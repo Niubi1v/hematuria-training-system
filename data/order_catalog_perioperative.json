@@ -1,0 +1,115 @@
+[
+  {
+    "orderId": "LAB-BL-005",
+    "primaryCategory": "围术期评估",
+    "secondaryCategory": "血液基础",
+    "displayName": "肝功能/白蛋白",
+    "synonyms": [
+      "肝功能/白蛋白",
+      "肝功能",
+      "ALT",
+      "AST",
+      "白蛋白",
+      "胆红素"
+    ],
+    "scenario": "术前、营养/全身评估、肿瘤分期治疗前",
+    "resultShouldInclude": "ALT、AST、TBil、Alb",
+    "priority": "基础/场景",
+    "studentDisplayHint": "围术期检验",
+    "cautions": "影响用药和围术期风险评估",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "LAB-BL-009",
+    "primaryCategory": "围术期评估",
+    "secondaryCategory": "炎症感染",
+    "displayName": "术前感染筛查",
+    "synonyms": [
+      "术前感染筛查",
+      "乙肝",
+      "丙肝",
+      "HIV",
+      "梅毒",
+      "感染四项"
+    ],
+    "scenario": "拟手术/侵入性操作",
+    "resultShouldInclude": "HBsAg、抗HCV、HIV、梅毒",
+    "priority": "场景必开",
+    "studentDisplayHint": "围术期检验",
+    "cautions": "按本院术前常规设置",
+    "sourceUrl": "https://uroweb.org/guidelines/non-muscle-invasive-bladder-cancer/chapter/diagnosis"
+  },
+  {
+    "orderId": "PERI-001",
+    "primaryCategory": "围术期评估",
+    "secondaryCategory": "围术期评估",
+    "tertiaryCategory": "心脏",
+    "displayName": "心电图",
+    "synonyms": [
+      "心电图",
+      "ECG"
+    ],
+    "scenario": "术前基础、老年/心血管病",
+    "resultShouldInclude": "心律、缺血改变",
+    "priority": "围术期必备",
+    "studentDisplayHint": "围术期评估",
+    "cautions": "按本院术前路径",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "PERI-002",
+    "primaryCategory": "围术期评估",
+    "secondaryCategory": "围术期评估",
+    "tertiaryCategory": "心脏",
+    "displayName": "心脏超声",
+    "synonyms": [
+      "心脏超声",
+      "心超",
+      "心脏彩超",
+      "UCG"
+    ],
+    "scenario": "心衰、瓣膜病、巨大手术、麻醉评估",
+    "resultShouldInclude": "EF、瓣膜、肺动脉压",
+    "priority": "按需/场景",
+    "studentDisplayHint": "围术期评估",
+    "cautions": "不是所有门诊血尿初筛",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "PERI-003",
+    "primaryCategory": "围术期评估",
+    "secondaryCategory": "围术期评估",
+    "tertiaryCategory": "肺功能",
+    "displayName": "肺功能检查",
+    "synonyms": [
+      "肺功能检查",
+      "肺功能",
+      "PFT"
+    ],
+    "scenario": "COPD、胸腹大手术、麻醉评估",
+    "resultShouldInclude": "FEV1、FVC、通气功能",
+    "priority": "按需",
+    "studentDisplayHint": "围术期评估",
+    "cautions": "按麻醉要求",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "PERI-004",
+    "primaryCategory": "围术期评估",
+    "secondaryCategory": "围术期评估",
+    "tertiaryCategory": "麻醉",
+    "displayName": "麻醉术前评估",
+    "synonyms": [
+      "麻醉术前评估",
+      "麻醉评估",
+      "ASA评估",
+      "术前麻醉门诊"
+    ],
+    "scenario": "拟TURBT/RNU/肾癌根治/急诊引流",
+    "resultShouldInclude": "ASA分级、气道、麻醉风险",
+    "priority": "场景必开",
+    "studentDisplayHint": "围术期评估",
+    "cautions": "复杂病例应触发麻醉会诊/MDT",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  }
+]

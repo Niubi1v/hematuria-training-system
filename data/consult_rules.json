@@ -1,0 +1,66 @@
+[
+  {
+    "ruleId": "CONS-URO-URG",
+    "trigger": "血块尿潴留、持续肉眼血尿、尿路梗阻感染、外伤后血尿",
+    "departments": "泌尿外科急会诊",
+    "questions": "是否需三腔导尿冲洗、膀胱镜止血、支架/肾造瘘或手术",
+    "exampleCases": "膀胱癌出血、感染性输尿管结石、外伤",
+    "requiredKeywords": "血块；梗阻；引流；内镜；急诊"
+  },
+  {
+    "ruleId": "CONS-NEPH",
+    "trigger": "蛋白尿、RBC管型、畸形红细胞、eGFR下降、水肿/高血压",
+    "departments": "肾内科",
+    "questions": "判断肾小球源性血尿、免疫学检查、肾活检和免疫治疗",
+    "exampleCases": "IgA肾病、急性肾炎、狼疮肾炎",
+    "requiredKeywords": "蛋白尿；位相；管型；肾活检"
+  },
+  {
+    "ruleId": "CONS-ID",
+    "trigger": "系统性UTI、MDR/反复感染、泌尿系结核/血吸虫、免疫抑制",
+    "departments": "感染科/结核专科",
+    "questions": "抗感染方案、药敏去阶梯、隔离/上报、疗程",
+    "exampleCases": "肾盂肾炎、结核、血吸虫",
+    "requiredKeywords": "培养；药敏；去阶梯；特殊感染"
+  },
+  {
+    "ruleId": "CONS-CARD",
+    "trigger": "长期阿司匹林/氯吡格雷/华法林/DOAC且需内镜或手术",
+    "departments": "心内科/神经内科/血液科",
+    "questions": "围术期抗栓停药、桥接或逆转，平衡血栓和出血",
+    "exampleCases": "膀胱肿瘤TURBT、BPH手术",
+    "requiredKeywords": "抗栓适应证；停药；桥接；出血风险"
+  },
+  {
+    "ruleId": "CONS-ONC",
+    "trigger": "MIBC、高危UTUC、转移性RCC/前列腺癌、需围术期化疗/系统治疗",
+    "departments": "肿瘤内科/放疗科",
+    "questions": "新辅助/辅助/系统治疗、放疗适应证、MDT决策",
+    "exampleCases": "膀胱癌、UTUC、RCC、前列腺癌",
+    "requiredKeywords": "分期；顺铂资格；系统治疗；放疗"
+  },
+  {
+    "ruleId": "CONS-ANES",
+    "trigger": "需TURBT、URS、PCNL、肾切除、前列腺手术且合并高龄/心肺病",
+    "departments": "麻醉科",
+    "questions": "围术期风险评估、麻醉方式、术前优化",
+    "exampleCases": "多数手术病例",
+    "requiredKeywords": "ASA；围术期；麻醉风险"
+  },
+  {
+    "ruleId": "CONS-GYN",
+    "trigger": "女性血尿样表现与月经/阴道出血混杂，妊娠可能",
+    "departments": "妇产科",
+    "questions": "鉴别阴道来源和妊娠相关出血，决定妇科检查/超声",
+    "exampleCases": "月经污染、妊娠相关",
+    "requiredKeywords": "末次月经；导尿尿；妊娠"
+  },
+  {
+    "ruleId": "CONS-TRAUMA",
+    "trigger": "外伤后血尿、骨盆骨折、休克",
+    "departments": "急诊/创伤外科/介入放射科",
+    "questions": "创伤复苏、出血控制、是否介入栓塞或手术",
+    "exampleCases": "肾损伤、膀胱/尿道损伤",
+    "requiredKeywords": "ABCDE；造影；栓塞；尿流改道"
+  }
+]

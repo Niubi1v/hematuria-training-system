@@ -1,0 +1,335 @@
+[
+  {
+    "slotId": "HX001",
+    "label": "主诉/哪里不舒服",
+    "recommendedQuestion": "您这次主要为什么来看病？",
+    "triggers": [
+      "您这次主要为什么来看病？"
+    ],
+    "wideField": "主诉/哪里不舒服",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX002",
+    "label": "血尿可见性",
+    "recommendedQuestion": "尿是肉眼能看到红，还是体检尿检发现？",
+    "triggers": [
+      "尿是肉眼能看到红，还是体检尿检发现？"
+    ],
+    "wideField": "血尿可见性",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX003",
+    "label": "起病时间",
+    "recommendedQuestion": "什么时候开始出现血尿或排尿症状？",
+    "triggers": [
+      "什么时候开始出现血尿或排尿症状？"
+    ],
+    "wideField": "起病时间",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX004",
+    "label": "血尿频率",
+    "recommendedQuestion": "血尿是持续还是间断？",
+    "triggers": [
+      "血尿是持续还是间断？"
+    ],
+    "wideField": "血尿频率",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX005",
+    "label": "血尿时相",
+    "recommendedQuestion": "刚开始红、快尿完红，还是从头到尾都红？",
+    "triggers": [
+      "刚开始红",
+      "快尿完红，还是从头到尾都红？"
+    ],
+    "wideField": "血尿时相",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX006",
+    "label": "是否一直红",
+    "recommendedQuestion": "是不是整泡尿一直红？",
+    "triggers": [
+      "是不是整泡尿一直红？"
+    ],
+    "wideField": "是否一直红",
+    "isKey": true,
+    "score": 5,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX007",
+    "label": "尿色",
+    "recommendedQuestion": "尿是什么颜色？鲜红、洗肉水样、茶色还是酱油色？",
+    "triggers": [
+      "尿是什么颜色？鲜红",
+      "洗肉水样",
+      "茶色还是酱油色？"
+    ],
+    "wideField": "尿色",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX008",
+    "label": "血块",
+    "recommendedQuestion": "有没有血块？是什么形状？",
+    "triggers": [
+      "有没有血块？是什么形状？"
+    ],
+    "wideField": "血块",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX009",
+    "label": "尿痛",
+    "recommendedQuestion": "小便时痛不痛？",
+    "triggers": [
+      "小便时痛不痛？"
+    ],
+    "wideField": "尿痛",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX010",
+    "label": "尿频尿急",
+    "recommendedQuestion": "有没有尿频、尿急、尿不尽？",
+    "triggers": [
+      "有没有尿频",
+      "尿急",
+      "尿不尽？"
+    ],
+    "wideField": "尿频尿急",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX011",
+    "label": "排尿困难",
+    "recommendedQuestion": "尿线变细、排尿费力、排尿中断或尿潴留吗？",
+    "triggers": [
+      "尿线变细",
+      "排尿费力",
+      "排尿中断或尿潴留吗？"
+    ],
+    "wideField": "排尿困难",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX012",
+    "label": "腰痛/肾绞痛",
+    "recommendedQuestion": "有没有腰痛？疼痛会不会放射到腹股沟或会阴？",
+    "triggers": [
+      "有没有腰痛？疼痛会不会放射到腹股沟或会阴？"
+    ],
+    "wideField": "腰痛/肾绞痛",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX013",
+    "label": "发热寒战",
+    "recommendedQuestion": "有没有发热、寒战？",
+    "triggers": [
+      "有没有发热",
+      "寒战？"
+    ],
+    "wideField": "发热寒战",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX014",
+    "label": "恶心呕吐",
+    "recommendedQuestion": "有没有恶心呕吐？",
+    "triggers": [
+      "有没有恶心呕吐？"
+    ],
+    "wideField": "恶心呕吐",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX015",
+    "label": "泡沫尿/水肿",
+    "recommendedQuestion": "有没有泡沫尿、水肿？",
+    "triggers": [
+      "有没有泡沫尿",
+      "水肿？"
+    ],
+    "wideField": "泡沫尿/水肿",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX016",
+    "label": "上感咽痛",
+    "recommendedQuestion": "最近有没有感冒、咽痛、扁桃体炎？",
+    "triggers": [
+      "最近有没有感冒",
+      "咽痛",
+      "扁桃体炎？"
+    ],
+    "wideField": "上感咽痛",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX017",
+    "label": "体重食欲",
+    "recommendedQuestion": "最近体重、食欲有没有变化？",
+    "triggers": [
+      "最近体重",
+      "食欲有没有变化？"
+    ],
+    "wideField": "体重食欲",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX018",
+    "label": "月经/阴道污染",
+    "recommendedQuestion": "女性是否在月经期或有阴道出血？",
+    "triggers": [
+      "女性是否在月经期或有阴道出血？"
+    ],
+    "wideField": "月经/阴道污染",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX019",
+    "label": "运动外伤操作",
+    "recommendedQuestion": "有没有运动、外伤、导尿、膀胱镜或手术操作诱因？",
+    "triggers": [
+      "有没有运动",
+      "外伤",
+      "导尿",
+      "膀胱镜或手术操作诱因？"
+    ],
+    "wideField": "运动外伤操作",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX020",
+    "label": "既往病史",
+    "recommendedQuestion": "以前有什么病？高血压、糖尿病、冠心病、肾病、结石、肿瘤？",
+    "triggers": [
+      "以前有什么病？高血压",
+      "糖尿病",
+      "冠心病",
+      "肾病",
+      "结石",
+      "肿瘤？"
+    ],
+    "wideField": "既往病史",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX021",
+    "label": "用药史",
+    "recommendedQuestion": "有没有长期吃阿司匹林、氯吡格雷、华法林、利伐沙班或其他药？",
+    "triggers": [
+      "有没有长期吃阿司匹林",
+      "氯吡格雷",
+      "华法林",
+      "利伐沙班或其他药？"
+    ],
+    "wideField": "用药史",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX022",
+    "label": "过敏手术输血",
+    "recommendedQuestion": "有没有药物过敏、手术史、输血史？",
+    "triggers": [
+      "有没有药物过敏",
+      "手术史",
+      "输血史？"
+    ],
+    "wideField": "过敏手术输血",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX023",
+    "label": "吸烟饮酒职业",
+    "recommendedQuestion": "是否吸烟、饮酒，是否有染料、化工、皮革、橡胶等职业暴露？",
+    "triggers": [
+      "是否吸烟",
+      "饮酒，是否有染料",
+      "化工",
+      "皮革",
+      "橡胶等职业暴露？"
+    ],
+    "wideField": "吸烟饮酒职业",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX024",
+    "label": "家族史",
+    "recommendedQuestion": "家里有没有肿瘤、肾病或类似血尿病史？",
+    "triggers": [
+      "家里有没有肿瘤",
+      "肾病或类似血尿病史？"
+    ],
+    "wideField": "家族史",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  },
+  {
+    "slotId": "HX025",
+    "label": "一般情况",
+    "recommendedQuestion": "大便、饮食、睡眠、体重怎么样？",
+    "triggers": [
+      "大便",
+      "饮食",
+      "睡眠",
+      "体重怎么样？"
+    ],
+    "wideField": "一般情况",
+    "isKey": false,
+    "score": 2,
+    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+  }
+]

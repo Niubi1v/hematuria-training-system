@@ -1,0 +1,79 @@
+[
+  {
+    "module": "研究类型",
+    "design": "单中心、前瞻性、分层随机对照医学教育研究",
+    "implementation": "对象为轮转至泌尿外科的1、2年级住院医师/专业型硕士，N=30",
+    "dataFields": "participant_id, grade, group, consent",
+    "biasControl": "伦理审批和知情同意"
+  },
+  {
+    "module": "分层随机化",
+    "design": "按年级分层：1年级和2年级分别随机进入LLM组/传统组",
+    "implementation": "最终LLM组n=15，传统CBL/MDT组n=15",
+    "dataFields": "randomization_stratum, allocation",
+    "biasControl": "使用独立随机表；分配隐藏"
+  },
+  {
+    "module": "统一基线培训",
+    "design": "两组先接受相同血尿理论复习",
+    "implementation": "内容包括血尿定位、肿瘤/感染/结石/肾小球鉴别、会诊原则",
+    "dataFields": "baseline_quiz_score",
+    "biasControl": "减少知识暴露差异"
+  },
+  {
+    "module": "干预组",
+    "design": "LLM互动组使用系统完成3-5个血尿虚拟病人全流程",
+    "implementation": "自主问诊、开检查、MDT人机交互、后台评分反馈",
+    "dataFields": "case_log, time, actions, score",
+    "biasControl": "每人病例组合按难度均衡"
+  },
+  {
+    "module": "对照组",
+    "design": "传统纸质CBL/MDT教学",
+    "implementation": "静态病例资料+导师讨论+模拟MDT汇报",
+    "dataFields": "attendance, discussion_time",
+    "biasControl": "总时长与干预组尽量相同"
+  },
+  {
+    "module": "主要终点",
+    "design": "盲态专家评分的临床思维与协同能力总分",
+    "implementation": "OSCE/标准化病例站：问诊、鉴别、开单、治疗、MDT汇报",
+    "dataFields": "osce_total, clinical_reasoning_score, mdt_score",
+    "biasControl": "评分者不知道分组"
+  },
+  {
+    "module": "次要终点",
+    "design": "完成时间、自我效能提升、满意度、系统可用性",
+    "implementation": "前后自我效能Likert 5分；LLM组满意度Likert 5分",
+    "dataFields": "completion_time, self_efficacy_pre/post, satisfaction",
+    "biasControl": "统一问卷；预设评分规则"
+  },
+  {
+    "module": "考核病例",
+    "design": "不能使用训练中完全相同病例",
+    "implementation": "用等难度新病例或变式病例，覆盖膀胱癌、感染梗阻、肾小球性血尿/肾癌MDT",
+    "dataFields": "osce_case_id",
+    "biasControl": "避免记忆病例影响结果"
+  },
+  {
+    "module": "统计分析",
+    "design": "小样本优先报告效应量和95%CI",
+    "implementation": "连续变量t检验或Mann-Whitney；配对前后Wilcoxon/t检验；ANCOVA可调基线",
+    "dataFields": "analysis_plan",
+    "biasControl": "预先写统计分析计划"
+  },
+  {
+    "module": "过程数据",
+    "design": "系统自动保存交互日志",
+    "implementation": "问诊槽位覆盖率、关键医嘱命中率、MDT触发时机、治疗红旗错误",
+    "dataFields": "interaction_log",
+    "biasControl": "用于机制分析，不替代主要终点"
+  },
+  {
+    "module": "报告规范",
+    "design": "按CONSORT/SPIRIT/TIDieR思路报告",
+    "implementation": "流程图、纳排标准、随机化、盲法、干预可复制性、缺失数据处理",
+    "dataFields": "reporting_checklist",
+    "biasControl": "提高投稿BMC Medical Education可读性"
+  }
+]

@@ -1,0 +1,37 @@
+{
+  "input": "work/source/v2_only_cases.xlsx",
+  "caseLibraryVersion": "V2-only",
+  "generatedAt": "2026-07-05T10:00:58.806Z",
+  "cases": 12,
+  "caseCards": 444,
+  "questionAnswers": 300,
+  "orderResults": 192,
+  "mdtTriggers": 12,
+  "physicalExamItems": 16,
+  "physicalExamResults": 192,
+  "uiReleaseRules": 0,
+  "allowedCaseIds": [
+    "P001",
+    "P002",
+    "P003",
+    "P004",
+    "P005",
+    "P006",
+    "P007",
+    "P008",
+    "P009",
+    "P010",
+    "P011",
+    "P012"
+  ],
+  "sourceSheets": [
+    "仪表盘",
+    "总表_V2病例库",
+    "病例卡_导师模板长表",
+    "问诊槽位答案_逐项",
+    "开单返回结果_病例级",
+    "MDT触发_病例级",
+    "Codex提示词_替换旧病例",
+    "来源与使用说明"
+  ]
+}

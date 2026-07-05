@@ -1,0 +1,74 @@
+[
+  {
+    "orderId": "LAB-PATH-001",
+    "primaryCategory": "病理/操作",
+    "secondaryCategory": "病理",
+    "displayName": "TURBT病理",
+    "synonyms": [
+      "TURBT病理",
+      "膀胱肿瘤电切病理",
+      "肌层"
+    ],
+    "scenario": "膀胱肿瘤明确诊断/分期/分级",
+    "resultShouldInclude": "组织学类型、分级、T分期、是否肌层",
+    "priority": "场景必开",
+    "studentDisplayHint": "病理/组织",
+    "cautions": "膀胱肿瘤不能无病理直接定治疗",
+    "sourceUrl": "https://uroweb.org/guidelines/non-muscle-invasive-bladder-cancer/chapter/diagnosis"
+  },
+  {
+    "orderId": "LAB-PATH-002",
+    "primaryCategory": "病理/操作",
+    "secondaryCategory": "病理",
+    "displayName": "输尿管镜活检病理",
+    "synonyms": [
+      "输尿管镜活检病理",
+      "URS活检",
+      "输尿管镜活检",
+      "肾盂活检"
+    ],
+    "scenario": "疑UTUC且影像/尿细胞学不足或保肾决策前",
+    "resultShouldInclude": "肿瘤级别、组织学",
+    "priority": "按需/场景",
+    "studentDisplayHint": "病理/组织",
+    "cautions": "活检可能影响膀胱内复发风险，需有指征",
+    "sourceUrl": "https://uroweb.org/guidelines/upper-urinary-tract-urothelial-cell-carcinoma/chapter/diagnosis"
+  },
+  {
+    "orderId": "LAB-PATH-003",
+    "primaryCategory": "病理/操作",
+    "secondaryCategory": "病理",
+    "displayName": "肾活检病理",
+    "synonyms": [
+      "肾活检病理",
+      "肾穿刺",
+      "肾活检",
+      "肾病理"
+    ],
+    "scenario": "蛋白尿、RBC管型、AKI、疑肾小球肾炎",
+    "resultShouldInclude": "光镜、免疫荧光、电镜诊断",
+    "priority": "场景必开",
+    "studentDisplayHint": "病理/组织",
+    "cautions": "需评估凝血、血压、肾大小和禁忌证",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "END-002",
+    "primaryCategory": "病理/操作",
+    "secondaryCategory": "内镜+病理",
+    "tertiaryCategory": "膀胱",
+    "displayName": "诊断性TURBT+病理",
+    "synonyms": [
+      "诊断性TURBT+病理",
+      "TURBT",
+      "膀胱肿瘤电切",
+      "电切病理"
+    ],
+    "scenario": "膀胱镜见肿瘤后诊断和初治",
+    "resultShouldInclude": "完整切除、肌层、病理分期分级",
+    "priority": "场景必开",
+    "studentDisplayHint": "内镜/操作",
+    "cautions": "无病理无分期不得确定肿瘤治疗",
+    "sourceUrl": "https://uroweb.org/guidelines/non-muscle-invasive-bladder-cancer/chapter/diagnosis"
+  }
+]

@@ -1,0 +1,51 @@
+[
+  {
+    "stage": "病例进入",
+    "preSubmitAllowed": "年龄、性别、主诉、就诊场景、患者开场白",
+    "preSubmitForbidden": "完整现病史、危险因素、检查结果、诊断、治疗、MDT触发点",
+    "postSubmitAllowed": "本阶段无反馈或仅通用操作说明",
+    "technicalAdvice": "studentVisibleCase对象只含白名单字段"
+  },
+  {
+    "stage": "病史采集",
+    "preSubmitAllowed": "患者对已问问题的回答、已问问题数、通用问诊框架",
+    "preSubmitForbidden": "未问关键slot名称、标准答案、最终诊断、得分点、病例特异提示",
+    "postSubmitAllowed": "漏问项、危险漏项、标准问诊小结、得分",
+    "technicalAdvice": "missingSlots只在submitHistory=true后返回"
+  },
+  {
+    "stage": "体格检查",
+    "preSubmitAllowed": "学生点选/输入查体项目后返回对应体征",
+    "preSubmitForbidden": "未查体项目结果、诊断提示",
+    "postSubmitAllowed": "体格检查漏项、危急体征提示",
+    "technicalAdvice": "examResult按case_id+exam_id返回"
+  },
+  {
+    "stage": "开单检查",
+    "preSubmitAllowed": "医嘱分类库、已开医嘱、已返回报告",
+    "preSubmitForbidden": "未开医嘱报告、病例必开清单、扣分规则",
+    "postSubmitAllowed": "漏开关键检查、过度检查、不适当检查",
+    "technicalAdvice": "orderResult按case_id+order_id返回"
+  },
+  {
+    "stage": "诊断与鉴别",
+    "preSubmitAllowed": "学生填写诊断和鉴别诊断",
+    "preSubmitForbidden": "标准最终诊断、病理、分期",
+    "postSubmitAllowed": "标准诊断思路、鉴别诊断、安全网漏项",
+    "technicalAdvice": "evaluateDiagnosis后显示"
+  },
+  {
+    "stage": "会诊/MDT",
+    "preSubmitAllowed": "科室分类库、会诊目的输入框",
+    "preSubmitForbidden": "病例标准会诊科室、MDT触发点、专家标准答案",
+    "postSubmitAllowed": "应会诊科室、遗漏会诊、专家质询",
+    "technicalAdvice": "mdtAdvice仅基于已知信息生成"
+  },
+  {
+    "stage": "治疗决策",
+    "preSubmitAllowed": "学生填写即时处理/后续治疗/围术期准备",
+    "preSubmitForbidden": "标准治疗路径",
+    "postSubmitAllowed": "标准治疗、红旗错误、随访计划",
+    "technicalAdvice": "treatmentFeedback提交后显示"
+  }
+]

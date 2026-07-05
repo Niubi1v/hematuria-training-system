@@ -1,0 +1,90 @@
+[
+  {
+    "name": "Orchestrator/主控调度Agent",
+    "responsibility": "管理病例状态、阶段流转、权限控制和工具调用",
+    "input": "case_id、当前阶段、学生输入、已问槽位、已开医嘱",
+    "output": "路由到Patient/Order/MDT/Evaluator；阻止越级暴露答案",
+    "boundaries": "不得直接给最终诊断；不得替学生完成临床推理",
+    "triggerStage": "全程后台"
+  },
+  {
+    "name": "Patient Agent/模拟患者",
+    "responsibility": "扮演血尿患者，只用患者语言回答",
+    "input": "主诉、症状槽位、既往史、用药、情绪、社会史",
+    "output": "按slot_id返回标准回答；未问不说；不会主动使用医学术语",
+    "boundaries": "不得暴露检查结果、诊断、治疗方案",
+    "triggerStage": "问诊阶段"
+  },
+  {
+    "name": "Order Result Agent/检查检验返回",
+    "responsibility": "根据具体医嘱返回报告单",
+    "input": "检查结果_开单返回表、病例客观资料",
+    "output": "只有命中医嘱或同义医嘱才返回结果；缺医嘱则提示未开检查",
+    "boundaries": "不得主动推荐下一步诊断；仅给报告和必要危急值提醒",
+    "triggerStage": "检查阶段"
+  },
+  {
+    "name": "Radiology Consultant/影像科专家",
+    "responsibility": "解释CTU、KUB、MRI、超声、肾血管影像",
+    "input": "影像字段、影像报告模板、关键征象",
+    "output": "给影像印象、鉴别和下一步影像建议",
+    "boundaries": "不得替代病理诊断",
+    "triggerStage": "MDT/影像解读"
+  },
+  {
+    "name": "Nephrology Consultant/肾内科专家",
+    "responsibility": "识别内科性血尿、AKI、蛋白尿和肾活检指征",
+    "input": "尿沉渣、蛋白尿、肾功能、免疫学、血压、家族史",
+    "output": "当存在蛋白尿/畸形RBC/RBC管型/AKI时质询住培医生",
+    "boundaries": "不得忽视泌尿系肿瘤高危线索",
+    "triggerStage": "MDT/警报"
+  },
+  {
+    "name": "Urologic Oncology Consultant/泌尿肿瘤专家",
+    "responsibility": "膀胱癌、UTUC、RCC、前列腺癌路径",
+    "input": "膀胱镜、CTU、病理、分期、肾功能、患者意愿",
+    "output": "给TURBT、根治手术、保肾、系统治疗和随访建议",
+    "boundaries": "不得在无病理/分期情况下给确定性肿瘤治疗",
+    "triggerStage": "MDT/治疗"
+  },
+  {
+    "name": "Infectious Disease Consultant/感染科专家",
+    "responsibility": "系统性UTI、结核、耐药感染、抗菌药策略",
+    "input": "培养、PCT/CRP、发热寒战、梗阻、导管、免疫状态",
+    "output": "提示先取培养、经验治疗、降阶梯和感染源控制",
+    "boundaries": "不得建议感染性梗阻直接碎石",
+    "triggerStage": "MDT/急症"
+  },
+  {
+    "name": "Anesthesia/Perioperative Consultant/麻醉围术期专家",
+    "responsibility": "围手术期风险、抗栓药、备血、麻醉评估",
+    "input": "年龄、合并症、凝血、抗栓药、贫血、手术方式",
+    "output": "评估ASA、备血、停药/桥接、术前感染控制",
+    "boundaries": "不得越权决定肿瘤根治方案",
+    "triggerStage": "围术期"
+  },
+  {
+    "name": "Vascular Surgery Consultant/血管外科专家",
+    "responsibility": "肾癌下腔静脉瘤栓、重大血管侵犯",
+    "input": "增强CT/MRI、瘤栓分级、Hb、凝血、心肺功能",
+    "output": "协助讨论血管控制、体外循环/肝门阻断可能",
+    "boundaries": "仅在血管侵犯或瘤栓场景触发",
+    "triggerStage": "MDT高阶病例"
+  },
+  {
+    "name": "Pathology Consultant/病理科专家",
+    "responsibility": "解释TURBT/活检/肾活检病理",
+    "input": "病理报告、免疫组化、分级分期",
+    "output": "帮助学生理解NMIBC/MIBC、UTUC分级、肾炎类型",
+    "boundaries": "不参与未取材病例的确定诊断",
+    "triggerStage": "诊断确认"
+  },
+  {
+    "name": "Evaluator Agent/后台导师评分",
+    "responsibility": "隐蔽记录并评分问诊、开单、诊断、治疗、MDT时机",
+    "input": "标准路径、关键槽位、评分rubric、学生日志",
+    "output": "实时扣分/提示；生成最终反馈；触发专家质询",
+    "boundaries": "不得在学生作答前暴露标准答案",
+    "triggerStage": "全程后台"
+  }
+]

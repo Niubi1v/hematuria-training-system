@@ -1,0 +1,179 @@
+[
+  {
+    "examId": "PE001",
+    "category": "一般情况与生命体征",
+    "displayName": "体温",
+    "synonyms": [
+      "体温",
+      "发热",
+      "测体温",
+      "最高体温"
+    ]
+  },
+  {
+    "examId": "PE002",
+    "category": "一般情况与生命体征",
+    "displayName": "血压",
+    "synonyms": [
+      "血压",
+      "高血压",
+      "测血压"
+    ]
+  },
+  {
+    "examId": "PE003",
+    "category": "一般情况与生命体征",
+    "displayName": "心率/呼吸/血氧",
+    "synonyms": [
+      "心率",
+      "脉搏",
+      "呼吸",
+      "血氧",
+      "生命体征"
+    ]
+  },
+  {
+    "examId": "PE004",
+    "category": "一般情况与生命体征",
+    "displayName": "贫血貌/脱水貌/意识",
+    "synonyms": [
+      "贫血貌",
+      "脱水貌",
+      "意识",
+      "精神状态",
+      "一般情况"
+    ]
+  },
+  {
+    "examId": "PE101",
+    "category": "腹部与泌尿系统",
+    "displayName": "腹部压痛",
+    "synonyms": [
+      "腹部压痛",
+      "肚子压痛",
+      "下腹压痛",
+      "腹痛查体"
+    ]
+  },
+  {
+    "examId": "PE102",
+    "category": "腹部与泌尿系统",
+    "displayName": "肾区叩击痛",
+    "synonyms": [
+      "肾区叩击痛",
+      "肾区",
+      "叩击痛",
+      "腰部叩痛",
+      "肋脊角"
+    ]
+  },
+  {
+    "examId": "PE103",
+    "category": "腹部与泌尿系统",
+    "displayName": "输尿管走行区压痛",
+    "synonyms": [
+      "输尿管压痛",
+      "输尿管走行区",
+      "输尿管点压痛"
+    ]
+  },
+  {
+    "examId": "PE104",
+    "category": "腹部与泌尿系统",
+    "displayName": "耻骨上膀胱充盈",
+    "synonyms": [
+      "耻骨上",
+      "膀胱充盈",
+      "尿潴留",
+      "下腹包块"
+    ]
+  },
+  {
+    "examId": "PE105",
+    "category": "腹部与泌尿系统",
+    "displayName": "腰部包块",
+    "synonyms": [
+      "腰部包块",
+      "肾区包块",
+      "腹部包块"
+    ]
+  },
+  {
+    "examId": "PE201",
+    "category": "男性泌尿生殖",
+    "displayName": "外生殖器/尿道口",
+    "synonyms": [
+      "外生殖器",
+      "尿道口",
+      "尿道口滴血",
+      "阴茎"
+    ]
+  },
+  {
+    "examId": "PE202",
+    "category": "男性泌尿生殖",
+    "displayName": "阴囊",
+    "synonyms": [
+      "阴囊",
+      "睾丸",
+      "附睾"
+    ]
+  },
+  {
+    "examId": "PE203",
+    "category": "男性泌尿生殖",
+    "displayName": "直肠指检/前列腺",
+    "synonyms": [
+      "直肠指检",
+      "前列腺",
+      "肛诊",
+      "DRE"
+    ]
+  },
+  {
+    "examId": "PE301",
+    "category": "女性相关",
+    "displayName": "妇科查体/阴道出血",
+    "synonyms": [
+      "妇科查体",
+      "阴道出血",
+      "月经污染",
+      "阴道污染",
+      "外阴"
+    ]
+  },
+  {
+    "examId": "PE401",
+    "category": "全身系统",
+    "displayName": "水肿",
+    "synonyms": [
+      "水肿",
+      "下肢水肿",
+      "眼睑水肿",
+      "浮肿"
+    ]
+  },
+  {
+    "examId": "PE402",
+    "category": "全身系统",
+    "displayName": "皮疹紫癜/关节",
+    "synonyms": [
+      "皮疹",
+      "紫癜",
+      "关节痛",
+      "关节",
+      "狼疮"
+    ]
+  },
+  {
+    "examId": "PE403",
+    "category": "全身系统",
+    "displayName": "心肺听诊",
+    "synonyms": [
+      "心肺",
+      "听诊",
+      "肺部",
+      "心脏"
+    ]
+  }
+]

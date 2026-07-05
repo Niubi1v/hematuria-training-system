@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #f7fafb;
+  color: #17202a;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.medical-band {
+  background:
+    linear-gradient(90deg, rgba(29, 111, 143, 0.08), rgba(17, 128, 106, 0.08)),
+    #ffffff;
+}

@@ -1,0 +1,439 @@
+[
+  {
+    "orderId": "IMG-US-001",
+    "primaryCategory": "检查",
+    "secondaryCategory": "超声",
+    "tertiaryCategory": "泌尿系",
+    "displayName": "泌尿系超声+残余尿",
+    "synonyms": [
+      "泌尿系超声+残余尿",
+      "泌尿系超声",
+      "双肾输尿管膀胱前列腺超声",
+      "残余尿",
+      "膀胱彩超"
+    ],
+    "scenario": "初筛血尿、肾积水、膀胱占位、BPH残余尿",
+    "resultShouldInclude": "肾积水、结石、肿块、膀胱内占位、残余尿量",
+    "priority": "基础/场景",
+    "studentDisplayHint": "超声",
+    "cautions": "不能可靠排除UTUC，不能替代CTU/膀胱镜",
+    "sourceUrl": "https://uroweb.org/guidelines/non-muscle-invasive-bladder-cancer/chapter/diagnosis"
+  },
+  {
+    "orderId": "IMG-US-002",
+    "primaryCategory": "检查",
+    "secondaryCategory": "超声",
+    "tertiaryCategory": "肾脏/上尿路",
+    "displayName": "肾脏及输尿管超声",
+    "synonyms": [
+      "肾脏及输尿管超声",
+      "肾脏超声",
+      "输尿管超声",
+      "肾积水超声"
+    ],
+    "scenario": "发热腰痛、梗阻、结石初筛",
+    "resultShouldInclude": "肾积水、结石强回声、脓肾可能",
+    "priority": "场景必开",
+    "studentDisplayHint": "超声",
+    "cautions": "急症处理不能因等待超声延误",
+    "sourceUrl": "https://uroweb.org/guidelines/urolithiasis/chapter/guidelines"
+  },
+  {
+    "orderId": "IMG-US-003",
+    "primaryCategory": "检查",
+    "secondaryCategory": "超声",
+    "tertiaryCategory": "前列腺",
+    "displayName": "经腹/经直肠前列腺超声",
+    "synonyms": [
+      "经腹/经直肠前列腺超声",
+      "前列腺超声",
+      "TRUS",
+      "经直肠超声"
+    ],
+    "scenario": "BPH、尿潴留、前列腺体积评估",
+    "resultShouldInclude": "前列腺体积、残余尿、突入膀胱",
+    "priority": "按需",
+    "studentDisplayHint": "超声",
+    "cautions": "急性前列腺炎不宜不必要经直肠刺激",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "IMG-XR-001",
+    "primaryCategory": "检查",
+    "secondaryCategory": "X线",
+    "tertiaryCategory": "泌尿系",
+    "displayName": "KUB腹部平片",
+    "synonyms": [
+      "KUB腹部平片",
+      "KUB",
+      "腹部平片",
+      "泌尿系平片"
+    ],
+    "scenario": "结石显影/随访、结石放射透亮性判断",
+    "resultShouldInclude": "肾输尿管区高密度影",
+    "priority": "按需",
+    "studentDisplayHint": "X线",
+    "cautions": "阴性不能排除尿酸结石或小结石",
+    "sourceUrl": "https://uroweb.org/guidelines/urolithiasis/chapter/guidelines"
+  },
+  {
+    "orderId": "IMG-XR-002",
+    "primaryCategory": "检查",
+    "secondaryCategory": "X线",
+    "tertiaryCategory": "胸部",
+    "displayName": "胸片",
+    "synonyms": [
+      "胸片",
+      "胸部X线"
+    ],
+    "scenario": "术前基础或肺部感染筛查",
+    "resultShouldInclude": "心肺影像基本结果",
+    "priority": "按需/围术期",
+    "studentDisplayHint": "X线",
+    "cautions": "不能替代肿瘤分期胸部CT",
+    "sourceUrl": "https://uroweb.org/guidelines/upper-urinary-tract-urothelial-cell-carcinoma/chapter/diagnosis"
+  },
+  {
+    "orderId": "IMG-CT-001",
+    "primaryCategory": "检查",
+    "secondaryCategory": "CT",
+    "tertiaryCategory": "结石/急腹症",
+    "displayName": "泌尿系CT平扫/低剂量NCCT KUB",
+    "synonyms": [
+      "泌尿系CT平扫/低剂量NCCT KUB",
+      "CT平扫",
+      "CT KUB",
+      "低剂量CT",
+      "非增强CT",
+      "NCCT"
+    ],
+    "scenario": "急性肾绞痛、疑输尿管结石",
+    "resultShouldInclude": "结石位置、大小、HU、梗阻、肾周渗出",
+    "priority": "场景必开",
+    "studentDisplayHint": "CT",
+    "cautions": "急性肾绞痛标准确认检查；孕妇慎用",
+    "sourceUrl": "https://uroweb.org/guidelines/urolithiasis/chapter/guidelines"
+  },
+  {
+    "orderId": "IMG-CT-002",
+    "primaryCategory": "检查",
+    "secondaryCategory": "CT",
+    "tertiaryCategory": "血尿/尿路上皮",
+    "displayName": "CTU评估上尿路",
+    "synonyms": [
+      "CTU评估上尿路",
+      "CTU",
+      "CT尿路造影",
+      "增强CTU",
+      "泌尿系增强"
+    ],
+    "scenario": "高危肉眼血尿、疑膀胱癌/UTUC、上尿路评估",
+    "resultShouldInclude": "肾盂输尿管充盈缺损、肿块、积水、淋巴结",
+    "priority": "场景必开",
+    "studentDisplayHint": "CT",
+    "cautions": "造影前看eGFR/过敏；不能替代膀胱镜",
+    "sourceUrl": "https://uroweb.org/guidelines/upper-urinary-tract-urothelial-cell-carcinoma/chapter/diagnosis"
+  },
+  {
+    "orderId": "IMG-CT-003",
+    "primaryCategory": "检查",
+    "secondaryCategory": "CT",
+    "tertiaryCategory": "肾肿瘤",
+    "displayName": "肾脏增强CT三期/肾肿瘤协议",
+    "synonyms": [
+      "肾脏增强CT三期/肾肿瘤协议",
+      "肾增强CT",
+      "肾脏三期CT",
+      "肾肿瘤CT"
+    ],
+    "scenario": "肾实质占位、RCC分期",
+    "resultShouldInclude": "强化方式、肿瘤大小、肾静脉/下腔静脉、淋巴结",
+    "priority": "场景必开",
+    "studentDisplayHint": "CT",
+    "cautions": "巨大肾肿瘤/瘤栓触发MDT",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "IMG-CT-004",
+    "primaryCategory": "检查",
+    "secondaryCategory": "CT",
+    "tertiaryCategory": "肿瘤分期",
+    "displayName": "胸部CT",
+    "synonyms": [
+      "胸部CT",
+      "肺部CT",
+      "胸CT"
+    ],
+    "scenario": "膀胱癌/UTUC/RCC高危或疑转移",
+    "resultShouldInclude": "肺结节/转移、纵隔淋巴结",
+    "priority": "场景/按需",
+    "studentDisplayHint": "CT",
+    "cautions": "高危UTUC推荐胸部CT分期",
+    "sourceUrl": "https://uroweb.org/guidelines/upper-urinary-tract-urothelial-cell-carcinoma/chapter/diagnosis"
+  },
+  {
+    "orderId": "IMG-CT-005",
+    "primaryCategory": "检查",
+    "secondaryCategory": "CT",
+    "tertiaryCategory": "外伤",
+    "displayName": "增强CT腹盆/CT尿路外渗评估",
+    "synonyms": [
+      "增强CT腹盆/CT尿路外渗评估",
+      "腹盆增强CT",
+      "外伤CT",
+      "肾损伤CT"
+    ],
+    "scenario": "外伤后血尿、怀疑肾/输尿管损伤",
+    "resultShouldInclude": "肾损伤分级、尿外渗、血肿",
+    "priority": "场景必开",
+    "studentDisplayHint": "CT",
+    "cautions": "血流动力学不稳先抢救",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "IMG-CT-006",
+    "primaryCategory": "检查",
+    "secondaryCategory": "CT",
+    "tertiaryCategory": "外伤膀胱",
+    "displayName": "CT膀胱造影",
+    "synonyms": [
+      "CT膀胱造影",
+      "膀胱造影",
+      "膀胱破裂"
+    ],
+    "scenario": "骨盆骨折、肉眼血尿、疑膀胱破裂",
+    "resultShouldInclude": "腹膜内/外膀胱破裂、造影剂外渗",
+    "priority": "场景必开",
+    "studentDisplayHint": "CT",
+    "cautions": "普通CT膀胱充盈不足可漏诊",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "IMG-CT-007",
+    "primaryCategory": "检查",
+    "secondaryCategory": "CT",
+    "tertiaryCategory": "血管/瘤栓",
+    "displayName": "CTA/CTV肾血管与下腔静脉",
+    "synonyms": [
+      "CTA/CTV肾血管与下腔静脉",
+      "CTA",
+      "CTV",
+      "下腔静脉瘤栓",
+      "肾静脉瘤栓"
+    ],
+    "scenario": "巨大肾癌、瘤栓、术前血管评估",
+    "resultShouldInclude": "肾动脉、肾静脉、IVC瘤栓高度",
+    "priority": "场景必开",
+    "studentDisplayHint": "CT血管",
+    "cautions": "需触发血管外科/麻醉/ICU MDT",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "IMG-MR-001",
+    "primaryCategory": "检查",
+    "secondaryCategory": "MRI",
+    "tertiaryCategory": "膀胱局部分期",
+    "displayName": "膀胱mpMRI/VI-RADS",
+    "synonyms": [
+      "膀胱mpMRI/VI-RADS",
+      "膀胱MRI",
+      "VI-RADS",
+      "盆腔MRI"
+    ],
+    "scenario": "疑肌层浸润膀胱癌，TURBT前局部分期",
+    "resultShouldInclude": "VI-RADS评分、肌层侵犯可能",
+    "priority": "按需/场景",
+    "studentDisplayHint": "MRI",
+    "cautions": "若做MRI用于局部分期，宜在TURBT前完成",
+    "sourceUrl": "https://uroweb.org/guidelines/non-muscle-invasive-bladder-cancer/chapter/diagnosis"
+  },
+  {
+    "orderId": "IMG-MR-002",
+    "primaryCategory": "检查",
+    "secondaryCategory": "MRI",
+    "tertiaryCategory": "上尿路",
+    "displayName": "MRU",
+    "synonyms": [
+      "MRU",
+      "磁共振尿路造影"
+    ],
+    "scenario": "不能做CTU：造影剂禁忌、肾功能差、过敏等",
+    "resultShouldInclude": "上尿路梗阻/充盈缺损/软组织",
+    "priority": "替代检查",
+    "studentDisplayHint": "MRI",
+    "cautions": "诊断UTUC敏感性通常低于CTU",
+    "sourceUrl": "https://uroweb.org/guidelines/upper-urinary-tract-urothelial-cell-carcinoma/chapter/diagnosis"
+  },
+  {
+    "orderId": "IMG-MR-003",
+    "primaryCategory": "检查",
+    "secondaryCategory": "MRI",
+    "tertiaryCategory": "肾肿瘤/瘤栓",
+    "displayName": "肾脏MRI/下腔静脉MRI",
+    "synonyms": [
+      "肾脏MRI/下腔静脉MRI",
+      "肾MRI",
+      "肾脏增强MRI",
+      "IVC MRI",
+      "瘤栓MRI"
+    ],
+    "scenario": "肾肿瘤性质、瘤栓范围、CT不确定或造影禁忌",
+    "resultShouldInclude": "肿瘤范围、脂肪/出血、瘤栓上界",
+    "priority": "按需/场景",
+    "studentDisplayHint": "MRI",
+    "cautions": "金属植入/肾源性系统纤维化风险需考虑",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "IMG-MR-004",
+    "primaryCategory": "检查",
+    "secondaryCategory": "MRI",
+    "tertiaryCategory": "前列腺",
+    "displayName": "前列腺mpMRI",
+    "synonyms": [
+      "前列腺mpMRI",
+      "前列腺MRI",
+      "mpMRI",
+      "PI-RADS"
+    ],
+    "scenario": "PSA异常、疑前列腺癌合并血尿",
+    "resultShouldInclude": "PI-RADS、包膜外侵犯、精囊侵犯",
+    "priority": "按需",
+    "studentDisplayHint": "MRI",
+    "cautions": "不是血尿初筛常规检查",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "END-001",
+    "primaryCategory": "检查",
+    "secondaryCategory": "内镜",
+    "tertiaryCategory": "膀胱",
+    "displayName": "膀胱镜",
+    "synonyms": [
+      "膀胱镜",
+      "尿道膀胱镜",
+      "柔性膀胱镜"
+    ],
+    "scenario": "高危血尿、疑膀胱癌、无痛肉眼血尿",
+    "resultShouldInclude": "肿物位置、数目、大小、形态、是否出血",
+    "priority": "场景必开",
+    "studentDisplayHint": "内镜",
+    "cautions": "不能被尿细胞学或尿标志物替代",
+    "sourceUrl": "https://uroweb.org/guidelines/non-muscle-invasive-bladder-cancer/chapter/diagnosis"
+  },
+  {
+    "orderId": "END-003",
+    "primaryCategory": "检查",
+    "secondaryCategory": "内镜",
+    "tertiaryCategory": "上尿路",
+    "displayName": "输尿管镜检查/选择性细胞学/活检",
+    "synonyms": [
+      "输尿管镜检查/选择性细胞学/活检",
+      "输尿管镜",
+      "URS",
+      "肾盂镜",
+      "选择性上尿路细胞学"
+    ],
+    "scenario": "疑UTUC但影像/尿细胞学不足，或需风险分层",
+    "resultShouldInclude": "病灶位置、大小、多灶、活检级别",
+    "priority": "按需/场景",
+    "studentDisplayHint": "内镜",
+    "cautions": "并非所有UTUC都必做；注意适应证",
+    "sourceUrl": "https://uroweb.org/guidelines/upper-urinary-tract-urothelial-cell-carcinoma/chapter/diagnosis"
+  },
+  {
+    "orderId": "END-004",
+    "primaryCategory": "检查",
+    "secondaryCategory": "造影/内镜辅助",
+    "tertiaryCategory": "上尿路",
+    "displayName": "逆行肾盂输尿管造影",
+    "synonyms": [
+      "逆行肾盂输尿管造影",
+      "逆行造影",
+      "RPG",
+      "输尿管造影"
+    ],
+    "scenario": "CTU禁忌或需显示上尿路充盈缺损",
+    "resultShouldInclude": "狭窄、充盈缺损、梗阻位置",
+    "priority": "按需",
+    "studentDisplayHint": "内镜辅助",
+    "cautions": "可与选择性细胞学/输尿管镜配合",
+    "sourceUrl": "https://uroweb.org/guidelines/upper-urinary-tract-urothelial-cell-carcinoma/chapter/diagnosis"
+  },
+  {
+    "orderId": "FUNC-001",
+    "primaryCategory": "检查",
+    "secondaryCategory": "功能检查",
+    "tertiaryCategory": "排尿功能",
+    "displayName": "尿流率+残余尿",
+    "synonyms": [
+      "尿流率+残余尿",
+      "尿流率",
+      "UFM",
+      "残余尿",
+      "PVR"
+    ],
+    "scenario": "BPH、排尿困难、尿潴留后评估",
+    "resultShouldInclude": "Qmax、排尿量、PVR",
+    "priority": "按需",
+    "studentDisplayHint": "功能检查",
+    "cautions": "急性血尿急症阶段不应优先于止血/引流",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "FUNC-002",
+    "primaryCategory": "检查",
+    "secondaryCategory": "肾功能影像",
+    "tertiaryCategory": "分肾功能/肾动态显像",
+    "displayName": "肾动态显像|ECT|核素肾图|分肾功能",
+    "synonyms": [
+      "肾动态显像|ECT|核素肾图|分肾功能",
+      "肾积水",
+      "保肾决策",
+      "肾功能分侧评估"
+    ],
+    "scenario": "左右肾GFR/排泄曲线",
+    "resultShouldInclude": "按需",
+    "priority": "核医学/功能",
+    "studentDisplayHint": "肿瘤急诊诊断不是第一步",
+    "cautions": "https://uroweb.org/guidelines/upper-urinary-tract-urothelial-cell-carcinoma/chapter/diagnosis",
+    "sourceUrl": ""
+  },
+  {
+    "orderId": "NUC-001",
+    "primaryCategory": "检查",
+    "secondaryCategory": "核医学",
+    "tertiaryCategory": "肿瘤分期",
+    "displayName": "骨显像",
+    "synonyms": [
+      "骨显像",
+      "骨扫描",
+      "ECT骨显像"
+    ],
+    "scenario": "骨痛、ALP高、疑骨转移",
+    "resultShouldInclude": "骨转移阳性/阴性",
+    "priority": "按需",
+    "studentDisplayHint": "核医学",
+    "cautions": "不是所有血尿常规检查",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "NUC-002",
+    "primaryCategory": "检查",
+    "secondaryCategory": "核医学",
+    "tertiaryCategory": "肿瘤分期",
+    "displayName": "FDG-PET/CT",
+    "synonyms": [
+      "FDG-PET/CT",
+      "PET",
+      "PET-CT",
+      "FDG PET"
+    ],
+    "scenario": "高危UTUC/RCC或常规影像不清、疑转移",
+    "resultShouldInclude": "代谢活性灶、淋巴/远处转移",
+    "priority": "按需高级",
+    "studentDisplayHint": "核医学",
+    "cautions": "不作为普通血尿初筛",
+    "sourceUrl": "https://uroweb.org/guidelines/upper-urinary-tract-urothelial-cell-carcinoma/chapter/diagnosis"
+  }
+]

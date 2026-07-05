@@ -1,0 +1,74 @@
+[
+  {
+    "id": "score-01",
+    "dimension": "1. 病史采集完整性",
+    "max": 35,
+    "coreRequirements": "血尿可见性、时相、颜色、血块、疼痛、尿路刺激、诱因、病程",
+    "excellentPerformance": "能主动区分肉眼/镜下、全程/初始/终末、条索状血块等定位线索",
+    "deductionPoints": "只问尿红，不问时相/血块/疼痛",
+    "scoringAdvice": "slot命中+追问深度累计"
+  },
+  {
+    "id": "score-02",
+    "dimension": "2. 危险因素识别",
+    "max": 25,
+    "coreRequirements": "年龄、性别、吸烟、职业暴露、放疗/化疗、抗凝、家族史",
+    "excellentPerformance": "能识别肿瘤高危并说明抗凝不能排除病因",
+    "deductionPoints": "把血尿归因于阿司匹林或感染",
+    "scoringAdvice": "关键词+病例高危项匹配"
+  },
+  {
+    "id": "score-03",
+    "dimension": "3. 鉴别诊断与定位",
+    "max": 30,
+    "coreRequirements": "肿瘤、感染、结石、BPH、肾小球、外伤/污染",
+    "excellentPerformance": "能根据血尿性质和伴随症状排序鉴别",
+    "deductionPoints": "只给单一诊断，无鉴别",
+    "scoringAdvice": "要求至少3个合理鉴别且排序"
+  },
+  {
+    "id": "score-04",
+    "dimension": "4. 检验开单",
+    "max": 30,
+    "coreRequirements": "尿沉渣、尿培养指征、CBC、肾功能、凝血、蛋白尿/免疫学按线索",
+    "excellentPerformance": "能根据感染/肾小球/出血严重度选择专项项目",
+    "deductionPoints": "不确认尿沉渣；漏肾功能/凝血",
+    "scoringAdvice": "按case_profile.package校验"
+  },
+  {
+    "id": "score-05",
+    "dimension": "5. 影像/内镜/功能检查",
+    "max": 30,
+    "coreRequirements": "超声、CTU、非增强CT、膀胱镜、mpMRI、肾活检按病因选择",
+    "excellentPerformance": "能说明为什么选CTU/膀胱镜/非增强CT",
+    "deductionPoints": "肉眼血尿高危不做膀胱镜；结石不用CT/超声定位",
+    "scoringAdvice": "按疾病路径给分"
+  },
+  {
+    "id": "score-06",
+    "dimension": "6. 会诊与急诊意识",
+    "max": 20,
+    "coreRequirements": "识别梗阻感染、血块尿潴留、外伤、AKI、蛋白尿管型等会诊触发",
+    "excellentPerformance": "能写出会诊要解决的问题",
+    "deductionPoints": "只写“请会诊”不写目的",
+    "scoringAdvice": "触发条件+科室+问题三联匹配"
+  },
+  {
+    "id": "score-07",
+    "dimension": "7. 治疗方案",
+    "max": 20,
+    "coreRequirements": "即时处理和确定性治疗分开：止血/引流/抗感染/手术/肿瘤治疗/肾内治疗",
+    "excellentPerformance": "能避免感染梗阻先碎石等错误",
+    "deductionPoints": "治疗笼统、不分急慢",
+    "scoringAdvice": "路径节点覆盖率"
+  },
+  {
+    "id": "score-08",
+    "dimension": "8. 随访与患者教育",
+    "max": 10,
+    "coreRequirements": "复查尿常规、肾功能、影像/膀胱镜、风险因素控制",
+    "excellentPerformance": "能说明血尿持续/复发的升级评估",
+    "deductionPoints": "治疗后不安排复查",
+    "scoringAdvice": "必须有复查时间或项目"
+  }
+]

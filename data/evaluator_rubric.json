@@ -1,0 +1,66 @@
+[
+  {
+    "dimension": "病史采集与血尿定位",
+    "max": 50,
+    "observation": "主诉、起病、可见性、时相、颜色、血块、疼痛、伴随症状",
+    "autoEvidence": "命中问诊槽位HX001-HX012",
+    "redFlags": "提交前不得显示漏项；未问时相/血块/感染/肾小球线索扣分",
+    "relatedAgent": "Patient+Evaluator"
+  },
+  {
+    "dimension": "危险因素和安全网",
+    "max": 40,
+    "observation": "既往史、用药史、个人史、肿瘤/感染/肾小球/假性血尿安全网",
+    "autoEvidence": "命中HX013-HX015",
+    "redFlags": "抗凝药不能直接解释血尿；女性需排除污染",
+    "relatedAgent": "Patient+Evaluator"
+  },
+  {
+    "dimension": "诊断与鉴别",
+    "max": 45,
+    "observation": "定位内外科来源，提出至少3个鉴别诊断",
+    "autoEvidence": "诊断文本关键词与病例路径匹配",
+    "redFlags": "只按单一病因处理扣分",
+    "relatedAgent": "Evaluator"
+  },
+  {
+    "dimension": "开单检查",
+    "max": 55,
+    "observation": "检验、检查、病理/操作、围术期评估合理",
+    "autoEvidence": "Order Agent命中规范医嘱",
+    "redFlags": "未开不得显示结果；缺尿沉渣/CTU/膀胱镜/肾活检等按场景扣分",
+    "relatedAgent": "Order+Evaluator"
+  },
+  {
+    "dimension": "会诊与MDT",
+    "max": 45,
+    "observation": "科室选择、触发时机、会诊目的聚焦",
+    "autoEvidence": "MDT触发规则与学生科室匹配",
+    "redFlags": "只勾科室不写目的不得提交",
+    "relatedAgent": "MDT+Evaluator"
+  },
+  {
+    "dimension": "治疗决策",
+    "max": 50,
+    "observation": "即时处理、确定性治疗、围术期准备",
+    "autoEvidence": "治疗文本与病例路径匹配",
+    "redFlags": "感染梗阻不得先碎石；肿瘤治疗需病理/分期",
+    "relatedAgent": "Evaluator"
+  },
+  {
+    "dimension": "随访与教育",
+    "max": 30,
+    "observation": "复查、随访、患者教育和生活方式",
+    "autoEvidence": "随访文本关键词",
+    "redFlags": "缺关键复查计划扣分",
+    "relatedAgent": "Evaluator"
+  },
+  {
+    "dimension": "效率与表达",
+    "max": 45,
+    "observation": "问诊逻辑、资源使用、表达清晰",
+    "autoEvidence": "完整训练记录",
+    "redFlags": "跳步或提前暴露标准答案扣分",
+    "relatedAgent": "Evaluator"
+  }
+]

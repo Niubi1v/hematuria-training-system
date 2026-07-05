@@ -1,0 +1,80 @@
+[
+  {
+    "scale": "OSCE-问诊",
+    "item": "是否完整问清血尿可见性、时相、颜色、血块、疼痛、伴随症状",
+    "scoring": "0-5",
+    "anchor": "0=完全缺失；3=问到部分；5=系统完整"
+  },
+  {
+    "scale": "OSCE-鉴别",
+    "item": "是否能区分内科性血尿与外科性血尿",
+    "scoring": "0-5",
+    "anchor": "需提出肿瘤、结石、感染、肾小球、假性血尿"
+  },
+  {
+    "scale": "OSCE-开单",
+    "item": "检查医嘱是否分层、必要且不过度",
+    "scoring": "0-5",
+    "anchor": "尿沉渣/肾功能/尿培养/CTU/膀胱镜/肾内检查等按病例匹配"
+  },
+  {
+    "scale": "OSCE-MDT",
+    "item": "是否在正确时机发起MDT并选择正确科室",
+    "scoring": "0-5",
+    "anchor": "必须说明会诊要解决的问题"
+  },
+  {
+    "scale": "OSCE-治疗",
+    "item": "即时处理和确定性治疗是否符合路径",
+    "scoring": "0-5",
+    "anchor": "急症先处理，肿瘤先病理分期，感染梗阻先引流"
+  },
+  {
+    "scale": "自我效能-1",
+    "item": "我有信心系统评估肉眼血尿患者",
+    "scoring": "Likert 1-5",
+    "anchor": "1=非常不同意；5=非常同意"
+  },
+  {
+    "scale": "自我效能-2",
+    "item": "我有信心区分肾小球性和非肾小球性血尿",
+    "scoring": "Likert 1-5",
+    "anchor": "前后测均填写"
+  },
+  {
+    "scale": "自我效能-3",
+    "item": "我有信心为血尿患者选择合适的辅助检查",
+    "scoring": "Likert 1-5",
+    "anchor": "前后测均填写"
+  },
+  {
+    "scale": "自我效能-4",
+    "item": "我有信心判断何时需要MDT会诊",
+    "scoring": "Likert 1-5",
+    "anchor": "前后测均填写"
+  },
+  {
+    "scale": "满意度-LLM组",
+    "item": "系统中的患者回答真实、符合临床情境",
+    "scoring": "Likert 1-5",
+    "anchor": "仅LLM组"
+  },
+  {
+    "scale": "满意度-LLM组",
+    "item": "系统能帮助我发现问诊和诊断中的漏项",
+    "scoring": "Likert 1-5",
+    "anchor": "仅LLM组"
+  },
+  {
+    "scale": "满意度-LLM组",
+    "item": "MDT专家智能体的反馈有助于形成诊疗方案",
+    "scoring": "Likert 1-5",
+    "anchor": "仅LLM组"
+  },
+  {
+    "scale": "满意度-LLM组",
+    "item": "我愿意继续使用该系统训练临床思维",
+    "scoring": "Likert 1-5",
+    "anchor": "仅LLM组"
+  }
+]

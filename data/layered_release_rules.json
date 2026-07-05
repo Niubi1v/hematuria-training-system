@@ -1,0 +1,58 @@
+[
+  {
+    "stage": "阶段0：病例进入",
+    "trigger": "系统显示主诉、年龄、性别、就诊场景",
+    "allowedInfo": "学生端病例标题、年龄、性别、主诉",
+    "forbiddenInfo": "最终诊断、危险因素、已有检查结果、治疗路径",
+    "agentOrTool": "Orchestrator创建session并初始化已问槽位"
+  },
+  {
+    "stage": "阶段1：自由问诊",
+    "trigger": "学生主动提问",
+    "allowedInfo": "仅返回匹配slot的患者回答；未匹配时让患者要求医生换个说法",
+    "forbiddenInfo": "已有尿检/影像、病理、教师提示",
+    "agentOrTool": "Patient Agent按case_id+slot_id检索"
+  },
+  {
+    "stage": "阶段2：查体",
+    "trigger": "学生输入具体体格检查",
+    "allowedInfo": "返回生命体征、肾区叩痛、腹部/DRE/水肿等被要求项目",
+    "forbiddenInfo": "未查项目、标准诊断",
+    "agentOrTool": "Exam/Patient Agent"
+  },
+  {
+    "stage": "阶段3：开单检查",
+    "trigger": "学生输入具体医嘱",
+    "allowedInfo": "返回该医嘱对应报告；危急值可提示但不替代推理",
+    "forbiddenInfo": "未开医嘱的报告、最终诊断",
+    "agentOrTool": "Order Result Agent按同义词匹配"
+  },
+  {
+    "stage": "阶段4：诊断与鉴别",
+    "trigger": "学生提交初诊和鉴别",
+    "allowedInfo": "Evaluator给依据充分度、漏项、不合理归因提示",
+    "forbiddenInfo": "完整治疗方案可暂不显示",
+    "agentOrTool": "Evaluator Agent"
+  },
+  {
+    "stage": "阶段5：MDT会诊",
+    "trigger": "学生点击发起MDT并选择科室/问题",
+    "allowedInfo": "对应专家Agent加入对话并质询/建议",
+    "forbiddenInfo": "无触发点时不强行出现专家答案",
+    "agentOrTool": "MDT Agents"
+  },
+  {
+    "stage": "阶段6：治疗决策",
+    "trigger": "学生提交即时处理和确定性治疗",
+    "allowedInfo": "显示标准处理、关键错误、下一步路径",
+    "forbiddenInfo": "考核分数细节可延后",
+    "agentOrTool": "Evaluator+Consultants"
+  },
+  {
+    "stage": "阶段7：随访反馈",
+    "trigger": "训练结束",
+    "allowedInfo": "总分、分项反馈、漏项清单、推荐复习路径",
+    "forbiddenInfo": "无",
+    "agentOrTool": "Evaluator生成报告"
+  }
+]

@@ -1,0 +1,58 @@
+[
+  {
+    "id": "chief_onset",
+    "label": "主诉和起病经过",
+    "max": 10,
+    "keyPoints": ["onset"],
+    "summaryKeywords": ["主诉", "起病", "出现", "诱因", "加重", "持续", "间断"]
+  },
+  {
+    "id": "hematuria_features",
+    "label": "血尿特征采集",
+    "max": 20,
+    "keyPoints": ["hematuriaType", "hematuriaPhase", "colorClots"],
+    "summaryKeywords": ["肉眼", "镜下", "全程", "终末", "初始", "颜色", "血块", "鲜红", "洗肉水", "浓茶"]
+  },
+  {
+    "id": "associated_symptoms",
+    "label": "伴随症状采集",
+    "max": 15,
+    "keyPoints": ["irritativeSymptoms", "flankPain", "fever", "voidingDifficulty"],
+    "summaryKeywords": ["尿频", "尿急", "尿痛", "腰痛", "肾绞痛", "发热", "排尿困难", "尿线", "尿潴留"]
+  },
+  {
+    "id": "risk_factors",
+    "label": "危险因素采集",
+    "max": 15,
+    "keyPoints": ["smoking", "occupation", "stoneHistory", "infectionHistory", "trauma", "anticoagulants"],
+    "summaryKeywords": ["吸烟", "职业", "染料", "橡胶", "结石", "感染", "外伤", "阿司匹林", "抗凝", "氯吡格雷"]
+  },
+  {
+    "id": "history_bundle",
+    "label": "既往史、个人史、家族史",
+    "max": 10,
+    "keyPoints": ["tumorFamilyHistory", "historyBundle"],
+    "summaryKeywords": ["既往", "个人史", "家族史", "过敏", "手术", "输血", "婚育", "肿瘤"]
+  },
+  {
+    "id": "summary_quality",
+    "label": "病史总结质量",
+    "max": 15,
+    "keyPoints": [],
+    "summaryKeywords": ["患者", "因", "伴", "否认", "考虑", "提示", "鉴别"]
+  },
+  {
+    "id": "differential",
+    "label": "鉴别诊断合理性",
+    "max": 10,
+    "keyPoints": [],
+    "summaryKeywords": ["膀胱癌", "输尿管癌", "肾盂癌", "结石", "感染", "前列腺", "肾小球", "IgA", "肿瘤"]
+  },
+  {
+    "id": "communication_logic",
+    "label": "问诊逻辑和表达",
+    "max": 5,
+    "keyPoints": [],
+    "summaryKeywords": ["首先", "其次", "同时", "因此", "建议", "进一步"]
+  }
+]

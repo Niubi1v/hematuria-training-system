@@ -1,0 +1,2882 @@
+[
+  {
+    "caseId": "P001",
+    "orderId": "LAB_URINE_ROUTINE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液基础",
+    "synonyms": [
+      "尿常规+尿沉渣镜检"
+    ],
+    "result": "红细胞5562个/ul",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P001",
+    "orderId": "LAB_URINE_CULTURE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液感染",
+    "synonyms": [
+      "中段尿培养+药敏"
+    ],
+    "result": "可作为排除感染的辅助项目；本例以血尿病因排查为主。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P001",
+    "orderId": "LAB_URINE_CYTOLOGY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液肿瘤",
+    "synonyms": [
+      "尿脱落细胞学"
+    ],
+    "result": "尿脱落细胞学按病例结果：1、入院糖化血红蛋白8.0，梅毒抗体阳性\n2、胸部CT：左上肺结节大小约1cm，不除外AIS\n3、心脏CT平扫+冠脉CTA：LAD狭窄30%， RCA狭窄60-70%，LCX狭窄40-50%。心脏彩超：EF65%\n4、盆腔MR提示：左侧膀胱左侧壁多发占位性病变，宽基底，最大约3*3cm，侵犯膀胱肌层，盆腔淋巴结未见明显肿大。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P001",
+    "orderId": "LAB_RBC_MORPH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿红细胞形态/相差显微镜"
+    ],
+    "result": "红细胞形态多提示非肾小球性来源或未见典型畸形红细胞；需结合尿蛋白和管型。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P001",
+    "orderId": "LAB_UPCR",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿蛋白/肌酐比或24小时尿蛋白"
+    ],
+    "result": "无明显蛋白尿证据或作为排除肾小球性血尿的项目。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P001",
+    "orderId": "LAB_CBC",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "血常规"
+    ],
+    "result": "用于评估贫血、感染和术前状态；阳性参考：1、入院糖化血红蛋白8.0，梅毒抗体阳性\n2、胸部CT：左上肺结节大小约1cm，不除外AIS\n3、心脏CT平扫+冠脉CTA：LAD狭窄30%， RCA狭窄60-70%，LCX狭窄40-50%。心脏彩超：EF65%\n4、盆腔MR提示：左侧膀胱左侧壁多发占位性病变，宽基底，最大约3*3cm，侵犯膀胱肌层，盆腔淋巴结未见明显肿大。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P001",
+    "orderId": "LAB_RENAL",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "肾功能/eGFR+电解质"
+    ],
+    "result": "用于评估肌酐/eGFR、电解质和梗阻/肾炎影响；阳性参考：1、入院糖化血红蛋白8.0，梅毒抗体阳性\n2、胸部CT：左上肺结节大小约1cm，不除外AIS\n3、心脏CT平扫+冠脉CTA：LAD狭窄30%， RCA狭窄60-70%，LCX狭窄40-50%。心脏彩超：EF65%\n4、盆腔MR提示：左侧膀胱左侧壁多发占位性病变，宽基底，最大约3*3cm，侵犯膀胱肌层，盆腔淋巴结未见明显肿大。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P001",
+    "orderId": "LAB_CRP_PCT",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/炎症感染",
+    "synonyms": [
+      "CRP/PCT"
+    ],
+    "result": "本病例无系统性感染证据，炎症指标通常不作为核心阳性结果。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P001",
+    "orderId": "LAB_COAG",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/凝血/输血",
+    "synonyms": [
+      "凝血功能"
+    ],
+    "result": "用于术前评估和抗凝/抗血小板管理，尤其华法林、阿司匹林、氯吡格雷患者。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P001",
+    "orderId": "IMG_US",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/超声",
+    "synonyms": [
+      "泌尿系超声"
+    ],
+    "result": "泌尿系CTU提示：膀胱左侧壁占位性病变，\n泌尿系彩超提示：膀胱左侧壁多发占位性病变，宽基底，最大约3*3cm",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P001",
+    "orderId": "IMG_CTU",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "CTU"
+    ],
+    "result": "心肺功能评估：心电图、胸部CT平扫、心脏CT平扫+冠脉CTA，心脏彩超。评估膀胱肿瘤肌层浸润程度：盆腔MR平扫+增强+DWI。评估肿瘤远处：全身核素骨扫描。\n阳性结果：1、入院糖化血红蛋白8.0，梅毒抗体阳性\n2、胸部CT：左上肺结节大小约1cm，不除外AIS\n3、心脏CT平扫+冠脉CTA：LAD狭窄30%， RCA狭窄60-70%，LCX狭窄40-50%。心脏彩超：EF65%\n4、盆腔MR提示：左侧膀胱左侧壁多发占位性病变，宽基底，最大约3*3cm，侵犯膀胱肌层，盆腔淋巴结未见明显肿大。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P001",
+    "orderId": "IMG_CT_KUB",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "泌尿系CT平扫/CT KUB"
+    ],
+    "result": "CT KUB用于结石筛查；本例是否需要取决于疼痛/结石线索。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P001",
+    "orderId": "IMG_MRI",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/MRI",
+    "synonyms": [
+      "盆腔MRI/MRU/腹部MRI"
+    ],
+    "result": "1、入院糖化血红蛋白8.0，梅毒抗体阳性\n2、胸部CT：左上肺结节大小约1cm，不除外AIS\n3、心脏CT平扫+冠脉CTA：LAD狭窄30%， RCA狭窄60-70%，LCX狭窄40-50%。心脏彩超：EF65%\n4、盆腔MR提示：左侧膀胱左侧壁多发占位性病变，宽基底，最大约3*3cm，侵犯膀胱肌层，盆腔淋巴结未见明显肿大。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P001",
+    "orderId": "PROC_CYSTOSCOPY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/内镜",
+    "synonyms": [
+      "膀胱镜"
+    ],
+    "result": "膀胱镜用于观察膀胱黏膜、肿物位置和输尿管口情况；结果需结合TURBT/活检病理。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P001",
+    "orderId": "PROC_TURBT_PATH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/病理",
+    "synonyms": [
+      "TURBT或活检病理"
+    ],
+    "result": "病理结果根据病例路径释放：膀胱活检提示：高级别尿路上皮癌。肠道准备：提前3天行少渣饮食，口服乳果糖30ml,tid导泄。控制血糖：空腹血糖（6-8mmol/l），三餐后2h（8-10mmol/l）。造口门诊会诊：指导腹壁造口定位 。手术当天改用钙离子拮抗剂控制血压。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P001",
+    "orderId": "PROC_RENAL_BIOPSY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/肾活检",
+    "synonyms": [
+      "肾活检"
+    ],
+    "result": "非肾小球性血尿通常不首选肾活检。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P002",
+    "orderId": "LAB_URINE_ROUTINE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液基础",
+    "synonyms": [
+      "尿常规+尿沉渣镜检"
+    ],
+    "result": "红细胞4768个/ul，尿白细胞45个/ul",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P002",
+    "orderId": "LAB_URINE_CULTURE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液感染",
+    "synonyms": [
+      "中段尿培养+药敏"
+    ],
+    "result": "可作为排除感染的辅助项目；本例以血尿病因排查为主。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P002",
+    "orderId": "LAB_URINE_CYTOLOGY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液肿瘤",
+    "synonyms": [
+      "尿脱落细胞学"
+    ],
+    "result": "尿脱落细胞学按病例结果：1、入院甘油三酯、胆固醇及低密度脂蛋白明显升高\n2、心电图：房颤\n3、心脏CT平扫+冠脉CTA：LAD狭窄30%， RCA狭窄40%，LCX狭窄40-50%。心脏彩超：EF45%，瓣膜可见反流\n4、双肾CTU提示：左肾积水，左侧输尿管中段占位性病变，最大约1*2cm。\n5、尿脱落细胞学：非典型尿路上皮细胞",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P002",
+    "orderId": "LAB_RBC_MORPH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿红细胞形态/相差显微镜"
+    ],
+    "result": "红细胞形态多提示非肾小球性来源或未见典型畸形红细胞；需结合尿蛋白和管型。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P002",
+    "orderId": "LAB_UPCR",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿蛋白/肌酐比或24小时尿蛋白"
+    ],
+    "result": "无明显蛋白尿证据或作为排除肾小球性血尿的项目。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P002",
+    "orderId": "LAB_CBC",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "血常规"
+    ],
+    "result": "用于评估贫血、感染和术前状态；阳性参考：1、入院甘油三酯、胆固醇及低密度脂蛋白明显升高\n2、心电图：房颤\n3、心脏CT平扫+冠脉CTA：LAD狭窄30%， RCA狭窄40%，LCX狭窄40-50%。心脏彩超：EF45%，瓣膜可见反流\n4、双肾CTU提示：左肾积水，左侧输尿管中段占位性病变，最大约1*2cm。\n5、尿脱落细胞学：非典型尿路上皮细胞",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P002",
+    "orderId": "LAB_RENAL",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "肾功能/eGFR+电解质"
+    ],
+    "result": "用于评估肌酐/eGFR、电解质和梗阻/肾炎影响；阳性参考：1、入院甘油三酯、胆固醇及低密度脂蛋白明显升高\n2、心电图：房颤\n3、心脏CT平扫+冠脉CTA：LAD狭窄30%， RCA狭窄40%，LCX狭窄40-50%。心脏彩超：EF45%，瓣膜可见反流\n4、双肾CTU提示：左肾积水，左侧输尿管中段占位性病变，最大约1*2cm。\n5、尿脱落细胞学：非典型尿路上皮细胞",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P002",
+    "orderId": "LAB_CRP_PCT",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/炎症感染",
+    "synonyms": [
+      "CRP/PCT"
+    ],
+    "result": "本病例无系统性感染证据，炎症指标通常不作为核心阳性结果。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P002",
+    "orderId": "LAB_COAG",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/凝血/输血",
+    "synonyms": [
+      "凝血功能"
+    ],
+    "result": "用于术前评估和抗凝/抗血小板管理，尤其华法林、阿司匹林、氯吡格雷患者。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P002",
+    "orderId": "IMG_US",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/超声",
+    "synonyms": [
+      "泌尿系超声"
+    ],
+    "result": "泌尿系彩超提示：左肾输尿管积水扩张，不除外输尿管中段梗阻可能。\n双肾CT提示：左侧输尿管中段软组织灶，考虑恶性肿瘤可能性大。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P002",
+    "orderId": "IMG_CTU",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "CTU"
+    ],
+    "result": "心肺功能评估：心电图、胸部CT平扫、心脏CT平扫+冠脉CTA，心脏彩超。脑评估：头部MR平扫+DWI。评估输尿管肿物情况：完善双肾CTU。评估分侧肾功能：核素肾图。评估肿瘤远处：PET-CT。\n阳性结果：1、入院甘油三酯、胆固醇及低密度脂蛋白明显升高\n2、心电图：房颤\n3、心脏CT平扫+冠脉CTA：LAD狭窄30%， RCA狭窄40%，LCX狭窄40-50%。心脏彩超：EF45%，瓣膜可见反流\n4、双肾CTU提示：左肾积水，左侧输尿管中段占位性病变，最大约1*2cm。\n5、尿脱落细胞学：非典型尿路上皮细胞",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P002",
+    "orderId": "IMG_CT_KUB",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "泌尿系CT平扫/CT KUB"
+    ],
+    "result": "CT KUB用于结石筛查；本例是否需要取决于疼痛/结石线索。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P002",
+    "orderId": "IMG_MRI",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/MRI",
+    "synonyms": [
+      "盆腔MRI/MRU/腹部MRI"
+    ],
+    "result": "1、入院甘油三酯、胆固醇及低密度脂蛋白明显升高\n2、心电图：房颤\n3、心脏CT平扫+冠脉CTA：LAD狭窄30%， RCA狭窄40%，LCX狭窄40-50%。心脏彩超：EF45%，瓣膜可见反流\n4、双肾CTU提示：左肾积水，左侧输尿管中段占位性病变，最大约1*2cm。\n5、尿脱落细胞学：非典型尿路上皮细胞",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P002",
+    "orderId": "PROC_CYSTOSCOPY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/内镜",
+    "synonyms": [
+      "膀胱镜"
+    ],
+    "result": "膀胱镜用于观察膀胱黏膜、肿物位置和输尿管口情况；结果需结合TURBT/活检病理。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P002",
+    "orderId": "PROC_TURBT_PATH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/病理",
+    "synonyms": [
+      "TURBT或活检病理"
+    ],
+    "result": "病理结果根据病例路径释放：肠道准备：口服乳果糖15ml,tid导泄，软化大便，保持大便通畅。手术备血 。联系外科ICU会诊留床，手术当天停用抗凝药。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P002",
+    "orderId": "PROC_RENAL_BIOPSY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/肾活检",
+    "synonyms": [
+      "肾活检"
+    ],
+    "result": "非肾小球性血尿通常不首选肾活检。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P003",
+    "orderId": "LAB_URINE_ROUTINE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液基础",
+    "synonyms": [
+      "尿常规+尿沉渣镜检"
+    ],
+    "result": "红细胞4448个/ul，尿白细胞3个/ul",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P003",
+    "orderId": "LAB_URINE_CULTURE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液感染",
+    "synonyms": [
+      "中段尿培养+药敏"
+    ],
+    "result": "可作为排除感染的辅助项目；本例以血尿病因排查为主。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P003",
+    "orderId": "LAB_URINE_CYTOLOGY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液肿瘤",
+    "synonyms": [
+      "尿脱落细胞学"
+    ],
+    "result": "尿脱落细胞学按病例结果：1、入院血气分析提示：氧分压85\n2、胸部CT：双肺多发肺大泡。\n3、心脏CT平扫+冠脉CTA（危急值）：LAD狭窄＞75%， RCA狭窄40%，LCX狭窄40-50%，建议行CAG。心脏彩超：EF55%\n4、双肾CTU提示：右肾盂内占位，考虑肾盂癌可能性大。\n5、尿脱落细胞学：非典型尿路上皮细胞\n6、肺功能：中重度肺通气功能障碍",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P003",
+    "orderId": "LAB_RBC_MORPH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿红细胞形态/相差显微镜"
+    ],
+    "result": "红细胞形态多提示非肾小球性来源或未见典型畸形红细胞；需结合尿蛋白和管型。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P003",
+    "orderId": "LAB_UPCR",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿蛋白/肌酐比或24小时尿蛋白"
+    ],
+    "result": "无明显蛋白尿证据或作为排除肾小球性血尿的项目。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P003",
+    "orderId": "LAB_CBC",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "血常规"
+    ],
+    "result": "用于评估贫血、感染和术前状态；阳性参考：1、入院血气分析提示：氧分压85\n2、胸部CT：双肺多发肺大泡。\n3、心脏CT平扫+冠脉CTA（危急值）：LAD狭窄＞75%， RCA狭窄40%，LCX狭窄40-50%，建议行CAG。心脏彩超：EF55%\n4、双肾CTU提示：右肾盂内占位，考虑肾盂癌可能性大。\n5、尿脱落细胞学：非典型尿路上皮细胞\n6、肺功能：中重度肺通气功能障碍",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P003",
+    "orderId": "LAB_RENAL",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "肾功能/eGFR+电解质"
+    ],
+    "result": "用于评估肌酐/eGFR、电解质和梗阻/肾炎影响；阳性参考：1、入院血气分析提示：氧分压85\n2、胸部CT：双肺多发肺大泡。\n3、心脏CT平扫+冠脉CTA（危急值）：LAD狭窄＞75%， RCA狭窄40%，LCX狭窄40-50%，建议行CAG。心脏彩超：EF55%\n4、双肾CTU提示：右肾盂内占位，考虑肾盂癌可能性大。\n5、尿脱落细胞学：非典型尿路上皮细胞\n6、肺功能：中重度肺通气功能障碍",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P003",
+    "orderId": "LAB_CRP_PCT",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/炎症感染",
+    "synonyms": [
+      "CRP/PCT"
+    ],
+    "result": "本病例无系统性感染证据，炎症指标通常不作为核心阳性结果。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P003",
+    "orderId": "LAB_COAG",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/凝血/输血",
+    "synonyms": [
+      "凝血功能"
+    ],
+    "result": "用于术前评估和抗凝/抗血小板管理，尤其华法林、阿司匹林、氯吡格雷患者。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P003",
+    "orderId": "IMG_US",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/超声",
+    "synonyms": [
+      "泌尿系超声"
+    ],
+    "result": "泌尿系CT提示：右肾盂内软组织病变，大小约2*3cm",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P003",
+    "orderId": "IMG_CTU",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "CTU"
+    ],
+    "result": "心肺功能评估：心电图、胸部CT平扫、心脏CT平扫+冠脉CTA，心脏彩超、肺功能。评估右肾盂肿物情况：完善双肾CTU。评估分侧肾功能：核素肾图。评估肿瘤远处：PET-CT。\n阳性结果：1、入院血气分析提示：氧分压85\n2、胸部CT：双肺多发肺大泡。\n3、心脏CT平扫+冠脉CTA（危急值）：LAD狭窄＞75%， RCA狭窄40%，LCX狭窄40-50%，建议行CAG。心脏彩超：EF55%\n4、双肾CTU提示：右肾盂内占位，考虑肾盂癌可能性大。\n5、尿脱落细胞学：非典型尿路上皮细胞\n6、肺功能：中重度肺通气功能障碍",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P003",
+    "orderId": "IMG_CT_KUB",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "泌尿系CT平扫/CT KUB"
+    ],
+    "result": "CT KUB用于结石筛查；本例是否需要取决于疼痛/结石线索。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P003",
+    "orderId": "IMG_MRI",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/MRI",
+    "synonyms": [
+      "盆腔MRI/MRU/腹部MRI"
+    ],
+    "result": "1、入院血气分析提示：氧分压85\n2、胸部CT：双肺多发肺大泡。\n3、心脏CT平扫+冠脉CTA（危急值）：LAD狭窄＞75%， RCA狭窄40%，LCX狭窄40-50%，建议行CAG。心脏彩超：EF55%\n4、双肾CTU提示：右肾盂内占位，考虑肾盂癌可能性大。\n5、尿脱落细胞学：非典型尿路上皮细胞\n6、肺功能：中重度肺通气功能障碍",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P003",
+    "orderId": "PROC_CYSTOSCOPY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/内镜",
+    "synonyms": [
+      "膀胱镜"
+    ],
+    "result": "膀胱镜用于观察膀胱黏膜、肿物位置和输尿管口情况；结果需结合TURBT/活检病理。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P003",
+    "orderId": "PROC_TURBT_PATH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/病理",
+    "synonyms": [
+      "TURBT或活检病理"
+    ],
+    "result": "病理结果根据病例路径释放：肠道准备：口服乳果糖15ml,tid导泄，软化大便，保持大便通畅。手术备血 。联系外科ICU会诊留床。使用低分子肝素抗凝，口服阿托伐他汀稳定心脏斑块。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P003",
+    "orderId": "PROC_RENAL_BIOPSY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/肾活检",
+    "synonyms": [
+      "肾活检"
+    ],
+    "result": "非肾小球性血尿通常不首选肾活检。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P004",
+    "orderId": "LAB_URINE_ROUTINE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液基础",
+    "synonyms": [
+      "尿常规+尿沉渣镜检"
+    ],
+    "result": "红细胞4448个/ul，尿白细胞3个/ul",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P004",
+    "orderId": "LAB_URINE_CULTURE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液感染",
+    "synonyms": [
+      "中段尿培养+药敏"
+    ],
+    "result": "可作为排除感染的辅助项目；本例以血尿病因排查为主。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P004",
+    "orderId": "LAB_URINE_CYTOLOGY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液肿瘤",
+    "synonyms": [
+      "尿脱落细胞学"
+    ],
+    "result": "尿脱落细胞学按病例结果：1、入院糖化血红蛋白7.6\n2、胸部CT平扫+增强：双肺多发炎性结节。左侧第二肋骨骨质破坏并软组织形成，考虑转移瘤\n3、核素全身骨扫描：左侧第2肋及胸2椎体横突骨质破坏，考虑转移瘤\n4、双肾CTU提示：左肾巨大占位，考虑透明细胞癌可能性大。\n5、下腹MR增强：左肾占位，恶性肿瘤考虑透明细胞癌，腔静脉癌栓形成。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P004",
+    "orderId": "LAB_RBC_MORPH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿红细胞形态/相差显微镜"
+    ],
+    "result": "红细胞形态多提示非肾小球性来源或未见典型畸形红细胞；需结合尿蛋白和管型。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P004",
+    "orderId": "LAB_UPCR",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿蛋白/肌酐比或24小时尿蛋白"
+    ],
+    "result": "无明显蛋白尿证据或作为排除肾小球性血尿的项目。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P004",
+    "orderId": "LAB_CBC",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "血常规"
+    ],
+    "result": "用于评估贫血、感染和术前状态；阳性参考：1、入院糖化血红蛋白7.6\n2、胸部CT平扫+增强：双肺多发炎性结节。左侧第二肋骨骨质破坏并软组织形成，考虑转移瘤\n3、核素全身骨扫描：左侧第2肋及胸2椎体横突骨质破坏，考虑转移瘤\n4、双肾CTU提示：左肾巨大占位，考虑透明细胞癌可能性大。\n5、下腹MR增强：左肾占位，恶性肿瘤考虑透明细胞癌，腔静脉癌栓形成。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P004",
+    "orderId": "LAB_RENAL",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "肾功能/eGFR+电解质"
+    ],
+    "result": "用于评估肌酐/eGFR、电解质和梗阻/肾炎影响；阳性参考：1、入院糖化血红蛋白7.6\n2、胸部CT平扫+增强：双肺多发炎性结节。左侧第二肋骨骨质破坏并软组织形成，考虑转移瘤\n3、核素全身骨扫描：左侧第2肋及胸2椎体横突骨质破坏，考虑转移瘤\n4、双肾CTU提示：左肾巨大占位，考虑透明细胞癌可能性大。\n5、下腹MR增强：左肾占位，恶性肿瘤考虑透明细胞癌，腔静脉癌栓形成。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P004",
+    "orderId": "LAB_CRP_PCT",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/炎症感染",
+    "synonyms": [
+      "CRP/PCT"
+    ],
+    "result": "本病例无系统性感染证据，炎症指标通常不作为核心阳性结果。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P004",
+    "orderId": "LAB_COAG",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/凝血/输血",
+    "synonyms": [
+      "凝血功能"
+    ],
+    "result": "用于术前评估和抗凝/抗血小板管理，尤其华法林、阿司匹林、氯吡格雷患者。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P004",
+    "orderId": "IMG_US",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/超声",
+    "synonyms": [
+      "泌尿系超声"
+    ],
+    "result": "泌尿系CT提示：右肾巨大占位，腹膜后多发淋巴结肿大，左侧第二肋骨骨质破坏并软组织形成",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P004",
+    "orderId": "IMG_CTU",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "CTU"
+    ],
+    "result": "心肺功能评估：心电图、胸部CT平扫+增强、心脏CT平扫+冠脉CTA，心脏彩超。评估右肾肿物情况：完善双肾CTU。评估癌栓情况：下腹MR增强，彩超腹部大血管。评估分侧肾功能：核素肾图。评估评估肿瘤远处：核素全身骨扫描。\n阳性结果：1、入院糖化血红蛋白7.6\n2、胸部CT平扫+增强：双肺多发炎性结节。左侧第二肋骨骨质破坏并软组织形成，考虑转移瘤\n3、核素全身骨扫描：左侧第2肋及胸2椎体横突骨质破坏，考虑转移瘤\n4、双肾CTU提示：左肾巨大占位，考虑透明细胞癌可能性大。\n5、下腹MR增强：左肾占位，恶性肿瘤考虑透明细胞癌，腔静脉癌栓形成。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P004",
+    "orderId": "IMG_CT_KUB",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "泌尿系CT平扫/CT KUB"
+    ],
+    "result": "CT KUB用于结石筛查；本例是否需要取决于疼痛/结石线索。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P004",
+    "orderId": "IMG_MRI",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/MRI",
+    "synonyms": [
+      "盆腔MRI/MRU/腹部MRI"
+    ],
+    "result": "1、入院糖化血红蛋白7.6\n2、胸部CT平扫+增强：双肺多发炎性结节。左侧第二肋骨骨质破坏并软组织形成，考虑转移瘤\n3、核素全身骨扫描：左侧第2肋及胸2椎体横突骨质破坏，考虑转移瘤\n4、双肾CTU提示：左肾巨大占位，考虑透明细胞癌可能性大。\n5、下腹MR增强：左肾占位，恶性肿瘤考虑透明细胞癌，腔静脉癌栓形成。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P004",
+    "orderId": "PROC_CYSTOSCOPY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/内镜",
+    "synonyms": [
+      "膀胱镜"
+    ],
+    "result": "膀胱镜用于观察膀胱黏膜、肿物位置和输尿管口情况；结果需结合TURBT/活检病理。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P004",
+    "orderId": "PROC_TURBT_PATH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/病理",
+    "synonyms": [
+      "TURBT或活检病理"
+    ],
+    "result": "病理结果根据病例路径释放：肠道准备：口服乳果糖15ml,tid导泄，软化大便，保持大便通畅。手术备血 。使用低分子肝素抗凝，口服阿托伐他汀稳定心脏斑块。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P004",
+    "orderId": "PROC_RENAL_BIOPSY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/肾活检",
+    "synonyms": [
+      "肾活检"
+    ],
+    "result": "非肾小球性血尿通常不首选肾活检。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P005",
+    "orderId": "LAB_URINE_ROUTINE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液基础",
+    "synonyms": [
+      "尿常规+尿沉渣镜检"
+    ],
+    "result": "红细胞328个/ul，尿白细胞88个/ul",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P005",
+    "orderId": "LAB_URINE_CULTURE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液感染",
+    "synonyms": [
+      "中段尿培养+药敏"
+    ],
+    "result": "可作为排除感染的辅助项目；本例以血尿病因排查为主。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P005",
+    "orderId": "LAB_URINE_CYTOLOGY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液肿瘤",
+    "synonyms": [
+      "尿脱落细胞学"
+    ],
+    "result": "尿脱落细胞学按病例结果：1、TPSA:32ng/ml, fPSA:1.2ng/m\n2、心脏CT平扫+冠脉CTA（危急值）：LAD狭窄＞70%， RCA狭窄30%，LCX狭窄40-50%，支架位置正常通畅。心脏彩超：EF55%\n3、盆腔MR提示：前列腺外周带及中央带结节，PI-RAD 5分，考虑前列腺癌，左侧精囊侵犯可能\n4、尿流动力学：膀胱出口重度梗阻，膀胱收缩力减弱。\n5、血糖控制不佳，餐后血糖波动13-16之间",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P005",
+    "orderId": "LAB_RBC_MORPH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿红细胞形态/相差显微镜"
+    ],
+    "result": "红细胞形态多提示非肾小球性来源或未见典型畸形红细胞；需结合尿蛋白和管型。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P005",
+    "orderId": "LAB_UPCR",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿蛋白/肌酐比或24小时尿蛋白"
+    ],
+    "result": "无明显蛋白尿证据或作为排除肾小球性血尿的项目。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P005",
+    "orderId": "LAB_CBC",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "血常规"
+    ],
+    "result": "用于评估贫血、感染和术前状态；阳性参考：1、TPSA:32ng/ml, fPSA:1.2ng/m\n2、心脏CT平扫+冠脉CTA（危急值）：LAD狭窄＞70%， RCA狭窄30%，LCX狭窄40-50%，支架位置正常通畅。心脏彩超：EF55%\n3、盆腔MR提示：前列腺外周带及中央带结节，PI-RAD 5分，考虑前列腺癌，左侧精囊侵犯可能\n4、尿流动力学：膀胱出口重度梗阻，膀胱收缩力减弱。\n5、血糖控制不佳，餐后血糖波动13-16之间",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P005",
+    "orderId": "LAB_RENAL",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "肾功能/eGFR+电解质"
+    ],
+    "result": "用于评估肌酐/eGFR、电解质和梗阻/肾炎影响；阳性参考：1、TPSA:32ng/ml, fPSA:1.2ng/m\n2、心脏CT平扫+冠脉CTA（危急值）：LAD狭窄＞70%， RCA狭窄30%，LCX狭窄40-50%，支架位置正常通畅。心脏彩超：EF55%\n3、盆腔MR提示：前列腺外周带及中央带结节，PI-RAD 5分，考虑前列腺癌，左侧精囊侵犯可能\n4、尿流动力学：膀胱出口重度梗阻，膀胱收缩力减弱。\n5、血糖控制不佳，餐后血糖波动13-16之间",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P005",
+    "orderId": "LAB_CRP_PCT",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/炎症感染",
+    "synonyms": [
+      "CRP/PCT"
+    ],
+    "result": "本病例无系统性感染证据，炎症指标通常不作为核心阳性结果。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P005",
+    "orderId": "LAB_COAG",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/凝血/输血",
+    "synonyms": [
+      "凝血功能"
+    ],
+    "result": "用于术前评估和抗凝/抗血小板管理，尤其华法林、阿司匹林、氯吡格雷患者。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P005",
+    "orderId": "IMG_US",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/超声",
+    "synonyms": [
+      "泌尿系超声"
+    ],
+    "result": "泌尿系彩超提示：膀胱小梁小房形成，前列腺增大，直径56*65*47，内部回声不均匀。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P005",
+    "orderId": "IMG_CTU",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "CTU"
+    ],
+    "result": "若非高危血尿，CTU按需；本例优先根据临床路径选择。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P005",
+    "orderId": "IMG_CT_KUB",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "泌尿系CT平扫/CT KUB"
+    ],
+    "result": "CT KUB用于结石筛查；本例是否需要取决于疼痛/结石线索。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P005",
+    "orderId": "IMG_MRI",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/MRI",
+    "synonyms": [
+      "盆腔MRI/MRU/腹部MRI"
+    ],
+    "result": "1、TPSA:32ng/ml, fPSA:1.2ng/m\n2、心脏CT平扫+冠脉CTA（危急值）：LAD狭窄＞70%， RCA狭窄30%，LCX狭窄40-50%，支架位置正常通畅。心脏彩超：EF55%\n3、盆腔MR提示：前列腺外周带及中央带结节，PI-RAD 5分，考虑前列腺癌，左侧精囊侵犯可能\n4、尿流动力学：膀胱出口重度梗阻，膀胱收缩力减弱。\n5、血糖控制不佳，餐后血糖波动13-16之间",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P005",
+    "orderId": "PROC_CYSTOSCOPY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/内镜",
+    "synonyms": [
+      "膀胱镜"
+    ],
+    "result": "膀胱镜按血尿风险分层选择；肾小球性血尿通常不是首选。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P005",
+    "orderId": "PROC_TURBT_PATH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/病理",
+    "synonyms": [
+      "TURBT或活检病理"
+    ],
+    "result": "本病例暂无TURBT/肿瘤活检适应证，除非后续发现占位。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P005",
+    "orderId": "PROC_RENAL_BIOPSY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/肾活检",
+    "synonyms": [
+      "肾活检"
+    ],
+    "result": "非肾小球性血尿通常不首选肾活检。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P006",
+    "orderId": "LAB_URINE_ROUTINE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液基础",
+    "synonyms": [
+      "尿常规+尿沉渣镜检"
+    ],
+    "result": "红细胞48个/ul，尿白细胞58个/ul",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P006",
+    "orderId": "LAB_URINE_CULTURE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液感染",
+    "synonyms": [
+      "中段尿培养+药敏"
+    ],
+    "result": "尿培养用于明确病原菌和药敏；本例可结合尿白细胞升高，若发热/梗阻需尽快送检。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P006",
+    "orderId": "LAB_URINE_CYTOLOGY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液肿瘤",
+    "synonyms": [
+      "尿脱落细胞学"
+    ],
+    "result": "本病例非常规首要项目，若持续肉眼血尿或高危因素可作为补充。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P006",
+    "orderId": "LAB_RBC_MORPH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿红细胞形态/相差显微镜"
+    ],
+    "result": "红细胞形态多提示非肾小球性来源或未见典型畸形红细胞；需结合尿蛋白和管型。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P006",
+    "orderId": "LAB_UPCR",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿蛋白/肌酐比或24小时尿蛋白"
+    ],
+    "result": "无明显蛋白尿证据或作为排除肾小球性血尿的项目。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P006",
+    "orderId": "LAB_CBC",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "血常规"
+    ],
+    "result": "用于评估贫血、感染和术前状态；阳性参考：复查尿沉渣：RBC 48/μl、WBC 58/μl；尿亚硝酸盐可阴性或阳性；尿培养可提示大肠埃希菌等常见病原菌；无发热、肾区叩痛阴性。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P006",
+    "orderId": "LAB_RENAL",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "肾功能/eGFR+电解质"
+    ],
+    "result": "用于评估肌酐/eGFR、电解质和梗阻/肾炎影响；阳性参考：复查尿沉渣：RBC 48/μl、WBC 58/μl；尿亚硝酸盐可阴性或阳性；尿培养可提示大肠埃希菌等常见病原菌；无发热、肾区叩痛阴性。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P006",
+    "orderId": "LAB_CRP_PCT",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/炎症感染",
+    "synonyms": [
+      "CRP/PCT"
+    ],
+    "result": "炎症指标用于判断感染严重程度；若升高需警惕复杂感染或感染性梗阻。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P006",
+    "orderId": "LAB_COAG",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/凝血/输血",
+    "synonyms": [
+      "凝血功能"
+    ],
+    "result": "用于术前评估和抗凝/抗血小板管理，尤其华法林、阿司匹林、氯吡格雷患者。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P006",
+    "orderId": "IMG_US",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/超声",
+    "synonyms": [
+      "泌尿系超声"
+    ],
+    "result": "泌尿系彩超未见异常",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P006",
+    "orderId": "IMG_CTU",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "CTU"
+    ],
+    "result": "若非高危血尿，CTU按需；本例优先根据临床路径选择。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P006",
+    "orderId": "IMG_CT_KUB",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "泌尿系CT平扫/CT KUB"
+    ],
+    "result": "CT KUB用于结石筛查；本例是否需要取决于疼痛/结石线索。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P006",
+    "orderId": "IMG_MRI",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/MRI",
+    "synonyms": [
+      "盆腔MRI/MRU/腹部MRI"
+    ],
+    "result": "复查尿沉渣：RBC 48/μl、WBC 58/μl；尿亚硝酸盐可阴性或阳性；尿培养可提示大肠埃希菌等常见病原菌；无发热、肾区叩痛阴性。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P006",
+    "orderId": "PROC_CYSTOSCOPY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/内镜",
+    "synonyms": [
+      "膀胱镜"
+    ],
+    "result": "膀胱镜按血尿风险分层选择；肾小球性血尿通常不是首选。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P006",
+    "orderId": "PROC_TURBT_PATH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/病理",
+    "synonyms": [
+      "TURBT或活检病理"
+    ],
+    "result": "本病例暂无TURBT/肿瘤活检适应证，除非后续发现占位。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P006",
+    "orderId": "PROC_RENAL_BIOPSY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/肾活检",
+    "synonyms": [
+      "肾活检"
+    ],
+    "result": "非肾小球性血尿通常不首选肾活检。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P007",
+    "orderId": "LAB_URINE_ROUTINE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液基础",
+    "synonyms": [
+      "尿常规+尿沉渣镜检"
+    ],
+    "result": "红细胞78个/ul，尿白细胞88个/ul，TPSA:7ng/ml, fPSA:0.5ng/m",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P007",
+    "orderId": "LAB_URINE_CULTURE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液感染",
+    "synonyms": [
+      "中段尿培养+药敏"
+    ],
+    "result": "可作为排除感染的辅助项目；本例以血尿病因排查为主。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P007",
+    "orderId": "LAB_URINE_CYTOLOGY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液肿瘤",
+    "synonyms": [
+      "尿脱落细胞学"
+    ],
+    "result": "本病例非常规首要项目，若持续肉眼血尿或高危因素可作为补充。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P007",
+    "orderId": "LAB_RBC_MORPH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿红细胞形态/相差显微镜"
+    ],
+    "result": "红细胞形态多提示非肾小球性来源或未见典型畸形红细胞；需结合尿蛋白和管型。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P007",
+    "orderId": "LAB_UPCR",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿蛋白/肌酐比或24小时尿蛋白"
+    ],
+    "result": "无明显蛋白尿证据或作为排除肾小球性血尿的项目。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P007",
+    "orderId": "LAB_CBC",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "血常规"
+    ],
+    "result": "用于评估贫血、感染和术前状态；阳性参考：1、尿流动力学：膀胱出口重度梗阻，膀胱收缩力减弱。\n2、盆腔MR提示：前列腺三径54*58*65。前列腺外周带及中央带多发结节，PI-RAD3分，前列腺凸出膀胱",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P007",
+    "orderId": "LAB_RENAL",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "肾功能/eGFR+电解质"
+    ],
+    "result": "用于评估肌酐/eGFR、电解质和梗阻/肾炎影响；阳性参考：1、尿流动力学：膀胱出口重度梗阻，膀胱收缩力减弱。\n2、盆腔MR提示：前列腺三径54*58*65。前列腺外周带及中央带多发结节，PI-RAD3分，前列腺凸出膀胱",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P007",
+    "orderId": "LAB_CRP_PCT",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/炎症感染",
+    "synonyms": [
+      "CRP/PCT"
+    ],
+    "result": "本病例无系统性感染证据，炎症指标通常不作为核心阳性结果。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P007",
+    "orderId": "LAB_COAG",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/凝血/输血",
+    "synonyms": [
+      "凝血功能"
+    ],
+    "result": "用于术前评估和抗凝/抗血小板管理，尤其华法林、阿司匹林、氯吡格雷患者。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P007",
+    "orderId": "IMG_US",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/超声",
+    "synonyms": [
+      "泌尿系超声"
+    ],
+    "result": "泌尿系彩超提示：膀胱壁增厚，内可见尿管球囊，前列腺增大，大小56*48mm，前列腺突向膀胱。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P007",
+    "orderId": "IMG_CTU",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "CTU"
+    ],
+    "result": "若非高危血尿，CTU按需；本例优先根据临床路径选择。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P007",
+    "orderId": "IMG_CT_KUB",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "泌尿系CT平扫/CT KUB"
+    ],
+    "result": "CT KUB用于结石筛查；本例是否需要取决于疼痛/结石线索。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P007",
+    "orderId": "IMG_MRI",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/MRI",
+    "synonyms": [
+      "盆腔MRI/MRU/腹部MRI"
+    ],
+    "result": "1、尿流动力学：膀胱出口重度梗阻，膀胱收缩力减弱。\n2、盆腔MR提示：前列腺三径54*58*65。前列腺外周带及中央带多发结节，PI-RAD3分，前列腺凸出膀胱",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P007",
+    "orderId": "PROC_CYSTOSCOPY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/内镜",
+    "synonyms": [
+      "膀胱镜"
+    ],
+    "result": "膀胱镜按血尿风险分层选择；肾小球性血尿通常不是首选。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P007",
+    "orderId": "PROC_TURBT_PATH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/病理",
+    "synonyms": [
+      "TURBT或活检病理"
+    ],
+    "result": "本病例暂无TURBT/肿瘤活检适应证，除非后续发现占位。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P007",
+    "orderId": "PROC_RENAL_BIOPSY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/肾活检",
+    "synonyms": [
+      "肾活检"
+    ],
+    "result": "非肾小球性血尿通常不首选肾活检。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P008",
+    "orderId": "LAB_URINE_ROUTINE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液基础",
+    "synonyms": [
+      "尿常规+尿沉渣镜检"
+    ],
+    "result": "红细胞279个/ul，尿白细胞3个/ul",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P008",
+    "orderId": "LAB_URINE_CULTURE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液感染",
+    "synonyms": [
+      "中段尿培养+药敏"
+    ],
+    "result": "尿培养用于明确病原菌和药敏；本例可结合尿白细胞升高，若发热/梗阻需尽快送检。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P008",
+    "orderId": "LAB_URINE_CYTOLOGY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液肿瘤",
+    "synonyms": [
+      "尿脱落细胞学"
+    ],
+    "result": "本病例非常规首要项目，若持续肉眼血尿或高危因素可作为补充。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P008",
+    "orderId": "LAB_RBC_MORPH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿红细胞形态/相差显微镜"
+    ],
+    "result": "红细胞形态多提示非肾小球性来源或未见典型畸形红细胞；需结合尿蛋白和管型。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P008",
+    "orderId": "LAB_UPCR",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿蛋白/肌酐比或24小时尿蛋白"
+    ],
+    "result": "无明显蛋白尿证据或作为排除肾小球性血尿的项目。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P008",
+    "orderId": "LAB_CBC",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "血常规"
+    ],
+    "result": "用于评估贫血、感染和术前状态；阳性参考：1、尿流动力学：膀胱出口中度梗阻，膀胱收缩力正常。残余尿60ml\n2、盆腔CT提示：前列腺三径54*43*42。膀胱内多发结石，大小约1-2cm",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P008",
+    "orderId": "LAB_RENAL",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "肾功能/eGFR+电解质"
+    ],
+    "result": "用于评估肌酐/eGFR、电解质和梗阻/肾炎影响；阳性参考：1、尿流动力学：膀胱出口中度梗阻，膀胱收缩力正常。残余尿60ml\n2、盆腔CT提示：前列腺三径54*43*42。膀胱内多发结石，大小约1-2cm",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P008",
+    "orderId": "LAB_CRP_PCT",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/炎症感染",
+    "synonyms": [
+      "CRP/PCT"
+    ],
+    "result": "炎症指标用于判断感染严重程度；若升高需警惕复杂感染或感染性梗阻。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P008",
+    "orderId": "LAB_COAG",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/凝血/输血",
+    "synonyms": [
+      "凝血功能"
+    ],
+    "result": "用于术前评估和抗凝/抗血小板管理，尤其华法林、阿司匹林、氯吡格雷患者。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P008",
+    "orderId": "IMG_US",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/超声",
+    "synonyms": [
+      "泌尿系超声"
+    ],
+    "result": "泌尿系彩超：前列腺增大,直径52*41mm，膀胱内可见高回声，遂体位改变移动，考虑膀胱结石",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P008",
+    "orderId": "IMG_CTU",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "CTU"
+    ],
+    "result": "心肺功能评估：心电图、胸部CT平扫，心脏彩超。评估前列腺及结石情况：完善盆腔CT平扫。评估下尿路功能：尿流动力学检查。\n阳性结果：1、尿流动力学：膀胱出口中度梗阻，膀胱收缩力正常。残余尿60ml\n2、盆腔CT提示：前列腺三径54*43*42。膀胱内多发结石，大小约1-2cm",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P008",
+    "orderId": "IMG_CT_KUB",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "泌尿系CT平扫/CT KUB"
+    ],
+    "result": "1、尿流动力学：膀胱出口中度梗阻，膀胱收缩力正常。残余尿60ml\n2、盆腔CT提示：前列腺三径54*43*42。膀胱内多发结石，大小约1-2cm",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P008",
+    "orderId": "IMG_MRI",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/MRI",
+    "synonyms": [
+      "盆腔MRI/MRU/腹部MRI"
+    ],
+    "result": "1、尿流动力学：膀胱出口中度梗阻，膀胱收缩力正常。残余尿60ml\n2、盆腔CT提示：前列腺三径54*43*42。膀胱内多发结石，大小约1-2cm",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P008",
+    "orderId": "PROC_CYSTOSCOPY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/内镜",
+    "synonyms": [
+      "膀胱镜"
+    ],
+    "result": "膀胱镜用于观察膀胱黏膜、肿物位置和输尿管口情况；结果需结合TURBT/活检病理。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P008",
+    "orderId": "PROC_TURBT_PATH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/病理",
+    "synonyms": [
+      "TURBT或活检病理"
+    ],
+    "result": "病理结果根据病例路径释放：肠道准备：口服乳果糖15ml,tid导泄，软化大便，保持大便通畅。计算前列腺体积",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P008",
+    "orderId": "PROC_RENAL_BIOPSY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/肾活检",
+    "synonyms": [
+      "肾活检"
+    ],
+    "result": "非肾小球性血尿通常不首选肾活检。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P009",
+    "orderId": "LAB_URINE_ROUTINE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液基础",
+    "synonyms": [
+      "尿常规+尿沉渣镜检"
+    ],
+    "result": "红细胞5689个/ul，尿白细胞45个/ul",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P009",
+    "orderId": "LAB_URINE_CULTURE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液感染",
+    "synonyms": [
+      "中段尿培养+药敏"
+    ],
+    "result": "尿培养用于明确病原菌和药敏；本例可结合尿白细胞升高，若发热/梗阻需尽快送检。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P009",
+    "orderId": "LAB_URINE_CYTOLOGY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液肿瘤",
+    "synonyms": [
+      "尿脱落细胞学"
+    ],
+    "result": "本病例非常规首要项目，若持续肉眼血尿或高危因素可作为补充。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P009",
+    "orderId": "LAB_RBC_MORPH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿红细胞形态/相差显微镜"
+    ],
+    "result": "红细胞形态多提示非肾小球性来源或未见典型畸形红细胞；需结合尿蛋白和管型。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P009",
+    "orderId": "LAB_UPCR",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿蛋白/肌酐比或24小时尿蛋白"
+    ],
+    "result": "无明显蛋白尿证据或作为排除肾小球性血尿的项目。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P009",
+    "orderId": "LAB_CBC",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "血常规"
+    ],
+    "result": "用于评估贫血、感染和术前状态；阳性参考：1、双肾+盆腔CT平扫提示：右肾多发结石，最大10*12mm, 输尿管上端结石9*8mm",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P009",
+    "orderId": "LAB_RENAL",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "肾功能/eGFR+电解质"
+    ],
+    "result": "用于评估肌酐/eGFR、电解质和梗阻/肾炎影响；阳性参考：1、双肾+盆腔CT平扫提示：右肾多发结石，最大10*12mm, 输尿管上端结石9*8mm",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P009",
+    "orderId": "LAB_CRP_PCT",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/炎症感染",
+    "synonyms": [
+      "CRP/PCT"
+    ],
+    "result": "炎症指标用于判断感染严重程度；若升高需警惕复杂感染或感染性梗阻。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P009",
+    "orderId": "LAB_COAG",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/凝血/输血",
+    "synonyms": [
+      "凝血功能"
+    ],
+    "result": "用于术前评估和抗凝/抗血小板管理，尤其华法林、阿司匹林、氯吡格雷患者。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P009",
+    "orderId": "IMG_US",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/超声",
+    "synonyms": [
+      "泌尿系超声"
+    ],
+    "result": "泌尿系彩超：右肾多发结石，右侧肾输尿管轻度积液扩张，输尿管上段可见一9*8mm结石，膀胱未见异常。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P009",
+    "orderId": "IMG_CTU",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "CTU"
+    ],
+    "result": "心肺功能评估：心电图、胸片。评估上尿路结石情况：完善双肾+盆腔CT平扫，腹部平片。\n阳性结果：1、双肾+盆腔CT平扫提示：右肾多发结石，最大10*12mm, 输尿管上端结石9*8mm",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P009",
+    "orderId": "IMG_CT_KUB",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "泌尿系CT平扫/CT KUB"
+    ],
+    "result": "1、双肾+盆腔CT平扫提示：右肾多发结石，最大10*12mm, 输尿管上端结石9*8mm",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P009",
+    "orderId": "IMG_MRI",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/MRI",
+    "synonyms": [
+      "盆腔MRI/MRU/腹部MRI"
+    ],
+    "result": "1、双肾+盆腔CT平扫提示：右肾多发结石，最大10*12mm, 输尿管上端结石9*8mm",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P009",
+    "orderId": "PROC_CYSTOSCOPY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/内镜",
+    "synonyms": [
+      "膀胱镜"
+    ],
+    "result": "膀胱镜按血尿风险分层选择；肾小球性血尿通常不是首选。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P009",
+    "orderId": "PROC_TURBT_PATH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/病理",
+    "synonyms": [
+      "TURBT或活检病理"
+    ],
+    "result": "本病例暂无TURBT/肿瘤活检适应证，除非后续发现占位。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P009",
+    "orderId": "PROC_RENAL_BIOPSY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/肾活检",
+    "synonyms": [
+      "肾活检"
+    ],
+    "result": "非肾小球性血尿通常不首选肾活检。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P010",
+    "orderId": "LAB_URINE_ROUTINE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液基础",
+    "synonyms": [
+      "尿常规+尿沉渣镜检"
+    ],
+    "result": "红细胞5689个/ul，尿白细胞55个/ul",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P010",
+    "orderId": "LAB_URINE_CULTURE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液感染",
+    "synonyms": [
+      "中段尿培养+药敏"
+    ],
+    "result": "尿培养用于明确病原菌和药敏；本例可结合尿白细胞升高，若发热/梗阻需尽快送检。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P010",
+    "orderId": "LAB_URINE_CYTOLOGY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液肿瘤",
+    "synonyms": [
+      "尿脱落细胞学"
+    ],
+    "result": "本病例非常规首要项目，若持续肉眼血尿或高危因素可作为补充。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P010",
+    "orderId": "LAB_RBC_MORPH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿红细胞形态/相差显微镜"
+    ],
+    "result": "红细胞形态多提示非肾小球性来源或未见典型畸形红细胞；需结合尿蛋白和管型。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P010",
+    "orderId": "LAB_UPCR",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿蛋白/肌酐比或24小时尿蛋白"
+    ],
+    "result": "无明显蛋白尿证据或作为排除肾小球性血尿的项目。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P010",
+    "orderId": "LAB_CBC",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "血常规"
+    ],
+    "result": "用于评估贫血、感染和术前状态；阳性参考：1、双肾CTU提示：左肾铸型结石，范围35*30mm",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P010",
+    "orderId": "LAB_RENAL",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "肾功能/eGFR+电解质"
+    ],
+    "result": "用于评估肌酐/eGFR、电解质和梗阻/肾炎影响；阳性参考：1、双肾CTU提示：左肾铸型结石，范围35*30mm",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P010",
+    "orderId": "LAB_CRP_PCT",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/炎症感染",
+    "synonyms": [
+      "CRP/PCT"
+    ],
+    "result": "炎症指标用于判断感染严重程度；若升高需警惕复杂感染或感染性梗阻。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P010",
+    "orderId": "LAB_COAG",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/凝血/输血",
+    "synonyms": [
+      "凝血功能"
+    ],
+    "result": "用于术前评估和抗凝/抗血小板管理，尤其华法林、阿司匹林、氯吡格雷患者。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P010",
+    "orderId": "IMG_US",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/超声",
+    "synonyms": [
+      "泌尿系超声"
+    ],
+    "result": "泌尿系彩超：肾盂轻度扩张，左肾结石，大小月35*25mm，膀胱及前列腺未见异常。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P010",
+    "orderId": "IMG_CTU",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "CTU"
+    ],
+    "result": "心肺功能评估：心电图、胸部CT。评估上尿路结石情况：完善双肾CTU，腹部平片。\n阳性结果：1、双肾CTU提示：左肾铸型结石，范围35*30mm",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P010",
+    "orderId": "IMG_CT_KUB",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "泌尿系CT平扫/CT KUB"
+    ],
+    "result": "1、双肾CTU提示：左肾铸型结石，范围35*30mm",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P010",
+    "orderId": "IMG_MRI",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/MRI",
+    "synonyms": [
+      "盆腔MRI/MRU/腹部MRI"
+    ],
+    "result": "1、双肾CTU提示：左肾铸型结石，范围35*30mm",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P010",
+    "orderId": "PROC_CYSTOSCOPY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/内镜",
+    "synonyms": [
+      "膀胱镜"
+    ],
+    "result": "膀胱镜按血尿风险分层选择；肾小球性血尿通常不是首选。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P010",
+    "orderId": "PROC_TURBT_PATH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/病理",
+    "synonyms": [
+      "TURBT或活检病理"
+    ],
+    "result": "本病例暂无TURBT/肿瘤活检适应证，除非后续发现占位。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P010",
+    "orderId": "PROC_RENAL_BIOPSY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/肾活检",
+    "synonyms": [
+      "肾活检"
+    ],
+    "result": "非肾小球性血尿通常不首选肾活检。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P011",
+    "orderId": "LAB_URINE_ROUTINE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液基础",
+    "synonyms": [
+      "尿常规+尿沉渣镜检"
+    ],
+    "result": "红细胞279个/ul，尿白细胞3个/ul，尿蛋白+，病理管型+，红细胞位相：畸形红细胞9000",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P011",
+    "orderId": "LAB_URINE_CULTURE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液感染",
+    "synonyms": [
+      "中段尿培养+药敏"
+    ],
+    "result": "可作为排除感染的辅助项目；本例以血尿病因排查为主。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P011",
+    "orderId": "LAB_URINE_CYTOLOGY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液肿瘤",
+    "synonyms": [
+      "尿脱落细胞学"
+    ],
+    "result": "本病例非常规首要项目，若持续肉眼血尿或高危因素可作为补充。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P011",
+    "orderId": "LAB_RBC_MORPH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿红细胞形态/相差显微镜"
+    ],
+    "result": "红细胞279个/ul，尿白细胞3个/ul，尿蛋白+，病理管型+，红细胞位相：畸形红细胞9000；提示畸形红细胞增多。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P011",
+    "orderId": "LAB_UPCR",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿蛋白/肌酐比或24小时尿蛋白"
+    ],
+    "result": "蛋白尿定量异常：尿蛋白+、病理管型+、畸形红细胞9000；可见C3降低、ASO升高；肾功能可正常或轻度异常；肾脏超声多无明显泌尿外科占位。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P011",
+    "orderId": "LAB_CBC",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "血常规"
+    ],
+    "result": "用于评估贫血、感染和术前状态；阳性参考：尿蛋白+、病理管型+、畸形红细胞9000；可见C3降低、ASO升高；肾功能可正常或轻度异常；肾脏超声多无明显泌尿外科占位。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P011",
+    "orderId": "LAB_RENAL",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "肾功能/eGFR+电解质"
+    ],
+    "result": "用于评估肌酐/eGFR、电解质和梗阻/肾炎影响；阳性参考：尿蛋白+、病理管型+、畸形红细胞9000；可见C3降低、ASO升高；肾功能可正常或轻度异常；肾脏超声多无明显泌尿外科占位。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P011",
+    "orderId": "LAB_CRP_PCT",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/炎症感染",
+    "synonyms": [
+      "CRP/PCT"
+    ],
+    "result": "本病例无系统性感染证据，炎症指标通常不作为核心阳性结果。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P011",
+    "orderId": "LAB_COAG",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/凝血/输血",
+    "synonyms": [
+      "凝血功能"
+    ],
+    "result": "用于术前评估和抗凝/抗血小板管理，尤其华法林、阿司匹林、氯吡格雷患者。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P011",
+    "orderId": "IMG_US",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/超声",
+    "synonyms": [
+      "泌尿系超声"
+    ],
+    "result": "院前未见明确泌尿外科影像阳性；建议完善肾脏超声排除结构性病变。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P011",
+    "orderId": "IMG_CTU",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "CTU"
+    ],
+    "result": "若非高危血尿，CTU按需；本例优先根据临床路径选择。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P011",
+    "orderId": "IMG_CT_KUB",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "泌尿系CT平扫/CT KUB"
+    ],
+    "result": "CT KUB用于结石筛查；本例是否需要取决于疼痛/结石线索。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P011",
+    "orderId": "IMG_MRI",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/MRI",
+    "synonyms": [
+      "盆腔MRI/MRU/腹部MRI"
+    ],
+    "result": "尿蛋白+、病理管型+、畸形红细胞9000；可见C3降低、ASO升高；肾功能可正常或轻度异常；肾脏超声多无明显泌尿外科占位。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P011",
+    "orderId": "PROC_CYSTOSCOPY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/内镜",
+    "synonyms": [
+      "膀胱镜"
+    ],
+    "result": "膀胱镜按血尿风险分层选择；肾小球性血尿通常不是首选。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P011",
+    "orderId": "PROC_TURBT_PATH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/病理",
+    "synonyms": [
+      "TURBT或活检病理"
+    ],
+    "result": "本病例暂无TURBT/肿瘤活检适应证，除非后续发现占位。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P011",
+    "orderId": "PROC_RENAL_BIOPSY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/肾活检",
+    "synonyms": [
+      "肾活检"
+    ],
+    "result": "肾活检用于明确病理类型、活动度和慢性化程度；IgA肾病可报告Oxford分类。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P012",
+    "orderId": "LAB_URINE_ROUTINE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液基础",
+    "synonyms": [
+      "尿常规+尿沉渣镜检"
+    ],
+    "result": "尿常规：蛋白3+，潜血3+，红细胞5689个/ul，红细胞位相：畸形红细胞27000",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P012",
+    "orderId": "LAB_URINE_CULTURE",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液感染",
+    "synonyms": [
+      "中段尿培养+药敏"
+    ],
+    "result": "可作为排除感染的辅助项目；本例以血尿病因排查为主。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P012",
+    "orderId": "LAB_URINE_CYTOLOGY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液肿瘤",
+    "synonyms": [
+      "尿脱落细胞学"
+    ],
+    "result": "本病例非常规首要项目，若持续肉眼血尿或高危因素可作为补充。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P012",
+    "orderId": "LAB_RBC_MORPH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿红细胞形态/相差显微镜"
+    ],
+    "result": "尿常规：蛋白3+，潜血3+，红细胞5689个/ul，红细胞位相：畸形红细胞27000；提示畸形红细胞增多。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P012",
+    "orderId": "LAB_UPCR",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/尿液蛋白/肾小球线索",
+    "synonyms": [
+      "尿蛋白/肌酐比或24小时尿蛋白"
+    ],
+    "result": "蛋白尿定量异常：尿蛋白3+、潜血3+、畸形红细胞27000；24小时尿蛋白4.7g；肾功能目前正常；肾活检可提示IgA肾病并给出Oxford分类。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P012",
+    "orderId": "LAB_CBC",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "血常规"
+    ],
+    "result": "用于评估贫血、感染和术前状态；阳性参考：尿蛋白3+、潜血3+、畸形红细胞27000；24小时尿蛋白4.7g；肾功能目前正常；肾活检可提示IgA肾病并给出Oxford分类。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P012",
+    "orderId": "LAB_RENAL",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/血液基础",
+    "synonyms": [
+      "肾功能/eGFR+电解质"
+    ],
+    "result": "用于评估肌酐/eGFR、电解质和梗阻/肾炎影响；阳性参考：尿蛋白3+、潜血3+、畸形红细胞27000；24小时尿蛋白4.7g；肾功能目前正常；肾活检可提示IgA肾病并给出Oxford分类。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P012",
+    "orderId": "LAB_CRP_PCT",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/炎症感染",
+    "synonyms": [
+      "CRP/PCT"
+    ],
+    "result": "本病例无系统性感染证据，炎症指标通常不作为核心阳性结果。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P012",
+    "orderId": "LAB_COAG",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检验/凝血/输血",
+    "synonyms": [
+      "凝血功能"
+    ],
+    "result": "用于术前评估和抗凝/抗血小板管理，尤其华法林、阿司匹林、氯吡格雷患者。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P012",
+    "orderId": "IMG_US",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/超声",
+    "synonyms": [
+      "泌尿系超声"
+    ],
+    "result": "院前未见明确泌尿外科影像阳性；建议完善肾脏超声排除结构性病变。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P012",
+    "orderId": "IMG_CTU",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "CTU"
+    ],
+    "result": "若非高危血尿，CTU按需；本例优先根据临床路径选择。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P012",
+    "orderId": "IMG_CT_KUB",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/CT",
+    "synonyms": [
+      "泌尿系CT平扫/CT KUB"
+    ],
+    "result": "CT KUB用于结石筛查；本例是否需要取决于疼痛/结石线索。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P012",
+    "orderId": "IMG_MRI",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "检查/MRI",
+    "synonyms": [
+      "盆腔MRI/MRU/腹部MRI"
+    ],
+    "result": "尿蛋白3+、潜血3+、畸形红细胞27000；24小时尿蛋白4.7g；肾功能目前正常；肾活检可提示IgA肾病并给出Oxford分类。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P012",
+    "orderId": "PROC_CYSTOSCOPY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/内镜",
+    "synonyms": [
+      "膀胱镜"
+    ],
+    "result": "膀胱镜按血尿风险分层选择；肾小球性血尿通常不是首选。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P012",
+    "orderId": "PROC_TURBT_PATH",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/病理",
+    "synonyms": [
+      "TURBT或活检病理"
+    ],
+    "result": "本病例暂无TURBT/肿瘤活检适应证，除非后续发现占位。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  },
+  {
+    "caseId": "P012",
+    "orderId": "PROC_RENAL_BIOPSY",
+    "diagnosis": "",
+    "diseaseType": "",
+    "orderCategory": "病理/操作/肾活检",
+    "synonyms": [
+      "肾活检"
+    ],
+    "result": "肾活检用于明确病理类型、活动度和慢性化程度；IgA肾病可报告Oxford分类。",
+    "abnormalLevel": "模拟返回",
+    "teachingExplanation": "仅当学生开立该医嘱后返回；未开不得显示。",
+    "isKey": true,
+    "prerequisite": "仅当学生开立该医嘱后返回；未开不得显示。"
+  }
+]

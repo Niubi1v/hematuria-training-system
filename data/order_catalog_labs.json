@@ -1,0 +1,513 @@
+[
+  {
+    "orderId": "LAB-UR-001",
+    "primaryCategory": "检验",
+    "secondaryCategory": "尿液基础",
+    "displayName": "尿常规",
+    "synonyms": [
+      "尿常规",
+      "尿检",
+      "尿试纸",
+      "尿分析"
+    ],
+    "scenario": "所有血尿病例初筛",
+    "resultShouldInclude": "颜色、比重、pH、潜血、蛋白、白细胞、亚硝酸盐、葡萄糖、酮体",
+    "priority": "基础必开",
+    "studentDisplayHint": "尿液检验-基础",
+    "cautions": "尿试纸阳性不能单独诊断血尿，需尿沉渣确认",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "LAB-UR-002",
+    "primaryCategory": "检验",
+    "secondaryCategory": "尿液基础",
+    "displayName": "尿沉渣镜检",
+    "synonyms": [
+      "尿沉渣镜检",
+      "尿沉渣",
+      "尿镜检",
+      "尿红细胞计数",
+      "RBC/HPF"
+    ],
+    "scenario": "确认真性血尿、判断细胞/管型",
+    "resultShouldInclude": "RBC/HPF、WBC、管型、结晶、细菌",
+    "priority": "基础必开",
+    "studentDisplayHint": "尿液检验-基础",
+    "cautions": "所有血尿训练应鼓励先确认真性血尿",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "LAB-UR-003",
+    "primaryCategory": "检验",
+    "secondaryCategory": "尿液基础",
+    "displayName": "尿红细胞形态/相差显微镜",
+    "synonyms": [
+      "尿红细胞形态/相差显微镜",
+      "红细胞形态",
+      "畸形红细胞",
+      "相差显微镜",
+      "肾小球性红细胞"
+    ],
+    "scenario": "怀疑肾小球性血尿",
+    "resultShouldInclude": "畸形RBC比例、棘形红细胞提示",
+    "priority": "场景必开",
+    "studentDisplayHint": "尿液检验-肾小球线索",
+    "cautions": "不能替代肾内评估",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "LAB-UR-004",
+    "primaryCategory": "检验",
+    "secondaryCategory": "尿液蛋白/肾小球线索",
+    "displayName": "尿蛋白定性/尿蛋白肌酐比",
+    "synonyms": [
+      "尿蛋白定性/尿蛋白肌酐比",
+      "尿蛋白",
+      "UPCR",
+      "尿蛋白肌酐比",
+      "尿白蛋白肌酐比",
+      "ACR"
+    ],
+    "scenario": "泡沫尿、水肿、高血压、茶色尿、AKI",
+    "resultShouldInclude": "尿蛋白定性、UPCR/ACR",
+    "priority": "场景必开",
+    "studentDisplayHint": "尿液检验-肾内",
+    "cautions": "肾小球性血尿漏查尿蛋白应扣分",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "LAB-UR-005",
+    "primaryCategory": "检验",
+    "secondaryCategory": "尿液蛋白/肾小球线索",
+    "displayName": "24小时尿蛋白定量",
+    "synonyms": [
+      "24小时尿蛋白定量",
+      "24h尿蛋白",
+      "24小时尿蛋白",
+      "尿蛋白定量"
+    ],
+    "scenario": "明确蛋白尿程度、肾内会诊前完善",
+    "resultShouldInclude": "24h尿蛋白g/day",
+    "priority": "按需",
+    "studentDisplayHint": "尿液检验-肾内",
+    "cautions": "急诊阶段不一定优先于基础评估",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "LAB-UR-006",
+    "primaryCategory": "检验",
+    "secondaryCategory": "尿液肿瘤",
+    "displayName": "尿脱落细胞学",
+    "synonyms": [
+      "尿脱落细胞学",
+      "尿细胞学",
+      "尿脱落细胞",
+      "voided cytology"
+    ],
+    "scenario": "高危肉眼血尿、疑膀胱癌/UTUC/CIS",
+    "resultShouldInclude": "阴性/可疑/高级别尿路上皮癌细胞",
+    "priority": "场景必开",
+    "studentDisplayHint": "尿液检验-肿瘤",
+    "cautions": "只能作为膀胱镜辅助，不能替代膀胱镜",
+    "sourceUrl": "https://uroweb.org/guidelines/non-muscle-invasive-bladder-cancer/chapter/diagnosis"
+  },
+  {
+    "orderId": "LAB-UR-007",
+    "primaryCategory": "检验",
+    "secondaryCategory": "尿液肿瘤",
+    "displayName": "尿FISH/UroVysion",
+    "synonyms": [
+      "尿FISH/UroVysion",
+      "FISH",
+      "UroVysion",
+      "尿肿瘤分子检测"
+    ],
+    "scenario": "疑UTUC、CIS、尿细胞学可疑或高危随访",
+    "resultShouldInclude": "阳性/阴性、染色体异常",
+    "priority": "按需高级",
+    "studentDisplayHint": "尿液检验-肿瘤",
+    "cautions": "尿肿瘤标志物不能替代膀胱镜或病理",
+    "sourceUrl": "https://uroweb.org/guidelines/upper-urinary-tract-urothelial-cell-carcinoma/chapter/diagnosis"
+  },
+  {
+    "orderId": "LAB-UR-008",
+    "primaryCategory": "检验",
+    "secondaryCategory": "尿液感染",
+    "displayName": "中段尿培养+药敏",
+    "synonyms": [
+      "中段尿培养+药敏",
+      "尿培养",
+      "中段尿培养",
+      "尿药敏",
+      "培养药敏"
+    ],
+    "scenario": "尿频尿急尿痛、发热、复杂UTI、术前感染筛查",
+    "resultShouldInclude": "菌落计数、菌种、药敏",
+    "priority": "场景必开",
+    "studentDisplayHint": "尿液检验-感染",
+    "cautions": "先留培养再抗菌更规范；严重感染不要等培养才治疗",
+    "sourceUrl": "https://uroweb.org/guidelines/urological-infections/chapter/the-guideline"
+  },
+  {
+    "orderId": "LAB-UR-009",
+    "primaryCategory": "检验",
+    "secondaryCategory": "尿液感染",
+    "displayName": "尿抗酸杆菌/结核分枝杆菌检查",
+    "synonyms": [
+      "尿抗酸杆菌/结核分枝杆菌检查",
+      "尿结核",
+      "AFB",
+      "抗酸染色",
+      "结核培养",
+      "TB-PCR",
+      "尿分枝杆菌"
+    ],
+    "scenario": "无菌性脓尿、膀胱刺激征迁延、结核史",
+    "resultShouldInclude": "涂片、培养、核酸检测",
+    "priority": "按需高级",
+    "studentDisplayHint": "尿液检验-特殊感染",
+    "cautions": "需多次晨尿标本；不要作为普通血尿常规必开",
+    "sourceUrl": "https://uroweb.org/guidelines/urological-infections/chapter/the-guideline"
+  },
+  {
+    "orderId": "LAB-UR-010",
+    "primaryCategory": "检验",
+    "secondaryCategory": "尿液感染",
+    "displayName": "尿道/宫颈分泌物或首段尿NAAT",
+    "synonyms": [
+      "尿道/宫颈分泌物或首段尿NAAT",
+      "淋病",
+      "衣原体",
+      "NAAT",
+      "支原体",
+      "尿道分泌物"
+    ],
+    "scenario": "尿道炎、性接触史、尿道口脓性分泌物",
+    "resultShouldInclude": "病原学阳性/阴性",
+    "priority": "按需",
+    "studentDisplayHint": "尿液/分泌物检验-性病",
+    "cautions": "学生未问性史不应自动显示",
+    "sourceUrl": "https://uroweb.org/guidelines/urological-infections/chapter/the-guideline"
+  },
+  {
+    "orderId": "LAB-UR-011",
+    "primaryCategory": "检验",
+    "secondaryCategory": "结石代谢",
+    "displayName": "结石成分分析",
+    "synonyms": [
+      "结石成分分析",
+      "结石分析",
+      "红外光谱",
+      "X射线衍射"
+    ],
+    "scenario": "排出结石或术后取石",
+    "resultShouldInclude": "草酸钙/尿酸/磷酸镁铵等",
+    "priority": "场景必开",
+    "studentDisplayHint": "结石代谢",
+    "cautions": "所有首次结石成分分析有教学价值",
+    "sourceUrl": "https://uroweb.org/guidelines/urolithiasis/chapter/guidelines"
+  },
+  {
+    "orderId": "LAB-UR-012",
+    "primaryCategory": "检验",
+    "secondaryCategory": "结石代谢",
+    "displayName": "24小时尿结石代谢评估",
+    "synonyms": [
+      "24小时尿结石代谢评估",
+      "24h尿钙",
+      "尿草酸",
+      "尿枸橼酸",
+      "尿尿酸",
+      "尿钠",
+      "尿肌酐"
+    ],
+    "scenario": "复发性结石、高危结石、年轻结石",
+    "resultShouldInclude": "尿量、钙、草酸、枸橼酸、尿酸、钠、肌酐",
+    "priority": "按需高级",
+    "studentDisplayHint": "结石代谢",
+    "cautions": "急性梗阻感染时先处理急症，代谢评估后置",
+    "sourceUrl": "https://uroweb.org/guidelines/urolithiasis/chapter/guidelines"
+  },
+  {
+    "orderId": "LAB-BL-001",
+    "primaryCategory": "检验",
+    "secondaryCategory": "血液基础",
+    "displayName": "血常规",
+    "synonyms": [
+      "血常规",
+      "CBC",
+      "白细胞",
+      "血红蛋白",
+      "血小板"
+    ],
+    "scenario": "所有肉眼血尿、感染、术前、贫血评估",
+    "resultShouldInclude": "WBC、Hb、PLT、中性粒等",
+    "priority": "基础必开",
+    "studentDisplayHint": "血液检验-基础",
+    "cautions": "肉眼血尿伴血块/贫血漏查应扣分",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "LAB-BL-002",
+    "primaryCategory": "检验",
+    "secondaryCategory": "炎症感染",
+    "displayName": "CRP/降钙素原",
+    "synonyms": [
+      "CRP/降钙素原",
+      "CRP",
+      "PCT",
+      "感染指标",
+      "炎症指标"
+    ],
+    "scenario": "发热、寒战、肾盂肾炎、感染性梗阻",
+    "resultShouldInclude": "CRP、PCT",
+    "priority": "场景必开",
+    "studentDisplayHint": "血液检验-感染",
+    "cautions": "感染性梗阻需要评估全身炎症和脓毒症风险",
+    "sourceUrl": "https://uroweb.org/guidelines/urological-infections/chapter/the-guideline"
+  },
+  {
+    "orderId": "LAB-BL-003",
+    "primaryCategory": "检验",
+    "secondaryCategory": "血液基础",
+    "displayName": "肾功能/eGFR",
+    "synonyms": [
+      "肾功能/eGFR",
+      "肌酐",
+      "尿素氮",
+      "eGFR",
+      "肾功能",
+      "Scr",
+      "BUN"
+    ],
+    "scenario": "所有血尿、造影前、AKI评估",
+    "resultShouldInclude": "Scr、BUN、eGFR",
+    "priority": "基础必开",
+    "studentDisplayHint": "血液检验-基础",
+    "cautions": "造影前和梗阻/感染必须评估肾功能",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "LAB-BL-004",
+    "primaryCategory": "检验",
+    "secondaryCategory": "血液基础",
+    "displayName": "电解质",
+    "synonyms": [
+      "电解质",
+      "钾钠氯",
+      "钙磷镁"
+    ],
+    "scenario": "AKI、感染、结石代谢、术前",
+    "resultShouldInclude": "K、Na、Cl、Ca、P、Mg",
+    "priority": "基础/场景",
+    "studentDisplayHint": "血液检验-基础",
+    "cautions": "肾功能异常或结石病例漏查应扣分",
+    "sourceUrl": "https://uroweb.org/guidelines/urolithiasis/chapter/guidelines"
+  },
+  {
+    "orderId": "LAB-BL-006",
+    "primaryCategory": "检验",
+    "secondaryCategory": "凝血/输血",
+    "displayName": "凝血功能",
+    "synonyms": [
+      "凝血功能",
+      "PT",
+      "INR",
+      "APTT",
+      "纤维蛋白原",
+      "D二聚体",
+      "凝血"
+    ],
+    "scenario": "肉眼血尿、抗凝用药、术前、TURBT/穿刺",
+    "resultShouldInclude": "PT、INR、APTT、Fib、D-dimer",
+    "priority": "基础/场景",
+    "studentDisplayHint": "凝血输血",
+    "cautions": "不能因抗凝解释血尿，但需评估出血/围术期风险",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "LAB-BL-007",
+    "primaryCategory": "检验",
+    "secondaryCategory": "凝血/输血",
+    "displayName": "血型+交叉配血/备血",
+    "synonyms": [
+      "血型+交叉配血/备血",
+      "血型",
+      "交叉配血",
+      "备血",
+      "输血前检查"
+    ],
+    "scenario": "重度肉眼血尿、贫血、拟手术/大出血风险",
+    "resultShouldInclude": "ABO/Rh、交叉配血结果",
+    "priority": "场景必开",
+    "studentDisplayHint": "凝血输血",
+    "cautions": "严重血尿或巨大肿瘤拟手术漏备血扣分",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "LAB-BL-008",
+    "primaryCategory": "检验",
+    "secondaryCategory": "炎症感染",
+    "displayName": "血培养+药敏",
+    "synonyms": [
+      "血培养+药敏",
+      "血培养",
+      "血药敏",
+      "菌血症",
+      "败血症"
+    ],
+    "scenario": "发热寒战、脓毒症、感染性梗阻",
+    "resultShouldInclude": "血培养菌种和药敏",
+    "priority": "场景必开",
+    "studentDisplayHint": "感染检验",
+    "cautions": "严重感染应抗菌前尽量留取，但不能延误抗感染",
+    "sourceUrl": "https://uroweb.org/guidelines/urolithiasis/chapter/guidelines"
+  },
+  {
+    "orderId": "LAB-BL-010",
+    "primaryCategory": "检验",
+    "secondaryCategory": "大便/全身鉴别",
+    "displayName": "育龄女性妊娠试验",
+    "synonyms": [
+      "育龄女性妊娠试验",
+      "HCG",
+      "β-hCG",
+      "妊娠试验",
+      "早孕"
+    ],
+    "scenario": "育龄女性拟CT/用药/手术",
+    "resultShouldInclude": "阴性/阳性",
+    "priority": "场景必开",
+    "studentDisplayHint": "特殊人群",
+    "cautions": "开CT或用药前需考虑妊娠",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "LAB-BL-011",
+    "primaryCategory": "检验",
+    "secondaryCategory": "肾内免疫",
+    "displayName": "补体C3/C4",
+    "synonyms": [
+      "补体C3/C4",
+      "补体",
+      "C3",
+      "C4"
+    ],
+    "scenario": "肾小球性血尿、狼疮、感染后肾炎",
+    "resultShouldInclude": "C3、C4水平",
+    "priority": "场景必开",
+    "studentDisplayHint": "肾内免疫",
+    "cautions": "肾小球安全网项目",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "LAB-BL-012",
+    "primaryCategory": "检验",
+    "secondaryCategory": "肾内免疫",
+    "displayName": "IgA/免疫球蛋白",
+    "synonyms": [
+      "IgA/免疫球蛋白",
+      "IgA",
+      "IgG",
+      "IgM",
+      "免疫球蛋白"
+    ],
+    "scenario": "IgA肾病、上感后肉眼血尿",
+    "resultShouldInclude": "IgA水平",
+    "priority": "按需",
+    "studentDisplayHint": "肾内免疫",
+    "cautions": "结果不能单独确诊IgA肾病",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "LAB-BL-013",
+    "primaryCategory": "检验",
+    "secondaryCategory": "肾内免疫",
+    "displayName": "ANA谱/抗dsDNA/ENA",
+    "synonyms": [
+      "ANA谱/抗dsDNA/ENA",
+      "ANA",
+      "抗核抗体",
+      "dsDNA",
+      "ENA",
+      "狼疮"
+    ],
+    "scenario": "女性、皮疹关节痛、蛋白尿、肾炎综合征",
+    "resultShouldInclude": "阳性/滴度/抗体谱",
+    "priority": "场景必开",
+    "studentDisplayHint": "肾内免疫",
+    "cautions": "疑狼疮肾炎漏查扣分",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "LAB-BL-014",
+    "primaryCategory": "检验",
+    "secondaryCategory": "肾内免疫",
+    "displayName": "ANCA/抗GBM抗体",
+    "synonyms": [
+      "ANCA/抗GBM抗体",
+      "ANCA",
+      "抗GBM",
+      "肺肾综合征",
+      "咯血"
+    ],
+    "scenario": "急进性肾炎、AKI、RBC管型、咯血",
+    "resultShouldInclude": "ANCA、抗GBM",
+    "priority": "场景必开",
+    "studentDisplayHint": "肾内免疫",
+    "cautions": "快速进展肾损害需紧急肾内会诊",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "LAB-BL-015",
+    "primaryCategory": "检验",
+    "secondaryCategory": "尿液肿瘤",
+    "displayName": "PSA",
+    "synonyms": [
+      "PSA",
+      "前列腺特异抗原"
+    ],
+    "scenario": "男性LUTS、前列腺增大、疑前列腺癌；急性感染后延迟解释",
+    "resultShouldInclude": "总PSA、游离PSA比值",
+    "priority": "按需",
+    "studentDisplayHint": "肿瘤相关检验",
+    "cautions": "急性前列腺炎/尿潴留/导尿可影响PSA，不能乱解读",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  },
+  {
+    "orderId": "LAB-BL-016",
+    "primaryCategory": "检验",
+    "secondaryCategory": "大便/全身鉴别",
+    "displayName": "血糖/糖化血红蛋白",
+    "synonyms": [
+      "血糖/糖化血红蛋白",
+      "血糖",
+      "糖化",
+      "HbA1c"
+    ],
+    "scenario": "感染风险、术前、糖尿病相关UTI",
+    "resultShouldInclude": "空腹血糖、HbA1c",
+    "priority": "按需",
+    "studentDisplayHint": "基础/感染",
+    "cautions": "糖尿病是UTI风险因素之一",
+    "sourceUrl": "https://uroweb.org/guidelines/urological-infections/chapter/the-guideline"
+  },
+  {
+    "orderId": "LAB-ST-001",
+    "primaryCategory": "检验",
+    "secondaryCategory": "大便/全身鉴别",
+    "displayName": "粪便常规+隐血",
+    "synonyms": [
+      "粪便常规+隐血",
+      "大便常规",
+      "粪便隐血",
+      "FOBT"
+    ],
+    "scenario": "贫血来源不明、黑便、全身失血鉴别",
+    "resultShouldInclude": "隐血阳性/阴性、红细胞/白细胞",
+    "priority": "按需",
+    "studentDisplayHint": "大便检验",
+    "cautions": "不是血尿常规必开；用于贫血鉴别",
+    "sourceUrl": "https://www.ncbi.nlm.nih.gov/books/NBK534213/"
+  }
+]

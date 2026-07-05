@@ -1,0 +1,1538 @@
+[
+  {
+    "caseId": "P001",
+    "examId": "PE001",
+    "displayName": "体温",
+    "category": "一般情况与生命体征",
+    "result": "否认发热寒战",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P001",
+    "examId": "PE002",
+    "displayName": "血压",
+    "category": "一般情况与生命体征",
+    "result": "需测量并记录血压；本例应特别关注血压升高线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P001",
+    "examId": "PE003",
+    "displayName": "心率/呼吸/血氧",
+    "category": "一般情况与生命体征",
+    "result": "可见感染/疼痛相关心率增快风险，需同步记录呼吸和血氧。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P001",
+    "examId": "PE004",
+    "displayName": "贫血貌/脱水貌/意识",
+    "category": "一般情况与生命体征",
+    "result": "一般情况尚可，意识清楚。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P001",
+    "examId": "PE101",
+    "displayName": "腹部压痛",
+    "category": "腹部与泌尿系统",
+    "result": "排尿稍费力、尿不尽、夜尿1-2次/晚",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P001",
+    "examId": "PE102",
+    "displayName": "肾区叩击痛",
+    "category": "腹部与泌尿系统",
+    "result": "无痛性",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P001",
+    "examId": "PE103",
+    "displayName": "输尿管走行区压痛",
+    "category": "腹部与泌尿系统",
+    "result": "输尿管走行区未见明确压痛线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P001",
+    "examId": "PE104",
+    "displayName": "耻骨上膀胱充盈",
+    "category": "腹部与泌尿系统",
+    "result": "需触诊耻骨上区，评估膀胱充盈和血块尿潴留。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P001",
+    "examId": "PE105",
+    "displayName": "腰部包块",
+    "category": "腹部与泌尿系统",
+    "result": "未见明确腰部包块线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P001",
+    "examId": "PE201",
+    "displayName": "外生殖器/尿道口",
+    "category": "男性泌尿生殖",
+    "result": "外生殖器和尿道口需检查有无损伤、滴血、分泌物或污染；当前病例无额外主动暴露信息。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P001",
+    "examId": "PE202",
+    "displayName": "阴囊",
+    "category": "男性泌尿生殖",
+    "result": "阴囊、睾丸和附睾未见明确异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P001",
+    "examId": "PE203",
+    "displayName": "直肠指检/前列腺",
+    "category": "男性泌尿生殖",
+    "result": "直肠指检/前列腺未见明确异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P001",
+    "examId": "PE301",
+    "displayName": "妇科查体/阴道出血",
+    "category": "女性相关",
+    "result": "本项对男性病例通常不适用。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P001",
+    "examId": "PE401",
+    "displayName": "水肿",
+    "category": "全身系统",
+    "result": "需查眼睑和双下肢水肿；本例存在肾小球性线索时尤为重要。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P001",
+    "examId": "PE402",
+    "displayName": "皮疹紫癜/关节",
+    "category": "全身系统",
+    "result": "未见明确皮疹紫癜或关节异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P001",
+    "examId": "PE403",
+    "displayName": "心肺听诊",
+    "category": "全身系统",
+    "result": "心肺听诊未见明确异常线索；如存在感染、贫血、容量负荷或围术期风险需完整记录。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P002",
+    "examId": "PE001",
+    "displayName": "体温",
+    "category": "一般情况与生命体征",
+    "result": "否认发热寒战",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P002",
+    "examId": "PE002",
+    "displayName": "血压",
+    "category": "一般情况与生命体征",
+    "result": "需测量并记录血压；本例应特别关注血压升高线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P002",
+    "examId": "PE003",
+    "displayName": "心率/呼吸/血氧",
+    "category": "一般情况与生命体征",
+    "result": "可见感染/疼痛相关心率增快风险，需同步记录呼吸和血氧。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P002",
+    "examId": "PE004",
+    "displayName": "贫血貌/脱水貌/意识",
+    "category": "一般情况与生命体征",
+    "result": "一般情况尚可，意识清楚。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P002",
+    "examId": "PE101",
+    "displayName": "腹部压痛",
+    "category": "腹部与泌尿系统",
+    "result": "无明显尿频尿急尿痛",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P002",
+    "examId": "PE102",
+    "displayName": "肾区叩击痛",
+    "category": "腹部与泌尿系统",
+    "result": "伴左侧腰部酸胀痛，小便时不痛",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P002",
+    "examId": "PE103",
+    "displayName": "输尿管走行区压痛",
+    "category": "腹部与泌尿系统",
+    "result": "输尿管走行区压痛需重点检查，符合结石/梗阻定位思路。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P002",
+    "examId": "PE104",
+    "displayName": "耻骨上膀胱充盈",
+    "category": "腹部与泌尿系统",
+    "result": "需触诊耻骨上区，评估膀胱充盈和血块尿潴留。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P002",
+    "examId": "PE105",
+    "displayName": "腰部包块",
+    "category": "腹部与泌尿系统",
+    "result": "未见明确腰部包块线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P002",
+    "examId": "PE201",
+    "displayName": "外生殖器/尿道口",
+    "category": "男性泌尿生殖",
+    "result": "外生殖器和尿道口需检查有无损伤、滴血、分泌物或污染；当前病例无额外主动暴露信息。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P002",
+    "examId": "PE202",
+    "displayName": "阴囊",
+    "category": "男性泌尿生殖",
+    "result": "阴囊、睾丸和附睾未见明确异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P002",
+    "examId": "PE203",
+    "displayName": "直肠指检/前列腺",
+    "category": "男性泌尿生殖",
+    "result": "直肠指检/前列腺未见明确异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P002",
+    "examId": "PE301",
+    "displayName": "妇科查体/阴道出血",
+    "category": "女性相关",
+    "result": "女性病例需排除月经、阴道出血或标本污染。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P002",
+    "examId": "PE401",
+    "displayName": "水肿",
+    "category": "全身系统",
+    "result": "需查眼睑和双下肢水肿；本例存在肾小球性线索时尤为重要。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P002",
+    "examId": "PE402",
+    "displayName": "皮疹紫癜/关节",
+    "category": "全身系统",
+    "result": "未见明确皮疹紫癜或关节异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P002",
+    "examId": "PE403",
+    "displayName": "心肺听诊",
+    "category": "全身系统",
+    "result": "心肺听诊未见明确异常线索；如存在感染、贫血、容量负荷或围术期风险需完整记录。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P003",
+    "examId": "PE001",
+    "displayName": "体温",
+    "category": "一般情况与生命体征",
+    "result": "否认发热",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P003",
+    "examId": "PE002",
+    "displayName": "血压",
+    "category": "一般情况与生命体征",
+    "result": "需测量并记录血压；本例应特别关注血压升高线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P003",
+    "examId": "PE003",
+    "displayName": "心率/呼吸/血氧",
+    "category": "一般情况与生命体征",
+    "result": "心率、呼吸、血氧未见明确异常。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P003",
+    "examId": "PE004",
+    "displayName": "贫血貌/脱水貌/意识",
+    "category": "一般情况与生命体征",
+    "result": "一般情况尚可，意识清楚。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P003",
+    "examId": "PE101",
+    "displayName": "腹部压痛",
+    "category": "腹部与泌尿系统",
+    "result": "无尿频尿急排尿困难",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P003",
+    "examId": "PE102",
+    "displayName": "肾区叩击痛",
+    "category": "腹部与泌尿系统",
+    "result": "无痛性",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P003",
+    "examId": "PE103",
+    "displayName": "输尿管走行区压痛",
+    "category": "腹部与泌尿系统",
+    "result": "输尿管走行区未见明确压痛线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P003",
+    "examId": "PE104",
+    "displayName": "耻骨上膀胱充盈",
+    "category": "腹部与泌尿系统",
+    "result": "需触诊耻骨上区，评估膀胱充盈和血块尿潴留。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P003",
+    "examId": "PE105",
+    "displayName": "腰部包块",
+    "category": "腹部与泌尿系统",
+    "result": "未见明确腰部包块线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P003",
+    "examId": "PE201",
+    "displayName": "外生殖器/尿道口",
+    "category": "男性泌尿生殖",
+    "result": "外生殖器和尿道口需检查有无损伤、滴血、分泌物或污染；当前病例无额外主动暴露信息。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P003",
+    "examId": "PE202",
+    "displayName": "阴囊",
+    "category": "男性泌尿生殖",
+    "result": "阴囊、睾丸和附睾未见明确异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P003",
+    "examId": "PE203",
+    "displayName": "直肠指检/前列腺",
+    "category": "男性泌尿生殖",
+    "result": "直肠指检/前列腺未见明确异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P003",
+    "examId": "PE301",
+    "displayName": "妇科查体/阴道出血",
+    "category": "女性相关",
+    "result": "本项对男性病例通常不适用。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P003",
+    "examId": "PE401",
+    "displayName": "水肿",
+    "category": "全身系统",
+    "result": "需查眼睑和双下肢水肿；本例存在肾小球性线索时尤为重要。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P003",
+    "examId": "PE402",
+    "displayName": "皮疹紫癜/关节",
+    "category": "全身系统",
+    "result": "未见明确皮疹紫癜或关节异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P003",
+    "examId": "PE403",
+    "displayName": "心肺听诊",
+    "category": "全身系统",
+    "result": "心肺听诊未见明确异常线索；如存在感染、贫血、容量负荷或围术期风险需完整记录。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P004",
+    "examId": "PE001",
+    "displayName": "体温",
+    "category": "一般情况与生命体征",
+    "result": "否认发热",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P004",
+    "examId": "PE002",
+    "displayName": "血压",
+    "category": "一般情况与生命体征",
+    "result": "需测量并记录血压；本例应特别关注血压升高线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P004",
+    "examId": "PE003",
+    "displayName": "心率/呼吸/血氧",
+    "category": "一般情况与生命体征",
+    "result": "心率、呼吸、血氧未见明确异常。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P004",
+    "examId": "PE004",
+    "displayName": "贫血貌/脱水貌/意识",
+    "category": "一般情况与生命体征",
+    "result": "一般情况尚可，意识清楚。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P004",
+    "examId": "PE101",
+    "displayName": "腹部压痛",
+    "category": "腹部与泌尿系统",
+    "result": "无尿频尿急排尿困难",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P004",
+    "examId": "PE102",
+    "displayName": "肾区叩击痛",
+    "category": "腹部与泌尿系统",
+    "result": "无痛性",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P004",
+    "examId": "PE103",
+    "displayName": "输尿管走行区压痛",
+    "category": "腹部与泌尿系统",
+    "result": "输尿管走行区未见明确压痛线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P004",
+    "examId": "PE104",
+    "displayName": "耻骨上膀胱充盈",
+    "category": "腹部与泌尿系统",
+    "result": "需触诊耻骨上区，评估膀胱充盈和血块尿潴留。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P004",
+    "examId": "PE105",
+    "displayName": "腰部包块",
+    "category": "腹部与泌尿系统",
+    "result": "需检查腰腹部包块和压痛，辅助评估肾脏占位。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P004",
+    "examId": "PE201",
+    "displayName": "外生殖器/尿道口",
+    "category": "男性泌尿生殖",
+    "result": "外生殖器和尿道口需检查有无损伤、滴血、分泌物或污染；当前病例无额外主动暴露信息。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P004",
+    "examId": "PE202",
+    "displayName": "阴囊",
+    "category": "男性泌尿生殖",
+    "result": "阴囊、睾丸和附睾未见明确异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P004",
+    "examId": "PE203",
+    "displayName": "直肠指检/前列腺",
+    "category": "男性泌尿生殖",
+    "result": "直肠指检/前列腺未见明确异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P004",
+    "examId": "PE301",
+    "displayName": "妇科查体/阴道出血",
+    "category": "女性相关",
+    "result": "本项对男性病例通常不适用。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P004",
+    "examId": "PE401",
+    "displayName": "水肿",
+    "category": "全身系统",
+    "result": "需查眼睑和双下肢水肿；本例存在肾小球性线索时尤为重要。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P004",
+    "examId": "PE402",
+    "displayName": "皮疹紫癜/关节",
+    "category": "全身系统",
+    "result": "未见明确皮疹紫癜或关节异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P004",
+    "examId": "PE403",
+    "displayName": "心肺听诊",
+    "category": "全身系统",
+    "result": "心肺听诊未见明确异常线索；如存在感染、贫血、容量负荷或围术期风险需完整记录。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P005",
+    "examId": "PE001",
+    "displayName": "体温",
+    "category": "一般情况与生命体征",
+    "result": "否认发热",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P005",
+    "examId": "PE002",
+    "displayName": "血压",
+    "category": "一般情况与生命体征",
+    "result": "血压未见明确异常。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P005",
+    "examId": "PE003",
+    "displayName": "心率/呼吸/血氧",
+    "category": "一般情况与生命体征",
+    "result": "心率、呼吸、血氧未见明确异常。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P005",
+    "examId": "PE004",
+    "displayName": "贫血貌/脱水貌/意识",
+    "category": "一般情况与生命体征",
+    "result": "一般情况尚可，意识清楚。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P005",
+    "examId": "PE101",
+    "displayName": "腹部压痛",
+    "category": "腹部与泌尿系统",
+    "result": "尿频尿急、尿线变细、尿分叉、夜尿5-6次/晚、急迫性尿失禁、排尿困难",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P005",
+    "examId": "PE102",
+    "displayName": "肾区叩击痛",
+    "category": "腹部与泌尿系统",
+    "result": "排尿困难加重时伴尿痛及下腹憋胀",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P005",
+    "examId": "PE103",
+    "displayName": "输尿管走行区压痛",
+    "category": "腹部与泌尿系统",
+    "result": "输尿管走行区未见明确压痛线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P005",
+    "examId": "PE104",
+    "displayName": "耻骨上膀胱充盈",
+    "category": "腹部与泌尿系统",
+    "result": "需触诊耻骨上区，评估膀胱充盈和血块尿潴留。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P005",
+    "examId": "PE105",
+    "displayName": "腰部包块",
+    "category": "腹部与泌尿系统",
+    "result": "未见明确腰部包块线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P005",
+    "examId": "PE201",
+    "displayName": "外生殖器/尿道口",
+    "category": "男性泌尿生殖",
+    "result": "外生殖器和尿道口需检查有无损伤、滴血、分泌物或污染；当前病例无额外主动暴露信息。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P005",
+    "examId": "PE202",
+    "displayName": "阴囊",
+    "category": "男性泌尿生殖",
+    "result": "阴囊、睾丸和附睾未见明确异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P005",
+    "examId": "PE203",
+    "displayName": "直肠指检/前列腺",
+    "category": "男性泌尿生殖",
+    "result": "需行直肠指检评估前列腺大小、质地、压痛和结节。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P005",
+    "examId": "PE301",
+    "displayName": "妇科查体/阴道出血",
+    "category": "女性相关",
+    "result": "本项对男性病例通常不适用。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P005",
+    "examId": "PE401",
+    "displayName": "水肿",
+    "category": "全身系统",
+    "result": "需查眼睑和双下肢水肿；本例存在肾小球性线索时尤为重要。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P005",
+    "examId": "PE402",
+    "displayName": "皮疹紫癜/关节",
+    "category": "全身系统",
+    "result": "未见明确皮疹紫癜或关节异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P005",
+    "examId": "PE403",
+    "displayName": "心肺听诊",
+    "category": "全身系统",
+    "result": "心肺听诊未见明确异常线索；如存在感染、贫血、容量负荷或围术期风险需完整记录。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P006",
+    "examId": "PE001",
+    "displayName": "体温",
+    "category": "一般情况与生命体征",
+    "result": "无发热寒战",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P006",
+    "examId": "PE002",
+    "displayName": "血压",
+    "category": "一般情况与生命体征",
+    "result": "需测量并记录血压；本例应特别关注血压升高线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P006",
+    "examId": "PE003",
+    "displayName": "心率/呼吸/血氧",
+    "category": "一般情况与生命体征",
+    "result": "可见感染/疼痛相关心率增快风险，需同步记录呼吸和血氧。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P006",
+    "examId": "PE004",
+    "displayName": "贫血貌/脱水貌/意识",
+    "category": "一般情况与生命体征",
+    "result": "一般情况尚可，意识清楚。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P006",
+    "examId": "PE101",
+    "displayName": "腹部压痛",
+    "category": "腹部与泌尿系统",
+    "result": "尿频明显、尿急、尿痛、尿不尽",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P006",
+    "examId": "PE102",
+    "displayName": "肾区叩击痛",
+    "category": "腹部与泌尿系统",
+    "result": "排尿刺痛、灼热感明显",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P006",
+    "examId": "PE103",
+    "displayName": "输尿管走行区压痛",
+    "category": "腹部与泌尿系统",
+    "result": "输尿管走行区未见明确压痛线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P006",
+    "examId": "PE104",
+    "displayName": "耻骨上膀胱充盈",
+    "category": "腹部与泌尿系统",
+    "result": "需触诊耻骨上区，评估膀胱充盈和血块尿潴留。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P006",
+    "examId": "PE105",
+    "displayName": "腰部包块",
+    "category": "腹部与泌尿系统",
+    "result": "未见明确腰部包块线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P006",
+    "examId": "PE201",
+    "displayName": "外生殖器/尿道口",
+    "category": "男性泌尿生殖",
+    "result": "外生殖器和尿道口需检查有无损伤、滴血、分泌物或污染；当前病例无额外主动暴露信息。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P006",
+    "examId": "PE202",
+    "displayName": "阴囊",
+    "category": "男性泌尿生殖",
+    "result": "阴囊、睾丸和附睾未见明确异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P006",
+    "examId": "PE203",
+    "displayName": "直肠指检/前列腺",
+    "category": "男性泌尿生殖",
+    "result": "直肠指检/前列腺未见明确异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P006",
+    "examId": "PE301",
+    "displayName": "妇科查体/阴道出血",
+    "category": "女性相关",
+    "result": "女性病例需排除月经、阴道出血或标本污染。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P006",
+    "examId": "PE401",
+    "displayName": "水肿",
+    "category": "全身系统",
+    "result": "需查眼睑和双下肢水肿；本例存在肾小球性线索时尤为重要。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P006",
+    "examId": "PE402",
+    "displayName": "皮疹紫癜/关节",
+    "category": "全身系统",
+    "result": "未见明确皮疹紫癜或关节异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P006",
+    "examId": "PE403",
+    "displayName": "心肺听诊",
+    "category": "全身系统",
+    "result": "心肺听诊未见明确异常线索；如存在感染、贫血、容量负荷或围术期风险需完整记录。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P007",
+    "examId": "PE001",
+    "displayName": "体温",
+    "category": "一般情况与生命体征",
+    "result": "无发热",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P007",
+    "examId": "PE002",
+    "displayName": "血压",
+    "category": "一般情况与生命体征",
+    "result": "需测量并记录血压；本例应特别关注血压升高线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P007",
+    "examId": "PE003",
+    "displayName": "心率/呼吸/血氧",
+    "category": "一般情况与生命体征",
+    "result": "心率、呼吸、血氧未见明确异常。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P007",
+    "examId": "PE004",
+    "displayName": "贫血貌/脱水貌/意识",
+    "category": "一般情况与生命体征",
+    "result": "一般情况尚可，意识清楚。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P007",
+    "examId": "PE101",
+    "displayName": "腹部压痛",
+    "category": "腹部与泌尿系统",
+    "result": "尿线变细、尿分叉、尿频、夜尿4-5次/晚、急性尿潴留",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P007",
+    "examId": "PE102",
+    "displayName": "肾区叩击痛",
+    "category": "腹部与泌尿系统",
+    "result": "排尿困难伴尿痛、下腹憋胀",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P007",
+    "examId": "PE103",
+    "displayName": "输尿管走行区压痛",
+    "category": "腹部与泌尿系统",
+    "result": "输尿管走行区未见明确压痛线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P007",
+    "examId": "PE104",
+    "displayName": "耻骨上膀胱充盈",
+    "category": "腹部与泌尿系统",
+    "result": "需触诊耻骨上区，评估膀胱充盈和血块尿潴留。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P007",
+    "examId": "PE105",
+    "displayName": "腰部包块",
+    "category": "腹部与泌尿系统",
+    "result": "未见明确腰部包块线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P007",
+    "examId": "PE201",
+    "displayName": "外生殖器/尿道口",
+    "category": "男性泌尿生殖",
+    "result": "外生殖器和尿道口需检查有无损伤、滴血、分泌物或污染；当前病例无额外主动暴露信息。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P007",
+    "examId": "PE202",
+    "displayName": "阴囊",
+    "category": "男性泌尿生殖",
+    "result": "阴囊、睾丸和附睾未见明确异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P007",
+    "examId": "PE203",
+    "displayName": "直肠指检/前列腺",
+    "category": "男性泌尿生殖",
+    "result": "需行直肠指检评估前列腺大小、质地、压痛和结节。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P007",
+    "examId": "PE301",
+    "displayName": "妇科查体/阴道出血",
+    "category": "女性相关",
+    "result": "本项对男性病例通常不适用。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P007",
+    "examId": "PE401",
+    "displayName": "水肿",
+    "category": "全身系统",
+    "result": "需查眼睑和双下肢水肿；本例存在肾小球性线索时尤为重要。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P007",
+    "examId": "PE402",
+    "displayName": "皮疹紫癜/关节",
+    "category": "全身系统",
+    "result": "未见明确皮疹紫癜或关节异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P007",
+    "examId": "PE403",
+    "displayName": "心肺听诊",
+    "category": "全身系统",
+    "result": "心肺听诊未见明确异常线索；如存在感染、贫血、容量负荷或围术期风险需完整记录。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P008",
+    "examId": "PE001",
+    "displayName": "体温",
+    "category": "一般情况与生命体征",
+    "result": "无发热",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P008",
+    "examId": "PE002",
+    "displayName": "血压",
+    "category": "一般情况与生命体征",
+    "result": "需测量并记录血压；本例应特别关注血压升高线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P008",
+    "examId": "PE003",
+    "displayName": "心率/呼吸/血氧",
+    "category": "一般情况与生命体征",
+    "result": "心率、呼吸、血氧未见明确异常。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P008",
+    "examId": "PE004",
+    "displayName": "贫血貌/脱水貌/意识",
+    "category": "一般情况与生命体征",
+    "result": "一般情况尚可，意识清楚。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P008",
+    "examId": "PE101",
+    "displayName": "腹部压痛",
+    "category": "腹部与泌尿系统",
+    "result": "排尿中断、改变体位后可继续排尿；夜尿1-2次/晚",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P008",
+    "examId": "PE102",
+    "displayName": "肾区叩击痛",
+    "category": "腹部与泌尿系统",
+    "result": "排尿时轻微刺痛，体位相关排尿中断",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P008",
+    "examId": "PE103",
+    "displayName": "输尿管走行区压痛",
+    "category": "腹部与泌尿系统",
+    "result": "输尿管走行区压痛需重点检查，符合结石/梗阻定位思路。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P008",
+    "examId": "PE104",
+    "displayName": "耻骨上膀胱充盈",
+    "category": "腹部与泌尿系统",
+    "result": "需触诊耻骨上区，评估膀胱充盈和血块尿潴留。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P008",
+    "examId": "PE105",
+    "displayName": "腰部包块",
+    "category": "腹部与泌尿系统",
+    "result": "未见明确腰部包块线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P008",
+    "examId": "PE201",
+    "displayName": "外生殖器/尿道口",
+    "category": "男性泌尿生殖",
+    "result": "外生殖器和尿道口需检查有无损伤、滴血、分泌物或污染；当前病例无额外主动暴露信息。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P008",
+    "examId": "PE202",
+    "displayName": "阴囊",
+    "category": "男性泌尿生殖",
+    "result": "阴囊、睾丸和附睾未见明确异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P008",
+    "examId": "PE203",
+    "displayName": "直肠指检/前列腺",
+    "category": "男性泌尿生殖",
+    "result": "需行直肠指检评估前列腺大小、质地、压痛和结节。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P008",
+    "examId": "PE301",
+    "displayName": "妇科查体/阴道出血",
+    "category": "女性相关",
+    "result": "本项对男性病例通常不适用。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P008",
+    "examId": "PE401",
+    "displayName": "水肿",
+    "category": "全身系统",
+    "result": "需查眼睑和双下肢水肿；本例存在肾小球性线索时尤为重要。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P008",
+    "examId": "PE402",
+    "displayName": "皮疹紫癜/关节",
+    "category": "全身系统",
+    "result": "未见明确皮疹紫癜或关节异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P008",
+    "examId": "PE403",
+    "displayName": "心肺听诊",
+    "category": "全身系统",
+    "result": "心肺听诊未见明确异常线索；如存在感染、贫血、容量负荷或围术期风险需完整记录。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P009",
+    "examId": "PE001",
+    "displayName": "体温",
+    "category": "一般情况与生命体征",
+    "result": "无发热",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P009",
+    "examId": "PE002",
+    "displayName": "血压",
+    "category": "一般情况与生命体征",
+    "result": "血压未见明确异常。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P009",
+    "examId": "PE003",
+    "displayName": "心率/呼吸/血氧",
+    "category": "一般情况与生命体征",
+    "result": "可见感染/疼痛相关心率增快风险，需同步记录呼吸和血氧。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P009",
+    "examId": "PE004",
+    "displayName": "贫血貌/脱水貌/意识",
+    "category": "一般情况与生命体征",
+    "result": "一般情况尚可，意识清楚。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P009",
+    "examId": "PE101",
+    "displayName": "腹部压痛",
+    "category": "腹部与泌尿系统",
+    "result": "尿频尿急",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P009",
+    "examId": "PE102",
+    "displayName": "肾区叩击痛",
+    "category": "腹部与泌尿系统",
+    "result": "右腰刀割样阵发性疼痛，向右下腹及会阴放射，伴恶心呕吐",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P009",
+    "examId": "PE103",
+    "displayName": "输尿管走行区压痛",
+    "category": "腹部与泌尿系统",
+    "result": "输尿管走行区压痛需重点检查，符合结石/梗阻定位思路。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P009",
+    "examId": "PE104",
+    "displayName": "耻骨上膀胱充盈",
+    "category": "腹部与泌尿系统",
+    "result": "需触诊耻骨上区，评估膀胱充盈和血块尿潴留。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P009",
+    "examId": "PE105",
+    "displayName": "腰部包块",
+    "category": "腹部与泌尿系统",
+    "result": "未见明确腰部包块线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P009",
+    "examId": "PE201",
+    "displayName": "外生殖器/尿道口",
+    "category": "男性泌尿生殖",
+    "result": "外生殖器和尿道口需检查有无损伤、滴血、分泌物或污染；当前病例无额外主动暴露信息。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P009",
+    "examId": "PE202",
+    "displayName": "阴囊",
+    "category": "男性泌尿生殖",
+    "result": "阴囊、睾丸和附睾未见明确异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P009",
+    "examId": "PE203",
+    "displayName": "直肠指检/前列腺",
+    "category": "男性泌尿生殖",
+    "result": "直肠指检/前列腺未见明确异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P009",
+    "examId": "PE301",
+    "displayName": "妇科查体/阴道出血",
+    "category": "女性相关",
+    "result": "女性病例需排除月经、阴道出血或标本污染。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P009",
+    "examId": "PE401",
+    "displayName": "水肿",
+    "category": "全身系统",
+    "result": "需查眼睑和双下肢水肿；本例存在肾小球性线索时尤为重要。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P009",
+    "examId": "PE402",
+    "displayName": "皮疹紫癜/关节",
+    "category": "全身系统",
+    "result": "未见明确皮疹紫癜或关节异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P009",
+    "examId": "PE403",
+    "displayName": "心肺听诊",
+    "category": "全身系统",
+    "result": "心肺听诊未见明确异常线索；如存在感染、贫血、容量负荷或围术期风险需完整记录。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P010",
+    "examId": "PE001",
+    "displayName": "体温",
+    "category": "一般情况与生命体征",
+    "result": "无发热",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P010",
+    "examId": "PE002",
+    "displayName": "血压",
+    "category": "一般情况与生命体征",
+    "result": "需测量并记录血压；本例应特别关注血压升高线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P010",
+    "examId": "PE003",
+    "displayName": "心率/呼吸/血氧",
+    "category": "一般情况与生命体征",
+    "result": "心率、呼吸、血氧未见明确异常。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P010",
+    "examId": "PE004",
+    "displayName": "贫血貌/脱水貌/意识",
+    "category": "一般情况与生命体征",
+    "result": "一般情况尚可，意识清楚。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P010",
+    "examId": "PE101",
+    "displayName": "腹部压痛",
+    "category": "腹部与泌尿系统",
+    "result": "无尿频尿急尿痛",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P010",
+    "examId": "PE102",
+    "displayName": "肾区叩击痛",
+    "category": "腹部与泌尿系统",
+    "result": "左侧腰部隐痛，非典型肾绞痛",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P010",
+    "examId": "PE103",
+    "displayName": "输尿管走行区压痛",
+    "category": "腹部与泌尿系统",
+    "result": "输尿管走行区压痛需重点检查，符合结石/梗阻定位思路。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P010",
+    "examId": "PE104",
+    "displayName": "耻骨上膀胱充盈",
+    "category": "腹部与泌尿系统",
+    "result": "需触诊耻骨上区，评估膀胱充盈和血块尿潴留。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P010",
+    "examId": "PE105",
+    "displayName": "腰部包块",
+    "category": "腹部与泌尿系统",
+    "result": "未见明确腰部包块线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P010",
+    "examId": "PE201",
+    "displayName": "外生殖器/尿道口",
+    "category": "男性泌尿生殖",
+    "result": "外生殖器和尿道口需检查有无损伤、滴血、分泌物或污染；当前病例无额外主动暴露信息。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P010",
+    "examId": "PE202",
+    "displayName": "阴囊",
+    "category": "男性泌尿生殖",
+    "result": "阴囊、睾丸和附睾未见明确异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P010",
+    "examId": "PE203",
+    "displayName": "直肠指检/前列腺",
+    "category": "男性泌尿生殖",
+    "result": "直肠指检/前列腺未见明确异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P010",
+    "examId": "PE301",
+    "displayName": "妇科查体/阴道出血",
+    "category": "女性相关",
+    "result": "本项对男性病例通常不适用。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P010",
+    "examId": "PE401",
+    "displayName": "水肿",
+    "category": "全身系统",
+    "result": "需查眼睑和双下肢水肿；本例存在肾小球性线索时尤为重要。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P010",
+    "examId": "PE402",
+    "displayName": "皮疹紫癜/关节",
+    "category": "全身系统",
+    "result": "未见明确皮疹紫癜或关节异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P010",
+    "examId": "PE403",
+    "displayName": "心肺听诊",
+    "category": "全身系统",
+    "result": "心肺听诊未见明确异常线索；如存在感染、贫血、容量负荷或围术期风险需完整记录。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P011",
+    "examId": "PE001",
+    "displayName": "体温",
+    "category": "一般情况与生命体征",
+    "result": "有咽痛/扁桃体炎伴发热，最高38℃",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P011",
+    "examId": "PE002",
+    "displayName": "血压",
+    "category": "一般情况与生命体征",
+    "result": "需测量并记录血压；本例应特别关注血压升高线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P011",
+    "examId": "PE003",
+    "displayName": "心率/呼吸/血氧",
+    "category": "一般情况与生命体征",
+    "result": "心率、呼吸、血氧未见明确异常。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P011",
+    "examId": "PE004",
+    "displayName": "贫血貌/脱水貌/意识",
+    "category": "一般情况与生命体征",
+    "result": "一般情况尚可，意识清楚。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P011",
+    "examId": "PE101",
+    "displayName": "腹部压痛",
+    "category": "腹部与泌尿系统",
+    "result": "无尿频尿急尿痛",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P011",
+    "examId": "PE102",
+    "displayName": "肾区叩击痛",
+    "category": "腹部与泌尿系统",
+    "result": "无尿痛；可有双腰酸胀",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P011",
+    "examId": "PE103",
+    "displayName": "输尿管走行区压痛",
+    "category": "腹部与泌尿系统",
+    "result": "输尿管走行区未见明确压痛线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P011",
+    "examId": "PE104",
+    "displayName": "耻骨上膀胱充盈",
+    "category": "腹部与泌尿系统",
+    "result": "需触诊耻骨上区，评估膀胱充盈和血块尿潴留。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P011",
+    "examId": "PE105",
+    "displayName": "腰部包块",
+    "category": "腹部与泌尿系统",
+    "result": "未见明确腰部包块线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P011",
+    "examId": "PE201",
+    "displayName": "外生殖器/尿道口",
+    "category": "男性泌尿生殖",
+    "result": "外生殖器和尿道口需检查有无损伤、滴血、分泌物或污染；当前病例无额外主动暴露信息。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P011",
+    "examId": "PE202",
+    "displayName": "阴囊",
+    "category": "男性泌尿生殖",
+    "result": "阴囊、睾丸和附睾未见明确异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P011",
+    "examId": "PE203",
+    "displayName": "直肠指检/前列腺",
+    "category": "男性泌尿生殖",
+    "result": "直肠指检/前列腺未见明确异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P011",
+    "examId": "PE301",
+    "displayName": "妇科查体/阴道出血",
+    "category": "女性相关",
+    "result": "女性病例需排除月经、阴道出血或标本污染。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P011",
+    "examId": "PE401",
+    "displayName": "水肿",
+    "category": "全身系统",
+    "result": "需查眼睑和双下肢水肿；本例存在肾小球性线索时尤为重要。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P011",
+    "examId": "PE402",
+    "displayName": "皮疹紫癜/关节",
+    "category": "全身系统",
+    "result": "需查皮疹、紫癜、关节压痛/肿胀等系统性疾病线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P011",
+    "examId": "PE403",
+    "displayName": "心肺听诊",
+    "category": "全身系统",
+    "result": "心肺听诊未见明确异常线索；如存在感染、贫血、容量负荷或围术期风险需完整记录。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P012",
+    "examId": "PE001",
+    "displayName": "体温",
+    "category": "一般情况与生命体征",
+    "result": "与感冒/上呼吸道感染相关，可无持续发热",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P012",
+    "examId": "PE002",
+    "displayName": "血压",
+    "category": "一般情况与生命体征",
+    "result": "需测量并记录血压；本例应特别关注血压升高线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P012",
+    "examId": "PE003",
+    "displayName": "心率/呼吸/血氧",
+    "category": "一般情况与生命体征",
+    "result": "心率、呼吸、血氧未见明确异常。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P012",
+    "examId": "PE004",
+    "displayName": "贫血貌/脱水貌/意识",
+    "category": "一般情况与生命体征",
+    "result": "一般情况尚可，意识清楚。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P012",
+    "examId": "PE101",
+    "displayName": "腹部压痛",
+    "category": "腹部与泌尿系统",
+    "result": "无尿频尿急尿痛",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P012",
+    "examId": "PE102",
+    "displayName": "肾区叩击痛",
+    "category": "腹部与泌尿系统",
+    "result": "无尿痛和肾绞痛",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P012",
+    "examId": "PE103",
+    "displayName": "输尿管走行区压痛",
+    "category": "腹部与泌尿系统",
+    "result": "输尿管走行区压痛需重点检查，符合结石/梗阻定位思路。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P012",
+    "examId": "PE104",
+    "displayName": "耻骨上膀胱充盈",
+    "category": "腹部与泌尿系统",
+    "result": "需触诊耻骨上区，评估膀胱充盈和血块尿潴留。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P012",
+    "examId": "PE105",
+    "displayName": "腰部包块",
+    "category": "腹部与泌尿系统",
+    "result": "未见明确腰部包块线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P012",
+    "examId": "PE201",
+    "displayName": "外生殖器/尿道口",
+    "category": "男性泌尿生殖",
+    "result": "外生殖器和尿道口需检查有无损伤、滴血、分泌物或污染；当前病例无额外主动暴露信息。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P012",
+    "examId": "PE202",
+    "displayName": "阴囊",
+    "category": "男性泌尿生殖",
+    "result": "阴囊、睾丸和附睾未见明确异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P012",
+    "examId": "PE203",
+    "displayName": "直肠指检/前列腺",
+    "category": "男性泌尿生殖",
+    "result": "直肠指检/前列腺未见明确异常线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P012",
+    "examId": "PE301",
+    "displayName": "妇科查体/阴道出血",
+    "category": "女性相关",
+    "result": "本项对男性病例通常不适用。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P012",
+    "examId": "PE401",
+    "displayName": "水肿",
+    "category": "全身系统",
+    "result": "需查眼睑和双下肢水肿；本例存在肾小球性线索时尤为重要。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P012",
+    "examId": "PE402",
+    "displayName": "皮疹紫癜/关节",
+    "category": "全身系统",
+    "result": "需查皮疹、紫癜、关节压痛/肿胀等系统性疾病线索。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  },
+  {
+    "caseId": "P012",
+    "examId": "PE403",
+    "displayName": "心肺听诊",
+    "category": "全身系统",
+    "result": "心肺听诊未见明确异常线索；如存在感染、贫血、容量负荷或围术期风险需完整记录。",
+    "teachingNote": "Exam Agent 只在学生选择或输入该查体项目后返回结果。"
+  }
+]
