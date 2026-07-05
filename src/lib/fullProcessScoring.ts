@@ -1,4 +1,7 @@
 import scoringTemplate from "@/data/scoring_template.json";
+import historyRubricJson from "@/data/hematuria_history_rubric.json";
+import questionSlotsJson from "@/data/question_slots.json";
+import diagnosticGuardrailsJson from "@/data/diagnostic_guardrails.json";
 import type { CaseData, ScoringTemplateItem, StageKey } from "./types";
 
 export type StageEvaluation = {
@@ -74,6 +77,35 @@ const synonymGroups = [
   ["抗感染", "抗生素", "抗菌药"],
   ["随访", "复查", "门诊复诊"]
 ];
+
+type HistoryRubricItem = {
+  dimension: string;
+  item: string;
+  max: number;
+  scoringDetails: string;
+  displayRule: string;
+  slotIds: string[];
+};
+
+type QuestionSlot = {
+  slotId: string;
+  label: string;
+  recommendedQuestion?: string;
+  triggers?: string[];
+  missingFeedback?: string;
+};
+
+type DiagnosticGuardrail = {
+  id: string;
+  title: string;
+  rule: string;
+  triggerSlots: string[];
+  feedback: string;
+};
+
+const historyRubric = historyRubricJson as HistoryRubricItem[];
+const questionSlots = questionSlotsJson as QuestionSlot[];
+const diagnosticGuardrails = diagnosticGuardrailsJson as DiagnosticGuardrail[];
 
 function normalize(text: string) {
   return text.toLowerCase().replace(/\s+/g, "");
@@ -177,7 +209,140 @@ function hasInText(text: string, words: string[]) {
   return words.some((word) => text.includes(word));
 }
 
+function slotById(slotId: string) {
+  return questionSlots.find((slot) => slot.slotId === slotId);
+}
+
+function historySlotHit(answer: string, slotId: string) {
+  const slot = slotById(slotId);
+  if (!slot) return false;
+  const candidates = [
+    slot.slotId,
+    slot.label,
+    slot.recommendedQuestion ?? "",
+    ...(slot.triggers ?? [])
+  ]
+    .map((item) => item.trim())
+    .filter((item) => item.length >= 2);
+  return candidates.some((keyword) => keywordHit(answer, keyword));
+}
+
+function historyDimensionScore(answer: string, item: HistoryRubricItem) {
+  if (!item.slotIds.length) {
+    return {
+      score: answer.trim() ? Math.round(item.max * 0.6) : 0,
+      hits: [] as string[],
+      misses: [] as string[]
+    };
+  }
+
+  const hits = item.slotIds.filter((slotId) => historySlotHit(answer, slotId));
+  const misses = item.slotIds.filter((slotId) => !historySlotHit(answer, slotId));
+  const ratio = hits.length / item.slotIds.length;
+  const expressionBonus = answer.trim().length > 120 ? 0.08 : 0;
+  return {
+    score: Math.round(Math.min(1, ratio + expressionBonus) * item.max),
+    hits: hits.map((slotId) => slotById(slotId)?.label || slotId),
+    misses: misses.map((slotId) => slotById(slotId)?.label || slotId)
+  };
+}
+
+function caseLooksLike(caseData: CaseData, words: string[]) {
+  const source = [
+    caseData.diseaseCategory,
+    caseData.diagnosis,
+    caseData.clinical?.diseaseCategory,
+    caseData.clinical?.redFlags,
+    caseData.clinical?.primaryProblem,
+    caseData.clinical?.keyHistory,
+    caseData.sex
+  ].filter(Boolean).join(" ");
+  return hasInText(source, words);
+}
+
+function historyGuardrailWarnings(caseData: CaseData, answer: string) {
+  const warnings: string[] = [];
+  const missing = (slotId: string) => !historySlotHit(answer, slotId);
+
+  if (missing("HX003")) warnings.push("血尿需先确认是真性血尿、肉眼血尿还是镜下血尿，不能只凭尿色判断。");
+  if (missing("HX005")) warnings.push("血尿时相是定位线索，需询问起始、终末或全程血尿。");
+
+  if (caseLooksLike(caseData, ["肾小球", "IgA", "肾炎"]) && (missing("HX013") || missing("HX014"))) {
+    warnings.push("本例需启动肾小球性血尿安全网：泡沫尿、水肿、高血压、上感或咽痛后血尿不能漏问。");
+  }
+
+  if (caseLooksLike(caseData, ["肿瘤", "癌"]) && (missing("HX007") || missing("HX019") || missing("HX020"))) {
+    warnings.push("高龄、无痛肉眼血尿、血块、吸烟和职业暴露是泌尿系肿瘤风险线索。");
+  }
+
+  if (caseLooksLike(caseData, ["感染", "肾盂肾炎", "尿路感染"]) && (missing("HX010") || missing("HX012"))) {
+    warnings.push("感染性血尿需追问尿频尿急尿痛、发热寒战和腰痛。");
+  }
+
+  if (caseLooksLike(caseData, ["结石"]) && missing("HX009")) {
+    warnings.push("血尿伴肾绞痛或放射痛提示结石，疼痛性质不能漏问。");
+  }
+
+  if (caseData.sex.includes("女") && missing("HX021")) {
+    warnings.push("女性血尿样表现需排除月经、阴道出血或妇科污染。");
+  }
+
+  if (missing("HX018")) warnings.push("抗凝药或抗血小板药不能作为血尿唯一解释，仍需排查器质性病变。");
+  if (missing("HX024")) warnings.push("血尿合并鼻出血、牙龈出血、瘀斑紫癜时需考虑全身性出血倾向。");
+
+  const guardrailTips = diagnosticGuardrails
+    .filter((guardrail) => guardrail.triggerSlots.some((slotId) => historySlotHit(answer, slotId)))
+    .map((guardrail) => guardrail.feedback)
+    .slice(0, 4);
+
+  return uniq([...warnings, ...guardrailTips]);
+}
+
+function evaluateHistoryStage(caseData: CaseData, answer: string): StageEvaluation {
+  const dimensionResults = historyRubric.map((item) => {
+    const result = historyDimensionScore(answer, item);
+    return {
+      item,
+      ...result
+    };
+  });
+
+  const max = historyRubric.reduce((sum, item) => sum + item.max, 0);
+  const rawScore = dimensionResults.reduce((sum, item) => sum + item.score, 0);
+  const warnings = historyGuardrailWarnings(caseData, answer);
+  const score = Math.max(0, Math.min(max, rawScore - warnings.length));
+  const hits = dimensionResults
+    .filter((item) => item.hits.length)
+    .map((item) => `${item.item.dimension}. ${item.item.item}：${item.score}/${item.item.max}，命中 ${item.hits.join("、")}`);
+  const misses = dimensionResults
+    .filter((item) => item.misses.length)
+    .map((item) => `${item.item.dimension}. ${item.item.item}：漏问 ${item.misses.join("、")}`);
+
+  return {
+    stageKey: "history",
+    max,
+    score,
+    hits,
+    misses,
+    warnings,
+    standardAnswer: [
+      caseData.clinical?.keyHistory,
+      caseData.standardSummary,
+      "诊断学安全网：确认真性血尿，追问时相、颜色、血块、疼痛、尿路刺激征、感染表现、肾小球线索、用药、吸烟职业暴露、女性污染和全身出血倾向。"
+    ].filter(Boolean).join("\n\n"),
+    comment: score >= max * 0.85
+      ? "病史采集较完整，能覆盖血尿诊断学关键线索。"
+      : score >= max * 0.6
+        ? "已覆盖部分核心问题，但仍需补齐定位线索、危险因素或安全网问题。"
+        : "病史采集覆盖不足，建议按血尿 OSCE 问诊框架重新梳理。"
+  };
+}
+
 export function evaluateStage(caseData: CaseData, stageKey: StageKey, answer: string, max = 20): StageEvaluation {
+  if (stageKey === "history") {
+    return evaluateHistoryStage(caseData, answer);
+  }
+
   const standardAnswer = stageStandard(caseData, stageKey);
   const result = scoreKeywords(answer, standardAnswer, max);
   const warnings = warningChecks(caseData, stageKey, answer);

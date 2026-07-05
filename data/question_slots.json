@@ -1,335 +1,414 @@
 [
   {
     "slotId": "HX001",
-    "label": "主诉/哪里不舒服",
-    "recommendedQuestion": "您这次主要为什么来看病？",
+    "label": "开场与身份核对",
+    "recommendedQuestion": "您叫什么名字？我可以问您几个问题吗？",
     "triggers": [
-      "您这次主要为什么来看病？"
+      "核对患者身份",
+      "自我介绍",
+      "说明目的",
+      "取得配合"
     ],
-    "wideField": "主诉/哪里不舒服",
+    "wideField": "患者回应身份与配合程度",
     "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "score": 1,
+    "missingFeedback": "沟通基础",
+    "displayRule": "提交后计分"
   },
   {
     "slotId": "HX002",
-    "label": "血尿可见性",
-    "recommendedQuestion": "尿是肉眼能看到红，还是体检尿检发现？",
+    "label": "主诉与持续时间",
+    "recommendedQuestion": "您这次主要哪里不舒服？多久了？",
     "triggers": [
-      "尿是肉眼能看到红，还是体检尿检发现？"
+      "主要症状或体征",
+      "发生多久"
     ],
-    "wideField": "血尿可见性",
-    "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "wideField": "主诉和持续时间",
+    "isKey": true,
+    "score": 5,
+    "missingFeedback": "主诉",
+    "displayRule": "提交后计分"
   },
   {
     "slotId": "HX003",
-    "label": "起病时间",
-    "recommendedQuestion": "什么时候开始出现血尿或排尿症状？",
+    "label": "血尿可见性",
+    "recommendedQuestion": "尿红是肉眼能看到，还是体检发现？",
     "triggers": [
-      "什么时候开始出现血尿或排尿症状？"
+      "肉眼血尿或镜下血尿"
     ],
-    "wideField": "起病时间",
-    "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "wideField": "可见性",
+    "isKey": true,
+    "score": 4,
+    "missingFeedback": "血尿核心",
+    "displayRule": "提交前不提示具体词"
   },
   {
     "slotId": "HX004",
-    "label": "血尿频率",
-    "recommendedQuestion": "血尿是持续还是间断？",
+    "label": "起病情况",
+    "recommendedQuestion": "什么时候开始尿血的？突然还是慢慢出现？",
     "triggers": [
-      "血尿是持续还是间断？"
+      "起病急缓",
+      "首次出现时间"
     ],
-    "wideField": "血尿频率",
-    "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "wideField": "起病时间与急缓",
+    "isKey": true,
+    "score": 4,
+    "missingFeedback": "现病史",
+    "displayRule": ""
   },
   {
     "slotId": "HX005",
     "label": "血尿时相",
-    "recommendedQuestion": "刚开始红、快尿完红，还是从头到尾都红？",
+    "recommendedQuestion": "刚开始红、最后红，还是一直红？",
     "triggers": [
-      "刚开始红",
-      "快尿完红，还是从头到尾都红？"
+      "起始",
+      "终末",
+      "全程",
+      "镜下"
     ],
-    "wideField": "血尿时相",
-    "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "wideField": "分段尿/时相",
+    "isKey": true,
+    "score": 8,
+    "missingFeedback": "血尿核心",
+    "displayRule": "高权重"
   },
   {
     "slotId": "HX006",
-    "label": "是否一直红",
-    "recommendedQuestion": "是不是整泡尿一直红？",
+    "label": "颜色性状",
+    "recommendedQuestion": "尿是什么颜色？像鲜红、洗肉水还是茶色？",
     "triggers": [
-      "是不是整泡尿一直红？"
+      "鲜红",
+      "暗红",
+      "洗肉水",
+      "茶色",
+      "酱油色"
     ],
-    "wideField": "是否一直红",
+    "wideField": "尿色",
     "isKey": true,
     "score": 5,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "missingFeedback": "血尿核心",
+    "displayRule": ""
   },
   {
     "slotId": "HX007",
-    "label": "尿色",
-    "recommendedQuestion": "尿是什么颜色？鲜红、洗肉水样、茶色还是酱油色？",
+    "label": "血块",
+    "recommendedQuestion": "有没有血块或血凝块？",
     "triggers": [
-      "尿是什么颜色？鲜红",
-      "洗肉水样",
-      "茶色还是酱油色？"
+      "有无血块",
+      "大小",
+      "频率"
     ],
-    "wideField": "尿色",
-    "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "wideField": "血块情况",
+    "isKey": true,
+    "score": 5,
+    "missingFeedback": "血尿核心",
+    "displayRule": ""
   },
   {
     "slotId": "HX008",
-    "label": "血块",
-    "recommendedQuestion": "有没有血块？是什么形状？",
+    "label": "血尿量与频率",
+    "recommendedQuestion": "每次都有吗？量多不多？",
     "triggers": [
-      "有没有血块？是什么形状？"
+      "每次量",
+      "是否每次排尿均有",
+      "间断",
+      "持续"
     ],
-    "wideField": "血块",
-    "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "wideField": "频率和出血量",
+    "isKey": true,
+    "score": 4,
+    "missingFeedback": "血尿核心",
+    "displayRule": ""
   },
   {
     "slotId": "HX009",
-    "label": "尿痛",
-    "recommendedQuestion": "小便时痛不痛？",
+    "label": "疼痛关系",
+    "recommendedQuestion": "小便疼吗？腰痛吗？会放到腹股沟吗？",
     "triggers": [
-      "小便时痛不痛？"
+      "排尿痛",
+      "腰痛",
+      "肾绞痛",
+      "放射痛"
     ],
-    "wideField": "尿痛",
-    "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "wideField": "疼痛定位",
+    "isKey": true,
+    "score": 6,
+    "missingFeedback": "鉴别诊断",
+    "displayRule": ""
   },
   {
     "slotId": "HX010",
-    "label": "尿频尿急",
-    "recommendedQuestion": "有没有尿频、尿急、尿不尽？",
+    "label": "尿路刺激征",
+    "recommendedQuestion": "有没有尿频尿急尿痛？",
     "triggers": [
-      "有没有尿频",
+      "尿频",
       "尿急",
-      "尿不尽？"
+      "尿痛",
+      "尿不尽"
     ],
-    "wideField": "尿频尿急",
-    "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "wideField": "LUTS",
+    "isKey": true,
+    "score": 5,
+    "missingFeedback": "感染/膀胱刺激",
+    "displayRule": ""
   },
   {
     "slotId": "HX011",
-    "label": "排尿困难",
-    "recommendedQuestion": "尿线变细、排尿费力、排尿中断或尿潴留吗？",
+    "label": "梗阻症状",
+    "recommendedQuestion": "尿线变细或排尿费力吗？会突然断流吗？",
     "triggers": [
-      "尿线变细",
-      "排尿费力",
-      "排尿中断或尿潴留吗？"
+      "尿线细",
+      "排尿困难",
+      "尿流中断",
+      "尿潴留"
     ],
-    "wideField": "排尿困难",
-    "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "wideField": "梗阻/结石/前列腺线索",
+    "isKey": true,
+    "score": 4,
+    "missingFeedback": "下尿路",
+    "displayRule": ""
   },
   {
     "slotId": "HX012",
-    "label": "腰痛/肾绞痛",
-    "recommendedQuestion": "有没有腰痛？疼痛会不会放射到腹股沟或会阴？",
+    "label": "感染症状",
+    "recommendedQuestion": "有没有发热寒战？腰痛或会阴痛？",
     "triggers": [
-      "有没有腰痛？疼痛会不会放射到腹股沟或会阴？"
+      "发热",
+      "寒战",
+      "畏寒",
+      "腰痛",
+      "会阴痛"
     ],
-    "wideField": "腰痛/肾绞痛",
-    "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "wideField": "感染线索",
+    "isKey": true,
+    "score": 5,
+    "missingFeedback": "急症识别",
+    "displayRule": ""
   },
   {
     "slotId": "HX013",
-    "label": "发热寒战",
-    "recommendedQuestion": "有没有发热、寒战？",
+    "label": "肾小球线索",
+    "recommendedQuestion": "有没有泡沫尿、眼睑或下肢水肿？血压高吗？",
     "triggers": [
-      "有没有发热",
-      "寒战？"
+      "泡沫尿",
+      "水肿",
+      "高血压"
     ],
-    "wideField": "发热寒战",
-    "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "wideField": "肾小球线索",
+    "isKey": true,
+    "score": 6,
+    "missingFeedback": "肾内安全网",
+    "displayRule": ""
   },
   {
     "slotId": "HX014",
-    "label": "恶心呕吐",
-    "recommendedQuestion": "有没有恶心呕吐？",
+    "label": "上感/咽痛后血尿",
+    "recommendedQuestion": "最近感冒、咽痛后尿色变深吗？",
     "triggers": [
-      "有没有恶心呕吐？"
+      "近期感冒咽痛",
+      "扁桃体炎后出现血尿"
     ],
-    "wideField": "恶心呕吐",
-    "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "wideField": "感染后血尿线索",
+    "isKey": true,
+    "score": 4,
+    "missingFeedback": "肾内安全网",
+    "displayRule": ""
   },
   {
     "slotId": "HX015",
-    "label": "泡沫尿/水肿",
-    "recommendedQuestion": "有没有泡沫尿、水肿？",
+    "label": "诱因",
+    "recommendedQuestion": "发作前有运动、受凉、同房、外伤或插尿管吗？",
     "triggers": [
-      "有没有泡沫尿",
-      "水肿？"
+      "运动",
+      "劳累",
+      "受凉",
+      "性生活",
+      "外伤",
+      "尿路操作"
     ],
-    "wideField": "泡沫尿/水肿",
-    "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "wideField": "诱因",
+    "isKey": true,
+    "score": 5,
+    "missingFeedback": "现病史",
+    "displayRule": ""
   },
   {
     "slotId": "HX016",
-    "label": "上感咽痛",
-    "recommendedQuestion": "最近有没有感冒、咽痛、扁桃体炎？",
+    "label": "既往泌尿史",
+    "recommendedQuestion": "以前有结石、尿路感染或泌尿系手术吗？",
     "triggers": [
-      "最近有没有感冒",
-      "咽痛",
-      "扁桃体炎？"
+      "结石",
+      "感染",
+      "肿瘤",
+      "前列腺",
+      "手术史"
     ],
-    "wideField": "上感咽痛",
-    "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "wideField": "既往泌尿史",
+    "isKey": true,
+    "score": 5,
+    "missingFeedback": "既往史",
+    "displayRule": ""
   },
   {
     "slotId": "HX017",
-    "label": "体重食欲",
-    "recommendedQuestion": "最近体重、食欲有没有变化？",
+    "label": "慢性病史",
+    "recommendedQuestion": "有没有高血压、糖尿病、肾病、心脏病？",
     "triggers": [
-      "最近体重",
-      "食欲有没有变化？"
+      "高血压",
+      "糖尿病",
+      "肾病",
+      "冠心病",
+      "房颤等"
     ],
-    "wideField": "体重食欲",
-    "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "wideField": "慢性病",
+    "isKey": true,
+    "score": 5,
+    "missingFeedback": "既往史",
+    "displayRule": ""
   },
   {
     "slotId": "HX018",
-    "label": "月经/阴道污染",
-    "recommendedQuestion": "女性是否在月经期或有阴道出血？",
+    "label": "药物史",
+    "recommendedQuestion": "长期吃阿司匹林、氯吡格雷、华法林或止痛药吗？",
     "triggers": [
-      "女性是否在月经期或有阴道出血？"
+      "抗凝",
+      "抗血小板",
+      "止痛药",
+      "抗生素",
+      "肾毒性药物"
     ],
-    "wideField": "月经/阴道污染",
-    "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "wideField": "药物线索",
+    "isKey": true,
+    "score": 5,
+    "missingFeedback": "药物/围术期",
+    "displayRule": ""
   },
   {
     "slotId": "HX019",
-    "label": "运动外伤操作",
-    "recommendedQuestion": "有没有运动、外伤、导尿、膀胱镜或手术操作诱因？",
+    "label": "吸烟饮酒",
+    "recommendedQuestion": "抽烟吗？抽了多少年？",
     "triggers": [
-      "有没有运动",
-      "外伤",
-      "导尿",
-      "膀胱镜或手术操作诱因？"
+      "吸烟包年",
+      "饮酒"
     ],
-    "wideField": "运动外伤操作",
-    "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "wideField": "吸烟饮酒",
+    "isKey": true,
+    "score": 4,
+    "missingFeedback": "肿瘤风险",
+    "displayRule": ""
   },
   {
     "slotId": "HX020",
-    "label": "既往病史",
-    "recommendedQuestion": "以前有什么病？高血压、糖尿病、冠心病、肾病、结石、肿瘤？",
+    "label": "职业暴露",
+    "recommendedQuestion": "做什么工作？接触染料、化工、重金属吗？",
     "triggers": [
-      "以前有什么病？高血压",
-      "糖尿病",
-      "冠心病",
-      "肾病",
-      "结石",
-      "肿瘤？"
+      "染料",
+      "橡胶",
+      "皮革",
+      "化工",
+      "重金属等"
     ],
-    "wideField": "既往病史",
-    "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "wideField": "职业暴露",
+    "isKey": true,
+    "score": 4,
+    "missingFeedback": "肿瘤风险",
+    "displayRule": ""
   },
   {
     "slotId": "HX021",
-    "label": "用药史",
-    "recommendedQuestion": "有没有长期吃阿司匹林、氯吡格雷、华法林、利伐沙班或其他药？",
+    "label": "女性相关/假性血尿",
+    "recommendedQuestion": "最近来月经吗？有没有阴道出血或怀孕可能？",
     "triggers": [
-      "有没有长期吃阿司匹林",
-      "氯吡格雷",
-      "华法林",
-      "利伐沙班或其他药？"
+      "月经",
+      "阴道出血",
+      "妊娠",
+      "妇科病史"
     ],
-    "wideField": "用药史",
-    "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "wideField": "女性假性血尿",
+    "isKey": true,
+    "score": 4,
+    "missingFeedback": "假性血尿",
+    "displayRule": "女性病例必问"
   },
   {
     "slotId": "HX022",
-    "label": "过敏手术输血",
-    "recommendedQuestion": "有没有药物过敏、手术史、输血史？",
+    "label": "诊治经过",
+    "recommendedQuestion": "之前查过什么？吃过什么药？效果如何？",
     "triggers": [
-      "有没有药物过敏",
-      "手术史",
-      "输血史？"
+      "外院检查",
+      "诊断",
+      "用药",
+      "疗效"
     ],
-    "wideField": "过敏手术输血",
-    "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "wideField": "诊治经过",
+    "isKey": true,
+    "score": 4,
+    "missingFeedback": "现病史",
+    "displayRule": "不得让患者报CT细节"
   },
   {
     "slotId": "HX023",
-    "label": "吸烟饮酒职业",
-    "recommendedQuestion": "是否吸烟、饮酒，是否有染料、化工、皮革、橡胶等职业暴露？",
+    "label": "全身状态",
+    "recommendedQuestion": "最近胃口、体重、睡眠、大便怎么样？",
     "triggers": [
-      "是否吸烟",
-      "饮酒，是否有染料",
-      "化工",
-      "皮革",
-      "橡胶等职业暴露？"
+      "精神",
+      "食欲",
+      "睡眠",
+      "大小便",
+      "体重变化"
     ],
-    "wideField": "吸烟饮酒职业",
-    "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "wideField": "一般情况",
+    "isKey": true,
+    "score": 4,
+    "missingFeedback": "全身状态",
+    "displayRule": ""
   },
   {
     "slotId": "HX024",
-    "label": "家族史",
-    "recommendedQuestion": "家里有没有肿瘤、肾病或类似血尿病史？",
+    "label": "出血倾向",
+    "recommendedQuestion": "有鼻出血、牙龈出血、皮肤瘀斑吗？",
     "triggers": [
-      "家里有没有肿瘤",
-      "肾病或类似血尿病史？"
+      "鼻出血",
+      "牙龈出血",
+      "皮肤瘀斑紫癜"
     ],
-    "wideField": "家族史",
+    "wideField": "全身出血倾向",
     "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "score": 3,
+    "missingFeedback": "全身性疾病",
+    "displayRule": ""
   },
   {
     "slotId": "HX025",
-    "label": "一般情况",
-    "recommendedQuestion": "大便、饮食、睡眠、体重怎么样？",
+    "label": "家族史",
+    "recommendedQuestion": "家里有人尿血、肾病或听力问题吗？",
     "triggers": [
-      "大便",
-      "饮食",
-      "睡眠",
-      "体重怎么样？"
+      "类似血尿",
+      "肾病",
+      "听力异常",
+      "遗传病"
     ],
-    "wideField": "一般情况",
+    "wideField": "家族史",
     "isKey": false,
-    "score": 2,
-    "missingFeedback": "用于Patient Agent；不能主动泄露。"
+    "score": 3,
+    "missingFeedback": "遗传/肾内",
+    "displayRule": ""
+  },
+  {
+    "slotId": "HX026",
+    "label": "沟通技巧",
+    "recommendedQuestion": "系统根据问题形式和结束语判断",
+    "triggers": [
+      "避免诱导",
+      "多问题连问",
+      "使用通俗语言",
+      "共情",
+      "结束告知"
+    ],
+    "wideField": "技巧评分",
+    "isKey": true,
+    "score": 8,
+    "missingFeedback": "问诊技巧",
+    "displayRule": "后台评分"
   }
 ]

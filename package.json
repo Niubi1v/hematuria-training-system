@@ -8,9 +8,10 @@
     "build:github": "next build",
     "preview": "node scripts/serve-static.mjs",
     "test:patient": "tsx scripts/test-patient-agent.ts",
+    "test:history": "tsx scripts/test-history-rubric.ts",
     "start": "next dev",
     "lint": "next lint",
-    "convert:excel": "tsx scripts/convert-tutor-template-cases.ts work/source/v2_only_cases.xlsx data && tsx scripts/convert-frontend-fixes.ts work/source/frontend_order_consult_fix.xlsx data"
+    "convert:excel": "tsx scripts/convert-tutor-template-cases.ts work/source/v2_only_cases.xlsx data && tsx scripts/convert-frontend-fixes.ts work/source/frontend_order_consult_fix.xlsx data && tsx scripts/convert-diagnostic-knowledge.ts work/source/hematuria_diagnostics_scoring_rules.xlsx data"
   },
   "dependencies": {
     "clsx": "^2.1.1",

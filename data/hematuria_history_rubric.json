@@ -1,0 +1,129 @@
+[
+  {
+    "dimension": "A",
+    "item": "沟通与开场",
+    "max": 5,
+    "scoringDetails": "核对身份1，自我介绍1，说明目的和取得配合1，隐私保护1，基本礼貌1",
+    "displayRule": "提交后显示；OSCE模式结束后显示",
+    "slotIds": [
+      "HX001"
+    ],
+    "originalMax": 5
+  },
+  {
+    "dimension": "B",
+    "item": "主诉与起病",
+    "max": 7,
+    "scoringDetails": "主诉准确3，持续时间2，起病急缓2，首次发作/复发1",
+    "displayRule": "",
+    "slotIds": [
+      "HX002",
+      "HX004"
+    ],
+    "originalMax": 8
+  },
+  {
+    "dimension": "C",
+    "item": "血尿核心特征",
+    "max": 24,
+    "scoringDetails": "肉眼/镜下4，时相8，颜色5，血块5，出血量/频率/间断持续4",
+    "displayRule": "最高权重；提交前绝不显示具体漏项",
+    "slotIds": [
+      "HX003",
+      "HX005",
+      "HX006",
+      "HX007",
+      "HX008"
+    ],
+    "originalMax": 26
+  },
+  {
+    "dimension": "D",
+    "item": "诱因与演变",
+    "max": 7,
+    "scoringDetails": "诱因5，病情变化和加重缓解3",
+    "displayRule": "诱因包括运动/受凉/劳累/外伤/操作/性生活/药物",
+    "slotIds": [
+      "HX015",
+      "HX008"
+    ],
+    "originalMax": 8
+  },
+  {
+    "dimension": "E",
+    "item": "伴随症状与定位",
+    "max": 16,
+    "scoringDetails": "疼痛和放射6，尿路刺激征5，感染症状5，梗阻症状2",
+    "displayRule": "感染性梗阻病例高危扣分项",
+    "slotIds": [
+      "HX009",
+      "HX010",
+      "HX011",
+      "HX012"
+    ],
+    "originalMax": 18
+  },
+  {
+    "dimension": "F",
+    "item": "肾小球/全身安全网",
+    "max": 11,
+    "scoringDetails": "泡沫尿水肿血压6，上感后血尿4，出血倾向2",
+    "displayRule": "肾小球性病例必问",
+    "slotIds": [
+      "HX013",
+      "HX014",
+      "HX024"
+    ],
+    "originalMax": 12
+  },
+  {
+    "dimension": "G",
+    "item": "既往史与用药",
+    "max": 9,
+    "scoringDetails": "泌尿系既往史5，慢性病史2，抗凝/抗血小板/肾毒性药物3",
+    "displayRule": "抗凝不能作为唯一解释",
+    "slotIds": [
+      "HX016",
+      "HX017",
+      "HX018"
+    ],
+    "originalMax": 10
+  },
+  {
+    "dimension": "H",
+    "item": "风险因素与特殊人群",
+    "max": 6,
+    "scoringDetails": "吸烟2，职业暴露2，女性月经/阴道污染2，家族史1",
+    "displayRule": "高危肉眼血尿病例重点",
+    "slotIds": [
+      "HX019",
+      "HX020",
+      "HX021",
+      "HX025"
+    ],
+    "originalMax": 7
+  },
+  {
+    "dimension": "I",
+    "item": "诊治经过与一般情况",
+    "max": 5,
+    "scoringDetails": "外院检查/治疗/疗效3，精神饮食睡眠大小便体重3",
+    "displayRule": "患者端不直接吐影像报告",
+    "slotIds": [
+      "HX022",
+      "HX023"
+    ],
+    "originalMax": 6
+  },
+  {
+    "dimension": "J",
+    "item": "问诊技巧",
+    "max": 10,
+    "scoringDetails": "逻辑清晰2，无诱导/诘难/连续性提问2，通俗解释1，共情2，不编造1，结束感谢和告知下一步2",
+    "displayRule": "由日志和输入质量评分",
+    "slotIds": [
+      "HX026"
+    ],
+    "originalMax": 10
+  }
+]
