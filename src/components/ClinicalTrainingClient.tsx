@@ -804,7 +804,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
               <div ref={chatScrollRef} className="mt-4 h-[360px] space-y-4 overflow-y-auto rounded-md border border-clinic-line bg-clinic-paper p-4">
                 {messages.map((message, index) => (
                   <div key={`${message.role}-${index}`} className={`flex ${message.role === "student" ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[78%] rounded-lg px-4 py-3 text-sm leading-6 ${message.role === "student" ? "bg-clinic-blue text-white" : "bg-white text-clinic-ink"}`}>{message.text}</div>
+                    <div className={`max-w-[78%] whitespace-pre-line rounded-lg px-4 py-3 text-sm leading-6 ${message.role === "student" ? "bg-clinic-blue text-white" : "bg-white text-clinic-ink"}`}>{message.text}</div>
                   </div>
                 ))}
               </div>
