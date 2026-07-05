@@ -112,16 +112,17 @@ const emptyAnswers: FullProcessAnswers = {
 };
 
 function sessionKey(caseId: string) {
-  return `hematuria-v2-only-session-${caseId}`;
+  return `hematuria-v2-patient-safe-session-${caseId}`;
 }
 
 function clearLegacyTrainingCache() {
   const versionKey = "hematuria-case-library-version";
-  if (localStorage.getItem(versionKey) === "V2-only") return;
+  if (localStorage.getItem(versionKey) === "V2-patient-safe") return;
   Object.keys(localStorage).forEach((key) => {
     if (
       key.startsWith("hematuria-full-process") ||
       key.startsWith("hematuria-v2-only-session") ||
+      key.startsWith("hematuria-v2-patient-safe-session") ||
       key.startsWith("hematuria-case-draft") ||
       key.startsWith("hematuria-manual-score") ||
       key === "hematuria-new-case-drafts" ||
@@ -130,7 +131,7 @@ function clearLegacyTrainingCache() {
       localStorage.removeItem(key);
     }
   });
-  localStorage.setItem(versionKey, "V2-only");
+  localStorage.setItem(versionKey, "V2-patient-safe");
 }
 
 function safeJson<T>(value: string | null, fallback: T): T {
