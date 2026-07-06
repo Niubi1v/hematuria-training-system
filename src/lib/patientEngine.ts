@@ -223,6 +223,15 @@ function answerPain(caseData: CaseData, question: string) {
   return firstUsable(legacyAnswer(caseData, "HX009"), legacyAnswer(caseData, "HX012"), illness.pain) || "没有明显疼痛。";
 }
 
+function patientPhaseText(value: string) {
+  const clean = cleanValue(value);
+  if (clean.includes("全程")) return "我整个排尿过程都是红的。";
+  if (clean.includes("终末") || clean.includes("最后")) return "主要是快尿完时更红。";
+  if (clean.includes("起始") || clean.includes("开始")) return "主要是一开始小便时更红。";
+  if (clean.includes("镜下")) return "肉眼看不出来，是化验发现的。";
+  return clean;
+}
+
 function answerFromSlot(caseData: CaseData, slotId: string, question: string) {
   const illness = caseData.presentIllness;
   const risk = caseData.riskFactors;
@@ -237,7 +246,7 @@ function answerFromSlot(caseData: CaseData, slotId: string, question: string) {
     case "HX004":
       return [firstUsable(legacyAnswer(caseData, "HX003"), illness.onset) || "开始得比较突然，具体诱因我说不清。"];
     case "HX005":
-      return [firstUsable(legacyAnswer(caseData, "HX005"), legacyAnswer(caseData, "HX006"), caseData.patientAnswers?.phase, illness.hematuriaPhase) || "我没有特别分清是刚开始红还是最后红。"];
+      return [patientPhaseText(firstUsable(legacyAnswer(caseData, "HX005"), legacyAnswer(caseData, "HX006"), caseData.patientAnswers?.phase, illness.hematuriaPhase)) || "我没有特别分清是刚开始红还是最后红。"];
     case "HX006":
       return [firstUsable(legacyAnswer(caseData, "HX007"), caseData.patientAnswers?.color, illness.color) || "尿液颜色看起来偏红。"];
     case "HX007":
@@ -290,9 +299,9 @@ function answerFromSlot(caseData: CaseData, slotId: string, question: string) {
 }
 
 function matchByStrongRules(question: string) {
-  if (hasAny(question, ["鲜红", "暗红", "洗肉水", "茶色", "酱油色", "颜色", "红色"])) return ["HX006"];
-  if (hasAny(question, ["血块", "血凝块", "凝血块", "块状"])) return ["HX007"];
   if (hasAny(question, ["一直红", "全程", "开始红", "终末", "快尿完", "最后才红", "第一杯", "第三杯", "一开始", "从头到尾"])) return ["HX005"];
+  if (hasAny(question, ["血块", "血凝块", "凝血块", "块状"])) return ["HX007"];
+  if (hasAny(question, ["鲜红", "暗红", "洗肉水", "茶色", "酱油色", "颜色", "红色"])) return ["HX006"];
   if (hasAny(question, ["肉眼", "镜下", "看得见", "尿检发现", "尿本身红"])) return ["HX003"];
   if (hasAny(question, ["多久", "什么时候", "几天", "几周", "几个月", "开始", "起病"])) return ["HX002"];
   if (hasAny(question, ["突然", "诱因", "怎么开始", "无明显诱因"])) return ["HX004"];

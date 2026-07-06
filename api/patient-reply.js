@@ -67,6 +67,15 @@ function firstUsable(...values) {
   return values.map(cleanValue).find((value) => value && !isUnknown(value)) || "";
 }
 
+function patientPhaseText(value) {
+  const clean = cleanValue(value);
+  if (clean.includes("全程")) return "我整个排尿过程都是红的。";
+  if (clean.includes("终末") || clean.includes("最后")) return "主要是快尿完时更红。";
+  if (clean.includes("起始") || clean.includes("开始")) return "主要是一开始小便时更红。";
+  if (clean.includes("镜下")) return "肉眼看不出来，是化验发现的。";
+  return clean;
+}
+
 function legacyAnswer(caseData, slotId) {
   return caseData.interviewAnswers?.[slotId]?.patientAnswer || "";
 }
@@ -94,9 +103,9 @@ function filterReply(text) {
 function matchSlot(question) {
   if (hasAny(question, ["什么病", "诊断", "是不是癌", "癌症", "肿瘤", "严重吗"])) return { blocked: "diagnosis" };
   if (hasAny(question, ["ct", "ctu", "彩超", "超声", "膀胱镜", "病理", "尿常规", "报告", "检查结果"])) return { blocked: "report" };
-  if (hasAny(question, ["鲜红", "暗红", "洗肉水", "茶色", "酱油色", "颜色", "红色"])) return { slotId: "HX006" };
-  if (hasAny(question, ["血块", "血凝块", "凝血块", "块状"])) return { slotId: "HX007" };
   if (hasAny(question, ["一直红", "全程", "开始红", "终末", "快尿完", "最后才红", "第一杯", "第三杯"])) return { slotId: "HX005" };
+  if (hasAny(question, ["血块", "血凝块", "凝血块", "块状"])) return { slotId: "HX007" };
+  if (hasAny(question, ["鲜红", "暗红", "洗肉水", "茶色", "酱油色", "颜色", "红色"])) return { slotId: "HX006" };
   if (hasAny(question, ["吸烟", "抽烟", "烟龄", "几包", "包年", "喝酒", "饮酒"])) return { slotId: "HX019" };
   if (hasAny(question, ["高血压病史", "有高血压", "高血压吗", "糖尿病", "冠心病", "房颤", "慢性病", "既往"])) return { slotId: "HX017" };
   if (hasAny(question, ["尿痛", "小便疼", "疼", "腰痛", "肾绞痛", "腹痛", "放射痛", "烧灼"])) return { slotId: "HX009" };
@@ -117,7 +126,7 @@ function answerForSlot(caseData, slotId, question) {
 
   if (slotId === "HX006") return firstUsable(legacyAnswer(caseData, "HX007"), caseData.patientAnswers?.color, illness.color) || "尿液颜色看起来偏红。";
   if (slotId === "HX007") return firstUsable(legacyAnswer(caseData, "HX008"), caseData.patientAnswers?.clots, illness.clots) || "我没有注意到明显血块。";
-  if (slotId === "HX005") return firstUsable(legacyAnswer(caseData, "HX005"), legacyAnswer(caseData, "HX006"), caseData.patientAnswers?.phase, illness.hematuriaPhase) || "我没有特别分清是刚开始红还是最后红。";
+  if (slotId === "HX005") return patientPhaseText(firstUsable(legacyAnswer(caseData, "HX005"), legacyAnswer(caseData, "HX006"), caseData.patientAnswers?.phase, illness.hematuriaPhase)) || "我没有特别分清是刚开始红还是最后红。";
   if (slotId === "HX019") {
     if (hasAny(question, ["吸烟", "抽烟", "烟龄", "几包", "包年"])) return firstUsable(caseData.patientAnswers?.smoking, sentenceWith(historySource, ["吸烟", "抽烟", "烟", "未吸烟"])) || "我平时不吸烟。";
     if (hasAny(question, ["喝酒", "饮酒", "白酒", "酒量"])) return firstUsable(caseData.patientAnswers?.alcohol, sentenceWith(historySource, ["饮酒", "喝酒", "白酒", "酗酒"])) || "我平时不怎么喝酒。";
