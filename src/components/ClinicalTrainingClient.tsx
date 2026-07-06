@@ -98,7 +98,8 @@ const consultCatalog = consultCatalogJson as ConsultCatalogItem[];
 const allClientCases = casesJson as CaseData[];
 const orderPackages = orderPackagesJson as OrderPackage[];
 const physicalExamItems = physicalExamItemsJson as PhysicalExamItem[];
-const buildTimePatientApiUrl = process.env.NEXT_PUBLIC_PATIENT_AGENT_API_URL || "";
+const defaultPatientApiUrl = "https://hematuria-training-system.vercel.app/api/patient-reply/";
+const buildTimePatientApiUrl = process.env.NEXT_PUBLIC_PATIENT_AGENT_API_URL || defaultPatientApiUrl;
 const orderPrimaryTabs = ["检验", "检查", "病理/操作", "围术期评估"];
 const labSecondaryOrder = ["尿液基础", "尿液感染", "尿液肿瘤", "尿液蛋白/肾小球线索", "血液基础", "炎症感染", "凝血/输血", "肾内免疫", "结石代谢", "大便/全身鉴别"];
 const imagingSecondaryOrder = ["超声", "X线", "CT", "MRI", "内镜", "核医学", "功能检查"];
@@ -285,7 +286,11 @@ function matchCatalogByName(name: string) {
 
 function readClientSetting(key: string, fallback: string) {
   if (typeof window === "undefined") return fallback;
-  return localStorage.getItem(key) || fallback;
+  const saved = localStorage.getItem(key) || "";
+  if (key === "hematuria-patient-agent-api-url" && (saved.includes("vercel.com/niubi1vs-projects") || saved.includes("osq537xvu"))) {
+    return fallback;
+  }
+  return saved || fallback;
 }
 
 async function requestAiPatientReply({
