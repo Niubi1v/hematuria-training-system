@@ -1,5 +1,3 @@
-import { handlePatientReplyRequest } from "../src/server/patientReplyService";
-
 const allowedMethods = "POST, OPTIONS";
 
 function setCors(res: { setHeader: (key: string, value: string) => void }) {
@@ -21,11 +19,13 @@ export default async function handler(req: any, res: any) {
 
   try {
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    const { handlePatientReplyRequest } = await import("../src/server/patientReplyService");
     const result = await handlePatientReplyRequest(body);
     res.status(200).json(result);
   } catch (error) {
-    res.status(400).json({
-      error: error instanceof Error ? error.message : "Patient reply request failed"
+    res.status(500).json({
+      error: error instanceof Error ? error.message : "Patient reply request failed",
+      name: error instanceof Error ? error.name : "UnknownError"
     });
   }
 }
