@@ -100,6 +100,7 @@ const orderPackages = orderPackagesJson as OrderPackage[];
 const physicalExamItems = physicalExamItemsJson as PhysicalExamItem[];
 const defaultPatientApiUrl = "https://hematuria-training-system.vercel.app/api/patient-reply/";
 const buildTimePatientApiUrl = process.env.NEXT_PUBLIC_PATIENT_AGENT_API_URL || defaultPatientApiUrl;
+const PATIENT_REPLY_TIMEOUT_MS = 12000;
 const orderPrimaryTabs = ["检验", "检查", "病理/操作", "围术期评估"];
 const labSecondaryOrder = ["尿液基础", "尿液感染", "尿液肿瘤", "尿液蛋白/肾小球线索", "血液基础", "炎症感染", "凝血/输血", "肾内免疫", "结石代谢", "大便/全身鉴别"];
 const imagingSecondaryOrder = ["超声", "X线", "CT", "MRI", "内镜", "核医学", "功能检查"];
@@ -309,20 +310,31 @@ async function requestAiPatientReply({
   askedSlots: string[];
 }) {
   if (!apiUrl) throw new Error("问诊服务暂不可用");
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      caseId,
-      stage: "history",
-      studentQuestion: question,
-      conversationHistory: messages.slice(-6).map((message) => ({ role: message.role, text: message.text })),
-      askedSlotIds: askedSlots,
-      mode: mode === "debug" ? "debug" : "ai"
-    })
-  });
-  if (!response.ok) throw new Error(`Patient Agent API ${response.status}`);
-  return response.json() as Promise<PatientReplyApiResponse>;
+  const controller = new AbortController();
+  // 手机网络或上游大模型偶发卡住时，及时回退到本地规则，避免界面一直停在“生成中”。
+  const timeoutId: ReturnType<typeof globalThis.setTimeout> = globalThis.setTimeout(() => {
+    controller.abort();
+  }, PATIENT_REPLY_TIMEOUT_MS);
+  try {
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      signal: controller.signal,
+      body: JSON.stringify({
+        caseId,
+        stage: "history",
+        studentQuestion: question,
+        conversationHistory: messages.slice(-6).map((message) => ({ role: message.role, text: message.text })),
+        askedSlotIds: askedSlots,
+        mode: mode === "debug" ? "debug" : "ai"
+      })
+    });
+    if (!response.ok) throw new Error(`Patient Agent API ${response.status}`);
+    return response.json() as Promise<PatientReplyApiResponse>;
+  } finally {
+    globalThis.clearTimeout(timeoutId);
+  }
 }
 
 function formatReportLines(text: string) {
