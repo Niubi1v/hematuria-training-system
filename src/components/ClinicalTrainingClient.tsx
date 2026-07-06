@@ -41,6 +41,7 @@ type SpeechRecognitionLike = {
 };
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 type TrainingMode = "free" | "osce" | "demo" | "rct" | "random";
+type PatientAgentMode = "rule" | "ai" | "debug";
 type StudentVisibleCase = Pick<CaseData, "id" | "studentChiefComplaint" | "chiefComplaint" | "age" | "sex" | "difficulty">;
 type TimelineEvent = {
   id: string;
@@ -49,6 +50,22 @@ type TimelineEvent = {
   label: string;
   detail: string;
   at: string;
+};
+
+type PatientReplyApiResponse = {
+  replyText: string;
+  matchedSlotIds: string[];
+  revealedFields: string[];
+  blockedFields: string[];
+  provider: string;
+  model: string;
+  isFallback: boolean;
+  debug?: {
+    rawRuleReply: string;
+    rawPatientAnswer: string;
+    filterHits: string[];
+    cacheKey: string;
+  };
 };
 
 declare global {
@@ -81,6 +98,7 @@ const consultCatalog = consultCatalogJson as ConsultCatalogItem[];
 const allClientCases = casesJson as CaseData[];
 const orderPackages = orderPackagesJson as OrderPackage[];
 const physicalExamItems = physicalExamItemsJson as PhysicalExamItem[];
+const buildTimePatientApiUrl = process.env.NEXT_PUBLIC_PATIENT_AGENT_API_URL || "";
 const orderPrimaryTabs = ["检验", "检查", "病理/操作", "围术期评估"];
 const labSecondaryOrder = ["尿液基础", "尿液感染", "尿液肿瘤", "尿液蛋白/肾小球线索", "血液基础", "炎症感染", "凝血/输血", "肾内免疫", "结石代谢", "大便/全身鉴别"];
 const imagingSecondaryOrder = ["超声", "X线", "CT", "MRI", "内镜", "核医学", "功能检查"];
@@ -263,6 +281,43 @@ function matchCatalogByName(name: string) {
       return value && (value.includes(normalized) || normalized.includes(value));
     });
   });
+}
+
+function readClientSetting(key: string, fallback: string) {
+  if (typeof window === "undefined") return fallback;
+  return localStorage.getItem(key) || fallback;
+}
+
+async function requestAiPatientReply({
+  apiUrl,
+  caseId,
+  mode,
+  question,
+  messages,
+  askedSlots
+}: {
+  apiUrl: string;
+  caseId: string;
+  mode: PatientAgentMode;
+  question: string;
+  messages: ChatMessage[];
+  askedSlots: string[];
+}) {
+  if (!apiUrl) throw new Error("未配置 Patient Agent 后端 API 地址");
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      caseId,
+      stage: "history",
+      studentQuestion: question,
+      conversationHistory: messages.slice(-6).map((message) => ({ role: message.role, text: message.text })),
+      askedSlotIds: askedSlots,
+      mode: mode === "debug" ? "debug" : "ai"
+    })
+  });
+  if (!response.ok) throw new Error(`Patient Agent API ${response.status}`);
+  return response.json() as Promise<PatientReplyApiResponse>;
 }
 
 function formatReportLines(text: string) {
@@ -460,6 +515,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [listening, setListening] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(false);
   const [voiceNotice, setVoiceNotice] = useState("");
+  const [patientAgentMode, setPatientAgentMode] = useState<PatientAgentMode>(() => readClientSetting("hematuria-patient-agent-mode", "ai") as PatientAgentMode);
+  const [patientApiUrl, setPatientApiUrl] = useState(() => readClientSetting("hematuria-patient-agent-api-url", buildTimePatientApiUrl));
+  const [patientAgentNotice, setPatientAgentNotice] = useState("");
+  const [patientReplyLoading, setPatientReplyLoading] = useState(false);
+  const [lastPatientDebug, setLastPatientDebug] = useState<PatientReplyApiResponse["debug"] | null>(null);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
   const physicalGroups = useMemo(() => groupPhysicalExamItems(), []);
 
@@ -526,6 +586,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }, [activeStage, answers, askedSlots, initialCaseData.id, collected, examLogs, finalReport, mdtOpinions, messages, orderLogs, osceTimeLeft, submitted, timeline]);
 
   useEffect(() => {
+    localStorage.setItem("hematuria-patient-agent-mode", patientAgentMode);
+    localStorage.setItem("hematuria-patient-agent-api-url", patientApiUrl);
+  }, [patientAgentMode, patientApiUrl]);
+
+  useEffect(() => {
     if (!isOsce || activeStage === "debrief" || finalReport) return;
     const timer = window.setInterval(() => setOsceTimeLeft((value) => Math.max(0, value - 1)), 1000);
     return () => window.clearInterval(timer);
@@ -547,22 +612,53 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     window.speechSynthesis.speak(utterance);
   }
 
-  function submitQuestion(textOverride?: string) {
+  async function submitQuestion(textOverride?: string) {
     if (!caseData) return;
     const text = (textOverride ?? question).trim();
-    if (!text) return;
-    const result = askPatient(caseData, text);
-    const nextCollected = mergeCollected(collected, result.matchedKeys);
-    const nextAskedSlots = unique([...askedSlots, ...(result.matchedSlots ?? [])]);
-    const nextMessages: ChatMessage[] = [...messages, { role: "student", text }, { role: "patient", text: result.answer, matchedKeys: result.matchedKeys, matchedSlots: result.matchedSlots }];
+    if (!text || patientReplyLoading) return;
+    setPatientReplyLoading(true);
+    const ruleResult = askPatient(caseData, text);
+    let answerText = ruleResult.answer;
+    let matchedSlots = ruleResult.matchedSlots;
+    let matchedKeys = ruleResult.matchedKeys;
+    try {
+      if (patientAgentMode !== "rule") {
+        const aiResult = await requestAiPatientReply({
+          apiUrl: patientApiUrl,
+          caseId: caseData.id,
+          mode: patientAgentMode,
+          question: text,
+          messages,
+          askedSlots
+        });
+        answerText = aiResult.replyText || ruleResult.answer;
+        matchedSlots = aiResult.matchedSlotIds?.length ? aiResult.matchedSlotIds : ruleResult.matchedSlots;
+        setPatientAgentNotice(aiResult.isFallback ? `AI不可用，已自动回退规则模式（${aiResult.provider}）。` : `AI增强回复：${aiResult.provider} / ${aiResult.model}`);
+        setLastPatientDebug(aiResult.debug ?? null);
+      } else {
+        setPatientAgentNotice("当前使用规则模式。");
+        setLastPatientDebug(null);
+      }
+    } catch (error) {
+      answerText = ruleResult.answer;
+      matchedSlots = ruleResult.matchedSlots;
+      matchedKeys = ruleResult.matchedKeys;
+      setPatientAgentNotice(`AI后端不可用，已回退规则模式：${error instanceof Error ? error.message : "请求失败"}`);
+      setLastPatientDebug(null);
+    } finally {
+      setPatientReplyLoading(false);
+    }
+    const nextCollected = mergeCollected(collected, matchedKeys);
+    const nextAskedSlots = unique([...askedSlots, ...(matchedSlots ?? [])]);
+    const nextMessages: ChatMessage[] = [...messages, { role: "student", text }, { role: "patient", text: answerText, matchedKeys, matchedSlots }];
     setMessages(nextMessages);
     setCollected(nextCollected);
     setAskedSlots(nextAskedSlots);
     setQuestion("");
     setVoiceNotice("");
     addTimeline("ask", "学生提问", text, "history");
-    addTimeline("answer", "患者回答", result.answer, "history");
-    speak(result.answer);
+    addTimeline("answer", "患者回答", answerText, "history");
+    speak(answerText);
   }
 
   function startVoiceInput() {
@@ -797,11 +893,33 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             <div>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-xl font-semibold">Patient Agent：模拟问诊</h2>
-                <button type="button" onClick={() => setAutoSpeak((value) => !value)} disabled={!speechOutputSupported} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm text-clinic-muted hover:border-clinic-blue disabled:cursor-not-allowed disabled:opacity-50">
-                  {autoSpeak ? <Volume2 size={16} /> : <VolumeX size={16} />}
-                  {autoSpeak ? "患者朗读已开" : "患者朗读"}
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <select value={patientAgentMode} onChange={(event) => setPatientAgentMode(event.target.value as PatientAgentMode)} className="rounded-md border border-clinic-line px-3 py-2 text-sm text-clinic-muted outline-none focus:border-clinic-blue">
+                    <option value="ai">AI增强模式</option>
+                    <option value="rule">规则模式</option>
+                    <option value="debug">调试模式</option>
+                  </select>
+                  <button type="button" onClick={() => setAutoSpeak((value) => !value)} disabled={!speechOutputSupported} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm text-clinic-muted hover:border-clinic-blue disabled:cursor-not-allowed disabled:opacity-50">
+                    {autoSpeak ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                    {autoSpeak ? "患者朗读已开" : "患者朗读"}
+                  </button>
+                </div>
               </div>
+              {patientAgentMode !== "rule" && (
+                <div className="mt-3 rounded-md border border-clinic-line bg-clinic-paper p-3">
+                  <label className="block text-xs font-medium text-clinic-muted">Patient Agent 后端 API 地址</label>
+                  <input value={patientApiUrl} onChange={(event) => setPatientApiUrl(event.target.value)} className="mt-2 w-full rounded-md border border-clinic-line bg-white px-3 py-2 text-sm outline-none focus:border-clinic-blue" placeholder="https://你的后端域名/api/patient-reply" />
+                  {patientAgentNotice && <p className="mt-2 text-xs text-clinic-muted">{patientAgentNotice}</p>}
+                </div>
+              )}
+              {patientAgentMode === "debug" && lastPatientDebug && (
+                <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
+                  <p className="font-semibold">教师调试信息</p>
+                  <p>cacheKey：{lastPatientDebug.cacheKey}</p>
+                  <p>rawPatientAnswer：{lastPatientDebug.rawPatientAnswer}</p>
+                  <p>filterHits：{lastPatientDebug.filterHits.join("、") || "无"}</p>
+                </div>
+              )}
               <div ref={chatScrollRef} className="mt-4 h-[360px] space-y-4 overflow-y-auto rounded-md border border-clinic-line bg-clinic-paper p-4">
                 {messages.map((message, index) => (
                   <div key={`${message.role}-${index}`} className={`flex ${message.role === "student" ? "justify-end" : "justify-start"}`}>
@@ -812,12 +930,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
               <div className="mt-3">
                 {voiceNotice && <p className="mb-2 text-sm text-clinic-muted">{voiceNotice}</p>}
                 <div className="flex flex-wrap gap-2">
-                  <input value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") submitQuestion(); }} className="min-w-[220px] flex-1 rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" placeholder="输入问诊问题" />
+                  <input value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void submitQuestion(); }} className="min-w-[220px] flex-1 rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" placeholder="输入问诊问题" />
                   <button type="button" onClick={startVoiceInput} disabled={!speechInputSupported || listening} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-4 py-2 font-medium hover:border-clinic-blue disabled:opacity-50">
                     {listening ? <MicOff size={16} /> : <Mic size={16} />} {listening ? "聆听中" : "语音提问"}
                   </button>
-                  <button onClick={() => submitQuestion()} className="inline-flex items-center gap-2 rounded-md bg-clinic-teal px-4 py-2 font-medium text-white hover:bg-clinic-blue">
-                    <Send size={16} /> 发送
+                  <button onClick={() => void submitQuestion()} disabled={patientReplyLoading} className="inline-flex items-center gap-2 rounded-md bg-clinic-teal px-4 py-2 font-medium text-white hover:bg-clinic-blue disabled:cursor-not-allowed disabled:opacity-60">
+                    <Send size={16} /> {patientReplyLoading ? "生成中" : "发送"}
                   </button>
                 </div>
               </div>

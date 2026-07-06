@@ -195,15 +195,21 @@ function firstUsable(...values: Array<string | undefined>) {
   return values.map(cleanValue).find((value) => value && !isNonPatientUnknown(value)) || "";
 }
 
+function sentenceWith(value: string | undefined, words: string[]) {
+  const sentences = splitSentences(value || "").flatMap((item) => item.split(/[，,、]/).map((part) => part.trim()));
+  return sentences.find((sentence) => words.some((word) => sentence.includes(word))) || "";
+}
+
 function answerSmokingOrDrinking(caseData: CaseData, question: string) {
   const risk = caseData.riskFactors;
+  const source = [risk.smoking, caseData.personalHistory, caseData.pastHistory, legacyAnswer(caseData, "HX023")].filter(Boolean).join("。");
   if (hasAny(question, ["抽烟", "吸烟", "烟龄", "几包", "包年"])) {
-    return firstUsable(risk.smoking, caseData.patientAnswers?.smoking) || "我平时不吸烟。";
+    return firstUsable(caseData.patientAnswers?.smoking, sentenceWith(source, ["吸烟", "抽烟", "烟", "未吸烟"])) || "我平时不吸烟。";
   }
   if (hasAny(question, ["喝酒", "饮酒", "白酒", "酒量"])) {
-    return firstUsable(risk.alcohol, caseData.patientAnswers?.alcohol) || "我平时不怎么喝酒。";
+    return firstUsable(caseData.patientAnswers?.alcohol, sentenceWith(source, ["饮酒", "喝酒", "白酒", "酗酒"])) || "我平时不怎么喝酒。";
   }
-  return firstUsable(risk.smoking, risk.alcohol) || "抽烟、饮酒方面没有特别的。";
+  return firstUsable(sentenceWith(source, ["吸烟", "抽烟", "烟"]), sentenceWith(source, ["饮酒", "喝酒", "白酒"])) || "抽烟、饮酒方面没有特别的。";
 }
 
 function answerPain(caseData: CaseData, question: string) {
@@ -255,6 +261,10 @@ function answerFromSlot(caseData: CaseData, slotId: string, question: string) {
     case "HX016":
       return [firstUsable(legacyAnswer(caseData, "HX020"), risk.stoneHistory, risk.infectionHistory, risk.tumorHistory, caseData.pastHistory) || "以前没有特别明确的泌尿系病史。"];
     case "HX017":
+      if (hasAny(question, ["高血压"])) return [firstUsable(sentenceWith(caseData.pastHistory, ["高血压"]), sentenceWith(legacyAnswer(caseData, "HX020"), ["高血压"])) || "没有高血压病史。"];
+      if (hasAny(question, ["糖尿病"])) return [firstUsable(sentenceWith(caseData.pastHistory, ["糖尿病"]), sentenceWith(legacyAnswer(caseData, "HX020"), ["糖尿病"])) || "没有糖尿病病史。"];
+      if (hasAny(question, ["肝炎", "乙肝"])) return [firstUsable(sentenceWith(caseData.pastHistory, ["肝炎", "乙肝"]), sentenceWith(legacyAnswer(caseData, "HX020"), ["肝炎", "乙肝"])) || "没有肝炎病史。"];
+      if (hasAny(question, ["结核"])) return [firstUsable(sentenceWith(caseData.pastHistory, ["结核"]), sentenceWith(legacyAnswer(caseData, "HX020"), ["结核"])) || "没有结核病史。"];
       return [firstUsable(caseData.pastHistory, legacyAnswer(caseData, "HX020")) || "以前身体情况没有特别的。"];
     case "HX018":
       return [firstUsable(legacyAnswer(caseData, "HX021"), risk.anticoagulants, caseData.medication) || "平时没有长期吃特殊药。"];
@@ -291,11 +301,12 @@ function matchByStrongRules(question: string) {
   if (hasAny(question, ["尿频", "尿急", "尿不尽", "夜尿"])) return ["HX010"];
   if (hasAny(question, ["排尿困难", "尿线", "尿流中断", "尿不出来", "费力", "尿潴留"])) return ["HX011"];
   if (hasAny(question, ["发热", "发烧", "寒战", "畏寒", "高热", "体温"])) return ["HX012"];
+  if (hasAny(question, ["高血压病史", "有高血压", "高血压吗", "慢性病", "既往"])) return ["HX017"];
   if (hasAny(question, ["泡沫尿", "水肿", "眼睑肿", "下肢肿", "高血压"])) return ["HX013"];
   if (hasAny(question, ["感冒", "咽痛", "扁桃体炎", "上呼吸道"])) return ["HX014"];
   if (hasAny(question, ["运动", "劳累", "受凉", "外伤", "性生活", "导尿", "尿路操作", "膀胱镜"])) return ["HX015"];
   if (hasAny(question, ["结石史", "尿路感染", "前列腺", "泌尿系手术", "以前血尿", "泌尿病"])) return ["HX016"];
-  if (hasAny(question, ["糖尿病", "冠心病", "房颤", "慢性病", "既往"])) return ["HX017"];
+  if (hasAny(question, ["糖尿病", "冠心病", "房颤"])) return ["HX017"];
   if (hasAny(question, ["阿司匹林", "氯吡格雷", "华法林", "利伐沙班", "抗凝", "抗血小板", "止痛药", "肾毒性", "吃药", "用药"])) return ["HX018"];
   if (hasAny(question, ["抽烟", "吸烟", "烟龄", "几包", "包年", "喝酒", "饮酒"])) return ["HX019"];
   if (hasAny(question, ["职业", "工作", "染料", "化工", "橡胶", "皮革", "重金属", "油漆", "接触"])) return ["HX020"];

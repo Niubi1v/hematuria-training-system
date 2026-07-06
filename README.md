@@ -224,3 +224,80 @@ http://127.0.0.1:4173
 ```
 
 Windows 下也可以直接双击 `start-local.bat` 启动开发预览，或双击 `preview-static.bat` 预览静态打包结果。
+## 通用 LLM Provider：AI 增强 Patient Agent
+
+本项目已支持“通用第三方大模型 API”增强 Patient Agent，但不会把 API Key 放进前端，也不会把完整病例发送给模型。
+
+### 工作方式
+
+1. 前端学生提问。
+2. 后端 `/api/patient-reply` 根据 `caseId + studentQuestion` 调用本地规则匹配 slot。
+3. 后端只取当前 slot 对应的安全 `patientAnswer`。
+4. 大模型只负责把该答案改写成简短、患者口吻的 1-2 条分点。
+5. `responseFilter` 拦截“根据原始病史、需追问、CT提示、癌、诊断、治疗、评分”等泄露词。
+6. AI 不可用、超时或输出不合格时，自动回退规则模式。
+
+### 后端环境变量
+
+复制 `.env.example` 为 `.env.local`，只在本地或 Vercel 环境变量中填写真实 Key，不要提交到 GitHub。
+
+```bash
+LLM_PROVIDER=custom
+LLM_API_KEY=你的第三方平台API_KEY
+LLM_API_BASE_URL=https://第三方平台的API地址/v1
+LLM_MODEL=你购买的平台模型名称
+LLM_ENDPOINT_TYPE=chat_completions
+LLM_TEMPERATURE=0.2
+LLM_MAX_TOKENS=120
+LLM_REQUEST_TIMEOUT_MS=15000
+LLM_ENABLE_AI_PATIENT=true
+PATIENT_AGENT_ALLOWED_ORIGIN=https://niubi1v.github.io
+```
+
+`LLM_API_BASE_URL` 建议填写平台的 OpenAI-compatible base URL，例如 `https://xxx.example.com/v1`。系统会请求 `${LLM_API_BASE_URL}/chat/completions`。如果平台返回格式不同，请只改 `src/server/llmClient.ts` 的 adapter。
+
+### 本地运行后端 API
+
+```bash
+npm run dev:api
+```
+
+默认地址：
+
+```text
+http://127.0.0.1:8787/api/patient-reply
+```
+
+前端页面的“Patient Agent 后端 API 地址”可填写这个地址进行本地测试。
+
+### Vercel 部署后端 API
+
+1. 将本仓库导入 Vercel。
+2. 在 Vercel Project Settings -> Environment Variables 中填写：
+   `LLM_PROVIDER`、`LLM_API_KEY`、`LLM_API_BASE_URL`、`LLM_MODEL`、`LLM_ENDPOINT_TYPE`、`LLM_ENABLE_AI_PATIENT`。
+3. 部署后 API 地址通常为：
+
+```text
+https://你的-vercel-项目.vercel.app/api/patient-reply
+```
+
+4. 在 GitHub Pages 前端的病例训练页，将“Patient Agent 后端 API 地址”填为上面的 Vercel 地址；也可以在 GitHub Actions 构建前设置：
+
+```bash
+NEXT_PUBLIC_PATIENT_AGENT_API_URL=https://你的-vercel-项目.vercel.app/api/patient-reply
+```
+
+### 回复模式
+
+病例问诊页提供 3 种模式：
+
+- 规则模式：完全离线，不调用后端。
+- AI增强模式：默认模式，调用后端，失败自动回退规则模式。
+- 调试模式：教师可查看 `matchedSlot`、`rawPatientAnswer`、过滤命中和缓存 Key；学生端训练不应使用该模式。
+
+### 安全边界
+
+- 不要把真实 API Key 写入源码、README 或前端环境变量。
+- `.gitignore` 已包含 `.env`、`.env.local`、`.env.*.local`。
+- 前端构建产物中不包含 `LLM_API_KEY`。
+- 后端禁止向模型发送完整病例、诊断、检查、影像、病理、治疗方案、教师端评分点。
