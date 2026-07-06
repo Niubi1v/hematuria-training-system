@@ -1,5 +1,5 @@
 import { EMPTY_COLLECTED } from "./keyPoints";
-import questionSlotsJson from "@/data/question_slots.json";
+import questionSlotsJson from "../../data/question_slots.json";
 import type { CaseData, CollectedMap, InterviewSlot, KeyPointId } from "./types";
 
 type ReplyResult = {

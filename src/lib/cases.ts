@@ -1,4 +1,4 @@
-import cases from "@/data/cases.json";
+import cases from "../../data/cases.json";
 import type { CaseData } from "./types";
 
 export const allCases = cases as CaseData[];

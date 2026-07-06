@@ -1,5 +1,5 @@
-import { allCases } from "@/src/lib/cases";
-import { generatePatientReply } from "@/src/lib/patientEngine";
+import { allCases } from "../lib/cases";
+import { generatePatientReply } from "../lib/patientEngine";
 import { callLLM, getLLMProviderConfig } from "./llmClient";
 import { filterPatientReply, normalizeQuestion, sanitizeRuleReply } from "./responseFilter";
 
