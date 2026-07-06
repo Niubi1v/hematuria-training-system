@@ -13,7 +13,7 @@
     "dev:api": "tsx scripts/dev-patient-api.ts",
     "start": "next dev",
     "lint": "next lint",
-    "convert:excel": "tsx scripts/convert-tutor-template-cases.ts work/source/v2_only_cases.xlsx data && tsx scripts/convert-frontend-fixes.ts work/source/frontend_order_consult_fix.xlsx data && tsx scripts/convert-diagnostic-knowledge.ts work/source/hematuria_diagnostics_scoring_rules.xlsx data"
+    "convert:excel": "tsx scripts/convert-tutor-template-cases.ts work/source/v2_only_cases.xlsx data && tsx scripts/convert-frontend-fixes.ts work/source/frontend_order_consult_fix.xlsx data && tsx scripts/convert-diagnostic-knowledge.ts work/source/hematuria_diagnostics_scoring_rules.xlsx data && tsx scripts/convert-bilingual-7agent.ts work/source/v2_bilingual.xlsx data"
   },
   "dependencies": {
     "clsx": "^2.1.1",

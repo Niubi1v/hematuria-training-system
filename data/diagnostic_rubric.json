@@ -1,0 +1,11 @@
+{
+  "version": "7-agent-bilingual-v1",
+  "total": 100,
+  "dimensions": [
+    "Confirm true hematuria",
+    "Localize medical vs surgical hematuria",
+    "Identify tumor, stone, infection, glomerular and pseudohematuria pathways",
+    "Provide at least 3 differentials with supporting and opposing evidence",
+    "Avoid high-risk premature closure"
+  ]
+}

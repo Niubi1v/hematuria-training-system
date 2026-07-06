@@ -1,0 +1,74 @@
+[
+  {
+    "component": "Left navigation",
+    "requirement": {
+      "zh": "左侧由上到下显示1–7个智能体阶段。",
+      "en": "Display 7 numbered Agent stages vertically from top to bottom."
+    },
+    "implementationNote": "Use a fixed/scrollable left rail; active stage highlighted."
+  },
+  {
+    "component": "Main work window",
+    "requirement": {
+      "zh": "中间为主要功能窗口：对话、查体/开单、诊断、MDT、治疗、围术期、复盘。",
+      "en": "The center panel shows the active function: interview, exam/order, diagnosis, MDT, treatment, perioperative, debrief."
+    },
+    "implementationNote": "One stage = one workspace component."
+  },
+  {
+    "component": "Sequential flow",
+    "requirement": {
+      "zh": "进入病例后按顺序往下推进。",
+      "en": "After entering a case, learner proceeds in stage order 1→2→3→4→5→6→7."
+    },
+    "implementationNote": "Allow review of obtained information but not locked answers."
+  },
+  {
+    "component": "Language toggle",
+    "requirement": {
+      "zh": "右上角设置中加入中英切换。",
+      "en": "Add a Chinese/English switch at the top-right settings area."
+    },
+    "implementationNote": "Persist language in localStorage; all labels use i18n dictionary."
+  },
+  {
+    "component": "Student visibility",
+    "requirement": {
+      "zh": "提交前隐藏病例特异得分点、漏项、标准答案和诊断提示。",
+      "en": "Before submission, hide case-specific scoring points, missed items, standard answers and diagnosis clues."
+    },
+    "implementationNote": "Use separate studentVisibleData and teacherOnlyData."
+  },
+  {
+    "component": "Patient response",
+    "requirement": {
+      "zh": "患者问一点答一点，只回答匹配slot，1–2条短句。",
+      "en": "Patient answers one question at a time, only the matched slot, in 1–2 short bullet points."
+    },
+    "implementationNote": "Never return full symptoms_detail or medical_history."
+  },
+  {
+    "component": "Investigation release",
+    "requirement": {
+      "zh": "开了什么检查才返回什么结果。",
+      "en": "Investigation Agent returns results only after the learner orders the corresponding test."
+    },
+    "implementationNote": "No CTU/cystoscopy/pathology result before order."
+  },
+  {
+    "component": "OSCE mode",
+    "requirement": {
+      "zh": "OSCE模式不显示提示或即时反馈，结束后统一复盘。",
+      "en": "No hints or immediate feedback in OSCE mode; show debrief after completion."
+    },
+    "implementationNote": "Add mode flag and feedback gating."
+  },
+  {
+    "component": "Debriefing",
+    "requirement": {
+      "zh": "最终复盘包含时间线、得分、能力画像、漏项、危险错误和学习建议。",
+      "en": "Final debrief includes timeline, scores, competency profile, missed items, unsafe errors and learning advice."
+    },
+    "implementationNote": "Assessment & Debriefing Agent generates report."
+  }
+]

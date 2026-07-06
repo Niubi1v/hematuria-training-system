@@ -1,0 +1,14 @@
+{
+  "version": "7-agent-bilingual-v1",
+  "total": 100,
+  "dimensions": [
+    "History record",
+    "Investigation record",
+    "Diagnostic reasoning",
+    "MDT coordination",
+    "Clinical decision support",
+    "Perioperative management",
+    "Timeline and reflection",
+    "Dangerous errors and learning plan"
+  ]
+}

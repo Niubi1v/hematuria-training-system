@@ -1,40 +1,41 @@
 # TEST_REPORT
 
-测试日期：2026-07-05
+测试日期：2026-07-06
 
-## 数据源
+## 本次升级
 
-- 当前病例库版本：`V2-only`
-- 唯一病例来源：`work/source/v2_only_cases.xlsx`
-- 开单/会诊目录来源：`work/source/frontend_order_consult_fix.xlsx`
+目标：将当前血尿训练系统升级为 **7-Agent 多智能体临床能力训练工作台**，并接入《血尿病例库_V2_英文双语版.xlsx》。
 
-## 生成数据
+## 数据生成
 
-- `data/cases.json`：12 例，`P001` 到 `P012`
-- `data/case_cards.json`：444 条病例卡长表字段
-- `data/question_answers.json`：300 条问诊槽位答案
-- `data/interview_answers.json`：300 条问诊槽位答案
-- `data/interview_slots.json`：25 个问诊槽位
-- `data/question_slots.json`：25 个问诊槽位镜像
-- `data/order_results.json`：192 条病例级开单返回结果
-- `data/mdt_triggers.json`：12 条病例级 MDT 触发规则
-- `data/physical_exam_results.json`：192 条病例级查体返回结果
-- `data/evaluator_rubric.json`：360 分评价规则
-- `data/osce_rubric.json`：OSCE 站点评分表
-
-## 数据清理测试
-
-执行数据校验：
+命令：
 
 ```bash
-npm run convert:excel
+node_modules/.bin/tsx.cmd scripts/convert-bilingual-7agent.ts work/source/v2_bilingual.xlsx data
 ```
 
 结果：
 
-- 病例数 = 12
-- `cases.json`、`question_answers.json`、`order_results.json`、`mdt_triggers.json`、`physical_exam_results.json` 的 case_id 均在 `P001-P012`
-- 未发现非 V2 病例进入上述数据文件
+- `data/agents.json`：7 个 Agent
+- `data/cases_en.json`：12 个英文病例
+- `data/cases_zh.json`：12 个中英文对照病例摘要
+- `data/case_cards_en.json`：360 条英文病例卡长表字段
+- `data/i18n/zh.json`、`data/i18n/en.json`：中英文 UI 文案
+- `data/diagnostic_rubric.json`、`data/perioperative_rubric.json`、`data/debriefing_rubric.json`：分阶段评分结构
+
+病例 ID 验证：
+
+```text
+cases_en_count=12
+P001,P002,P003,P004,P005,P006,P007,P008,P009,P010,P011,P012
+bad_ids=
+```
+
+旧病例清理验证：
+
+```text
+NO_LEGACY_CASE_TEXT
+```
 
 ## 构建测试
 
@@ -44,67 +45,67 @@ npm run convert:excel
 npm run build
 ```
 
-结果：通过。Next.js 静态导出成功，生成 12 个病例详情页。
-
-## 防泄题测试
-
-测试页面：
-
-```text
-http://127.0.0.1:3000/cases/P001/
-```
-
-提交病史采集前检查：
-
-- 不显示具体漏项
-- 不显示得分点
-- 不显示关键槽位
-- 不显示标准答案
-- 学生端仅显示脱敏主诉、年龄、性别、当前任务、已获得资料和通用记录
-
 结果：通过。
+
+Next.js 已成功生成静态页面，包括：
+
+- `/cases/P001/`
+- `/cases/P002/`
+- `/cases/P003/`
+- 其余 P004-P012 病例页
 
 ## Patient Agent 测试
 
-- 学生问题：`有血块吗`
-- 返回来源：`问诊槽位答案_逐项` 中当前 `case_id + slot_id`
-- 行为：只回答被问到的信息，不主动透露诊断、治疗或未问关键线索
+命令：
 
-结果：通过。
+```bash
+node_modules/.bin/tsx.cmd scripts/test-patient-agent.ts
+```
 
-## Order Result Agent 测试
+结果：
 
-测试病例：`P001`
+```text
+Patient Agent tests passed.
+```
 
-- 未开 CTU 前：页面不显示 CTU 结果
-- 输入并开立 `CTU` 后：返回病例级 CTU 模拟报告卡
-- 其他未开项目不提前显示
+覆盖行为：
 
-结果：通过。
+- 问“尿是鲜红色吗”只回答颜色，不返回 CT、占位、诊断。
+- 问“有血块吗”只回答血块，不出现“未主动诉”“需追问”。
+- 问“小便疼吗”只回答尿痛/烧灼感，不返回完整病史。
+- 问 CT 结果时 Patient Agent 不直接返回检查报告。
 
-## MDT 与教师端测试
+## 前端功能验收
 
-- 会诊页面按外科、内科、辅助/平台、急诊/危重分组
-- 会诊目的为空时不能提交
-- 教师端可以查看完整病例卡、问诊答案、开单结果、MDT触发规则
-- 教师端提供“清空本地训练缓存”按钮
+已实现：
 
-结果：通过。
+1. 左侧显示 1-7 个 Agent 阶段。
+2. 训练流程按 1→7 顺序解锁，未提交前不能进入后续阶段。
+3. 右上角支持中文 / English 切换，并保存到 `localStorage`。
+4. 英文模式下 P001 显示英文主诉和英文阶段名。
+5. 中文模式下 P001 显示中文主诉和中文阶段名。
+6. 第 1 阶段提交前不显示具体漏项、评分点、标准答案或诊断提示。
+7. Investigation Agent 中未开 CTU 不显示 CTU 结果；开立 CTU 后才返回对应报告。
+8. MDT 阶段支持多选科室；会诊目的为空时不能提交。
+9. 第 6 阶段已独立为围术期管理。
+10. 第 7 阶段显示最终评分、能力画像、训练时间线、学生记录和标准路径摘要。
 
-## 缓存策略
+## 部署状态
 
-- 浏览器缓存版本号：`V2-only`
-- 首次进入新版训练页时自动清理旧训练缓存
-- 教师端可手动清空本地训练缓存
+项目仍为 Next.js 静态导出，可继续部署到 GitHub Pages。
 
-## 部署测试
+线上链接：
 
-项目类型：Next.js 静态导出。
+```text
+https://niubi1v.github.io/hematuria-training-system/
+```
 
-已配置：
+本地提交后推送：
 
-- `next.config.mjs`：`output: "export"`，支持 `NEXT_PUBLIC_BASE_PATH`
-- `.github/workflows/deploy.yml`：GitHub Pages 自动部署
-- `README.md`：包含 GitHub Pages 设置、更新 Excel 和清理缓存方法
+```bash
+git add .
+git commit -m "Upgrade to bilingual 7-agent clinical training workspace"
+git push origin main
+```
 
-线上链接需要推送到用户自己的 GitHub 仓库后由 GitHub Pages 生成。
+GitHub Actions 完成后线上版本自动更新。

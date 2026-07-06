@@ -1,0 +1,149 @@
+[
+  {
+    "stageNo": 1,
+    "key": "agent1",
+    "agentName": {
+      "zh": "标准化患者智能体",
+      "en": "Standardized Patient Agent"
+    },
+    "leftNavLabel": {
+      "zh": "1. 标准化患者",
+      "en": "1. Standardized Patient"
+    },
+    "competency": {
+      "zh": "病史采集",
+      "en": "History taking"
+    },
+    "mainWindowFunction": {
+      "zh": "自然语言问诊；患者只回答被问到的信息。",
+      "en": "Natural-language patient interview; the patient answers only what is asked."
+    },
+    "keyRule": "Never return full history or teacher-only hints."
+  },
+  {
+    "stageNo": 2,
+    "key": "agent2",
+    "agentName": {
+      "zh": "检查决策智能体",
+      "en": "Investigation Agent"
+    },
+    "leftNavLabel": {
+      "zh": "2. 检查决策",
+      "en": "2. Investigation"
+    },
+    "competency": {
+      "zh": "检查决策",
+      "en": "Investigation decision-making"
+    },
+    "mainWindowFunction": {
+      "zh": "查体、检验、影像、内镜、病理及围术期评估；开了什么才返回什么。",
+      "en": "Physical exam, laboratory tests, imaging, endoscopy, pathology and perioperative workup; return results only after orders."
+    },
+    "keyRule": "No order, no result."
+  },
+  {
+    "stageNo": 3,
+    "key": "agent3",
+    "agentName": {
+      "zh": "诊断推理智能体",
+      "en": "Diagnostic Reasoning Agent"
+    },
+    "leftNavLabel": {
+      "zh": "3. 诊断推理",
+      "en": "3. Diagnostic Reasoning"
+    },
+    "competency": {
+      "zh": "临床推理",
+      "en": "Clinical reasoning"
+    },
+    "mainWindowFunction": {
+      "zh": "提交最可能诊断、诊断依据和鉴别诊断。",
+      "en": "Learner submits most likely diagnosis, evidence and differential diagnoses."
+    },
+    "keyRule": "Check true hematuria, internal vs surgical hematuria, red flags."
+  },
+  {
+    "stageNo": 4,
+    "key": "agent4",
+    "agentName": {
+      "zh": "MDT协调智能体",
+      "en": "MDT Coordinator Agent"
+    },
+    "leftNavLabel": {
+      "zh": "4. MDT协作",
+      "en": "4. MDT Coordinator"
+    },
+    "competency": {
+      "zh": "多学科协作",
+      "en": "Multidisciplinary collaboration"
+    },
+    "mainWindowFunction": {
+      "zh": "判断会诊时机、科室、会诊目的并整合MDT意见。",
+      "en": "Determine consultation timing, departments, consultation purpose and integrated MDT opinion."
+    },
+    "keyRule": "Consult purpose is required."
+  },
+  {
+    "stageNo": 5,
+    "key": "agent5",
+    "agentName": {
+      "zh": "临床决策支持智能体",
+      "en": "Clinical Decision Support Agent"
+    },
+    "leftNavLabel": {
+      "zh": "5. 循证决策",
+      "en": "5. Clinical Decision Support"
+    },
+    "competency": {
+      "zh": "循证治疗决策",
+      "en": "Evidence-based treatment decision"
+    },
+    "mainWindowFunction": {
+      "zh": "对照指南/RAG路径评价治疗方案一致性与差异。",
+      "en": "Compare learner plan with EAU/CUA/AUA/CSCO/RAG pathway; explain agreement and deviations after submission."
+    },
+    "keyRule": "Feedback after submission only; do not give answer early."
+  },
+  {
+    "stageNo": 6,
+    "key": "agent6",
+    "agentName": {
+      "zh": "围术期管理智能体",
+      "en": "Perioperative Management Agent"
+    },
+    "leftNavLabel": {
+      "zh": "6. 围术期管理",
+      "en": "6. Perioperative Management"
+    },
+    "competency": {
+      "zh": "围术期管理",
+      "en": "Perioperative management"
+    },
+    "mainWindowFunction": {
+      "zh": "术前优化、ERAS、抗栓、感染控制、备血、VTE及并发症预防。",
+      "en": "Preoperative optimization, ERAS, anticoagulation, infection control, transfusion, VTE and complication prevention."
+    },
+    "keyRule": "Separate perioperative stage, not mixed with treatment."
+  },
+  {
+    "stageNo": 7,
+    "key": "agent7",
+    "agentName": {
+      "zh": "评估复盘智能体",
+      "en": "Assessment & Debriefing Agent"
+    },
+    "leftNavLabel": {
+      "zh": "7. 评估复盘",
+      "en": "7. Assessment & Debriefing"
+    },
+    "competency": {
+      "zh": "反思与持续改进",
+      "en": "Reflection and continuous improvement"
+    },
+    "mainWindowFunction": {
+      "zh": "生成时间线、分数、能力画像、漏项、危险错误和学习建议。",
+      "en": "Generate timeline, scores, competency profile, missed items, unsafe errors and learning suggestions."
+    },
+    "keyRule": "OSCE mode: feedback only after completion."
+  }
+]

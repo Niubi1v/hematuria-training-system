@@ -1,0 +1,31 @@
+{
+  "input": "work\\source\\v2_bilingual.xlsx",
+  "generatedAt": "2026-07-06T09:28:21.623Z",
+  "casesEn": 12,
+  "casesZh": 12,
+  "cardsEn": 360,
+  "agents": 7,
+  "allowedCaseIds": [
+    "P001",
+    "P002",
+    "P003",
+    "P004",
+    "P005",
+    "P006",
+    "P007",
+    "P008",
+    "P009",
+    "P010",
+    "P011",
+    "P012"
+  ],
+  "sourceSheets": [
+    "7_Agent_UI_Bilingual",
+    "EN_Case_Master",
+    "Case_Master_Bilingual",
+    "EN_Case_Cards_Long",
+    "UI_Workflow_Spec",
+    "Codex_Prompt_7Agent_UI",
+    "Source_and_Notes"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "version": "7-agent-bilingual-v1",
+  "total": 60,
+  "dimensions": [
+    "Preoperative optimization",
+    "Anesthesia and cardiopulmonary assessment",
+    "Bleeding, anticoagulant and transfusion planning",
+    "Infection control and renal function protection",
+    "VTE prevention, ERAS and postoperative complication prevention"
+  ]
+}

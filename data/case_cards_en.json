@@ -1,0 +1,3602 @@
+[
+  {
+    "caseId": "P001",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "chief_complaint_en",
+    "fieldLabel": "Chief complaint",
+    "value": "Intermittent painless gross hematuria for more than 3 months.",
+    "studentVisibleTiming": "Initial visible",
+    "teacherOnly": false
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "symptoms_detail_en",
+    "fieldLabel": "History of present illness",
+    "value": "Three months ago, the patient first noticed that the entire stream of urine was red, similar to meat-washing water, with small clots. The discoloration was present from the beginning to the end of voiding and was not painful. Episodes occurred intermittently. He also had mild straining, a sensation of incomplete emptying, and nocturia 1–2 times/night. No flank pain, fever, abdominal pain, or weight loss was reported. He initially visited a local clinic but no systematic workup was completed.",
+    "studentVisibleTiming": "Patient answers by slot only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_type_en",
+    "fieldLabel": "Hematuria type",
+    "value": "Gross hematuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_phase_en",
+    "fieldLabel": "Hematuria phase",
+    "value": "Total hematuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "urine_color_en",
+    "fieldLabel": "Urine color",
+    "value": "Meat-washing-water appearance.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "clots_en",
+    "fieldLabel": "Clots",
+    "value": "Small clots are present.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "pain_relation_en",
+    "fieldLabel": "Pain relation",
+    "value": "Painless during urination.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "fever_chills_en",
+    "fieldLabel": "Fever/chills",
+    "value": "Denies fever or chills.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "flank_pain_en",
+    "fieldLabel": "Flank pain",
+    "value": "Denies flank pain.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "luts_en",
+    "fieldLabel": "Lower urinary tract symptoms",
+    "value": "Mild straining, incomplete emptying, nocturia 1–2 times/night.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "glomerular_clues_en",
+    "fieldLabel": "Glomerular clues",
+    "value": "No foamy urine, edema, hypertension-related renal symptoms, or glomerular clues; urinalysis is dominated by marked hematuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "past_history_en",
+    "fieldLabel": "Past medical history",
+    "value": "Hypertension for 10 years, controlled with valsartan once daily. Occasional exertional precordial discomfort and chest tightness. Denies known diabetes, liver disease, tuberculosis, drug allergy, previous major surgery, or transfusion. Family generally healthy.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "medications_en",
+    "fieldLabel": "Medications",
+    "value": "Long-term aspirin use; valsartan for hypertension.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "patient_persona_en",
+    "fieldLabel": "Patient persona",
+    "value": "Retired man, worried about cancer, communicates clearly. Initially emphasizes red urine and does not volunteer aspirin use or clots unless asked.",
+    "studentVisibleTiming": "Backend only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "physical_exam_en",
+    "fieldLabel": "Physical examination",
+    "value": "Vital signs stable. No obvious pallor. Abdomen soft and non-tender. No costovertebral-angle tenderness. No suprapubic distension. External genitalia unremarkable.",
+    "studentVisibleTiming": "Only after selected/ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "urine_test_en",
+    "fieldLabel": "Urine test result",
+    "value": "Urine RBC 5562/μL.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "imaging_en",
+    "fieldLabel": "Imaging result",
+    "value": "CT urography: space-occupying lesion on the left bladder wall. Ultrasound: multiple broad-based lesions on the left bladder wall, largest about 3 × 3 cm.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "initial_diagnosis_en",
+    "fieldLabel": "Initial diagnosis",
+    "value": "Malignant bladder tumor.",
+    "studentVisibleTiming": "After diagnosis submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "risk_summary_en",
+    "fieldLabel": "Risk summary",
+    "value": "Older male with painless gross hematuria, clots, and antiplatelet use. Bladder cancer must be considered; hematuria must not be attributed solely to aspirin.",
+    "studentVisibleTiming": "After submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_labs_en",
+    "fieldLabel": "Admission laboratory orders",
+    "value": "CBC, urinalysis with sediment, stool routine, full biochemistry, ABO blood group, coagulation tests, infectious screening, PSA panel, tumor markers, HbA1c.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_imaging_en",
+    "fieldLabel": "Admission imaging/orders",
+    "value": "Cardiopulmonary evaluation: ECG, chest CT, non-contrast cardiac CT + coronary CTA, echocardiography. Tumor evaluation: pelvic MRI with contrast and DWI for muscle invasion. Metastatic workup: bone scan.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "initial_treatment_plan_en",
+    "fieldLabel": "Initial treatment plan",
+    "value": "Stop aspirin and bridge with low-molecular-weight heparin if indicated. Continue blood pressure control. Complete diagnostic and preoperative evaluation, exclude surgical contraindications, arrange bladder tumor biopsy/TURBT, then formulate surgical plan.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "key_positive_findings_en",
+    "fieldLabel": "Key positive findings",
+    "value": "HbA1c 8.0%; syphilis antibody positive; chest CT shows a 1 cm left upper-lung nodule, AIS not excluded; coronary CTA shows LAD 30%, RCA 40%, LCX 40–50% stenosis.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "next_management_en",
+    "fieldLabel": "Next management",
+    "value": "Monitor capillary glucose fasting and postprandial; diabetic diet and glucose optimization. Complete syphilis confirmatory testing. Request cardiology/endocrinology evaluation as needed. Use pathology and staging to decide radical cystectomy and urinary diversion.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "preoperative_or_final_diagnosis_en",
+    "fieldLabel": "Preoperative/final diagnosis",
+    "value": "1. Bladder malignant tumor (T2N0M0). 2. Hypertension. 3. Coronary atherosclerotic heart disease. 4. Diabetes mellitus.",
+    "studentVisibleTiming": "Teacher/debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "perioperative_points_en",
+    "fieldLabel": "Perioperative points",
+    "value": "Bladder biopsy shows high-grade urothelial carcinoma. Bowel preparation before urinary diversion; glycemic target fasting 6–8 mmol/L and 2h postprandial 8–10 mmol/L. Stoma clinic for abdominal stoma marking. Switch to calcium-channel blocker on operation day as appropriate.",
+    "studentVisibleTiming": "After perioperative submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "definitive_treatment_en",
+    "fieldLabel": "Definitive treatment",
+    "value": "Laparoscopic radical cystectomy with Bricker ileal conduit urinary diversion.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_departments_en",
+    "fieldLabel": "Recommended MDT departments",
+    "value": "Urology, radiology, pathology, cardiology, endocrinology, anesthesiology, stoma therapy clinic; oncology and thoracic surgery if needed.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_question_en",
+    "fieldLabel": "MDT question",
+    "value": "Clarify muscle invasion and staging; assess coronary stenosis and aspirin interruption/bridging; optimize diabetes; evaluate lung nodule; plan radical cystectomy and urinary diversion safely.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P001",
+    "stageNo": 7,
+    "agentStage": "Assessment & Debriefing Agent",
+    "fieldKey": "evaluator_key_points_en",
+    "fieldLabel": "Evaluator key points",
+    "value": "Deduct points if hematuria phase, clots, painless nature, aspirin, smoking/occupational exposure are not asked. High-risk error if hematuria is attributed only to aspirin. Deduct if CTU, cystoscopy/TURBT pathology, or pelvic MRI staging is omitted.",
+    "studentVisibleTiming": "Debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "chief_complaint_en",
+    "fieldLabel": "Chief complaint",
+    "value": "Recurrent left flank pain with hematuria for more than 1 month.",
+    "studentVisibleTiming": "Initial visible",
+    "teacherOnly": false
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "symptoms_detail_en",
+    "fieldLabel": "History of present illness",
+    "value": "One month ago the patient developed left flank aching pain without radiation. With changes in body position she noticed the entire urine stream became red like meat-washing water, with worm-like clots, from start to finish. Urination itself was not painful. The symptom recurred intermittently. No obvious frequency, urgency, or dysuria. No fever or chills.",
+    "studentVisibleTiming": "Patient answers by slot only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_type_en",
+    "fieldLabel": "Hematuria type",
+    "value": "Gross hematuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_phase_en",
+    "fieldLabel": "Hematuria phase",
+    "value": "Total hematuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "urine_color_en",
+    "fieldLabel": "Urine color",
+    "value": "Meat-washing-water appearance.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "clots_en",
+    "fieldLabel": "Clots",
+    "value": "Worm-like clots.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "pain_relation_en",
+    "fieldLabel": "Pain relation",
+    "value": "Left flank aching pain; no dysuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "fever_chills_en",
+    "fieldLabel": "Fever/chills",
+    "value": "Denies fever or chills.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "flank_pain_en",
+    "fieldLabel": "Flank pain",
+    "value": "Left flank aching pain.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "luts_en",
+    "fieldLabel": "Lower urinary tract symptoms",
+    "value": "No obvious frequency, urgency, or dysuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "glomerular_clues_en",
+    "fieldLabel": "Glomerular clues",
+    "value": "No foamy urine, edema, or post-infectious tea-colored urine.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "past_history_en",
+    "fieldLabel": "Past medical history",
+    "value": "Rheumatic heart disease with mechanical valve replacement; long-term anticoagulation. Cerebral infarction 2 years ago, recovered after conservative treatment. Denies diabetes, liver disease, tuberculosis, smoking, or heavy drinking. Penicillin allergy.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "medications_en",
+    "fieldLabel": "Medications",
+    "value": "Long-term hypnotic use (estazolam reported); warfarin anticoagulation due to mechanical valve.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "patient_persona_en",
+    "fieldLabel": "Patient persona",
+    "value": "Elderly woman with valve replacement, anxious about surgery and stopping anticoagulation. Medication history must be actively asked.",
+    "studentVisibleTiming": "Backend only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "physical_exam_en",
+    "fieldLabel": "Physical examination",
+    "value": "Vital signs stable. Mild left CVA tenderness possible. Abdomen soft. Irregular rhythm and valvular murmur. No lower limb edema.",
+    "studentVisibleTiming": "Only after selected/ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "urine_test_en",
+    "fieldLabel": "Urine test result",
+    "value": "Urine RBC 4768/μL; WBC 45/μL.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "imaging_en",
+    "fieldLabel": "Imaging result",
+    "value": "Ultrasound: left renal and ureteral hydronephrosis, possible mid-ureteral obstruction. CT: soft tissue lesion in the mid-left ureter, highly suspicious for malignancy.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "initial_diagnosis_en",
+    "fieldLabel": "Initial diagnosis",
+    "value": "Left ureteral malignant tumor.",
+    "studentVisibleTiming": "After diagnosis submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "risk_summary_en",
+    "fieldLabel": "Risk summary",
+    "value": "Upper-tract mass with hydronephrosis. Warfarin does not explain hematuria by itself; malignancy workup is required.",
+    "studentVisibleTiming": "After submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_labs_en",
+    "fieldLabel": "Admission laboratory orders",
+    "value": "CBC, urinalysis with sediment, stool routine, full biochemistry, ABO blood group, coagulation, infectious screening, tumor markers, HbA1c; urine cytology on 3 consecutive days.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_imaging_en",
+    "fieldLabel": "Admission imaging/orders",
+    "value": "Cardiopulmonary evaluation: ECG, chest CT, cardiac CT + coronary CTA, echocardiography. Brain MRI with DWI due to stroke history. CTU to define ureteral lesion. Renal scan for split renal function. Staging imaging as needed.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "initial_treatment_plan_en",
+    "fieldLabel": "Initial treatment plan",
+    "value": "Stop warfarin and bridge with low-molecular-weight heparin under specialist guidance. Complete evaluation, confirm diagnosis, and exclude surgical contraindications.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "key_positive_findings_en",
+    "fieldLabel": "Key positive findings",
+    "value": "Marked hyperlipidemia. ECG shows atrial fibrillation. Coronary CTA: LAD 30%, RCA 40%, LCX 40–50% stenosis; echocardiography may show valvular dysfunction and reduced cardiac reserve.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "next_management_en",
+    "fieldLabel": "Next management",
+    "value": "Low-salt, low-fat diet and statin therapy. Holter monitoring for atrial fibrillation. Urine cytology shows atypical urothelial cells; consider urine methylation test and definitive CTU/ureteroscopic pathology if needed.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "preoperative_or_final_diagnosis_en",
+    "fieldLabel": "Preoperative/final diagnosis",
+    "value": "1. Left ureteral malignant tumor (T2N0M0). 2. Hyperlipidemia. 3. Atrial fibrillation. 4. Coronary atherosclerosis.",
+    "studentVisibleTiming": "Teacher/debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "perioperative_points_en",
+    "fieldLabel": "Perioperative points",
+    "value": "Bowel preparation, blood preparation, ICU bed reservation if high risk, anticoagulation interruption on operation day with bridging strategy planned by cardiology/cardiac surgery/anesthesiology.",
+    "studentVisibleTiming": "After perioperative submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "definitive_treatment_en",
+    "fieldLabel": "Definitive treatment",
+    "value": "Laparoscopic left radical nephroureterectomy with bladder cuff excision.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_departments_en",
+    "fieldLabel": "Recommended MDT departments",
+    "value": "Urology, radiology, cardiology, cardiac surgery, anesthesiology; hematology/transfusion medicine if needed.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_question_en",
+    "fieldLabel": "MDT question",
+    "value": "Assess staging and surgical plan; determine perioperative management of warfarin in a mechanical-valve/atrial fibrillation patient; evaluate reduced EF and valvular regurgitation risk.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P002",
+    "stageNo": 7,
+    "agentStage": "Assessment & Debriefing Agent",
+    "fieldKey": "evaluator_key_points_en",
+    "fieldLabel": "Evaluator key points",
+    "value": "Deduct if mechanical valve, warfarin, or stroke history is not asked. Deduct if CTU, urine cytology, cystoscopy, or split renal function is omitted. Deduct if cardiology/cardiac surgery/anesthesia risk evaluation is not requested.",
+    "studentVisibleTiming": "Debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "chief_complaint_en",
+    "fieldLabel": "Chief complaint",
+    "value": "Recurrent hematuria for over 5 months, worsened for 1 week.",
+    "studentVisibleTiming": "Initial visible",
+    "teacherOnly": false
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "symptoms_detail_en",
+    "fieldLabel": "History of present illness",
+    "value": "Five months ago he developed painless gross hematuria without obvious trigger. Urine was bright red with a small amount of clots and the whole stream was red. There was no dysuria, frequency, urgency, or obstructive symptoms. No flank pain or fever. Symptoms recurred intermittently and worsened in the last week.",
+    "studentVisibleTiming": "Patient answers by slot only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_type_en",
+    "fieldLabel": "Hematuria type",
+    "value": "Gross hematuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_phase_en",
+    "fieldLabel": "Hematuria phase",
+    "value": "Total hematuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "urine_color_en",
+    "fieldLabel": "Urine color",
+    "value": "Bright red.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "clots_en",
+    "fieldLabel": "Clots",
+    "value": "Small amount of clots.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "pain_relation_en",
+    "fieldLabel": "Pain relation",
+    "value": "Painless.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "fever_chills_en",
+    "fieldLabel": "Fever/chills",
+    "value": "Denies fever.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "flank_pain_en",
+    "fieldLabel": "Flank pain",
+    "value": "No flank pain.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "luts_en",
+    "fieldLabel": "Lower urinary tract symptoms",
+    "value": "No frequency, urgency, or obstructive symptoms.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "glomerular_clues_en",
+    "fieldLabel": "Glomerular clues",
+    "value": "No foamy urine, edema, or glomerulonephritis clues.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "past_history_en",
+    "fieldLabel": "Past medical history",
+    "value": "COPD with cough and white foamy sputum. Hypertension for over 20 years, controlled with irbesartan. Denies diabetes, liver disease, tuberculosis. Smokes for over 30 years, about 1 pack/day; drinks small amounts. No known drug allergy.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "medications_en",
+    "fieldLabel": "Medications",
+    "value": "Long-term aspirin and irbesartan.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "patient_persona_en",
+    "fieldLabel": "Patient persona",
+    "value": "Elderly long-term smoker with sputum production; worries he may not tolerate surgery. Smoking and COPD history must be actively asked.",
+    "studentVisibleTiming": "Backend only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "physical_exam_en",
+    "fieldLabel": "Physical examination",
+    "value": "COPD signs may include barrel-chest tendency and coarse breath sounds. Abdomen soft. No CVA tenderness. No obvious lower limb edema.",
+    "studentVisibleTiming": "Only after selected/ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "urine_test_en",
+    "fieldLabel": "Urine test result",
+    "value": "Urine RBC 4448/μL; WBC 3/μL.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "imaging_en",
+    "fieldLabel": "Imaging result",
+    "value": "Urinary CT suggests a soft tissue lesion in the right renal pelvis, about 2 × 3 cm.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "initial_diagnosis_en",
+    "fieldLabel": "Initial diagnosis",
+    "value": "Right renal pelvis malignant tumor.",
+    "studentVisibleTiming": "After diagnosis submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "risk_summary_en",
+    "fieldLabel": "Risk summary",
+    "value": "70-year-old male, heavy smoking history, painless total gross hematuria and weight loss risk suggest high-risk urothelial cancer.",
+    "studentVisibleTiming": "After submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_labs_en",
+    "fieldLabel": "Admission laboratory orders",
+    "value": "CBC, urinalysis with sediment, stool routine, full biochemistry, ABO blood group, coagulation, infectious screening, tumor markers, HbA1c, arterial blood gas; urine cytology for 3 consecutive days.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_imaging_en",
+    "fieldLabel": "Admission imaging/orders",
+    "value": "ECG, chest CT, cardiac CT + coronary CTA, echocardiography, pulmonary function tests. CTU for right renal pelvic lesion. Renal scan for split function. Staging imaging including chest/abdominal assessment.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "initial_treatment_plan_en",
+    "fieldLabel": "Initial treatment plan",
+    "value": "Airway preparation with nebulization and sputum management. Smoking cessation. Continue blood pressure control. Stop aspirin if primary prevention without bridging. Complete evaluation and exclude surgical contraindications.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "key_positive_findings_en",
+    "fieldLabel": "Key positive findings",
+    "value": "ABG shows PaO2 about 85 mmHg. Chest CT shows multiple pulmonary bullae. Coronary CTA critical value: LAD stenosis >75%, RCA 40%, LCX 40–50%.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "next_management_en",
+    "fieldLabel": "Next management",
+    "value": "Nebulization, bronchodilation, sputum clearance, low-flow oxygen and pulse oximetry. Cardiology consult for CAG/stent and operative risk. Respiratory consult for perioperative pulmonary management.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "preoperative_or_final_diagnosis_en",
+    "fieldLabel": "Preoperative/final diagnosis",
+    "value": "1. Right renal pelvis malignant tumor (T2N0M0). 2. COPD. 3. Pulmonary bullae. 4. Coronary atherosclerotic heart disease.",
+    "studentVisibleTiming": "Teacher/debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "perioperative_points_en",
+    "fieldLabel": "Perioperative points",
+    "value": "Bowel preparation, blood preparation, ICU bed reservation. Use LMWH if indicated; oral atorvastatin for plaque stabilization. Optimize airway and coronary risk before major surgery.",
+    "studentVisibleTiming": "After perioperative submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "definitive_treatment_en",
+    "fieldLabel": "Definitive treatment",
+    "value": "Cardiology may require CAG and coronary stenting first; oncology consult to evaluate neoadjuvant therapy. Elective laparoscopic right nephroureterectomy with bladder cuff excision after optimization.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_departments_en",
+    "fieldLabel": "Recommended MDT departments",
+    "value": "Urology, radiology, cardiology, respiratory medicine, anesthesiology, ICU, medical oncology; thoracic surgery if needed.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_question_en",
+    "fieldLabel": "MDT question",
+    "value": "Evaluate staging and timing of nephroureterectomy; determine whether LAD >75% stenosis needs CAG/stent; optimize COPD and airway management; decide if neoadjuvant therapy should be given first.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P003",
+    "stageNo": 7,
+    "agentStage": "Assessment & Debriefing Agent",
+    "fieldKey": "evaluator_key_points_en",
+    "fieldLabel": "Evaluator key points",
+    "value": "Deduct if smoking, COPD symptoms, aspirin, or weight loss are not asked. Deduct if severe coronary stenosis is not recognized and consulted. Deduct if CTU, urine cytology, renal scan, or chest imaging is omitted.",
+    "studentVisibleTiming": "Debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "chief_complaint_en",
+    "fieldLabel": "Chief complaint",
+    "value": "Painless total gross hematuria for more than 1 month.",
+    "studentVisibleTiming": "Initial visible",
+    "teacherOnly": false
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "symptoms_detail_en",
+    "fieldLabel": "History of present illness",
+    "value": "Over one month ago he developed painless gross hematuria. Urine was bright red and the entire stream was red. No frequency, urgency, dysuria, flank pain, or fever. He did not pay attention initially. One week ago symptoms worsened and a local CT suggested a huge right renal mass, possible vena cava tumor thrombus, retroperitoneal lymphadenopathy, and destruction of the left second rib with a soft tissue mass. He then came to the hospital.",
+    "studentVisibleTiming": "Patient answers by slot only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_type_en",
+    "fieldLabel": "Hematuria type",
+    "value": "Gross hematuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_phase_en",
+    "fieldLabel": "Hematuria phase",
+    "value": "Total hematuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "urine_color_en",
+    "fieldLabel": "Urine color",
+    "value": "Bright red.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "clots_en",
+    "fieldLabel": "Clots",
+    "value": "No obvious clots noticed unless specifically asked.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "pain_relation_en",
+    "fieldLabel": "Pain relation",
+    "value": "Painless.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "fever_chills_en",
+    "fieldLabel": "Fever/chills",
+    "value": "Denies fever.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "flank_pain_en",
+    "fieldLabel": "Flank pain",
+    "value": "No flank pain.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "luts_en",
+    "fieldLabel": "Lower urinary tract symptoms",
+    "value": "No frequency, urgency, or obstructive symptoms.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "glomerular_clues_en",
+    "fieldLabel": "Glomerular clues",
+    "value": "No glomerular clues.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "past_history_en",
+    "fieldLabel": "Past medical history",
+    "value": "Hypertension for over 20 years, controlled with benazepril, nifedipine sustained-release tablets and hydrochlorothiazide. Type 2 diabetes treated with insulin, dapagliflozin and metformin; glucose monitoring unclear. Denies heart disease, liver disease, tuberculosis, major surgery, or transfusion unless otherwise specified.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "medications_en",
+    "fieldLabel": "Medications",
+    "value": "Benazepril, nifedipine SR, hydrochlorothiazide, dapagliflozin, metformin, and insulin.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "patient_persona_en",
+    "fieldLabel": "Patient persona",
+    "value": "Elderly male, anxious about tumor thrombus and metastasis. Diabetes and hypertension medications must be actively asked.",
+    "studentVisibleTiming": "Backend only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "physical_exam_en",
+    "fieldLabel": "Physical examination",
+    "value": "May have mild pallor. Right upper abdomen/flank fullness may be palpable. CVA tenderness not prominent. Lower limb edema should be checked.",
+    "studentVisibleTiming": "Only after selected/ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "urine_test_en",
+    "fieldLabel": "Urine test result",
+    "value": "Urine RBC 4448/μL; WBC 3/μL.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "imaging_en",
+    "fieldLabel": "Imaging result",
+    "value": "Urinary CT: huge right renal mass, retroperitoneal lymphadenopathy, destruction of left second rib with soft tissue formation; possible vena cava involvement needs further MRI/vascular evaluation.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "initial_diagnosis_en",
+    "fieldLabel": "Initial diagnosis",
+    "value": "Right renal malignant tumor.",
+    "studentVisibleTiming": "After diagnosis submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "risk_summary_en",
+    "fieldLabel": "Risk summary",
+    "value": "Huge renal mass with suspected vena cava tumor thrombus and bone metastasis; complex oncologic MDT case.",
+    "studentVisibleTiming": "After submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_labs_en",
+    "fieldLabel": "Admission laboratory orders",
+    "value": "CBC, urinalysis with sediment, stool routine, full biochemistry, ABO blood group, coagulation, infectious screening, tumor markers, HbA1c, PSA panel; urine cytology for 3 consecutive days.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_imaging_en",
+    "fieldLabel": "Admission imaging/orders",
+    "value": "ECG, enhanced chest CT, cardiac CT + coronary CTA, echocardiography. CTU for renal tumor. MRI/vascular ultrasound for tumor thrombus. Bone scan for skeletal metastasis. Whole-body staging imaging as needed.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "initial_treatment_plan_en",
+    "fieldLabel": "Initial treatment plan",
+    "value": "Monitor glucose fasting and postprandial; diabetic diet and optimize glycemia. Continue blood pressure control. Complete staging and operative-risk evaluation; organize MDT before deciding surgery/systemic therapy.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "key_positive_findings_en",
+    "fieldLabel": "Key positive findings",
+    "value": "HbA1c 7.6%. Enhanced chest CT: multiple inflammatory lung nodules; left second rib destruction with soft-tissue mass, metastasis considered. Bone scan: uptake in left second rib and T2 vertebra. Imaging suggests advanced renal tumor with thrombus/metastasis.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "next_management_en",
+    "fieldLabel": "Next management",
+    "value": "Optimize glucose to fasting 6–8 mmol/L and postprandial 8–10 mmol/L. MDT: thoracic surgery for rib metastasis resection possibility, spine surgery for vertebral lesion, vascular surgery for tumor thrombus, oncology for systemic therapy, anesthesia/ICU for operative risk.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "preoperative_or_final_diagnosis_en",
+    "fieldLabel": "Preoperative/final diagnosis",
+    "value": "Right renal malignant tumor with suspected venous tumor thrombus and bone metastasis; hypertension; type 2 diabetes mellitus.",
+    "studentVisibleTiming": "Teacher/debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "perioperative_points_en",
+    "fieldLabel": "Perioperative points",
+    "value": "Major surgery only after staging and MDT. Assess thrombus level, cardiopulmonary reserve, bleeding risk, transfusion needs, ICU bed, glucose/BP control and VTE prevention.",
+    "studentVisibleTiming": "After perioperative submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "definitive_treatment_en",
+    "fieldLabel": "Definitive treatment",
+    "value": "MDT-guided plan: consider cytoreductive nephrectomy/thrombectomy only if appropriate; otherwise systemic therapy, metastasis-directed therapy, or staged surgery according to risk and resectability.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_departments_en",
+    "fieldLabel": "Recommended MDT departments",
+    "value": "Urology, radiology, vascular surgery, anesthesiology, ICU, medical oncology, thoracic surgery, spine/orthopedics, transfusion medicine.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_question_en",
+    "fieldLabel": "MDT question",
+    "value": "Define thrombus level, metastatic burden, operability, need for nephrectomy/thrombectomy, systemic therapy sequence, and perioperative safety plan.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P004",
+    "stageNo": 7,
+    "agentStage": "Assessment & Debriefing Agent",
+    "fieldKey": "evaluator_key_points_en",
+    "fieldLabel": "Evaluator key points",
+    "value": "Deduct if large renal mass with thrombus/metastasis does not trigger MDT; deduct if staging, venous imaging, bone scan, glucose control, vascular/anesthesia/ICU consults are omitted.",
+    "studentVisibleTiming": "Debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "chief_complaint_en",
+    "fieldLabel": "Chief complaint",
+    "value": "Progressive dysuria/voiding difficulty for over 3 years, worsened with hematuria for 1 month.",
+    "studentVisibleTiming": "Initial visible",
+    "teacherOnly": false
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "symptoms_detail_en",
+    "fieldLabel": "History of present illness",
+    "value": "Three years ago he developed frequency and urgency. If unable to void promptly, he could wet his pants. He also had straining, weak stream, split stream, occasional blood in urine and nocturia. Symptoms worsened progressively; nocturia increased to 3–4 and later 5–6 times/night, with recurrent hematuria and obstructive symptoms.",
+    "studentVisibleTiming": "Patient answers by slot only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_type_en",
+    "fieldLabel": "Hematuria type",
+    "value": "Gross hematuria mainly; microscopic RBC elevated.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_phase_en",
+    "fieldLabel": "Hematuria phase",
+    "value": "Intermittent hematuria, partially relieved by increased water intake; ask whether terminal/total.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "urine_color_en",
+    "fieldLabel": "Urine color",
+    "value": "Bright red.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "clots_en",
+    "fieldLabel": "Clots",
+    "value": "No obvious clots if asked.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "pain_relation_en",
+    "fieldLabel": "Pain relation",
+    "value": "Dysuria and suprapubic distension when obstruction worsens.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "fever_chills_en",
+    "fieldLabel": "Fever/chills",
+    "value": "Denies fever.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "flank_pain_en",
+    "fieldLabel": "Flank pain",
+    "value": "Denies back or limb pain.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "luts_en",
+    "fieldLabel": "Lower urinary tract symptoms",
+    "value": "Frequency, urgency, weak and split stream, nocturia 5–6 times/night, urge incontinence, voiding difficulty.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "glomerular_clues_en",
+    "fieldLabel": "Glomerular clues",
+    "value": "No foamy urine, edema, or post-infectious hematuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "past_history_en",
+    "fieldLabel": "Past medical history",
+    "value": "Diabetes for over 10 years treated with dapagliflozin and metformin, glucose monitoring unclear. Coronary stent implantation 6 years ago. Denies liver disease and tuberculosis. Allergic to sulfonamides and Qingkailing. Denies transfusion. Family generally healthy.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "medications_en",
+    "fieldLabel": "Medications",
+    "value": "Long-term aspirin, clopidogrel, dapagliflozin and metformin.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "patient_persona_en",
+    "fieldLabel": "Patient persona",
+    "value": "Elderly male most concerned about being unable to void. Hesitant about prostate biopsy; coronary stent and dual antiplatelet therapy require active questioning.",
+    "studentVisibleTiming": "Backend only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "physical_exam_en",
+    "fieldLabel": "Physical examination",
+    "value": "Possible suprapubic bladder distension. Digital rectal exam should assess enlarged, hard, nodular prostate and median sulcus. External genitalia unremarkable.",
+    "studentVisibleTiming": "Only after selected/ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "urine_test_en",
+    "fieldLabel": "Urine test result",
+    "value": "Urine RBC 328/μL; WBC 88/μL.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "imaging_en",
+    "fieldLabel": "Imaging result",
+    "value": "Ultrasound: bladder trabeculation, enlarged prostate 56 × 65 × 47 mm, heterogeneous internal echo.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "initial_diagnosis_en",
+    "fieldLabel": "Initial diagnosis",
+    "value": "Benign prostatic hyperplasia initially, but prostate cancer must be ruled out.",
+    "studentVisibleTiming": "After diagnosis submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "risk_summary_en",
+    "fieldLabel": "Risk summary",
+    "value": "Elderly male with markedly elevated PSA, PI-RADS 5 lesion and possible seminal vesicle invasion. Prostate cancer must be considered; dual antiplatelet therapy does not explain hematuria alone.",
+    "studentVisibleTiming": "After submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_labs_en",
+    "fieldLabel": "Admission laboratory orders",
+    "value": "CBC, urinalysis with sediment, stool routine, full biochemistry, ABO, coagulation, infectious screening, tumor markers, PSA panel, HbA1c.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_imaging_en",
+    "fieldLabel": "Admission imaging/orders",
+    "value": "ECG, chest CT, cardiac CT + coronary CTA, echocardiography. Pelvic MRI with contrast and DWI for prostate assessment. Urodynamic study for lower urinary tract function.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "initial_treatment_plan_en",
+    "fieldLabel": "Initial treatment plan",
+    "value": "Monitor fasting and postprandial glucose. Diabetic diet; switch oral hypoglycemics to insulin if needed. Assess antiplatelet therapy interruption with cardiology. Complete evaluation and plan biopsy/surgery.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "key_positive_findings_en",
+    "fieldLabel": "Key positive findings",
+    "value": "tPSA 32 ng/mL, fPSA 1.2 ng/mL. Coronary CTA critical: LAD stenosis >70%, RCA 30%, LCX 40–50%. Pelvic MRI likely PI-RADS 5 with possible seminal vesicle involvement.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "next_management_en",
+    "fieldLabel": "Next management",
+    "value": "High suspicion of prostate cancer: proceed to prostate biopsy after antiplatelet and cardiac risk assessment. Consult cardiology for coronary stenosis/antiplatelet management; endocrinology for glucose control.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "preoperative_or_final_diagnosis_en",
+    "fieldLabel": "Preoperative/final diagnosis",
+    "value": "Suspected/confirmed prostate cancer with BPH/LUTS; coronary artery disease after stent; type 2 diabetes mellitus.",
+    "studentVisibleTiming": "Teacher/debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "perioperative_points_en",
+    "fieldLabel": "Perioperative points",
+    "value": "Assess dual antiplatelet interruption, bleeding/thrombosis risk, glucose control, infection control, anesthesia and cardiac risk before biopsy or surgery.",
+    "studentVisibleTiming": "After perioperative submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "definitive_treatment_en",
+    "fieldLabel": "Definitive treatment",
+    "value": "Transperineal or transrectal prostate biopsy for pathology; treatment depends on risk stage: active surveillance, radiotherapy, endocrine therapy, surgery or systemic therapy as appropriate.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_departments_en",
+    "fieldLabel": "Recommended MDT departments",
+    "value": "Urology, cardiology, endocrinology, anesthesiology, radiology, pathology, oncology/radiotherapy as needed.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_question_en",
+    "fieldLabel": "MDT question",
+    "value": "Clarify prostate cancer likelihood and staging, biopsy safety under dual antiplatelets, cardiac risk, and glucose optimization.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P005",
+    "stageNo": 7,
+    "agentStage": "Assessment & Debriefing Agent",
+    "fieldKey": "evaluator_key_points_en",
+    "fieldLabel": "Evaluator key points",
+    "value": "Deduct if PSA, DRE, prostate MRI, biopsy pathway, antiplatelet management or diabetes optimization are omitted; high-risk error if hematuria is attributed only to BPH or antiplatelets.",
+    "studentVisibleTiming": "Debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "chief_complaint_en",
+    "fieldLabel": "Chief complaint",
+    "value": "Frequency, urgency and dysuria with hematuria for 2 days.",
+    "studentVisibleTiming": "Initial visible",
+    "teacherOnly": false
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "symptoms_detail_en",
+    "fieldLabel": "History of present illness",
+    "value": "Two days ago she suddenly developed stinging pain, incomplete emptying, and burning during urination. Frequency was marked, about every 10 minutes. After voiding, tissue paper showed pink urine. No clots, flank pain, or fever. She bought Sanjin tablets from a pharmacy herself and symptoms improved incompletely.",
+    "studentVisibleTiming": "Patient answers by slot only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_type_en",
+    "fieldLabel": "Hematuria type",
+    "value": "Light gross/pink urine; microscopic RBC elevated.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_phase_en",
+    "fieldLabel": "Hematuria phase",
+    "value": "Not classic total hematuria; mainly pink staining after voiding. Ask to distinguish urethral urine from vaginal bleeding.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "urine_color_en",
+    "fieldLabel": "Urine color",
+    "value": "Pink.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "clots_en",
+    "fieldLabel": "Clots",
+    "value": "No clots.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "pain_relation_en",
+    "fieldLabel": "Pain relation",
+    "value": "Stinging and burning with urination.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "fever_chills_en",
+    "fieldLabel": "Fever/chills",
+    "value": "No fever or chills.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "flank_pain_en",
+    "fieldLabel": "Flank pain",
+    "value": "No flank pain.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "luts_en",
+    "fieldLabel": "Lower urinary tract symptoms",
+    "value": "Marked frequency, urgency, dysuria and incomplete emptying.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "glomerular_clues_en",
+    "fieldLabel": "Glomerular clues",
+    "value": "No foamy urine, edema, hypertension or post-infectious tea-colored urine.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "past_history_en",
+    "fieldLabel": "Past medical history",
+    "value": "Denies hypertension, diabetes, heart disease, liver disease and tuberculosis. No drug allergy, trauma or surgery. Unmarried and never pregnant. Menarche at 14; last menstrual period on the 15th of last month; regular 28–30 day cycle.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "medications_en",
+    "fieldLabel": "Medications",
+    "value": "No regular medication.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "patient_persona_en",
+    "fieldLabel": "Patient persona",
+    "value": "Young woman irritated by pain and frequency. Somewhat embarrassed about gynecologic/menstrual questions; requires gentle questioning.",
+    "studentVisibleTiming": "Backend only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "physical_exam_en",
+    "fieldLabel": "Physical examination",
+    "value": "Afebrile. Mild suprapubic tenderness. No CVA tenderness. Exclude gynecologic bleeding if indicated.",
+    "studentVisibleTiming": "Only after selected/ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "urine_test_en",
+    "fieldLabel": "Urine test result",
+    "value": "Urine RBC 48/μL; WBC 58/μL.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "imaging_en",
+    "fieldLabel": "Imaging result",
+    "value": "Urinary ultrasound unremarkable.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "initial_diagnosis_en",
+    "fieldLabel": "Initial diagnosis",
+    "value": "Urinary tract infection / acute cystitis.",
+    "studentVisibleTiming": "After diagnosis submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "risk_summary_en",
+    "fieldLabel": "Risk summary",
+    "value": "Young woman; rule out menstrual/vaginal contamination, pregnancy and sexual activity-related infection. No high-risk tumor features.",
+    "studentVisibleTiming": "After submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_labs_en",
+    "fieldLabel": "Admission laboratory orders",
+    "value": "Urinalysis with sediment. Midstream urine culture and susceptibility if symptoms are severe, recurrent, treatment failure occurs, or before antibiotics. CBC/CRP as needed. Renal function as needed. Pregnancy test if applicable.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_imaging_en",
+    "fieldLabel": "Admission imaging/orders",
+    "value": "Ultrasound already normal. CT is usually unnecessary for uncomplicated cystitis; consider ultrasound or CT KUB if fever, flank pain, recurrent infection, treatment failure, or suspected stone/obstruction.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "initial_treatment_plan_en",
+    "fieldLabel": "Initial treatment plan",
+    "value": "Empirical oral antibiotics, hydration, avoid irritant foods, symptomatic analgesia if needed, and education to complete the course.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "key_positive_findings_en",
+    "fieldLabel": "Key positive findings",
+    "value": "RBC and WBC elevated in urine; nitrite may be positive or negative. Culture may grow E. coli. No fever and no CVA tenderness.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "next_management_en",
+    "fieldLabel": "Next management",
+    "value": "Adjust antibiotics according to culture. Recheck urinalysis in about 1 week. If hematuria persists or recurrent gross hematuria occurs, enter formal hematuria pathway to exclude stones/tumor.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "preoperative_or_final_diagnosis_en",
+    "fieldLabel": "Preoperative/final diagnosis",
+    "value": "Acute uncomplicated cystitis with hematuria; rule out menstrual/vaginal contamination.",
+    "studentVisibleTiming": "Teacher/debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "perioperative_points_en",
+    "fieldLabel": "Perioperative points",
+    "value": "Non-surgical case; focus on infection control, pregnancy/gynecologic exclusion if needed, antimicrobial stewardship and follow-up.",
+    "studentVisibleTiming": "After perioperative submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "definitive_treatment_en",
+    "fieldLabel": "Definitive treatment",
+    "value": "Short-course oral antibiotics guided by local resistance/culture; hydration and follow-up urinalysis.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_departments_en",
+    "fieldLabel": "Recommended MDT departments",
+    "value": "Usually no MDT. Gynecology if vaginal bleeding/contamination suspected; infectious disease if recurrent/resistant/complicated infection.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_question_en",
+    "fieldLabel": "MDT question",
+    "value": "Clarify source of bleeding, pregnancy/gynecologic contamination, need for culture-directed therapy and further workup if hematuria persists.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P006",
+    "stageNo": 7,
+    "agentStage": "Assessment & Debriefing Agent",
+    "fieldKey": "evaluator_key_points_en",
+    "fieldLabel": "Evaluator key points",
+    "value": "Deduct if frequency/urgency/dysuria, fever/flank pain, menstrual contamination, pregnancy, culture indication or follow-up urinalysis are not addressed.",
+    "studentVisibleTiming": "Debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "chief_complaint_en",
+    "fieldLabel": "Chief complaint",
+    "value": "Recurrent voiding difficulty for over 5 years, acute worsening with hematuria for 1 day.",
+    "studentVisibleTiming": "Initial visible",
+    "teacherOnly": false
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "symptoms_detail_en",
+    "fieldLabel": "History of present illness",
+    "value": "Five years ago he developed split stream, weak stream, marked frequency about every half hour, and nocturia 4–5 times/night. A local hospital considered prostatic enlargement. He took prostate medication intermittently. Recently he developed acute urinary retention and light-red urine after catheterization.",
+    "studentVisibleTiming": "Patient answers by slot only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_type_en",
+    "fieldLabel": "Hematuria type",
+    "value": "Light gross hematuria plus microscopic hematuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_phase_en",
+    "fieldLabel": "Hematuria phase",
+    "value": "Light red urine after catheterization/retention; may have terminal hematuria. Must differentiate from tumor-related hematuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "urine_color_en",
+    "fieldLabel": "Urine color",
+    "value": "Light red.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "clots_en",
+    "fieldLabel": "Clots",
+    "value": "No clots reported.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "pain_relation_en",
+    "fieldLabel": "Pain relation",
+    "value": "Voiding difficulty with dysuria and lower abdominal distension.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "fever_chills_en",
+    "fieldLabel": "Fever/chills",
+    "value": "No fever.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "flank_pain_en",
+    "fieldLabel": "Flank pain",
+    "value": "No back/flank pain.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "luts_en",
+    "fieldLabel": "Lower urinary tract symptoms",
+    "value": "Weak stream, split stream, frequency, nocturia 4–5 times/night, acute urinary retention.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "glomerular_clues_en",
+    "fieldLabel": "Glomerular clues",
+    "value": "No foamy urine, edema, or post-infectious hematuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "past_history_en",
+    "fieldLabel": "Past medical history",
+    "value": "Denies hypertension, diabetes, liver disease and tuberculosis. No known drug allergy. Non-smoker. Drinks 50–100 mL liquor/day. Denies transfusion. Children healthy.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "medications_en",
+    "fieldLabel": "Medications",
+    "value": "No regular medication recorded; answer as none if asked.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "patient_persona_en",
+    "fieldLabel": "Patient persona",
+    "value": "Elderly male most anxious about inability to urinate; has concerns about DRE and surgery.",
+    "studentVisibleTiming": "Backend only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "physical_exam_en",
+    "fieldLabel": "Physical examination",
+    "value": "Suprapubic bladder distension/tenderness before catheterization, improved afterward. DRE: enlarged firm prostate with shallow median sulcus. No CVA tenderness.",
+    "studentVisibleTiming": "Only after selected/ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "urine_test_en",
+    "fieldLabel": "Urine test result",
+    "value": "Urine RBC 78/μL; WBC 88/μL; tPSA 7 ng/mL, fPSA 0.5 ng/mL.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "imaging_en",
+    "fieldLabel": "Imaging result",
+    "value": "Ultrasound: thickened bladder wall, catheter balloon in bladder, enlarged prostate 56 × 48 mm protruding into bladder.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "initial_diagnosis_en",
+    "fieldLabel": "Initial diagnosis",
+    "value": "Benign prostatic hyperplasia.",
+    "studentVisibleTiming": "After diagnosis submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "risk_summary_en",
+    "fieldLabel": "Risk summary",
+    "value": "Older male with enlarged prostate and PSA 7; prostate cancer must be excluded. Alcohol may precipitate retention.",
+    "studentVisibleTiming": "After submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_labs_en",
+    "fieldLabel": "Admission laboratory orders",
+    "value": "CBC, urinalysis with sediment, stool routine, full biochemistry, ABO, coagulation, infectious screening, tumor markers, HbA1c.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_imaging_en",
+    "fieldLabel": "Admission imaging/orders",
+    "value": "ECG, chest CT and echocardiography. Pelvic MRI with contrast/DWI for prostate. Urodynamics for lower urinary tract function.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "initial_treatment_plan_en",
+    "fieldLabel": "Initial treatment plan",
+    "value": "Treat UTI with oral antibiotics; use tamsulosin and finasteride to improve voiding. Complete diagnostic evaluation and cardiopulmonary assessment; plan surgery if indicated.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "key_positive_findings_en",
+    "fieldLabel": "Key positive findings",
+    "value": "Urodynamics: severe bladder outlet obstruction and weakened detrusor contractility. Pelvic MRI: enlarged prostate with multiple nodules, PI-RADS 3, protruding into bladder.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "next_management_en",
+    "fieldLabel": "Next management",
+    "value": "Consult as needed; exclude prostate cancer if clinically indicated; consider TURP/laser enucleation based on obstruction, retention, bladder function and surgical risk.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "preoperative_or_final_diagnosis_en",
+    "fieldLabel": "Preoperative/final diagnosis",
+    "value": "BPH with bladder outlet obstruction, acute urinary retention, UTI/hematuria; elevated PSA requiring prostate cancer exclusion.",
+    "studentVisibleTiming": "Teacher/debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "perioperative_points_en",
+    "fieldLabel": "Perioperative points",
+    "value": "Treat infection, evaluate residual urine and bladder function, assess anesthesia/cardiopulmonary risk, control bleeding risk, and counsel on urinary retention/recurrence.",
+    "studentVisibleTiming": "After perioperative submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "definitive_treatment_en",
+    "fieldLabel": "Definitive treatment",
+    "value": "Medical therapy or surgical treatment such as TURP/laser enucleation after evaluation.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_departments_en",
+    "fieldLabel": "Recommended MDT departments",
+    "value": "Urology primarily; anesthesiology and cardiology if operative risk; pathology if biopsy/resection specimen abnormal.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_question_en",
+    "fieldLabel": "MDT question",
+    "value": "Clarify whether PSA/MRI requires biopsy, assess surgical indication, retention management and perioperative risk.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P007",
+    "stageNo": 7,
+    "agentStage": "Assessment & Debriefing Agent",
+    "fieldKey": "evaluator_key_points_en",
+    "fieldLabel": "Evaluator key points",
+    "value": "Deduct if LUTS history, acute retention, DRE, PSA/MRI, infection evaluation or tumor exclusion are missed.",
+    "studentVisibleTiming": "Debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "chief_complaint_en",
+    "fieldLabel": "Chief complaint",
+    "value": "Intermittent hematuria with interrupted urinary stream for more than 1 year.",
+    "studentVisibleTiming": "Initial visible",
+    "teacherOnly": false
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "symptoms_detail_en",
+    "fieldLabel": "History of present illness",
+    "value": "For one year he has had intermittent gross hematuria, mainly light red urine at the end of urination. He has mild stinging during urination. Sometimes the urinary stream suddenly stops; after changing body position he can void again. No clots, flank pain, or fever. Nocturia 1–2 times/night.",
+    "studentVisibleTiming": "Patient answers by slot only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_type_en",
+    "fieldLabel": "Hematuria type",
+    "value": "Gross hematuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_phase_en",
+    "fieldLabel": "Hematuria phase",
+    "value": "Predominantly terminal hematuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "urine_color_en",
+    "fieldLabel": "Urine color",
+    "value": "Light red.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "clots_en",
+    "fieldLabel": "Clots",
+    "value": "No clots.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "pain_relation_en",
+    "fieldLabel": "Pain relation",
+    "value": "Mild stinging during urination; position-related interruption of stream.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "fever_chills_en",
+    "fieldLabel": "Fever/chills",
+    "value": "No fever.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "flank_pain_en",
+    "fieldLabel": "Flank pain",
+    "value": "No flank pain.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "luts_en",
+    "fieldLabel": "Lower urinary tract symptoms",
+    "value": "Interrupted stream that improves after postural change; nocturia 1–2 times/night.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "glomerular_clues_en",
+    "fieldLabel": "Glomerular clues",
+    "value": "No glomerular clues.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "past_history_en",
+    "fieldLabel": "Past medical history",
+    "value": "HBV carrier/small three positives, untreated. Denies hypertension, diabetes, and tuberculosis. No known drug allergy. Smokes for over 20 years, half a pack/day. Occasional social drinking. Denies transfusion. Children healthy.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "medications_en",
+    "fieldLabel": "Medications",
+    "value": "Long-term aspirin.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "patient_persona_en",
+    "fieldLabel": "Patient persona",
+    "value": "Middle-aged man troubled by intermittent stream interruption. Does not volunteer smoking or aspirin unless asked.",
+    "studentVisibleTiming": "Backend only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "physical_exam_en",
+    "fieldLabel": "Physical examination",
+    "value": "Usually no significant suprapubic tenderness. No CVA tenderness. DRE may show enlarged prostate. Bladder percussion depends on residual urine.",
+    "studentVisibleTiming": "Only after selected/ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "urine_test_en",
+    "fieldLabel": "Urine test result",
+    "value": "Urine RBC 279/μL; WBC 3/μL.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "imaging_en",
+    "fieldLabel": "Imaging result",
+    "value": "Ultrasound: enlarged prostate 52 × 41 mm; mobile hyperechoic lesion in bladder with postural change, consistent with bladder stone.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "initial_diagnosis_en",
+    "fieldLabel": "Initial diagnosis",
+    "value": "Bladder stone with benign prostatic hyperplasia.",
+    "studentVisibleTiming": "After diagnosis submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "risk_summary_en",
+    "fieldLabel": "Risk summary",
+    "value": "Smoking history and aspirin use; still must exclude bladder tumor, although stone+BPH strongly explains symptoms.",
+    "studentVisibleTiming": "After submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_labs_en",
+    "fieldLabel": "Admission laboratory orders",
+    "value": "CBC, urinalysis with sediment, stool routine, full biochemistry, ABO, coagulation, infectious screening, PSA panel, tumor markers, HbA1c.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_imaging_en",
+    "fieldLabel": "Admission imaging/orders",
+    "value": "ECG, chest CT, echocardiography. Pelvic CT to assess prostate and stones. Urodynamics for lower urinary tract function.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "initial_treatment_plan_en",
+    "fieldLabel": "Initial treatment plan",
+    "value": "Tamsulosin and finasteride for LUTS. Complete evaluation and surgical planning.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "key_positive_findings_en",
+    "fieldLabel": "Key positive findings",
+    "value": "Urodynamics: moderate bladder outlet obstruction, normal detrusor contractility, residual urine 60 mL. Pelvic CT: prostate 54 × 43 × 42 mm; multiple bladder stones 1–2 cm.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "next_management_en",
+    "fieldLabel": "Next management",
+    "value": "Plan cystolithotripsy/cystolitholapaxy and address bladder outlet obstruction if indicated; continue tumor exclusion if hematuria features are atypical or persistent.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "preoperative_or_final_diagnosis_en",
+    "fieldLabel": "Preoperative/final diagnosis",
+    "value": "Bladder stones; BPH with bladder outlet obstruction; hematuria.",
+    "studentVisibleTiming": "Teacher/debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "perioperative_points_en",
+    "fieldLabel": "Perioperative points",
+    "value": "Evaluate infection, coagulation/aspirin, prostate obstruction, anesthesia risk and recurrence prevention.",
+    "studentVisibleTiming": "After perioperative submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "definitive_treatment_en",
+    "fieldLabel": "Definitive treatment",
+    "value": "Endoscopic bladder stone removal; consider simultaneous or staged BPH surgery depending on obstruction.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_departments_en",
+    "fieldLabel": "Recommended MDT departments",
+    "value": "Urology primarily; anesthesiology/cardiology if antiplatelet or surgical risk; infectious disease if UTI.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_question_en",
+    "fieldLabel": "MDT question",
+    "value": "Clarify stone management, need to treat BPH, antiplatelet perioperative strategy, and whether cystoscopy is needed to exclude bladder tumor.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P008",
+    "stageNo": 7,
+    "agentStage": "Assessment & Debriefing Agent",
+    "fieldKey": "evaluator_key_points_en",
+    "fieldLabel": "Evaluator key points",
+    "value": "Deduct if terminal hematuria, interrupted stream/postural relief, stone imaging, BPH, smoking/aspirin and tumor exclusion are not assessed.",
+    "studentVisibleTiming": "Debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "chief_complaint_en",
+    "fieldLabel": "Chief complaint",
+    "value": "Sudden right flank pain with hematuria for half a day.",
+    "studentVisibleTiming": "Initial visible",
+    "teacherOnly": false
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "symptoms_detail_en",
+    "fieldLabel": "History of present illness",
+    "value": "At midnight last night she developed sudden right flank cutting pain, paroxysmal and severe, radiating to the right lower abdomen and perineum, with nausea and vomiting. She had frequency and urgency. Urine became dark tea-colored. No fever. Stool normal.",
+    "studentVisibleTiming": "Patient answers by slot only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_type_en",
+    "fieldLabel": "Hematuria type",
+    "value": "Tea-colored gross hematuria / marked microscopic hematuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_phase_en",
+    "fieldLabel": "Hematuria phase",
+    "value": "Hematuria appeared with renal colic; not typical initial/terminal; usually whole-urine discoloration.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "urine_color_en",
+    "fieldLabel": "Urine color",
+    "value": "Dark tea-colored.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "clots_en",
+    "fieldLabel": "Clots",
+    "value": "No obvious clots.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "pain_relation_en",
+    "fieldLabel": "Pain relation",
+    "value": "Severe paroxysmal right renal colic radiating to right lower abdomen/perineum, with nausea/vomiting.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "fever_chills_en",
+    "fieldLabel": "Fever/chills",
+    "value": "No fever.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "flank_pain_en",
+    "fieldLabel": "Flank pain",
+    "value": "Marked right renal colic.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "luts_en",
+    "fieldLabel": "Lower urinary tract symptoms",
+    "value": "Frequency and urgency.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "glomerular_clues_en",
+    "fieldLabel": "Glomerular clues",
+    "value": "No foamy urine or edema; tea-colored urine should be distinguished by sediment, but stone evidence is strong.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "past_history_en",
+    "fieldLabel": "Past medical history",
+    "value": "Denies diabetes, heart disease, liver disease, tuberculosis and previous stones. No smoking or alcohol. No drug allergy or transfusion. Unmarried and never pregnant; menarche at 14; last menstrual period on the 6th of last month, regular cycle.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "medications_en",
+    "fieldLabel": "Medications",
+    "value": "No regular medication.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "patient_persona_en",
+    "fieldLabel": "Patient persona",
+    "value": "Young woman in severe pain and anxious; may answer impatiently. Menstrual history should be asked to rule out contamination.",
+    "studentVisibleTiming": "Backend only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "physical_exam_en",
+    "fieldLabel": "Physical examination",
+    "value": "Right CVA tenderness positive; possible right ureteral tract tenderness; no peritoneal irritation; vital signs stable.",
+    "studentVisibleTiming": "Only after selected/ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "urine_test_en",
+    "fieldLabel": "Urine test result",
+    "value": "Urine RBC 5689/μL; WBC 45/μL.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "imaging_en",
+    "fieldLabel": "Imaging result",
+    "value": "Ultrasound: multiple right renal stones; mild right hydronephrosis and ureteral dilatation; 9 × 8 mm stone in upper ureter; bladder unremarkable.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "initial_diagnosis_en",
+    "fieldLabel": "Initial diagnosis",
+    "value": "Right renal/ureteral stone with hydronephrosis and infection.",
+    "studentVisibleTiming": "After diagnosis submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "risk_summary_en",
+    "fieldLabel": "Risk summary",
+    "value": "Upper ureteral stone 9 × 8 mm with mild hydronephrosis and pyuria; watch for progression to infected obstruction.",
+    "studentVisibleTiming": "After submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_labs_en",
+    "fieldLabel": "Admission laboratory orders",
+    "value": "CBC, urinalysis with sediment, stool routine, full biochemistry, ABO, coagulation, infectious screening, urine culture.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_imaging_en",
+    "fieldLabel": "Admission imaging/orders",
+    "value": "ECG and chest X-ray. Non-contrast CT KUB/renal+pelvic CT for stone evaluation; KUB X-ray as appropriate.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "initial_treatment_plan_en",
+    "fieldLabel": "Initial treatment plan",
+    "value": "Oral/IV antibiotics if infection suspected; antispasmodic and analgesic treatment such as drotaverine; complete imaging and prepare definitive stone plan.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "key_positive_findings_en",
+    "fieldLabel": "Key positive findings",
+    "value": "CT shows multiple right renal stones, largest 10 × 12 mm, and upper ureteral stone 9 × 8 mm.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "next_management_en",
+    "fieldLabel": "Next management",
+    "value": "If no systemic infection: consider ureteroscopic lithotripsy or stent based on stone size/location. If fever, sepsis, AKI or worsening obstruction appears: urgent drainage first, stone treatment later.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "preoperative_or_final_diagnosis_en",
+    "fieldLabel": "Preoperative/final diagnosis",
+    "value": "Right upper ureteral stone with hydronephrosis; right renal stones; hematuria; mild urinary infection.",
+    "studentVisibleTiming": "Teacher/debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "perioperative_points_en",
+    "fieldLabel": "Perioperative points",
+    "value": "Confirm infection control, renal function, coagulation, pregnancy status, imaging, analgesia and drainage plan.",
+    "studentVisibleTiming": "After perioperative submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "definitive_treatment_en",
+    "fieldLabel": "Definitive treatment",
+    "value": "Ureteroscopic lithotripsy/stent placement; treat renal stones in staged fashion if needed.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_departments_en",
+    "fieldLabel": "Recommended MDT departments",
+    "value": "Urology primarily; infectious disease if systemic infection/resistant bacteria; interventional radiology if nephrostomy needed; anesthesia if surgery.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_question_en",
+    "fieldLabel": "MDT question",
+    "value": "Determine urgent drainage versus elective lithotripsy, infection control, and surgical timing.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P009",
+    "stageNo": 7,
+    "agentStage": "Assessment & Debriefing Agent",
+    "fieldKey": "evaluator_key_points_en",
+    "fieldLabel": "Evaluator key points",
+    "value": "Deduct if renal colic radiation, nausea/vomiting, fever, urine culture, CT KUB, pregnancy/menstruation, and infected obstruction red flags are not assessed.",
+    "studentVisibleTiming": "Debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "chief_complaint_en",
+    "fieldLabel": "Chief complaint",
+    "value": "Recurrent left flank dull pain with exercise-related hematuria for over 3 years, recurrence for 1 day.",
+    "studentVisibleTiming": "Initial visible",
+    "teacherOnly": false
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "symptoms_detail_en",
+    "fieldLabel": "History of present illness",
+    "value": "Three years ago he developed left flank dull pain after fatigue, without radiation or urinary discomfort. After strenuous exercise he intermittently developed dark tea-colored urine. Yesterday after badminton he again had soy-sauce/dark urine with mild left flank discomfort. No frequency, urgency, dysuria or fever.",
+    "studentVisibleTiming": "Patient answers by slot only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_type_en",
+    "fieldLabel": "Hematuria type",
+    "value": "Gross hematuria / marked microscopic hematuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_phase_en",
+    "fieldLabel": "Hematuria phase",
+    "value": "Whole-urine darkening after exercise; not typical terminal hematuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "urine_color_en",
+    "fieldLabel": "Urine color",
+    "value": "Soy-sauce or dark tea-colored.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "clots_en",
+    "fieldLabel": "Clots",
+    "value": "No clots reported.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "pain_relation_en",
+    "fieldLabel": "Pain relation",
+    "value": "Mild left flank dull pain, not typical renal colic.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "fever_chills_en",
+    "fieldLabel": "Fever/chills",
+    "value": "No fever.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "flank_pain_en",
+    "fieldLabel": "Flank pain",
+    "value": "Left flank dull pain.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "luts_en",
+    "fieldLabel": "Lower urinary tract symptoms",
+    "value": "No frequency, urgency, or dysuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "glomerular_clues_en",
+    "fieldLabel": "Glomerular clues",
+    "value": "Tea/soy color requires distinction from glomerular hematuria, but imaging shows stone clearly.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "past_history_en",
+    "fieldLabel": "Past medical history",
+    "value": "Denies diabetes, heart disease, liver disease, tuberculosis, and previous stones. No smoking or alcohol. No drug allergy or transfusion. Parents, spouse and children healthy.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "medications_en",
+    "fieldLabel": "Medications",
+    "value": "No regular medication.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "patient_persona_en",
+    "fieldLabel": "Patient persona",
+    "value": "Middle-aged man who thinks dark urine after exercise may not be serious; clinicians must ask about pain, fever and stone history.",
+    "studentVisibleTiming": "Backend only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "physical_exam_en",
+    "fieldLabel": "Physical examination",
+    "value": "Mild left CVA tenderness. Abdomen soft. Afebrile. No lower limb edema.",
+    "studentVisibleTiming": "Only after selected/ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "urine_test_en",
+    "fieldLabel": "Urine test result",
+    "value": "Urine RBC 5689/μL; WBC 55/μL.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "imaging_en",
+    "fieldLabel": "Imaging result",
+    "value": "Ultrasound: mild renal pelvis dilation; left renal stone about 35 × 25 mm; bladder and prostate unremarkable.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "initial_diagnosis_en",
+    "fieldLabel": "Initial diagnosis",
+    "value": "Left staghorn renal calculus.",
+    "studentVisibleTiming": "After diagnosis submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "risk_summary_en",
+    "fieldLabel": "Risk summary",
+    "value": "Left staghorn renal calculus about 35 × 30 mm with mild hydronephrosis and infection risk; requires urine culture and preoperative infection control.",
+    "studentVisibleTiming": "After submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_labs_en",
+    "fieldLabel": "Admission laboratory orders",
+    "value": "CBC, urinalysis with sediment, stool routine, full biochemistry, ABO, coagulation, infectious screening, urine culture.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_imaging_en",
+    "fieldLabel": "Admission imaging/orders",
+    "value": "ECG, chest CT. CTU for upper urinary tract stone anatomy; KUB X-ray.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "initial_treatment_plan_en",
+    "fieldLabel": "Initial treatment plan",
+    "value": "Antibiotic treatment if infection suspected; antispasmodic/analgesic for flank discomfort; complete CTU/KUB and plan definitive stone treatment.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "key_positive_findings_en",
+    "fieldLabel": "Key positive findings",
+    "value": "CTU shows left staghorn calculus, range about 35 × 30 mm.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "next_management_en",
+    "fieldLabel": "Next management",
+    "value": "Control infection and assess renal anatomy/function; plan PCNL or staged stone surgery; culture-directed antibiotics if bacteriuria/pyuria.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "preoperative_or_final_diagnosis_en",
+    "fieldLabel": "Preoperative/final diagnosis",
+    "value": "Left staghorn renal calculus with hematuria; mild hydronephrosis/UTI risk.",
+    "studentVisibleTiming": "Teacher/debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "perioperative_points_en",
+    "fieldLabel": "Perioperative points",
+    "value": "Preoperative urine culture, infection control, renal function, coagulation, blood preparation, imaging road map for PCNL, and sepsis prevention.",
+    "studentVisibleTiming": "After perioperative submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "definitive_treatment_en",
+    "fieldLabel": "Definitive treatment",
+    "value": "Percutaneous nephrolithotomy (PCNL), staged if necessary; metabolic evaluation and recurrence prevention afterward.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_departments_en",
+    "fieldLabel": "Recommended MDT departments",
+    "value": "Urology, anesthesiology, infectious disease if infection; interventional radiology if access/drainage issues.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_question_en",
+    "fieldLabel": "MDT question",
+    "value": "Assess PCNL plan, infection control, bleeding risk and need for staged treatment.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P010",
+    "stageNo": 7,
+    "agentStage": "Assessment & Debriefing Agent",
+    "fieldKey": "evaluator_key_points_en",
+    "fieldLabel": "Evaluator key points",
+    "value": "Deduct if exercise association, flank pain, fever, urine culture, CTU/KUB, infection control and PCNL preparation are omitted.",
+    "studentVisibleTiming": "Debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "chief_complaint_en",
+    "fieldLabel": "Chief complaint",
+    "value": "Sore throat for 3 weeks and hematuria for 1 week.",
+    "studentVisibleTiming": "Initial visible",
+    "teacherOnly": false
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "symptoms_detail_en",
+    "fieldLabel": "History of present illness",
+    "value": "Three weeks ago she developed tonsillitis with fever up to 38°C and bilateral lumbar aching. No cough or sputum. Eyelid edema was obvious in the morning. One week ago she again had tonsillitis with fever and then developed gross hematuria a few days after infection, light red or meat-washing-water in appearance. No frequency, urgency or dysuria. Appetite fair, no significant weight loss.",
+    "studentVisibleTiming": "Patient answers by slot only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_type_en",
+    "fieldLabel": "Hematuria type",
+    "value": "Gross hematuria with glomerular microscopic evidence.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_phase_en",
+    "fieldLabel": "Hematuria phase",
+    "value": "Post-infectious hematuria; not localized by initial/terminal pattern; may appear as total light-red/meat-washing urine.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "urine_color_en",
+    "fieldLabel": "Urine color",
+    "value": "Light red or meat-washing-water appearance.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "clots_en",
+    "fieldLabel": "Clots",
+    "value": "No clots.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "pain_relation_en",
+    "fieldLabel": "Pain relation",
+    "value": "No dysuria; bilateral lumbar aching may be present.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "fever_chills_en",
+    "fieldLabel": "Fever/chills",
+    "value": "Sore throat/tonsillitis with fever up to 38°C.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "flank_pain_en",
+    "fieldLabel": "Flank pain",
+    "value": "Bilateral lumbar aching, not classic renal colic.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "luts_en",
+    "fieldLabel": "Lower urinary tract symptoms",
+    "value": "No frequency, urgency, or dysuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "glomerular_clues_en",
+    "fieldLabel": "Glomerular clues",
+    "value": "Eyelid edema, proteinuria, pathological casts, markedly dysmorphic RBCs, and post-infectious hematuria strongly suggest glomerular origin.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "past_history_en",
+    "fieldLabel": "Past medical history",
+    "value": "Denies hypertension, diabetes, liver disease, and tuberculosis. No known drug allergy. Denies transfusion. Vaccinations on schedule.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "medications_en",
+    "fieldLabel": "Medications",
+    "value": "No regular medication recorded; answer as none if asked.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "patient_persona_en",
+    "fieldLabel": "Patient persona",
+    "value": "Adolescent girl; family anxious; expression is average. Sore throat and eyelid edema must be actively asked.",
+    "studentVisibleTiming": "Backend only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "physical_exam_en",
+    "fieldLabel": "Physical examination",
+    "value": "Blood pressure must be measured and may be elevated. Eyelid edema. Pharynx/tonsils congested. Check lower limb edema if needed. CVA tenderness not typical.",
+    "studentVisibleTiming": "Only after selected/ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "urine_test_en",
+    "fieldLabel": "Urine test result",
+    "value": "Urine RBC 279/μL; WBC 3/μL; protein positive; pathological casts positive; RBC phase: dysmorphic RBCs 9000.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "imaging_en",
+    "fieldLabel": "Imaging result",
+    "value": "No clear urologic imaging positive finding before admission. Renal ultrasound recommended to exclude structural disease.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "initial_diagnosis_en",
+    "fieldLabel": "Initial diagnosis",
+    "value": "Acute glomerulonephritis.",
+    "studentVisibleTiming": "After diagnosis submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "risk_summary_en",
+    "fieldLabel": "Risk summary",
+    "value": "Adolescent post-infectious hematuria should prioritize glomerular origin, not tumor/stone pathway.",
+    "studentVisibleTiming": "After submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_labs_en",
+    "fieldLabel": "Admission laboratory orders",
+    "value": "Urinalysis with sediment; dysmorphic RBC assessment; UPCR or 24-hour urine protein; renal function/eGFR; electrolytes; albumin; C3/C4; ASO; IgA; ANA, anti-dsDNA, ANCA, anti-GBM as needed; HBV/HCV/HIV screening as needed.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_imaging_en",
+    "fieldLabel": "Admission imaging/orders",
+    "value": "Renal ultrasound for kidney size/structure. CTU is not first-line. If proteinuria persists, renal function worsens, or diagnosis is unclear, nephrology evaluates renal biopsy indication.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "initial_treatment_plan_en",
+    "fieldLabel": "Initial treatment plan",
+    "value": "Nephrology consult. Rest, salt restriction, monitoring of blood pressure, urine output, weight and renal function. Treat infection focus. Use diuretics/antihypertensives as needed for edema/hypertension.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "key_positive_findings_en",
+    "fieldLabel": "Key positive findings",
+    "value": "Protein positive, pathological casts positive, dysmorphic RBCs 9000; possible low C3 and elevated ASO; renal function normal or mildly abnormal; renal ultrasound usually without urologic mass.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "next_management_en",
+    "fieldLabel": "Next management",
+    "value": "Nephrology-led management. Serial urinalysis, proteinuria, creatinine and complement. If renal function worsens, proteinuria is marked, or diagnosis unclear, evaluate renal biopsy. Avoid unnecessary cystoscopy/CTU.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "preoperative_or_final_diagnosis_en",
+    "fieldLabel": "Preoperative/final diagnosis",
+    "value": "Acute glomerulonephritis / infection-related glomerulonephritis; proteinuria; eyelid edema.",
+    "studentVisibleTiming": "Teacher/debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "perioperative_points_en",
+    "fieldLabel": "Perioperative points",
+    "value": "Usually non-surgical. Focus on blood pressure, urine output, renal function, infection control and avoiding nephrotoxic drugs.",
+    "studentVisibleTiming": "After perioperative submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "definitive_treatment_en",
+    "fieldLabel": "Definitive treatment",
+    "value": "Nephrology follow-up and supportive therapy; BP control, salt restriction, diuresis if needed; immunologic treatment only according to nephrology assessment.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_departments_en",
+    "fieldLabel": "Recommended MDT departments",
+    "value": "Nephrology mandatory; pediatric nephrology by age; infectious disease and rheumatology as needed.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_question_en",
+    "fieldLabel": "MDT question",
+    "value": "Confirm glomerular hematuria, assess severity of acute nephritis, need for renal biopsy, and supportive/immunologic treatment strategy.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P011",
+    "stageNo": 7,
+    "agentStage": "Assessment & Debriefing Agent",
+    "fieldKey": "evaluator_key_points_en",
+    "fieldLabel": "Evaluator key points",
+    "value": "Deduct if sore throat/URI, edema, foamy urine, BP, proteinuria are not asked. Deduct if RBC morphology, protein quantification, complement, ASO, renal function are not ordered. High-risk error if nephrology safety net is not triggered.",
+    "studentVisibleTiming": "Debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "chief_complaint_en",
+    "fieldLabel": "Chief complaint",
+    "value": "Recurrent hematuria with increased foamy urine for over 6 months, worsened for half a month.",
+    "studentVisibleTiming": "Initial visible",
+    "teacherOnly": false
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "symptoms_detail_en",
+    "fieldLabel": "History of present illness",
+    "value": "For half a year, after colds, he developed hematuria and increased foamy urine. 24-hour urine protein was 2.4 g. He took Huangkui capsules without relief. Half a month ago after staying up late, symptoms recurred and worsened; repeat 24-hour urine protein was 4.7 g with normal renal function. He was admitted for evaluation of proteinuria.",
+    "studentVisibleTiming": "Patient answers by slot only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_type_en",
+    "fieldLabel": "Hematuria type",
+    "value": "Gross/microscopic hematuria with marked proteinuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "hematuria_phase_en",
+    "fieldLabel": "Hematuria phase",
+    "value": "Recurrent post-URI hematuria; not initial/terminal; usually total urine color change.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "urine_color_en",
+    "fieldLabel": "Urine color",
+    "value": "May be tea-colored, light red, or gross hematuria, with foamy urine.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "clots_en",
+    "fieldLabel": "Clots",
+    "value": "No clots.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "pain_relation_en",
+    "fieldLabel": "Pain relation",
+    "value": "No dysuria or renal colic.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "fever_chills_en",
+    "fieldLabel": "Fever/chills",
+    "value": "Related to colds/upper respiratory infections; no persistent fever.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "flank_pain_en",
+    "fieldLabel": "Flank pain",
+    "value": "No typical flank pain.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "luts_en",
+    "fieldLabel": "Lower urinary tract symptoms",
+    "value": "No frequency, urgency, or dysuria.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "glomerular_clues_en",
+    "fieldLabel": "Glomerular clues",
+    "value": "Foamy urine, protein 3+, 24h protein increasing from 2.4 g to 4.7 g, dysmorphic RBCs 27000 strongly suggest glomerular origin.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "past_history_en",
+    "fieldLabel": "Past medical history",
+    "value": "Previously healthy.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "medications_en",
+    "fieldLabel": "Medications",
+    "value": "No regular medication.",
+    "studentVisibleTiming": "Only after asked/submitted",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 1,
+    "agentStage": "Standardized Patient Agent",
+    "fieldKey": "patient_persona_en",
+    "fieldLabel": "Patient persona",
+    "value": "Young man worried about recurrent hematuria and foamy urine damaging kidney function; can clearly describe worsening after colds.",
+    "studentVisibleTiming": "Backend only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "physical_exam_en",
+    "fieldLabel": "Physical examination",
+    "value": "Check blood pressure and eyelid/lower limb edema. Abdominal and urologic exam often unremarkable. No renal colic signs.",
+    "studentVisibleTiming": "Only after selected/ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "urine_test_en",
+    "fieldLabel": "Urine test result",
+    "value": "Urinalysis: protein 3+, occult blood 3+, RBC 5689/μL; RBC morphology: dysmorphic RBCs 27000.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "imaging_en",
+    "fieldLabel": "Imaging result",
+    "value": "No clear urologic imaging positive finding before admission. Renal ultrasound recommended to exclude structural abnormality.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "initial_diagnosis_en",
+    "fieldLabel": "Initial diagnosis",
+    "value": "IgA nephropathy.",
+    "studentVisibleTiming": "After diagnosis submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 3,
+    "agentStage": "Diagnostic Reasoning Agent",
+    "fieldKey": "risk_summary_en",
+    "fieldLabel": "Risk summary",
+    "value": "Young male with recurrent post-URI hematuria and proteinuria; IgA nephropathy should be considered. Do not treat as isolated stone/tumor pathway.",
+    "studentVisibleTiming": "After submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_labs_en",
+    "fieldLabel": "Admission laboratory orders",
+    "value": "Urinalysis with sediment; RBC morphology; UPCR/ACR; 24-hour urine protein; renal function/eGFR; electrolytes; albumin; IgA; C3/C4; ANA, anti-dsDNA, ANCA, anti-GBM; HBV/HCV/HIV screening; coagulation and biopsy workup if needed.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "admission_imaging_en",
+    "fieldLabel": "Admission imaging/orders",
+    "value": "Renal ultrasound for kidney size, cortex-medulla and structure. Nephrology evaluates renal biopsy. CTU/cystoscopy is not first-line.",
+    "studentVisibleTiming": "Order catalog/teacher only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "initial_treatment_plan_en",
+    "fieldLabel": "Initial treatment plan",
+    "value": "Nephrology consult. Monitor BP, urine output, renal function and proteinuria. Low-salt diet; avoid nephrotoxic drugs. Consider RAS blockade/supportive therapy according to proteinuria and BP. Evaluate renal biopsy.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 2,
+    "agentStage": "Investigation Agent",
+    "fieldKey": "key_positive_findings_en",
+    "fieldLabel": "Key positive findings",
+    "value": "Protein 3+, occult blood 3+, dysmorphic RBCs 27000; 24-hour urine protein 4.7 g; renal function currently normal. Renal biopsy can confirm IgA nephropathy and Oxford classification.",
+    "studentVisibleTiming": "Only after ordered",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "next_management_en",
+    "fieldLabel": "Next management",
+    "value": "Nephrology completes renal biopsy and classifies pathology/activity. Treatment depends on proteinuria, eGFR, BP and biopsy findings; regular monitoring of urine protein and renal function.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "preoperative_or_final_diagnosis_en",
+    "fieldLabel": "Preoperative/final diagnosis",
+    "value": "IgA nephropathy; proteinuria; glomerular hematuria.",
+    "studentVisibleTiming": "Teacher/debrief only",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 6,
+    "agentStage": "Perioperative Management Agent",
+    "fieldKey": "perioperative_points_en",
+    "fieldLabel": "Perioperative points",
+    "value": "Non-urologic surgical pathway. Before renal biopsy assess coagulation, BP, infection risk and informed consent. Avoid NSAIDs and other nephrotoxic drugs.",
+    "studentVisibleTiming": "After perioperative submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 5,
+    "agentStage": "Clinical Decision Support Agent",
+    "fieldKey": "definitive_treatment_en",
+    "fieldLabel": "Definitive treatment",
+    "value": "Nephrology follow-up. Proteinuria and BP control, renal protection, and steroid/immunosuppressive therapy only according to biopsy and guideline indications.",
+    "studentVisibleTiming": "After treatment submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_departments_en",
+    "fieldLabel": "Recommended MDT departments",
+    "value": "Nephrology mandatory; rheumatology if immune abnormalities; pathology for renal biopsy interpretation.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 4,
+    "agentStage": "MDT Coordinator Agent",
+    "fieldKey": "mdt_question_en",
+    "fieldLabel": "MDT question",
+    "value": "Clarify IgA nephropathy diagnosis, renal biopsy necessity, proteinuria target, immunotherapy indication and follow-up plan.",
+    "studentVisibleTiming": "After MDT submission",
+    "teacherOnly": true
+  },
+  {
+    "caseId": "P012",
+    "stageNo": 7,
+    "agentStage": "Assessment & Debriefing Agent",
+    "fieldKey": "evaluator_key_points_en",
+    "fieldLabel": "Evaluator key points",
+    "value": "Deduct if foamy urine, URI trigger, proteinuria, BP and edema are not asked. Deduct if UPCR/24h protein, RBC morphology, immune tests or renal biopsy evaluation are omitted. High-risk error if nephrology is not consulted.",
+    "studentVisibleTiming": "Debrief only",
+    "teacherOnly": true
+  }
+]
