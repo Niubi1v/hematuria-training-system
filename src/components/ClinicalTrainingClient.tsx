@@ -308,7 +308,7 @@ async function requestAiPatientReply({
   messages: ChatMessage[];
   askedSlots: string[];
 }) {
-  if (!apiUrl) throw new Error("未配置 Patient Agent 后端 API 地址");
+  if (!apiUrl) throw new Error("问诊服务暂不可用");
   const response = await fetch(apiUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -520,8 +520,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [listening, setListening] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(false);
   const [voiceNotice, setVoiceNotice] = useState("");
-  const [patientAgentMode, setPatientAgentMode] = useState<PatientAgentMode>(() => readClientSetting("hematuria-patient-agent-mode", "ai") as PatientAgentMode);
-  const [patientApiUrl, setPatientApiUrl] = useState(() => readClientSetting("hematuria-patient-agent-api-url", buildTimePatientApiUrl));
+  const [patientAgentMode] = useState<PatientAgentMode>("ai");
+  const [patientApiUrl] = useState(buildTimePatientApiUrl);
   const [patientAgentNotice, setPatientAgentNotice] = useState("");
   const [patientReplyLoading, setPatientReplyLoading] = useState(false);
   const [lastPatientDebug, setLastPatientDebug] = useState<PatientReplyApiResponse["debug"] | null>(null);
@@ -591,11 +591,6 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }, [activeStage, answers, askedSlots, initialCaseData.id, collected, examLogs, finalReport, mdtOpinions, messages, orderLogs, osceTimeLeft, submitted, timeline]);
 
   useEffect(() => {
-    localStorage.setItem("hematuria-patient-agent-mode", patientAgentMode);
-    localStorage.setItem("hematuria-patient-agent-api-url", patientApiUrl);
-  }, [patientAgentMode, patientApiUrl]);
-
-  useEffect(() => {
     if (!isOsce || activeStage === "debrief" || finalReport) return;
     const timer = window.setInterval(() => setOsceTimeLeft((value) => Math.max(0, value - 1)), 1000);
     return () => window.clearInterval(timer);
@@ -638,17 +633,17 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         });
         answerText = aiResult.replyText || ruleResult.answer;
         matchedSlots = aiResult.matchedSlotIds?.length ? aiResult.matchedSlotIds : ruleResult.matchedSlots;
-        setPatientAgentNotice(aiResult.isFallback ? `AI不可用，已自动回退规则模式（${aiResult.provider}）。` : `AI增强回复：${aiResult.provider} / ${aiResult.model}`);
+        setPatientAgentNotice("");
         setLastPatientDebug(aiResult.debug ?? null);
       } else {
-        setPatientAgentNotice("当前使用规则模式。");
+        setPatientAgentNotice("");
         setLastPatientDebug(null);
       }
     } catch (error) {
       answerText = ruleResult.answer;
       matchedSlots = ruleResult.matchedSlots;
       matchedKeys = ruleResult.matchedKeys;
-      setPatientAgentNotice(`AI后端不可用，已回退规则模式：${error instanceof Error ? error.message : "请求失败"}`);
+      setPatientAgentNotice("");
       setLastPatientDebug(null);
     } finally {
       setPatientReplyLoading(false);
@@ -898,33 +893,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             <div>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-xl font-semibold">Patient Agent：模拟问诊</h2>
-                <div className="flex flex-wrap items-center gap-2">
-                  <select value={patientAgentMode} onChange={(event) => setPatientAgentMode(event.target.value as PatientAgentMode)} className="rounded-md border border-clinic-line px-3 py-2 text-sm text-clinic-muted outline-none focus:border-clinic-blue">
-                    <option value="ai">AI增强模式</option>
-                    <option value="rule">规则模式</option>
-                    <option value="debug">调试模式</option>
-                  </select>
-                  <button type="button" onClick={() => setAutoSpeak((value) => !value)} disabled={!speechOutputSupported} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm text-clinic-muted hover:border-clinic-blue disabled:cursor-not-allowed disabled:opacity-50">
-                    {autoSpeak ? <Volume2 size={16} /> : <VolumeX size={16} />}
-                    {autoSpeak ? "患者朗读已开" : "患者朗读"}
-                  </button>
-                </div>
+                <button type="button" onClick={() => setAutoSpeak((value) => !value)} disabled={!speechOutputSupported} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm text-clinic-muted hover:border-clinic-blue disabled:cursor-not-allowed disabled:opacity-50">
+                  {autoSpeak ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                  {autoSpeak ? "患者朗读已开" : "患者朗读"}
+                </button>
               </div>
-              {patientAgentMode !== "rule" && (
-                <div className="mt-3 rounded-md border border-clinic-line bg-clinic-paper p-3">
-                  <label className="block text-xs font-medium text-clinic-muted">Patient Agent 后端 API 地址</label>
-                  <input value={patientApiUrl} onChange={(event) => setPatientApiUrl(event.target.value)} className="mt-2 w-full rounded-md border border-clinic-line bg-white px-3 py-2 text-sm outline-none focus:border-clinic-blue" placeholder="https://你的后端域名/api/patient-reply" />
-                  {patientAgentNotice && <p className="mt-2 text-xs text-clinic-muted">{patientAgentNotice}</p>}
-                </div>
-              )}
-              {patientAgentMode === "debug" && lastPatientDebug && (
-                <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
-                  <p className="font-semibold">教师调试信息</p>
-                  <p>cacheKey：{lastPatientDebug.cacheKey}</p>
-                  <p>rawPatientAnswer：{lastPatientDebug.rawPatientAnswer}</p>
-                  <p>filterHits：{lastPatientDebug.filterHits.join("、") || "无"}</p>
-                </div>
-              )}
               <div ref={chatScrollRef} className="mt-4 h-[360px] space-y-4 overflow-y-auto rounded-md border border-clinic-line bg-clinic-paper p-4">
                 {messages.map((message, index) => (
                   <div key={`${message.role}-${index}`} className={`flex ${message.role === "student" ? "justify-end" : "justify-start"}`}>
