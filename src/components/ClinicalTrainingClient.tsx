@@ -58,6 +58,8 @@ import FormattedText from "./FormattedText";
 
 type TrainingMode = "free" | "osce" | "demo" | "rct" | "random";
 type LanguageCode = "zh" | "en";
+type AiMode = "deepseek" | "rule" | "debug";
+type AiStatus = "unknown" | "checking" | "connected" | "fallback" | "error";
 type AgentStageNo = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 type StudentVisibleCase = Pick<CaseData, "id" | "studentChiefComplaint" | "chiefComplaint" | "age" | "sex" | "difficulty">;
 type TimelineEvent = {
@@ -100,12 +102,17 @@ type EnglishCase = {
 };
 
 type PatientReplyApiResponse = {
+  agentId?: string;
   replyText: string;
   matchedSlotIds: string[];
-  revealedFields: string[];
-  blockedFields: string[];
+  revealedFields?: string[];
+  revealedDataKeys?: string[];
+  blockedFields?: string[];
+  blockedDataKeys?: string[];
+  safetyFlags?: string[];
   provider: string;
-  model: string;
+  model?: string;
+  usedModel?: string;
   isFallback: boolean;
   debug?: Record<string, unknown>;
 };
@@ -141,9 +148,52 @@ const orderPrimaryTabs = ["检验", "检查", "病理/操作", "围术期评估"
 const labSecondaryOrder = ["尿液基础", "尿液感染", "尿液肿瘤", "尿液蛋白/肾小球线索", "血液基础", "炎症感染", "凝血/输血", "肾内免疫", "结石代谢", "大便/全身鉴别"];
 const imagingSecondaryOrder = ["超声", "X线", "CT", "MRI", "内镜", "核医学", "功能检查"];
 const consultGroupOrder = ["外科", "内科", "辅助/平台", "急诊/危重"];
-const defaultPatientApiUrl = "https://hematuria-training-system.vercel.app/api/patient-reply";
-const buildTimePatientApiUrl = process.env.NEXT_PUBLIC_PATIENT_AGENT_API_URL || defaultPatientApiUrl;
+const defaultAgentApiUrl = "https://hematuria-training-system.vercel.app/api/agent-chat";
+const buildTimeAgentApiUrl = process.env.NEXT_PUBLIC_AGENT_API_URL || process.env.NEXT_PUBLIC_PATIENT_AGENT_API_URL || defaultAgentApiUrl;
 const PATIENT_REPLY_TIMEOUT_MS = 12000;
+
+const patientReplyForbiddenTerms = [
+  "根据原始病史",
+  "根据病例资料",
+  "未主动诉",
+  "需追问",
+  "评分点",
+  "教师提示",
+  "CT提示",
+  "CTU提示",
+  "膀胱镜",
+  "病理",
+  "占位",
+  "癌栓",
+  "淋巴结",
+  "诊断",
+  "治疗",
+  "手术",
+  "化疗",
+  "放疗"
+];
+
+function isUnsafePatientReply(question: string, reply: string) {
+  const compactQuestion = question.replace(/\s+/g, "");
+  const compactReply = reply.replace(/\s+/g, "");
+  if (!reply.trim()) return true;
+  if (patientReplyForbiddenTerms.some((term) => reply.includes(term))) return true;
+  if (compactReply.length > 180) return true;
+
+  const askedSmoking = /吸烟|抽烟|烟龄|几包|包年/.test(compactQuestion);
+  const askedAlcohol = /喝酒|饮酒|白酒|酒量/.test(compactQuestion);
+  const askedHypertension = /高血压/.test(compactQuestion);
+  const askedColor = /颜色|鲜红|暗红|洗肉水|茶色|酱油|红色/.test(compactQuestion);
+  const askedClot = /血块|血凝块|凝血块/.test(compactQuestion);
+
+  if (askedSmoking && /饮酒|喝酒|糖尿病|乙肝|肝炎|结核|输血|子女|父母|高血压/.test(compactReply)) return true;
+  if (askedAlcohol && /吸烟|抽烟|包年|糖尿病|乙肝|肝炎|结核|输血|子女|父母|高血压/.test(compactReply)) return true;
+  if (askedHypertension && /吸烟|抽烟|饮酒|喝酒|糖尿病|乙肝|肝炎|结核|输血|子女|父母/.test(compactReply)) return true;
+  if (askedColor && /CT|影像|血块|无痛|全程|终末|诊断/.test(compactReply)) return true;
+  if (askedClot && /鲜红|暗红|洗肉水|茶色|全程|终末|无痛|诊断/.test(compactReply)) return true;
+
+  return false;
+}
 
 const emptyAnswers: FullProcessAnswers = {
   historySummary: "",
@@ -299,12 +349,14 @@ function stageAnswerText(stageNo: AgentStageNo, answers: FullProcessAnswers, mes
   return answers.debriefReflection;
 }
 
-async function requestAiPatientReply({ apiUrl, caseId, question, messages, askedSlots }: {
+async function requestAiPatientReply({ apiUrl, caseId, question, messages, askedSlots, aiMode, language }: {
   apiUrl: string;
   caseId: string;
   question: string;
   messages: ChatMessage[];
   askedSlots: string[];
+  aiMode: AiMode;
+  language: LanguageCode;
 }) {
   const controller = new AbortController();
   const timeoutId = globalThis.setTimeout(() => controller.abort(), PATIENT_REPLY_TIMEOUT_MS);
@@ -316,11 +368,14 @@ async function requestAiPatientReply({ apiUrl, caseId, question, messages, asked
       signal: controller.signal,
       body: JSON.stringify({
         caseId,
+        agentId: "standardized_patient",
         stage: "history",
-        studentQuestion: question,
+        mode: aiMode === "rule" ? "rule" : aiMode === "debug" ? "debug" : "training",
+        language,
+        studentInput: question,
         conversationHistory: messages.slice(-6).map((message) => ({ role: message.role, text: message.text })),
         askedSlotIds: askedSlots,
-        mode: "ai"
+        askedQuestions: askedSlots
       })
     });
     if (!response.ok) throw new Error(`Patient Agent API ${response.status}`);
@@ -456,6 +511,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [speechOutputSupported, setSpeechOutputSupported] = useState(false);
   const [listening, setListening] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(false);
+  const [aiMode, setAiMode] = useState<AiMode>("deepseek");
+  const [aiStatus, setAiStatus] = useState<AiStatus>("unknown");
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
   const isOsce = runtimeMode === "osce";
   const enCase = useMemo(() => allEnglishCases.find((item) => item.id === initialCaseData.id), [initialCaseData.id]);
@@ -487,6 +544,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   useEffect(() => {
     const savedLang = localStorage.getItem("hematuria-language") as LanguageCode | null;
     if (savedLang === "zh" || savedLang === "en") setLang(savedLang);
+    const savedAiMode = localStorage.getItem("hematuria-ai-mode") as AiMode | null;
+    if (savedAiMode === "deepseek" || savedAiMode === "rule" || savedAiMode === "debug") setAiMode(savedAiMode);
     const urlMode = new URLSearchParams(window.location.search).get("mode");
     if (urlMode === "osce") setRuntimeMode("osce");
     else if (urlMode === "demo") setRuntimeMode("demo");
@@ -532,6 +591,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   useEffect(() => {
     localStorage.setItem("hematuria-language", lang);
   }, [lang]);
+
+  useEffect(() => {
+    localStorage.setItem("hematuria-ai-mode", aiMode);
+    setAiStatus(aiMode === "rule" ? "fallback" : "unknown");
+  }, [aiMode]);
 
   useEffect(() => {
     localStorage.setItem(sessionKey(initialCaseData.id), JSON.stringify({
@@ -594,19 +658,29 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     let matchedSlots = ruleResult.matchedSlots;
     let matchedKeys = ruleResult.matchedKeys;
     try {
-      const aiResult = await requestAiPatientReply({
-        apiUrl: buildTimePatientApiUrl,
-        caseId: caseData.id,
-        question: text,
-        messages,
-        askedSlots
-      });
-      answerText = aiResult.replyText || ruleResult.answer;
-      matchedSlots = aiResult.matchedSlotIds?.length ? aiResult.matchedSlotIds : ruleResult.matchedSlots;
+      if (aiMode === "rule") {
+        setAiStatus("fallback");
+      } else {
+        setAiStatus("checking");
+        const aiResult = await requestAiPatientReply({
+          apiUrl: buildTimeAgentApiUrl,
+          caseId: caseData.id,
+          question: text,
+          messages,
+          askedSlots,
+          aiMode,
+          language: lang
+        });
+        const safeAiReply = aiResult.replyText && !isUnsafePatientReply(text, aiResult.replyText);
+        answerText = safeAiReply ? aiResult.replyText : ruleResult.answer;
+        matchedSlots = aiResult.matchedSlotIds?.length ? aiResult.matchedSlotIds : ruleResult.matchedSlots;
+        setAiStatus(safeAiReply && !aiResult.isFallback ? "connected" : "fallback");
+      }
     } catch {
       answerText = ruleResult.answer;
       matchedSlots = ruleResult.matchedSlots;
       matchedKeys = ruleResult.matchedKeys;
+      setAiStatus("error");
     } finally {
       setPatientReplyLoading(false);
     }
@@ -786,6 +860,20 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             <button type="button" onClick={() => setLanguage("zh")} className={`rounded px-3 py-1 text-sm ${lang === "zh" ? "bg-clinic-blue text-white" : "text-clinic-muted"}`}>{t(lang, "zh")}</button>
             <button type="button" onClick={() => setLanguage("en")} className={`rounded px-3 py-1 text-sm ${lang === "en" ? "bg-clinic-blue text-white" : "text-clinic-muted"}`}>{t(lang, "en")}</button>
           </div>
+          <div className="inline-flex rounded-md border border-clinic-line bg-white p-1">
+            <button type="button" onClick={() => setAiMode("deepseek")} className={`rounded px-3 py-1 text-sm ${aiMode === "deepseek" ? "bg-clinic-blue text-white" : "text-clinic-muted"}`}>{lang === "en" ? "DeepSeek AI" : "DeepSeek AI"}</button>
+            <button type="button" onClick={() => setAiMode("rule")} className={`rounded px-3 py-1 text-sm ${aiMode === "rule" ? "bg-clinic-blue text-white" : "text-clinic-muted"}`}>{lang === "en" ? "Rule" : "规则"}</button>
+            <button type="button" onClick={() => setAiMode("debug")} className={`rounded px-3 py-1 text-sm ${aiMode === "debug" ? "bg-clinic-blue text-white" : "text-clinic-muted"}`}>{lang === "en" ? "Debug" : "调试"}</button>
+          </div>
+          <span className={`rounded-full px-3 py-1 text-xs ${aiStatus === "connected" ? "bg-emerald-50 text-emerald-700" : aiStatus === "checking" || aiStatus === "unknown" ? "bg-slate-50 text-slate-600" : "bg-amber-50 text-amber-700"}`}>
+            {aiStatus === "connected"
+              ? (lang === "en" ? "API connected" : "API已连接")
+              : aiStatus === "checking"
+                ? (lang === "en" ? "Checking API" : "正在连接AI")
+                : aiStatus === "unknown"
+                  ? (lang === "en" ? "AI ready" : "AI待调用")
+                  : (lang === "en" ? "Rule fallback" : "已回退规则")}
+          </span>
           <Link href="/cases" className="rounded-md border border-clinic-line bg-white px-4 py-2 text-sm hover:border-clinic-blue">{t(lang, "backToCases")}</Link>
         </div>
       </div>
@@ -826,7 +914,6 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             <dl className="mt-4 grid gap-3 text-sm">
               <div><dt className="text-clinic-muted">{t(lang, "ageSex")}</dt><dd className="leading-6">{display.age || "-"} / {display.sex || "-"}</dd></div>
               <div><dt className="text-clinic-muted">{t(lang, "chiefComplaint")}</dt><dd className="leading-6">{display.chiefComplaint}</dd></div>
-              <div><dt className="text-clinic-muted">Case tags</dt><dd className="leading-6">{display.difficulty} {display.diseaseCategory ? `· ${display.diseaseCategory}` : ""}</dd></div>
             </dl>
           </section>
         </aside>
@@ -1113,11 +1200,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           <section className="rounded-lg border border-clinic-line bg-white p-5">
             <h2 className="font-semibold">{t(lang, "obtainedData")}</h2>
             <div className="mt-3 space-y-3 text-sm text-clinic-muted">
-              <p>Questions: {acquiredStats.questions}</p>
-              <p>Patient replies: {acquiredStats.patientAnswers}</p>
-              <p>Physical exams: {acquiredStats.exams}</p>
-              <p>Orders: {acquiredStats.orders}</p>
-              <p>Reports returned: {acquiredStats.reports}</p>
+              <p>{lang === "en" ? "Questions" : "已问问题"}: {acquiredStats.questions}</p>
+              <p>{lang === "en" ? "Patient replies" : "患者回答"}: {acquiredStats.patientAnswers}</p>
+              <p>{lang === "en" ? "Physical exams" : "已查体项目"}: {acquiredStats.exams}</p>
+              <p>{lang === "en" ? "Orders" : "已开医嘱"}: {acquiredStats.orders}</p>
+              <p>{lang === "en" ? "Reports returned" : "已返回报告"}: {acquiredStats.reports}</p>
             </div>
           </section>
           <section className="rounded-lg border border-clinic-line bg-white p-5">

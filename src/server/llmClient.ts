@@ -29,7 +29,7 @@ export function getLLMProviderConfig(): LLMProviderConfig {
     temperature: Number(process.env.LLM_TEMPERATURE ?? 0.2),
     maxTokens: Number(process.env.LLM_MAX_TOKENS ?? 120),
     timeoutMs: Number(process.env.LLM_REQUEST_TIMEOUT_MS ?? 15000),
-    enabled: process.env.LLM_ENABLE_AI_PATIENT === "true"
+    enabled: process.env.LLM_ENABLE_AI_AGENTS === "true" || process.env.LLM_ENABLE_AI_PATIENT === "true"
   };
 }
 
@@ -52,7 +52,7 @@ function readChatCompletionText(payload: unknown) {
 
 export async function callLLM({ systemPrompt, userPayload, temperature, maxTokens }: CallLLMInput) {
   const config = getLLMProviderConfig();
-  if (!config.enabled) throw new Error("LLM patient mode is disabled");
+  if (!config.enabled) throw new Error("LLM agent mode is disabled");
   if (!config.apiKey) throw new Error("Missing LLM_API_KEY");
   if (!config.baseUrl) throw new Error("Missing LLM_API_BASE_URL");
   if (!config.model) throw new Error("Missing LLM_MODEL");

@@ -299,7 +299,7 @@ function joinUrl(baseUrl) {
 }
 
 async function callLLM(payload) {
-  if (process.env.LLM_ENABLE_AI_PATIENT !== "true") throw new Error("AI patient disabled");
+  if (process.env.LLM_ENABLE_AI_AGENTS !== "true" && process.env.LLM_ENABLE_AI_PATIENT !== "true") throw new Error("AI patient disabled");
   if (!process.env.LLM_API_KEY) throw new Error("Missing LLM_API_KEY");
   if (!process.env.LLM_API_BASE_URL) throw new Error("Missing LLM_API_BASE_URL");
   if (!process.env.LLM_MODEL) throw new Error("Missing LLM_MODEL");

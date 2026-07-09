@@ -100,6 +100,29 @@ LLM adapter and API safety tests passed.
 - 源码和 `.env.example` 不包含真实 API Key
 - API 请求失败或 LLM 输出不合格时回退规则模式
 
+## 统一 Agent Chat API 测试
+
+命令：
+
+```bash
+tsx scripts/test-agent-chat.ts
+```
+
+结果：
+
+```text
+Agent Chat API tests passed.
+```
+
+覆盖：
+
+- `/api/agent-chat` 请求结构支持 `caseId + agentId + stage + studentInput`
+- Standardized Patient Agent 问“抽烟吗”只回答吸烟，不顺带饮酒、乙肝、糖尿病、输血、子女
+- 问“尿是鲜红色吗”只回答尿色，不返回 CT、占位、癌栓、淋巴结、诊断或治疗
+- 问“做过CT吗，结果怎么样”不由 Patient Agent 返回 CT 报告细节
+- 非患者 Agent 只使用 `unlockedData`，保持 `teacherOnlyData` 阻断
+- 源码和前端构建变量不包含真实 DeepSeek API Key
+
 ## 构建测试
 
 命令：

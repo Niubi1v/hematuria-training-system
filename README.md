@@ -114,10 +114,10 @@ GitHub Pages 前端不能保存 API Key。AI 增强问诊必须通过 Vercel/Net
 POST /api/patient-reply
 ```
 
-当前前端默认请求：
+当前前端默认请求统一 Agent API：
 
 ```text
-https://hematuria-training-system.vercel.app/api/patient-reply
+https://hematuria-training-system.vercel.app/api/agent-chat
 ```
 
 后端安全边界：
@@ -127,6 +127,8 @@ https://hematuria-training-system.vercel.app/api/patient-reply
 - 不传完整现病史、影像、病理、诊断、治疗、评分点
 - LLM 输出经过 `responseFilter`，失败则回退规则模式
 - API 不可用时前端自动回退本地规则 Patient Agent
+- 旧 `/api/patient-reply` 保留兼容，新功能使用 `/api/agent-chat`
+- 前端不包含 API Key，真实 Key 只填在 Vercel Environment Variables
 
 DeepSeek 示例环境变量：
 
@@ -137,9 +139,18 @@ LLM_API_BASE_URL=https://api.deepseek.com
 LLM_MODEL=deepseek-v4-flash
 LLM_ENDPOINT_TYPE=chat_completions
 LLM_TEMPERATURE=0.2
-LLM_MAX_TOKENS=160
+LLM_MAX_TOKENS=300
+LLM_ENABLE_AI_AGENTS=true
 LLM_ENABLE_AI_PATIENT=true
+AGENT_API_ALLOWED_ORIGIN=https://niubi1v.github.io
 PATIENT_AGENT_ALLOWED_ORIGIN=https://niubi1v.github.io
+```
+
+GitHub Pages 前端构建变量：
+
+```text
+NEXT_PUBLIC_AGENT_API_URL=https://hematuria-training-system.vercel.app/api/agent-chat
+NEXT_PUBLIC_PATIENT_AGENT_API_URL=https://hematuria-training-system.vercel.app/api/patient-reply
 ```
 
 不要把真实 API Key 写入 `.env.example`、代码或 GitHub。
@@ -178,6 +189,7 @@ https://niubi1v.github.io/hematuria-training-system/
 ```bash
 npm run test:patient
 npm run test:llm
+npm run test:agent
 npm run build
 ```
 
@@ -189,6 +201,7 @@ npm run build
 - 不输出“根据原始病史、未主动诉、需追问、评分点”
 - 不由 Patient Agent 直接返回 CT、膀胱镜、病理、诊断或治疗
 - Investigation Agent 仍保持“开了什么才返回什么”
+- 训练页右上角默认 DeepSeek AI，可手动切换规则模式；不会在聊天区显示 API 地址或模型名
 
 ## 教学边界
 
