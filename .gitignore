@@ -14,3 +14,6 @@ work/dev.log
 work/dev.err.log
 work/teacher-package-*/
 outputs/*.zip
+
+.vercel
+.env.local

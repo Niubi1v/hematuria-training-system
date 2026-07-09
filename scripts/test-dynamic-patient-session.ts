@@ -84,7 +84,7 @@ async function main() {
 
   const source = [
     ".env.example",
-    "api/lib/llmClient.js",
+    "api/lib/llmClient.runtime.js",
     "api/lib/llmClient.ts",
     "api/session/init.js",
     "api/agent-chat.js",

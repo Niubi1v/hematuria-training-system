@@ -1,5 +1,5 @@
 const cases = require("../../data/cases.json");
-const { callLLM, getLLMProviderConfig } = require("./llmClient.js");
+const { callLLM, getLLMProviderConfig } = require("./llmClient.runtime.js");
 
 const sessionCache = globalThis.__hematuriaSessionCache || new Map();
 const answerCache = globalThis.__hematuriaAnswerCache || new Map();
