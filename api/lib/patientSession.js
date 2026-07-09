@@ -30,6 +30,7 @@ const patientBlockedTerms = [
   "根据病例资料",
   "病例资料显示",
   "未主动诉",
+  "未诉",
   "需追问",
   "CT提示",
   "CTU提示",
@@ -77,6 +78,8 @@ function cleanPatientValue(value) {
   const text = String(value || "")
     .replace(/\s+/g, " ")
     .replace(/未主动诉[^，。；;]*[，。；;]?/g, "")
+    .replace(/未诉\/?需主动询问/g, "")
+    .replace(/未诉\/?/g, "")
     .replace(/需主动询问[^，。；;]*[，。；;]?/g, "")
     .replace(/需追问[^，。；;]*[，。；;]?/g, "")
     .trim();

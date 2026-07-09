@@ -48,7 +48,7 @@ async function main() {
     conversationHistory: [],
     language: "zh"
   });
-  assertNotContains(smoking.replyText, ["乙肝", "高血压", "饮酒", "喝酒", "输血", "子女", "CT", "占位", "诊断"], "smoking");
+  assertNotContains(smoking.replyText, ["未诉", "乙肝", "高血压", "饮酒", "喝酒", "输血", "子女", "CT", "占位", "诊断"], "smoking");
 
   const drinking = await generatePatientAnswer({
     sessionId: session.sessionId,
