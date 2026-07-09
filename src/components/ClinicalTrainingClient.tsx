@@ -33,6 +33,7 @@ import orderCatalogProceduresJson from "@/data/order_catalog_procedures.json";
 import orderPackagesJson from "@/data/order_packages.json";
 import physicalExamItemsJson from "@/data/physical_exam_items.json";
 import { evaluateStage, type FullProcessAnswers, type StageEvaluation } from "@/src/lib/fullProcessScoring";
+import { simplifiedChiefComplaint } from "@/src/lib/chiefComplaint";
 import { askPatient, createEmptyCollected, mergeCollected } from "@/src/lib/patientEngine";
 import {
   generateMdtOpinions,
@@ -292,7 +293,7 @@ function nextStage(stageNo: AgentStageNo): AgentStageNo | null {
 }
 
 function patientOpening(caseData: CaseData, lang: LanguageCode, enCase?: EnglishCase) {
-  const complaint = lang === "en" ? enCase?.chiefComplaint : (caseData.studentChiefComplaint || caseData.chiefComplaint);
+  const complaint = simplifiedChiefComplaint(caseData.studentChiefComplaint || caseData.chiefComplaint, lang, enCase?.chiefComplaint);
   if (lang === "en") return `Hello doctor. I came because of ${complaint || "abnormal urine color"}.`;
   return `医生您好，我是因为${complaint || "小便颜色异常"}来看病的。`;
 }
@@ -305,7 +306,7 @@ function caseDisplay(caseData: CaseData, lang: LanguageCode, enCase?: EnglishCas
       sex: enCase.sex,
       difficulty: enCase.difficulty,
       diseaseCategory: enCase.diseaseCategory,
-      chiefComplaint: enCase.chiefComplaint,
+      chiefComplaint: simplifiedChiefComplaint(caseData.studentChiefComplaint || caseData.chiefComplaint, "en", enCase.chiefComplaint),
       standardPath: [
         `Diagnosis: ${enCase.initialDiagnosis}`,
         `Essential labs: ${enCase.admissionLabs}`,
@@ -323,7 +324,7 @@ function caseDisplay(caseData: CaseData, lang: LanguageCode, enCase?: EnglishCas
     sex: caseData.sex,
     difficulty: caseData.difficulty || "",
     diseaseCategory: caseData.diseaseCategory || "",
-    chiefComplaint: caseData.studentChiefComplaint || caseData.chiefComplaint,
+    chiefComplaint: simplifiedChiefComplaint(caseData.studentChiefComplaint || caseData.chiefComplaint, "zh"),
     standardPath: [
       `诊断思路：${caseData.clinical?.diagnosticReasoning ?? caseData.diagnosis}`,
       `基础检验：${caseData.clinical?.requiredLabs ?? ""}`,

@@ -113,18 +113,38 @@ function sentenceWith(value, words) {
     .find((line) => line && words.some((word) => line.includes(word))) || "";
 }
 
+function findDurationNearHematuria(text) {
+  const compact = String(text || "").replace(/\s+/g, "");
+  const durationPattern = "([半\\d一二两三四五六七八九十]+(?:小时|天|日|周|月|个月|年)(?:余|多|左右)?)";
+  const symptomPattern = "(?:小便(?:颜色)?(?:变红|发红)|尿(?:色)?(?:变红|发红)|血尿|尿潜血阳性|尿隐血阳性|肉眼血尿|镜下血尿)";
+  const after = new RegExp(`${symptomPattern}[^，。；、,;]*?${durationPattern}`).exec(compact);
+  if (after?.[1]) return after[1];
+  const before = new RegExp(`${durationPattern}[^，。；、,;]*?${symptomPattern}`).exec(compact);
+  if (before?.[1]) return before[1];
+  const allDurations = Array.from(compact.matchAll(new RegExp(durationPattern, "g"))).map((match) => match[1]);
+  return allDurations[allDurations.length - 1] || "";
+}
+
+function simplifiedChiefComplaintZh(raw) {
+  const text = String(raw || "").trim();
+  const duration = findDurationNearHematuria(text) || "数天";
+  if (/小便|尿色|尿液|发红|变红/.test(text) && !/尿潜血|尿隐血|镜下/.test(text)) return `小便颜色变红${duration}`;
+  return `血尿${duration}`;
+}
+
 function buildRawPatientFacingProfile(caseData) {
   const illness = caseData.presentIllness || {};
   const risk = caseData.riskFactors || {};
   const answers = caseData.patientAnswers || {};
   const pfp = caseData.patientFacingProfile || {};
+  const simplifiedComplaint = simplifiedChiefComplaintZh(pfp.chiefComplaint || caseData.studentChiefComplaint || caseData.chiefComplaint);
   return {
     patient_id: field(caseData.id),
     age: field(pfp.age || caseData.age),
     gender: field(pfp.sex || caseData.sex),
-    chief_complaint: field(pfp.chiefComplaint || caseData.studentChiefComplaint || caseData.chiefComplaint),
-    patient_opening_statement: firstField(answers.opening, `医生您好，我是因为${caseData.studentChiefComplaint || caseData.chiefComplaint || "小便颜色异常"}来看病的。`),
-    current_symptoms_patient_safe: firstField(answers.opening, caseData.studentChiefComplaint, caseData.chiefComplaint),
+    chief_complaint: field(simplifiedComplaint),
+    patient_opening_statement: field(`医生您好，我是因为${simplifiedComplaint || "小便颜色异常"}来看病的。`),
+    current_symptoms_patient_safe: field(simplifiedComplaint),
     hematuria_visibility: firstField(pfp.hematuriaType, illness.hematuriaType),
     hematuria_onset_time: firstField(illness.onset, illness.duration),
     hematuria_frequency: firstField(illness.frequency, illness.duration),

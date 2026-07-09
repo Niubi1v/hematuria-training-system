@@ -36,6 +36,8 @@ async function main() {
   assert(session.sessionId, "session/init should return sessionId");
   assert(session.completedPatientFacingProfile, "session/init should return completedPatientFacingProfile");
   assert(session.patientOpeningStatement, "session/init should return patientOpeningStatement");
+  assert(session.patientOpeningStatement.includes("小便颜色变红3月余") || session.patientOpeningStatement.includes("血尿3月余"), `opening should use simplified complaint: ${session.patientOpeningStatement}`);
+  assertNotContains(session.patientOpeningStatement, ["无痛", "肉眼", "全程"], "session opening complaint");
 
   const profileText = JSON.stringify(session.completedPatientFacingProfile);
   assertNotContains(profileText, ["imaging_finding", "final_diagnosis", "treatment_plan", "pathology_result", "evaluator_rubric"], "completedPatientFacingProfile");

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Filter, Languages, Shuffle } from "lucide-react";
 import casesEnJson from "@/data/cases_en.json";
+import { simplifiedChiefComplaint } from "@/src/lib/chiefComplaint";
 import type { CaseData } from "@/src/lib/types";
 
 type LanguageCode = "zh" | "en";
@@ -46,7 +47,7 @@ export default function CaseCatalogClient({ cases }: { cases: CaseData[] }) {
       sex: lang === "en" ? en?.sex || item.sex : item.sex,
       difficulty: lang === "en" ? en?.difficulty || item.difficulty || "" : item.difficulty || "",
       category: lang === "en" ? en?.diseaseCategory || item.diseaseCategory || "" : item.diseaseCategory || "",
-      complaint: lang === "en" ? en?.chiefComplaint || item.studentChiefComplaint || item.chiefComplaint : item.studentChiefComplaint || item.chiefComplaint,
+      complaint: simplifiedChiefComplaint(item.studentChiefComplaint || item.chiefComplaint, lang, en?.chiefComplaint),
       title: lang === "en" ? en?.title || item.title : item.title
     };
   }), [cases, lang]);
