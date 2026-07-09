@@ -130,7 +130,7 @@ https://niubi1v.github.io/hematuria-training-system/
 Patient Agent 后端 API：
 
 ```text
-https://hematuria-training-system.vercel.app/api/patient-reply/
+https://hematuria-training-system.vercel.app/api/patient-reply
 ```
 
 部署说明：

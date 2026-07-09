@@ -117,7 +117,7 @@ POST /api/patient-reply
 当前前端默认请求：
 
 ```text
-https://hematuria-training-system.vercel.app/api/patient-reply/
+https://hematuria-training-system.vercel.app/api/patient-reply
 ```
 
 后端安全边界：
