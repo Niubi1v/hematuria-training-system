@@ -149,7 +149,7 @@ PATIENT_AGENT_ALLOWED_ORIGIN=https://niubi1v.github.io
 GitHub Pages 前端构建变量：
 
 ```text
-NEXT_PUBLIC_AGENT_API_URL=https://hematuria-training-system.vercel.app/api/agent-chat
+NEXT_PUBLIC_AGENT_API_URL=https://hematuria-training-system.vercel.app/api/agent-chat/
 NEXT_PUBLIC_PATIENT_AGENT_API_URL=https://hematuria-training-system.vercel.app/api/patient-reply
 ```
 

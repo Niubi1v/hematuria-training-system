@@ -148,7 +148,7 @@ const orderPrimaryTabs = ["检验", "检查", "病理/操作", "围术期评估"
 const labSecondaryOrder = ["尿液基础", "尿液感染", "尿液肿瘤", "尿液蛋白/肾小球线索", "血液基础", "炎症感染", "凝血/输血", "肾内免疫", "结石代谢", "大便/全身鉴别"];
 const imagingSecondaryOrder = ["超声", "X线", "CT", "MRI", "内镜", "核医学", "功能检查"];
 const consultGroupOrder = ["外科", "内科", "辅助/平台", "急诊/危重"];
-const defaultAgentApiUrl = "https://hematuria-training-system.vercel.app/api/agent-chat";
+const defaultAgentApiUrl = "https://hematuria-training-system.vercel.app/api/agent-chat/";
 const buildTimeAgentApiUrl = process.env.NEXT_PUBLIC_AGENT_API_URL || process.env.NEXT_PUBLIC_PATIENT_AGENT_API_URL || defaultAgentApiUrl;
 const PATIENT_REPLY_TIMEOUT_MS = 12000;
 
