@@ -350,6 +350,19 @@ function filterPatientOutput(text) {
   return { ok: hits.length === 0 && hasBulletShape && !tooLong, hits, hasBulletShape, tooLong };
 }
 
+function formatPatientReply(text) {
+  const lines = String(text || "")
+    .split(/\n|。|；|;/)
+    .map((line) => line.replace(/^[-•\s]*/, "").trim())
+    .filter(Boolean)
+    .slice(0, 3)
+    .map((line) => {
+      const clean = line.length > 45 ? `${line.slice(0, 45)}。` : line;
+      return `- ${clean}`;
+    });
+  return lines.length ? lines.join("\n") : "";
+}
+
 function readProfileField(profile, path) {
   const value = path.split(".").reduce((node, key) => node?.[key], profile);
   return typeof value?.value === "string" ? value.value : "";
@@ -427,9 +440,10 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   };
   try {
     const first = await callLLM({ systemPrompt: patientPrompt, userPayload: payload, temperature: 0.3, maxTokens: 300 });
-    let filter = filterPatientOutput(first.text);
+    const firstText = formatPatientReply(first.text);
+    let filter = filterPatientOutput(firstText);
     if (filter.ok) {
-      const result = { replyText: first.text, provider: first.provider, model: first.model, isFallback: false, filter, rewriteTriggered: false, safetyFlags: [] };
+      const result = { replyText: firstText, provider: first.provider, model: first.model, isFallback: false, filter, rewriteTriggered: false, safetyFlags: [] };
       answerCache.set(answerKey, result);
       return result;
     }
@@ -439,9 +453,10 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
       temperature: 0.2,
       maxTokens: 220
     });
-    const retryFilter = filterPatientOutput(retry.text);
+    const retryText = formatPatientReply(retry.text);
+    const retryFilter = filterPatientOutput(retryText);
     if (retryFilter.ok) {
-      const result = { replyText: retry.text, provider: retry.provider, model: retry.model, isFallback: false, filter: retryFilter, rewriteTriggered: true, safetyFlags: [] };
+      const result = { replyText: retryText, provider: retry.provider, model: retry.model, isFallback: false, filter: retryFilter, rewriteTriggered: true, safetyFlags: [] };
       answerCache.set(answerKey, result);
       return result;
     }
