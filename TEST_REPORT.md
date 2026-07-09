@@ -123,6 +123,32 @@ Agent Chat API tests passed.
 - 非患者 Agent 只使用 `unlockedData`，保持 `teacherOnlyData` 阻断
 - 源码和前端构建变量不包含真实 DeepSeek API Key
 
+## 动态标准化患者 Session 测试
+
+命令：
+
+```bash
+tsx scripts/test-dynamic-patient-session.ts
+```
+
+结果：
+
+```text
+Dynamic Patient Session tests passed.
+```
+
+覆盖：
+
+- `/api/session/init/` 返回 `sessionId`、开场白和 `completedPatientFacingProfile`
+- `completedPatientFacingProfile` 不包含 `imaging_finding`、`final_diagnosis`、`treatment_plan`、`pathology_result`
+- AI补齐字段包含 `source: "ai_completed"`
+- 问“吸烟吗”不回答乙肝、高血压、饮酒、输血、子女
+- 问“喝酒吗”不回答吸烟
+- 问“尿鲜红色吗”不回答 CT、占位、诊断
+- 问“做过CT吗，结果怎么样”不返回 CT 结果
+- responseFilter 拦截“根据原始病史”“CT提示”“诊断”等泄露内容
+- DeepSeek不可用时回退到安全 profile/rule 模式
+
 ## 构建测试
 
 命令：

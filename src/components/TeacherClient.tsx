@@ -24,6 +24,18 @@ type WorkbookPreview = {
   firstRow: Record<string, unknown>;
 };
 
+type AiPatientDebug = {
+  sessionId: string;
+  caseId: string;
+  patientOpeningStatement: string;
+  completedPatientFacingProfile: Record<string, unknown>;
+  cacheHit: boolean;
+  aiStatus: string;
+  debug?: Record<string, unknown>;
+};
+
+const sessionInitApiUrl = process.env.NEXT_PUBLIC_SESSION_INIT_API_URL || "https://hematuria-training-system.vercel.app/api/session/init/";
+
 function downloadText(filename: string, text: string, mime = "application/json") {
   const blob = new Blob([text], { type: `${mime};charset=utf-8` });
   const url = URL.createObjectURL(blob);
@@ -61,6 +73,8 @@ export default function TeacherClient() {
   const [manualScore, setManualScore] = useState("");
   const [manualComment, setManualComment] = useState("");
   const [studentLogs, setStudentLogs] = useState<Array<Record<string, unknown>>>([]);
+  const [aiDebug, setAiDebug] = useState<AiPatientDebug | null>(null);
+  const [aiDebugLoading, setAiDebugLoading] = useState(false);
 
   const selectedCase = useMemo(() => allCases.find((item) => item.id === selectedCaseId), [selectedCaseId]);
   const selectedOrderResults = useMemo(() => (orderResults as OrderResultItem[]).filter((item) => item.caseId === selectedCaseId), [selectedCaseId]);
@@ -145,6 +159,33 @@ export default function TeacherClient() {
     localStorage.setItem("hematuria-case-library-version", "V2-only");
     setStudentLogs([]);
     alert("已清空本机浏览器中的旧训练缓存。");
+  }
+
+  async function loadAiPatientDebug() {
+    if (!selectedCase) return;
+    setAiDebugLoading(true);
+    try {
+      const response = await fetch(sessionInitApiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        body: JSON.stringify({ caseId: selectedCase.id, mode: "training", language: "zh", debug: true })
+      });
+      if (!response.ok) throw new Error(`AI调试接口 ${response.status}`);
+      setAiDebug(await response.json() as AiPatientDebug);
+    } catch (error) {
+      setAiDebug({
+        sessionId: "",
+        caseId: selectedCase.id,
+        patientOpeningStatement: "",
+        completedPatientFacingProfile: {},
+        cacheHit: false,
+        aiStatus: "error",
+        debug: { error: error instanceof Error ? error.message : "AI患者调试失败" }
+      });
+    } finally {
+      setAiDebugLoading(false);
+    }
   }
 
   return (
@@ -370,6 +411,39 @@ export default function TeacherClient() {
                       </div>
                     ))}
                   </div>
+                </div>
+                <div className="rounded-md bg-clinic-paper p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="font-medium text-clinic-blue">AI患者调试</p>
+                    <button onClick={loadAiPatientDebug} disabled={aiDebugLoading} className="rounded-md border border-clinic-line bg-white px-3 py-2 text-sm hover:border-clinic-blue disabled:opacity-60">
+                      {aiDebugLoading ? "生成中..." : "初始化/刷新AI患者档案"}
+                    </button>
+                  </div>
+                  <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                    <div className="rounded-md bg-white p-3 text-sm leading-6">
+                      <p>caseId：{aiDebug?.caseId || selectedCase.id}</p>
+                      <p>sessionId：{aiDebug?.sessionId || "尚未初始化"}</p>
+                      <p>AI状态：{aiDebug?.aiStatus || "-"}</p>
+                      <p>命中缓存：{aiDebug ? (aiDebug.cacheHit ? "是" : "否") : "-"}</p>
+                      <p>开场白：{aiDebug?.patientOpeningStatement || "-"}</p>
+                    </div>
+                    <div className="rounded-md bg-white p-3 text-sm leading-6">
+                      <p>teacherOnlyData字段列表：</p>
+                      <p className="text-clinic-muted">{Array.isArray(aiDebug?.debug?.teacherOnlyFieldList) ? (aiDebug?.debug?.teacherOnlyFieldList as string[]).join("；") : "点击按钮后显示字段名，不向学生端展示。"}</p>
+                      <p className="mt-2">responseFilter：{JSON.stringify(aiDebug?.debug?.responseFilter ?? {})}</p>
+                      <p>触发重写：{String(aiDebug?.debug?.rewriteTriggered ?? false)}</p>
+                      <p>token估算：{String(aiDebug?.debug?.estimatedTokens ?? "-")}</p>
+                    </div>
+                  </div>
+                  <details className="mt-3">
+                    <summary className="cursor-pointer text-sm font-medium text-clinic-blue">patientFacingProfile / DeepSeek原始输出</summary>
+                    <pre className="mt-3 max-h-[420px] overflow-auto rounded-md bg-slate-950 p-3 text-xs leading-5 text-slate-100">{JSON.stringify({
+                      rawPatientFacingProfile: aiDebug?.debug?.rawPatientFacingProfile,
+                      completedPatientFacingProfile: aiDebug?.completedPatientFacingProfile,
+                      rawDeepSeekOutput: aiDebug?.debug?.rawDeepSeekOutput,
+                      error: aiDebug?.debug?.error
+                    }, null, 2)}</pre>
+                  </details>
                 </div>
               </div>
             )}

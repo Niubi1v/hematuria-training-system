@@ -117,6 +117,15 @@ type PatientReplyApiResponse = {
   debug?: Record<string, unknown>;
 };
 
+type SessionInitResponse = {
+  sessionId: string;
+  patientOpeningStatement: string;
+  completedPatientFacingProfile: Record<string, unknown>;
+  aiStatus: "connected" | "fallback";
+  cacheHit: boolean;
+  debug?: Record<string, unknown>;
+};
+
 type SpeechRecognitionResultLike = { transcript: string };
 type SpeechRecognitionEventLike = { results: ArrayLike<ArrayLike<SpeechRecognitionResultLike>> };
 type SpeechRecognitionLike = {
@@ -149,7 +158,9 @@ const labSecondaryOrder = ["尿液基础", "尿液感染", "尿液肿瘤", "尿�
 const imagingSecondaryOrder = ["超声", "X线", "CT", "MRI", "内镜", "核医学", "功能检查"];
 const consultGroupOrder = ["外科", "内科", "辅助/平台", "急诊/危重"];
 const defaultAgentApiUrl = "https://hematuria-training-system.vercel.app/api/agent-chat/";
+const defaultSessionInitApiUrl = "https://hematuria-training-system.vercel.app/api/session/init/";
 const buildTimeAgentApiUrl = process.env.NEXT_PUBLIC_AGENT_API_URL || process.env.NEXT_PUBLIC_PATIENT_AGENT_API_URL || defaultAgentApiUrl;
+const buildTimeSessionInitApiUrl = process.env.NEXT_PUBLIC_SESSION_INIT_API_URL || defaultSessionInitApiUrl;
 const PATIENT_REPLY_TIMEOUT_MS = 12000;
 
 const patientReplyForbiddenTerms = [
@@ -353,8 +364,43 @@ function stageAnswerText(stageNo: AgentStageNo, answers: FullProcessAnswers, mes
   return answers.debriefReflection;
 }
 
-async function requestAiPatientReply({ apiUrl, caseId, question, messages, askedSlots, aiMode, language }: {
+function aiSessionCacheKey(caseId: string, language: LanguageCode, mode: TrainingMode) {
+  return `hematuria-ai-patient-session-${caseId}-${language}-${mode}`;
+}
+
+async function requestSessionInit({ apiUrl, caseId, runtimeMode, language, debug }: {
   apiUrl: string;
+  caseId: string;
+  runtimeMode: TrainingMode;
+  language: LanguageCode;
+  debug: boolean;
+}) {
+  const controller = new AbortController();
+  const timeoutId = globalThis.setTimeout(() => controller.abort(), PATIENT_REPLY_TIMEOUT_MS);
+  try {
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      signal: controller.signal,
+      body: JSON.stringify({
+        caseId,
+        mode: runtimeMode,
+        language,
+        debug
+      })
+    });
+    if (!response.ok) throw new Error(`Session init API ${response.status}`);
+    return response.json() as Promise<SessionInitResponse>;
+  } finally {
+    globalThis.clearTimeout(timeoutId);
+  }
+}
+
+async function requestAiPatientReply({ apiUrl, sessionId, completedPatientFacingProfile, caseId, question, messages, askedSlots, aiMode, language }: {
+  apiUrl: string;
+  sessionId?: string;
+  completedPatientFacingProfile?: Record<string, unknown> | null;
   caseId: string;
   question: string;
   messages: ChatMessage[];
@@ -373,13 +419,15 @@ async function requestAiPatientReply({ apiUrl, caseId, question, messages, asked
       body: JSON.stringify({
         caseId,
         agentId: "standardized_patient",
+        sessionId,
         stage: "history",
         mode: aiMode === "rule" ? "rule" : aiMode === "debug" ? "debug" : "training",
         language,
         studentInput: question,
+        completedPatientFacingProfile,
         conversationHistory: messages.slice(-6).map((message) => ({ role: message.role, text: message.text })),
         askedSlotIds: askedSlots,
-        askedQuestions: askedSlots
+        askedQuestions: messages.filter((message) => message.role === "student").map((message) => message.text)
       })
     });
     if (!response.ok) throw new Error(`Patient Agent API ${response.status}`);
@@ -517,6 +565,10 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [autoSpeak, setAutoSpeak] = useState(false);
   const [aiMode, setAiMode] = useState<AiMode>("deepseek");
   const [aiStatus, setAiStatus] = useState<AiStatus>("unknown");
+  const [aiSessionId, setAiSessionId] = useState("");
+  const [completedPatientFacingProfile, setCompletedPatientFacingProfile] = useState<Record<string, unknown> | null>(null);
+  const [sessionInitLoading, setSessionInitLoading] = useState(false);
+  const [sessionInitError, setSessionInitError] = useState("");
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
   const isOsce = runtimeMode === "osce";
   const enCase = useMemo(() => allEnglishCases.find((item) => item.id === initialCaseData.id), [initialCaseData.id]);
@@ -591,6 +643,54 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     if (!caseData) return;
     setMessages((current) => current.length ? current : [{ role: "patient", text: patientOpening(caseData, lang, enCase) }]);
   }, [caseData, enCase, lang]);
+
+  useEffect(() => {
+    if (!caseData || aiMode === "rule") return;
+    let cancelled = false;
+    const cacheKey = aiSessionCacheKey(caseData.id, lang, runtimeMode);
+    const cached = safeJson<SessionInitResponse | null>(localStorage.getItem(cacheKey), null);
+    if (cached?.sessionId && cached.completedPatientFacingProfile) {
+      setAiSessionId(cached.sessionId);
+      setCompletedPatientFacingProfile(cached.completedPatientFacingProfile);
+      setAiStatus(cached.aiStatus === "connected" ? "connected" : "fallback");
+      setMessages((current) => {
+        const hasStudentMessage = current.some((message) => message.role === "student");
+        if (hasStudentMessage) return current;
+        return [{ role: "patient", text: cached.patientOpeningStatement || patientOpening(caseData, lang, enCase) }];
+      });
+      return;
+    }
+    setSessionInitLoading(true);
+    setSessionInitError("");
+    setAiStatus("checking");
+    void requestSessionInit({
+      apiUrl: buildTimeSessionInitApiUrl,
+      caseId: caseData.id,
+      runtimeMode,
+      language: lang,
+      debug: aiMode === "debug"
+    }).then((result) => {
+      if (cancelled) return;
+      setAiSessionId(result.sessionId);
+      setCompletedPatientFacingProfile(result.completedPatientFacingProfile);
+      setAiStatus(result.aiStatus === "connected" ? "connected" : "fallback");
+      localStorage.setItem(cacheKey, JSON.stringify(result));
+      setMessages((current) => {
+        const hasStudentMessage = current.some((message) => message.role === "student");
+        if (hasStudentMessage) return current;
+        return [{ role: "patient", text: result.patientOpeningStatement || patientOpening(caseData, lang, enCase) }];
+      });
+    }).catch((error) => {
+      if (cancelled) return;
+      setSessionInitError(error instanceof Error ? error.message : "AI患者初始化失败");
+      setAiStatus("error");
+    }).finally(() => {
+      if (!cancelled) setSessionInitLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [aiMode, caseData, enCase, lang, runtimeMode]);
 
   useEffect(() => {
     localStorage.setItem("hematuria-language", lang);
@@ -668,6 +768,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         setAiStatus("checking");
         const aiResult = await requestAiPatientReply({
           apiUrl: buildTimeAgentApiUrl,
+          sessionId: aiSessionId,
+          completedPatientFacingProfile,
           caseId: caseData.id,
           question: text,
           messages,
@@ -938,6 +1040,13 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                   {autoSpeak ? "Voice on" : "Voice off"}
                 </button>
               </div>
+              {(sessionInitLoading || sessionInitError) && (
+                <div className={`mt-3 rounded-md px-3 py-2 text-sm ${sessionInitError ? "bg-amber-50 text-amber-800" : "bg-clinic-paper text-clinic-muted"}`}>
+                  {sessionInitLoading
+                    ? (lang === "en" ? "AI patient is preparing..." : "AI患者正在准备中……")
+                    : (lang === "en" ? "DeepSeek unavailable, rule fallback enabled." : "DeepSeek 不可用，已回退规则模式。")}
+                </div>
+              )}
               <div ref={chatScrollRef} className="mt-4 h-[390px] space-y-4 overflow-y-auto rounded-md border border-clinic-line bg-clinic-paper p-4">
                 {messages.map((message, index) => (
                   <div key={`${message.role}-${index}`} className={`flex ${message.role === "student" ? "justify-end" : "justify-start"}`}>
@@ -950,7 +1059,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 <button type="button" onClick={startVoiceInput} disabled={!speechInputSupported || listening} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-4 py-2 font-medium hover:border-clinic-blue disabled:opacity-50">
                   {listening ? <MicOff size={16} /> : <Mic size={16} />} {t(lang, "voiceAsk")}
                 </button>
-                <button onClick={() => void submitQuestion()} disabled={patientReplyLoading} className="inline-flex items-center gap-2 rounded-md bg-clinic-teal px-4 py-2 font-medium text-white hover:bg-clinic-blue disabled:cursor-not-allowed disabled:opacity-60">
+                <button onClick={() => void submitQuestion()} disabled={patientReplyLoading || sessionInitLoading} className="inline-flex items-center gap-2 rounded-md bg-clinic-teal px-4 py-2 font-medium text-white hover:bg-clinic-blue disabled:cursor-not-allowed disabled:opacity-60">
                   <Send size={16} /> {patientReplyLoading ? t(lang, "generating") : t(lang, "send")}
                 </button>
               </div>

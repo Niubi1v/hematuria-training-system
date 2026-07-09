@@ -1,5 +1,5 @@
-const patientReplyHandler = require("./patient-reply.js");
 const cases = require("../data/cases.json");
+const { generatePatientAnswer } = require("./lib/patientSession.js");
 
 const blockedTeacherKeys = ["diagnosis", "imaging", "pathology", "treatment", "teacherOnlyData", "case_card", "scoring"];
 const agentIds = new Set([
@@ -79,41 +79,6 @@ async function callLLM({ systemPrompt, userPayload, maxTokens }) {
   }
 }
 
-function invokePatientReply(body) {
-  return new Promise((resolve, reject) => {
-    const req = {
-      method: "POST",
-      body: {
-        caseId: body.caseId,
-        stage: body.stage || "history",
-        studentQuestion: body.studentInput,
-        conversationHistory: body.conversationHistory || [],
-        askedSlotIds: body.askedSlotIds || body.askedQuestions || [],
-        mode: body.mode === "rule" ? "rule" : "ai"
-      }
-    };
-    const res = {
-      statusCode: 200,
-      headers: {},
-      setHeader(name, value) {
-        this.headers[name] = value;
-      },
-      status(code) {
-        this.statusCode = code;
-        return this;
-      },
-      json(payload) {
-        if (this.statusCode >= 400) reject(new Error(payload?.error || `Patient API ${this.statusCode}`));
-        else resolve(payload);
-      },
-      end() {
-        resolve({});
-      }
-    };
-    Promise.resolve(patientReplyHandler(req, res)).catch(reject);
-  });
-}
-
 function agentPrompt(agentId, language) {
   const outputLanguage = language === "en" ? "English" : "中文";
   return `
@@ -144,17 +109,25 @@ module.exports = async function handler(req, res) {
     if (!String(body.studentInput || "").trim()) return res.status(400).json({ error: "studentInput is required" });
 
     if (agentId === "standardized_patient") {
-      const patient = await invokePatientReply(body);
+      const patient = await generatePatientAnswer({
+        sessionId: body.sessionId,
+        caseId: body.caseId,
+        studentInput: body.studentInput,
+        conversationHistory: body.conversationHistory || [],
+        language: body.language || "zh",
+        completedPatientFacingProfile: body.completedPatientFacingProfile || body.sessionProfile
+      });
       return res.status(200).json({
         agentId,
         replyText: patient.replyText,
         usedModel: patient.model,
         provider: patient.provider,
         visibleToStudent: true,
-        revealedDataKeys: patient.revealedFields?.length ? patient.revealedFields : patient.matchedSlotIds || [],
-        blockedDataKeys: patient.blockedFields?.length ? patient.blockedFields : blockedTeacherKeys,
+        revealedDataKeys: [],
+        blockedDataKeys: blockedTeacherKeys,
         safetyFlags: patient.safetyFlags || [],
-        isFallback: Boolean(patient.isFallback)
+        isFallback: Boolean(patient.isFallback),
+        ...(body.debug ? { debug: { responseFilter: patient.filter, rewriteTriggered: patient.rewriteTriggered, cacheHit: Boolean(patient.cacheHit), error: patient.error || "" } } : {})
       });
     }
 

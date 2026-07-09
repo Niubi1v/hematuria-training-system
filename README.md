@@ -114,14 +114,18 @@ GitHub Pages 前端不能保存 API Key。AI 增强问诊必须通过 Vercel/Net
 POST /api/patient-reply
 ```
 
-当前前端默认请求统一 Agent API：
+当前前端默认请求：
 
 ```text
 https://hematuria-training-system.vercel.app/api/agent-chat
+https://hematuria-training-system.vercel.app/api/session/init/
 ```
 
 后端安全边界：
 
+- 进入病例先调用 `/api/session/init/` 生成 `completedPatientFacingProfile`
+- `patientFacingProfile` 只包含患者本人可知道的信息，并且每个字段带 `source`
+- `teacherOnlyData` 不传给 Standardized Patient Agent
 - 只给 LLM 当前问题对应的 `currentAllowedAnswer`
 - 不传 `teacherOnlyData`
 - 不传完整现病史、影像、病理、诊断、治疗、评分点
@@ -139,7 +143,7 @@ LLM_API_BASE_URL=https://api.deepseek.com
 LLM_MODEL=deepseek-v4-flash
 LLM_ENDPOINT_TYPE=chat_completions
 LLM_TEMPERATURE=0.2
-LLM_MAX_TOKENS=300
+LLM_MAX_TOKENS=500
 LLM_ENABLE_AI_AGENTS=true
 LLM_ENABLE_AI_PATIENT=true
 AGENT_API_ALLOWED_ORIGIN=https://niubi1v.github.io
@@ -150,8 +154,24 @@ GitHub Pages 前端构建变量：
 
 ```text
 NEXT_PUBLIC_AGENT_API_URL=https://hematuria-training-system.vercel.app/api/agent-chat/
+NEXT_PUBLIC_SESSION_INIT_API_URL=https://hematuria-training-system.vercel.app/api/session/init/
 NEXT_PUBLIC_PATIENT_AGENT_API_URL=https://hematuria-training-system.vercel.app/api/patient-reply
 ```
+
+动态标准化患者接口：
+
+```text
+POST /api/session/init/
+POST /api/session/complete-profile/
+POST /api/agent-chat/
+```
+
+病例拆分：
+
+- `patientFacingProfile`: 年龄、性别、主诉、开场白、血尿颜色/时相/血块、症状、诱因、既往史、用药、吸烟饮酒、职业暴露、一般情况、患者 persona。
+- `teacherOnlyData`: 尿检、血检、影像、膀胱镜、病理、诊断、治疗、MDT、评分点、标准小结。
+
+教师模式中新增“AI患者调试”面板，可查看 `sessionId`、raw/completed profile、DeepSeek 原始输出、responseFilter、token 估算和缓存状态。
 
 不要把真实 API Key 写入 `.env.example`、代码或 GitHub。
 
@@ -190,6 +210,7 @@ https://niubi1v.github.io/hematuria-training-system/
 npm run test:patient
 npm run test:llm
 npm run test:agent
+npm run test:session
 npm run build
 ```
 

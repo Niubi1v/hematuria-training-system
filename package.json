@@ -11,6 +11,7 @@
     "test:history": "tsx scripts/test-history-rubric.ts",
     "test:llm": "tsx scripts/test-llm-adapter.ts",
     "test:agent": "tsx scripts/test-agent-chat.ts",
+    "test:session": "tsx scripts/test-dynamic-patient-session.ts",
     "dev:api": "tsx scripts/dev-patient-api.ts",
     "start": "next dev",
     "lint": "next lint",
