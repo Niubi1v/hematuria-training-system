@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { allCases } from "@/src/lib/cases";
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
 export default function RandomTrainingClient() {
-  const router = useRouter();
   const [message, setMessage] = useState("正在随机抽取病例...");
 
   useEffect(() => {
@@ -18,8 +18,8 @@ export default function RandomTrainingClient() {
     const selected = allCases[index];
     setMessage("已抽取病例，正在进入全流程训练...");
     const mode = new URLSearchParams(window.location.search).get("mode") === "osce" ? "osce" : "random";
-    router.replace(`/cases/${selected.id}?mode=${mode}`);
-  }, [router]);
+    window.location.replace(`${basePath}/cases/${selected.id}/index.html?mode=${mode}`);
+  }, []);
 
   return (
     <main className="mx-auto flex min-h-[60vh] max-w-3xl items-center justify-center px-5 py-10">

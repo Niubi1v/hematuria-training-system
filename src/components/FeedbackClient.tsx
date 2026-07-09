@@ -17,6 +17,7 @@ const emptySummary: StudentSummary = {
   differentialDiagnosis: "",
   nextTests: ""
 };
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
 export default function FeedbackClient() {
   const params = useSearchParams();
@@ -50,7 +51,7 @@ export default function FeedbackClient() {
           <p className="mt-2 text-5xl font-semibold text-clinic-blue">{report.total}</p>
           <p className="mt-2 text-sm text-clinic-muted">满分 100 分</p>
           <div className="mt-6 grid gap-2">
-            <Link className="rounded-md border border-clinic-line px-4 py-2 text-center hover:border-clinic-blue" href={`/cases/${caseId}`}>重新问诊</Link>
+            <a className="rounded-md border border-clinic-line px-4 py-2 text-center hover:border-clinic-blue" href={`${basePath}/cases/${caseId}/index.html`}>重新问诊</a>
             <Link className="rounded-md bg-clinic-blue px-4 py-2 text-center text-white hover:bg-clinic-teal" href="/cases">选择其他病例</Link>
           </div>
         </aside>

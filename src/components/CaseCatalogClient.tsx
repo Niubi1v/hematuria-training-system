@@ -18,6 +18,11 @@ type EnglishCase = {
 };
 
 const englishCases = casesEnJson as EnglishCase[];
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
+function staticCaseHref(caseId: string) {
+  return `${basePath}/cases/${caseId}/index.html`;
+}
 
 export default function CaseCatalogClient({ cases }: { cases: CaseData[] }) {
   const [lang, setLang] = useState<LanguageCode>("zh");
@@ -91,7 +96,7 @@ export default function CaseCatalogClient({ cases }: { cases: CaseData[] }) {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {filtered.map((caseItem) => (
-          <Link key={caseItem.id} href={`/cases/${caseItem.id}`} className="rounded-lg border border-clinic-line bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-clinic-blue">
+          <a key={caseItem.id} href={staticCaseHref(caseItem.id)} className="rounded-lg border border-clinic-line bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-clinic-blue">
             <div className="flex items-start justify-between gap-3">
               <span className="text-sm font-medium text-clinic-blue">{caseItem.id}</span>
               <span className="rounded-full bg-clinic-paper px-3 py-1 text-sm text-clinic-muted">{caseItem.difficulty || (lang === "en" ? "Unrated" : "未分级")}</span>
@@ -100,7 +105,7 @@ export default function CaseCatalogClient({ cases }: { cases: CaseData[] }) {
             <p className="mt-1 text-sm text-clinic-muted">{caseItem.age || "-"} / {caseItem.sex || "-"}</p>
             {caseItem.category && <p className="mt-2 text-xs text-clinic-blue">{caseItem.category}</p>}
             <p className="mt-3 text-sm leading-6 text-clinic-muted">{caseItem.complaint || (lang === "en" ? "Hematuria-related chief complaint" : "血尿相关主诉")}</p>
-          </Link>
+          </a>
         ))}
       </div>
     </main>
