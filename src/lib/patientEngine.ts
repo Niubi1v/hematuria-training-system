@@ -452,7 +452,8 @@ function semanticReply(caseData: CaseData, semantic: Semantic, question: string)
   const slot = slotForSemantic(caseData, semantic) || findSlotByQuestion(caseData, question);
   const slotAnswer = slot?.patientAnswer;
   const structured = answerFromStructuredFields(caseData, semantic, question);
-  const answer = firstUsable(structured, slotAnswer, defaultAnswerForSemantic(semantic));
+  const safeSlotAnswer = slotAnswer && containsBlocked(slotAnswer).length === 0 ? slotAnswer : "";
+  const answer = firstUsable(structured, safeSlotAnswer, defaultAnswerForSemantic(semantic));
   return {
     replyText: asBullets([answer]),
     matchedSlotIds: slot ? [slot.slotId] : [],

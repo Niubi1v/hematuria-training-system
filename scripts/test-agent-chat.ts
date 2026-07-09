@@ -32,6 +32,9 @@ async function main() {
   assert(smoking.agentId === "standardized_patient", "agentId should be standardized_patient");
   assert(smoking.visibleToStudent === true, "reply should be student-visible");
 
+  const p001Smoking = await ask("吸烟吗？", "P001");
+  assertNotContains(p001Smoking.replyText, ["无痛", "肉眼血尿", "血块", "阿司匹林", "膀胱癌", "肿瘤", "高龄男性", "需警惕", "原始既往史"], "P001 smoking");
+
   const color = await ask("尿是鲜红色吗？", "P004");
   assert(/红|颜色|茶色|酱油|洗肉水/.test(color.replyText), `color reply should answer color: ${color.replyText}`);
   assertNotContains(color.replyText, ["CT", "占位", "癌栓", "淋巴结", "骨转移", "诊断", "治疗", "手术"], "color");

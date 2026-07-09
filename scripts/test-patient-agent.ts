@@ -67,6 +67,9 @@ const smoking = ask("HX-ADD-001", "你抽烟吗？");
 assert(smoking.replyText.includes("吸烟") || smoking.replyText.includes("包年") || smoking.replyText.includes("不吸烟"), `smoking answer should mention smoking only: ${smoking.replyText}`);
 assertNotContains(smoking.replyText, ["乙肝", "糖尿病", "饮酒", "输血", "子女", "高血压", ...forbidden], "smoking question");
 
+const p001Smoking = ask("P001", "吸烟吗？");
+assertNotContains(p001Smoking.replyText, ["无痛", "肉眼血尿", "血块", "阿司匹林", "膀胱癌", "肿瘤", "高龄男性", "需警惕", "原始既往史", ...forbidden], "P001 smoking question");
+
 const drinking = ask("HX-ADD-001", "喝酒吗？");
 assert(drinking.replyText.includes("饮酒") || drinking.replyText.includes("喝酒"), `drinking answer should mention drinking: ${drinking.replyText}`);
 assertNotContains(drinking.replyText, ["吸烟", "包年", "乙肝", "高血压", "糖尿病"], "drinking question");

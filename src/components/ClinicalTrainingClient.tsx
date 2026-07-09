@@ -157,13 +157,17 @@ const patientReplyForbiddenTerms = [
   "根据病例资料",
   "未主动诉",
   "需追问",
+  "需警惕",
   "评分点",
   "教师提示",
+  "原始既往史",
   "CT提示",
   "CTU提示",
   "膀胱镜",
   "病理",
   "占位",
+  "肿瘤",
+  "膀胱癌",
   "癌栓",
   "淋巴结",
   "诊断",
@@ -186,8 +190,8 @@ function isUnsafePatientReply(question: string, reply: string) {
   const askedColor = /颜色|鲜红|暗红|洗肉水|茶色|酱油|红色/.test(compactQuestion);
   const askedClot = /血块|血凝块|凝血块/.test(compactQuestion);
 
-  if (askedSmoking && /饮酒|喝酒|糖尿病|乙肝|肝炎|结核|输血|子女|父母|高血压/.test(compactReply)) return true;
-  if (askedAlcohol && /吸烟|抽烟|包年|糖尿病|乙肝|肝炎|结核|输血|子女|父母|高血压/.test(compactReply)) return true;
+  if (askedSmoking && /饮酒|喝酒|糖尿病|乙肝|肝炎|结核|输血|子女|父母|高血压|血尿|血块|肉眼|无痛|阿司匹林|肿瘤|膀胱癌|高龄/.test(compactReply)) return true;
+  if (askedAlcohol && /吸烟|抽烟|包年|糖尿病|乙肝|肝炎|结核|输血|子女|父母|高血压|血尿|血块|肉眼|无痛|阿司匹林|肿瘤|膀胱癌|高龄/.test(compactReply)) return true;
   if (askedHypertension && /吸烟|抽烟|饮酒|喝酒|糖尿病|乙肝|肝炎|结核|输血|子女|父母/.test(compactReply)) return true;
   if (askedColor && /CT|影像|血块|无痛|全程|终末|诊断/.test(compactReply)) return true;
   if (askedClot && /鲜红|暗红|洗肉水|茶色|全程|终末|无痛|诊断/.test(compactReply)) return true;

@@ -275,7 +275,8 @@ function ruleReply(caseData, question) {
     return { replyText: "- 医生，您能问得再具体一点吗？我不太明白您想问哪方面。", matchedSlotIds: [], revealedFields: [], blockedFields: [], safetyFlags: ["no_slot_match"] };
   }
   const slot = findSlot(caseData, slotKeywords[type] || []);
-  const answer = firstUsable(structuredAnswer(caseData, type, question), slot?.patientAnswer, defaults[type] || "这个我不太清楚。");
+  const safeSlotAnswer = slot?.patientAnswer && !containsBlocked(slot.patientAnswer).length ? slot.patientAnswer : "";
+  const answer = firstUsable(structuredAnswer(caseData, type, question), safeSlotAnswer, defaults[type] || "这个我不太清楚。");
   return {
     replyText: asBullets([answer]),
     matchedSlotIds: slot ? [slot.slotId] : [],
