@@ -1,8 +1,8 @@
 import { EMPTY_COLLECTED } from "./keyPoints";
 import questionSlotsJson from "../../data/question_slots.json";
-import type { CaseData, CollectedMap, InterviewSlot, KeyPointId } from "./types";
+import type { CaseData, CollectedMap, InterviewAnswer, InterviewSlot, KeyPointId } from "./types";
 
-type ReplyResult = {
+export type PatientReplyResult = {
   replyText: string;
   matchedSlotIds: string[];
   revealedFields: string[];
@@ -12,13 +12,56 @@ type ReplyResult = {
 
 const questionSlots = questionSlotsJson as InterviewSlot[];
 
-const fallbackReplies = [
-  "医生，您能问得再具体一点吗？我不太明白您想问哪方面。",
-  "主要是尿的问题，您可以具体问颜色、疼痛、有没有血块这些。",
-  "这个我说不太清楚，您可以换个更具体的问题问我。"
+const blockedPatientTerms = [
+  "根据原始病史",
+  "根据病例资料",
+  "根据病史",
+  "原始病史",
+  "病例显示",
+  "病例提示",
+  "未主动诉",
+  "未诉",
+  "需追问",
+  "需主动询问",
+  "教师提示",
+  "评分点",
+  "扣分",
+  "高危错误",
+  "需警惕",
+  "考虑",
+  "提示",
+  "CT提示",
+  "CTU提示",
+  "彩超提示",
+  "超声提示",
+  "膀胱镜",
+  "病理",
+  "癌栓",
+  "淋巴结",
+  "骨转移",
+  "骨质破坏",
+  "占位",
+  "肿瘤",
+  "恶性",
+  "诊断",
+  "治疗",
+  "手术",
+  "化疗",
+  "放疗",
+  "围术期",
+  "TURBT",
+  "尿检以",
+  "24小时尿蛋白",
+  "尿蛋白",
+  "畸形红细胞",
+  "肌酐",
+  "eGFR",
+  "PSA",
+  "尿培养",
+  "药敏",
+  "肾活检"
 ];
 
-const diagnosisQuestionWords = ["什么病", "诊断", "是不是癌", "癌症", "肿瘤", "严重吗", "能治好吗", "预后"];
 const reportQuestionWords = [
   "ct",
   "ctu",
@@ -41,84 +84,57 @@ const reportQuestionWords = [
   "影像"
 ];
 
-const forbiddenPatientPhrases = [
-  "根据原始病史",
-  "根据病例资料",
-  "根据病史",
-  "原始病史",
-  "病例提示",
-  "未诉",
-  "未主动诉",
-  "需主动询问",
-  "需追问",
-  "教师提示",
-  "评分点",
-  "扣分",
-  "高危错误",
-  "需警惕",
-  "原始既往史",
-  "考虑",
-  "提示",
-  "诊断",
-  "最终诊断"
-];
+const diagnosisQuestionWords = ["什么病", "诊断", "是不是癌", "癌症", "肿瘤", "严重吗", "能治好吗", "预后"];
 
-const forbiddenLeakWords = [
-  "CT提示",
-  "CTU提示",
-  "彩超提示",
-  "超声提示",
-  "膀胱镜",
-  "病理",
-  "占位",
-  "癌栓",
-  "淋巴结",
-  "骨转移",
-  "骨质破坏",
-  "TURBT",
-  "肾活检",
-  "尿常规",
-  "肌酐",
-  "eGFR",
-  "PSA",
-  "尿培养",
-  "药敏",
-  "恶性肿瘤",
-  "膀胱癌",
-  "输尿管癌",
-  "肾盂癌",
-  "肾癌",
-  "前列腺癌",
-  "IgA肾病",
-  "急性肾小球肾炎"
-];
+const semanticToKeyPoint: Record<string, KeyPointId | undefined> = {
+  onset: "onset",
+  visibility: "hematuriaType",
+  phase: "hematuriaPhase",
+  color: "colorClots",
+  clots: "colorClots",
+  dysuria: "irritativeSymptoms",
+  luts: "irritativeSymptoms",
+  voiding: "voidingDifficulty",
+  flankPain: "flankPain",
+  fever: "fever",
+  smoking: "smoking",
+  alcohol: "historyBundle",
+  occupation: "occupation",
+  stone: "stoneHistory",
+  infection: "infectionHistory",
+  trauma: "trauma",
+  medication: "anticoagulants",
+  family: "tumorFamilyHistory",
+  past: "historyBundle",
+  glomerular: "historyBundle"
+};
 
-const slotToKeyPoint: Record<string, KeyPointId> = {
+const slotIdToKeyPoint: Record<string, KeyPointId | undefined> = {
   HX001: "historyBundle",
   HX002: "onset",
   HX003: "hematuriaType",
-  HX004: "onset",
-  HX005: "hematuriaPhase",
+  HX004: "hematuriaPhase",
+  HX005: "colorClots",
   HX006: "colorClots",
-  HX007: "colorClots",
-  HX008: "colorClots",
-  HX009: "flankPain",
-  HX010: "irritativeSymptoms",
-  HX011: "voidingDifficulty",
-  HX012: "fever",
+  HX007: "irritativeSymptoms",
+  HX008: "flankPain",
+  HX009: "irritativeSymptoms",
+  HX010: "voidingDifficulty",
+  HX011: "fever",
+  HX012: "historyBundle",
   HX013: "historyBundle",
   HX014: "infectionHistory",
   HX015: "trauma",
   HX016: "stoneHistory",
   HX017: "historyBundle",
-  HX018: "anticoagulants",
-  HX019: "smoking",
+  HX018: "smoking",
+  HX019: "historyBundle",
   HX020: "occupation",
-  HX021: "historyBundle",
-  HX022: "historyBundle",
+  HX021: "anticoagulants",
+  HX022: "tumorFamilyHistory",
   HX023: "historyBundle",
   HX024: "historyBundle",
-  HX025: "tumorFamilyHistory",
+  HX025: "historyBundle",
   HX026: "historyBundle"
 };
 
@@ -129,235 +145,348 @@ function normalize(text: string) {
     .replace(/[，。！？；：、,.!?;:()[\]{}'"“”‘’]/g, "");
 }
 
-function hasAny(text: string, words: string[]) {
+export function patientHasAny(text: string, words: string[]) {
   const value = normalize(text);
   return words.some((word) => value.includes(normalize(word)));
 }
 
 function cleanValue(value?: string) {
-  return (value || "")
+  return String(value || "")
     .replace(/\s+/g, " ")
     .replace(/^根据原始病史[:：]?\s*/g, "")
     .replace(/^根据病例资料[:：]?\s*/g, "")
     .replace(/未主动诉[^，。；;]*[，。；;]?/g, "")
-    .replace(/未诉[^，。；;]*[，。；;]?/g, "")
-    .replace(/需主动询问[，。；;]?/g, "")
-    .replace(/需追问[，。；;]?/g, "")
+    .replace(/未诉\/?需主动询问/g, "")
+    .replace(/需主动询问[^，。；;]*[，。；;]?/g, "")
+    .replace(/需追问[^，。；;]*[，。；;]?/g, "")
+    .replace(/提交前隐藏[^，。；;]*[，。；;]?/g, "")
     .trim();
 }
 
-function isNonPatientUnknown(value?: string) {
-  return !value || /未诉|需追问|主动询问|未主动诉|不详/.test(value);
-}
-
-function splitSentences(text: string) {
-  return cleanValue(text)
+function splitSentences(value?: string) {
+  return cleanValue(value)
     .split(/[。；;\n]/)
-    .map((item) => item.trim())
+    .flatMap((line) => line.split(/[，,]/))
+    .map((line) => line.trim())
     .filter(Boolean);
 }
 
-function stripTeacherAndReports(text: string) {
-  let next = cleanValue(text);
-  forbiddenPatientPhrases.forEach((word) => {
-    next = next.replace(new RegExp(word, "gi"), "");
-  });
-  return splitSentences(next)
-    .filter((sentence) => !forbiddenLeakWords.some((word) => sentence.includes(word)))
-    .join("。")
-    .trim();
+function containsBlocked(text: string) {
+  return blockedPatientTerms.filter((term) => text.includes(term));
 }
 
-function containsForbidden(text: string) {
-  return [...forbiddenPatientPhrases, ...forbiddenLeakWords].filter((word) => text.includes(word));
+function stripBlockedSentences(value?: string) {
+  const sentences = splitSentences(value).filter((line) => !containsBlocked(line).length);
+  return sentences.join("。").trim();
 }
 
-function concise(text: string, maxLength = 80) {
-  const clean = stripTeacherAndReports(text);
-  if (!clean) return "";
-  return clean.length > maxLength ? `${clean.slice(0, maxLength).replace(/[，。；;、\s]*$/g, "")}。` : clean;
-}
-
-function asBullets(lines: string[]) {
-  const cleanLines = lines
-    .map((line) => concise(line, 80))
-    .filter(Boolean)
-    .slice(0, 2);
-  if (!cleanLines.length) return "- 这个我没有特别注意到。";
-  return cleanLines.map((line) => `- ${line.replace(/^[-•]\s*/, "")}`).join("\n");
-}
-
-function legacyAnswer(caseData: CaseData, slotId: string) {
-  return caseData.interviewAnswers?.[slotId]?.patientAnswer || "";
+function isNotUsable(value?: string) {
+  const clean = cleanValue(value);
+  return !clean || /未诉|需追问|需主动询问|不详|提交前隐藏|评分/.test(clean);
 }
 
 function firstUsable(...values: Array<string | undefined>) {
-  return values.map(cleanValue).find((value) => value && !isNonPatientUnknown(value)) || "";
+  for (const value of values) {
+    const clean = stripBlockedSentences(value);
+    if (clean && !isNotUsable(clean)) return clean;
+  }
+  return "";
+}
+
+function asBullets(lines: string[]) {
+  const cleaned = lines
+    .map((line) => stripBlockedSentences(line))
+    .filter(Boolean)
+    .flatMap((line) => splitSentences(line))
+    .filter((line) => !containsBlocked(line).length)
+    .slice(0, 2)
+    .map((line) => {
+      const trimmed = line.replace(/^[-•\s]*/, "").trim();
+      return trimmed.length > 80 ? `${trimmed.slice(0, 80).replace(/[，。；;\s]*$/g, "")}。` : trimmed;
+    });
+  return cleaned.length ? cleaned.map((line) => `- ${line}`).join("\n") : "- 这个我没有特别注意到。";
 }
 
 function sentenceWith(value: string | undefined, words: string[]) {
-  const sentences = splitSentences(value || "").flatMap((item) => item.split(/[，,、]/).map((part) => part.trim()));
-  return sentences.find((sentence) => words.some((word) => sentence.includes(word))) || "";
+  return splitSentences(value).find((sentence) => words.some((word) => sentence.includes(word)) && !containsBlocked(sentence).length) || "";
 }
 
-function answerSmokingOrDrinking(caseData: CaseData, question: string) {
-  const risk = caseData.riskFactors;
-  const source = [risk.smoking, caseData.personalHistory, caseData.pastHistory, legacyAnswer(caseData, "HX023")].filter(Boolean).join("。");
-  if (hasAny(question, ["抽烟", "吸烟", "烟龄", "几包", "包年"])) {
-    return firstUsable(caseData.patientAnswers?.smoking, sentenceWith(source, ["吸烟", "抽烟", "烟", "未吸烟"])) || "我平时不吸烟。";
-  }
-  if (hasAny(question, ["喝酒", "饮酒", "白酒", "酒量"])) {
-    return firstUsable(caseData.patientAnswers?.alcohol, sentenceWith(source, ["饮酒", "喝酒", "白酒", "酗酒"])) || "我平时不怎么喝酒。";
-  }
-  return firstUsable(sentenceWith(source, ["吸烟", "抽烟", "烟"]), sentenceWith(source, ["饮酒", "喝酒", "白酒"])) || "抽烟、饮酒方面没有特别的。";
+function getInterviewEntries(caseData: CaseData) {
+  return Object.values(caseData.interviewAnswers || {}) as InterviewAnswer[];
 }
 
-function answerPain(caseData: CaseData, question: string) {
-  const illness = caseData.presentIllness;
-  if (hasAny(question, ["尿痛", "小便疼", "烧灼", "尿道疼"])) {
-    return firstUsable(legacyAnswer(caseData, "HX009"), illness.dysuria) || "小便时不疼，也没有明显尿道烧灼感。";
-  }
-  if (hasAny(question, ["腰痛", "肾绞痛", "腹痛", "放射痛", "肾区"])) {
-    return firstUsable(legacyAnswer(caseData, "HX012"), illness.flankPain, illness.pain, caseData.patientAnswers?.pain) || "没有明显腰痛或肚子绞痛。";
-  }
-  return firstUsable(legacyAnswer(caseData, "HX009"), legacyAnswer(caseData, "HX012"), illness.pain) || "没有明显疼痛。";
+function findSlotByKeywords(caseData: CaseData, keywords: string[]) {
+  const entries = getInterviewEntries(caseData);
+  const scored = entries
+    .map((entry) => {
+      const haystack = `${entry.slotId} ${entry.label} ${entry.possibleQuestion}`;
+      const score = keywords.reduce((sum, word) => sum + (haystack.includes(word) ? 1 : 0), 0);
+      return { entry, score };
+    })
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score);
+  return scored[0]?.entry;
 }
 
-function patientPhaseText(value: string) {
-  const clean = cleanValue(value);
-  if (clean.includes("全程")) return "我整个排尿过程都是红的。";
-  if (clean.includes("终末") || clean.includes("最后")) return "主要是快尿完时更红。";
-  if (clean.includes("起始") || clean.includes("开始")) return "主要是一开始小便时更红。";
-  if (clean.includes("镜下")) return "肉眼看不出来，是化验发现的。";
-  return clean;
-}
+function findSlotByQuestion(caseData: CaseData, question: string) {
+  const normalizedQuestion = normalize(question);
+  const caseSlots = getInterviewEntries(caseData)
+    .map((slot) => {
+      const candidates = [slot.label, slot.possibleQuestion]
+        .flatMap((item) => String(item || "").split(/[|/、，,；;\s]+/))
+        .map(normalize)
+        .filter((item) => item.length >= 2);
+      const score = candidates.reduce((sum, item) => {
+        if (normalizedQuestion.includes(item)) return sum + item.length + 3;
+        if (item.includes(normalizedQuestion) && normalizedQuestion.length >= 2) return sum + normalizedQuestion.length;
+        return sum;
+      }, 0);
+      return { slot, score };
+    })
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score);
 
-function answerFromSlot(caseData: CaseData, slotId: string, question: string) {
-  const illness = caseData.presentIllness;
-  const risk = caseData.riskFactors;
+  if (caseSlots[0]) return caseSlots[0].slot;
 
-  switch (slotId) {
-    case "HX001":
-      return [caseData.patientAnswers?.opening || caseData.studentChiefComplaint || caseData.chiefComplaint || "主要是小便颜色不太正常。"];
-    case "HX002":
-      return [firstUsable(legacyAnswer(caseData, "HX003"), caseData.studentChiefComplaint, caseData.chiefComplaint) || "发现小便变红已经有一段时间了。"];
-    case "HX003":
-      return [firstUsable(legacyAnswer(caseData, "HX002"), illness.hematuriaType) || "我是自己能看到尿色变红，不只是化验发现。"];
-    case "HX004":
-      return [firstUsable(legacyAnswer(caseData, "HX003"), illness.onset) || "开始得比较突然，具体诱因我说不清。"];
-    case "HX005":
-      return [patientPhaseText(firstUsable(legacyAnswer(caseData, "HX005"), legacyAnswer(caseData, "HX006"), caseData.patientAnswers?.phase, illness.hematuriaPhase)) || "我没有特别分清是刚开始红还是最后红。"];
-    case "HX006":
-      return [firstUsable(legacyAnswer(caseData, "HX007"), caseData.patientAnswers?.color, illness.color) || "尿液颜色看起来偏红。"];
-    case "HX007":
-      return [firstUsable(legacyAnswer(caseData, "HX008"), caseData.patientAnswers?.clots, illness.clots) || "我没有注意到明显血块。"];
-    case "HX008":
-      return [firstUsable(legacyAnswer(caseData, "HX004"), illness.duration) || "不是每次都完全一样，有时明显一些。"];
-    case "HX009":
-      return [answerPain(caseData, question)];
-    case "HX010":
-      return [firstUsable(legacyAnswer(caseData, "HX010"), illness.urinaryFrequency, illness.urgency, illness.dysuria, caseData.patientAnswers?.irritativeSymptoms) || "没有明显尿频、尿急、尿痛。"];
-    case "HX011":
-      return [firstUsable(legacyAnswer(caseData, "HX011"), illness.voidingDifficulty) || "排尿没有特别费力。"];
-    case "HX012":
-      return [firstUsable(legacyAnswer(caseData, "HX013"), caseData.patientAnswers?.fever, illness.fever) || "没有发热，也没有寒战。"];
-    case "HX013":
-      return [firstUsable(legacyAnswer(caseData, "HX015"), caseData.patientAnswers?.glomerularClues) || "没有明显泡沫尿或水肿。"];
-    case "HX014":
-      return [firstUsable(legacyAnswer(caseData, "HX016"), risk.infectionHistory) || "最近没有明显感冒、咽痛。"];
-    case "HX015":
-      return [firstUsable(legacyAnswer(caseData, "HX019"), illness.trigger, risk.trauma) || "没有明显外伤、剧烈运动或尿路操作诱因。"];
-    case "HX016":
-      return [firstUsable(legacyAnswer(caseData, "HX020"), risk.stoneHistory, risk.infectionHistory, risk.tumorHistory, caseData.pastHistory) || "以前没有特别明确的泌尿系病史。"];
-    case "HX017":
-      if (hasAny(question, ["高血压"])) return [firstUsable(sentenceWith(caseData.pastHistory, ["高血压"]), sentenceWith(legacyAnswer(caseData, "HX020"), ["高血压"])) || "没有高血压病史。"];
-      if (hasAny(question, ["糖尿病"])) return [firstUsable(sentenceWith(caseData.pastHistory, ["糖尿病"]), sentenceWith(legacyAnswer(caseData, "HX020"), ["糖尿病"])) || "没有糖尿病病史。"];
-      if (hasAny(question, ["肝炎", "乙肝"])) return [firstUsable(sentenceWith(caseData.pastHistory, ["肝炎", "乙肝"]), sentenceWith(legacyAnswer(caseData, "HX020"), ["肝炎", "乙肝"])) || "没有肝炎病史。"];
-      if (hasAny(question, ["结核"])) return [firstUsable(sentenceWith(caseData.pastHistory, ["结核"]), sentenceWith(legacyAnswer(caseData, "HX020"), ["结核"])) || "没有结核病史。"];
-      return [firstUsable(caseData.pastHistory, legacyAnswer(caseData, "HX020")) || "以前身体情况没有特别的。"];
-    case "HX018":
-      return [firstUsable(legacyAnswer(caseData, "HX021"), risk.anticoagulants, caseData.medication) || "平时没有长期吃特殊药。"];
-    case "HX019":
-      return [answerSmokingOrDrinking(caseData, question)];
-    case "HX020":
-      return [firstUsable(risk.occupation) || "工作上没有接触特别的化学东西。"];
-    case "HX021":
-      return [firstUsable(legacyAnswer(caseData, "HX018")) || "这个情况对我不太适用，或没有这方面问题。"];
-    case "HX022":
-      return ["我在外院看过或做过一些检查，具体报告需要医生查看。"];
-    case "HX023":
-      return [firstUsable(legacyAnswer(caseData, "HX017"), legacyAnswer(caseData, "HX025")) || "胃口、体重和精神状态没有特别明显变化。"];
-    case "HX024":
-      return ["没有鼻出血、牙龈出血或皮肤瘀斑。"];
-    case "HX025":
-      return [firstUsable(legacyAnswer(caseData, "HX024"), risk.familyHistory, caseData.familyHistory) || "家里没有听说类似血尿或遗传性肾病。"];
-    case "HX026":
-      return ["可以，医生您问得具体一点，我尽量回忆。"];
-    default:
-      return [];
-  }
-}
-
-function matchByStrongRules(question: string) {
-  if (hasAny(question, ["一直红", "全程", "开始红", "终末", "快尿完", "最后才红", "第一杯", "第三杯", "一开始", "从头到尾"])) return ["HX005"];
-  if (hasAny(question, ["血块", "血凝块", "凝血块", "块状"])) return ["HX007"];
-  if (hasAny(question, ["鲜红", "暗红", "洗肉水", "茶色", "酱油色", "颜色", "红色"])) return ["HX006"];
-  if (hasAny(question, ["肉眼", "镜下", "看得见", "尿检发现", "尿本身红"])) return ["HX003"];
-  if (hasAny(question, ["多久", "什么时候", "几天", "几周", "几个月", "开始", "起病"])) return ["HX002"];
-  if (hasAny(question, ["突然", "诱因", "怎么开始", "无明显诱因"])) return ["HX004"];
-  if (hasAny(question, ["出血量", "多少血", "频率", "间断", "持续", "每次都有"])) return ["HX008"];
-  if (hasAny(question, ["尿痛", "小便疼", "疼", "腰痛", "肾绞痛", "腹痛", "放射痛", "烧灼", "肾区"])) return ["HX009"];
-  if (hasAny(question, ["尿频", "尿急", "尿不尽", "夜尿"])) return ["HX010"];
-  if (hasAny(question, ["排尿困难", "尿线", "尿流中断", "尿不出来", "费力", "尿潴留"])) return ["HX011"];
-  if (hasAny(question, ["发热", "发烧", "寒战", "畏寒", "高热", "体温"])) return ["HX012"];
-  if (hasAny(question, ["高血压病史", "有高血压", "高血压吗", "慢性病", "既往"])) return ["HX017"];
-  if (hasAny(question, ["泡沫尿", "水肿", "眼睑肿", "下肢肿", "高血压"])) return ["HX013"];
-  if (hasAny(question, ["感冒", "咽痛", "扁桃体炎", "上呼吸道"])) return ["HX014"];
-  if (hasAny(question, ["运动", "劳累", "受凉", "外伤", "性生活", "导尿", "尿路操作", "膀胱镜"])) return ["HX015"];
-  if (hasAny(question, ["结石史", "尿路感染", "前列腺", "泌尿系手术", "以前血尿", "泌尿病"])) return ["HX016"];
-  if (hasAny(question, ["糖尿病", "冠心病", "房颤"])) return ["HX017"];
-  if (hasAny(question, ["阿司匹林", "氯吡格雷", "华法林", "利伐沙班", "抗凝", "抗血小板", "止痛药", "肾毒性", "吃药", "用药"])) return ["HX018"];
-  if (hasAny(question, ["抽烟", "吸烟", "烟龄", "几包", "包年", "喝酒", "饮酒"])) return ["HX019"];
-  if (hasAny(question, ["职业", "工作", "染料", "化工", "橡胶", "皮革", "重金属", "油漆", "接触"])) return ["HX020"];
-  if (hasAny(question, ["月经", "阴道", "污染", "怀孕", "妊娠", "妇科"])) return ["HX021"];
-  if (hasAny(question, ["看过医生", "吃过什么", "治疗过", "做过检查", "外院"])) return ["HX022"];
-  if (hasAny(question, ["胃口", "体重", "乏力", "食欲", "大便", "精神"])) return ["HX023"];
-  if (hasAny(question, ["鼻出血", "牙龈出血", "瘀斑", "紫癜", "出血倾向"])) return ["HX024"];
-  if (hasAny(question, ["家族", "遗传", "家里", "亲属", "听力异常"])) return ["HX025"];
-  if (hasAny(question, ["哪里不舒服", "为什么来", "主诉", "怎么不舒服"])) return ["HX001"];
-  return [];
-}
-
-function matchBySlotDictionary(question: string) {
-  const normalized = normalize(question);
-  return questionSlots
+  const globalSlot = questionSlots
     .map((slot) => {
       const candidates = [slot.label, slot.recommendedQuestion, ...(slot.triggers || [])]
         .map(normalize)
         .filter((item) => item.length >= 2);
-      const score = candidates.reduce((sum, item) => {
-        if (normalized.includes(item)) return sum + item.length + 3;
-        if (item.includes(normalized) && normalized.length >= 2) return sum + normalized.length;
-        return sum;
-      }, 0);
-      return { slotId: slot.slotId, score };
+      const score = candidates.reduce((sum, item) => (normalizedQuestion.includes(item) ? sum + item.length : sum), 0);
+      return { slot, score };
     })
     .filter((item) => item.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 1)
-    .map((item) => item.slotId);
+    .sort((a, b) => b.score - a.score)[0]?.slot;
+
+  if (!globalSlot) return undefined;
+  return findSlotByKeywords(caseData, [globalSlot.label, globalSlot.slotId]);
 }
 
-function matchSlots(question: string) {
-  const strong = matchByStrongRules(question);
-  if (strong.length) return strong.slice(0, 1);
-  return matchBySlotDictionary(question).slice(0, 1);
+type Semantic =
+  | "chief"
+  | "visibility"
+  | "onset"
+  | "frequency"
+  | "phase"
+  | "color"
+  | "clots"
+  | "dysuria"
+  | "flankPain"
+  | "luts"
+  | "voiding"
+  | "fever"
+  | "glomerular"
+  | "uri"
+  | "trigger"
+  | "stone"
+  | "infection"
+  | "past"
+  | "medication"
+  | "smoking"
+  | "alcohol"
+  | "occupation"
+  | "female"
+  | "family"
+  | "bleeding"
+  | "priorCare";
+
+function semanticFromQuestion(question: string): Semantic | "diagnosis" | "report" | undefined {
+  if (patientHasAny(question, diagnosisQuestionWords)) return "diagnosis";
+  if (patientHasAny(question, reportQuestionWords)) return "report";
+  if (patientHasAny(question, ["一直红", "全程", "开始红", "终末", "快尿完", "最后才红", "第一杯", "第三杯", "从头到尾"])) return "phase";
+  if (patientHasAny(question, ["血块", "血凝块", "凝血块", "块状"])) return "clots";
+  if (patientHasAny(question, ["鲜红", "暗红", "洗肉水", "茶色", "酱油色", "颜色", "红色"])) return "color";
+  if (patientHasAny(question, ["肉眼", "镜下", "看得见", "尿潜血", "尿本身红"])) return "visibility";
+  if (patientHasAny(question, ["多久", "什么时候", "几天", "几周", "几个月", "开始", "起病"])) return "onset";
+  if (patientHasAny(question, ["频率", "间断", "持续", "每次都有", "反复", "次数"])) return "frequency";
+  if (patientHasAny(question, ["尿痛", "小便疼", "烧灼", "尿道疼"])) return "dysuria";
+  if (patientHasAny(question, ["腰痛", "肾绞痛", "腹痛", "放射痛", "肾区"])) return "flankPain";
+  if (patientHasAny(question, ["尿频", "尿急", "尿不尽", "夜尿"])) return "luts";
+  if (patientHasAny(question, ["排尿困难", "尿线", "尿流中断", "尿不出来", "费力", "尿潴留"])) return "voiding";
+  if (patientHasAny(question, ["发热", "发烧", "寒战", "畏寒", "高热", "体温"])) return "fever";
+  if (patientHasAny(question, ["泡沫尿", "水肿", "眼睑肿", "下肢肿"])) return "glomerular";
+  if (patientHasAny(question, ["感冒", "咽痛", "扁桃体炎", "上呼吸道"])) return "uri";
+  if (patientHasAny(question, ["运动", "劳累", "受凉", "外伤", "性生活", "导尿", "尿路操作"])) return "trigger";
+  if (patientHasAny(question, ["结石史", "以前结石", "肾结石", "输尿管结石"])) return "stone";
+  if (patientHasAny(question, ["感染史", "尿路感染", "膀胱炎", "肾盂肾炎"])) return "infection";
+  if (patientHasAny(question, ["阿司匹林", "氯吡格雷", "华法林", "利伐沙班", "抗凝", "抗血小板", "止痛药", "吃药", "用药"])) return "medication";
+  if (patientHasAny(question, ["吸烟", "抽烟", "烟龄", "几包", "包年"])) return "smoking";
+  if (patientHasAny(question, ["喝酒", "饮酒", "白酒", "酒量"])) return "alcohol";
+  if (patientHasAny(question, ["职业", "工作", "染料", "化工", "橡胶", "皮革", "重金属", "接触"])) return "occupation";
+  if (patientHasAny(question, ["月经", "阴道", "污染", "怀孕", "妊娠", "妇科"])) return "female";
+  if (patientHasAny(question, ["家族", "遗传", "家里", "亲属", "听力异常"])) return "family";
+  if (patientHasAny(question, ["鼻出血", "牙龈出血", "瘀斑", "紫癜", "出血倾向"])) return "bleeding";
+  if (patientHasAny(question, ["看过医生", "吃过什么", "治疗过", "外院"])) return "priorCare";
+  if (patientHasAny(question, ["哪里不舒服", "为什么来", "主诉", "怎么不舒服", "怎么回事", "详细说说"])) return "chief";
+  if (patientHasAny(question, ["高血压", "糖尿病", "冠心病", "房颤", "肝炎", "乙肝", "结核", "既往"])) return "past";
+  return undefined;
+}
+
+function slotForSemantic(caseData: CaseData, semantic: Semantic) {
+  const keywordMap: Record<Semantic, string[]> = {
+    chief: ["主诉", "来诊", "哪里不舒服"],
+    visibility: ["肉眼", "镜下", "可见性"],
+    onset: ["起病", "持续时间", "病程"],
+    frequency: ["频率", "间断", "持续"],
+    phase: ["时相", "全程", "终末", "起始", "一直红"],
+    color: ["尿色", "颜色", "鲜红", "暗红", "洗肉水", "茶色", "酱油"],
+    clots: ["血块", "凝血块"],
+    dysuria: ["尿痛", "疼痛关系", "小便疼"],
+    flankPain: ["腰痛", "肾绞痛", "放射痛"],
+    luts: ["尿频", "尿急", "尿路刺激"],
+    voiding: ["排尿困难", "尿线", "尿潴留"],
+    fever: ["发热", "寒战", "畏寒"],
+    glomerular: ["泡沫尿", "水肿", "高血压"],
+    uri: ["上感", "咽痛", "扁桃体炎", "感冒"],
+    trigger: ["诱因", "运动", "外伤", "操作"],
+    stone: ["结石史"],
+    infection: ["感染史", "尿路感染"],
+    past: ["既往病史", "慢性病"],
+    medication: ["用药", "抗凝", "抗血小板"],
+    smoking: ["吸烟史", "吸烟", "抽烟"],
+    alcohol: ["饮酒史", "饮酒", "喝酒"],
+    occupation: ["职业暴露", "职业", "工作"],
+    female: ["女性", "月经", "阴道", "妊娠"],
+    family: ["家族史", "遗传"],
+    bleeding: ["出血倾向", "鼻出血", "牙龈出血"],
+    priorCare: ["诊治经过", "院前诊治", "看过医生"]
+  };
+  return findSlotByKeywords(caseData, keywordMap[semantic]);
+}
+
+function answerFromStructuredFields(caseData: CaseData, semantic: Semantic, question: string) {
+  const pfp = (caseData as unknown as { patientFacingProfile?: Record<string, string> }).patientFacingProfile || {};
+  const illness = caseData.presentIllness || {};
+  const risk = caseData.riskFactors || {};
+
+  switch (semantic) {
+    case "chief":
+      return firstUsable(pfp.chiefComplaint, caseData.patientAnswers?.opening, caseData.studentChiefComplaint, caseData.chiefComplaint);
+    case "visibility":
+      return firstUsable(pfp.hematuriaType, illness.hematuriaType);
+    case "phase":
+      return firstUsable(pfp.hematuriaPhase, caseData.patientAnswers?.phase, illness.hematuriaPhase);
+    case "color":
+      return firstUsable(pfp.urineColor, caseData.patientAnswers?.color, illness.color);
+    case "clots":
+      return firstUsable(pfp.clots, caseData.patientAnswers?.clots, illness.clots);
+    case "dysuria":
+      return firstUsable(
+        sentenceWith(pfp.luts, ["尿痛", "疼", "痛", "烧灼"]),
+        sentenceWith(caseData.patientAnswers?.irritativeSymptoms, ["尿痛", "疼", "痛", "烧灼"]),
+        sentenceWith(illness.dysuria, ["尿痛", "疼", "痛", "烧灼"]),
+        caseData.patientAnswers?.pain,
+        illness.pain
+      );
+    case "flankPain":
+      return firstUsable(pfp.flankPain, illness.flankPain, caseData.patientAnswers?.stoneClues, illness.pain);
+    case "luts":
+      return firstUsable(pfp.luts, caseData.patientAnswers?.irritativeSymptoms, illness.urinaryFrequency, illness.urgency, illness.dysuria);
+    case "voiding":
+      return firstUsable(sentenceWith(pfp.luts, ["排尿困难", "尿线", "尿潴留"]), illness.voidingDifficulty);
+    case "fever":
+      return firstUsable(pfp.fever, caseData.patientAnswers?.fever, illness.fever);
+    case "glomerular":
+      return firstUsable(pfp.glomerularClues, caseData.patientAnswers?.glomerularClues);
+    case "trigger":
+      return firstUsable(illness.trigger, risk.trauma);
+    case "stone":
+      return firstUsable(risk.stoneHistory, sentenceWith(pfp.knownPastHistory, ["结石"]));
+    case "infection":
+      return firstUsable(risk.infectionHistory, sentenceWith(pfp.knownPastHistory, ["感染"]));
+    case "medication":
+      return firstUsable(pfp.knownMedication, risk.anticoagulants, caseData.medication);
+    case "smoking":
+      return firstUsable(sentenceWith(pfp.personalAndFamilyRisk, ["吸烟"]), sentenceWith(pfp.knownPastHistory, ["吸烟"]), risk.smoking);
+    case "alcohol":
+      return firstUsable(sentenceWith(pfp.personalAndFamilyRisk, ["饮酒", "喝酒"]), sentenceWith(pfp.knownPastHistory, ["饮酒", "喝酒"]), risk.alcohol);
+    case "occupation":
+      return firstUsable(sentenceWith(pfp.personalAndFamilyRisk, ["职业", "染料", "化工", "橡胶", "皮革", "重金属"]), risk.occupation);
+    case "family":
+      return firstUsable(sentenceWith(pfp.personalAndFamilyRisk, ["家族"]), risk.familyHistory, caseData.familyHistory);
+    case "past":
+      if (patientHasAny(question, ["高血压"])) return firstUsable(sentenceWith(pfp.knownPastHistory, ["高血压"]), sentenceWith(caseData.pastHistory, ["高血压"]));
+      if (patientHasAny(question, ["糖尿病"])) return firstUsable(sentenceWith(pfp.knownPastHistory, ["糖尿病"]), sentenceWith(caseData.pastHistory, ["糖尿病"]));
+      if (patientHasAny(question, ["肝炎", "乙肝"])) return firstUsable(sentenceWith(pfp.knownPastHistory, ["肝炎", "乙肝"]), sentenceWith(caseData.pastHistory, ["肝炎", "乙肝"]));
+      if (patientHasAny(question, ["结核"])) return firstUsable(sentenceWith(pfp.knownPastHistory, ["结核"]), sentenceWith(caseData.pastHistory, ["结核"]));
+      return firstUsable(pfp.knownPastHistory, caseData.pastHistory);
+    default:
+      return "";
+  }
+}
+
+function defaultAnswerForSemantic(semantic: Semantic) {
+  const defaults: Record<Semantic, string> = {
+    chief: "主要是小便颜色不太正常。",
+    visibility: "我是自己能看到尿色变红。",
+    onset: "已经有一段时间了，具体可以再问我。",
+    frequency: "不是每次都完全一样，有时明显一些。",
+    phase: "我没有特别分清是刚开始红还是最后红。",
+    color: "尿液颜色看起来偏红。",
+    clots: "我没有注意到明显血块。",
+    dysuria: "小便时不疼，也没有明显尿道烧灼感。",
+    flankPain: "没有明显腰痛或肚子绞痛。",
+    luts: "没有明显尿频、尿急、尿痛。",
+    voiding: "排尿没有特别费力。",
+    fever: "没有发热，也没有寒战。",
+    glomerular: "没有明显泡沫尿或水肿。",
+    uri: "最近没有明显感冒、咽痛。",
+    trigger: "没有明显外伤、剧烈运动或尿路操作诱因。",
+    stone: "以前没有明确结石史。",
+    infection: "以前没有反复尿路感染史。",
+    past: "以前身体情况没有特别的。",
+    medication: "平时没有长期吃特殊药。",
+    smoking: "我平时不吸烟。",
+    alcohol: "我平时不怎么喝酒。",
+    occupation: "工作上没有接触特别的化学东西。",
+    female: "这个情况对我不太适用，或没有这方面问题。",
+    family: "家里没有听说类似血尿或遗传性肾病。",
+    bleeding: "没有鼻出血、牙龈出血或皮肤瘀斑。",
+    priorCare: "此前没有系统诊治。"
+  };
+  return defaults[semantic];
+}
+
+function semanticReply(caseData: CaseData, semantic: Semantic, question: string) {
+  const slot = slotForSemantic(caseData, semantic) || findSlotByQuestion(caseData, question);
+  const slotAnswer = slot?.patientAnswer;
+  const structured = answerFromStructuredFields(caseData, semantic, question);
+  const answer = firstUsable(structured, slotAnswer, defaultAnswerForSemantic(semantic));
+  return {
+    replyText: asBullets([answer]),
+    matchedSlotIds: slot ? [slot.slotId] : [],
+    revealedFields: slot ? [slot.slotId] : [semantic],
+    blockedTeacherFields: containsBlocked(String(slotAnswer || "")),
+    safetyFlags: []
+  };
+}
+
+function keyPointFromSlot(caseData: CaseData, slotId: string): KeyPointId | undefined {
+  const slot = caseData.interviewAnswers?.[slotId];
+  const text = `${slot?.label || ""} ${slot?.possibleQuestion || ""}`;
+  if (/时相|全程|终末|起始|一直红/.test(text)) return "hematuriaPhase";
+  if (/尿色|颜色|血块|鲜红|暗红|洗肉水|茶色|酱油/.test(text)) return "colorClots";
+  if (/肉眼|镜下|可见性/.test(text)) return "hematuriaType";
+  if (/起病|病程|持续时间|多久/.test(text)) return "onset";
+  if (/尿频|尿急|尿痛|尿路刺激/.test(text)) return "irritativeSymptoms";
+  if (/腰痛|肾绞痛|放射痛/.test(text)) return "flankPain";
+  if (/发热|寒战|畏寒/.test(text)) return "fever";
+  if (/排尿困难|尿线|尿潴留/.test(text)) return "voidingDifficulty";
+  if (/吸烟/.test(text)) return "smoking";
+  if (/职业/.test(text)) return "occupation";
+  if (/结石/.test(text)) return "stoneHistory";
+  if (/感染/.test(text)) return "infectionHistory";
+  if (/外伤|操作|运动/.test(text)) return "trauma";
+  if (/用药|抗凝|抗血小板/.test(text)) return "anticoagulants";
+  if (/家族|遗传/.test(text)) return "tumorFamilyHistory";
+  return slotIdToKeyPoint[slotId];
 }
 
 function broadHistoryReply(caseData: CaseData) {
   return asBullets([
-    "主要是发现小便颜色不太正常。",
-    firstUsable(caseData.patientAnswers?.color, caseData.presentIllness.color) || "尿液看起来发红。",
+    firstUsable((caseData as unknown as { patientFacingProfile?: Record<string, string> }).patientFacingProfile?.chiefComplaint, caseData.studentChiefComplaint, caseData.chiefComplaint),
+    firstUsable(caseData.patientAnswers?.color, caseData.presentIllness?.color, "尿液颜色不太正常。"),
     "具体细节您可以一项一项问我。"
   ]);
 }
@@ -370,24 +499,23 @@ export function generatePatientReply({
   userQuestion: string;
   stage?: string;
   mode?: string;
-}): ReplyResult {
+}): PatientReplyResult {
   const question = userQuestion.trim();
-  const blockedTeacherFields: string[] = [];
-  const safetyFlags: string[] = [];
+  const semantic = semanticFromQuestion(question);
 
-  if (hasAny(question, diagnosisQuestionWords)) {
+  if (semantic === "diagnosis") {
     return {
       replyText: asBullets(["这个我不清楚，需要医生判断。"]),
       matchedSlotIds: [],
       revealedFields: [],
-      blockedTeacherFields: ["diagnosis", "teacherHint"],
+      blockedTeacherFields: ["diagnosis", "teacherOnlyData"],
       safetyFlags: ["blocked_diagnosis_request"]
     };
   }
 
-  if (hasAny(question, reportQuestionWords)) {
+  if (semantic === "report") {
     return {
-      replyText: asBullets(["我做过的检查具体结果我说不清楚，您需要查看检查报告。"]),
+      replyText: asBullets(["我做过的检查具体结果说不清楚，您需要查看检查报告。"]),
       matchedSlotIds: [],
       revealedFields: [],
       blockedTeacherFields: ["imaging_finding", "urine_test_result", "pathology", "order_results"],
@@ -395,47 +523,48 @@ export function generatePatientReply({
     };
   }
 
-  if (hasAny(question, ["详细说说", "怎么回事", "整个经过", "详细讲", "这次情况"])) {
+  if (semantic) return semanticReply(caseData, semantic, question);
+
+  const slot = findSlotByQuestion(caseData, question);
+  if (slot) {
+    return {
+      replyText: asBullets([slot.patientAnswer]),
+      matchedSlotIds: [slot.slotId],
+      revealedFields: [slot.slotId],
+      blockedTeacherFields: containsBlocked(slot.patientAnswer),
+      safetyFlags: []
+    };
+  }
+
+  if (patientHasAny(question, ["详细说说", "整个经过", "这次情况"])) {
     return {
       replyText: broadHistoryReply(caseData),
-      matchedSlotIds: ["HX001"],
-      revealedFields: ["chiefComplaint"],
-      blockedTeacherFields,
-      safetyFlags
-    };
-  }
-
-  const matchedSlotIds = matchSlots(question);
-  if (!matchedSlotIds.length) {
-    return {
-      replyText: asBullets([fallbackReplies[Math.floor(Math.random() * fallbackReplies.length)]]),
       matchedSlotIds: [],
-      revealedFields: [],
-      blockedTeacherFields,
-      safetyFlags: ["no_slot_match"]
+      revealedFields: ["chiefComplaint"],
+      blockedTeacherFields: [],
+      safetyFlags: []
     };
   }
-
-  const slotId = matchedSlotIds[0];
-  const rawAnswer = answerFromSlot(caseData, slotId, question).join("。");
-  const blocked = containsForbidden(rawAnswer);
-  if (blocked.length) blockedTeacherFields.push(...blocked);
-  const replyText = asBullets([rawAnswer]);
-  const leaked = containsForbidden(replyText);
-  if (leaked.length) safetyFlags.push(...leaked.map((item) => `filtered:${item}`));
 
   return {
-    replyText,
-    matchedSlotIds,
-    revealedFields: [slotId],
-    blockedTeacherFields: [...new Set(blockedTeacherFields)],
-    safetyFlags: [...new Set(safetyFlags)]
+    replyText: asBullets(["医生，您能问得再具体一点吗？我不太明白您想问哪方面。"]),
+    matchedSlotIds: [],
+    revealedFields: [],
+    blockedTeacherFields: [],
+    safetyFlags: ["no_slot_match"]
   };
 }
 
 export function askPatient(caseData: CaseData, question: string): { answer: string; matchedKeys: KeyPointId[]; matchedSlots: string[] } {
   const result = generatePatientReply({ caseData, userQuestion: question });
-  const matchedKeys = [...new Set(result.matchedSlotIds.map((slotId) => slotToKeyPoint[slotId]).filter(Boolean))] as KeyPointId[];
+  const matchedKeys = [
+    ...new Set(
+      result.revealedFields
+        .map((field) => semanticToKeyPoint[field] || semanticToKeyPoint[field.replace(/^HX\d+$/, "")])
+        .concat(result.matchedSlotIds.map((slotId) => keyPointFromSlot(caseData, slotId)))
+        .filter(Boolean)
+    )
+  ] as KeyPointId[];
   return {
     answer: result.replyText,
     matchedKeys,

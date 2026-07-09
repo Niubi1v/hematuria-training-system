@@ -1,0 +1,11 @@
+{
+  "defaultCaseSet": "v2_plus_30",
+  "supported": [
+    "v2_only",
+    "v2_plus_30"
+  ],
+  "generatedAt": "2026-07-09T03:43:46.076Z",
+  "v2Count": 12,
+  "addCount": 30,
+  "totalCount": 42
+}
