@@ -14,7 +14,7 @@ import ragRules from "@/data/rag_rules.json";
 import mdtTriggers from "@/data/mdt_triggers.json";
 import evaluatorRubric from "@/data/evaluator_rubric.json";
 import rctProtocol from "@/data/rct_protocol.json";
-import type { AgentConfig, CaseData, EvaluatorRubricItem, MdtTrigger, OrderResultItem } from "@/src/lib/types";
+import type { AgentConfig, EvaluatorRubricItem, MdtTrigger, OrderResultItem } from "@/src/lib/types";
 import FormattedText from "./FormattedText";
 
 type WorkbookPreview = {
@@ -75,6 +75,24 @@ export default function TeacherClient() {
   const [studentLogs, setStudentLogs] = useState<Array<Record<string, unknown>>>([]);
   const [aiDebug, setAiDebug] = useState<AiPatientDebug | null>(null);
   const [aiDebugLoading, setAiDebugLoading] = useState(false);
+  const [caseSearch, setCaseSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("全部");
+  const [difficultyFilter, setDifficultyFilter] = useState("全部");
+  const [reviewFilter, setReviewFilter] = useState("全部");
+
+  const filteredCases = useMemo(() => allCases.filter((item) => {
+    const keyword = caseSearch.trim().toLowerCase();
+    const keywordMatch = !keyword || `${item.id} ${item.title} ${item.diagnosis}`.toLowerCase().includes(keyword);
+    return keywordMatch
+      && (categoryFilter === "全部" || item.diseaseCategory === categoryFilter)
+      && (difficultyFilter === "全部" || item.difficulty === difficultyFilter)
+      && (reviewFilter === "全部" || item.medicalReview?.status === reviewFilter);
+  }), [caseSearch, categoryFilter, difficultyFilter, reviewFilter]);
+  const categories = useMemo(() => ["全部", ...new Set(allCases.map((item) => item.diseaseCategory || "未分类"))], []);
+
+  useEffect(() => {
+    if (filteredCases.length && !filteredCases.some((item) => item.id === selectedCaseId)) setSelectedCaseId(filteredCases[0].id);
+  }, [filteredCases, selectedCaseId]);
 
   const selectedCase = useMemo(() => allCases.find((item) => item.id === selectedCaseId), [selectedCaseId]);
   const selectedOrderResults = useMemo(() => (orderResults as OrderResultItem[]).filter((item) => item.caseId === selectedCaseId), [selectedCaseId]);
@@ -144,6 +162,11 @@ export default function TeacherClient() {
 
   function saveManualScore() {
     if (!selectedCase) return;
+    const score = Number(manualScore);
+    if (!Number.isFinite(score) || score < 0 || score > 360) {
+      alert("人工修正分数必须在0-360之间。");
+      return;
+    }
     localStorage.setItem(`hematuria-manual-score-${selectedCase.id}`, JSON.stringify({
       score: manualScore,
       comment: manualComment,
@@ -190,8 +213,9 @@ export default function TeacherClient() {
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-8">
-      <h1 className="text-3xl font-semibold">教师模式</h1>
-      <p className="mt-2 text-clinic-muted">用于本地预览新版 Excel、查看全流程隐藏答案、编辑病例草稿、人工修正评分和导出训练记录。</p>
+      <p className="text-sm font-medium text-amber-800">演示用教师模式</p>
+      <h1 className="mt-1 text-3xl font-semibold">教师工作台</h1>
+      <p className="mt-2 text-clinic-muted">用于本地预览 Excel、查看全流程隐藏答案、编辑病例草稿、复核360分评分和导出训练记录。静态 GitHub Pages 不具备真实身份验证，请勿在公开部署中存放真实患者或学生身份信息。</p>
 
       <div className="mt-6 grid gap-5 lg:grid-cols-[360px_1fr]">
         <aside className="space-y-5">
@@ -237,9 +261,12 @@ export default function TeacherClient() {
             <button onClick={clearTrainingCache} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md border border-rose-200 px-3 py-2 text-rose-700 hover:bg-rose-50">
               <Trash2 size={16} /> 清空本地训练缓存
             </button>
-            <div className="mt-4 max-h-[220px] overflow-auto rounded-md bg-clinic-paper p-3 text-xs leading-5 text-clinic-muted">
-              {studentLogs.length ? studentLogs.slice(-8).reverse().map((row, index) => (
-                <p key={`${row.case_id}-${row.stage}-${index}`}>{String(row.timestamp ?? "").slice(0, 19)} · {String(row.case_id ?? "")} · {String(row.stage ?? "")} · {String(row.score ?? "")}</p>
+            <div className="mt-4 max-h-[320px] space-y-2 overflow-auto rounded-md bg-clinic-paper p-3 text-xs leading-5 text-clinic-muted">
+              {studentLogs.length ? studentLogs.slice(-20).reverse().map((row, index) => (
+                <details key={`${row.case_id}-${row.stage}-${index}`} className="rounded bg-white p-2">
+                  <summary className="cursor-pointer font-medium text-clinic-blue">{String(row.timestamp ?? "").slice(0, 19)} · {String(row.case_id ?? "")} · {String(row.stage ?? "")} · {String(row.score ?? "")}/360</summary>
+                  <pre className="mt-2 whitespace-pre-wrap break-words text-[11px] text-clinic-muted">{JSON.stringify(row, null, 2)}</pre>
+                </details>
               )) : "暂无本机训练记录。"}
             </div>
           </section>
@@ -267,12 +294,24 @@ export default function TeacherClient() {
           <div className="rounded-lg border border-clinic-line bg-white p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="font-semibold">查看隐藏答案字段</h2>
+              <div className="grid w-full gap-2 md:grid-cols-4">
+                <input aria-label="按ID或疾病搜索" value={caseSearch} onChange={(event) => setCaseSearch(event.target.value)} placeholder="ID / 疾病 / 诊断" className="rounded-md border border-clinic-line px-3 py-2" />
+                <select aria-label="疾病类别" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="rounded-md border border-clinic-line px-3 py-2">{categories.map((item) => <option key={item}>{item}</option>)}</select>
+                <select aria-label="病例难度" value={difficultyFilter} onChange={(event) => setDifficultyFilter(event.target.value)} className="rounded-md border border-clinic-line px-3 py-2"><option>全部</option><option>基础</option><option>标准</option><option>挑战</option></select>
+                <select aria-label="医学审核状态" value={reviewFilter} onChange={(event) => setReviewFilter(event.target.value)} className="rounded-md border border-clinic-line px-3 py-2"><option value="全部">全部审核状态</option><option value="reviewed">已审核</option><option value="needs_revision">需复核</option><option value="pending">待审核</option></select>
+              </div>
               <select value={selectedCaseId} onChange={(event) => setSelectedCaseId(event.target.value)} className="max-w-full rounded-md border border-clinic-line px-3 py-2">
-                {allCases.map((item) => <option key={item.id} value={item.id}>{item.id} · {item.title}</option>)}
+                {filteredCases.map((item) => <option key={item.id} value={item.id}>{item.id} · {item.title}</option>)}
               </select>
             </div>
             {selectedCase && (
               <div className="mt-4 grid gap-4">
+                <div className="grid gap-3 border-b border-clinic-line pb-4 text-sm md:grid-cols-4">
+                  <p><span className="text-clinic-muted">病例版本：</span>{selectedCase.caseVersion || "未标注"}</p>
+                  <p><span className="text-clinic-muted">分类：</span>{selectedCase.diseaseCategory}/{selectedCase.diseaseSubcategory}</p>
+                  <p><span className="text-clinic-muted">审核状态：</span>{selectedCase.medicalReview?.status || "pending"}</p>
+                  <p><span className="text-clinic-muted">最后审核：</span>{selectedCase.medicalReview?.lastReviewedDate || "未记录"}</p>
+                </div>
                 <p><span className="font-medium text-clinic-ink">最终诊断：</span>{selectedCase.diagnosis}</p>
                 <div className="rounded-md bg-clinic-paper p-3">
                   <p className="mb-2 font-medium text-clinic-blue">初步诊断思路</p>
@@ -412,7 +451,7 @@ export default function TeacherClient() {
                     ))}
                   </div>
                 </div>
-                <div className="rounded-md bg-clinic-paper p-3">
+                {process.env.NODE_ENV !== "production" && <div className="rounded-md bg-clinic-paper p-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <p className="font-medium text-clinic-blue">AI患者调试</p>
                     <button onClick={loadAiPatientDebug} disabled={aiDebugLoading} className="rounded-md border border-clinic-line bg-white px-3 py-2 text-sm hover:border-clinic-blue disabled:opacity-60">
@@ -444,7 +483,7 @@ export default function TeacherClient() {
                       error: aiDebug?.debug?.error
                     }, null, 2)}</pre>
                   </details>
-                </div>
+                </div>}
               </div>
             )}
           </div>
@@ -472,7 +511,7 @@ export default function TeacherClient() {
           <div className="rounded-lg border border-clinic-line bg-white p-5">
             <h2 className="font-semibold">教师端人工修正分数</h2>
             <div className="mt-3 grid gap-3 md:grid-cols-[160px_1fr_auto]">
-              <input value={manualScore} onChange={(event) => setManualScore(event.target.value)} className="rounded-md border border-clinic-line px-3 py-2" placeholder="修正分数" />
+              <input type="number" min="0" max="360" aria-label="人工修正总分" value={manualScore} onChange={(event) => setManualScore(event.target.value)} className="rounded-md border border-clinic-line px-3 py-2" placeholder="修正分数 0-360" />
               <input value={manualComment} onChange={(event) => setManualComment(event.target.value)} className="rounded-md border border-clinic-line px-3 py-2" placeholder="教师点评" />
               <button onClick={saveManualScore} className="rounded-md bg-clinic-blue px-4 py-2 text-white hover:bg-clinic-teal">保存</button>
             </div>

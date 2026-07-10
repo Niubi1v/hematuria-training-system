@@ -16,51 +16,51 @@
     "relatedAgent": "Patient+Evaluator"
   },
   {
-    "dimension": "诊断与鉴别",
-    "max": 45,
-    "observation": "定位内外科来源，提出至少3个鉴别诊断",
-    "autoEvidence": "诊断文本关键词与病例路径匹配",
-    "redFlags": "只按单一病因处理扣分",
-    "relatedAgent": "Evaluator"
+    "dimension": "查体与急症识别",
+    "max": 35,
+    "observation": "针对性查体与休克、脓毒症、尿潴留、AKI、外伤识别",
+    "autoEvidence": "Examination Agent查体和时间线",
+    "redFlags": "急症病例未评估生命体征或稳定患者",
+    "relatedAgent": "Examination/Order Agent"
   },
   {
-    "dimension": "开单检查",
+    "dimension": "诊断与鉴别诊断",
+    "max": 45,
+    "observation": "定位、最可能诊断、至少3项鉴别及确认计划",
+    "autoEvidence": "诊断阶段提交记录",
+    "redFlags": "遗漏高危诊断或单一病因化",
+    "relatedAgent": "Diagnostic Reasoning Agent"
+  },
+  {
+    "dimension": "检验、影像、内镜及病理决策",
     "max": 55,
-    "observation": "检验、检查、病理/操作、围术期评估合理",
-    "autoEvidence": "Order Agent命中规范医嘱",
-    "redFlags": "未开不得显示结果；缺尿沉渣/CTU/膀胱镜/肾活检等按场景扣分",
-    "relatedAgent": "Order+Evaluator"
+    "observation": "必要检查、前置条件、重复与过度检查",
+    "autoEvidence": "结构化医嘱和报告日志",
+    "redFlags": "未开不得显示结果；关键漏检、重复和过度检查分别计分",
+    "relatedAgent": "Examination/Order Agent"
   },
   {
-    "dimension": "会诊与MDT",
+    "dimension": "MDT与会诊",
     "max": 45,
-    "observation": "科室选择、触发时机、会诊目的聚焦",
-    "autoEvidence": "MDT触发规则与学生科室匹配",
+    "observation": "科室、触发原因、问题、证据和汇报摘要",
+    "autoEvidence": "MDT申请和专家意见",
     "redFlags": "只勾科室不写目的不得提交",
-    "relatedAgent": "MDT+Evaluator"
+    "relatedAgent": "MDT Agent"
   },
   {
-    "dimension": "治疗决策",
+    "dimension": "治疗及围术期管理",
     "max": 50,
-    "observation": "即时处理、确定性治疗、围术期准备",
-    "autoEvidence": "治疗文本与病例路径匹配",
+    "observation": "即时、病因、确定性和围术期管理",
+    "autoEvidence": "治疗与围术期提交记录",
     "redFlags": "感染梗阻不得先碎石；肿瘤治疗需病理/分期",
-    "relatedAgent": "Evaluator"
+    "relatedAgent": "Treatment+Perioperative"
   },
   {
-    "dimension": "随访与教育",
-    "max": 30,
-    "observation": "复查、随访、患者教育和生活方式",
-    "autoEvidence": "随访文本关键词",
-    "redFlags": "缺关键复查计划扣分",
-    "relatedAgent": "Evaluator"
-  },
-  {
-    "dimension": "效率与表达",
-    "max": 45,
-    "observation": "问诊逻辑、资源使用、表达清晰",
-    "autoEvidence": "完整训练记录",
-    "redFlags": "跳步或提前暴露标准答案扣分",
-    "relatedAgent": "Evaluator"
+    "dimension": "随访、教育和表达效率",
+    "max": 40,
+    "observation": "复查时点、教育、表达和资源效率",
+    "autoEvidence": "完整训练时间线",
+    "redFlags": "无随访计划或重复操作堆砌",
+    "relatedAgent": "Evaluator Agent"
   }
 ]

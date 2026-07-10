@@ -408,25 +408,25 @@ function makeRubric(): EvaluatorRubricItem[] {
   return [
     { dimension: "病史采集与血尿定位", max: 50, observation: "主诉、起病、可见性、时相、颜色、血块、疼痛、伴随症状", autoEvidence: "命中问诊槽位HX001-HX012", redFlags: "提交前不得显示漏项；未问时相/血块/感染/肾小球线索扣分", relatedAgent: "Patient+Evaluator" },
     { dimension: "危险因素和安全网", max: 40, observation: "既往史、用药史、个人史、肿瘤/感染/肾小球/假性血尿安全网", autoEvidence: "命中HX013-HX015", redFlags: "抗凝药不能直接解释血尿；女性需排除污染", relatedAgent: "Patient+Evaluator" },
-    { dimension: "诊断与鉴别", max: 45, observation: "定位内外科来源，提出至少3个鉴别诊断", autoEvidence: "诊断文本关键词与病例路径匹配", redFlags: "只按单一病因处理扣分", relatedAgent: "Evaluator" },
-    { dimension: "开单检查", max: 55, observation: "检验、检查、病理/操作、围术期评估合理", autoEvidence: "Order Agent命中规范医嘱", redFlags: "未开不得显示结果；缺尿沉渣/CTU/膀胱镜/肾活检等按场景扣分", relatedAgent: "Order+Evaluator" },
-    { dimension: "会诊与MDT", max: 45, observation: "科室选择、触发时机、会诊目的聚焦", autoEvidence: "MDT触发规则与学生科室匹配", redFlags: "只勾科室不写目的不得提交", relatedAgent: "MDT+Evaluator" },
-    { dimension: "治疗决策", max: 50, observation: "即时处理、确定性治疗、围术期准备", autoEvidence: "治疗文本与病例路径匹配", redFlags: "感染梗阻不得先碎石；肿瘤治疗需病理/分期", relatedAgent: "Evaluator" },
-    { dimension: "随访与教育", max: 30, observation: "复查、随访、患者教育和生活方式", autoEvidence: "随访文本关键词", redFlags: "缺关键复查计划扣分", relatedAgent: "Evaluator" },
-    { dimension: "效率与表达", max: 45, observation: "问诊逻辑、资源使用、表达清晰", autoEvidence: "完整训练记录", redFlags: "跳步或提前暴露标准答案扣分", relatedAgent: "Evaluator" }
+    { dimension: "查体与急症识别", max: 35, observation: "针对性查体与休克、脓毒症、尿潴留、AKI、外伤识别", autoEvidence: "Examination Agent查体和时间线", redFlags: "急症病例未评估生命体征或稳定患者", relatedAgent: "Examination/Order Agent" },
+    { dimension: "诊断与鉴别诊断", max: 45, observation: "定位、最可能诊断、至少3项鉴别及确认计划", autoEvidence: "诊断阶段提交记录", redFlags: "遗漏高危诊断或单一病因化", relatedAgent: "Diagnostic Reasoning Agent" },
+    { dimension: "检验、影像、内镜及病理决策", max: 55, observation: "必要检查、前置条件、重复与过度检查", autoEvidence: "结构化医嘱和报告日志", redFlags: "未开不得显示结果；关键漏检、重复和过度检查分别计分", relatedAgent: "Examination/Order Agent" },
+    { dimension: "MDT与会诊", max: 45, observation: "科室、触发原因、问题、证据和汇报摘要", autoEvidence: "MDT申请和专家意见", redFlags: "只勾科室不写目的不得提交", relatedAgent: "MDT Agent" },
+    { dimension: "治疗及围术期管理", max: 50, observation: "即时、病因、确定性和围术期管理", autoEvidence: "治疗与围术期提交记录", redFlags: "感染梗阻不得先碎石；肿瘤治疗需病理/分期", relatedAgent: "Treatment+Perioperative" },
+    { dimension: "随访、教育和表达效率", max: 40, observation: "复查时点、教育、表达和资源效率", autoEvidence: "完整训练时间线", redFlags: "无随访计划或重复操作堆砌", relatedAgent: "Evaluator Agent" }
   ];
 }
 
 function makeOsceRubric(): OsceRubricItem[] {
   return [
-    { station: "接诊与问诊", dimension: "围绕主诉开放式开场并追问血尿特征", max: 25, observableBehavior: "能主动追问出现时间、肉眼/镜下、时相、颜色、血块、诱因和持续时间。", criticalErrors: "未问血尿特征即进入诊断或开单。" },
-    { station: "接诊与问诊", dimension: "伴随症状和危险因素安全网", max: 25, observableBehavior: "覆盖尿路刺激征、腰痛/肾绞痛、发热寒战、排尿困难、吸烟、职业暴露、抗凝/抗血小板、结石/感染史。", criticalErrors: "无痛肉眼血尿漏问吸烟/血块/时相；感染病例漏问发热寒战和腰痛。" },
-    { station: "查体", dimension: "按定位选择查体项目", max: 20, observableBehavior: "能按病情选择生命体征、腹部/肾区、耻骨上区、外生殖器/妇科污染、皮疹水肿等查体。", criticalErrors: "急症病例未评估生命体征或肾区叩击痛。" },
-    { station: "开单检查", dimension: "检验、影像、内镜/病理、围术期评估合理", max: 40, observableBehavior: "按疾病定位选择尿常规/沉渣、培养、肾功能、凝血、CTU/CT KUB、膀胱镜、病理、肾活检等。", criticalErrors: "未开项目却引用结果；感染性梗阻未做培养和影像评估。" },
-    { station: "诊断与鉴别", dimension: "能提出定位诊断和至少3个鉴别诊断", max: 35, observableBehavior: "每个鉴别诊断有支持点、反驳点和下一步确认检查。", criticalErrors: "将抗凝药直接作为唯一病因。" },
-    { station: "会诊/MDT", dimension: "会诊触发、科室选择和问题聚焦", max: 30, observableBehavior: "能判断是否需要会诊，选择相关科室，提交结构化会诊目的和交接摘要。", criticalErrors: "只勾科室不写会诊目的；肾小球安全网未请肾内科。" },
-    { station: "治疗决策", dimension: "即时处理、确定性治疗、围术期和MDT后修订", max: 35, observableBehavior: "区分急症处理、入院初始处理、病理/分期后的确定性治疗、围术期准备和MDT修订。", criticalErrors: "感染性梗阻未引流先碎石；血块尿潴留未导尿冲洗。" },
-    { station: "随访与复盘", dimension: "随访复查、患者教育与学习反思", max: 20, observableBehavior: "能提出复查项目、复诊时点、生活方式和复盘改进点。", criticalErrors: "肿瘤或肾小球病例无随访计划。" }
+    { station: "Agent 1", dimension: "病史采集与血尿定位", max: 50, observableBehavior: "确认真性血尿并完成核心定位。", criticalErrors: "未完成基本定位即直接诊断。" },
+    { station: "Agent 1/7", dimension: "危险因素和安全网", max: 40, observableBehavior: "覆盖病例特异危险因素和安全网。", criticalErrors: "把抗栓药作为唯一病因或漏急症红旗。" },
+    { station: "Agent 2", dimension: "查体与急症识别", max: 35, observableBehavior: "选择针对性查体并先稳定急症。", criticalErrors: "休克、脓毒症、尿潴留、AKI或外伤漏识别。" },
+    { station: "Agent 3", dimension: "诊断与鉴别诊断", max: 45, observableBehavior: "最可能诊断、依据、至少3项鉴别和确认计划。", criticalErrors: "遗漏高危诊断。" },
+    { station: "Agent 2", dimension: "检验、影像、内镜及病理决策", max: 55, observableBehavior: "合理开单并避免重复过度检查。", criticalErrors: "引用未开结果或关键漏检。" },
+    { station: "Agent 4", dimension: "MDT与会诊", max: 45, observableBehavior: "填写科室、触发原因、问题、证据和摘要。", criticalErrors: "只勾科室。" },
+    { station: "Agent 5-6", dimension: "治疗及围术期管理", max: 50, observableBehavior: "即时、病因、确定性和围术期处理顺序安全。", criticalErrors: "感染性梗阻直接碎石或无病理分期治疗肿瘤。" },
+    { station: "Agent 7", dimension: "随访、教育和表达效率", max: 40, observableBehavior: "随访时点、教育、表达与资源效率。", criticalErrors: "无随访计划。" }
   ];
 }
 

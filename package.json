@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "typecheck": "tsc --noEmit",
     "build:github": "next build",
     "preview": "node scripts/serve-static.mjs",
     "test:patient": "tsx scripts/test-patient-agent.ts",
@@ -13,10 +14,12 @@
     "test:agent": "tsx scripts/test-agent-chat.ts",
     "test:session": "tsx scripts/test-dynamic-patient-session.ts",
     "test:complaint": "tsx scripts/test-chief-complaint.ts",
+    "test:product": "tsx scripts/test-product-audit.ts",
+    "test": "tsx scripts/test-patient-agent.ts && tsx scripts/test-history-rubric.ts && tsx scripts/test-dynamic-patient-session.ts && tsx scripts/test-chief-complaint.ts && tsx scripts/test-product-audit.ts",
     "dev:api": "tsx scripts/dev-patient-api.ts",
     "start": "next dev",
-    "lint": "next lint",
-    "convert:excel": "tsx scripts/convert-tutor-template-cases.ts work/source/v2_only_cases.xlsx data && tsx scripts/convert-frontend-fixes.ts work/source/frontend_order_consult_fix.xlsx data && tsx scripts/convert-diagnostic-knowledge.ts work/source/hematuria_diagnostics_scoring_rules.xlsx data && tsx scripts/convert-bilingual-7agent.ts work/source/v2_bilingual.xlsx data && tsx scripts/convert-supplement-30-ai.ts work/source/supplement_30_ai.xlsx data"
+    "lint": "node scripts/run-lint.mjs",
+    "convert:excel": "tsx scripts/convert-tutor-template-cases.ts work/source/v2_only_cases.xlsx data && tsx scripts/convert-frontend-fixes.ts work/source/frontend_order_consult_fix.xlsx data && tsx scripts/convert-diagnostic-knowledge.ts work/source/hematuria_diagnostics_scoring_rules.xlsx data && tsx scripts/convert-bilingual-7agent.ts work/source/v2_bilingual.xlsx data && tsx scripts/convert-supplement-30-ai.ts work/source/supplement_30_ai.xlsx data && tsx scripts/normalize-case-library.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",

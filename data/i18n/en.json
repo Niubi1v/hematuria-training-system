@@ -42,9 +42,9 @@
   "differentialAnalysis": "Supportive and opposing points for each differential",
   "confirmatoryTests": "Further tests needed to confirm",
   "consultNeed": "Need consultation?",
-  "consultPurpose": "Consultation purpose and problem to solve",
-  "consultQuestions": "Specific questions for consultants",
-  "consultSummary": "Case handoff summary",
+  "consultPurpose": "Reason that triggered consultation",
+  "consultQuestions": "Specific problem to solve",
+  "consultSummary": "Available clinical evidence and case handoff summary",
   "startMdt": "Start MDT and get expert opinions",
   "treatmentImmediate": "Immediate ED/admission management",
   "treatmentDefinitive": "Definitive / subsequent treatment",
@@ -55,6 +55,6 @@
   "finalReport": "Final competency profile",
   "studentRecords": "Learner records",
   "standardPath": "Standard pathway summary",
-  "purposeRequired": "Please enter the consultation purpose and problem to solve. Departments alone are not enough.",
+  "purposeRequired": "Select at least one department and provide the trigger, problem to solve, and available clinical evidence.",
   "teachingOnly": "For educational simulation only. Not medical advice."
 }

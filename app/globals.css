@@ -23,8 +23,52 @@ select {
   font: inherit;
 }
 
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #1d6f8f;
+  outline-offset: 2px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+p,
+dd,
+td,
+button,
+a {
+  overflow-wrap: anywhere;
+}
+
 .medical-band {
   background:
     linear-gradient(90deg, rgba(29, 111, 143, 0.08), rgba(17, 128, 106, 0.08)),
     #ffffff;
+}
+
+@media print {
+  header,
+  .no-print,
+  button,
+  input,
+  textarea,
+  select {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  main,
+  section,
+  article,
+  div {
+    box-shadow: none !important;
+  }
 }

@@ -29,6 +29,7 @@ export default function CaseCatalogClient({ cases }: { cases: CaseData[] }) {
   const [lang, setLang] = useState<LanguageCode>("zh");
   const [difficulty, setDifficulty] = useState("全部");
   const [category, setCategory] = useState("全部");
+  const [source, setSource] = useState("全部");
 
   useEffect(() => {
     const saved = localStorage.getItem("hematuria-language");
@@ -48,23 +49,26 @@ export default function CaseCatalogClient({ cases }: { cases: CaseData[] }) {
       difficulty: lang === "en" ? en?.difficulty || item.difficulty || "" : item.difficulty || "",
       category: lang === "en" ? en?.diseaseCategory || item.diseaseCategory || "" : item.diseaseCategory || "",
       complaint: simplifiedChiefComplaint(item.studentChiefComplaint || item.chiefComplaint, lang, en?.chiefComplaint),
-      title: lang === "en" ? en?.title || item.title : item.title
+      title: lang === "en" ? en?.title || item.title : item.title,
+      source: item.id.startsWith("HX-ADD") ? (lang === "en" ? "Supplementary cases" : "补充病例") : (lang === "en" ? "V2 core cases" : "V2核心病例")
     };
   }), [cases, lang]);
 
   const difficulties = useMemo(() => ["全部", ...Array.from(new Set(rows.map((item) => item.difficulty).filter(Boolean)))], [rows]);
   const categories = useMemo(() => ["全部", ...Array.from(new Set(rows.map((item) => item.category).filter(Boolean)))], [rows]);
+  const sources = useMemo(() => ["全部", ...Array.from(new Set(rows.map((item) => item.source).filter(Boolean)))], [rows]);
   const filtered = rows.filter((item) => {
     const difficultyMatch = difficulty === "全部" || item.difficulty === difficulty;
     const categoryMatch = category === "全部" || item.category === category;
-    return difficultyMatch && categoryMatch;
+    const sourceMatch = source === "全部" || item.source === source;
+    return difficultyMatch && categoryMatch && sourceMatch;
   });
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="mb-2 text-sm font-medium text-clinic-blue">V2 bilingual · P001-P012</p>
+          <p className="mb-2 text-sm font-medium text-clinic-blue">42 cases · V2 core + supplementary library</p>
           <h1 className="text-3xl font-semibold">{lang === "en" ? "Case Selection" : "病例选择"}</h1>
           <p className="mt-2 text-clinic-muted">
             {lang === "en"
@@ -91,6 +95,9 @@ export default function CaseCatalogClient({ cases }: { cases: CaseData[] }) {
         </select>
         <select value={category} onChange={(event) => setCategory(event.target.value)} className="rounded-md border border-clinic-line px-3 py-2 text-sm">
           {categories.map((item) => <option key={item} value={item}>{item === "全部" && lang === "en" ? "All categories" : item}</option>)}
+        </select>
+        <select value={source} onChange={(event) => setSource(event.target.value)} className="rounded-md border border-clinic-line px-3 py-2 text-sm">
+          {sources.map((item) => <option key={item} value={item}>{item === "全部" && lang === "en" ? "All sources" : item}</option>)}
         </select>
         <span className="text-sm text-clinic-muted">{lang === "en" ? "Showing" : "当前"} {filtered.length} / {rows.length}</span>
       </section>

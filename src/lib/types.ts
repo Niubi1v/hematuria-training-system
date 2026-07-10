@@ -326,6 +326,28 @@ export type AgentCaseProfile = {
 
 export type CaseData = {
   id: string;
+  schemaVersion?: string;
+  caseVersion?: string;
+  languages?: string[];
+  diseaseSubcategory?: string;
+  standardChiefComplaint?: string;
+  reproductiveHistory?: string;
+  patientRole?: {
+    identity: string;
+    concerns: string;
+    affect: string;
+    communicationStyle: string;
+  };
+  questionSlotIds?: string[];
+  availableOrderIds?: string[];
+  orderPrerequisites?: Array<{ orderId: string; prerequisite: string }>;
+  emergencyRedFlags?: string[];
+  criticalErrors?: string[];
+  medicalReview?: {
+    status: "pending" | "reviewed" | "needs_revision";
+    references: Array<{ title: string; url: string }>;
+    lastReviewedDate: string;
+  };
   sourcePatientId: string;
   title: string;
   difficulty?: string;

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { allCases } from "@/src/lib/cases";
 import { KEY_POINTS } from "@/src/lib/keyPoints";
 import { keyPointLabel, scoreTraining } from "@/src/lib/scoring";
@@ -24,24 +24,34 @@ export default function FeedbackClient() {
   const caseId = params.get("case") ?? "";
   const caseData = allCases.find((item) => item.id === caseId);
 
-  if (!caseData) {
+  const payload = useMemo(() => {
+    if (!caseData) return null;
+    try {
+      const sessionRaw = typeof window !== "undefined" ? localStorage.getItem(`hematuria-training-${caseId}`) : null;
+      const summaryRaw = typeof window !== "undefined" ? localStorage.getItem(`hematuria-summary-${caseId}`) : null;
+      const collected: CollectedMap = sessionRaw ? JSON.parse(sessionRaw).collected : createEmptyCollected();
+      const summary: StudentSummary = summaryRaw ? JSON.parse(summaryRaw) : emptySummary;
+      const report = scoreTraining(caseData, collected, summary);
+      return { report, result: { caseId, total: report.total, summary, collected: report.collected, missing: report.missing, at: new Date().toISOString() } };
+    } catch {
+      const summary = emptySummary;
+      const report = scoreTraining(caseData, createEmptyCollected(), summary);
+      return { report, result: { caseId, total: report.total, summary, collected: report.collected, missing: report.missing, at: new Date().toISOString() } };
+    }
+  }, [caseData, caseId]);
+  useEffect(() => {
+    if (!payload) return;
+    try {
+      const old = JSON.parse(localStorage.getItem("hematuria-results") ?? "[]");
+      const alreadySaved = old.some((item: { caseId: string; total: number }) => item.caseId === payload.result.caseId && item.total === payload.result.total);
+      if (!alreadySaved) localStorage.setItem("hematuria-results", JSON.stringify([...old, payload.result]));
+    } catch { /* Legacy stage result can still render when storage is unavailable. */ }
+  }, [payload]);
+
+  if (!caseData || !payload) {
     return <main className="mx-auto max-w-3xl px-5 py-10">未找到病例，请返回病例列表重新选择。</main>;
   }
-
-  const sessionRaw = typeof window !== "undefined" ? localStorage.getItem(`hematuria-training-${caseId}`) : null;
-  const summaryRaw = typeof window !== "undefined" ? localStorage.getItem(`hematuria-summary-${caseId}`) : null;
-  const collected: CollectedMap = sessionRaw ? JSON.parse(sessionRaw).collected : createEmptyCollected();
-  const summary: StudentSummary = summaryRaw ? JSON.parse(summaryRaw) : emptySummary;
-  const report = scoreTraining(caseData, collected, summary);
-
-  const result = { caseId, total: report.total, summary, collected: report.collected, missing: report.missing, at: new Date().toISOString() };
-  useEffect(() => {
-    const old = JSON.parse(localStorage.getItem("hematuria-results") ?? "[]");
-    const alreadySaved = old.some((item: { caseId: string; total: number }) => item.caseId === result.caseId && item.total === result.total);
-    if (!alreadySaved) {
-      localStorage.setItem("hematuria-results", JSON.stringify([...old, result]));
-    }
-  }, [result]);
+  const { report } = payload;
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-8">
@@ -49,7 +59,7 @@ export default function FeedbackClient() {
         <aside className="rounded-lg border border-clinic-line bg-white p-5">
           <p className="text-sm text-clinic-muted">总分</p>
           <p className="mt-2 text-5xl font-semibold text-clinic-blue">{report.total}</p>
-          <p className="mt-2 text-sm text-clinic-muted">满分 100 分</p>
+          <p className="mt-2 text-sm text-clinic-muted">病史采集阶段完成度；全流程终末总评统一为360分</p>
           <div className="mt-6 grid gap-2">
             <a className="rounded-md border border-clinic-line px-4 py-2 text-center hover:border-clinic-blue" href={`${basePath}/cases/${caseId}/index.html`}>重新问诊</a>
             <Link className="rounded-md bg-clinic-blue px-4 py-2 text-center text-white hover:bg-clinic-teal" href="/cases">选择其他病例</Link>

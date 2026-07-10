@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { BookOpen, GraduationCap, ShieldAlert, Shuffle, Stethoscope } from "lucide-react";
+import OnboardingGuide from "@/src/components/OnboardingGuide";
 
 export default function HomePage() {
   return (
     <main>
+      <OnboardingGuide />
       <section className="medical-band border-b border-clinic-line">
         <div className="mx-auto grid max-w-7xl gap-8 px-5 py-12 md:grid-cols-[1.2fr_0.8fr] md:items-center">
           <div>
@@ -11,10 +13,10 @@ export default function HomePage() {
               <Stethoscope size={16} /> OSCE 风格全流程训练
             </p>
             <h1 className="text-4xl font-semibold tracking-normal text-clinic-ink md:text-5xl">
-              血尿临床思维训练系统
+              血尿多智能体临床思维训练平台
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-clinic-muted">
-              本系统用于训练临床医学本科生围绕血尿完成病史采集、鉴别诊断、开单检查、会诊判断、治疗决策和随访教育。
+              医学教学与临床思维训练平台，帮助临床医学本科生围绕血尿完成病史采集、检查决策、鉴别诊断、MDT、治疗、围术期管理和复盘。
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link className="rounded-md bg-clinic-blue px-5 py-3 font-medium text-white shadow-soft hover:bg-clinic-teal" href="/random">

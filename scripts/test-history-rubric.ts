@@ -27,6 +27,6 @@ assert(weakReport.misses.length > 0, "weak answer should list missing items afte
 const clientSource = fs.readFileSync("src/components/ClinicalTrainingClient.tsx", "utf8");
 assert(!clientSource.includes("missingSlots") && !clientSource.includes("criticalSlots") && !clientSource.includes("scoreKeywords"), "student UI should not render evaluator internals before submit");
 assert(clientSource.includes("showStageFeedback") && clientSource.includes("activeEvaluation"), "stage feedback should be gated by submit state");
-assert(clientSource.includes("isOsce") && clientSource.includes("activeStage !== \"debrief\""), "OSCE mode should avoid immediate stage feedback before final debrief");
+assert(clientSource.includes("isOsce") && clientSource.includes("activeStageNo === 7"), "OSCE mode should avoid immediate stage feedback before final debrief");
 
 console.log("History rubric tests passed.");

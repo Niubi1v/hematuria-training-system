@@ -1,189 +1,103 @@
-# TEST_REPORT
+# TEST REPORT
 
-测试日期：2026-07-09
+测试日期：2026-07-10
 
-## 本次升级目标
+## 审计范围
 
-基于《血尿补充30病例_按V2导师模板完善_AI接入版.xlsx》完成：
+- 首页、自由训练、OSCE、随机抽题、病例列表和筛选
+- 肿瘤、感染、结石、BPH、肾小球疾病、外伤和假性血尿代表病例
+- 7-Agent顺序解锁、教师演示、RCT离线原型、中英文数据
+- 刷新恢复、重复提交、离开确认、AI失败降级、损坏localStorage
+- GitHub Pages `/hematuria-training-system/` basePath和42个动态病例页
 
-- 恢复并补全 30 个补充病例，正式编号为 `HX-ADD-001` 至 `HX-ADD-030`
-- 与 V2 12 例合并，默认病例库为 42 例
-- 保留 `CASE_SET=v2_only` / `CASE_SET=v2_plus_30` 切换能力
-- 重构 Standardized Patient Agent 的规则回复与 AI 后端安全边界
-- 保留现有 7-Agent UI、开单返回、MDT 和中英切换框架
+## 数据整改
 
-## 数据导入结果
+- 保留42例：`P001-P012`、`HX-ADD-001-HX-ADD-030`
+- 修正 HX-ADD-005 为药物/凝血相关
+- 修正 HX-ADD-016-018 为前列腺疾病
+- 修正 HX-ADD-019-023 为肾小球疾病
+- 修正 HX-ADD-024 为功能性血尿
+- 修正 HX-ADD-025 为假性血尿
+- 修正 HX-ADD-026 为外伤
+- 修正 HX-ADD-027-028 为肾实质/结构性疾病
+- 修正 HX-ADD-029 为血管性疾病
+- 统一 `IgA肾病`、`CT KUB`、`eGFR` 等术语
+- 拆分既往史、个人史、婚育史和家族史，删除批量重复
+- 每例至少3项鉴别诊断；补齐严重错误、处置路径、版本和参考依据
+- schema校验：42例，0错误，42条“需临床专家终审”提示
 
-命令：
-
-```bash
-tsx scripts/convert-supplement-30-ai.ts work/source/supplement_30_ai.xlsx data
-```
-
-结果：
-
-```text
-Generated v2_plus_30: V2=12, supplement=30, active=42
-```
-
-生成/更新：
-
-```text
-data/cases.json
-data/cases_42.json
-data/cases_v2.json
-data/case_cards.json
-data/case_cards_42.json
-data/question_answers.json
-data/question_answers_42.json
-data/interview_answers.json
-data/interview_answers_42.json
-data/order_results.json
-data/order_results_42.json
-data/mdt_triggers.json
-data/mdt_triggers_42.json
-data/case_set_config.json
-data/supplement-30-import-report.json
-```
-
-验收：
-
-- 默认病例数：42
-- V2 病例：P001-P012
-- 补充病例：HX-ADD-001-HX-ADD-030
-- 不使用 HM-SUP 作为正式补充病例编号
-
-## Patient Agent 测试
-
-命令：
-
-```bash
-tsx scripts/test-patient-agent.ts
-```
-
-结果：
+## 自动化测试
 
 ```text
 Patient Agent tests passed.
-```
-
-覆盖：
-
-- 问“尿是鲜红色吗”只回答颜色，不返回 CT、占位、癌栓、诊断
-- 问“有血块吗”只回答血块，不出现“未主动诉”“需追问”，不顺带回答颜色/时相/无痛
-- 问“全程都红还是终末红”只回答血尿时相
-- 问“吸烟吗”只回答吸烟，不顺带乙肝、高血压、糖尿病、饮酒、输血、子女
-- 问“喝酒吗”只回答饮酒，不顺带吸烟
-- 问“有高血压吗”只回答高血压，不顺带糖尿病、乙肝、结核、吸烟、饮酒
-- 问“小便疼吗”只回答尿痛/疼痛，不返回完整病史
-- 问“做过CT吗，结果怎么样”不返回 CT 报告细节，提示查看检查报告
-- 问“这是什么病”不输出诊断
-
-## LLM/API 安全测试
-
-命令：
-
-```bash
-tsx scripts/test-llm-adapter.ts
-```
-
-结果：
-
-```text
-LLM adapter and API safety tests passed.
-```
-
-覆盖：
-
-- `responseFilter` 能拦截“根据原始病史”“CT提示”“占位”“肿瘤”等泄露词
-- 后端 rule 模式只返回当前 slot 答案
-- 源码和 `.env.example` 不包含真实 API Key
-- API 请求失败或 LLM 输出不合格时回退规则模式
-
-## 统一 Agent Chat API 测试
-
-命令：
-
-```bash
-tsx scripts/test-agent-chat.ts
-```
-
-结果：
-
-```text
-Agent Chat API tests passed.
-```
-
-覆盖：
-
-- `/api/agent-chat` 请求结构支持 `caseId + agentId + stage + studentInput`
-- Standardized Patient Agent 问“抽烟吗”只回答吸烟，不顺带饮酒、乙肝、糖尿病、输血、子女
-- 问“尿是鲜红色吗”只回答尿色，不返回 CT、占位、癌栓、淋巴结、诊断或治疗
-- 问“做过CT吗，结果怎么样”不由 Patient Agent 返回 CT 报告细节
-- 非患者 Agent 只使用 `unlockedData`，保持 `teacherOnlyData` 阻断
-- 源码和前端构建变量不包含真实 DeepSeek API Key
-
-## 动态标准化患者 Session 测试
-
-命令：
-
-```bash
-tsx scripts/test-dynamic-patient-session.ts
-```
-
-结果：
-
-```text
+History rubric tests passed.
 Dynamic Patient Session tests passed.
+Chief complaint simplification tests passed.
+Product audit tests passed.
 ```
 
-覆盖：
+代表病例覆盖：
 
-- `/api/session/init/` 返回 `sessionId`、开场白和 `completedPatientFacingProfile`
-- `completedPatientFacingProfile` 不包含 `imaging_finding`、`final_diagnosis`、`treatment_plan`、`pathology_result`
-- AI补齐字段包含 `source: "ai_completed"`
-- 问“吸烟吗”不回答乙肝、高血压、饮酒、输血、子女
-- 问“喝酒吗”不回答吸烟
-- 问“尿鲜红色吗”不回答 CT、占位、诊断
-- 问“做过CT吗，结果怎么样”不返回 CT 结果
-- responseFilter 拦截“根据原始病史”“CT提示”“诊断”等泄露内容
-- DeepSeek不可用时回退到安全 profile/rule 模式
+| 类型 | 病例 |
+| --- | --- |
+| 泌尿系肿瘤 | P001、HX-ADD-001 |
+| 感染 | P006、HX-ADD-007 |
+| 结石/感染性梗阻 | P009、HX-ADD-014 |
+| BPH | P007、HX-ADD-017 |
+| 肾小球疾病 | P011、HX-ADD-019 |
+| 外伤 | HX-ADD-026 |
+| 假性血尿 | HX-ADD-025 |
 
-## 构建测试
+关键断言：
 
-命令：
+- 8个终末评分维度总和自动校验为360
+- 未开CTU不返回CTU；开CTU后返回病例配置报告
+- 重复CTU被标记为重复医嘱并影响效率评分
+- 检查先显示“已开具”，再显示返回时间和报告
+- OSCE仅在Agent 7显示终末反馈
+- 阶段提交按钮提交后禁用，防止重复记录
+- 会诊必须有科室、触发原因、待解决问题和临床证据
+- 损坏localStorage自动清理并恢复为空白会话
+- RCT校验0-360、0-100范围和participant_id重复
+- 中英文病例索引均覆盖42例
 
-```bash
-npm run build
-```
-
-结果：通过。
-
-构建摘要：
+## 工程检查
 
 ```text
+npm run lint       通过
+npm run typecheck  通过
+npm run build      通过
+```
+
+生产构建使用：
+
+```text
+NEXT_PUBLIC_BASE_PATH=/hematuria-training-system
 Next.js 15.5.19
 Compiled successfully
 Generated static pages: 52
-/cases/[id]: P001-P012 + HX-ADD-001-HX-ADD-030
+/cases/[id]: 42 paths
 ```
 
-## 部署
+构建产物包含首页、病例库、42个病例页、随机抽题、教师演示、RCT、旧版阶段反馈兼容页和404页。`trailingSlash: true`，GitHub Pages工作流使用官方 Pages artifact/action。
 
-前端 GitHub Pages：
+## 修复前后
 
-```text
-https://niubi1v.github.io/hematuria-training-system/
-```
+| 项目 | 修复前 | 修复后 |
+| --- | --- | --- |
+| 病例分类 | 多个BPH、肾病、外伤、假性血尿误归结石/感染 | 统一大类和亚类，schema自动校验 |
+| 治疗字段 | 部分非结石病例误用碎石路径 | 按肿瘤、感染、结石、前列腺、肾小球、外伤等重建 |
+| 评分 | 100/200/230/360文件并存 | 终末评价、教师复核和OSCE统一360 |
+| 医嘱 | 立即显示结果、无重复证据 | 记录已开具/返回时间/阶段/重复医嘱 |
+| AI状态 | 生产界面显示模型、调试、AI待调用 | 动态显示AI、规则库或降级模式 |
+| RCT | 少量字段、无范围和重复校验 | 完整离线原型字段、校验、导入导出和数据字典 |
+| 教师端 | 未说明权限边界 | 明确“演示用教师模式”，显示版本和审核状态 |
 
-Patient Agent 后端 API：
+## 已知限制
 
-```text
-https://hematuria-training-system.vercel.app/api/patient-reply
-```
+- 当前环境无法为本地端口完成交互式浏览器截图验收；桌面/移动端布局使用响应式源码检查和生产静态构建验证。线上部署完成后仍需进行一次真机iPhone回归。
+- 静态GitHub Pages无法安全隐藏教师数据、实现真实身份验证或研究级审计。
+- 30个补充病例的英文病例索引已补齐；AI不可用时，部分深层患者槽位仍以中文规则库数据为准，正式双语考核前应由双语医学教师逐项翻译审核。
+- 所有病例仍标记为 `needs_revision`，本次为工程与规则审计，不冒充临床专家终审。
 
-部署说明：
-
-- GitHub Pages 前端不保存 API Key
-- DeepSeek/第三方大模型 Key 只配置在 Vercel 环境变量中
-- 前端请求后端 API；后端只传当前 slot 的患者可见答案给 LLM
+线上地址：<https://niubi1v.github.io/hematuria-training-system/>

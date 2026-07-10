@@ -1,0 +1,260 @@
+{
+  "schemaVersion": "2.1.0",
+  "caseCount": 42,
+  "errorCount": 0,
+  "warningCount": 42,
+  "issues": [
+    {
+      "caseId": "P001",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "P002",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "P003",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "P004",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "P005",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "P006",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "P007",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "P008",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "P009",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "P010",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "P011",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "P012",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-001",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-002",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-003",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-004",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-005",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-006",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-007",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-008",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-009",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-010",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-011",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-012",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-013",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-014",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-015",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-016",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-017",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-018",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-019",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-020",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-021",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-022",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-023",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-024",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-025",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-026",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-027",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-028",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-029",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    },
+    {
+      "caseId": "HX-ADD-030",
+      "path": "medicalReview.status",
+      "severity": "warning",
+      "message": "病例仍需教师/临床专家终审。"
+    }
+  ]
+}

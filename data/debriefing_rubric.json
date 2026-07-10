@@ -1,14 +1,14 @@
 {
-  "version": "7-agent-bilingual-v1",
-  "total": 100,
+  "version": "360-v1",
+  "total": 360,
   "dimensions": [
-    "History record",
-    "Investigation record",
-    "Diagnostic reasoning",
-    "MDT coordination",
-    "Clinical decision support",
-    "Perioperative management",
-    "Timeline and reflection",
-    "Dangerous errors and learning plan"
+    "History taking and hematuria localization (50)",
+    "Risk factors and safety net (40)",
+    "Physical examination and emergency recognition (35)",
+    "Diagnosis and differential diagnosis (45)",
+    "Laboratory, imaging, endoscopy and pathology decisions (55)",
+    "MDT and consultation (45)",
+    "Treatment and perioperative management (50)",
+    "Follow-up, education and communication efficiency (40)"
   ]
 }

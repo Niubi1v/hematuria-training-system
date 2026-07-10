@@ -1,90 +1,65 @@
-# 血尿 7-Agent 多智能体临床思维训练系统
+# 血尿多智能体临床思维训练平台
 
-这是一个用于临床医学本科生血尿主题训练的网页应用。当前版本保留 7-Agent 训练流程，并接入 AI-ready 补充病例库。
+面向临床医学本科生的血尿主题 7-Agent 教学系统。项目保留 Next.js、React、TypeScript、本地 JSON、Vercel AI API 和 GitHub Pages 静态部署架构。
 
-前端线上地址：
+线上地址：<https://niubi1v.github.io/hematuria-training-system/>
 
-```text
-https://niubi1v.github.io/hematuria-training-system/
+## 当前版本
+
+- 产品版本：`2.1.0`
+- 病例库：`v2_plus_30`
+- 病例数：42例，包括 `P001-P012` 和 `HX-ADD-001-HX-ADD-030`
+- 评分：统一360分制
+- 医学审核状态：程序校验已通过，病例仍标记为 `needs_revision`，需教师/临床专家终审
+
+## 7-Agent 流程
+
+1. Patient Agent：标准化患者问诊，只回答学生实际问到的槽位。
+2. Examination/Order Agent：查体、检验、影像、内镜和病理；先记录已开具，再返回相应报告。
+3. Diagnostic Reasoning Agent：评价定位、最可能诊断、至少3项鉴别和确认计划。
+4. MDT Agent：要求科室、触发原因、待解决问题和已掌握证据齐全。
+5. Evidence/Treatment Agent：评价急诊稳定、病因治疗和确定性治疗。
+6. Perioperative Agent：评价抗栓、感染、麻醉、营养、肾功能、VTE和ERAS。
+7. Evaluator Agent：根据完整操作日志生成360分报告、严重错误和改进建议。
+
+OSCE 模式不显示中途评分、病例特异提示或标准答案，反馈只在终末复盘显示。
+
+## 360分评分
+
+| 维度 | 分值 |
+| --- | ---: |
+| 病史采集与血尿定位 | 50 |
+| 危险因素和安全网 | 40 |
+| 查体与急症识别 | 35 |
+| 诊断与鉴别诊断 | 45 |
+| 检验、影像、内镜及病理决策 | 55 |
+| MDT与会诊 | 45 |
+| 治疗及围术期管理 | 50 |
+| 随访、教育和表达效率 | 40 |
+| 合计 | 360 |
+
+## 数据与校验
+
+原始 Excel 位于 `work/source/`。完整转换命令：
+
+```bash
+npm run convert:excel
 ```
 
-默认病例库版本：
-
-```text
-v2_plus_30 = P001-P012 + HX-ADD-001-HX-ADD-030，共42例
-```
-
-## 7 个 Agent
-
-1. Standardized Patient Agent / 标准化患者智能体：病史采集
-2. Investigation Agent / 检查决策智能体：查体、检验、影像、病理结果返回
-3. Diagnostic Reasoning Agent / 诊断推理智能体：诊断与鉴别诊断
-4. MDT Coordinator Agent / MDT 协调智能体：会诊与多学科协作
-5. Clinical Decision Support Agent / 临床决策支持智能体：治疗决策
-6. Perioperative Management Agent / 围术期管理智能体：术前优化、ERAS、并发症预防
-7. Assessment & Debriefing Agent / 评估复盘智能体：评分、能力画像、复盘建议
-
-学生端按 1 到 7 顺序推进。提交前不显示病例特异漏项、标准答案、得分点、诊断提示或 MDT 触发规则。
-
-## 病例数据
-
-当前导入源：
-
-```text
-work/source/supplement_30_ai.xlsx
-```
-
-对应原始文件：
-
-```text
-血尿补充30病例_按V2导师模板完善_AI接入版.xlsx
-```
-
-使用的工作表：
-
-- `补充30_导师模板总表`
-- `总表_42病例`
-- `病例卡_补充30长表`
-- `问诊槽位答案_补充30`
-- `开单返回结果_补充30`
-- `MDT触发_补充30`
-- `AI接入与7Agent方案`
-
-生成数据文件：
+转换结束后会自动运行 `scripts/normalize-case-library.ts`，生成或更新：
 
 ```text
 data/cases.json
 data/cases_42.json
-data/cases_v2.json
-data/case_cards.json
-data/case_cards_42.json
-data/question_answers.json
-data/question_answers_42.json
-data/interview_answers.json
-data/interview_answers_42.json
-data/order_results.json
-data/order_results_42.json
-data/mdt_triggers.json
-data/mdt_triggers_42.json
-data/case_set_config.json
-data/supplement-30-import-report.json
+data/cases_en.json
+data/cases_student.json
+data/case_validation_report.json
+data/evaluator_rubric.json
+data/osce_rubric.json
+data/debriefing_rubric.json
 ```
 
-## 切换病例库
-
-默认使用 42 例：
-
-```bash
-CASE_SET=v2_plus_30
-NEXT_PUBLIC_CASE_SET=v2_plus_30
-```
-
-只使用 V2 12 例：
-
-```bash
-CASE_SET=v2_only
-NEXT_PUBLIC_CASE_SET=v2_only
-```
+病例 schema 及运行时校验位于 `src/lib/caseSchema.ts`。开发环境会报告 schema 错误；生产界面不渲染教师答案和病例特异漏项。
 
 ## 本地运行
 
@@ -94,136 +69,63 @@ npm run convert:excel
 npm run dev
 ```
 
-打开：
+打开 <http://127.0.0.1:3000/>。
 
-```text
-http://127.0.0.1:3000
-```
-
-构建静态站点：
+质量检查：
 
 ```bash
+npm run test
+npm run lint
+npm run typecheck
 npm run build
 ```
 
-## AI Patient Agent 后端
+## AI Patient Agent
 
-GitHub Pages 前端不能保存 API Key。AI 增强问诊必须通过 Vercel/Netlify/Cloudflare Workers 等后端 API 调用：
+GitHub Pages 不保存 API Key。前端通过 Vercel API 请求 AI；API 不可用、超时或输出越界时自动切换到规则库，并在界面显示实际“回答来源”。只有技术失败时才提供同一问题的重新生成，不允许用刷新获得额外病史。
 
-```text
-POST /api/patient-reply
-```
-
-当前前端默认请求：
-
-```text
-https://hematuria-training-system.vercel.app/api/agent-chat
-https://hematuria-training-system.vercel.app/api/session/init/
-```
-
-后端安全边界：
-
-- 进入病例先调用 `/api/session/init/` 生成 `completedPatientFacingProfile`
-- `patientFacingProfile` 只包含患者本人可知道的信息，并且每个字段带 `source`
-- `teacherOnlyData` 不传给 Standardized Patient Agent
-- 只给 LLM 当前问题对应的 `currentAllowedAnswer`
-- 不传 `teacherOnlyData`
-- 不传完整现病史、影像、病理、诊断、治疗、评分点
-- LLM 输出经过 `responseFilter`，失败则回退规则模式
-- API 不可用时前端自动回退本地规则 Patient Agent
-- 旧 `/api/patient-reply` 保留兼容，新功能使用 `/api/agent-chat`
-- 前端不包含 API Key，真实 Key 只填在 Vercel Environment Variables
-
-DeepSeek 示例环境变量：
+Vercel 环境变量示例：
 
 ```text
 LLM_PROVIDER=deepseek
-LLM_API_KEY=your_deepseek_api_key
+LLM_API_KEY=your_key
 LLM_API_BASE_URL=https://api.deepseek.com
 LLM_MODEL=deepseek-v4-flash
 LLM_ENDPOINT_TYPE=chat_completions
-LLM_TEMPERATURE=0.2
-LLM_MAX_TOKENS=500
 LLM_ENABLE_AI_AGENTS=true
 LLM_ENABLE_AI_PATIENT=true
 AGENT_API_ALLOWED_ORIGIN=https://niubi1v.github.io
-PATIENT_AGENT_ALLOWED_ORIGIN=https://niubi1v.github.io
 ```
 
-GitHub Pages 前端构建变量：
-
-```text
-NEXT_PUBLIC_AGENT_API_URL=https://hematuria-training-system.vercel.app/api/agent-chat/
-NEXT_PUBLIC_SESSION_INIT_API_URL=https://hematuria-training-system.vercel.app/api/session/init/
-NEXT_PUBLIC_PATIENT_AGENT_API_URL=https://hematuria-training-system.vercel.app/api/patient-reply
-```
-
-动态标准化患者接口：
-
-```text
-POST /api/session/init/
-POST /api/session/complete-profile/
-POST /api/agent-chat/
-```
-
-病例拆分：
-
-- `patientFacingProfile`: 年龄、性别、主诉、开场白、血尿颜色/时相/血块、症状、诱因、既往史、用药、吸烟饮酒、职业暴露、一般情况、患者 persona。
-- `teacherOnlyData`: 尿检、血检、影像、膀胱镜、病理、诊断、治疗、MDT、评分点、标准小结。
-
-教师模式中新增“AI患者调试”面板，可查看 `sessionId`、raw/completed profile、DeepSeek 原始输出、responseFilter、token 估算和缓存状态。
-
-不要把真实 API Key 写入 `.env.example`、代码或 GitHub。
+不要把真实 API Key 写入代码、`.env.example` 或 GitHub。
 
 ## GitHub Pages 部署
 
-项目已配置：
-
-```text
-next.config.mjs
-.github/workflows/deploy.yml
-```
-
-GitHub 仓库设置：
-
-```text
-Settings -> Pages -> Build and deployment -> Source: GitHub Actions
-```
-
-推送部署：
+仓库已配置 `.github/workflows/deploy.yml`，自动设置 `/hematuria-training-system/` basePath、构建52个静态页面并部署。
 
 ```bash
 git add .
-git commit -m "Add AI-ready supplemental 30 case set"
+git commit -m "Product audit and 360 scoring hardening"
 git push origin main
 ```
 
-GitHub Actions 完成后访问：
+GitHub 仓库设置：`Settings -> Pages -> Source: GitHub Actions`。
 
-```text
-https://niubi1v.github.io/hematuria-training-system/
-```
+## RCT模块边界
 
-## 测试
+RCT 页面定位为“离线原型数据采集”，支持字段校验、重复ID检查、修改/删除确认、JSON/CSV导入导出和数据字典。不得录入姓名、学号、住院号、手机号或身份证号。
 
-```bash
-npm run test:patient
-npm run test:llm
-npm run test:agent
-npm run test:session
-npm run build
-```
+`localStorage` 可能因清理缓存而丢失，不是正式研究数据库。正式研究还需要服务端数据库、身份权限、知情同意版本管理、不可篡改审计日志、集中备份、数据加密和伦理审批流程。样本量必须根据主要终点、效应量、α、检验效能和脱落率正式估算。
 
-关键验收：
+## 静态部署限制
 
-- 默认病例数为 42
-- HX-ADD-001 至 HX-ADD-030 均存在
-- Patient Agent 问一个问题只回答当前 slot
-- 不输出“根据原始病史、未主动诉、需追问、评分点”
-- 不由 Patient Agent 直接返回 CT、膀胱镜、病理、诊断或治疗
-- Investigation Agent 仍保持“开了什么才返回什么”
-- 训练页右上角默认 DeepSeek AI，可手动切换规则模式；不会在聊天区显示 API 地址或模型名
+- 教师模式是演示功能，没有真实身份验证或权限隔离。
+- GitHub Pages 的静态资源可被技术用户检查。学生界面不会提前渲染答案，但“浏览器源码中绝对不可访问教师数据”只有改为服务端按权限释放后才能实现。
+- 训练记录和RCT原型数据只保存在当前浏览器，不能跨设备同步，也没有研究级审计能力。
+- AI 是否真实可用取决于 Vercel 环境变量、DeepSeek账户余额、网络和API状态；失败时系统明确显示规则库/降级模式。
 
-## 教学边界
+下一阶段建议增加独立后端、PostgreSQL、教师/学生身份认证、服务端病例答案与检查报告释放、研究数据审计和集中备份。
 
-本系统仅用于医学本科生临床思维训练。所有病例均视为教学病例，不作为真实患者诊疗建议。
+## 医学边界
+
+本系统仅用于医学教学和临床思维训练，不用于真实患者诊疗。病例参考 AUA/SUFU Microhematuria、EAU Urological Infections/Urolithiasis/NMIBC 和 KDIGO IgA nephropathy 等指南路径，仍需本地教师与临床专家审核后用于正式考核。

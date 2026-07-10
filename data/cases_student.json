@@ -1,0 +1,422 @@
+[
+  {
+    "id": "P001",
+    "caseVersion": "V2-2.1",
+    "age": "65",
+    "sex": "男",
+    "difficulty": "挑战",
+    "diseaseCategory": "泌尿系肿瘤",
+    "diseaseSubcategory": "膀胱恶性肿瘤",
+    "studentChiefComplaint": "间断小便变红3月余"
+  },
+  {
+    "id": "P002",
+    "caseVersion": "V2-2.1",
+    "age": "67",
+    "sex": "女",
+    "difficulty": "挑战",
+    "diseaseCategory": "泌尿系肿瘤",
+    "diseaseSubcategory": "左侧输尿管恶性肿瘤",
+    "studentChiefComplaint": "反复左侧腰痛伴小便变红1月余"
+  },
+  {
+    "id": "P003",
+    "caseVersion": "V2-2.1",
+    "age": "70",
+    "sex": "男",
+    "difficulty": "挑战",
+    "diseaseCategory": "泌尿系肿瘤",
+    "diseaseSubcategory": "肾盂恶性肿瘤",
+    "studentChiefComplaint": "反复小便变红5月余，加重1周"
+  },
+  {
+    "id": "P004",
+    "caseVersion": "V2-2.1",
+    "age": "65",
+    "sex": "男",
+    "difficulty": "挑战",
+    "diseaseCategory": "泌尿系肿瘤",
+    "diseaseSubcategory": "肾恶性肿瘤",
+    "studentChiefComplaint": "小便变红1月余"
+  },
+  {
+    "id": "P005",
+    "caseVersion": "V2-2.1",
+    "age": "83",
+    "sex": "男",
+    "difficulty": "挑战",
+    "diseaseCategory": "前列腺疾病",
+    "diseaseSubcategory": "前列腺增生",
+    "studentChiefComplaint": "进行性排尿困难3年余，加重伴小便变红1月"
+  },
+  {
+    "id": "P006",
+    "caseVersion": "V2-2.1",
+    "age": "23",
+    "sex": "女",
+    "difficulty": "基础",
+    "diseaseCategory": "感染",
+    "diseaseSubcategory": "泌尿道感染",
+    "studentChiefComplaint": "尿频、尿急、尿痛伴小便变红2天"
+  },
+  {
+    "id": "P007",
+    "caseVersion": "V2-2.1",
+    "age": "65",
+    "sex": "男",
+    "difficulty": "标准",
+    "diseaseCategory": "前列腺疾病",
+    "diseaseSubcategory": "前列腺增生",
+    "studentChiefComplaint": "反复排尿困难5年余，急性加重伴小便变红1天"
+  },
+  {
+    "id": "P008",
+    "caseVersion": "V2-2.1",
+    "age": "56",
+    "sex": "男",
+    "difficulty": "标准",
+    "diseaseCategory": "前列腺疾病",
+    "diseaseSubcategory": "膀胱结石，前列腺增生",
+    "studentChiefComplaint": "间断小便变红伴排尿中断1年余"
+  },
+  {
+    "id": "P009",
+    "caseVersion": "V2-2.1",
+    "age": "36",
+    "sex": "女",
+    "difficulty": "标准",
+    "diseaseCategory": "感染",
+    "diseaseSubcategory": "右侧肾输尿管结石伴积水和感染",
+    "studentChiefComplaint": "突发右侧腰痛伴小便变红半天"
+  },
+  {
+    "id": "P010",
+    "caseVersion": "V2-2.1",
+    "age": "42",
+    "sex": "男",
+    "difficulty": "标准",
+    "diseaseCategory": "结石",
+    "diseaseSubcategory": "左肾铸型结石",
+    "studentChiefComplaint": "反复左侧腰部隐痛伴运动后小便变红3年余，再发1天"
+  },
+  {
+    "id": "P011",
+    "caseVersion": "V2-2.1",
+    "age": "13",
+    "sex": "女",
+    "difficulty": "标准",
+    "diseaseCategory": "肾小球疾病",
+    "diseaseSubcategory": "急性肾小球肾炎",
+    "studentChiefComplaint": "咽痛3周，小便变红1周"
+  },
+  {
+    "id": "P012",
+    "caseVersion": "V2-2.1",
+    "age": "21",
+    "sex": "男",
+    "difficulty": "标准",
+    "diseaseCategory": "肾小球疾病",
+    "diseaseSubcategory": "IgA肾病",
+    "studentChiefComplaint": "反复小便变红伴尿泡沫增多半年余，加重半月"
+  },
+  {
+    "id": "HX-ADD-001",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "68",
+    "sex": "男",
+    "difficulty": "挑战",
+    "diseaseCategory": "泌尿系肿瘤",
+    "diseaseSubcategory": "膀胱尿路上皮癌",
+    "studentChiefComplaint": "间断肉眼血尿2个月"
+  },
+  {
+    "id": "HX-ADD-002",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "72",
+    "sex": "女",
+    "difficulty": "挑战",
+    "diseaseCategory": "泌尿系肿瘤",
+    "diseaseSubcategory": "膀胱癌/感染样表现",
+    "studentChiefComplaint": "反复尿频伴血尿半年"
+  },
+  {
+    "id": "HX-ADD-003",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "64",
+    "sex": "男",
+    "difficulty": "挑战",
+    "diseaseCategory": "泌尿系肿瘤",
+    "diseaseSubcategory": "上尿路尿路上皮癌",
+    "studentChiefComplaint": "左腰隐痛伴肉眼血尿1个月"
+  },
+  {
+    "id": "HX-ADD-004",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "58",
+    "sex": "男",
+    "difficulty": "挑战",
+    "diseaseCategory": "泌尿系肿瘤",
+    "diseaseSubcategory": "肾细胞癌",
+    "studentChiefComplaint": "无痛性肉眼血尿3周"
+  },
+  {
+    "id": "HX-ADD-005",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "76",
+    "sex": "男",
+    "difficulty": "挑战",
+    "diseaseCategory": "药物/凝血相关",
+    "diseaseSubcategory": "抗凝相关血尿并器质性病变排查",
+    "studentChiefComplaint": "服用抗凝药后肉眼血尿5天"
+  },
+  {
+    "id": "HX-ADD-006",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "24",
+    "sex": "女",
+    "difficulty": "基础",
+    "diseaseCategory": "感染",
+    "diseaseSubcategory": "急性膀胱炎",
+    "studentChiefComplaint": "尿频尿急尿痛伴血尿2天"
+  },
+  {
+    "id": "HX-ADD-007",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "35",
+    "sex": "女",
+    "difficulty": "标准",
+    "diseaseCategory": "感染",
+    "diseaseSubcategory": "急性肾盂肾炎/系统性UTI",
+    "studentChiefComplaint": "发热腰痛伴尿频尿痛3天"
+  },
+  {
+    "id": "HX-ADD-008",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "47",
+    "sex": "男",
+    "difficulty": "标准",
+    "diseaseCategory": "感染",
+    "diseaseSubcategory": "急性细菌性前列腺炎",
+    "studentChiefComplaint": "发热、尿痛伴会阴胀痛2天"
+  },
+  {
+    "id": "HX-ADD-009",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "63",
+    "sex": "女",
+    "difficulty": "标准",
+    "diseaseCategory": "感染",
+    "diseaseSubcategory": "复杂性尿路感染",
+    "studentChiefComplaint": "尿频尿痛伴血尿1周"
+  },
+  {
+    "id": "HX-ADD-010",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "55",
+    "sex": "女",
+    "difficulty": "挑战",
+    "diseaseCategory": "感染",
+    "diseaseSubcategory": "复发性UTI后持续血尿",
+    "studentChiefComplaint": "反复尿痛伴镜下血尿1年"
+  },
+  {
+    "id": "HX-ADD-011",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "39",
+    "sex": "男",
+    "difficulty": "标准",
+    "diseaseCategory": "结石",
+    "diseaseSubcategory": "输尿管结石",
+    "studentChiefComplaint": "右腰腹绞痛伴血尿6小时"
+  },
+  {
+    "id": "HX-ADD-012",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "45",
+    "sex": "男",
+    "difficulty": "标准",
+    "diseaseCategory": "结石",
+    "diseaseSubcategory": "肾盂/肾盏结石",
+    "studentChiefComplaint": "左腰痛伴血尿1天"
+  },
+  {
+    "id": "HX-ADD-013",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "67",
+    "sex": "男",
+    "difficulty": "标准",
+    "diseaseCategory": "结石",
+    "diseaseSubcategory": "膀胱结石",
+    "studentChiefComplaint": "排尿困难伴终末血尿3个月"
+  },
+  {
+    "id": "HX-ADD-014",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "61",
+    "sex": "女",
+    "difficulty": "挑战",
+    "diseaseCategory": "结石",
+    "diseaseSubcategory": "感染性鹿角形结石",
+    "studentChiefComplaint": "反复发热腰痛伴血尿半年"
+  },
+  {
+    "id": "HX-ADD-015",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "52",
+    "sex": "男",
+    "difficulty": "标准",
+    "diseaseCategory": "结石",
+    "diseaseSubcategory": "尿酸结石",
+    "studentChiefComplaint": "左侧腰腹痛伴血尿1天"
+  },
+  {
+    "id": "HX-ADD-016",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "73",
+    "sex": "男",
+    "difficulty": "标准",
+    "diseaseCategory": "前列腺疾病",
+    "diseaseSubcategory": "良性前列腺增生相关血尿",
+    "studentChiefComplaint": "排尿困难伴肉眼血尿3天"
+  },
+  {
+    "id": "HX-ADD-017",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "80",
+    "sex": "男",
+    "difficulty": "挑战",
+    "diseaseCategory": "前列腺疾病",
+    "diseaseSubcategory": "BPH急性尿潴留/导尿相关血尿",
+    "studentChiefComplaint": "导尿后肉眼血尿1天"
+  },
+  {
+    "id": "HX-ADD-018",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "69",
+    "sex": "男",
+    "difficulty": "挑战",
+    "diseaseCategory": "前列腺疾病",
+    "diseaseSubcategory": "前列腺癌相关血尿",
+    "studentChiefComplaint": "排尿困难伴镜下血尿半年"
+  },
+  {
+    "id": "HX-ADD-019",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "21",
+    "sex": "男",
+    "difficulty": "标准",
+    "diseaseCategory": "肾小球疾病",
+    "diseaseSubcategory": "IgA肾病",
+    "studentChiefComplaint": "咽痛后肉眼血尿2天"
+  },
+  {
+    "id": "HX-ADD-020",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "16",
+    "sex": "男",
+    "difficulty": "标准",
+    "diseaseCategory": "肾小球疾病",
+    "diseaseSubcategory": "感染后急性肾小球肾炎",
+    "studentChiefComplaint": "皮肤感染后茶色尿伴眼睑水肿1周"
+  },
+  {
+    "id": "HX-ADD-021",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "28",
+    "sex": "女",
+    "difficulty": "标准",
+    "diseaseCategory": "肾小球疾病",
+    "diseaseSubcategory": "薄基底膜肾病",
+    "studentChiefComplaint": "体检发现镜下血尿3年"
+  },
+  {
+    "id": "HX-ADD-022",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "19",
+    "sex": "男",
+    "difficulty": "挑战",
+    "diseaseCategory": "肾小球疾病",
+    "diseaseSubcategory": "Alport综合征",
+    "studentChiefComplaint": "反复镜下血尿伴听力下降"
+  },
+  {
+    "id": "HX-ADD-023",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "25",
+    "sex": "女",
+    "difficulty": "挑战",
+    "diseaseCategory": "肾小球疾病",
+    "diseaseSubcategory": "狼疮性肾炎",
+    "studentChiefComplaint": "泡沫尿、血尿伴面部皮疹2周"
+  },
+  {
+    "id": "HX-ADD-024",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "20",
+    "sex": "男",
+    "difficulty": "基础",
+    "diseaseCategory": "功能性血尿",
+    "diseaseSubcategory": "运动性血尿",
+    "studentChiefComplaint": "长跑后肉眼血尿1次"
+  },
+  {
+    "id": "HX-ADD-025",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "31",
+    "sex": "女",
+    "difficulty": "基础",
+    "diseaseCategory": "假性血尿",
+    "diseaseSubcategory": "月经污染/妇科来源",
+    "studentChiefComplaint": "体检尿潜血阳性1天"
+  },
+  {
+    "id": "HX-ADD-026",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "29",
+    "sex": "男",
+    "difficulty": "挑战",
+    "diseaseCategory": "外伤",
+    "diseaseSubcategory": "肾挫伤/泌尿系外伤",
+    "studentChiefComplaint": "车祸后腰痛伴肉眼血尿4小时"
+  },
+  {
+    "id": "HX-ADD-027",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "56",
+    "sex": "女",
+    "difficulty": "挑战",
+    "diseaseCategory": "肾实质/结构性疾病",
+    "diseaseSubcategory": "肾乳头坏死",
+    "studentChiefComplaint": "腰痛伴血尿反复半年"
+  },
+  {
+    "id": "HX-ADD-028",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "48",
+    "sex": "男",
+    "difficulty": "挑战",
+    "diseaseCategory": "肾实质/结构性疾病",
+    "diseaseSubcategory": "多囊肾囊肿出血",
+    "studentChiefComplaint": "突发左腰痛伴肉眼血尿1天"
+  },
+  {
+    "id": "HX-ADD-029",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "23",
+    "sex": "女",
+    "difficulty": "挑战",
+    "diseaseCategory": "血管性疾病",
+    "diseaseSubcategory": "胡桃夹综合征",
+    "studentChiefComplaint": "反复左腰酸痛伴镜下血尿1年"
+  },
+  {
+    "id": "HX-ADD-030",
+    "caseVersion": "HX-ADD-2.1",
+    "age": "62",
+    "sex": "男",
+    "difficulty": "挑战",
+    "diseaseCategory": "泌尿系肿瘤",
+    "diseaseSubcategory": "高危无症状镜下血尿",
+    "studentChiefComplaint": "体检发现镜下血尿1个月"
+  }
+]

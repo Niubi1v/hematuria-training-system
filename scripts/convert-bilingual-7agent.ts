@@ -156,7 +156,7 @@ function zhI18n() {
     languageName: "中文",
     appTitle: "血尿 7-Agent 临床思维训练工作台",
     appSubtitle: "按 1→7 顺序完成接诊、检查、诊断、MDT、治疗、围术期管理与复盘。",
-    backToCases: "返回病例库",
+    backToCases: "病例库",
     freeTraining: "自由训练",
     osceMode: "OSCE 模式",
     visibleInfo: "当前可见资料",
@@ -196,9 +196,9 @@ function zhI18n() {
     differentialAnalysis: "各鉴别诊断的支持点与反对点",
     confirmatoryTests: "还需哪些检查进一步确认",
     consultNeed: "是否需要会诊",
-    consultPurpose: "会诊目的和要解决的问题",
-    consultQuestions: "希望专家回答的具体问题",
-    consultSummary: "病例汇报摘要",
+    consultPurpose: "会诊触发原因",
+    consultQuestions: "希望解决的具体问题",
+    consultSummary: "已掌握的临床证据与病例汇报摘要",
     startMdt: "发起 MDT 并获取专家意见",
     treatmentImmediate: "急诊或入院即时处理",
     treatmentDefinitive: "确定性治疗/后续治疗",
@@ -209,7 +209,7 @@ function zhI18n() {
     finalReport: "最终能力画像",
     studentRecords: "学生记录",
     standardPath: "标准路径摘要",
-    purposeRequired: "请填写会诊目的和需要解决的问题，不能只勾选科室。",
+    purposeRequired: "会诊申请必须选择科室，并填写触发原因、希望解决的问题和已掌握的临床证据。",
     teachingOnly: "所有答案均为教学模拟，不作为真实诊疗建议。"
   };
 }
@@ -259,9 +259,9 @@ function enI18n() {
     differentialAnalysis: "Supportive and opposing points for each differential",
     confirmatoryTests: "Further tests needed to confirm",
     consultNeed: "Need consultation?",
-    consultPurpose: "Consultation purpose and problem to solve",
-    consultQuestions: "Specific questions for consultants",
-    consultSummary: "Case handoff summary",
+    consultPurpose: "Reason that triggered consultation",
+    consultQuestions: "Specific problem to solve",
+    consultSummary: "Available clinical evidence and case handoff summary",
     startMdt: "Start MDT and get expert opinions",
     treatmentImmediate: "Immediate ED/admission management",
     treatmentDefinitive: "Definitive / subsequent treatment",
@@ -272,15 +272,15 @@ function enI18n() {
     finalReport: "Final competency profile",
     studentRecords: "Learner records",
     standardPath: "Standard pathway summary",
-    purposeRequired: "Please enter the consultation purpose and problem to solve. Departments alone are not enough.",
+    purposeRequired: "Select at least one department and provide the trigger, problem to solve, and available clinical evidence.",
     teachingOnly: "For educational simulation only. Not medical advice."
   };
 }
 
 function rubric(name: string) {
   return {
-    version: "7-agent-bilingual-v1",
-    total: name === "diagnostic" ? 100 : name === "perioperative" ? 60 : 100,
+    version: name === "debriefing" ? "360-v1" : "7-agent-bilingual-v1",
+    total: name === "diagnostic" ? 100 : name === "perioperative" ? 60 : 360,
     dimensions: name === "diagnostic"
       ? [
         "Confirm true hematuria",
@@ -298,14 +298,14 @@ function rubric(name: string) {
           "VTE prevention, ERAS and postoperative complication prevention"
         ]
         : [
-          "History record",
-          "Investigation record",
-          "Diagnostic reasoning",
-          "MDT coordination",
-          "Clinical decision support",
-          "Perioperative management",
-          "Timeline and reflection",
-          "Dangerous errors and learning plan"
+          "History taking and hematuria localization (50)",
+          "Risk factors and safety net (40)",
+          "Physical examination and emergency recognition (35)",
+          "Diagnosis and differential diagnosis (45)",
+          "Laboratory, imaging, endoscopy and pathology decisions (55)",
+          "MDT and consultation (45)",
+          "Treatment and perioperative management (50)",
+          "Follow-up, education and communication efficiency (40)"
         ]
   };
 }

@@ -6,6 +6,7 @@ coverage/
 .env
 .env.local
 .env.*.local
+.vercel/
 npm-debug.log*
 pnpm-debug.log*
 yarn-debug.log*
@@ -14,6 +15,3 @@ work/dev.log
 work/dev.err.log
 work/teacher-package-*/
 outputs/*.zip
-
-.vercel
-.env.local

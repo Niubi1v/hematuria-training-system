@@ -16,8 +16,15 @@ export type OrderResultLog = {
   matched: boolean;
   matchedOrders: Array<{ orderId: string; displayName: string }>;
   results: OrderResultItem[];
+  pendingResults?: OrderResultItem[];
   message: string;
   at: string;
+  placedAt?: string;
+  returnedAt?: string;
+  stageNo?: number;
+  status?: "ordered" | "reported" | "no-result";
+  duplicateOrderIds?: string[];
+  unmetPrerequisites?: string[];
 };
 
 export type ExamResultLog = {
@@ -47,6 +54,8 @@ export type Evaluator360State = {
   mdtStarted: boolean;
   treatmentText: string;
   followUpText: string;
+  orderLogs?: OrderResultLog[];
+  timeline?: Array<{ type: string; stageNo: number; at: string; detail: string }>;
 };
 
 export type Evaluator360Report = {
@@ -58,6 +67,10 @@ export type Evaluator360Report = {
     score: number;
     evidence: string[];
     misses: string[];
+    sequenceIssues: string[];
+    overuse: string[];
+    criticalErrors: string[];
+    improvements: string[];
     comment: string;
   }>;
   redFlags: string[];
@@ -101,9 +114,11 @@ function caseMdt(caseId: string) {
   return mdtTriggers.find((item) => item.caseId === caseId);
 }
 
-export function matchOrderResults(caseData: CaseData, input: string): OrderResultLog {
+export function matchOrderResults(caseData: CaseData, input: string, context?: { previousOrderIds?: string[]; stageNo?: number }): OrderResultLog {
   const text = input.trim();
   const matchedOrders = orderCatalog.filter((item) => includesAny(text, [item.displayName, ...item.synonyms]));
+  const previousOrderIds = context?.previousOrderIds ?? [];
+  const duplicateOrderIds = matchedOrders.map((item) => item.orderId).filter((orderId) => previousOrderIds.includes(orderId));
   const candidates = orderResults.filter((item) => item.caseId === caseData.id);
   const matched = candidates.flatMap((item) => {
     const resultSynonyms = item.synonyms.flatMap(splitText);
@@ -112,15 +127,24 @@ export function matchOrderResults(caseData: CaseData, input: string): OrderResul
     return [{ ...item, orderId: matchedOrder.orderId }];
   });
 
+  const at = new Date().toISOString();
   return {
     id: `${caseData.id}-${Date.now()}`,
     input: text,
     matched: matchedOrders.length > 0,
     matchedOrders: matchedOrders.map((item) => ({ orderId: item.orderId, displayName: item.displayName })),
     results: matched,
-    at: new Date().toISOString(),
+    at,
+    placedAt: at,
+    returnedAt: matched.length ? at : undefined,
+    stageNo: context?.stageNo ?? 2,
+    status: matched.length ? "reported" : "no-result",
+    duplicateOrderIds,
+    unmetPrerequisites: [],
     message: matchedOrders.length && matched.length
-      ? "已根据你开立的具体项目返回模拟检查结果。"
+      ? duplicateOrderIds.length
+        ? "医嘱已识别，但包含重复开立项目；结果不会重复计入效率得分。"
+        : "已根据你开立的具体项目返回模拟检查结果。"
       : matchedOrders.length
         ? "已识别医嘱，但当前病例库暂未配置该项目的可返回报告；可继续开立其他关键检查。"
       : "暂未匹配到可返回结果的具体医嘱，请尝试输入更明确的项目名称，例如尿常规、尿培养、CTU、膀胱镜或肾功能。"
@@ -267,10 +291,17 @@ export function score360(caseData: CaseData, state: Evaluator360State): Evaluato
     state.followUpText
   ].join("；");
   const mdt = caseMdt(caseData.id);
+  const duplicateOrderIds = unique((state.orderLogs ?? []).flatMap((item) => item.duplicateOrderIds ?? []));
+  const treatmentSubmit = (state.timeline ?? []).find((event) => event.type === "submit" && event.stageNo === 5);
+  const diagnosisSubmit = (state.timeline ?? []).find((event) => event.type === "submit" && event.stageNo === 3);
+  const treatmentBeforeDiagnosis = Boolean(treatmentSubmit && (!diagnosisSubmit || new Date(treatmentSubmit.at).getTime() < new Date(diagnosisSubmit.at).getTime()));
 
   const items = evaluatorRubric.map((item) => {
     const evidence: string[] = [];
     const misses: string[] = [];
+    const sequenceIssues: string[] = [];
+    const overuse: string[] = [];
+    const criticalErrors: string[] = [];
     if (/病史|定位/.test(item.dimension)) {
       evidence.push(...state.askedSlots.slice(0, 12));
       ["HX002", "HX005", "HX006", "HX011", "HX012", "HX021", "HX022"].forEach((slot) => {
@@ -281,10 +312,18 @@ export function score360(caseData: CaseData, state: Evaluator360State): Evaluato
         if (state.askedSlots.includes(slot)) evidence.push(slot);
         else misses.push(slot);
       });
-    } else if (/诊断|定位|鉴别/.test(item.dimension)) {
+    } else if (/查体|急症识别/.test(item.dimension)) {
+      ["生命体征", "血压", "腹部", "肾区", "膀胱", "水肿", "尿量"].forEach((word) => includesAny(state.examTexts.join("；"), [word]) ? evidence.push(word) : misses.push(word));
+      if (includesAny(`${caseData.emergencyRedFlags?.join("；")}；${caseData.clinical?.redFlags}`, ["休克", "脓毒", "尿潴留", "AKI", "外伤"]) && !includesAny(state.treatmentText, ["复苏", "生命体征", "导尿", "引流", "尿量", "急诊"])) {
+        criticalErrors.push("存在急症红旗但未记录优先稳定和处置。 ");
+      }
+    } else if (/诊断|鉴别/.test(item.dimension)) {
       ["肿瘤", "结石", "感染", "肾小球", "抗凝", "假性血尿"].forEach((word) => includesAny(state.diagnosisText, [word]) ? evidence.push(word) : misses.push(word));
-    } else if (/检验|影像|内镜|功能/.test(item.dimension)) {
+    } else if (/检验|影像|内镜|病理/.test(item.dimension)) {
       ["尿常规", "尿沉渣", "尿培养", "肾功能", "凝血", "CTU", "CT KUB", "超声", "膀胱镜", "病理", "肾活检"].forEach((word) => includesAny(orderText, [word]) ? evidence.push(word) : misses.push(word));
+      if (duplicateOrderIds.length) overuse.push(`重复医嘱：${duplicateOrderIds.join("、")}`);
+      if (caseData.diseaseCategory === "感染" && includesAny(orderText, ["CTU", "膀胱镜", "肾活检"]) && !includesAny(caseData.diagnosis, ["复发", "持续", "肿瘤"])) overuse.push("单纯感染初始阶段存在高级检查过度使用风险。 ");
+      if (caseData.diseaseCategory === "肾小球疾病" && includesAny(orderText, ["CTU", "膀胱镜"])) overuse.push("肾小球性线索明确时应避免无指征的CTU或膀胱镜。 ");
     } else if (/会诊|急诊/.test(item.dimension)) {
       if (state.mdtStarted) evidence.push("已发起会诊");
       if (state.mdtDepartments.length) evidence.push(...state.mdtDepartments.slice(0, 4));
@@ -294,6 +333,7 @@ export function score360(caseData: CaseData, state: Evaluator360State): Evaluato
       if (!includesAny(state.treatmentText, ["急诊", "导尿", "引流", "抗感染", "冲洗", "备血", "AKI"])) misses.push("急诊意识或即时处理不足");
     } else if (/治疗/.test(item.dimension)) {
       ["即时", "导尿", "冲洗", "引流", "抗感染", "TURBT", "病理", "手术", "药物"].forEach((word) => includesAny(state.treatmentText, [word]) ? evidence.push(word) : misses.push(word));
+      if (treatmentBeforeDiagnosis) sequenceIssues.push("在完成诊断推理前提交了确定性治疗。 ");
     } else if (/随访|教育/.test(item.dimension)) {
       ["复查", "随访", "尿常规", "肾功能", "膀胱镜", "复诊", "戒烟", "用药"].forEach((word) => includesAny(state.followUpText, [word]) ? evidence.push(word) : misses.push(word));
     } else {
@@ -301,18 +341,29 @@ export function score360(caseData: CaseData, state: Evaluator360State): Evaluato
       else misses.push("表达过少");
     }
 
-    const score = scoreByEvidence(item.max, evidence.length, /病史/.test(item.dimension) ? 8 : 4);
+    if (overuse.length) sequenceIssues.push("存在重复或可能过度检查，需说明适应证。 ");
+    const score = Math.max(0, scoreByEvidence(item.max, evidence.length, /病史/.test(item.dimension) ? 8 : 4) - overuse.length * 2 - sequenceIssues.length * 2 - criticalErrors.length * 5);
+    const improvements = unique([
+      ...misses.slice(0, 3).map((miss) => `下次训练主动补充：${miss}`),
+      ...sequenceIssues.map((issue) => `调整操作顺序：${issue}`),
+      ...overuse.map((issue) => `减少资源浪费：${issue}`)
+    ]).slice(0, 5);
     return {
       label: item.dimension,
       max: item.max,
       score,
       evidence: unique(evidence).slice(0, 8),
       misses: unique(misses).slice(0, 8),
+      sequenceIssues: unique(sequenceIssues),
+      overuse: unique(overuse),
+      criticalErrors: unique(criticalErrors),
+      improvements,
       comment: score >= item.max * 0.8 ? "达成较好。" : score >= item.max * 0.5 ? "部分达标，建议补足关键漏项。" : "覆盖不足，需要重新梳理临床路径。"
     };
   });
 
   const redFlags: string[] = [];
+  redFlags.push(...items.flatMap((item) => item.criticalErrors));
   const source = `${clinical?.redFlags ?? ""}；${clinical?.orderReason ?? ""}；${clinical?.immediateTreatment ?? ""}；${caseData.medication}`;
   if (includesAny(source, ["阿司匹林", "氯吡格雷", "华法林", "利伐沙班", "抗凝", "抗血小板"]) && includesAny(state.diagnosisText, ["抗凝", "阿司匹林", "药物"]) && !includesAny(state.diagnosisText + orderText, ["肿瘤", "膀胱镜", "CTU", "结石", "感染", "器质"])) {
     redFlags.push("高危错误：不能把血尿直接归因于抗凝/抗血小板药，应继续排查器质性病变。");

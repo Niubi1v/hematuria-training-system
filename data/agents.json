@@ -18,7 +18,26 @@
       "zh": "自然语言问诊；患者只回答被问到的信息。",
       "en": "Natural-language patient interview; the patient answers only what is asked."
     },
-    "keyRule": "Never return full history or teacher-only hints."
+    "keyRule": "Never return full history or teacher-only hints.",
+    "contract": {
+      "reads": [
+        "studentVisibleCase",
+        "patientRole",
+        "questionSlotIds",
+        "patient answers for matched slots only"
+      ],
+      "outputs": [
+        "patient reply",
+        "matched slot IDs",
+        "safety flags"
+      ],
+      "forbidden": [
+        "diagnosis",
+        "test results",
+        "teacher hints",
+        "treatment"
+      ]
+    }
   },
   {
     "stageNo": 2,
@@ -39,7 +58,25 @@
       "zh": "查体、检验、影像、内镜、病理及围术期评估；开了什么才返回什么。",
       "en": "Physical exam, laboratory tests, imaging, endoscopy, pathology and perioperative workup; return results only after orders."
     },
-    "keyRule": "No order, no result."
+    "keyRule": "No order, no result.",
+    "contract": {
+      "reads": [
+        "submitted history",
+        "physical exam catalog",
+        "order catalog",
+        "case order results after matching"
+      ],
+      "outputs": [
+        "exam log",
+        "order status",
+        "released report"
+      ],
+      "forbidden": [
+        "unopened reports",
+        "final diagnosis",
+        "future-stage answers"
+      ]
+    }
   },
   {
     "stageNo": 3,
@@ -60,7 +97,21 @@
       "zh": "提交最可能诊断、诊断依据和鉴别诊断。",
       "en": "Learner submits most likely diagnosis, evidence and differential diagnoses."
     },
-    "keyRule": "Check true hematuria, internal vs surgical hematuria, red flags."
+    "keyRule": "Check true hematuria, internal vs surgical hematuria, red flags.",
+    "contract": {
+      "reads": [
+        "submitted history",
+        "exam log",
+        "released reports",
+        "student diagnosis text"
+      ],
+      "outputs": [
+        "reasoning evaluation after submission"
+      ],
+      "forbidden": [
+        "standard diagnosis before submission"
+      ]
+    }
   },
   {
     "stageNo": 4,
@@ -81,7 +132,22 @@
       "zh": "判断会诊时机、科室、会诊目的并整合MDT意见。",
       "en": "Determine consultation timing, departments, consultation purpose and integrated MDT opinion."
     },
-    "keyRule": "Consult purpose is required."
+    "keyRule": "Consult purpose is required.",
+    "contract": {
+      "reads": [
+        "submitted evidence",
+        "MDT trigger rule",
+        "selected departments",
+        "consult request"
+      ],
+      "outputs": [
+        "department-scoped opinions"
+      ],
+      "forbidden": [
+        "opinions outside specialty scope",
+        "final diagnosis on behalf of learner"
+      ]
+    }
   },
   {
     "stageNo": 5,
@@ -102,7 +168,21 @@
       "zh": "对照指南/RAG路径评价治疗方案一致性与差异。",
       "en": "Compare learner plan with EAU/CUA/AUA/CSCO/RAG pathway; explain agreement and deviations after submission."
     },
-    "keyRule": "Feedback after submission only; do not give answer early."
+    "keyRule": "Feedback after submission only; do not give answer early.",
+    "contract": {
+      "reads": [
+        "submitted diagnosis",
+        "released evidence",
+        "RAG guardrails",
+        "student treatment plan"
+      ],
+      "outputs": [
+        "treatment evaluation after submission"
+      ],
+      "forbidden": [
+        "standard treatment before submission"
+      ]
+    }
   },
   {
     "stageNo": 6,
@@ -123,7 +203,21 @@
       "zh": "术前优化、ERAS、抗栓、感染控制、备血、VTE及并发症预防。",
       "en": "Preoperative optimization, ERAS, anticoagulation, infection control, transfusion, VTE and complication prevention."
     },
-    "keyRule": "Separate perioperative stage, not mixed with treatment."
+    "keyRule": "Separate perioperative stage, not mixed with treatment.",
+    "contract": {
+      "reads": [
+        "planned procedure",
+        "comorbidities",
+        "released tests",
+        "student perioperative plan"
+      ],
+      "outputs": [
+        "perioperative risk evaluation"
+      ],
+      "forbidden": [
+        "unreleased test results"
+      ]
+    }
   },
   {
     "stageNo": 7,
@@ -144,6 +238,23 @@
       "zh": "生成时间线、分数、能力画像、漏项、危险错误和学习建议。",
       "en": "Generate timeline, scores, competency profile, missed items, unsafe errors and learning suggestions."
     },
-    "keyRule": "OSCE mode: feedback only after completion."
+    "keyRule": "OSCE mode: feedback only after completion.",
+    "contract": {
+      "reads": [
+        "complete operation log",
+        "case rubric",
+        "critical error rules"
+      ],
+      "outputs": [
+        "360 report",
+        "timeline",
+        "evidence",
+        "misses",
+        "improvement plan"
+      ],
+      "forbidden": [
+        "intermediate OSCE feedback"
+      ]
+    }
   }
 ]
