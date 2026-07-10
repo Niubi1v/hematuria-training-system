@@ -73,7 +73,72 @@ export type ClinicalFields = {
   stagePath: string;
 };
 
-export type StageKey = "history" | "exam" | "orders" | "diagnosis" | "consult" | "treatment" | "followup" | "debrief";
+export type StageKey = "history" | "exam" | "orders" | "diagnosis" | "consult" | "treatment" | "perioperative" | "followup" | "debrief";
+
+export type StructuredFactStatus = "present" | "absent" | "authoring_required";
+export type StructuredFactProvenance = "source" | "author_added_for_simulation";
+
+export type StructuredPatientFact = {
+  status: StructuredFactStatus;
+  patientAnswerZh: string;
+  patientAnswerEn: string;
+  provenance: StructuredFactProvenance;
+  teacherReviewRequired: boolean;
+};
+
+export type StructuredSmokingHistory = Omit<StructuredPatientFact, "status"> & {
+  status: "current" | "former" | "never" | "authoring_required";
+  cigarettesPerDay: number;
+  years: number;
+  quitYears: number;
+  packYears: number;
+};
+
+export type StructuredAlcoholHistory = Omit<StructuredPatientFact, "status"> & {
+  status: "current" | "former" | "never" | "authoring_required";
+  type: string;
+  amount: string;
+  frequency: string;
+  years: number;
+};
+
+export type StructuredMedication = {
+  name: string;
+  dose: string;
+  frequency: string;
+  indication: string;
+  provenance: StructuredFactProvenance;
+  teacherReviewRequired: boolean;
+};
+
+export type StructuredHistory = {
+  smokingHistory: StructuredSmokingHistory;
+  alcoholHistory: StructuredAlcoholHistory;
+  occupation: StructuredPatientFact;
+  occupationalExposure: StructuredPatientFact;
+  hypertension: StructuredPatientFact;
+  diabetes: StructuredPatientFact;
+  coronaryDisease: StructuredPatientFact;
+  stroke: StructuredPatientFact;
+  liverDisease: StructuredPatientFact;
+  tuberculosis: StructuredPatientFact;
+  stoneHistory: StructuredPatientFact;
+  urinaryInfectionHistory: StructuredPatientFact;
+  malignancyHistory: StructuredPatientFact;
+  traumaHistory: StructuredPatientFact;
+  urinaryProcedureHistory: StructuredPatientFact;
+  surgeryHistory: StructuredPatientFact;
+  transfusionHistory: StructuredPatientFact;
+  allergyHistory: StructuredPatientFact;
+  anticoagulantUse: StructuredPatientFact;
+  antiplateletUse: StructuredPatientFact;
+  familyHistory: StructuredPatientFact;
+  menstrualHistory: StructuredPatientFact;
+  pregnancyHistory: StructuredPatientFact;
+  medicationList: StructuredMedication[];
+  medicationAnswerZh: string;
+  medicationAnswerEn: string;
+};
 
 export type StageTask = {
   caseId: string;
@@ -347,6 +412,14 @@ export type CaseData = {
     status: "pending" | "reviewed" | "needs_revision";
     references: Array<{ title: string; url: string }>;
     lastReviewedDate: string;
+  };
+  structuredHistory?: StructuredHistory;
+  standardManagement?: {
+    immediate: string;
+    definitive: string;
+    perioperative: string;
+    followUp: string;
+    critical: string[];
   };
   sourcePatientId: string;
   title: string;

@@ -11,6 +11,7 @@ export type PatientReplyRequest = {
   conversationHistory?: Array<Pick<ChatMessage, "role" | "text">>;
   askedSlotIds?: string[];
   mode?: "ai" | "rule";
+  language?: "zh" | "en";
 };
 
 export type PatientReplyResponse = {
@@ -22,6 +23,10 @@ export type PatientReplyResponse = {
   provider: string;
   model: string;
   isFallback: boolean;
+  matchedFacts: string[];
+  answerSource: string;
+  confidence: number;
+  fallbackReason: string;
 };
 
 const PATIENT_AGENT_SYSTEM_PROMPT = `
@@ -36,12 +41,10 @@ const PATIENT_AGENT_SYSTEM_PROMPT = `
 6. 不编造 currentAllowedAnswer 之外的信息。
 7. 如果不知道，就说“我不太清楚”或“我没有注意到”。
 8. 用第一人称患者口吻。
-9. 输出 1-2 条中文分点短句，每条不超过 80 字。
+9. 输出第一人称自然短句，不使用Markdown、项目符号或“患者：”前缀，默认不超过80字。
 10. 如果学生问诊断，只能回答“这个我不清楚，需要医生判断。”
 
-输出格式：
-- ...
-- ...
+直接输出回答正文。
 `.trim();
 
 function buildPatientFacingPayload(caseData: CaseData, matchedSlotIds: string[], ruleText: string) {
@@ -75,7 +78,11 @@ function toRuleResponse(ruleReply: ReturnType<typeof generatePatientReply>, isFa
     safetyFlags: ruleReply.safetyFlags,
     provider,
     model,
-    isFallback
+    isFallback,
+    matchedFacts: ruleReply.matchedFacts || [],
+    answerSource: ruleReply.answerSource || (isFallback ? "rule" : provider),
+    confidence: ruleReply.confidence ?? (isFallback ? 0.9 : 0.95),
+    fallbackReason: ruleReply.fallbackReason || (isFallback ? "ai_unavailable_or_rule_mode" : "")
   };
 }
 
@@ -90,7 +97,8 @@ export async function handlePatientReplyRequest(input: PatientReplyRequest): Pro
     caseData,
     userQuestion: question,
     stage: input.stage || "history",
-    mode: input.mode || "ai"
+    mode: input.mode || "ai",
+    language: input.language || "zh"
   });
 
   if (input.mode === "rule" || !ruleReply.matchedSlotIds.length || ruleReply.safetyFlags.length) {
@@ -110,7 +118,7 @@ export async function handlePatientReplyRequest(input: PatientReplyRequest): Pro
       "只回答当前问题对应的 currentAllowedAnswer。",
       "不得输出检查报告、影像、病理、诊断、治疗、MDT、评分点。",
       "不得输出教师提示或病例资料来源说明。",
-      "输出1-2条中文分点短句。"
+      "直接输出第一人称自然短句，不使用项目符号。"
     ]
   };
 

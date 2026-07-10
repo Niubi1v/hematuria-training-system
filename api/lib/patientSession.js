@@ -1,5 +1,6 @@
 const cases = require("../../data/cases.json");
 const { callLLM, getLLMProviderConfig } = require("./llmClient.runtime.js");
+const { matchStructuredFacts } = require("./structuredFacts.js");
 
 const sessionCache = globalThis.__hematuriaSessionCache || new Map();
 const answerCache = globalThis.__hematuriaAnswerCache || new Map();
@@ -137,6 +138,7 @@ function buildRawPatientFacingProfile(caseData) {
   const risk = caseData.riskFactors || {};
   const answers = caseData.patientAnswers || {};
   const pfp = caseData.patientFacingProfile || {};
+  const sh = caseData.structuredHistory || {};
   const simplifiedComplaint = simplifiedChiefComplaintZh(pfp.chiefComplaint || caseData.studentChiefComplaint || caseData.chiefComplaint);
   return {
     patient_id: field(caseData.id),
@@ -171,12 +173,12 @@ function buildRawPatientFacingProfile(caseData) {
       menstruation: firstField(sentenceWith(answers.gynecologicClues, ["月经"]), sentenceWith(caseData.personalHistory, ["月经"]))
     },
     past_history_patient_safe: firstField(pfp.knownPastHistory, caseData.pastHistory),
-    medication_patient_safe: firstField(pfp.knownMedication, risk.anticoagulants, caseData.medication),
-    allergy_history: firstField(sentenceWith(caseData.pastHistory, ["过敏"]), sentenceWith(caseData.personalHistory, ["过敏"])),
-    smoking_history: firstField(sentenceWith(pfp.personalAndFamilyRisk, ["吸烟", "抽烟"]), risk.smoking),
-    drinking_history: firstField(sentenceWith(pfp.personalAndFamilyRisk, ["饮酒", "喝酒"]), risk.alcohol),
-    occupational_exposure: firstField(sentenceWith(pfp.personalAndFamilyRisk, ["职业", "染料", "化工", "橡胶", "皮革", "重金属"]), risk.occupation),
-    family_history: firstField(sentenceWith(pfp.personalAndFamilyRisk, ["家族"]), risk.familyHistory, caseData.familyHistory),
+    medication_patient_safe: firstField(sh.medicationAnswerZh, pfp.knownMedication, risk.anticoagulants, caseData.medication),
+    allergy_history: firstField(sh.allergyHistory?.patientAnswerZh, sentenceWith(caseData.pastHistory, ["过敏"]), sentenceWith(caseData.personalHistory, ["过敏"])),
+    smoking_history: firstField(sh.smokingHistory?.patientAnswerZh, sentenceWith(pfp.personalAndFamilyRisk, ["吸烟", "抽烟"]), risk.smoking),
+    drinking_history: firstField(sh.alcoholHistory?.patientAnswerZh, sentenceWith(pfp.personalAndFamilyRisk, ["饮酒", "喝酒"]), risk.alcohol),
+    occupational_exposure: firstField(sh.occupationalExposure?.patientAnswerZh, sentenceWith(pfp.personalAndFamilyRisk, ["职业", "染料", "化工", "橡胶", "皮革", "重金属"]), risk.occupation),
+    family_history: firstField(sh.familyHistory?.patientAnswerZh, sentenceWith(pfp.personalAndFamilyRisk, ["家族"]), risk.familyHistory, caseData.familyHistory),
     menstrual_gynecologic_history: firstField(answers.gynecologicClues),
     general_condition: {
       appetite: firstField(sentenceWith(answers.generalCondition, ["食欲", "胃口"])),
@@ -365,8 +367,8 @@ function getSession(sessionId, caseId, profile) {
 function filterPatientOutput(text) {
   const hits = blockedHits(text);
   const lines = String(text || "").split(/\n+/).map((line) => line.trim()).filter(Boolean);
-  const hasBulletShape = lines.length > 0 && lines.every((line) => line.startsWith("- "));
-  const tooLong = lines.some((line) => line.replace(/^-\s*/, "").length > 45) || String(text || "").length > 180;
+  const hasBulletShape = lines.length > 0 && lines.every((line) => !/^[-•*#]/.test(line));
+  const tooLong = lines.some((line) => line.length > 80) || String(text || "").length > 180;
   return { ok: hits.length === 0 && hasBulletShape && !tooLong, hits, hasBulletShape, tooLong };
 }
 
@@ -375,10 +377,9 @@ function formatPatientReply(text) {
     .split(/\n|。|；|;/)
     .map((line) => line.replace(/^[-•\s]*/, "").trim())
     .filter(Boolean)
-    .slice(0, 3)
+    .slice(0, 2)
     .map((line) => {
-      const clean = line.length > 45 ? `${line.slice(0, 45)}。` : line;
-      return `- ${clean}`;
+      return line.length > 80 ? `${line.slice(0, 80)}。` : line;
     });
   return lines.length ? lines.join("\n") : "";
 }
@@ -390,7 +391,7 @@ function readProfileField(profile, path) {
 
 function oneBullet(value) {
   const clean = cleanPatientValue(value) || "这个我不太清楚。";
-  return `- ${clean.length > 45 ? `${clean.slice(0, 45)}。` : clean}`;
+  return clean.length > 80 ? `${clean.slice(0, 80)}。` : clean;
 }
 
 function profileFallbackForQuestion(question, profile) {
@@ -434,13 +435,16 @@ const patientPrompt = `
 8. 如果学生问诊断，回答“这个我不清楚，需要医生判断”。
 9. 如果档案中没有该信息，回答“不太清楚”或“没有注意到”。
 10. 第一人称患者口吻。
-11. 回答简短，1-3条分点，每条不超过45字。
+11. 回答简短，1-2句，不超过80字，不使用Markdown项目符号或“患者：”前缀。
 12. 只回答当前问题，不要顺带回答未问内容。
 `.trim();
 
 async function generatePatientAnswer({ sessionId, caseId, studentInput, conversationHistory = [], language = "zh", completedPatientFacingProfile }) {
   const session = getSession(sessionId, caseId, completedPatientFacingProfile);
-  const fallback = safeFallbackForQuestion(studentInput, session?.completedPatientFacingProfile || completedPatientFacingProfile);
+  const caseData = getCaseById(caseId);
+  const structured = matchStructuredFacts(caseData, studentInput, language);
+  const genericFallback = safeFallbackForQuestion(studentInput, session?.completedPatientFacingProfile || completedPatientFacingProfile);
+  const fallback = structured ? { ...structured, provider: "rule", model: "local-rule", isFallback: true } : genericFallback;
   if (fallback.safetyFlags[0]?.startsWith("blocked_")) return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] } };
   if (!session?.completedPatientFacingProfile) return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] } };
 
@@ -454,6 +458,8 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
 
   const payload = {
     completedPatientFacingProfile: session.completedPatientFacingProfile,
+    currentAllowedAnswer: structured?.replyText || fallback.replyText,
+    matchedFacts: structured?.matchedFacts || [],
     studentInput,
     conversationHistory: conversationHistory.slice(-6),
     language
@@ -463,7 +469,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     const firstText = formatPatientReply(first.text);
     let filter = filterPatientOutput(firstText);
     if (filter.ok) {
-      const result = { replyText: firstText, provider: first.provider, model: first.model, isFallback: false, filter, rewriteTriggered: false, safetyFlags: [] };
+      const result = { replyText: firstText, provider: first.provider, model: first.model, isFallback: false, filter, rewriteTriggered: false, safetyFlags: [], matchedSlotIds: structured?.matchedSlotIds || [], matchedFacts: structured?.matchedFacts || [], answerSource: structured?.answerSource || "ai", confidence: structured?.confidence || 0.9, fallbackReason: "" };
       answerCache.set(answerKey, result);
       return result;
     }
@@ -476,7 +482,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     const retryText = formatPatientReply(retry.text);
     const retryFilter = filterPatientOutput(retryText);
     if (retryFilter.ok) {
-      const result = { replyText: retryText, provider: retry.provider, model: retry.model, isFallback: false, filter: retryFilter, rewriteTriggered: true, safetyFlags: [] };
+      const result = { replyText: retryText, provider: retry.provider, model: retry.model, isFallback: false, filter: retryFilter, rewriteTriggered: true, safetyFlags: [], matchedSlotIds: structured?.matchedSlotIds || [], matchedFacts: structured?.matchedFacts || [], answerSource: structured?.answerSource || "ai", confidence: structured?.confidence || 0.9, fallbackReason: "" };
       answerCache.set(answerKey, result);
       return result;
     }

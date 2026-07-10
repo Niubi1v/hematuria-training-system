@@ -1,6 +1,6 @@
 import type { CaseData } from "./types";
 
-export const CASE_SCHEMA_VERSION = "2.1.0";
+export const CASE_SCHEMA_VERSION = "2.2.0";
 
 export type CaseValidationIssue = {
   caseId: string;
@@ -50,6 +50,16 @@ export function validateCase(caseData: CaseData): CaseValidationIssue[] {
   requireText(issues, id, "personalHistory", caseData.personalHistory);
   requireText(issues, id, "familyHistory", caseData.familyHistory);
   requireText(issues, id, "medication", caseData.medication);
+  if (!caseData.structuredHistory) {
+    issues.push({ caseId: id, path: "structuredHistory", severity: "error", message: "缺少标准化患者结构化生活史/既往史。" });
+  } else {
+    const requiredFacts = ["smokingHistory", "alcoholHistory", "occupation", "occupationalExposure", "hypertension", "diabetes", "stoneHistory", "urinaryInfectionHistory", "surgeryHistory", "transfusionHistory", "allergyHistory", "familyHistory"] as const;
+    requiredFacts.forEach((key) => {
+      const fact = caseData.structuredHistory?.[key];
+      if (!fact?.patientAnswerZh || !fact?.patientAnswerEn) issues.push({ caseId: id, path: `structuredHistory.${key}`, severity: "error", message: "结构化事实必须包含中英文患者答案。" });
+      if (/未诉|需追问|需主动询问|原表未记录|训练中若被问及/.test(`${fact?.patientAnswerZh || ""}${fact?.patientAnswerEn || ""}`)) issues.push({ caseId: id, path: `structuredHistory.${key}`, severity: "error", message: "患者答案不得包含作者端占位语。" });
+    });
+  }
 
   if (!allowedDifficulties.has(caseData.difficulty || "")) {
     issues.push({ caseId: id, path: "difficulty", severity: "error", message: `难度必须为基础、标准或挑战，当前为${caseData.difficulty || "空"}。` });

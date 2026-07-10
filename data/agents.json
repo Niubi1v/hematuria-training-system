@@ -51,8 +51,8 @@
       "en": "2. Investigation"
     },
     "competency": {
-      "zh": "检查决策",
-      "en": "Investigation decision-making"
+      "zh": "检查与资源管理",
+      "en": "Investigation and resource stewardship"
     },
     "mainWindowFunction": {
       "zh": "查体、检验、影像、内镜、病理及围术期评估；开了什么才返回什么。",
@@ -196,8 +196,8 @@
       "en": "6. Perioperative Management"
     },
     "competency": {
-      "zh": "围术期管理",
-      "en": "Perioperative management"
+      "zh": "患者安全与围术期优化",
+      "en": "Patient safety and perioperative optimization"
     },
     "mainWindowFunction": {
       "zh": "术前优化、ERAS、抗栓、感染控制、备血、VTE及并发症预防。",

@@ -164,6 +164,7 @@ function stageStandard(caseData: CaseData, stageKey: StageKey) {
   if (stageKey === "orders") return `${clinical.requiredLabs}；${clinical.specialTests}；${clinical.imagingAndProcedures}；${clinical.orderReason}`;
   if (stageKey === "consult") return `${clinical.consultDepartments}；${clinical.consultQuestions}`;
   if (stageKey === "treatment") return `${clinical.immediateTreatment}；${clinical.definitiveTreatment}`;
+  if (stageKey === "perioperative") return caseData.standardManagement?.perioperative || caseData.agentProfile?.perioperativePreparation || "评估麻醉、心肺功能、感染、肾功能、贫血、抗栓用药、VTE风险和ERAS措施。";
   if (stageKey === "debrief") return [
     clinical.keyHistory,
     clinical.diagnosticReasoning,

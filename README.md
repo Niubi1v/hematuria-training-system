@@ -57,7 +57,10 @@ data/case_validation_report.json
 data/evaluator_rubric.json
 data/osce_rubric.json
 data/debriefing_rubric.json
+data/case_history_qc_report.json
 ```
+
+`scripts/structure-patient-history.ts` 会为42例生成 `structuredHistory`，将吸烟、饮酒、职业暴露、慢性病、手术/输血/过敏史、泌尿史和长期用药拆成可独立回答的事实。原始病例未明确记载而为教学模拟补全的字段统一标记 `author_added_for_simulation` 与 `teacherReviewRequired: true`，详见 `CASE_DATA_QC_REPORT.md`。
 
 病例 schema 及运行时校验位于 `src/lib/caseSchema.ts`。开发环境会报告 schema 错误；生产界面不渲染教师答案和病例特异漏项。
 
@@ -99,6 +102,14 @@ AGENT_API_ALLOWED_ORIGIN=https://niubi1v.github.io
 
 不要把真实 API Key 写入代码、`.env.example` 或 GitHub。
 
+Patient Agent API 返回：`replyText`、`matchedSlotIds`、`matchedFacts`、`answerSource`、`confidence`、`safetyFlags` 和 `fallbackReason`。DeepSeek 只负责把当前已允许的事实润色成患者口吻，结构化事实和越界过滤仍由服务端控制；AI输出不合格时使用同一事实的确定性规则回答。
+
+## 语音设置
+
+默认使用浏览器 Web Speech API，不产生额外付费调用。支持中文/英文系统音色筛选、音色选择、试听、语速 `0.80-1.15`、音调 `0.85-1.10`、暂停、继续、停止和重播；偏好保存在本机 `localStorage`。接口预留 `browser | azure | disabled` 三种 provider，当前仅启用 `browser` 与 `disabled`。
+
+如后续接入 Azure Speech，API Key 和区域必须放在服务端环境变量中，由服务端签发短时令牌；不得把长期密钥写入 GitHub Pages、`NEXT_PUBLIC_*` 或浏览器存储。接入前还需完成费用、隐私和跨境数据评估。
+
 ## GitHub Pages 部署
 
 仓库已配置 `.github/workflows/deploy.yml`，自动设置 `/hematuria-training-system/` basePath、构建52个静态页面并部署。
@@ -125,6 +136,10 @@ RCT 页面定位为“离线原型数据采集”，支持字段校验、重复I
 - AI 是否真实可用取决于 Vercel 环境变量、DeepSeek账户余额、网络和API状态；失败时系统明确显示规则库/降级模式。
 
 下一阶段建议增加独立后端、PostgreSQL、教师/学生身份认证、服务端病例答案与检查报告释放、研究数据审计和集中备份。
+
+## 本轮病例事实复核
+
+工程层已完成42例结构化校验和17类问题回归。病例原表大量生活史字段未明确记载，因此自动补全报告中仍有需教师审核的事实；正式OSCE前应由导师逐例确认，尤其是吸烟量、饮酒量、职业、女性月经/妊娠和既往阴性史。程序不会把这些补全项标记为原始资料。
 
 ## 医学边界
 

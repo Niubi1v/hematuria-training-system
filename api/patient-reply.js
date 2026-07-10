@@ -1,4 +1,5 @@
 const cases = require("../data/cases.json");
+const { matchStructuredFacts } = require("./lib/structuredFacts.js");
 
 const blockedTerms = [
   "根据原始病史",
@@ -116,7 +117,7 @@ function asBullets(lines) {
       const trimmed = line.replace(/^[-•\s]*/, "").trim();
       return trimmed.length > 80 ? `${trimmed.slice(0, 80).replace(/[，。；;\s]*$/g, "")}。` : trimmed;
     });
-  return cleaned.length ? cleaned.map((line) => `- ${line}`).join("\n") : "- 这个我没有特别注意到。";
+  return cleaned.length ? cleaned.join("") : "这个我没有特别注意到。";
 }
 
 function getCaseById(caseId) {
@@ -266,13 +267,13 @@ const defaults = {
 function ruleReply(caseData, question) {
   const type = semantic(question);
   if (type === "diagnosis") {
-    return { replyText: "- 这个我不清楚，需要医生判断。", matchedSlotIds: [], revealedFields: [], blockedFields: ["diagnosis"], safetyFlags: ["blocked_diagnosis_request"] };
+    return { replyText: "这个我不清楚，需要医生判断。", matchedSlotIds: [], revealedFields: [], blockedFields: ["diagnosis"], safetyFlags: ["blocked_diagnosis_request"] };
   }
   if (type === "report") {
-    return { replyText: "- 我做过的检查具体结果说不清楚，您需要查看检查报告。", matchedSlotIds: [], revealedFields: [], blockedFields: ["order_results"], safetyFlags: ["blocked_report_request"] };
+    return { replyText: "我做过的检查具体结果说不清楚，您需要查看检查报告。", matchedSlotIds: [], revealedFields: [], blockedFields: ["order_results"], safetyFlags: ["blocked_report_request"] };
   }
   if (!type) {
-    return { replyText: "- 医生，您能问得再具体一点吗？我不太明白您想问哪方面。", matchedSlotIds: [], revealedFields: [], blockedFields: [], safetyFlags: ["no_slot_match"] };
+    return { replyText: "医生，您能问得再具体一点吗？我不太明白您想问哪方面。", matchedSlotIds: [], revealedFields: [], blockedFields: [], safetyFlags: ["no_slot_match"] };
   }
   const slot = findSlot(caseData, slotKeywords[type] || []);
   const safeSlotAnswer = slot?.patientAnswer && !containsBlocked(slot.patientAnswer).length ? slot.patientAnswer : "";
@@ -289,7 +290,7 @@ function ruleReply(caseData, question) {
 function filterReply(text) {
   const hits = containsBlocked(text);
   const lines = String(text || "").split(/\n+/).map((line) => line.trim()).filter(Boolean);
-  const hasBulletShape = lines.length > 0 && lines.every((line) => line.startsWith("- "));
+  const hasBulletShape = lines.length > 0 && lines.every((line) => !/^[-•*#]/.test(line));
   const tooLong = lines.some((line) => line.replace(/^-\s*/, "").length > 80) || String(text || "").length > 180;
   return { ok: hits.length === 0 && hasBulletShape && !tooLong, hits };
 }
@@ -318,7 +319,7 @@ async function callLLM(payload) {
         messages: [
           {
             role: "system",
-            content: "你是血尿训练系统中的标准化患者。只根据 currentAllowedAnswer 回答当前问题；不得透露检查、影像、病理、诊断、治疗、评分点；不得说根据病例资料、未主动诉、需追问。输出1-2条中文分点短句，每条不超过80字。"
+            content: "你是血尿训练系统中的标准化患者。只根据 currentAllowedAnswer 回答当前问题；不得透露检查、影像、病理、诊断、治疗、评分点；不得说根据病例资料、未主动诉、需追问。直接输出第一人称自然短句，不使用Markdown项目符号，不超过80字。"
           },
           { role: "user", content: JSON.stringify(payload) }
         ]
@@ -353,12 +354,13 @@ module.exports = async function handler(req, res) {
     const question = String(body.studentQuestion || "").trim();
     if (!question) return res.status(400).json({ error: "studentQuestion is required" });
 
-    const fallback = ruleReply(caseData, question);
+    const structured = matchStructuredFacts(caseData, question, body.language || "zh");
+    const fallback = structured ? { ...structured, revealedFields: structured.matchedFacts, blockedFields: [] } : ruleReply(caseData, question);
     const model = process.env.LLM_MODEL || "local-rule";
     const provider = process.env.LLM_PROVIDER || "custom";
     const cacheKey = `${body.caseId}:${fallback.matchedSlotIds.join(",")}:${normalize(question)}:${model}`;
     if (body.mode === "rule" || !fallback.matchedSlotIds.length || fallback.safetyFlags.length) {
-      return res.status(200).json({ ...fallback, provider: "rule", model: "local-rule", isFallback: true });
+      return res.status(200).json({ ...fallback, provider: "rule", model: "local-rule", isFallback: true, fallbackReason: body.mode === "rule" ? "rule_mode" : "no_ai_match" });
     }
     if (cache.has(cacheKey)) return res.status(200).json(cache.get(cacheKey));
 
@@ -389,11 +391,15 @@ module.exports = async function handler(req, res) {
         provider,
         model,
         isFallback: false
+        ,matchedFacts: fallback.matchedFacts || []
+        ,answerSource: fallback.answerSource || provider
+        ,confidence: fallback.confidence || 0.95
+        ,fallbackReason: ""
       };
       cache.set(cacheKey, result);
       return res.status(200).json(result);
     } catch {
-      return res.status(200).json({ ...fallback, provider, model, isFallback: true });
+      return res.status(200).json({ ...fallback, provider, model, isFallback: true, fallbackReason: "ai_error" });
     }
   } catch (error) {
     return res.status(500).json({ error: error instanceof Error ? error.message : "Patient API failed" });

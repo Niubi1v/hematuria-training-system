@@ -15,11 +15,14 @@
     "test:session": "tsx scripts/test-dynamic-patient-session.ts",
     "test:complaint": "tsx scripts/test-chief-complaint.ts",
     "test:product": "tsx scripts/test-product-audit.ts",
-    "test": "tsx scripts/test-patient-agent.ts && tsx scripts/test-history-rubric.ts && tsx scripts/test-dynamic-patient-session.ts && tsx scripts/test-chief-complaint.ts && tsx scripts/test-product-audit.ts",
+    "test:history-matrix": "tsx scripts/test-structured-history-matrix.ts",
+    "test:e2e-contract": "tsx scripts/test-representative-e2e.ts",
+    "test": "tsx scripts/test-patient-agent.ts && tsx scripts/test-history-rubric.ts && tsx scripts/test-dynamic-patient-session.ts && tsx scripts/test-chief-complaint.ts && tsx scripts/test-product-audit.ts && tsx scripts/test-structured-history-matrix.ts && tsx scripts/test-representative-e2e.ts",
     "dev:api": "tsx scripts/dev-patient-api.ts",
     "start": "next dev",
     "lint": "node scripts/run-lint.mjs",
-    "convert:excel": "tsx scripts/convert-tutor-template-cases.ts work/source/v2_only_cases.xlsx data && tsx scripts/convert-frontend-fixes.ts work/source/frontend_order_consult_fix.xlsx data && tsx scripts/convert-diagnostic-knowledge.ts work/source/hematuria_diagnostics_scoring_rules.xlsx data && tsx scripts/convert-bilingual-7agent.ts work/source/v2_bilingual.xlsx data && tsx scripts/convert-supplement-30-ai.ts work/source/supplement_30_ai.xlsx data && tsx scripts/normalize-case-library.ts"
+    "structure:history": "tsx scripts/structure-patient-history.ts",
+    "convert:excel": "tsx scripts/convert-tutor-template-cases.ts work/source/v2_only_cases.xlsx data && tsx scripts/convert-frontend-fixes.ts work/source/frontend_order_consult_fix.xlsx data && tsx scripts/convert-diagnostic-knowledge.ts work/source/hematuria_diagnostics_scoring_rules.xlsx data && tsx scripts/convert-bilingual-7agent.ts work/source/v2_bilingual.xlsx data && tsx scripts/convert-supplement-30-ai.ts work/source/supplement_30_ai.xlsx data && tsx scripts/normalize-case-library.ts && tsx scripts/structure-patient-history.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",

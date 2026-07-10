@@ -52,7 +52,7 @@ export function filterPatientReply(text: string) {
     .split(/\n+/)
     .map((line) => line.trim())
     .filter(Boolean);
-  const hasBulletShape = lines.length > 0 && lines.every((line) => line.startsWith("- "));
+  const hasBulletShape = lines.length > 0 && lines.every((line) => !/^[-•*#]/.test(line));
   const tooLong = lines.some((line) => line.replace(/^-\s*/, "").length > 80) || text.length > 180;
   return {
     ok: hits.length === 0 && hasBulletShape && !tooLong,
@@ -70,6 +70,6 @@ export function sanitizeRuleReply(text: string) {
     .map((line) => line.replace(/^[-•\s]*/, ""))
     .filter((line) => !blockedPatientOutputTerms.some((term) => line.includes(term)))
     .slice(0, 2)
-    .map((line) => `- ${line.length > 80 ? `${line.slice(0, 80)}。` : line}`);
-  return cleaned.length ? cleaned.join("\n") : "- 这个我不太清楚。";
+    .map((line) => line.length > 80 ? `${line.slice(0, 80)}。` : line);
+  return cleaned.length ? cleaned.join("") : "这个我不太清楚。";
 }

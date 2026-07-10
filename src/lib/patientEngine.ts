@@ -1,6 +1,7 @@
 import { EMPTY_COLLECTED } from "./keyPoints";
 import questionSlotsJson from "../../data/question_slots.json";
 import type { CaseData, CollectedMap, InterviewAnswer, InterviewSlot, KeyPointId } from "./types";
+import { matchStructuredPatientQuestion } from "./structuredPatientReply";
 
 export type PatientReplyResult = {
   replyText: string;
@@ -8,6 +9,10 @@ export type PatientReplyResult = {
   revealedFields: string[];
   blockedTeacherFields: string[];
   safetyFlags: string[];
+  matchedFacts?: string[];
+  answerSource?: "source" | "author_added_for_simulation" | "mixed" | "rule";
+  confidence?: number;
+  fallbackReason?: string;
 };
 
 const questionSlots = questionSlotsJson as InterviewSlot[];
@@ -204,7 +209,7 @@ function asBullets(lines: string[]) {
       const trimmed = line.replace(/^[-•\s]*/, "").trim();
       return trimmed.length > 80 ? `${trimmed.slice(0, 80).replace(/[，。；;\s]*$/g, "")}。` : trimmed;
     });
-  return cleaned.length ? cleaned.map((line) => `- ${line}`).join("\n") : "- 这个我没有特别注意到。";
+  return cleaned.length ? cleaned.join("") : "这个我没有特别注意到。";
 }
 
 function sentenceWith(value: string | undefined, words: string[]) {
@@ -464,6 +469,14 @@ function semanticReply(caseData: CaseData, semantic: Semantic, question: string)
 }
 
 function keyPointFromSlot(caseData: CaseData, slotId: string): KeyPointId | undefined {
+  if (slotId === "LIFE_SMOKING") return "smoking";
+  if (slotId === "LIFE_OCCUPATION" || slotId === "LIFE_EXPOSURE") return "occupation";
+  if (slotId === "PAST_STONE") return "stoneHistory";
+  if (slotId === "PAST_UTI") return "infectionHistory";
+  if (slotId === "PAST_TRAUMA" || slotId === "PAST_URINARY_PROCEDURE") return "trauma";
+  if (slotId === "MED_ALL" || slotId === "MED_ANTICOAGULANT" || slotId === "MED_ANTIPLATELET") return "anticoagulants";
+  if (slotId === "FAMILY_HISTORY") return "tumorFamilyHistory";
+  if (/^(PAST_|LIFE_ALCOHOL|GYNE_)/.test(slotId)) return "historyBundle";
   const slot = caseData.interviewAnswers?.[slotId];
   const text = `${slot?.label || ""} ${slot?.possibleQuestion || ""}`;
   if (/时相|全程|终末|起始|一直红/.test(text)) return "hematuriaPhase";
@@ -494,14 +507,18 @@ function broadHistoryReply(caseData: CaseData) {
 
 export function generatePatientReply({
   caseData,
-  userQuestion
+  userQuestion,
+  language = "zh"
 }: {
   caseData: CaseData;
   userQuestion: string;
   stage?: string;
   mode?: string;
+  language?: "zh" | "en";
 }): PatientReplyResult {
   const question = userQuestion.trim();
+  const structured = matchStructuredPatientQuestion(caseData, question, language);
+  if (structured) return { ...structured, revealedFields: structured.matchedFacts, blockedTeacherFields: [] };
   const semantic = semanticFromQuestion(question);
 
   if (semantic === "diagnosis") {

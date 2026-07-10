@@ -36,6 +36,11 @@ export type AgentChatResponse = {
   blockedDataKeys: string[];
   safetyFlags: string[];
   isFallback: boolean;
+  matchedSlotIds?: string[];
+  matchedFacts?: string[];
+  answerSource?: string;
+  confidence?: number;
+  fallbackReason?: string;
 };
 
 const blockedTeacherKeys = ["diagnosis", "imaging", "pathology", "treatment", "teacherOnlyData", "case_card", "scoring"];
@@ -83,7 +88,8 @@ export async function handleAgentChatRequest(input: AgentChatRequest): Promise<A
       studentQuestion: input.studentInput,
       conversationHistory: input.conversationHistory,
       askedSlotIds: input.askedSlotIds,
-      mode: input.mode === "rule" ? "rule" : "ai"
+      mode: input.mode === "rule" ? "rule" : "ai",
+      language: input.language || "zh"
     });
     return {
       agentId,
@@ -94,7 +100,12 @@ export async function handleAgentChatRequest(input: AgentChatRequest): Promise<A
       revealedDataKeys: patient.revealedFields.length ? patient.revealedFields : patient.matchedSlotIds,
       blockedDataKeys: patient.blockedFields.length ? patient.blockedFields : blockedTeacherKeys,
       safetyFlags: patient.safetyFlags,
-      isFallback: patient.isFallback
+      isFallback: patient.isFallback,
+      matchedSlotIds: patient.matchedSlotIds,
+      matchedFacts: patient.matchedFacts,
+      answerSource: patient.answerSource,
+      confidence: patient.confidence,
+      fallbackReason: patient.fallbackReason
     };
   }
 

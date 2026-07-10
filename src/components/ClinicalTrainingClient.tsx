@@ -16,10 +16,13 @@ import {
   MicOff,
   RotateCcw,
   Send,
+  Settings2,
+  Pause,
+  Play,
+  Square,
   Stethoscope,
   UsersRound,
-  Volume2,
-  VolumeX
+  Volume2
 } from "lucide-react";
 import agentsJson from "@/data/agents.json";
 import casesJson from "@/data/cases.json";
@@ -63,6 +66,8 @@ type TrainingMode = "free" | "osce" | "demo" | "rct" | "random";
 type LanguageCode = "zh" | "en";
 type AiMode = "deepseek" | "rule" | "debug";
 type AiStatus = "unknown" | "checking" | "connected" | "fallback" | "error";
+type SpeechState = "off" | "speaking" | "paused";
+type SpeechProvider = "browser" | "azure" | "disabled";
 type AgentStageNo = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 type StudentVisibleCase = Pick<CaseData, "id" | "studentChiefComplaint" | "chiefComplaint" | "age" | "sex" | "difficulty">;
 type TimelineEvent = {
@@ -117,6 +122,10 @@ type PatientReplyApiResponse = {
   model?: string;
   usedModel?: string;
   isFallback: boolean;
+  matchedFacts?: string[];
+  answerSource?: string;
+  confidence?: number;
+  fallbackReason?: string;
   debug?: Record<string, unknown>;
 };
 
@@ -278,7 +287,8 @@ function stageScoreKey(stageNo: AgentStageNo): StageKey {
   if (stageNo === 2) return "orders";
   if (stageNo === 3) return "diagnosis";
   if (stageNo === 4) return "consult";
-  if (stageNo === 5 || stageNo === 6) return "treatment";
+  if (stageNo === 5) return "treatment";
+  if (stageNo === 6) return "perioperative";
   return "debrief";
 }
 
@@ -568,6 +578,14 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [speechOutputSupported, setSpeechOutputSupported] = useState(false);
   const [listening, setListening] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(false);
+  const [speechSettingsOpen, setSpeechSettingsOpen] = useState(false);
+  const [speechVoices, setSpeechVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [speechVoiceName, setSpeechVoiceName] = useState("");
+  const [speechRate, setSpeechRate] = useState(0.92);
+  const [speechPitch, setSpeechPitch] = useState(1);
+  const [speechState, setSpeechState] = useState<SpeechState>("off");
+  const [speechProvider, setSpeechProvider] = useState<SpeechProvider>("browser");
+  const [lastSpokenText, setLastSpokenText] = useState("");
   const [aiMode, setAiMode] = useState<AiMode>("deepseek");
   const [aiStatus, setAiStatus] = useState<AiStatus>("unknown");
   const [aiSessionId, setAiSessionId] = useState("");
@@ -608,7 +626,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   })).filter((group) => group.items.length > 0), []);
 
   useEffect(() => {
-    const storageInit = initializeStorageVersion("2.1.0");
+    const storageInit = initializeStorageVersion("2.2.0");
     if (storageInit.error) setStorageWarning("浏览器存储不可用，本次训练可能无法断点续训。");
     let savedLang: LanguageCode | null = null;
     let savedAiMode: AiMode | null = null;
@@ -628,6 +646,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     else setRuntimeMode(mode);
     setSpeechInputSupported(Boolean(getSpeechRecognition()));
     setSpeechOutputSupported("speechSynthesis" in window);
+    const savedSpeech = readJsonStorage("hematuria-speech-preferences", { enabled: false, provider: "browser" as SpeechProvider, voiceName: "", rate: 0.92, pitch: 1 }).value;
+    setAutoSpeak(Boolean(savedSpeech.enabled));
+    setSpeechVoiceName(String(savedSpeech.voiceName || ""));
+    setSpeechRate(Math.min(1.15, Math.max(0.8, Number(savedSpeech.rate) || 0.92)));
+    setSpeechPitch(Math.min(1.1, Math.max(0.85, Number(savedSpeech.pitch) || 1)));
+    setSpeechProvider(savedSpeech.provider === "disabled" || savedSpeech.provider === "azure" ? savedSpeech.provider : "browser");
 
     const savedResult = readJsonStorage<{
       activeStageNo?: AgentStageNo;
@@ -763,6 +787,29 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     if (panel) panel.scrollTo({ top: panel.scrollHeight, behavior: "smooth" });
   }, [activeStageNo, messages.length, patientReplyLoading]);
 
+  useEffect(() => {
+    if (!speechOutputSupported) return;
+    const loadVoices = () => {
+      const locale = lang === "en" ? /en-(US|GB)/i : /zh-(CN|Hans)|Mandarin/i;
+      const available = window.speechSynthesis.getVoices().filter((voice) => locale.test(`${voice.lang} ${voice.name}`));
+      setSpeechVoices(available);
+      if (!speechVoiceName && available.length) {
+        const isFemale = caseData?.sex === "女";
+        const preferred = available.find((voice) => isFemale ? /Xiaoxiao|Xiaoyi|Tingting|female/i.test(voice.name) : /Yunxi|Yunjian|male/i.test(voice.name))
+          || available.find((voice) => /Microsoft|Google/i.test(voice.name))
+          || available[0];
+        setSpeechVoiceName(preferred.name);
+      }
+    };
+    loadVoices();
+    window.speechSynthesis.addEventListener("voiceschanged", loadVoices);
+    return () => window.speechSynthesis.removeEventListener("voiceschanged", loadVoices);
+  }, [caseData?.sex, lang, speechOutputSupported, speechVoiceName]);
+
+  useEffect(() => {
+    writeJsonStorage("hematuria-speech-preferences", { enabled: autoSpeak, provider: speechProvider, voiceName: speechVoiceName, rate: speechRate, pitch: speechPitch });
+  }, [autoSpeak, speechPitch, speechProvider, speechRate, speechVoiceName]);
+
   function addTimeline(type: TimelineEvent["type"], label: string, detail: string, stageNo: AgentStageNo = activeStageNo) {
     setTimeline((current) => [...current, { id: nowEventId(), stageNo, type, label, detail, at: new Date().toISOString() }]);
   }
@@ -776,14 +823,29 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     setAnswers((current) => ({ ...current, [key]: value }));
   }
 
-  function speak(text: string) {
-    if (!speechOutputSupported || !autoSpeak) return;
+  function speak(text: string, force = false) {
+    if (!speechOutputSupported || speechProvider !== "browser" || (!autoSpeak && !force)) return;
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang === "en" ? "en-US" : "zh-CN";
-    utterance.rate = 0.95;
-    window.speechSynthesis.speak(utterance);
+    const clean = text.replace(/^患者[:：]\s*/i, "").replace(/^[-•*#]\s*/gm, "").replace(/\s+/g, " ").trim();
+    const segments = clean.split(/(?<=[。！？!?])/).map((item) => item.trim()).filter(Boolean);
+    const voice = speechVoices.find((item) => item.name === speechVoiceName);
+    setLastSpokenText(clean);
+    setSpeechState("speaking");
+    segments.forEach((segment, index) => {
+      const utterance = new SpeechSynthesisUtterance(segment);
+      utterance.lang = lang === "en" ? "en-US" : "zh-CN";
+      utterance.rate = speechRate;
+      utterance.pitch = speechPitch;
+      if (voice) utterance.voice = voice;
+      if (index === segments.length - 1) utterance.onend = () => setSpeechState("off");
+      utterance.onerror = () => setSpeechState("off");
+      window.speechSynthesis.speak(utterance);
+    });
   }
+
+  function pauseSpeech() { window.speechSynthesis.pause(); setSpeechState("paused"); }
+  function resumeSpeech() { window.speechSynthesis.resume(); setSpeechState("speaking"); }
+  function stopSpeech() { window.speechSynthesis.cancel(); setSpeechState("off"); }
 
   async function submitQuestion(textOverride?: string) {
     if (!caseData) return;
@@ -980,6 +1042,13 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       alert(t(lang, "purposeRequired"));
       return;
     }
+    if (activeStageNo === 3) {
+      const differentialCount = answers.differentials.split(/[；;、,，\n]/).map((item) => item.trim()).filter(Boolean).length;
+      if (!answers.diagnosis.trim() || answers.diagnosticEvidence.trim().length < 8 || differentialCount < 3 || answers.differentialAnalysis.trim().length < 12) {
+        alert(lang === "en" ? "Enter the most likely diagnosis, evidence, at least three ranked differentials, and support/opposition analysis." : "请填写最可能诊断、诊断依据、至少3个有优先级的鉴别诊断及各自支持/反对点。");
+        return;
+      }
+    }
     const answerText = [
       stageAnswerText(activeStageNo, answers, messages, examLogs, orderLogs, mdtOpinions),
       activeStageNo === 1 ? askedSlots.join("；") : ""
@@ -987,8 +1056,19 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     const evaluation = evaluateStage(caseData, stageScoreKey(activeStageNo), answerText);
     setSubmitted((current) => ({ ...current, [activeStageNo]: evaluation }));
     addTimeline("submit", lang === "en" ? "Stage submitted" : "提交阶段", `${agents.find((item) => item.stageNo === activeStageNo)?.agentName[lang] ?? activeStageNo}：${evaluation.score}/${evaluation.max}`, activeStageNo);
-    if (activeStageNo === 6 && !finalReport) setFinalReport(generateReport());
-    if (activeStageNo === 7 && !finalReport) setFinalReport(generateReport());
+  }
+
+  function completeTraining() {
+    if (!caseData || finalReport) return;
+    for (let stage = 1 as AgentStageNo; stage <= 6; stage = (stage + 1) as AgentStageNo) {
+      if (!submitted[stage]) { alert(lang === "en" ? "Complete stages 1-6 first." : "请先完成并提交第1至第6阶段。"); return; }
+    }
+    const evaluation = evaluateStage(caseData, "debrief", answers.debriefReflection);
+    const report = generateReport();
+    if (!report) return;
+    setSubmitted((current) => ({ ...current, 7: evaluation }));
+    setFinalReport(report);
+    addTimeline("submit", lang === "en" ? "Final report generated" : "完成训练并生成最终报告", `${report.total}/${report.max}`, 7);
   }
 
   function canOpenStage(stageNo: AgentStageNo) {
@@ -1142,11 +1222,34 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             <div>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold">Standardized Patient Agent</h3>
-                <button type="button" onClick={() => setAutoSpeak((value) => !value)} disabled={!speechOutputSupported} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm text-clinic-muted hover:border-clinic-blue disabled:opacity-50">
-                  {autoSpeak ? <Volume2 size={16} /> : <VolumeX size={16} />}
-                  {autoSpeak ? "Voice on" : "Voice off"}
+                <button type="button" onClick={() => setSpeechSettingsOpen(true)} disabled={!speechOutputSupported} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm text-clinic-muted hover:border-clinic-blue disabled:opacity-50">
+                  <Settings2 size={16} /> {lang === "en" ? "Voice settings" : "语音设置"}
+                  <span className="sr-only">{autoSpeak ? "on" : "off"}</span>
                 </button>
               </div>
+              {speechSettingsOpen && (
+                <div role="dialog" aria-modal="true" aria-label={lang === "en" ? "Voice settings" : "语音设置"} className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4">
+                  <section className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
+                    <div className="flex items-center justify-between gap-3">
+                      <h4 className="font-semibold text-clinic-blue">{lang === "en" ? "Voice settings" : "语音设置"}</h4>
+                      <button type="button" onClick={() => setSpeechSettingsOpen(false)} className="rounded-md px-2 py-1 text-sm hover:bg-clinic-paper" aria-label={lang === "en" ? "Close" : "关闭"}>×</button>
+                    </div>
+                    <label className="mt-4 flex items-center justify-between gap-3 text-sm"><span>{lang === "en" ? "Read patient replies" : "自动朗读患者回答"}</span><input type="checkbox" checked={autoSpeak} onChange={(event) => setAutoSpeak(event.target.checked)} /></label>
+                    <label className="mt-4 block text-sm"><span>{lang === "en" ? "Provider" : "语音来源"}</span><select value={speechProvider} onChange={(event) => setSpeechProvider(event.target.value as SpeechProvider)} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2"><option value="browser">{lang === "en" ? "Browser / system voice" : "浏览器/系统语音"}</option><option value="disabled">{lang === "en" ? "Disabled" : "关闭"}</option><option value="azure" disabled>{lang === "en" ? "Azure Speech (not configured)" : "Azure Speech（未配置）"}</option></select></label>
+                    <label className="mt-4 block text-sm"><span>{lang === "en" ? "Voice" : "音色"}</span><select value={speechVoiceName} onChange={(event) => setSpeechVoiceName(event.target.value)} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2">{speechVoices.map((voice) => <option key={voice.voiceURI} value={voice.name}>{voice.name}</option>)}</select></label>
+                    {!speechVoices.length && <p className="mt-2 text-xs text-amber-700">{lang === "en" ? "No matching system voice was found. Install a Chinese or English voice in system settings." : "未找到匹配的系统音色，请在系统设置中安装中文语音。"}</p>}
+                    <label className="mt-4 block text-sm"><span>{lang === "en" ? "Rate" : "语速"} {speechRate.toFixed(2)}</span><input className="mt-2 w-full" type="range" min="0.8" max="1.15" step="0.01" value={speechRate} onChange={(event) => setSpeechRate(Number(event.target.value))} /></label>
+                    <label className="mt-4 block text-sm"><span>{lang === "en" ? "Pitch" : "音调"} {speechPitch.toFixed(2)}</span><input className="mt-2 w-full" type="range" min="0.85" max="1.1" step="0.01" value={speechPitch} onChange={(event) => setSpeechPitch(Number(event.target.value))} /></label>
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      <button type="button" onClick={() => speak(lang === "en" ? "Hello doctor, I can hear you clearly." : "医生您好，我能听清您的问题。", true)} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-3 py-2 text-sm text-white"><Volume2 size={15} />{lang === "en" ? "Test" : "试听"}</button>
+                      {speechState === "speaking" ? <button type="button" onClick={pauseSpeech} className="rounded-md border border-clinic-line p-2" title={lang === "en" ? "Pause" : "暂停"}><Pause size={16} /></button> : <button type="button" onClick={resumeSpeech} disabled={speechState !== "paused"} className="rounded-md border border-clinic-line p-2 disabled:opacity-50" title={lang === "en" ? "Resume" : "继续"}><Play size={16} /></button>}
+                      <button type="button" onClick={stopSpeech} className="rounded-md border border-clinic-line p-2" title={lang === "en" ? "Stop" : "停止"}><Square size={16} /></button>
+                      <button type="button" onClick={() => lastSpokenText && speak(lastSpokenText, true)} disabled={!lastSpokenText} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm"><RotateCcw size={15} />{lang === "en" ? "Replay" : "重播"}</button>
+                    </div>
+                    <p className="mt-3 text-xs text-clinic-muted">{lang === "en" ? `Status: ${speechState}` : `状态：${speechState === "speaking" ? "朗读中" : speechState === "paused" ? "已暂停" : "已关闭"}`}</p>
+                  </section>
+                </div>
+              )}
               {(sessionInitLoading || sessionInitError) && (
                 <div className={`mt-3 rounded-md px-3 py-2 text-sm ${sessionInitError ? "bg-amber-50 text-amber-800" : "bg-clinic-paper text-clinic-muted"}`}>
                   {sessionInitLoading
@@ -1403,9 +1506,15 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           )}
 
           <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-clinic-line pt-4">
-            <button disabled={Boolean(activeEvaluation)} onClick={submitStage} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white hover:bg-clinic-teal disabled:cursor-not-allowed disabled:opacity-50">
-              <CheckCircle2 size={16} /> {t(lang, "submitStage")}
-            </button>
+            {activeStageNo === 7 ? (
+              <button disabled={Boolean(finalReport)} onClick={completeTraining} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white hover:bg-clinic-teal disabled:cursor-not-allowed disabled:opacity-50">
+                <CheckCircle2 size={16} /> {lang === "en" ? "Finish training and generate final report" : "完成训练并生成最终报告"}
+              </button>
+            ) : (
+              <button disabled={Boolean(activeEvaluation)} onClick={submitStage} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white hover:bg-clinic-teal disabled:cursor-not-allowed disabled:opacity-50">
+                <CheckCircle2 size={16} /> {t(lang, "submitStage")}
+              </button>
+            )}
             {activeEvaluation && activeStageNo !== 7 && (
               <button onClick={() => {
                 const next = nextStage(activeStageNo);

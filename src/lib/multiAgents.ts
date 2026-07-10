@@ -75,6 +75,9 @@ export type Evaluator360Report = {
   }>;
   redFlags: string[];
   ragGuardrails: string[];
+  scoringVersion: string;
+  caseVersion: string;
+  generatedAt: string;
 };
 
 const orderResults = orderResultsJson as OrderResultItem[];
@@ -384,5 +387,5 @@ export function score360(caseData: CaseData, state: Evaluator360State): Evaluato
   const raw = items.reduce((sum, item) => sum + item.score, 0);
   const total = Math.max(0, Math.min(max, raw - redFlags.length * 10));
 
-  return { total, max, items, redFlags, ragGuardrails };
+  return { total, max, items, redFlags, ragGuardrails, scoringVersion: "360-v1.0", caseVersion: caseData.caseVersion || "unknown", generatedAt: new Date().toISOString() };
 }

@@ -127,6 +127,11 @@ module.exports = async function handler(req, res) {
         blockedDataKeys: blockedTeacherKeys,
         safetyFlags: patient.safetyFlags || [],
         isFallback: Boolean(patient.isFallback),
+        matchedSlotIds: patient.matchedSlotIds || [],
+        matchedFacts: patient.matchedFacts || [],
+        answerSource: patient.answerSource || (patient.isFallback ? "rule" : patient.provider),
+        confidence: patient.confidence ?? (patient.isFallback ? 0.85 : 0.95),
+        fallbackReason: patient.fallbackReason || (patient.isFallback ? patient.error || "ai_unavailable_or_rule_mode" : ""),
         ...(body.debug ? { debug: { responseFilter: patient.filter, rewriteTriggered: patient.rewriteTriggered, cacheHit: Boolean(patient.cacheHit), error: patient.error || "" } } : {})
       });
     }
