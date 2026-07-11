@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 
 const base = String(process.env.PRODUCTION_API_BASE_URL || "https://hematuria-training-system.vercel.app").replace(/\/+$/, "");
 const origin = "https://niubi1v.github.io";
+const requireCloudTts = process.env.SMOKE_REQUIRE_TTS !== "false";
 const results = [];
 const sessionDurations = [];
 const patientDurations = [];
@@ -33,7 +34,7 @@ await check("health", async () => {
   const response = await request("/api/health/", { method: "GET" });
   if (response.status !== 200) throw new Error(`HTTP ${response.status}`);
   const body = await response.json();
-  if (!body.patientServiceConfigured || !body.trainingStateConfigured || !body.cloudTtsConfigured) throw new Error(`configuration incomplete: patient=${body.patientServiceConfigured}, state=${body.trainingStateConfigured}, tts=${body.cloudTtsConfigured}`);
+  if (!body.patientServiceConfigured || !body.trainingStateConfigured || (requireCloudTts && !body.cloudTtsConfigured)) throw new Error(`configuration incomplete: patient=${body.patientServiceConfigured}, state=${body.trainingStateConfigured}, tts=${body.cloudTtsConfigured}`);
   if (body.apiVersion !== "2.6.0") throw new Error(`outdated API version: ${body.apiVersion || "missing"}`);
   if (process.env.EXPECTED_DEPLOYMENT_SHA && !String(body.deploymentSha || "").startsWith(process.env.EXPECTED_DEPLOYMENT_SHA)) throw new Error(`deployment SHA mismatch: ${body.deploymentSha || "missing"}`);
 });
@@ -75,10 +76,10 @@ await check("training-action", async () => {
   if (!token) throw new Error("missing signed state token");
 });
 
-for (const [name, voiceName, text] of [
+for (const [name, voiceName, text] of (requireCloudTts ? [
   ["tts-zh-female", "zh-CN-XiaoxiaoNeural", "医生您好"], ["tts-zh-male", "zh-CN-YunxiNeural", "医生您好"],
   ["tts-en-female", "en-US-JennyNeural", "Hello doctor"], ["tts-en-male", "en-US-GuyNeural", "Hello doctor"]
-]) {
+] : [])) {
   await check(name, async () => {
     const response = await request("/api/tts/", { method: "POST", body: JSON.stringify({ voiceName, text }) });
     if (response.status !== 200) throw new Error(`HTTP ${response.status}`);
@@ -89,6 +90,7 @@ for (const [name, voiceName, text] of [
     if (!mp3Like) throw new Error("payload does not have an MP3 signature");
   });
 }
+if (!requireCloudTts) results.push({ name: "cloud-tts", status: "SKIP", detail: "Azure Speech is not configured; browser voice fallback remains available." });
 
 for (const row of results) console.log(`${row.status}\t${row.name}${row.detail ? `\t${row.detail}` : ""}`);
 function metricSummary(values) {

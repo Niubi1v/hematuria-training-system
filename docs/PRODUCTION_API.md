@@ -53,6 +53,15 @@ TTS_ALLOWED_ORIGINS=https://niubi1v.github.io
 pnpm run smoke:production
 ```
 
+若仅配置 DeepSeek、尚未配置 Azure Speech，可先验证真实会话与中英文 AI 问答：
+
+```powershell
+$env:SMOKE_REQUIRE_TTS="false"
+pnpm run smoke:production
+```
+
+该模式会明确将云语音标记为 `SKIP`，不会使用模拟音频冒充生产测试。
+
 测试会真实请求生产环境，验证健康接口、连续 10 次会话初始化、中文/英文各 5 次 Patient Agent、签名训练状态，以及中文男女声和英文男女声四种 Azure MP3。脚本会输出初始化与回答延迟、成功率、P50/P95、规则库降级次数及常见上游错误计数。任何 3xx 重定向、CORS 缺失、服务未配置、非 `audio/mpeg` 或空音频都会失败。
 
 ## 故障表现

@@ -53,6 +53,9 @@ jobs:
       - name: Medical review workbook contract
         run: pnpm run test:medical-review
 
+      - name: Medical review queue contract
+        run: pnpm run test:medical-review-queue
+
       - name: Reviewed v1.4 case import contract
         run: pnpm run test:release-v14
 
