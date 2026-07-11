@@ -25,8 +25,8 @@ export const AZURE_VOICE_BY_PROFILE: Record<`${VoiceProfile["locale"]}:${VoicePr
   "en-US:male": "en-US-GuyNeural"
 };
 
-const femaleHints = ["xiaoxiao", "xiaoyi", "jenny", "aria", "samantha", "tingting", "female", "woman"];
-const maleHints = ["yunxi", "yunyang", "guy", "david", "daniel", "alex", "male", "man"];
+const knownFemaleVoices = ["xiaoxiao", "xiaoyi", "jenny", "aria", "samantha", "sonia", "ava", "tingting"];
+const knownMaleVoices = ["yunxi", "yunyang", "guy", "david", "daniel", "alex", "ryan"];
 const qualityHints = ["natural", "online", "microsoft", "google", "apple", "neural"];
 
 function normalizedLocale(value: string) {
@@ -41,10 +41,14 @@ function localeMatches(voice: VoiceLike, locale: VoiceProfile["locale"]) {
 
 function genderScore(voice: VoiceLike, gender: VoiceProfile["gender"]) {
   const haystack = `${voice.name} ${voice.voiceURI}`.toLowerCase();
-  const expected = gender === "female" ? femaleHints : maleHints;
-  const opposite = gender === "female" ? maleHints : femaleHints;
-  if (expected.some((hint) => haystack.includes(hint))) return 3;
-  if (opposite.some((hint) => haystack.includes(hint))) return -2;
+  const tokens = new Set(haystack.split(/[^a-z]+/).filter(Boolean));
+  const knownFemale = knownFemaleVoices.some((name) => haystack.includes(name));
+  const knownMale = knownMaleVoices.some((name) => haystack.includes(name));
+  const explicitFemale = tokens.has("female") || tokens.has("woman");
+  const explicitMale = tokens.has("male") || tokens.has("man");
+  const inferred = knownFemale || explicitFemale ? "female" : knownMale || explicitMale ? "male" : null;
+  if (inferred === gender) return 3;
+  if (inferred && inferred !== gender) return -2;
   return 0;
 }
 
@@ -74,11 +78,15 @@ export function selectBestVoice<T extends VoiceLike>(voices: T[], options: {
   return scored[0]?.voice ?? null;
 }
 
-export function profileForCase(language: "zh" | "en", sex: string): VoiceProfile {
+export function profileForCase(language: "zh" | "en", sex: string, age?: string | number): VoiceProfile {
+  const numericAge = Number.parseInt(String(age ?? ""), 10);
+  const ageGroup: VoiceProfile["ageGroup"] = Number.isFinite(numericAge)
+    ? numericAge < 18 ? "child" : numericAge >= 65 ? "older" : numericAge < 35 ? "young" : "adult"
+    : "adult";
   return {
     locale: language === "en" ? "en-US" : "zh-CN",
     gender: /女|female|woman/i.test(sex) ? "female" : "male",
-    ageGroup: "adult",
+    ageGroup,
     style: "chat"
   };
 }

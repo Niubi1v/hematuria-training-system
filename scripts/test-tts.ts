@@ -42,4 +42,17 @@ assert(detectReplyLocale("我没有发热。", "en-US") === "zh-CN", "Chinese re
 const manual = selectBestVoice(voices, { ...profileForCase("en", "男"), manualOverride: { voiceURI: "local-en" } });
 assert(manual?.voiceURI === "local-en", "manual override should be scoped and preferred by voiceURI");
 
-console.log("TTS voice selection tests passed for zh/en and male/female profiles.");
+const adversarialVoices: VoiceLike[] = [
+  { name: "Samantha", voiceURI: "apple-samantha", lang: "en-US", localService: true },
+  { name: "Sonia Online Natural", voiceURI: "sonia", lang: "en-US", localService: false },
+  { name: "Ava Female", voiceURI: "ava-female", lang: "en-US", localService: false },
+  { name: "Ryan Online Natural", voiceURI: "ryan", lang: "en-US", localService: false },
+  { name: "Studio Male", voiceURI: "studio-male", lang: "en-US", localService: false }
+];
+assert(selectBestVoice(adversarialVoices, { ...profileForCase("en", "女", 32) })?.voiceURI !== "studio-male", "female must not be misclassified by the substring 'male'");
+assert(selectBestVoice(adversarialVoices, { ...profileForCase("en", "男", 32) })?.voiceURI === "ryan", "known male Ryan voice should be selected");
+assert(profileForCase("zh", "女", 12).ageGroup === "child", "age 12 should select child profile");
+assert(profileForCase("zh", "男", 45).ageGroup === "adult", "age 45 should select adult profile");
+assert(profileForCase("en", "Female", 72).ageGroup === "older", "age 72 should select older profile");
+
+console.log("TTS voice selection tests passed for language, sex, adversarial names, and age profiles.");

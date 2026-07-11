@@ -34,6 +34,7 @@ export type StageEvaluation = {
   warnings: string[];
   standardAnswer: string;
   comment: string;
+  practiceOnly?: boolean;
 };
 
 export type OrderResultLog = {

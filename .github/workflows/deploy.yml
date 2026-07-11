@@ -50,6 +50,9 @@ jobs:
       - name: Unit and behavioral tests
         run: pnpm run test
 
+      - name: Adversarial scoring tests
+        run: pnpm run test:adversarial
+
       - name: Typecheck
         run: pnpm run typecheck
 
@@ -64,7 +67,7 @@ jobs:
 
       - name: Prepare build metadata
         run: |
-          echo "NEXT_PUBLIC_APP_VERSION=2.4.0" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_APP_VERSION=2.4.1" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_GIT_SHA=${GITHUB_SHA::7}" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_BUILD_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_CASE_LIBRARY_VERSION=42-case-2.4" >> "$GITHUB_ENV"

@@ -34,7 +34,6 @@ import orderCatalogPerioperativeJson from "@/data/order_catalog_perioperative.js
 import orderCatalogProceduresJson from "@/data/order_catalog_procedures.json";
 import physicalExamItemsJson from "@/data/physical_exam_items.json";
 import { simplifiedChiefComplaint } from "@/src/lib/chiefComplaint";
-import type { TrainingEvent } from "@/src/lib/eventScoring";
 import { initializeStorageVersion, readJsonStorage, writeJsonStorage } from "@/src/lib/safeStorage";
 import { attemptPointerKey, attemptStorageKey, createAttempt, type AttemptIdentity, type AttemptMode } from "@/src/lib/attemptState";
 import {
@@ -402,19 +401,19 @@ async function requestAiPatientReply({ apiUrl, sessionId, caseId, question, mess
   }
 }
 
-async function requestTrainingAction<T>(body: Record<string, unknown>): Promise<T> {
+async function requestTrainingAction<T>(body: Record<string, unknown>, stateToken = ""): Promise<{ payload: T; stateToken: string }> {
   const controller = new AbortController();
   const timeoutId = globalThis.setTimeout(() => controller.abort(), PATIENT_REPLY_TIMEOUT_MS);
   try {
     const response = await fetch(buildTimeTrainingApiUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...(stateToken ? { "X-Training-State": stateToken } : {}) },
       cache: "no-store",
       signal: controller.signal,
       body: JSON.stringify(body)
     });
     if (!response.ok) throw new Error(`Training action API ${response.status}`);
-    return response.json() as Promise<T>;
+    return { payload: await response.json() as T, stateToken: response.headers.get("X-Training-State") || stateToken };
   } finally {
     globalThis.clearTimeout(timeoutId);
   }
@@ -447,7 +446,10 @@ function FeedbackBox({ evaluation, lang }: { evaluation: StageEvaluation; lang: 
     <section className="mt-5 rounded-lg border border-clinic-line bg-clinic-paper p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className="font-semibold text-clinic-blue">{t(lang, "stageFeedback")}</h3>
-        <span className="rounded-full bg-white px-3 py-1 text-sm font-medium text-clinic-blue">{evaluation.score}/{evaluation.max}</span>
+        <div className="flex items-center gap-2">
+          {evaluation.practiceOnly && <span className="rounded-full bg-amber-50 px-2 py-1 text-xs text-amber-800">{lang === "en" ? "Practice-only feedback" : "仅练习反馈"}</span>}
+          <span className="rounded-full bg-white px-3 py-1 text-sm font-medium text-clinic-blue">{evaluation.score}/{evaluation.max}</span>
+        </div>
       </div>
       <p className="mt-3 text-sm leading-6">{evaluation.comment}</p>
       <div className="mt-3 grid gap-3 md:grid-cols-2">
@@ -565,7 +567,9 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [speechRate, setSpeechRate] = useState(0.92);
   const [speechPitch, setSpeechPitch] = useState(1);
   const [speechState, setSpeechState] = useState<TtsPlaybackState>("idle");
+  const [speechNotice, setSpeechNotice] = useState("");
   const [speechProvider, setSpeechProvider] = useState<TtsProviderPreference>("auto");
+  const [speechPreferencesReady, setSpeechPreferencesReady] = useState(false);
   const [speechNeedsGesture, setSpeechNeedsGesture] = useState(false);
   const [speechGestureDismissed, setSpeechGestureDismissed] = useState(false);
   const [lastSpokenText, setLastSpokenText] = useState("");
@@ -585,11 +589,13 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const speechGenerationRef = useRef(0);
   const timeoutHandledRef = useRef(false);
   const allowNavigationRef = useRef(false);
+  const trainingStateTokenRef = useRef("");
+  const trainingInitPromiseRef = useRef<Promise<string> | null>(null);
   const practiceDeployment = process.env.NEXT_PUBLIC_DEPLOYMENT_TIER !== "formal";
   const isOsce = !practiceDeployment && runtimeMode === "osce";
   const osceLocked = isOsce && osceTimeLeft === 0;
   const display = caseDisplay(caseData, lang);
-  const voiceProfile = useMemo(() => profileForCase(lang, caseData?.sex || initialCaseData.sex), [caseData?.sex, initialCaseData.sex, lang]);
+  const voiceProfile = useMemo(() => profileForCase(lang, caseData?.sex || initialCaseData.sex, caseData?.age || initialCaseData.age), [caseData?.age, caseData?.sex, initialCaseData.age, initialCaseData.sex, lang]);
   const voiceKey = voicePreferenceKey(voiceProfile);
   const selectedBrowserVoice = useMemo(
     () => selectBestVoice(speechVoices, { ...voiceProfile, manualOverride: manualVoiceOverrides[voiceKey] }),
@@ -618,6 +624,37 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     group,
     items: consultCatalog.filter((item) => item.group === group)
   })).filter((group) => group.items.length > 0), []);
+
+  async function ensureTrainingStateToken() {
+    if (trainingStateTokenRef.current) return trainingStateTokenRef.current;
+    if (trainingInitPromiseRef.current) return trainingInitPromiseRef.current;
+    trainingInitPromiseRef.current = (async () => {
+      const storageKey = `hematuria-training-state-v1:${attempt.attemptId}`;
+      try {
+        const saved = sessionStorage.getItem(storageKey);
+        if (saved) {
+          trainingStateTokenRef.current = saved;
+          return saved;
+        }
+      } catch { /* The signed state can continue in memory. */ }
+      const initialized = await requestTrainingAction<{ attemptId: string }>({
+        action: "init-attempt", caseId: caseData.id, attemptId: attempt.attemptId,
+        language: lang, mode: runtimeMode
+      });
+      trainingStateTokenRef.current = initialized.stateToken;
+      try { sessionStorage.setItem(storageKey, initialized.stateToken); } catch { /* Memory fallback. */ }
+      return initialized.stateToken;
+    })().finally(() => { trainingInitPromiseRef.current = null; });
+    return trainingInitPromiseRef.current;
+  }
+
+  async function trainingAction<T>(body: Record<string, unknown>): Promise<T> {
+    const token = await ensureTrainingStateToken();
+    const result = await requestTrainingAction<T>({ ...body, caseId: caseData.id, attemptId: attempt.attemptId, language: lang, mode: runtimeMode }, token);
+    trainingStateTokenRef.current = result.stateToken;
+    try { sessionStorage.setItem(`hematuria-training-state-v1:${attempt.attemptId}`, result.stateToken); } catch { /* Memory fallback. */ }
+    return result.payload;
+  }
 
   useEffect(() => {
     const storageInit = initializeStorageVersion("2.2.0");
@@ -659,6 +696,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     setSpeechRate(Math.min(1.15, Math.max(0.8, Number(savedSpeech.rate) || 0.92)));
     setSpeechPitch(Math.min(1.1, Math.max(0.85, Number(savedSpeech.pitch) || 1)));
     setSpeechProvider(savedSpeech.provider === "disabled" || savedSpeech.provider === "browser" ? savedSpeech.provider : "auto");
+    setSpeechPreferencesReady(true);
 
     const savedResult = readJsonStorage<{
       activeStageNo?: AgentStageNo;
@@ -746,6 +784,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }, [lang]);
 
   useEffect(() => {
+    trainingStateTokenRef.current = "";
+    trainingInitPromiseRef.current = null;
+  }, [attempt.attemptId]);
+
+  useEffect(() => {
     try { localStorage.setItem("hematuria-ai-mode", aiMode); } catch { setStorageWarning("回答来源偏好无法保存。 "); }
     setAiStatus(aiMode === "rule" ? "fallback" : "unknown");
   }, [aiMode]);
@@ -782,9 +825,9 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     if (!osceLocked || timeoutHandledRef.current || finalReport) return;
     timeoutHandledRef.current = true;
     const at = new Date().toISOString();
-    const timeoutEvent: TrainingEvent = { eventId: `${attempt.attemptId}-timeout`, type: "timeout", stageNo: activeStageNo, at, text: "OSCE timer reached 00:00" };
+    const timeoutEvent = { eventId: `${attempt.attemptId}-timeout`, type: "timeout" as const, stageNo: activeStageNo, at, text: "OSCE timer reached 00:00" };
     setTimeline((current) => current.some((item) => item.type === "timeout") ? current : [...current, { id: timeoutEvent.eventId, stageNo: activeStageNo, type: "timeout", label: "OSCE timeout", detail: timeoutEvent.text || "timeout", at }]);
-    void requestTrainingAction<Evaluator360Report>({ action: "score", caseId: caseData.id, events: [...buildScoringEvents(), timeoutEvent], language: lang, attemptId: attempt.attemptId, mode: "osce" })
+    void trainingAction<Evaluator360Report>({ action: "score" })
       .then((report) => { setFinalReport(report); setActiveStageNo(7); })
       .catch(() => setStorageWarning(lang === "en" ? "Automatic timeout submission failed; responses remain locked." : "超时自动交卷失败，作答仍保持锁定。"));
   // The timeout transition is deliberately keyed only to identity/timer state and runs once.
@@ -818,8 +861,9 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }, [caseData?.id, caseData?.sex, lang, speechOutputSupported]);
 
   useEffect(() => {
+    if (!speechPreferencesReady) return;
     writeJsonStorage("hematuria-speech-preferences", { enabled: autoSpeak, provider: speechProvider, manualOverrides: manualVoiceOverrides, rate: speechRate, pitch: speechPitch });
-  }, [autoSpeak, manualVoiceOverrides, speechPitch, speechProvider, speechRate]);
+  }, [autoSpeak, manualVoiceOverrides, speechPitch, speechPreferencesReady, speechProvider, speechRate]);
 
   useEffect(() => () => {
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
@@ -878,6 +922,16 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     setSpeechState(nextState);
   }
 
+  function speechStateLabel() {
+    const labels: Record<TtsPlaybackState, { zh: string; en: string }> = {
+      idle: { zh: "空闲", en: "Idle" }, loading: { zh: "正在准备语音", en: "Preparing audio" },
+      playing: { zh: "朗读中", en: "Speaking" }, paused: { zh: "已暂停", en: "Paused" },
+      "fallback-local": { zh: "使用浏览器语音", en: "Using browser voice" },
+      "fallback-text": { zh: "仅文字模式", en: "Text only" }, failed: { zh: "语音失败", en: "Audio failed" }
+    };
+    return labels[speechState][lang];
+  }
+
   function speakWithBrowser(clean: string, locale: "zh-CN" | "en-US", generation: number) {
     if (!("speechSynthesis" in window)) {
       setSpeechState("fallback-text");
@@ -891,13 +945,16 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       return false;
     }
     const segments = clean.split(/(?<=[。！？!?])/).map((item) => item.trim()).filter(Boolean);
-    setSpeechState("fallback-local");
+    setSpeechState("loading");
     segments.forEach((segment, index) => {
       const utterance = new SpeechSynthesisUtterance(segment);
       utterance.lang = locale;
       utterance.rate = speechRate;
       utterance.pitch = speechPitch;
       utterance.voice = voice;
+      if (index === 0) utterance.onstart = () => {
+        if (speechGenerationRef.current === generation) setSpeechState("fallback-local");
+      };
       if (index === segments.length - 1) utterance.onend = () => {
         if (speechGenerationRef.current === generation) setSpeechState("idle");
       };
@@ -922,6 +979,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     const generation = speechGenerationRef.current;
 
     if (speechProvider === "auto") {
+      setSpeechNotice("");
       setSpeechState("loading");
       const controller = new AbortController();
       ttsAbortRef.current = controller;
@@ -947,7 +1005,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         return;
       } catch (error) {
         if (controller.signal.aborted || speechGenerationRef.current !== generation) return;
-        if (!speakWithBrowser(clean, locale, generation) && error instanceof DOMException && error.name === "NotAllowedError") setSpeechNeedsGesture(true);
+        const browserFallback = speakWithBrowser(clean, locale, generation);
+        setSpeechNotice(browserFallback
+          ? (lang === "en" ? "Cloud audio is unavailable; browser voice is being used." : "云语音暂时不可用，已切换为浏览器语音。")
+          : (lang === "en" ? "Audio is unavailable; continuing in text-only mode." : "语音暂时不可用，已切换为仅文字模式。"));
+        if (!browserFallback && error instanceof DOMException && error.name === "NotAllowedError") setSpeechNeedsGesture(true);
         return;
       }
     }
@@ -997,6 +1059,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     const nextCollected = collectedFromSlots(collected, matchedSlots);
     const nextAskedSlots = unique([...askedSlots, ...(matchedSlots ?? [])]);
     const nextMessages: ChatMessage[] = [...messages, { role: "student", text }, { role: "patient", text: answerText, matchedKeys, matchedSlots }];
+    try {
+      await trainingAction<{ recorded: boolean }>({ action: "history-log", question: text });
+    } catch {
+      setStorageWarning(lang === "en" ? "The question log could not be verified; it will not count toward scoring." : "本次提问日志未能由服务端验证，将不计入评分。 ");
+    }
     setMessages(nextMessages);
     setCollected(nextCollected);
     setAskedSlots(nextAskedSlots);
@@ -1057,7 +1124,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     const text = (textOverride ?? examInput).trim();
     if (!text) return;
     try {
-      const log = await requestTrainingAction<ExamResultLog>({ action: "exam", caseId: caseData.id, input: text, language: lang, attemptId: attempt.attemptId });
+      const log = await trainingAction<ExamResultLog>({ action: "exam", input: text });
       setExamLogs((current) => [...current, log]);
       updateAnswer("physicalExam", `${answers.physicalExam}\n${text}：${log.result}`.trim());
       addTimeline("exam", lang === "en" ? "Physical examination" : "查体", `${text}：${log.result}`, 2);
@@ -1078,9 +1145,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     if (osceLocked) return;
     const text = (textOverride ?? orderInput).trim();
     if (!text) return;
-    const previousOrderIds = orderLogs.flatMap((item) => item.matchedOrders.map((order) => order.orderId));
     try {
-      const matchedLog = await requestTrainingAction<OrderResultLog>({ action: "order", caseId: caseData.id, input: text, previousOrderIds, language: lang, attemptId: attempt.attemptId });
+      const matchedLog = await trainingAction<OrderResultLog>({ action: "order", input: text });
       const hasReport = matchedLog.results.length > 0;
       const log: OrderResultLog = hasReport
         ? { ...matchedLog, pendingResults: matchedLog.results, results: [], returnedAt: undefined, status: "ordered", message: lang === "en" ? "Order placed. The simulated report is pending." : "医嘱已开具，模拟报告返回中。" }
@@ -1122,7 +1188,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     }
     const purpose = [answers.consultPurpose, answers.consultQuestions, answers.consultSummary].filter(Boolean).join("；");
     try {
-      const opinions = await requestTrainingAction<MdtOpinion[]>({ action: "mdt", caseId: caseData.id, departments: answers.consultDepartments, purpose, language: lang, attemptId: attempt.attemptId });
+      const opinions = await trainingAction<MdtOpinion[]>({ action: "mdt", departments: answers.consultDepartments, purpose });
       setMdtOpinions(opinions);
       addTimeline("mdt", "MDT", `${answers.consultDepartments.join("；") || "未选择科室"} - ${purpose}`, 4);
     } catch {
@@ -1130,46 +1196,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     }
   }
 
-  function buildScoringEvents() {
-    const at = new Date().toISOString();
-    let eventIndex = 0;
-    const event = (type: TrainingEvent["type"], stageNo: number, fields: Partial<TrainingEvent> = {}): TrainingEvent => ({ eventId: `score-${initialCaseData.id}-${eventIndex++}`, type, stageNo, at, ...fields });
-    const scoringEvents: TrainingEvent[] = [];
-    askedSlots.forEach((slotId) => {
-      if (!/^HX\d+$/i.test(slotId)) scoringEvents.push(event("slot_answered", 1, { slotId: slotId as TrainingEvent["slotId"], text: messages.find((message) => message.role === "student" && message.matchedSlots?.includes(slotId))?.text || slotId }));
-    });
-    examLogs.forEach((log) => {
-      const exam = physicalExamItems.find((item) => item.displayName === log.input || item.synonyms.includes(log.input));
-      scoringEvents.push(event("physical_exam_performed", 2, { actionId: exam?.examId || log.input, text: log.input }));
-    });
-    orderLogs.forEach((log) => {
-      log.matchedOrders.forEach((order) => scoringEvents.push(event("order_placed", 2, { actionId: order.orderId, text: order.displayName, metadata: { duplicate: Boolean(log.duplicateOrderIds?.includes(order.orderId)) } })));
-      log.results.forEach((result) => scoringEvents.push(event("result_returned", 2, { actionId: result.orderId, text: result.impression || result.result })));
-    });
-    if (answers.diagnosis.trim() && answers.diagnosticEvidence.trim()) scoringEvents.push(event("diagnosis_supported", 3, { actionId: "primary", text: `${answers.diagnosis}：${answers.diagnosticEvidence}` }));
-    answers.differentials.split(/[；;、,，\n]/).map((item) => item.trim()).filter(Boolean).slice(0, 3).forEach((item, index) => scoringEvents.push(event("diagnosis_supported", 3, { actionId: `differential_${index + 1}`, text: item })));
-    if (answers.confirmatoryTests.trim()) scoringEvents.push(event("diagnosis_supported", 3, { actionId: "confirmation", text: answers.confirmatoryTests }));
-    if (answers.consultDepartments.length) scoringEvents.push(event("consult_requested", 4, { actionId: "department", text: answers.consultDepartments.join("；") }));
-    if (answers.consultPurpose.trim()) scoringEvents.push(event("consult_requested", 4, { actionId: "trigger", text: answers.consultPurpose }));
-    if (answers.consultQuestions.trim()) scoringEvents.push(event("consult_requested", 4, { actionId: "question", text: answers.consultQuestions }));
-    if (answers.consultSummary.trim()) scoringEvents.push(event("consult_requested", 4, { actionId: "evidence", text: answers.consultSummary }));
-    if (answers.immediateTreatment.trim()) scoringEvents.push(event("treatment_action", 5, { actionId: "immediate", text: answers.immediateTreatment }));
-    if (answers.admissionTreatment.trim()) scoringEvents.push(event("treatment_action", 5, { actionId: "etiologic", text: answers.admissionTreatment }));
-    if (answers.definitiveTreatment.trim()) scoringEvents.push(event("treatment_action", 5, { actionId: "definitive", text: answers.definitiveTreatment }));
-    if (answers.perioperativePreparation.trim()) scoringEvents.push(event("treatment_action", 6, { actionId: "perioperative", text: answers.perioperativePreparation }));
-    if (answers.followUp.trim()) scoringEvents.push(event("safety_net_provided", 5, { actionId: "followup", text: answers.followUp }));
-    if (answers.patientEducation.trim()) scoringEvents.push(event("safety_net_provided", 5, { actionId: "education", text: answers.patientEducation }));
-    if (answers.debriefReflection.trim().length >= 30) scoringEvents.push(event("reflection_submitted", 7, { actionId: "quality", text: answers.debriefReflection }));
-    return scoringEvents;
-  }
-
   async function generateReport() {
-    return requestTrainingAction<Evaluator360Report>({ action: "score", caseId: caseData.id, events: buildScoringEvents(), language: lang, attemptId: attempt.attemptId });
+    return trainingAction<Evaluator360Report>({ action: "score" });
   }
 
   async function submitStage() {
     if (osceLocked) return;
-    if (submitted[activeStageNo]) return;
     if (activeStageNo === 4 && answers.consultNeeded === "需要会诊" && (answers.consultDepartments.length === 0 || answers.consultPurpose.trim().length < 6 || answers.consultQuestions.trim().length < 6 || answers.consultSummary.trim().length < 6)) {
       alert(t(lang, "purposeRequired"));
       return;
@@ -1186,8 +1218,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       activeStageNo === 1 ? askedSlots.join("；") : ""
     ].filter(Boolean).join("；");
     try {
-      const evaluation = await requestTrainingAction<StageEvaluation>({ action: "stage-feedback", caseId: caseData.id, stageKey: stageScoreKey(activeStageNo), answerText, language: lang, attemptId: attempt.attemptId });
-      setSubmitted((current) => ({ ...current, [activeStageNo]: evaluation }));
+      const evaluation = await trainingAction<StageEvaluation>({ action: "stage-feedback", stageKey: stageScoreKey(activeStageNo), submission: { ...answers, answerText } });
+      setSubmitted((current) => Object.fromEntries(
+        Object.entries({ ...current, [activeStageNo]: evaluation }).filter(([stage]) => Number(stage) <= activeStageNo)
+      ) as Partial<Record<AgentStageNo, StageEvaluation>>);
+      setFinalReport(null);
       addTimeline("submit", lang === "en" ? "Stage submitted" : "提交阶段", `${agents.find((item) => item.stageNo === activeStageNo)?.agentName[lang] ?? activeStageNo}：${evaluation.score}/${evaluation.max}`, activeStageNo);
     } catch {
       setStorageWarning(lang === "en" ? "Stage submission failed. Please retry." : "阶段提交失败，请重试。" );
@@ -1204,10 +1239,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       return;
     }
     try {
-      const [evaluation, report] = await Promise.all([
-        requestTrainingAction<StageEvaluation>({ action: "stage-feedback", caseId: caseData.id, stageKey: "debrief", answerText: answers.debriefReflection, language: lang, attemptId: attempt.attemptId }),
-        generateReport()
-      ]);
+      const evaluation = await trainingAction<StageEvaluation>({ action: "stage-feedback", stageKey: "debrief", submission: { ...answers } });
+      const report = await generateReport();
       setSubmitted((current) => ({ ...current, 7: evaluation }));
       setFinalReport(report);
       const summaries = readJsonStorage<Array<{ attemptId: string; caseId: string; language: LanguageCode; total: number; completedAt: string }>>("hematuria-practice-attempt-summaries-v1", []).value;
@@ -1379,7 +1412,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 <h3 className="text-lg font-semibold">{t(lang, "patientAgent")}</h3>
                 <button type="button" onClick={() => setSpeechSettingsOpen(true)} disabled={!speechOutputSupported} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm text-clinic-muted hover:border-clinic-blue disabled:opacity-50">
                   <Settings2 size={16} /> {t(lang, "voiceSettings")}
-                  <span className="sr-only">{autoSpeak ? t(lang, "speechSpeaking") : t(lang, "speechOff")}</span>
+                  <span className="sr-only">{autoSpeak ? speechStateLabel() : t(lang, "speechOff")}</span>
                 </button>
               </div>
               {speechSettingsOpen && (
@@ -1409,7 +1442,16 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                       <button type="button" onClick={() => stopSpeech()} className="rounded-md border border-clinic-line p-2" title={t(lang, "stop")}><Square size={16} /></button>
                       <button type="button" onClick={() => lastSpokenText && void speak(lastSpokenText, true)} disabled={!lastSpokenText} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm"><RotateCcw size={15} />{t(lang, "replay")}</button>
                     </div>
-                    <p className="mt-3 text-xs text-clinic-muted">{t(lang, "speechStatus")}：{speechState}</p>
+                    <p
+                      data-testid="voice-profile"
+                      data-locale={voiceProfile.locale}
+                      data-gender={voiceProfile.gender}
+                      data-age-group={voiceProfile.ageGroup}
+                      data-cloud-voice={AZURE_VOICE_BY_PROFILE[voicePreferenceKey(voiceProfile)]}
+                      data-speech-state={speechState}
+                      className="mt-3 text-xs text-clinic-muted"
+                    >{t(lang, "speechStatus")}：{speechStateLabel()}</p>
+                    {speechNotice && <p role="status" className="mt-2 text-xs text-amber-700">{speechNotice}</p>}
                   </section>
                 </div>
               )}
@@ -1672,8 +1714,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 <CheckCircle2 size={16} /> {t(lang, "finishTraining")}
               </button>
             ) : (
-              <button disabled={Boolean(activeEvaluation)} onClick={submitStage} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white hover:bg-clinic-teal disabled:cursor-not-allowed disabled:opacity-50">
-                <CheckCircle2 size={16} /> {t(lang, "submitStage")}
+              <button disabled={osceLocked} onClick={submitStage} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white hover:bg-clinic-teal disabled:cursor-not-allowed disabled:opacity-50">
+                <CheckCircle2 size={16} /> {activeEvaluation ? (lang === "en" ? "Resubmit this stage" : "修改后重新提交") : t(lang, "submitStage")}
               </button>
             )}
             {activeEvaluation && activeStageNo !== 7 && (
