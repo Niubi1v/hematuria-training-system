@@ -78,6 +78,7 @@ export type Evaluator360Report = {
   scoringVersion: string;
   caseVersion: string;
   generatedAt: string;
+  reportVersion: number;
 };
 
 const orderResults = orderResultsJson as OrderResultItem[];
@@ -159,29 +160,17 @@ export function generatePhysicalExamResult(caseData: CaseData, input: string): E
   const matchedExam = physicalExamItems.find((item) => includesAny(text, [item.displayName, ...item.synonyms]));
   if (matchedExam) {
     const configured = physicalExamResults.find((item) => item.caseId === caseData.id && item.examId === matchedExam.examId);
-    if (configured) {
+    if (configured && configured.studentVisibleAfterSelection) {
       return { input: text, result: configured.result, at: new Date().toISOString() };
     }
   }
-  const answers = caseData.interviewAnswers ?? {};
-  const bySlot = (slotId: string) => answers[slotId]?.patientAnswer || "未诉明显异常。";
-  let result = "本训练只返回你明确要求检查的体征。该项目需结合现场查体记录，当前病例未提供更多阳性体征。";
+  return { input: text, result: "未匹配到适用于当前患者的已配置查体项目。", at: new Date().toISOString() };
+}
 
-  if (includesAny(text, ["生命体征", "体温", "发热", "寒战", "脉搏", "血压"])) {
-    result = `生命体征需现场测量；与发热寒战相关的病史回答为：${bySlot("HX022")} 血压线索：${bySlot("HX039")}`;
-  } else if (includesAny(text, ["肾区", "叩击痛", "腰痛", "肾绞痛", "肋脊角"])) {
-    result = `请重点查双侧肾区叩击痛和输尿管走行区压痛。患者相关症状回答：${bySlot("HX021")}`;
-  } else if (includesAny(text, ["腹部", "下腹", "耻骨", "膀胱", "尿潴留", "充盈"])) {
-    result = `请重点查腹部压痛、膀胱充盈和耻骨上区叩诊。排尿困难/潴留相关回答：${bySlot("HX020")}`;
-  } else if (includesAny(text, ["水肿", "眼睑", "下肢", "浮肿"])) {
-    result = `请观察眼睑和下肢水肿。患者相关回答：${bySlot("HX025")}`;
-  } else if (includesAny(text, ["外生殖器", "尿道口", "阴道", "月经", "妇科"])) {
-    result = `请检查尿道口、外阴/阴道污染线索并询问月经情况。相关回答：${bySlot("HX029")}`;
-  } else if (includesAny(text, ["皮疹", "关节", "紫癜", "咽部", "扁桃体"])) {
-    result = `请查皮疹、关节和咽部体征，帮助判断肾小球性或系统性疾病线索。上感/咽痛相关回答：${bySlot("HX026")}`;
-  }
-
-  return { input: text, result, at: new Date().toISOString() };
+export function applicablePhysicalExamIds(caseData: CaseData) {
+  return physicalExamResults
+    .filter((item) => item.caseId === caseData.id && item.studentVisibleAfterSelection)
+    .map((item) => item.examId);
 }
 
 export function generateMdtOpinions(caseData: CaseData, departments: string[], purpose: string): MdtOpinion[] {
@@ -387,5 +376,5 @@ export function score360(caseData: CaseData, state: Evaluator360State): Evaluato
   const raw = items.reduce((sum, item) => sum + item.score, 0);
   const total = Math.max(0, Math.min(max, raw - redFlags.length * 10));
 
-  return { total, max, items, redFlags, ragGuardrails, scoringVersion: "360-v1.0", caseVersion: caseData.caseVersion || "unknown", generatedAt: new Date().toISOString() };
+  return { total, max, items, redFlags, ragGuardrails, scoringVersion: "360-v2", caseVersion: caseData.caseVersion || "unknown", generatedAt: new Date().toISOString(), reportVersion: 1 };
 }

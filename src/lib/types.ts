@@ -272,8 +272,15 @@ export type PhysicalExamResult = {
   examId: string;
   displayName: string;
   category: string;
+  applicableSex?: Array<"男" | "女">;
+  minimumAge?: number;
+  maximumAge?: number;
+  applicableDiseaseCategories?: string[];
   result: string;
+  abnormal?: boolean;
   teachingNote: string;
+  studentVisibleAfterSelection?: boolean;
+  teacherOnlyRationale?: string;
 };
 
 export type OsceRubricItem = {
@@ -405,6 +412,7 @@ export type CaseData = {
   };
   questionSlotIds?: string[];
   availableOrderIds?: string[];
+  physicalExamResultIds?: string[];
   orderPrerequisites?: Array<{ orderId: string; prerequisite: string }>;
   emergencyRedFlags?: string[];
   criticalErrors?: string[];

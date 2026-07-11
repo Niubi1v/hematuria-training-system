@@ -72,8 +72,8 @@ export default function CaseCatalogClient({ cases }: { cases: CaseData[] }) {
           <h1 className="text-3xl font-semibold">{lang === "en" ? "Case Selection" : "病例选择"}</h1>
           <p className="mt-2 text-clinic-muted">
             {lang === "en"
-              ? "Select a case and complete the 7-Agent clinical reasoning workflow in order."
-              : "选择病例后，按 7-Agent 顺序完成完整临床思维训练。"}
+              ? "Select a case and complete the seven-stage clinical reasoning workflow in order."
+              : "选择病例后，按7阶段顺序完成完整临床思维训练。"}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

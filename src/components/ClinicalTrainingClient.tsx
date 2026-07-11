@@ -43,6 +43,7 @@ import { askPatient, createEmptyCollected, mergeCollected } from "@/src/lib/pati
 import {
   generateMdtOpinions,
   generatePhysicalExamResult,
+  applicablePhysicalExamIds,
   matchOrderResults,
   score360,
   type Evaluator360Report,
@@ -264,8 +265,8 @@ function nowEventId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function shortTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+function shortTime(iso: string, lang: LanguageCode) {
+  return new Date(iso).toLocaleTimeString(lang === "en" ? "en-GB" : "zh-CN", { hour: "2-digit", minute: "2-digit" });
 }
 
 function formatDuration(seconds: number) {
@@ -341,9 +342,10 @@ function caseDisplay(caseData: CaseData, lang: LanguageCode, enCase?: EnglishCas
   };
 }
 
-function groupPhysicalExamItems() {
+function groupPhysicalExamItems(caseData: CaseData) {
+  const allowed = new Set(applicablePhysicalExamIds(caseData));
   const grouped = new Map<string, PhysicalExamItem[]>();
-  physicalExamItems.forEach((item) => grouped.set(item.category, [...(grouped.get(item.category) ?? []), item]));
+  physicalExamItems.filter((item) => allowed.has(item.examId)).forEach((item) => grouped.set(item.category, [...(grouped.get(item.category) ?? []), item]));
   return Array.from(grouped.entries()).map(([category, items]) => ({ category, items }));
 }
 
@@ -446,20 +448,20 @@ function formatReportLines(text: string) {
   return (text || "").split(/\n|；/).map((line) => line.trim()).filter(Boolean);
 }
 
-function ReportCard({ item }: { item: OrderResultLog["results"][number] }) {
+function ReportCard({ item, lang }: { item: OrderResultLog["results"][number]; lang: LanguageCode }) {
   const lines = formatReportLines(item.result);
   return (
     <article className="mt-3 rounded-md border border-clinic-line bg-white p-4 text-sm leading-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-medium text-clinic-blue">{item.orderCategory}</p>
-        <span className="rounded-full bg-clinic-paper px-2 py-1 text-xs text-clinic-muted">{item.abnormalLevel || "模拟报告"}</span>
+        <span className="rounded-full bg-clinic-paper px-2 py-1 text-xs text-clinic-muted">{item.abnormalLevel || t(lang, "simulatedReport")}</span>
       </div>
       <div className="mt-3 grid gap-2">
         {(lines.length ? lines : [item.result]).map((line) => (
           <p key={line} className="rounded-md bg-clinic-paper px-3 py-2">{line}</p>
         ))}
       </div>
-      {item.teachingExplanation && <p className="mt-3 text-xs leading-5 text-clinic-muted">释放规则：{item.teachingExplanation}</p>}
+      {item.teachingExplanation && <p className="mt-3 text-xs leading-5 text-clinic-muted">{t(lang, "releaseRule")}：{item.teachingExplanation}</p>}
     </article>
   );
 }
@@ -474,32 +476,32 @@ function FeedbackBox({ evaluation, lang }: { evaluation: StageEvaluation; lang: 
       <p className="mt-3 text-sm leading-6">{evaluation.comment}</p>
       <div className="mt-3 grid gap-3 md:grid-cols-2">
         <div className="rounded-md bg-white p-3 text-sm">
-          <p className="font-medium">命中项</p>
-          <p className="mt-2 text-clinic-muted">{evaluation.hits.join("；") || "暂无"}</p>
+          <p className="font-medium">{t(lang, "hitItems")}</p>
+          <p className="mt-2 text-clinic-muted">{evaluation.hits.join("；") || t(lang, "none")}</p>
         </div>
         <div className="rounded-md bg-white p-3 text-sm">
-          <p className="font-medium">漏项/危险点</p>
-          <p className="mt-2 text-clinic-muted">{[...evaluation.misses, ...evaluation.warnings].join("；") || "暂无"}</p>
+          <p className="font-medium">{t(lang, "missingRiskItems")}</p>
+          <p className="mt-2 text-clinic-muted">{[...evaluation.misses, ...evaluation.warnings].join("；") || t(lang, "none")}</p>
         </div>
       </div>
       <details className="mt-3 text-sm">
-        <summary className="cursor-pointer font-medium text-clinic-blue">提交后标准参考</summary>
+        <summary className="cursor-pointer font-medium text-clinic-blue">{t(lang, "standardReference")}</summary>
         <FormattedText text={evaluation.standardAnswer} />
       </details>
     </section>
   );
 }
 
-function FinalReport({ report }: { report: Evaluator360Report }) {
+function FinalReport({ report, lang }: { report: Evaluator360Report; lang: LanguageCode }) {
   return (
     <section className="rounded-lg border border-clinic-line bg-white p-5">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h3 className="text-lg font-semibold text-clinic-blue">能力画像 / Competency Profile</h3>
-          <p className="text-sm text-clinic-muted">基于 7-Agent 全流程记录生成。</p>
+          <h3 className="text-lg font-semibold text-clinic-blue">{t(lang, "competencyProfile")}</h3>
+          <p className="text-sm text-clinic-muted">{t(lang, "reportBasis")}</p>
         </div>
         <div className="flex items-center gap-3">
-          <button type="button" onClick={() => window.print()} className="no-print rounded-md border border-clinic-line px-3 py-2 text-sm font-medium hover:border-clinic-blue">打印报告</button>
+          <button type="button" onClick={() => window.print()} className="no-print rounded-md border border-clinic-line px-3 py-2 text-sm font-medium hover:border-clinic-blue">{t(lang, "printReport")}</button>
           <div className="text-3xl font-semibold text-clinic-blue">{report.total}<span className="text-base text-clinic-muted"> / {report.max}</span></div>
         </div>
       </div>
@@ -522,19 +524,19 @@ function FinalReport({ report }: { report: Evaluator360Report }) {
               </div>
               <p className="mt-2 text-sm text-clinic-muted">{item.comment}</p>
               <div className="mt-3 space-y-1 text-xs leading-5 text-clinic-muted">
-                <p><span className="font-medium text-clinic-ink">做对证据：</span>{item.evidence.join("；") || "暂无可核验证据"}</p>
-                <p><span className="font-medium text-clinic-ink">漏项：</span>{item.misses.slice(0, 5).join("；") || "暂无明显漏项"}</p>
-                {item.sequenceIssues.length > 0 && <p><span className="font-medium text-amber-800">顺序问题：</span>{item.sequenceIssues.join("；")}</p>}
-                {item.overuse.length > 0 && <p><span className="font-medium text-amber-800">重复/过度：</span>{item.overuse.join("；")}</p>}
-                {item.criticalErrors.length > 0 && <p><span className="font-medium text-rose-700">严重错误：</span>{item.criticalErrors.join("；")}</p>}
-                <p><span className="font-medium text-clinic-ink">下次改进：</span>{item.improvements.join("；") || "保持当前操作并进一步提高表达效率。"}</p>
+                <p><span className="font-medium text-clinic-ink">{t(lang, "didWell")}：</span>{item.evidence.join("；") || t(lang, "noEvidence")}</p>
+                <p><span className="font-medium text-clinic-ink">{t(lang, "needsMore")}：</span>{item.misses.slice(0, 5).join("；") || t(lang, "noMissing")}</p>
+                {item.sequenceIssues.length > 0 && <p><span className="font-medium text-amber-800">{t(lang, "sequenceIssues")}：</span>{item.sequenceIssues.join("；")}</p>}
+                {item.overuse.length > 0 && <p><span className="font-medium text-amber-800">{t(lang, "overuse")}：</span>{item.overuse.join("；")}</p>}
+                {item.criticalErrors.length > 0 && <p><span className="font-medium text-rose-700">{t(lang, "criticalErrors")}：</span>{item.criticalErrors.join("；")}</p>}
+                <p><span className="font-medium text-clinic-ink">{t(lang, "nextAdvice")}：</span>{item.improvements.join("；") || (lang === "en" ? "Maintain the current approach and improve communication efficiency." : "保持当前操作并进一步提高表达效率。")}</p>
               </div>
             </div>
           );
         })}
       </div>
       <div className="mt-4 rounded-md bg-clinic-paper p-4">
-        <p className="font-medium text-clinic-blue">Guardrails</p>
+        <p className="font-medium text-clinic-blue">{t(lang, "clinicalSafetyAlerts")}</p>
         <FormattedText text={report.ragGuardrails.join("\n")} />
       </div>
     </section>
@@ -601,7 +603,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const isOsce = runtimeMode === "osce";
   const enCase = useMemo(() => allEnglishCases.find((item) => item.id === initialCaseData.id), [initialCaseData.id]);
   const display = caseData ? caseDisplay(caseData, lang, enCase) : null;
-  const physicalGroups = useMemo(() => groupPhysicalExamItems(), []);
+  const physicalGroups = useMemo(() => caseData ? groupPhysicalExamItems(caseData) : [], [caseData]);
 
   const orderGroups = useMemo(() => {
     const keyword = orderSearch.trim().toLowerCase();
@@ -793,7 +795,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       const locale = lang === "en" ? /en-(US|GB)/i : /zh-(CN|Hans)|Mandarin/i;
       const available = window.speechSynthesis.getVoices().filter((voice) => locale.test(`${voice.lang} ${voice.name}`));
       setSpeechVoices(available);
-      if (!speechVoiceName && available.length) {
+      if (available.length && !available.some((voice) => voice.name === speechVoiceName)) {
         const isFemale = caseData?.sex === "女";
         const preferred = available.find((voice) => isFemale ? /Xiaoxiao|Xiaoyi|Tingting|female/i.test(voice.name) : /Yunxi|Yunjian|male/i.test(voice.name))
           || available.find((voice) => /Microsoft|Google/i.test(voice.name))
@@ -810,12 +812,17 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     writeJsonStorage("hematuria-speech-preferences", { enabled: autoSpeak, provider: speechProvider, voiceName: speechVoiceName, rate: speechRate, pitch: speechPitch });
   }, [autoSpeak, speechPitch, speechProvider, speechRate, speechVoiceName]);
 
+  useEffect(() => () => {
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  }, []);
+
   function addTimeline(type: TimelineEvent["type"], label: string, detail: string, stageNo: AgentStageNo = activeStageNo) {
     setTimeline((current) => [...current, { id: nowEventId(), stageNo, type, label, detail, at: new Date().toISOString() }]);
   }
 
   function setLanguage(next: LanguageCode) {
     setLang(next);
+    window.dispatchEvent(new CustomEvent("hematuria-language-change", { detail: next }));
     if (caseData && messages.length <= 1) setMessages([{ role: "patient", text: patientOpening(caseData, next, enCase) }]);
   }
 
@@ -1063,6 +1070,10 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     for (let stage = 1 as AgentStageNo; stage <= 6; stage = (stage + 1) as AgentStageNo) {
       if (!submitted[stage]) { alert(lang === "en" ? "Complete stages 1-6 first." : "请先完成并提交第1至第6阶段。"); return; }
     }
+    if (answers.debriefReflection.trim().length < 10) {
+      alert(t(lang, "finalReflectionRequired"));
+      return;
+    }
     const evaluation = evaluateStage(caseData, "debrief", answers.debriefReflection);
     const report = generateReport();
     if (!report) return;
@@ -1072,6 +1083,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }
 
   function canOpenStage(stageNo: AgentStageNo) {
+    if (finalReport && stageNo !== 7) return false;
     if (stageNo === 1) return true;
     for (let current = 1 as AgentStageNo; current < stageNo; current = (current + 1) as AgentStageNo) {
       if (!submitted[current]) return false;
@@ -1081,7 +1093,6 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
 
   function openStage(stageNo: AgentStageNo) {
     if (!canOpenStage(stageNo)) return;
-    if (stageNo === 7 && !finalReport) setFinalReport(generateReport());
     setActiveStageNo(stageNo);
     setMobileNavOpen(false);
   }
@@ -1145,16 +1156,16 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             </div>
           )}
           <span className={`rounded-full px-3 py-1 text-xs ${aiStatus === "connected" ? "bg-emerald-50 text-emerald-700" : aiStatus === "checking" || aiStatus === "unknown" ? "bg-slate-50 text-slate-600" : "bg-amber-50 text-amber-700"}`}>
-            {lang === "en" ? "Response source: " : "回答来源："}
+            {t(lang, "responseSource")}：
             {aiStatus === "connected"
-              ? (lang === "en" ? "AI" : "AI")
+              ? t(lang, "aiConnected")
               : aiStatus === "checking"
-                ? (lang === "en" ? "connecting" : "连接中")
+                ? t(lang, "aiChecking")
                 : aiStatus === "unknown"
-                  ? (lang === "en" ? "AI" : "AI")
+                  ? t(lang, "statusUnknown")
                   : aiMode === "rule"
-                    ? (lang === "en" ? "rules" : "规则库")
-                    : (lang === "en" ? "fallback rules" : "降级模式")}
+                    ? t(lang, "ruleFallback")
+                    : t(lang, "degradedMode")}
           </span>
           <button type="button" onClick={restartTraining} className="inline-flex items-center gap-2 rounded-md border border-clinic-line bg-white px-3 py-2 text-sm hover:border-clinic-blue"><RotateCcw size={15} />{lang === "en" ? "Restart" : "重新开始"}</button>
           <Link onClick={(event) => { if (!confirmExit()) event.preventDefault(); }} href="/cases" className="rounded-md border border-clinic-line bg-white px-4 py-2 text-sm hover:border-clinic-blue">{t(lang, "backToCases")}</Link>
@@ -1163,18 +1174,18 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       {storageWarning && (
         <div role="alert" className="mb-4 flex items-start justify-between gap-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <span>{storageWarning}</span>
-          <button type="button" onClick={() => setStorageWarning("")} className="font-medium underline">{lang === "en" ? "Dismiss" : "知道了"}</button>
+          <button type="button" onClick={() => setStorageWarning("")} className="font-medium underline">{t(lang, "dismiss")}</button>
         </div>
       )}
 
       <button type="button" aria-expanded={mobileNavOpen} onClick={() => setMobileNavOpen((value) => !value)} className="mb-3 inline-flex w-full items-center justify-between rounded-md border border-clinic-line bg-white px-4 py-3 font-medium lg:hidden">
-        <span className="inline-flex items-center gap-2"><Menu size={18} />{lang === "en" ? "Stages and case info" : "阶段导航与病例信息"}</span>
+        <span className="inline-flex items-center gap-2"><Menu size={18} />{t(lang, "mobileNavigation")}</span>
         <span>{activeStageNo}/7</span>
       </button>
       <div className="grid gap-5 lg:grid-cols-[300px_1fr_300px]">
         <aside className={`${mobileNavOpen ? "block" : "hidden"} space-y-3 lg:block`}>
           <section className="rounded-lg border border-clinic-line bg-white p-4">
-            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-clinic-blue"><Languages size={16} /> 7-Agent</div>
+            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-clinic-blue"><Languages size={16} /> {t(lang, "stageNavigation")}</div>
             <div className="space-y-2">
               {agents.map((agent) => {
                 const locked = !canOpenStage(agent.stageNo);
@@ -1221,40 +1232,40 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           {activeStageNo === 1 && (
             <div>
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-lg font-semibold">Standardized Patient Agent</h3>
+                <h3 className="text-lg font-semibold">{t(lang, "patientAgent")}</h3>
                 <button type="button" onClick={() => setSpeechSettingsOpen(true)} disabled={!speechOutputSupported} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm text-clinic-muted hover:border-clinic-blue disabled:opacity-50">
-                  <Settings2 size={16} /> {lang === "en" ? "Voice settings" : "语音设置"}
-                  <span className="sr-only">{autoSpeak ? "on" : "off"}</span>
+                  <Settings2 size={16} /> {t(lang, "voiceSettings")}
+                  <span className="sr-only">{autoSpeak ? t(lang, "speechSpeaking") : t(lang, "speechOff")}</span>
                 </button>
               </div>
               {speechSettingsOpen && (
-                <div role="dialog" aria-modal="true" aria-label={lang === "en" ? "Voice settings" : "语音设置"} className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4">
+                <div role="dialog" aria-modal="true" aria-label={t(lang, "voiceSettings")} className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4">
                   <section className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
                     <div className="flex items-center justify-between gap-3">
-                      <h4 className="font-semibold text-clinic-blue">{lang === "en" ? "Voice settings" : "语音设置"}</h4>
-                      <button type="button" onClick={() => setSpeechSettingsOpen(false)} className="rounded-md px-2 py-1 text-sm hover:bg-clinic-paper" aria-label={lang === "en" ? "Close" : "关闭"}>×</button>
+                      <h4 className="font-semibold text-clinic-blue">{t(lang, "voiceSettings")}</h4>
+                      <button type="button" onClick={() => setSpeechSettingsOpen(false)} className="rounded-md px-2 py-1 text-sm hover:bg-clinic-paper" aria-label={t(lang, "close")}>×</button>
                     </div>
-                    <label className="mt-4 flex items-center justify-between gap-3 text-sm"><span>{lang === "en" ? "Read patient replies" : "自动朗读患者回答"}</span><input type="checkbox" checked={autoSpeak} onChange={(event) => setAutoSpeak(event.target.checked)} /></label>
-                    <label className="mt-4 block text-sm"><span>{lang === "en" ? "Provider" : "语音来源"}</span><select value={speechProvider} onChange={(event) => setSpeechProvider(event.target.value as SpeechProvider)} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2"><option value="browser">{lang === "en" ? "Browser / system voice" : "浏览器/系统语音"}</option><option value="disabled">{lang === "en" ? "Disabled" : "关闭"}</option><option value="azure" disabled>{lang === "en" ? "Azure Speech (not configured)" : "Azure Speech（未配置）"}</option></select></label>
-                    <label className="mt-4 block text-sm"><span>{lang === "en" ? "Voice" : "音色"}</span><select value={speechVoiceName} onChange={(event) => setSpeechVoiceName(event.target.value)} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2">{speechVoices.map((voice) => <option key={voice.voiceURI} value={voice.name}>{voice.name}</option>)}</select></label>
-                    {!speechVoices.length && <p className="mt-2 text-xs text-amber-700">{lang === "en" ? "No matching system voice was found. Install a Chinese or English voice in system settings." : "未找到匹配的系统音色，请在系统设置中安装中文语音。"}</p>}
-                    <label className="mt-4 block text-sm"><span>{lang === "en" ? "Rate" : "语速"} {speechRate.toFixed(2)}</span><input className="mt-2 w-full" type="range" min="0.8" max="1.15" step="0.01" value={speechRate} onChange={(event) => setSpeechRate(Number(event.target.value))} /></label>
-                    <label className="mt-4 block text-sm"><span>{lang === "en" ? "Pitch" : "音调"} {speechPitch.toFixed(2)}</span><input className="mt-2 w-full" type="range" min="0.85" max="1.1" step="0.01" value={speechPitch} onChange={(event) => setSpeechPitch(Number(event.target.value))} /></label>
+                    <label className="mt-4 flex items-center justify-between gap-3 text-sm"><span>{t(lang, "autoRead")}</span><input type="checkbox" checked={autoSpeak} onChange={(event) => setAutoSpeak(event.target.checked)} /></label>
+                    <label className="mt-4 block text-sm"><span>{t(lang, "speechProvider")}</span><select value={speechProvider} onChange={(event) => setSpeechProvider(event.target.value as SpeechProvider)} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2"><option value="browser">{t(lang, "browserVoice")}</option><option value="disabled">{t(lang, "disabled")}</option><option value="azure" disabled>{lang === "en" ? "Azure Speech (not configured)" : "Azure语音服务（未配置）"}</option></select></label>
+                    <label className="mt-4 block text-sm"><span>{t(lang, "voiceTone")}</span><select value={speechVoiceName} onChange={(event) => setSpeechVoiceName(event.target.value)} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2">{speechVoices.map((voice) => <option key={voice.voiceURI} value={voice.name}>{voice.name}</option>)}</select></label>
+                    {!speechVoices.length && <p className="mt-2 text-xs text-amber-700">{t(lang, "noVoice")}</p>}
+                    <label className="mt-4 block text-sm"><span>{t(lang, "speechRate")} {speechRate.toFixed(2)}</span><input className="mt-2 w-full" type="range" min="0.8" max="1.15" step="0.01" value={speechRate} onChange={(event) => setSpeechRate(Number(event.target.value))} /></label>
+                    <label className="mt-4 block text-sm"><span>{t(lang, "speechPitch")} {speechPitch.toFixed(2)}</span><input className="mt-2 w-full" type="range" min="0.85" max="1.1" step="0.01" value={speechPitch} onChange={(event) => setSpeechPitch(Number(event.target.value))} /></label>
                     <div className="mt-5 flex flex-wrap gap-2">
-                      <button type="button" onClick={() => speak(lang === "en" ? "Hello doctor, I can hear you clearly." : "医生您好，我能听清您的问题。", true)} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-3 py-2 text-sm text-white"><Volume2 size={15} />{lang === "en" ? "Test" : "试听"}</button>
-                      {speechState === "speaking" ? <button type="button" onClick={pauseSpeech} className="rounded-md border border-clinic-line p-2" title={lang === "en" ? "Pause" : "暂停"}><Pause size={16} /></button> : <button type="button" onClick={resumeSpeech} disabled={speechState !== "paused"} className="rounded-md border border-clinic-line p-2 disabled:opacity-50" title={lang === "en" ? "Resume" : "继续"}><Play size={16} /></button>}
-                      <button type="button" onClick={stopSpeech} className="rounded-md border border-clinic-line p-2" title={lang === "en" ? "Stop" : "停止"}><Square size={16} /></button>
-                      <button type="button" onClick={() => lastSpokenText && speak(lastSpokenText, true)} disabled={!lastSpokenText} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm"><RotateCcw size={15} />{lang === "en" ? "Replay" : "重播"}</button>
+                      <button type="button" onClick={() => speak(lang === "en" ? "Hello doctor, I can hear you clearly." : "医生您好，我能听清您的问题。", true)} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-3 py-2 text-sm text-white"><Volume2 size={15} />{t(lang, "testVoice")}</button>
+                      {speechState === "speaking" ? <button type="button" onClick={pauseSpeech} className="rounded-md border border-clinic-line p-2" title={t(lang, "pause")}><Pause size={16} /></button> : <button type="button" onClick={resumeSpeech} disabled={speechState !== "paused"} className="rounded-md border border-clinic-line p-2 disabled:opacity-50" title={t(lang, "resume")}><Play size={16} /></button>}
+                      <button type="button" onClick={stopSpeech} className="rounded-md border border-clinic-line p-2" title={t(lang, "stop")}><Square size={16} /></button>
+                      <button type="button" onClick={() => lastSpokenText && speak(lastSpokenText, true)} disabled={!lastSpokenText} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm"><RotateCcw size={15} />{t(lang, "replay")}</button>
                     </div>
-                    <p className="mt-3 text-xs text-clinic-muted">{lang === "en" ? `Status: ${speechState}` : `状态：${speechState === "speaking" ? "朗读中" : speechState === "paused" ? "已暂停" : "已关闭"}`}</p>
+                    <p className="mt-3 text-xs text-clinic-muted">{t(lang, "speechStatus")}：{speechState === "speaking" ? t(lang, "speechSpeaking") : speechState === "paused" ? t(lang, "speechPaused") : t(lang, "speechOff")}</p>
                   </section>
                 </div>
               )}
               {(sessionInitLoading || sessionInitError) && (
                 <div className={`mt-3 rounded-md px-3 py-2 text-sm ${sessionInitError ? "bg-amber-50 text-amber-800" : "bg-clinic-paper text-clinic-muted"}`}>
                   {sessionInitLoading
-                    ? (lang === "en" ? "AI patient is preparing..." : "AI患者正在准备中……")
-                    : (lang === "en" ? "AI is temporarily unavailable. Answers are currently provided by the rule library." : "AI暂时不可用，当前为规则库回答。")}
+                    ? t(lang, "aiPreparing")
+                    : t(lang, "aiUnavailable")}
                 </div>
               )}
               <div ref={chatScrollRef} className="mt-4 h-[390px] space-y-4 overflow-y-auto rounded-md border border-clinic-line bg-clinic-paper p-4">
@@ -1275,8 +1286,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
               </div>
               {lastTechnicalFailure && (
                 <div className="mt-2 flex items-center justify-between gap-3 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                  <span>{lang === "en" ? "The last AI request failed; the displayed reply came from fallback rules." : "上次AI调用失败，当前显示的是规则库回答。"}</span>
-                  <button type="button" onClick={() => void retryTechnicalReply()} disabled={patientReplyLoading} className="shrink-0 font-medium underline disabled:opacity-50">{lang === "en" ? "Retry technical request" : "重新生成回答"}</button>
+                  <span>{t(lang, "technicalFailure")}</span>
+                  <button type="button" onClick={() => void retryTechnicalReply()} disabled={patientReplyLoading} className="shrink-0 font-medium underline disabled:opacity-50">{t(lang, "technicalRetry")}</button>
                 </div>
               )}
               <label className="mt-5 block">
@@ -1289,7 +1300,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           {activeStageNo === 2 && (
             <div className="space-y-6">
               <section>
-                <h3 className="text-lg font-semibold">Investigation Agent: physical examination</h3>
+                <h3 className="text-lg font-semibold">{t(lang, "investigationExam")}</h3>
                 <div className="mt-4 space-y-4">
                   {physicalGroups.map((group) => (
                     <section key={group.category} className="rounded-md border border-clinic-line p-4">
@@ -1305,8 +1316,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                   ))}
                 </div>
                 <div className="mt-4 flex gap-2">
-                  <input value={examInput} onChange={(event) => setExamInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") submitExam(); }} className="flex-1 rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" placeholder="例如：查肾区叩击痛" />
-                  <button onClick={() => submitExam()} className="rounded-md bg-clinic-blue px-4 py-2 font-medium text-white">查询查体</button>
+                  <input value={examInput} onChange={(event) => setExamInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") submitExam(); }} className="flex-1 rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" placeholder={t(lang, "examPlaceholder")} />
+                  <button onClick={() => submitExam()} className="rounded-md bg-clinic-blue px-4 py-2 font-medium text-white">{t(lang, "queryExam")}</button>
                 </div>
                 <div className="mt-4 space-y-3">
                   {examLogs.map((log) => (
@@ -1316,7 +1327,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
               </section>
 
               <section className="border-t border-clinic-line pt-5">
-                <h3 className="text-lg font-semibold">Investigation Agent: orders and reports</h3>
+                <h3 className="text-lg font-semibold">{t(lang, "investigationOrders")}</h3>
                 <div className="mt-4 flex flex-wrap gap-2 border-b border-clinic-line pb-3">
                   {orderPrimaryTabs.map((tab) => (
                     <button key={tab} type="button" onClick={() => setActiveOrderTab(tab)} className={`rounded-md px-4 py-2 text-sm font-medium ${activeOrderTab === tab ? "bg-clinic-blue text-white" : "border border-clinic-line bg-white text-clinic-muted hover:border-clinic-blue"}`}>
@@ -1327,8 +1338,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 {!isOsce && orderPackages.length > 0 && (
                   <section className="mt-4 rounded-md border border-clinic-line bg-clinic-paper p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                      <h4 className="font-medium text-clinic-blue">常用医嘱套餐</h4>
-                      <span className="text-xs text-clinic-muted">仅用于快速勾选，不代表本病例正确答案</span>
+                      <h4 className="font-medium text-clinic-blue">{t(lang, "commonOrderPackages")}</h4>
+                      <span className="text-xs text-clinic-muted">{t(lang, "packageDisclaimer")}</span>
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {orderPackages.map((pkg) => (
@@ -1361,9 +1372,9 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                     </section>
                   ))}
                 </div>
-                <label className="mt-4 block"><span className="font-medium">其他检查或开单理由</span><textarea value={answers.customOrders} onChange={(event) => updateAnswer("customOrders", event.target.value)} rows={4} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" /></label>
+                <label className="mt-4 block"><span className="font-medium">{t(lang, "otherOrders")}</span><textarea value={answers.customOrders} onChange={(event) => updateAnswer("customOrders", event.target.value)} rows={4} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" /></label>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <input value={orderInput} onChange={(event) => setOrderInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") submitOrder(); }} className="min-w-[240px] flex-1 rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" placeholder="例如：尿常规+尿沉渣，CTU，膀胱镜" />
+                  <input value={orderInput} onChange={(event) => setOrderInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") submitOrder(); }} className="min-w-[240px] flex-1 rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" placeholder={t(lang, "orderPlaceholder")} />
                   <button onClick={() => submitOrder()} className="rounded-md bg-clinic-blue px-4 py-2 font-medium text-white">{t(lang, "orderAndReturn")}</button>
                   <button onClick={submitSelectedOrders} className="rounded-md border border-clinic-line px-4 py-2 font-medium hover:border-clinic-blue">{t(lang, "selectedOrderResults")}</button>
                 </div>
@@ -1372,15 +1383,15 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                     <div key={log.id} className="rounded-md border border-clinic-line p-3">
                       <p className="text-sm font-medium text-clinic-blue">{log.input}</p>
                       <p className="mt-1 text-xs text-clinic-muted">
-                        {lang === "en" ? "Placed" : "开具时间"}：{shortTime(log.placedAt || log.at)}
-                        {log.returnedAt ? ` · ${lang === "en" ? "Returned" : "返回时间"}：${shortTime(log.returnedAt)}` : ""}
-                        {` · Agent ${log.stageNo || 2}`}
+                        {t(lang, "placedAt")}：{shortTime(log.placedAt || log.at, lang)}
+                        {log.returnedAt ? ` · ${t(lang, "returnedAt")}：${shortTime(log.returnedAt, lang)}` : ""}
+                        {` · ${t(lang, "stageLabel").replace("{stage}", String(log.stageNo || 2))}`}
                       </p>
-                      {log.matchedOrders.length > 0 && <p className="mt-1 text-xs text-clinic-muted">已识别医嘱：{log.matchedOrders.map((item) => item.displayName).join("；")}</p>}
-                      {log.duplicateOrderIds && log.duplicateOrderIds.length > 0 && <p className="mt-1 text-xs text-amber-800">重复医嘱不会重复计入效率得分。</p>}
+                      {log.matchedOrders.length > 0 && <p className="mt-1 text-xs text-clinic-muted">{t(lang, "recognizedOrders")}：{log.matchedOrders.map((item) => item.displayName).join("；")}</p>}
+                      {log.duplicateOrderIds && log.duplicateOrderIds.length > 0 && <p className="mt-1 text-xs text-amber-800">{t(lang, "duplicateOrder")}</p>}
                       <p className="mt-1 text-sm text-clinic-muted">{log.message}</p>
                       {log.status === "ordered" && <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-clinic-paper"><div className="h-full w-1/2 animate-pulse rounded-full bg-clinic-teal" /></div>}
-                      {log.results.map((item, index) => <ReportCard key={`${log.id}-${index}`} item={item} />)}
+                      {log.results.map((item, index) => <ReportCard key={`${log.id}-${index}`} item={item} lang={lang} />)}
                     </div>
                   ))}
                 </div>
@@ -1432,9 +1443,9 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                   <div key={item.department} className="rounded-md border border-clinic-line p-3 text-sm leading-6">
                     <p className="font-medium text-clinic-blue">{item.department}</p>
                     <p className="mt-1">{item.opinion}</p>
-                    {item.neededInfo && <p className="mt-2"><span className="font-medium">还需信息：</span>{item.neededInfo}</p>}
-                    {item.suggestedHandling && <p><span className="font-medium">处理建议：</span>{item.suggestedHandling}</p>}
-                    {item.riskReminder && <p className="text-amber-800"><span className="font-medium">风险提醒：</span>{item.riskReminder}</p>}
+                    {item.neededInfo && <p className="mt-2"><span className="font-medium">{t(lang, "moreInformation")}：</span>{item.neededInfo}</p>}
+                    {item.suggestedHandling && <p><span className="font-medium">{t(lang, "handlingAdvice")}：</span>{item.suggestedHandling}</p>}
+                    {item.riskReminder && <p className="text-amber-800"><span className="font-medium">{t(lang, "riskReminder")}：</span>{item.riskReminder}</p>}
                   </div>
                 ))}
               </div>
@@ -1444,10 +1455,10 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           {activeStageNo === 5 && (
             <div className="space-y-4">
               <label className="block"><span className="font-medium">{t(lang, "treatmentImmediate")}</span><textarea value={answers.immediateTreatment} onChange={(event) => updateAnswer("immediateTreatment", event.target.value)} rows={5} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" /></label>
-              <label className="block"><span className="font-medium">入院初始处理</span><textarea value={answers.admissionTreatment} onChange={(event) => updateAnswer("admissionTreatment", event.target.value)} rows={4} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" /></label>
+              <label className="block"><span className="font-medium">{t(lang, "admissionInitialTreatment")}</span><textarea value={answers.admissionTreatment} onChange={(event) => updateAnswer("admissionTreatment", event.target.value)} rows={4} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" /></label>
               <label className="block"><span className="font-medium">{t(lang, "treatmentDefinitive")}</span><textarea value={answers.definitiveTreatment} onChange={(event) => updateAnswer("definitiveTreatment", event.target.value)} rows={5} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" /></label>
               <label className="block"><span className="font-medium">{t(lang, "mdtRevisedPlan")}</span><textarea value={answers.mdtRevisedPlan} onChange={(event) => updateAnswer("mdtRevisedPlan", event.target.value)} rows={4} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" /></label>
-              <label className="block"><span className="font-medium">随访复查与患者教育</span><textarea value={`${answers.followUp}\n${answers.patientEducation}`.trim()} onChange={(event) => {
+              <label className="block"><span className="font-medium">{t(lang, "followupEducation")}</span><textarea value={`${answers.followUp}\n${answers.patientEducation}`.trim()} onChange={(event) => {
                 const [followUp, ...education] = event.target.value.split("\n");
                 updateAnswer("followUp", followUp ?? "");
                 updateAnswer("patientEducation", education.join("\n"));
@@ -1467,16 +1478,16 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             <div>
               <h3 className="text-lg font-semibold">{t(lang, "debriefTitle")}</h3>
               <label className="mt-4 block">
-                <span className="font-medium">学习反思 / Reflection</span>
-                <textarea value={answers.debriefReflection} onChange={(event) => updateAnswer("debriefReflection", event.target.value)} rows={4} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" />
+                <span className="font-medium">{t(lang, "reflection")}</span>
+                <textarea disabled={Boolean(finalReport)} value={answers.debriefReflection} onChange={(event) => updateAnswer("debriefReflection", event.target.value)} rows={4} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue disabled:bg-clinic-paper" />
               </label>
-              <div className="mt-5">{finalReport && <FinalReport report={finalReport} />}</div>
+              <div className="mt-5">{finalReport && <FinalReport report={finalReport} lang={lang} />}</div>
               <section className="mt-5 rounded-lg border border-clinic-line bg-clinic-paper p-4">
                 <h4 className="font-semibold">{t(lang, "timeline")}</h4>
                 <div className="mt-3 max-h-[360px] space-y-3 overflow-auto">
                   {timeline.map((item) => (
                     <div key={item.id} className="rounded-md bg-white p-3 text-sm leading-6">
-                      <p className="font-medium text-clinic-blue">{shortTime(item.at)} · Agent {item.stageNo} · {item.label}</p>
+                      <p className="font-medium text-clinic-blue">{shortTime(item.at, lang)} · {t(lang, "stageLabel").replace("{stage}", String(item.stageNo))} · {item.label}</p>
                       <p className="mt-1 text-clinic-muted">{item.detail}</p>
                     </div>
                   ))}
@@ -1486,15 +1497,15 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 <div className="rounded-lg border border-clinic-line bg-white p-4">
                   <h4 className="font-semibold text-clinic-blue">{t(lang, "studentRecords")}</h4>
                   <FormattedText text={[
-                    `History: ${answers.historySummary}`,
-                    `Exam: ${answers.physicalExam}`,
-                    `Orders: ${answers.selectedOrders.join("；")}；${answers.customOrders}`,
-                    `Diagnosis: ${answers.diagnosis}`,
-                    `Differentials: ${answers.differentials}`,
-                    `MDT: ${answers.consultDepartments.join("；")}；${answers.consultPurpose}`,
-                    `Treatment: ${answers.immediateTreatment}；${answers.admissionTreatment}；${answers.definitiveTreatment}`,
-                    `Perioperative: ${answers.perioperativePreparation}`,
-                    `Follow-up: ${answers.followUp}；${answers.patientEducation}`
+                    `${t(lang, "historyRecord")}：${answers.historySummary}`,
+                    `${t(lang, "examRecord")}：${answers.physicalExam}`,
+                    `${t(lang, "orderRecord")}：${answers.selectedOrders.join("；")}；${answers.customOrders}`,
+                    `${t(lang, "diagnosisRecord")}：${answers.diagnosis}`,
+                    `${t(lang, "differentialRecord")}：${answers.differentials}`,
+                    `${t(lang, "mdtRecord")}：${answers.consultDepartments.join("；")}；${answers.consultPurpose}`,
+                    `${t(lang, "treatmentRecord")}：${answers.immediateTreatment}；${answers.admissionTreatment}；${answers.definitiveTreatment}`,
+                    `${t(lang, "perioperativeRecord")}：${answers.perioperativePreparation}`,
+                    `${t(lang, "followupRecord")}：${answers.followUp}；${answers.patientEducation}`
                   ].join("\n")} />
                 </div>
                 <div className="rounded-lg border border-clinic-line bg-white p-4">
@@ -1508,7 +1519,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-clinic-line pt-4">
             {activeStageNo === 7 ? (
               <button disabled={Boolean(finalReport)} onClick={completeTraining} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white hover:bg-clinic-teal disabled:cursor-not-allowed disabled:opacity-50">
-                <CheckCircle2 size={16} /> {lang === "en" ? "Finish training and generate final report" : "完成训练并生成最终报告"}
+                <CheckCircle2 size={16} /> {t(lang, "finishTraining")}
               </button>
             ) : (
               <button disabled={Boolean(activeEvaluation)} onClick={submitStage} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white hover:bg-clinic-teal disabled:cursor-not-allowed disabled:opacity-50">
@@ -1534,20 +1545,20 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             <div className="mt-3 space-y-2 text-sm text-clinic-muted">
               <p>{isOsce ? t(lang, "osceMode") : t(lang, "freeTraining")}</p>
               {isOsce && <p>{formatDuration(osceTimeLeft)}</p>}
-              <p>Agent {activeStageNo}: {activeAgent.agentName[lang]}</p>
+              <p>{t(lang, "stageLabel").replace("{stage}", String(activeStageNo))}：{activeAgent.agentName[lang]}</p>
               <p>{Object.keys(submitted).length} / 7 {t(lang, "completed")}</p>
-              <p>{lang === "en" ? "Save status" : "保存状态"}：{saveStatus === "saved" ? (lang === "en" ? "Saved" : "已自动保存") : saveStatus === "saving" ? (lang === "en" ? "Saving" : "保存中") : (lang === "en" ? "Save failed" : "保存失败")}</p>
+              <p>{t(lang, "saveStatus")}：{saveStatus === "saved" ? t(lang, "saved") : saveStatus === "saving" ? t(lang, "saving") : t(lang, "saveFailed")}</p>
               <p className="pt-2 text-xs leading-5">{t(lang, "teachingOnly")}</p>
             </div>
           </section>
           <section className="rounded-lg border border-clinic-line bg-white p-5">
             <h2 className="font-semibold">{t(lang, "obtainedData")}</h2>
             <div className="mt-3 space-y-3 text-sm text-clinic-muted">
-              <p>{lang === "en" ? "Questions" : "已问问题"}: {acquiredStats.questions}</p>
-              <p>{lang === "en" ? "Patient replies" : "患者回答"}: {acquiredStats.patientAnswers}</p>
-              <p>{lang === "en" ? "Physical exams" : "已查体项目"}: {acquiredStats.exams}</p>
-              <p>{lang === "en" ? "Orders" : "已开医嘱"}: {acquiredStats.orders}</p>
-              <p>{lang === "en" ? "Reports returned" : "已返回报告"}: {acquiredStats.reports}</p>
+              <p>{t(lang, "questionsCount")}：{acquiredStats.questions}</p>
+              <p>{t(lang, "repliesCount")}：{acquiredStats.patientAnswers}</p>
+              <p>{t(lang, "examsCount")}：{acquiredStats.exams}</p>
+              <p>{t(lang, "ordersCount")}：{acquiredStats.orders}</p>
+              <p>{t(lang, "reportsCount")}：{acquiredStats.reports}</p>
             </div>
           </section>
           <section className="rounded-lg border border-clinic-line bg-white p-5">
@@ -1555,16 +1566,16 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             <div className="mt-3 space-y-3">
               {(timeline.length ? timeline.slice(-6).reverse() : []).map((item) => (
                 <div key={item.id} className="rounded-md bg-clinic-paper p-3 text-xs leading-5">
-                  <p className="font-medium text-clinic-blue">{shortTime(item.at)} · Agent {item.stageNo} · {item.label}</p>
+                  <p className="font-medium text-clinic-blue">{shortTime(item.at, lang)} · {t(lang, "stageLabel").replace("{stage}", String(item.stageNo))} · {item.label}</p>
                   <p className="mt-1 line-clamp-3 text-clinic-muted">{item.detail}</p>
                 </div>
               ))}
-              {!timeline.length && <p className="text-sm text-clinic-muted">暂无操作记录。</p>}
+              {!timeline.length && <p className="text-sm text-clinic-muted">{t(lang, "noTimeline")}</p>}
             </div>
           </section>
           {isOsce && activeEvaluation && activeStageNo !== 7 && (
             <section className="rounded-lg border border-clinic-line bg-white p-5 text-sm leading-6 text-clinic-muted">
-              OSCE 模式下阶段反馈将在最终复盘统一显示。
+              {t(lang, "osceFeedbackNotice")}
             </section>
           )}
         </aside>

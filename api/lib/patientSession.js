@@ -106,6 +106,20 @@ function firstField(...values) {
   return { value: "不太清楚", source: "unknown" };
 }
 
+function patientHistoryField(...values) {
+  for (const value of values) {
+    const clean = String(value || "")
+      .replace(/未主动诉[^，。；;]*[，。；;]?/g, "")
+      .replace(/需主动询问[^，。；;]*[，。；;]?/g, "")
+      .replace(/需追问[^，。；;]*[，。；;]?/g, "")
+      .replace(/提交前隐藏|评分点|教师提示/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (clean) return { value: clean, source: "case_explicit" };
+  }
+  return { value: "这个我不太清楚。", source: "unknown" };
+}
+
 function sentenceWith(value, words) {
   return String(value || "")
     .split(/[。；;\n]/)
@@ -172,7 +186,7 @@ function buildRawPatientFacingProfile(caseData) {
       surgery: firstField(sentenceWith(illness.trigger, ["手术"])),
       menstruation: firstField(sentenceWith(answers.gynecologicClues, ["月经"]), sentenceWith(caseData.personalHistory, ["月经"]))
     },
-    past_history_patient_safe: firstField(pfp.knownPastHistory, caseData.pastHistory),
+    past_history_patient_safe: patientHistoryField(pfp.knownPastHistory, caseData.pastHistory),
     medication_patient_safe: firstField(sh.medicationAnswerZh, pfp.knownMedication, risk.anticoagulants, caseData.medication),
     allergy_history: firstField(sh.allergyHistory?.patientAnswerZh, sentenceWith(caseData.pastHistory, ["过敏"]), sentenceWith(caseData.personalHistory, ["过敏"])),
     smoking_history: firstField(sh.smokingHistory?.patientAnswerZh, sentenceWith(pfp.personalAndFamilyRisk, ["吸烟", "抽烟"]), risk.smoking),
@@ -193,6 +207,19 @@ function buildRawPatientFacingProfile(caseData) {
       cooperation_style: completed("医生问到具体问题时再回答。")
     }
   };
+}
+
+function validateRequiredProfileFacts(caseData, profile) {
+  const structured = caseData.structuredHistory || {};
+  const checks = [
+    ["past_history_patient_safe", profile.past_history_patient_safe],
+    ["smoking_history", structured.smokingHistory ? profile.smoking_history : null],
+    ["drinking_history", structured.alcoholHistory ? profile.drinking_history : null],
+    ["allergy_history", structured.allergyHistory ? profile.allergy_history : null],
+    ["medication_patient_safe", structured.medicationAnswerZh ? profile.medication_patient_safe : null]
+  ];
+  const missing = checks.filter(([, value]) => value && (value.source === "unknown" || !String(value.value || "").trim())).map(([key]) => key);
+  if (missing.length) throw new Error(`Patient-facing profile lost structured facts for ${caseData.id}: ${missing.join(", ")}`);
 }
 
 function localCompleteProfile(rawProfile) {
@@ -327,6 +354,7 @@ async function initSession({ caseId, mode = "training", language = "zh", debug =
   }
 
   const rawPatientFacingProfile = buildRawPatientFacingProfile(caseData);
+  validateRequiredProfileFacts(caseData, rawPatientFacingProfile);
   const completion = await completePatientFacingProfile(rawPatientFacingProfile);
   const teacherOnlyData = buildTeacherOnlyData(caseData);
   const profileRecord = {

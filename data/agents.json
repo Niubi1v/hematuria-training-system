@@ -7,7 +7,7 @@
       "en": "Standardized Patient Agent"
     },
     "leftNavLabel": {
-      "zh": "1. 标准化患者",
+      "zh": "第1阶段·标准化患者",
       "en": "1. Standardized Patient"
     },
     "competency": {
@@ -47,12 +47,12 @@
       "en": "Investigation Agent"
     },
     "leftNavLabel": {
-      "zh": "2. 检查决策",
+      "zh": "第2阶段·检查决策",
       "en": "2. Investigation"
     },
     "competency": {
-      "zh": "检查与资源管理",
-      "en": "Investigation and resource stewardship"
+      "zh": "检查决策",
+      "en": "Investigation decision-making"
     },
     "mainWindowFunction": {
       "zh": "查体、检验、影像、内镜、病理及围术期评估；开了什么才返回什么。",
@@ -86,7 +86,7 @@
       "en": "Diagnostic Reasoning Agent"
     },
     "leftNavLabel": {
-      "zh": "3. 诊断推理",
+      "zh": "第3阶段·诊断推理",
       "en": "3. Diagnostic Reasoning"
     },
     "competency": {
@@ -117,11 +117,11 @@
     "stageNo": 4,
     "key": "agent4",
     "agentName": {
-      "zh": "MDT协调智能体",
+      "zh": "多学科协作智能体",
       "en": "MDT Coordinator Agent"
     },
     "leftNavLabel": {
-      "zh": "4. MDT协作",
+      "zh": "第4阶段·多学科协作",
       "en": "4. MDT Coordinator"
     },
     "competency": {
@@ -153,11 +153,11 @@
     "stageNo": 5,
     "key": "agent5",
     "agentName": {
-      "zh": "临床决策支持智能体",
+      "zh": "治疗决策智能体",
       "en": "Clinical Decision Support Agent"
     },
     "leftNavLabel": {
-      "zh": "5. 循证决策",
+      "zh": "第5阶段·治疗决策",
       "en": "5. Clinical Decision Support"
     },
     "competency": {
@@ -192,12 +192,12 @@
       "en": "Perioperative Management Agent"
     },
     "leftNavLabel": {
-      "zh": "6. 围术期管理",
+      "zh": "第6阶段·围术期管理",
       "en": "6. Perioperative Management"
     },
     "competency": {
-      "zh": "患者安全与围术期优化",
-      "en": "Patient safety and perioperative optimization"
+      "zh": "围术期管理",
+      "en": "Perioperative management"
     },
     "mainWindowFunction": {
       "zh": "术前优化、ERAS、抗栓、感染控制、备血、VTE及并发症预防。",
@@ -227,7 +227,7 @@
       "en": "Assessment & Debriefing Agent"
     },
     "leftNavLabel": {
-      "zh": "7. 评估复盘",
+      "zh": "第7阶段·评估复盘",
       "en": "7. Assessment & Debriefing"
     },
     "competency": {

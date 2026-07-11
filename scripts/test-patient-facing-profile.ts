@@ -1,0 +1,33 @@
+import fs from "node:fs";
+import { createRequire } from "node:module";
+import type { CaseData } from "../src/lib/types";
+
+const require = createRequire(import.meta.url);
+const { initSession } = require("../api/lib/patientSession.js") as { initSession: (input: { caseId: string; language: string; mode: string; debug: boolean }) => Promise<any> };
+const cases = JSON.parse(fs.readFileSync("data/cases.json", "utf8")) as CaseData[];
+
+function assert(condition: unknown, message: string) { if (!condition) throw new Error(message); }
+
+async function main() {
+  process.env.LLM_ENABLE_AI_AGENTS = "false";
+  const rows: string[] = [];
+  for (const caseData of cases) {
+    const session = await initSession({ caseId: caseData.id, language: "zh", mode: "qc", debug: true });
+    const profile = session.completedPatientFacingProfile as Record<string, { value?: string; source?: string }>;
+    for (const key of ["past_history_patient_safe", "medication_patient_safe", "allergy_history", "smoking_history", "drinking_history"]) {
+      const fact = profile[key];
+      assert(fact && fact.value && fact.source !== "unknown", `${caseData.id} lost required patient-facing fact ${key}`);
+    }
+    rows.push(`| ${caseData.id} | 完整 | ${profile.smoking_history.value} | ${profile.medication_patient_safe.value} |`);
+  }
+  const p001 = await initSession({ caseId: "P001", language: "zh", mode: "p001-qc", debug: true });
+  assert(/高血压病史10年/.test(p001.completedPatientFacingProfile.past_history_patient_safe.value), "P001 past history must retain 10-year hypertension history");
+  assert(/缬沙坦/.test(p001.completedPatientFacingProfile.medication_patient_safe.value) && /阿司匹林/.test(p001.completedPatientFacingProfile.medication_patient_safe.value), "P001 medication profile incomplete");
+  const hx30 = await initSession({ caseId: "HX-ADD-030", language: "zh", mode: "hx30-qc", debug: true });
+  assert(/45包年/.test(hx30.completedPatientFacingProfile.smoking_history.value), "HX-ADD-030 must retain 45 pack-years");
+  const report = ["# 42病例患者可见资料完整性报告", "", `生成时间：${new Date().toISOString()}`, "", "| 病例 | 必填事实 | 吸烟史 | 用药史 |", "|---|---|---|---|", ...rows].join("\n");
+  fs.writeFileSync("PATIENT_PROFILE_COMPLETENESS_REPORT.md", `${report}\n`, "utf8");
+  console.log("Patient-facing profile completeness passed for 42 cases.");
+}
+
+void main();

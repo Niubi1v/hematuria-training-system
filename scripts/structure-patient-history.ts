@@ -7,21 +7,22 @@ type QcRow = { caseId: string; field: string; before: string; after: string; rea
 
 const dataDir = path.join(process.cwd(), "data");
 const placeholders = /未诉|需主动询问|需追问|不详|没有特别注意|原表未记录|训练中若被问及|未提供/;
-const medicineNames = ["缬沙坦", "阿司匹林", "氯吡格雷", "华法林", "利伐沙班", "达比加群", "阿哌沙班", "二甲双胍", "胰岛素", "氨氯地平", "硝苯地平", "贝那普利", "厄贝沙坦", "氯沙坦", "他汀", "非那雄胺", "坦索罗辛", "抗生素"];
+const medicineNames = ["缬沙坦", "阿司匹林", "氯吡格雷", "华法林", "利伐沙班", "达比加群", "阿哌沙班", "二甲双胍", "胰岛素", "氨氯地平", "硝苯地平", "贝那普利", "厄贝沙坦", "氯沙坦", "他汀", "非那雄胺", "坦索罗辛", "抗生素", "降压药"];
 
 function read<T>(file: string): T { return JSON.parse(fs.readFileSync(path.join(dataDir, file), "utf8")); }
 function write(file: string, value: unknown) { fs.writeFileSync(path.join(dataDir, file), `${JSON.stringify(value, null, 2)}\n`, "utf8"); }
 function clean(value: unknown) { return String(value || "").replace(/吸烟：吸烟：/g, "吸烟：").replace(/饮酒：饮酒：/g, "饮酒：").replace(/手术术/g, "手术").replace(/ng\/m(?!L)/g, "ng/mL").replace(/\s+/g, " ").trim(); }
 function sourceText(c: MutableCase) {
-  return clean([c.pastHistory, c.personalHistory, c.familyHistory, c.medication, JSON.stringify(c.riskFactors || {}), ...Object.values(c.interviewAnswers || {}).map((v: any) => v?.patientAnswer || "")].join("；"));
+  return clean([c.pastHistory, c.personalHistory, c.familyHistory, c.medication, JSON.stringify(c.riskFactors || {}), JSON.stringify(c.patientFacingProfile || {}), ...Object.values(c.interviewAnswers || {}).map((v: any) => v?.patientAnswer || "")].join("；"));
 }
 function authoredFact(zh: string, en: string): StructuredPatientFact { return { status: "absent", patientAnswerZh: zh, patientAnswerEn: en, provenance: "author_added_for_simulation", teacherReviewRequired: true }; }
 function factFromText(corpus: string, term: RegExp, zhName: string, enName: string): StructuredPatientFact {
-  const explicitPositive = new RegExp(`(?:患有|确诊(?:为)?|得过)(?:${term.source})|(?:${term.source})(?:病史)?\\s*\\d+(?:余)?年|(?:${term.source})病史`).test(corpus);
+  const clauses = corpus.split(/[。；]/).filter((clause) => new RegExp(term.source).test(clause));
+  const explicitPositive = clauses.some((clause) => new RegExp(`(?:患有|确诊(?:为)?|得过)(?:${term.source})|(?:${term.source})(?:病史)?\\s*\\d+(?:余)?年|(?:既往史[:：])?(?:${term.source})病史?`).test(clause) && !/(否认|没有|无)[^，,]{0,20}$/.test(clause));
   if (explicitPositive) return { status: "present", patientAnswerZh: `有${zhName}。`, patientAnswerEn: `I have ${enName}.`, provenance: "source", teacherReviewRequired: false };
-  const negative = new RegExp(`(?:否认|无|没有)[^。；]{0,36}(?:${term.source})`).test(corpus) || new RegExp(`(?:${term.source})[^。；]{0,12}(?:无|否认)`).test(corpus);
+  const negative = clauses.some((clause) => new RegExp(`(?:否认|无|没有)[^，,]{0,36}(?:${term.source})|(?:${term.source})[^，,]{0,16}(?:无|否认|线索)`).test(clause));
   if (negative) return { status: "absent", patientAnswerZh: `没有${zhName}。`, patientAnswerEn: `I do not have ${enName}.`, provenance: "source", teacherReviewRequired: false };
-  if (term.test(corpus)) return { status: "present", patientAnswerZh: `有${zhName}。`, patientAnswerEn: `I have ${enName}.`, provenance: "source", teacherReviewRequired: false };
+  if (clauses.some((clause) => !/未诉|需主动询问|线索/.test(clause))) return { status: "present", patientAnswerZh: `有${zhName}。`, patientAnswerEn: `I have ${enName}.`, provenance: "source", teacherReviewRequired: false };
   return authoredFact(`没有${zhName}。`, `I do not have ${enName}.`);
 }
 function detailedFact(raw: string, positive: RegExp, negative: RegExp, positiveZh: string, negativeZh: string, positiveEn: string, negativeEn: string): StructuredPatientFact {
@@ -38,27 +39,32 @@ function smoking(c: MutableCase, corpus: string): StructuredSmokingHistory {
   const negative = /不吸烟|从不吸烟|无吸烟|否认吸烟/.test(raw || corpus);
   const years = Number((raw.match(/(\d+)\s*(?:余)?年/) || [])[1] || 0);
   const cigarettesPerDay = Number((raw.match(/每天\s*(\d+)\s*支/) || [])[1] || ((raw.match(/(\d+(?:\.\d+)?)\s*包\/?(?:天|日|每天)/) || [])[1] ? Number((raw.match(/(\d+(?:\.\d+)?)\s*包/) || [])[1]) * 20 : 0));
+  const statedPackYears = Number((raw.match(/(\d+(?:\.\d+)?)\s*包年/) || [])[1] || 0);
   const former = /已戒|戒烟/.test(raw);
   if (usable && !negative) {
-    const amount = cigarettesPerDay ? `每天约${cigarettesPerDay}支` : "每天都吸";
+    const amount = cigarettesPerDay ? `每天约${cigarettesPerDay}支` : statedPackYears ? "具体每天多少支记不准" : "每天都吸";
     const duration = years ? `，吸了${years}年` : "";
-    return { status: former ? "former" : "current", cigarettesPerDay, years, quitYears: Number((raw.match(/戒烟(\d+)年/) || [])[1] || 0), packYears: Math.round((cigarettesPerDay / 20) * years * 10) / 10, patientAnswerZh: former ? `以前吸烟，${amount}${duration}，现在已经戒了。` : `吸烟，${amount}${duration}。`, patientAnswerEn: former ? "I used to smoke but have quit." : `I smoke${cigarettesPerDay ? ` about ${cigarettesPerDay} cigarettes a day` : ""}${years ? ` for ${years} years` : ""}.`, provenance: "source", teacherReviewRequired: false };
+    const packYears = statedPackYears || Math.round((cigarettesPerDay / 20) * years * 10) / 10;
+    const packYearText = packYears ? `，累计约${packYears}包年` : "";
+    return { status: former ? "former" : "current", cigarettesPerDay, years, quitYears: Number((raw.match(/戒烟(\d+)年/) || [])[1] || 0), packYears, patientAnswerZh: former ? `以前吸烟，${amount}${duration}${packYearText}，现在已经戒了。` : `吸烟，${amount}${duration}${packYearText}。`, patientAnswerEn: former ? "I used to smoke but have quit." : `I smoke${cigarettesPerDay ? ` about ${cigarettesPerDay} cigarettes a day` : ""}${years ? ` for ${years} years` : ""}${packYears ? `, about ${packYears} pack-years in total` : ""}.`, provenance: "source", teacherReviewRequired: false };
   }
   return { status: "never", cigarettesPerDay: 0, years: 0, quitYears: 0, packYears: 0, patientAnswerZh: "我不吸烟。", patientAnswerEn: "I do not smoke.", provenance: usable && negative ? "source" : "author_added_for_simulation", teacherReviewRequired: !(usable && negative) };
 }
 function alcohol(c: MutableCase): StructuredAlcoholHistory {
   const raw = clean(c.riskFactors?.alcohol);
   const usable = raw && !placeholders.test(raw);
-  const negative = /不喝酒|不饮酒|无饮酒|否认饮酒|偶尔少量/.test(raw);
+  const negative = /不喝酒|不饮酒|无饮酒|无酗酒|不酗酒|否认[^。；]{0,16}(?:饮酒|喝酒|酗酒)/.test(raw);
+  const positive = /饮酒|喝酒|白酒|啤酒|红酒|黄酒/.test(raw);
   const years = Number((raw.match(/(\d+)\s*(?:余)?年/) || [])[1] || 0);
   const type = (raw.match(/白酒|啤酒|红酒|黄酒/) || [""])[0];
   const amount = (raw.match(/每天[^，。；]*|每次[^，。；]*|\d+\s*(?:两|毫升|ml)/i) || [""])[0];
-  if (usable && !negative) return { status: /已戒|戒酒/.test(raw) ? "former" : "current", type, amount, frequency: /每天/.test(raw) ? "daily" : "regular", years, patientAnswerZh: `喝酒，${[type, amount].filter(Boolean).join("，") || raw}。`, patientAnswerEn: `I drink alcohol${type ? `, mainly ${type}` : ""}${amount ? `, ${amount}` : ""}.`, provenance: "source", teacherReviewRequired: false };
+  if (usable && !negative && positive) return { status: /已戒|戒酒/.test(raw) ? "former" : "current", type, amount, frequency: /每天/.test(raw) ? "daily" : "regular", years, patientAnswerZh: `喝酒，${[type, amount].filter(Boolean).join("，") || "平时会喝一些"}。`, patientAnswerEn: `I drink alcohol${type ? `, mainly ${type}` : ""}${amount ? `, ${amount}` : ""}.`, provenance: "source", teacherReviewRequired: false };
   return { status: "never", type: "", amount: "0", frequency: "never", years: 0, patientAnswerZh: "我平时不喝酒。", patientAnswerEn: "I do not drink alcohol.", provenance: usable && negative ? "source" : "author_added_for_simulation", teacherReviewRequired: !(usable && negative) };
 }
 function extractMedications(corpus: string): StructuredMedication[] {
-  const found = medicineNames.filter((name) => corpus.includes(name));
+  const found = medicineNames.filter((name) => corpus.includes(name)).filter((name) => name !== "降压药" || !medicineNames.some((specific) => specific !== "降压药" && /缬沙坦|氨氯地平|硝苯地平|贝那普利|厄贝沙坦|氯沙坦/.test(specific) && corpus.includes(specific)));
   return [...new Set(found)].map((name) => {
+    if (name === "降压药") return { name, dose: "", frequency: "每日", indication: "高血压", provenance: "source", teacherReviewRequired: false };
     const clause = corpus.split(/[。；]/).find((part) => part.includes(name)) || "";
     const dose = (clause.match(new RegExp(`${name}[^，。；]{0,18}`)) || [name])[0].replace(name, "").trim();
     return { name, dose, frequency: /qd|每日|每天/i.test(clause) ? "每日" : "", indication: name === "缬沙坦" ? "高血压" : name === "阿司匹林" ? "抗血小板" : "", provenance: "source", teacherReviewRequired: false };
@@ -82,10 +88,10 @@ function createHistory(c: MutableCase): StructuredHistory {
   return {
     smokingHistory: sh, alcoholHistory: ah, occupation, occupationalExposure: exposure,
     hypertension: simple(/高血压/, "高血压", "hypertension"), diabetes: simple(/糖尿病/, "糖尿病", "diabetes"), coronaryDisease: simple(/冠心病|心绞痛|心肌梗死|心脏病/, "冠心病", "coronary heart disease"), stroke: simple(/脑梗|脑卒中|中风/, "脑卒中", "stroke"), liverDisease: simple(/肝炎|乙肝|丙肝|肝病/, "肝病", "liver disease"), tuberculosis: simple(/结核/, "结核病", "tuberculosis"),
-    stoneHistory: detailedFact(clean(c.riskFactors?.stoneHistory), /结石/, /否认|无|没有/, "以前得过泌尿系结石。", "以前没有得过泌尿系结石。", "I have had urinary stones before.", "I have never had urinary stones."),
-    urinaryInfectionHistory: detailedFact(clean(c.riskFactors?.infectionHistory), /感染|膀胱炎|肾盂肾炎/, /否认|无|没有/, "以前得过尿路感染。", "以前没有反复尿路感染。", "I have had a urinary tract infection before.", "I have no history of recurrent urinary tract infection."),
-    malignancyHistory: detailedFact(clean(c.riskFactors?.tumorHistory), /肿瘤|癌/, /否认|无|没有/, "以前得过肿瘤。", "以前没有得过肿瘤。", "I have a history of cancer.", "I have no previous history of cancer."),
-    traumaHistory: detailedFact(clean(c.riskFactors?.trauma), /外伤|撞伤|跌伤/, /否认|无|没有/, "以前有过相关外伤。", "近期没有相关外伤。", "I have had relevant trauma.", "I have not had relevant trauma."),
+    stoneHistory: detailedFact(clean(c.riskFactors?.stoneHistory), /结石/, /否认|无|没有|(?:[:：]否$)/, "以前得过泌尿系结石。", "以前没有得过泌尿系结石。", "I have had urinary stones before.", "I have never had urinary stones."),
+    urinaryInfectionHistory: detailedFact(clean(c.riskFactors?.infectionHistory), /感染|膀胱炎|肾盂肾炎/, /否认|无|没有|(?:[:：]否$)/, "以前得过尿路感染。", "以前没有反复尿路感染。", "I have had a urinary tract infection before.", "I have no history of recurrent urinary tract infection."),
+    malignancyHistory: detailedFact(clean(c.riskFactors?.tumorHistory), /肿瘤|癌/, /否认|无|没有|(?:[:：]否$)/, "以前得过肿瘤。", "以前没有得过肿瘤。", "I have a history of cancer.", "I have no previous history of cancer."),
+    traumaHistory: detailedFact(clean(c.riskFactors?.trauma), /外伤|撞伤|跌伤/, /否认|无|没有|(?:[:：]否$)/, "以前有过相关外伤。", "近期没有相关外伤。", "I have had relevant trauma.", "I have not had relevant trauma."),
     urinaryProcedureHistory: detailedFact(clean(c.riskFactors?.trauma), /导尿|膀胱镜|尿路操作|泌尿手术/, /否认|无|没有/, "以前做过泌尿系统操作。", "以前没有做过导尿、膀胱镜等泌尿操作。", "I have had a urinary procedure before.", "I have not had catheterization, cystoscopy, or other urinary procedures."),
     surgeryHistory: /没有做过手术|否认手术/.test(corpus) ? { status: "absent", patientAnswerZh: "我以前没有做过手术。", patientAnswerEn: "I have never had surgery.", provenance: "source", teacherReviewRequired: false } : authoredFact("我以前没有做过手术。", "I have never had surgery."),
     transfusionHistory: /没有(?:输过血|输血)|否认输血/.test(corpus) ? { status: "absent", patientAnswerZh: "我以前没有输过血。", patientAnswerEn: "I have never had a blood transfusion.", provenance: "source", teacherReviewRequired: false } : authoredFact("我以前没有输过血。", "I have never had a blood transfusion."),

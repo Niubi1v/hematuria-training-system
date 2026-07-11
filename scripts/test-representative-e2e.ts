@@ -19,7 +19,8 @@ for (const id of representativeIds) {
   assert.ok(!emptyOrders.results.some((item) => /CTU/i.test(item.orderCategory)), `${id} leaked unopened CTU`);
   const report = score360(caseData!, { askedSlots: smoking.matchedSlotIds, examTexts: [], orderTexts: [], diagnosisText: "", mdtDepartments: [], mdtPurpose: "", mdtStarted: false, treatmentText: "", followUpText: "" });
   assert.equal(report.max, 360);
-  assert.equal(report.scoringVersion, "360-v1.0");
+  assert.equal(report.scoringVersion, "360-v2");
+  assert.equal(report.reportVersion, 1);
   assert.equal(report.caseVersion, caseData!.caseVersion);
   assert.ok(report.generatedAt);
 }

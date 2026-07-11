@@ -32,6 +32,14 @@ jobs:
       - name: Convert Excel data
         run: npm run convert:excel
 
+      - name: Prepare build metadata
+        run: |
+          echo "NEXT_PUBLIC_APP_VERSION=2.3.0" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_GIT_SHA=${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_BUILD_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_CASE_LIBRARY_VERSION=42-case-2.3" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SCORING_VERSION=360-v2" >> "$GITHUB_ENV"
+
       - name: Build static site
         env:
           NEXT_PUBLIC_BASE_PATH: ${{ github.event.repository.name == format('{0}.github.io', github.repository_owner) && '' || format('/{0}', github.event.repository.name) }}
