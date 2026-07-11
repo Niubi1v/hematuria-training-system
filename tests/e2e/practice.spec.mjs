@@ -92,7 +92,7 @@ test("cloud TTS failure visibly falls back to the matched browser voice", async 
 });
 
 test("English patient reply stays English and language switch creates a separate attempt", async ({ page }) => {
-  await page.route("**/api/session/init/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: "e2e-session", patientOpeningStatement: "Hello doctor. My urine has been red.", aiStatus: "connected" }) }));
+  await page.route("**/api/session/init/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: "e2e-session", caseId: "P001", language: "en", mode: "free", patientOpeningStatement: "Hello doctor. My urine has been red.", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) }));
   await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "- I do not have pain or fever.", matchedSlotIds: ["pain", "fever_chills"], isFallback: false }) }));
   await page.route("**/api/training-action/**", async (route) => {
     const body = route.request().postDataJSON();
@@ -107,6 +107,75 @@ test("English patient reply stays English and language switch creates a separate
   await expect(page.getByText("这个我不太清楚")).toHaveCount(0);
   const englishPointer = await page.evaluate(() => Object.keys(localStorage).find((key) => key.includes("attempt-pointer-v3:P001:free:en")));
   expect(englishPointer).toBeTruthy();
+});
+
+test("rule fallback keeps reconnection available and recovery replaces the reply without duplicate evidence", async ({ page }) => {
+  let sessionCalls = 0;
+  let historyLogCalls = 0;
+  const sessionBodies = [];
+  await page.route("**/api/health/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" }) }));
+  await page.route("**/api/session/init/**", (route) => {
+    sessionCalls += 1;
+    const request = route.request().postDataJSON();
+    sessionBodies.push(request);
+    const sessionId = request.forceRefresh ? "session-new" : "session-old";
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId, caseId: "P001", language: "zh", mode: "free", patientOpeningStatement: "医生您好。", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) });
+  });
+  await page.route("**/api/agent-chat/**", (route) => {
+    const request = route.request().postDataJSON();
+    if (request.probe) return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "", matchedSlotIds: [], matchedFacts: [], provider: "deepseek", isFallback: false }) });
+    const recovered = request.sessionId === "session-new";
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(recovered
+      ? { replyText: "我吸烟，大约每天一包。", matchedSlotIds: ["smoking"], matchedFacts: ["smoking=current"], provider: "deepseek", isFallback: false, fallbackReason: "" }
+      : { replyText: "我吸烟，大约每天一包。", matchedSlotIds: ["smoking"], matchedFacts: ["smoking=current"], provider: "rule", isFallback: true, fallbackReason: "provider_timeout" }) });
+  });
+  await page.route("**/api/training-action/**", async (route) => {
+    const body = route.request().postDataJSON();
+    if (body.action === "history-log") historyLogCalls += 1;
+    const payload = body.action === "init-attempt" ? { attemptId: body.attemptId, practiceOnly: true } : { recorded: true };
+    await route.fulfill({ status: 200, contentType: "application/json", headers: { "X-Training-State": `e2e-${body.attemptId}` }, body: JSON.stringify(payload) });
+  });
+  await page.goto("/cases/P001/");
+  await page.getByPlaceholder("输入问诊问题").fill("您吸烟吗？");
+  await page.getByRole("button", { name: "发送" }).click();
+  await expect(page.getByText("当前由规则库回答，可随时重新连接AI。")).toBeVisible();
+  const reconnect = page.getByRole("button", { name: "重新连接AI", exact: true });
+  expect(await reconnect.count()).toBe(1);
+  await reconnect.evaluate((button) => { button.click(); button.click(); });
+  await expect(page.getByText("已重新连接AI")).toBeVisible();
+  const conversation = page.getByRole("log", { name: "模拟问诊对话" });
+  await expect(conversation.getByText("您吸烟吗？", { exact: true })).toHaveCount(1);
+  await expect(conversation.getByText("我吸烟，大约每天一包。", { exact: true })).toHaveCount(1);
+  expect(historyLogCalls).toBe(1);
+  expect(sessionCalls).toBeGreaterThanOrEqual(2);
+  expect(sessionBodies.filter((body) => body.forceRefresh === true)).toHaveLength(1);
+  const saved = await page.evaluate(() => {
+    const key = Object.keys(localStorage).find((item) => item.startsWith("hematuria-attempt-v3:P001:free:zh:"));
+    return key ? JSON.parse(localStorage.getItem(key)) : null;
+  });
+  expect(saved.messages.filter((item) => item.role === "student")).toHaveLength(1);
+  expect(saved.askedSlots).toContain("smoking");
+  expect(saved.collected.smoking).toBe(true);
+  expect(saved.timeline.filter((item) => item.type === "ask")).toHaveLength(1);
+  expect(saved.timeline.filter((item) => item.type === "technical")).toHaveLength(1);
+});
+
+test("offline reconnect sends no request and can recover after the online event", async ({ page, context }) => {
+  let healthCalls = 0;
+  await page.route("**/api/health/**", (route) => { healthCalls += 1; return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" }) }); });
+  await page.route("**/api/session/init/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: `session-${Date.now()}`, caseId: "P001", language: "zh", mode: "free", patientOpeningStatement: "医生您好。", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) }));
+  await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "", matchedSlotIds: [], matchedFacts: [], provider: "deepseek", isFallback: false }) }));
+  await page.goto("/cases/P001/");
+  await context.setOffline(true);
+  await expect(page.getByText("当前处于离线状态，既有训练记录已保留。")).toBeVisible();
+  const before = healthCalls;
+  await page.getByRole("button", { name: "重新连接AI", exact: true }).click();
+  expect(healthCalls).toBe(before);
+  await context.setOffline(false);
+  await expect(page.getByText("网络已恢复，可以重新连接AI。")).toBeVisible();
+  await page.getByRole("button", { name: "重新连接AI", exact: true }).click();
+  await expect(page.getByText("已重新连接AI")).toBeVisible();
+  expect(healthCalls).toBeGreaterThan(before);
 });
 
 test("public teacher and RCT routes do not expose formal functions", async ({ page }) => {

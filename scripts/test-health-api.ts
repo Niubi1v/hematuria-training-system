@@ -30,6 +30,8 @@ async function main() {
   assert.equal(health.payload.patientServiceConfigured, true);
   assert.equal(health.payload.trainingStateConfigured, true);
   assert.equal(health.payload.cloudTtsConfigured, true);
+  assert.equal(health.payload.apiVersion, "2.6.0");
+  assert.ok(health.payload.deploymentSha);
   assert.equal(health.headers["access-control-allow-origin"], "https://niubi1v.github.io");
   assert.equal(JSON.stringify(health.payload).includes("test-placeholder"), false, "health must never expose secret values");
   const options = await call("OPTIONS");

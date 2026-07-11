@@ -539,6 +539,7 @@ export type ChatMessage = {
   text: string;
   matchedKeys?: KeyPointId[];
   matchedSlots?: string[];
+  matchedFacts?: string[];
 };
 
 export type StudentSummary = {

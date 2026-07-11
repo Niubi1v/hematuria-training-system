@@ -22,6 +22,12 @@ LLM_ENABLE_AI_AGENTS=true
 LLM_ENABLE_AI_PATIENT=true
 LLM_REQUEST_TIMEOUT_MS=15000
 
+# 可选：短期会话与回答缓存（毫秒/最大条目数）
+PATIENT_SESSION_TTL_MS=1800000
+PATIENT_ANSWER_CACHE_TTL_MS=900000
+PATIENT_SESSION_CACHE_MAX=200
+PATIENT_ANSWER_CACHE_MAX=500
+
 TRAINING_STATE_SECRET=<至少32字节的独立随机密钥>
 TRAINING_DEPLOYMENT_TIER=practice
 
@@ -39,13 +45,15 @@ TTS_ALLOWED_ORIGINS=https://niubi1v.github.io
 
 部署后访问 `https://hematuria-training-system.vercel.app/api/health/`。该接口只返回布尔配置状态、部署层级、短提交号和 API 版本，不返回密钥。期望 `patientServiceConfigured`、`trainingStateConfigured`、`cloudTtsConfigured` 和 `allowedOriginConfigured` 均为 `true`。
 
+`session/init` 使用本地病例事实快速建立会话，不再同步等待大模型补全。会话默认 30 分钟失效，回答幂等缓存默认 15 分钟失效；部署 SHA 或 API 版本变化后，浏览器会自动丢弃旧会话。页面中的“重新连接AI”只更新 AI 会话，不会清空学生的训练记录。
+
 ## 无模拟生产冒烟测试
 
 ```bash
 pnpm run smoke:production
 ```
 
-测试会真实请求生产环境，验证健康接口、中文/英文 Patient Agent、签名训练状态，以及中文男女声和英文男女声四种 Azure MP3。任何 3xx 重定向、CORS 缺失、服务未配置、非 `audio/mpeg` 或空音频都会失败。
+测试会真实请求生产环境，验证健康接口、连续 10 次会话初始化、中文/英文各 5 次 Patient Agent、签名训练状态，以及中文男女声和英文男女声四种 Azure MP3。脚本会输出初始化与回答延迟、成功率、P50/P95、规则库降级次数及常见上游错误计数。任何 3xx 重定向、CORS 缺失、服务未配置、非 `audio/mpeg` 或空音频都会失败。
 
 ## 故障表现
 

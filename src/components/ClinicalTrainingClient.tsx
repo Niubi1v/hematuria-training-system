@@ -36,6 +36,7 @@ import physicalExamItemsJson from "@/data/physical_exam_items.json";
 import { simplifiedChiefComplaint } from "@/src/lib/chiefComplaint";
 import { ApiRequestError, createIdempotencyKey, fetchWithRecovery, requestJson, studentFacingApiMessage } from "@/src/lib/apiClient";
 import { publicApiConfig } from "@/src/lib/apiConfig";
+import { isConnectionFailureFallback, isSafetyFallback, mergeRecoveredCoverage, validCachedSession, type AiConnectionStatus, type CachedPatientSession } from "@/src/lib/aiRecovery";
 import { initializeStorageVersion, readJsonStorage, writeJsonStorage } from "@/src/lib/safeStorage";
 import { attemptPointerKey, attemptStorageKey, createAttempt, type AttemptIdentity, type AttemptMode } from "@/src/lib/attemptState";
 import {
@@ -63,7 +64,7 @@ import FormattedText from "./FormattedText";
 type TrainingMode = "free" | "osce" | "demo" | "rct" | "random";
 type LanguageCode = "zh" | "en";
 type AiMode = "deepseek" | "rule" | "debug";
-type AiStatus = "unknown" | "checking" | "connected" | "fallback" | "error";
+type AiStatus = AiConnectionStatus;
 type AgentStageNo = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 type StudentVisibleCase = {
   id: string;
@@ -79,7 +80,7 @@ type StudentVisibleCase = {
 type TimelineEvent = {
   id: string;
   stageNo: AgentStageNo;
-  type: "ask" | "answer" | "exam" | "order" | "result" | "diagnosis" | "mdt" | "treatment" | "perioperative" | "submit" | "timeout";
+  type: "ask" | "answer" | "technical" | "exam" | "order" | "result" | "diagnosis" | "mdt" | "treatment" | "perioperative" | "submit" | "timeout";
   label: string;
   detail: string;
   at: string;
@@ -115,10 +116,7 @@ type PatientReplyApiResponse = {
   debug?: Record<string, unknown>;
 };
 
-type SessionInitResponse = {
-  sessionId: string;
-  patientOpeningStatement: string;
-  aiStatus: "connected" | "fallback";
+type SessionInitResponse = CachedPatientSession & {
   cacheHit: boolean;
   debug?: Record<string, unknown>;
 };
@@ -126,11 +124,17 @@ type ServiceHealth = {
   status: string;
   deploymentTier: string;
   gitSha: string;
+  deploymentSha?: string;
   patientServiceConfigured: boolean;
   trainingStateConfigured: boolean;
   cloudTtsConfigured: boolean;
   allowedOriginConfigured: boolean;
   apiVersion: string;
+};
+type PendingFailedQuestion = {
+  question: string;
+  patientMessageIndex: number;
+  fallbackReason: string;
 };
 
 type SpeechRecognitionResultLike = { transcript: string };
@@ -162,6 +166,7 @@ const labSecondaryOrder = ["尿液基础", "尿液感染", "尿液肿瘤", "尿�
 const imagingSecondaryOrder = ["超声", "X线", "CT", "MRI", "内镜", "核医学", "功能检查"];
 const consultGroupOrder = ["外科", "内科", "辅助/平台", "急诊/危重"];
 const PATIENT_REPLY_TIMEOUT_MS = 12000;
+const EXPECTED_API_VERSION = "2.6.0";
 const isDevelopment = process.env.NODE_ENV !== "production";
 
 const patientReplyForbiddenTerms = [
@@ -340,19 +345,23 @@ function aiSessionCacheKey(caseId: string, language: LanguageCode, mode: Trainin
   return `hematuria-ai-patient-session-${caseId}-${language}-${mode}`;
 }
 
-async function requestSessionInit({ caseId, runtimeMode, language, debug, attemptId }: {
+async function requestSessionInit({ caseId, runtimeMode, language, debug, attemptId, forceRefresh = false, signal }: {
   caseId: string;
   runtimeMode: TrainingMode;
   language: LanguageCode;
   debug: boolean;
   attemptId: string;
+  forceRefresh?: boolean;
+  signal?: AbortSignal;
 }) {
-  return requestJson<SessionInitResponse>(publicApiConfig.sessionInit, { caseId, mode: runtimeMode, language, debug }, {
-    timeoutMs: PATIENT_REPLY_TIMEOUT_MS, retries: 2, idempotencyKey: `${attemptId}:session-init`
+  return requestJson<SessionInitResponse>(publicApiConfig.sessionInit, { caseId, mode: runtimeMode, language, debug, forceRefresh }, {
+    timeoutMs: PATIENT_REPLY_TIMEOUT_MS, retries: 2, signal,
+    idempotencyKey: `${attemptId}:session-init:${forceRefresh ? Date.now() : "default"}`,
+    endpointName: "session-init"
   });
 }
 
-async function requestAiPatientReply({ sessionId, caseId, question, messages, askedSlots, aiMode, language, attemptId }: {
+async function requestAiPatientReply({ sessionId, caseId, question, messages, askedSlots, aiMode, language, attemptId, signal, recoveryCycle = "default" }: {
   sessionId?: string;
   caseId: string;
   question: string;
@@ -361,6 +370,8 @@ async function requestAiPatientReply({ sessionId, caseId, question, messages, as
   aiMode: AiMode;
   language: LanguageCode;
   attemptId: string;
+  signal?: AbortSignal;
+  recoveryCycle?: string;
 }) {
   return requestJson<PatientReplyApiResponse>(publicApiConfig.patientAgent, {
         caseId,
@@ -373,7 +384,13 @@ async function requestAiPatientReply({ sessionId, caseId, question, messages, as
         conversationHistory: messages.slice(-6).map((message) => ({ role: message.role, text: message.text })),
         askedSlotIds: askedSlots,
         askedQuestions: messages.filter((message) => message.role === "student").map((message) => message.text)
-      }, { timeoutMs: PATIENT_REPLY_TIMEOUT_MS, retries: 2, idempotencyKey: createIdempotencyKey(attemptId, "patient", question.trim().toLowerCase()) });
+      }, { timeoutMs: PATIENT_REPLY_TIMEOUT_MS, retries: 2, signal, endpointName: "patient-reply", idempotencyKey: createIdempotencyKey(attemptId, "patient", recoveryCycle, question.trim().toLowerCase()) });
+}
+
+async function probeAiPatient({ caseId, sessionId, language, signal }: { caseId: string; sessionId: string; language: LanguageCode; signal?: AbortSignal }) {
+  return requestJson<PatientReplyApiResponse>(publicApiConfig.patientAgent, {
+    caseId, sessionId, language, agentId: "standardized_patient", probe: true
+  }, { timeoutMs: 8000, retries: 1, signal, endpointName: "patient-probe" });
 }
 
 async function requestTrainingAction<T>(body: Record<string, unknown>, stateToken = ""): Promise<{ payload: T; stateToken: string }> {
@@ -557,6 +574,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [serviceHealth, setServiceHealth] = useState<ServiceHealth | null>(null);
   const [healthCheckFailed, setHealthCheckFailed] = useState(false);
   const [lastTechnicalFailure, setLastTechnicalFailure] = useState("");
+  const [pendingFailedQuestion, setPendingFailedQuestion] = useState<PendingFailedQuestion | null>(null);
+  const [reconnectNotice, setReconnectNotice] = useState("");
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error">("saved");
   const [storageWarning, setStorageWarning] = useState("");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -570,6 +589,10 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const allowNavigationRef = useRef(false);
   const trainingStateTokenRef = useRef("");
   const trainingInitPromiseRef = useRef<Promise<string> | null>(null);
+  const sessionInitAbortRef = useRef<AbortController | null>(null);
+  const patientReplyAbortRef = useRef<AbortController | null>(null);
+  const aiGenerationRef = useRef(0);
+  const reconnectPromiseRef = useRef<Promise<boolean> | null>(null);
   const practiceDeployment = process.env.NEXT_PUBLIC_DEPLOYMENT_TIER !== "formal";
   const isOsce = !practiceDeployment && runtimeMode === "osce";
   const osceLocked = isOsce && osceTimeLeft === 0;
@@ -717,17 +740,31 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }, []);
 
   useEffect(() => {
+    const handleOffline = () => { setAiStatus("offline"); setReconnectNotice(lang === "en" ? "You are offline. Existing training records are preserved." : "当前处于离线状态，既有训练记录已保留。"); };
+    const handleOnline = () => { setAiStatus((current) => current === "offline" ? "unknown" : current); setReconnectNotice(lang === "en" ? "Network restored. You can reconnect AI." : "网络已恢复，可以重新连接AI。"); };
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+    if (!navigator.onLine) handleOffline();
+    return () => { window.removeEventListener("offline", handleOffline); window.removeEventListener("online", handleOnline); };
+  }, [lang]);
+
+  useEffect(() => {
     setMessages((current) => current.length ? current : [{ role: "patient", text: patientOpening(caseData, lang) }]);
   }, [caseData, lang]);
 
   useEffect(() => {
     if (aiMode === "rule") return;
     let cancelled = false;
+    const generation = ++aiGenerationRef.current;
+    sessionInitAbortRef.current?.abort();
+    const controller = new AbortController();
+    sessionInitAbortRef.current = controller;
     const cacheKey = aiSessionCacheKey(caseData.id, lang, runtimeMode);
     const cached = readJsonStorage<SessionInitResponse | null>(cacheKey, null).value;
-    if (cached?.sessionId) {
+    const expectedDeploymentSha = serviceHealth?.deploymentSha || serviceHealth?.gitSha;
+    if (validCachedSession(cached, { caseId: caseData.id, language: lang, mode: runtimeMode, deploymentSha: expectedDeploymentSha && expectedDeploymentSha !== "unknown" ? expectedDeploymentSha : undefined, apiVersion: EXPECTED_API_VERSION })) {
       setAiSessionId(cached.sessionId);
-      setAiStatus(cached.aiStatus === "connected" ? "connected" : "fallback");
+      setAiStatus(cached.aiStatus === "degraded" ? "degraded" : "unknown");
       setMessages((current) => {
         const hasStudentMessage = current.some((message) => message.role === "student");
         if (hasStudentMessage) return current;
@@ -735,6 +772,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       });
       return;
     }
+    try { localStorage.removeItem(cacheKey); } catch { /* Session continues in memory. */ }
+    if (!navigator.onLine) { setAiStatus("offline"); return; }
     setSessionInitLoading(true);
     setSessionInitError("");
     setAiStatus("checking");
@@ -743,11 +782,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       runtimeMode,
       language: lang,
       debug: aiMode === "debug",
-      attemptId: attempt.attemptId
+      attemptId: attempt.attemptId,
+      signal: controller.signal
     }).then((result) => {
-      if (cancelled) return;
+      if (cancelled || generation !== aiGenerationRef.current) return;
       setAiSessionId(result.sessionId);
-      setAiStatus(result.aiStatus === "connected" ? "connected" : "fallback");
+      setAiStatus(result.aiStatus === "degraded" ? "degraded" : "unknown");
       writeJsonStorage(cacheKey, result);
       setMessages((current) => {
         const hasStudentMessage = current.some((message) => message.role === "student");
@@ -755,17 +795,18 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         return [{ role: "patient", text: result.patientOpeningStatement || patientOpening(caseData, lang) }];
       });
     }).catch((error) => {
-      if (cancelled) return;
+      if (cancelled || controller.signal.aborted || generation !== aiGenerationRef.current) return;
       const kind = error instanceof ApiRequestError ? error.kind : "patient-service";
       setSessionInitError(studentFacingApiMessage(kind, lang));
-      setAiStatus("error");
+      setAiStatus(kind === "offline" ? "offline" : "error");
     }).finally(() => {
       if (!cancelled) setSessionInitLoading(false);
     });
     return () => {
       cancelled = true;
+      controller.abort();
     };
-  }, [aiMode, attempt.attemptId, caseData, lang, runtimeMode]);
+  }, [aiMode, attempt.attemptId, caseData, lang, runtimeMode, serviceHealth?.apiVersion, serviceHealth?.deploymentSha, serviceHealth?.gitSha]);
 
   useEffect(() => {
     try { localStorage.setItem("hematuria-language", lang); } catch { setStorageWarning("语言偏好无法保存。 "); }
@@ -778,7 +819,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
 
   useEffect(() => {
     try { localStorage.setItem("hematuria-ai-mode", aiMode); } catch { setStorageWarning("回答来源偏好无法保存。 "); }
-    setAiStatus(aiMode === "rule" ? "fallback" : "unknown");
+    setAiStatus(aiMode === "rule" ? "degraded" : "unknown");
   }, [aiMode]);
 
   useEffect(() => {
@@ -856,6 +897,9 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   useEffect(() => () => {
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     ttsAbortRef.current?.abort();
+    sessionInitAbortRef.current?.abort();
+    patientReplyAbortRef.current?.abort();
+    aiGenerationRef.current += 1;
     cloudAudioRef.current?.pause();
     if (cloudAudioUrlRef.current) URL.revokeObjectURL(cloudAudioUrlRef.current);
   }, []);
@@ -869,6 +913,9 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     if (timeline.length > 0 && !window.confirm(next === "en" ? "Switching language starts a separate attempt. Continue?" : "切换语言将开始独立训练记录，是否继续？")) return;
     const attemptMode: AttemptMode = runtimeMode === "osce" ? "osce" : runtimeMode === "rct" ? "rct" : "free";
     const nextAttempt = createAttempt(caseData.id, attemptMode, next);
+    sessionInitAbortRef.current?.abort();
+    patientReplyAbortRef.current?.abort();
+    aiGenerationRef.current += 1;
     setAttempt(nextAttempt);
     writeJsonStorage(attemptPointerKey(caseData.id, attemptMode, next), nextAttempt);
     setLang(next);
@@ -884,6 +931,9 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     setTimeline([]);
     setOsceTimeLeft(20 * 60);
     setAiSessionId("");
+    setPendingFailedQuestion(null);
+    setLastTechnicalFailure("");
+    setReconnectNotice("");
     window.dispatchEvent(new CustomEvent("hematuria-language-change", { detail: next }));
     setMessages([{ role: "patient", text: patientOpening(caseData, next) }]);
   }
@@ -1017,12 +1067,18 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     if (!text || patientReplyLoading) return;
     stopSpeech();
     setPatientReplyLoading(true);
-    const technicalFallback = lang === "en"
-      ? "I am sorry, the patient service is temporarily unavailable. Please try again."
-      : "抱歉，患者服务暂时不可用，请稍后重试。";
-    let answerText = technicalFallback;
+    patientReplyAbortRef.current?.abort();
+    const controller = new AbortController();
+    patientReplyAbortRef.current = controller;
+    const generation = ++aiGenerationRef.current;
+    const ruleSafeFallback = lang === "en"
+      ? "Doctor, could you ask that more specifically? I am not quite sure what you mean."
+      : "医生，您能问得再具体一点吗？我不太明白您的意思。";
+    let answerText = ruleSafeFallback;
     let matchedSlots: string[] = [];
     let matchedKeys: KeyPointId[] = [];
+    let matchedFacts: string[] = [];
+    let pendingReason = "";
     try {
       setAiStatus("checking");
       const aiResult = await requestAiPatientReply({
@@ -1033,25 +1089,47 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         askedSlots,
         aiMode,
         language: lang,
-        attemptId: attempt.attemptId
+        attemptId: attempt.attemptId,
+        signal: controller.signal
       });
+      if (generation !== aiGenerationRef.current) return;
       const safeAiReply = aiResult.replyText && !isUnsafePatientReply(text, aiResult.replyText, lang);
-      answerText = safeAiReply ? aiResult.replyText : technicalFallback;
+      answerText = safeAiReply ? aiResult.replyText : ruleSafeFallback;
       matchedSlots = aiResult.matchedSlotIds || [];
+      matchedFacts = aiResult.matchedFacts || [];
       matchedKeys = unique(matchedSlots.map((slot) => canonicalToCollected[slot]).filter(Boolean)) as KeyPointId[];
-      setAiStatus(safeAiReply && !aiResult.isFallback ? "connected" : "fallback");
-      if (safeAiReply) setLastTechnicalFailure("");
+      if (safeAiReply && !aiResult.isFallback) {
+        setAiStatus("connected");
+        setLastTechnicalFailure("");
+        setPendingFailedQuestion(null);
+        setReconnectNotice("");
+      } else if (isConnectionFailureFallback(aiResult.fallbackReason)) {
+        pendingReason = aiResult.fallbackReason || "provider_unavailable";
+        setAiStatus("degraded");
+        setReconnectNotice(lang === "en" ? "Current answer came from the rule fallback." : "当前由规则库回答，可随时重新连接AI。");
+      } else if (isSafetyFallback(aiResult.fallbackReason)) {
+        setAiStatus((current) => current === "connected" ? current : "unknown");
+      } else {
+        setAiStatus((current) => current === "connected" ? current : "degraded");
+      }
     } catch (error) {
+      if (controller.signal.aborted || generation !== aiGenerationRef.current) return;
       const kind = error instanceof ApiRequestError ? error.kind : "patient-service";
-      answerText = studentFacingApiMessage(kind, lang);
-      setAiStatus("error");
-      setLastTechnicalFailure(text);
+      pendingReason = kind;
+      setAiStatus(kind === "offline" ? "offline" : "error");
+      setReconnectNotice(studentFacingApiMessage(kind, lang));
     } finally {
-      setPatientReplyLoading(false);
+      if (generation === aiGenerationRef.current) setPatientReplyLoading(false);
     }
+    if (generation !== aiGenerationRef.current) return;
     const nextCollected = collectedFromSlots(collected, matchedSlots);
     const nextAskedSlots = unique([...askedSlots, ...(matchedSlots ?? [])]);
-    const nextMessages: ChatMessage[] = [...messages, { role: "student", text }, { role: "patient", text: answerText, matchedKeys, matchedSlots }];
+    const patientMessageIndex = messages.length + 1;
+    const nextMessages: ChatMessage[] = [...messages, { role: "student", text }, { role: "patient", text: answerText, matchedKeys, matchedSlots, matchedFacts }];
+    if (pendingReason) {
+      setPendingFailedQuestion({ question: text, patientMessageIndex, fallbackReason: pendingReason });
+      setLastTechnicalFailure(text);
+    }
     try {
       await trainingAction<{ recorded: boolean }>({ action: "history-log", question: text });
     } catch {
@@ -1066,30 +1144,128 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     void speak(answerText);
   }
 
+  function applyRecoveredReply(aiResult: PatientReplyApiResponse, pending: PendingFailedQuestion, eventLabel: string) {
+    if (!aiResult.replyText || aiResult.isFallback || isUnsafePatientReply(pending.question, aiResult.replyText, lang)) return false;
+    const matchedSlots = aiResult.matchedSlotIds || [];
+    const matchedFacts = aiResult.matchedFacts || [];
+    const matchedKeys = unique(matchedSlots.map((slot) => canonicalToCollected[slot]).filter(Boolean)) as KeyPointId[];
+    setMessages((current) => current.map((message, index) => index === pending.patientMessageIndex && message.role === "patient"
+      ? { ...message, text: aiResult.replyText, matchedKeys, matchedSlots, matchedFacts }
+      : message));
+    setAskedSlots((current) => mergeRecoveredCoverage(current, collected, matchedSlots, canonicalToCollected).askedSlots);
+    setCollected((current) => mergeRecoveredCoverage(askedSlots, current, matchedSlots, canonicalToCollected).collected);
+    setAiStatus("connected");
+    setSessionInitError("");
+    setPendingFailedQuestion(null);
+    setLastTechnicalFailure("");
+    setReconnectNotice(lang === "en" ? "AI reconnected" : "已重新连接AI");
+    addTimeline("technical", eventLabel, lang === "en" ? "The failed patient reply was replaced without duplicating the question." : "已替换失败患者回答，未重复提问或计分。", 1);
+    void speak(aiResult.replyText);
+    return true;
+  }
+
   async function retryTechnicalReply() {
-    if (!caseData || !lastTechnicalFailure || patientReplyLoading) return;
+    const pending = pendingFailedQuestion;
+    if (!caseData || !pending || patientReplyLoading) return;
     setPatientReplyLoading(true);
+    patientReplyAbortRef.current?.abort();
+    const controller = new AbortController();
+    patientReplyAbortRef.current = controller;
+    const generation = ++aiGenerationRef.current;
     try {
       const aiResult = await requestAiPatientReply({
         sessionId: aiSessionId,
         caseId: caseData.id,
-        question: lastTechnicalFailure,
+        question: pending.question,
         messages,
         askedSlots,
         aiMode: "deepseek",
         language: lang,
-        attemptId: attempt.attemptId
+        attemptId: attempt.attemptId,
+        signal: controller.signal,
+        recoveryCycle: `retry-${generation}`
       });
-      if (!aiResult.replyText || aiResult.isFallback || isUnsafePatientReply(lastTechnicalFailure, aiResult.replyText, lang)) throw new Error("unsafe-or-fallback");
-      setMessages((current) => current.map((message, index) => index === current.length - 1 && message.role === "patient" ? { ...message, text: aiResult.replyText } : message));
-      setAiStatus("connected");
-      setLastTechnicalFailure("");
-      addTimeline("answer", lang === "en" ? "Technical retry succeeded" : "技术重试成功", aiResult.replyText, 1);
-    } catch {
-      setAiStatus("error");
+      if (generation !== aiGenerationRef.current || !applyRecoveredReply(aiResult, pending, lang === "en" ? "Patient reply retry succeeded" : "本次患者回答重试成功")) {
+        setAiStatus("degraded");
+        setReconnectNotice(lang === "en" ? "Retry still used rule fallback. Reconnect AI to create a new session." : "重试仍为规则库回答，请重新连接AI以建立新会话。");
+      }
+    } catch (error) {
+      if (!controller.signal.aborted && generation === aiGenerationRef.current) {
+        const kind = error instanceof ApiRequestError ? error.kind : "patient-service";
+        setAiStatus(kind === "offline" ? "offline" : "error");
+        setReconnectNotice(studentFacingApiMessage(kind, lang));
+      }
     } finally {
-      setPatientReplyLoading(false);
+      if (generation === aiGenerationRef.current) setPatientReplyLoading(false);
     }
+  }
+
+  function reconnectAiPatient() {
+    if (reconnectPromiseRef.current) return reconnectPromiseRef.current;
+    const promise = (async () => {
+      if (!navigator.onLine) {
+        setAiStatus("offline");
+        setReconnectNotice(studentFacingApiMessage("offline", lang));
+        return false;
+      }
+      sessionInitAbortRef.current?.abort();
+      patientReplyAbortRef.current?.abort();
+      const controller = new AbortController();
+      sessionInitAbortRef.current = controller;
+      const generation = ++aiGenerationRef.current;
+      setAiStatus("reconnecting");
+      setReconnectNotice(lang === "en" ? "Reconnecting..." : "正在连接……");
+      try {
+        const health = await requestJson<ServiceHealth>(publicApiConfig.health, undefined, { method: "GET", timeoutMs: 7000, retries: 2, signal: controller.signal, endpointName: "health" });
+        if (generation !== aiGenerationRef.current) return false;
+        setServiceHealth(health);
+        setHealthCheckFailed(false);
+        if (health.apiVersion !== EXPECTED_API_VERSION) throw new ApiRequestError("backend-outdated", 409, "version_mismatch");
+        if (!health.patientServiceConfigured) throw new ApiRequestError("not-configured", 503, "provider_not_configured");
+        const cacheKey = aiSessionCacheKey(caseData.id, lang, runtimeMode);
+        try { localStorage.removeItem(cacheKey); } catch { /* New session still works in memory. */ }
+        const session = await requestSessionInit({
+          caseId: caseData.id, runtimeMode, language: lang, debug: aiMode === "debug", attemptId: attempt.attemptId,
+          forceRefresh: true, signal: controller.signal
+        });
+        if (generation !== aiGenerationRef.current) return false;
+        setAiSessionId(session.sessionId);
+        writeJsonStorage(cacheKey, session);
+        const pending = pendingFailedQuestion;
+        if (pending) {
+          const aiResult = await requestAiPatientReply({
+            sessionId: session.sessionId, caseId: caseData.id, question: pending.question, messages, askedSlots,
+            aiMode: "deepseek", language: lang, attemptId: attempt.attemptId, signal: controller.signal, recoveryCycle: `reconnect-${session.sessionId}`
+          });
+          if (generation !== aiGenerationRef.current) return false;
+          if (!applyRecoveredReply(aiResult, pending, lang === "en" ? "AI reconnection restored patient reply" : "重新连接后回答成功")) {
+            setAiStatus("degraded");
+            setReconnectNotice(lang === "en" ? "Connection failed; using rule fallback" : "连接失败，使用规则库");
+            return false;
+          }
+        } else {
+          const probe = await probeAiPatient({ caseId: caseData.id, sessionId: session.sessionId, language: lang, signal: controller.signal });
+          if (generation !== aiGenerationRef.current) return false;
+          if (probe.isFallback) {
+            setAiStatus("degraded");
+            setReconnectNotice(lang === "en" ? "Connection failed; using rule fallback" : "连接失败，使用规则库");
+            return false;
+          }
+          setAiStatus("connected");
+          setSessionInitError("");
+          setReconnectNotice(lang === "en" ? "AI reconnected" : "已重新连接AI");
+        }
+        return true;
+      } catch (error) {
+        if (controller.signal.aborted || generation !== aiGenerationRef.current) return false;
+        const kind = error instanceof ApiRequestError ? error.kind : "patient-service";
+        setAiStatus(kind === "offline" ? "offline" : "degraded");
+        setReconnectNotice(studentFacingApiMessage(kind, lang));
+        return false;
+      }
+    })().finally(() => { reconnectPromiseRef.current = null; });
+    reconnectPromiseRef.current = promise;
+    return promise;
   }
 
   function startVoiceInput() {
@@ -1324,18 +1500,34 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
               <button type="button" onClick={() => setAiMode("rule")} className={`rounded px-3 py-1 text-sm ${aiMode === "rule" ? "bg-clinic-blue text-white" : "text-clinic-muted"}`}>{lang === "en" ? "Rules" : "规则库"}</button>
             </div>
           )}
-          <span className={`rounded-full px-3 py-1 text-xs ${aiStatus === "connected" ? "bg-emerald-50 text-emerald-700" : aiStatus === "checking" || aiStatus === "unknown" ? "bg-slate-50 text-slate-600" : "bg-amber-50 text-amber-700"}`}>
+          <span aria-live="polite" className={`rounded-full px-3 py-1 text-xs ${aiStatus === "connected" ? "bg-emerald-50 text-emerald-700" : aiStatus === "checking" || aiStatus === "unknown" || aiStatus === "reconnecting" ? "bg-slate-50 text-slate-600" : "bg-amber-50 text-amber-700"}`}>
             {t(lang, "responseSource")}：
             {aiStatus === "connected"
               ? t(lang, "aiConnected")
-              : aiStatus === "checking"
+              : aiStatus === "reconnecting"
+                ? (lang === "en" ? "Reconnecting..." : "正在连接……")
+                : aiStatus === "checking"
                 ? t(lang, "aiChecking")
+                : aiStatus === "offline"
+                  ? (lang === "en" ? "Offline" : "离线")
                 : aiStatus === "unknown"
                   ? t(lang, "statusUnknown")
                   : aiMode === "rule"
                     ? t(lang, "ruleFallback")
                     : t(lang, "degradedMode")}
           </span>
+          <button
+            type="button"
+            onClick={() => void reconnectAiPatient()}
+            disabled={aiStatus === "reconnecting"}
+            className={`rounded-md border border-clinic-line bg-white px-3 py-2 text-sm font-medium hover:border-clinic-blue disabled:cursor-wait disabled:opacity-60 ${aiStatus === "connected" ? "text-clinic-muted" : "text-clinic-blue"}`}
+          >
+            {aiStatus === "reconnecting"
+              ? (lang === "en" ? "Reconnecting..." : "正在连接……")
+              : aiStatus === "connected"
+                ? (lang === "en" ? "Check connection" : "检测连接")
+                : (lang === "en" ? "Reconnect AI" : "重新连接AI")}
+          </button>
           <button type="button" onClick={restartTraining} className="inline-flex items-center gap-2 rounded-md border border-clinic-line bg-white px-3 py-2 text-sm hover:border-clinic-blue"><RotateCcw size={15} />{lang === "en" ? "Restart" : "重新开始"}</button>
           <Link onClick={(event) => { if (!confirmExit()) event.preventDefault(); }} href="/cases" className="rounded-md border border-clinic-line bg-white px-4 py-2 text-sm hover:border-clinic-blue">{t(lang, "backToCases")}</Link>
         </div>
@@ -1346,6 +1538,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           <button type="button" onClick={() => setStorageWarning("")} className="font-medium underline">{t(lang, "dismiss")}</button>
         </div>
       )}
+      {reconnectNotice && <div role="status" aria-live="polite" className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{reconnectNotice}</div>}
 
       <button type="button" aria-expanded={mobileNavOpen} onClick={() => setMobileNavOpen((value) => !value)} className="mb-3 inline-flex w-full items-center justify-between rounded-md border border-clinic-line bg-white px-4 py-3 font-medium lg:hidden">
         <span className="inline-flex items-center gap-2"><Menu size={18} />{t(lang, "mobileNavigation")}</span>
@@ -1461,13 +1654,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 </button>
               )}
               {(sessionInitLoading || sessionInitError) && (
-                <div className={`mt-3 rounded-md px-3 py-2 text-sm ${sessionInitError ? "bg-amber-50 text-amber-800" : "bg-clinic-paper text-clinic-muted"}`}>
-                  {sessionInitLoading
-                    ? t(lang, "aiPreparing")
-                    : t(lang, "aiUnavailable")}
+                <div role="status" className={`mt-3 flex flex-wrap items-center justify-between gap-3 rounded-md px-3 py-2 text-sm ${sessionInitError ? "bg-amber-50 text-amber-800" : "bg-clinic-paper text-clinic-muted"}`}>
+                  <span>{sessionInitLoading ? t(lang, "aiPreparing") : sessionInitError}</span>
+                  {sessionInitError && <button type="button" onClick={() => void reconnectAiPatient()} disabled={aiStatus === "reconnecting"} className="font-medium underline disabled:opacity-50">{aiStatus === "reconnecting" ? (lang === "en" ? "Reconnecting..." : "正在连接……") : (lang === "en" ? "Reconnect AI" : "重新连接AI")}</button>}
                 </div>
               )}
-              <div ref={chatScrollRef} className="mt-4 h-[390px] space-y-4 overflow-y-auto rounded-md border border-clinic-line bg-clinic-paper p-4">
+              <div ref={chatScrollRef} role="log" aria-label={lang === "en" ? "Simulated patient conversation" : "模拟问诊对话"} aria-live="polite" className="mt-4 h-[390px] space-y-4 overflow-y-auto rounded-md border border-clinic-line bg-clinic-paper p-4">
                 {messages.map((message, index) => (
                   <div key={`${message.role}-${index}`} className={`flex ${message.role === "student" ? "justify-end" : "justify-start"}`}>
                     <div className={`max-w-[78%] whitespace-pre-line rounded-lg px-4 py-3 text-sm leading-6 ${message.role === "student" ? "bg-clinic-blue text-white" : "bg-white text-clinic-ink"}`}>{message.text}</div>

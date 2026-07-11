@@ -3,7 +3,7 @@ const { initSession } = require("../lib/patientSession.js");
 function setCors(res) {
   res.setHeader("Access-Control-Allow-Origin", process.env.AGENT_API_ALLOWED_ORIGIN || process.env.PATIENT_AGENT_ALLOWED_ORIGIN || "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Request-Id, X-Idempotency-Key");
 }
 
 module.exports = async function handler(req, res) {
@@ -18,7 +18,8 @@ module.exports = async function handler(req, res) {
       caseId: body.caseId,
       mode: body.mode || "training",
       language: body.language || "zh",
-      debug: Boolean(body.debug)
+      debug: Boolean(body.debug),
+      forceRefresh: Boolean(body.forceRefresh)
     });
     return res.status(200).json(result);
   } catch (error) {

@@ -33,6 +33,28 @@ async function main() {
     );
     assert.equal(calls, 1, "non-transient failures must not retry");
 
+    calls = 0;
+    globalThis.fetch = async () => {
+      calls += 1;
+      return new Response(JSON.stringify({ code: "provider_not_configured" }), { status: 503 });
+    };
+    await assert.rejects(
+      fetchWithRecovery("https://api.example.test/api/agent-chat/", { retries: 0 }),
+      (error: unknown) => error instanceof ApiRequestError && error.kind === "not-configured" && error.code === "provider_not_configured"
+    );
+    assert.equal(calls, 1, "503 JSON code should classify the actual provider failure");
+
+    calls = 0;
+    globalThis.fetch = async () => {
+      calls += 1;
+      return new Response(JSON.stringify({ code: "route_missing" }), { status: 404 });
+    };
+    await assert.rejects(
+      fetchWithRecovery("https://api.example.test/api/health/", { retries: 2 }),
+      (error: unknown) => error instanceof ApiRequestError && error.kind === "not-deployed"
+    );
+    assert.equal(calls, 1, "404 must not be retried blindly");
+
     globalThis.fetch = async (_input, init) => new Promise((_resolve, reject) => {
       init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")), { once: true });
     });

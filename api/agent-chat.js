@@ -1,5 +1,5 @@
 const cases = require("../data/cases.json");
-const { generatePatientAnswer } = require("./lib/patientSession.js");
+const { generatePatientAnswer, probePatientProvider } = require("./lib/patientSession.js");
 
 const blockedTeacherKeys = ["diagnosis", "imaging", "pathology", "treatment", "teacherOnlyData", "case_card", "scoring"];
 const agentIds = new Set([
@@ -15,7 +15,7 @@ const agentIds = new Set([
 function setCors(res) {
   res.setHeader("Access-Control-Allow-Origin", process.env.AGENT_API_ALLOWED_ORIGIN || process.env.PATIENT_AGENT_ALLOWED_ORIGIN || "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Request-Id, X-Idempotency-Key");
 }
 
 function getProviderConfig() {
@@ -113,9 +113,13 @@ module.exports = async function handler(req, res) {
     const agentId = agentIds.has(body.agentId) ? body.agentId : "standardized_patient";
     const caseData = cases.find((item) => String(item.id).toLowerCase() === String(body.caseId).toLowerCase());
     if (!caseData) return res.status(400).json({ error: `Unknown caseId: ${body.caseId}` });
-    if (!String(body.studentInput || "").trim()) return res.status(400).json({ error: "studentInput is required" });
+    if (!body.probe && !String(body.studentInput || "").trim()) return res.status(400).json({ error: "studentInput is required" });
 
     if (agentId === "standardized_patient") {
+      if (body.probe) {
+        const probe = await probePatientProvider();
+        return res.status(200).json({ agentId, replyText: "", matchedSlotIds: [], matchedFacts: [], safetyFlags: [], answerSource: probe.isFallback ? "rule" : probe.provider, confidence: 1, ...probe });
+      }
       const patient = await generatePatientAnswer({
         sessionId: body.sessionId,
         caseId: body.caseId,

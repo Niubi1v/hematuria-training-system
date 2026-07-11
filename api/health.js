@@ -9,18 +9,19 @@ module.exports = function handler(req, res) {
   if (origin && allowed.includes(origin)) res.setHeader("Access-Control-Allow-Origin", origin);
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Request-Id");
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "GET") return res.status(405).json({ error: "method_not_allowed" });
   return res.status(200).json({
     status: "ok",
     deploymentTier: process.env.TRAINING_DEPLOYMENT_TIER || "practice",
     gitSha: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || process.env.NEXT_PUBLIC_GIT_SHA || "unknown",
+    deploymentSha: process.env.VERCEL_GIT_COMMIT_SHA || process.env.NEXT_PUBLIC_GIT_SHA || "unknown",
     buildTime: process.env.NEXT_PUBLIC_BUILD_TIME || "unknown",
     patientServiceConfigured: Boolean(process.env.LLM_API_KEY && process.env.LLM_API_BASE_URL && process.env.LLM_MODEL),
     trainingStateConfigured: Boolean(process.env.TRAINING_STATE_SECRET || process.env.LLM_API_KEY),
     cloudTtsConfigured: Boolean(process.env.AZURE_SPEECH_KEY && process.env.AZURE_SPEECH_REGION),
     allowedOriginConfigured: allowed.length > 0,
-    apiVersion: "2.5.0"
+    apiVersion: "2.6.0"
   });
 };

@@ -8,7 +8,7 @@ const {
   filterPatientOutput,
   getSession
 } = require("../api/lib/patientSession.js") as {
-  initSession: (input: { caseId: string; mode?: string; language?: string; debug?: boolean }) => Promise<any>;
+  initSession: (input: { caseId: string; mode?: string; language?: string; debug?: boolean; forceRefresh?: boolean }) => Promise<any>;
   generatePatientAnswer: (input: {
     sessionId?: string;
     caseId: string;
@@ -33,14 +33,27 @@ function assertNotContains(text: string, words: string[], context: string) {
 async function main() {
   const previousEnable = process.env.LLM_ENABLE_AI_AGENTS;
   process.env.LLM_ENABLE_AI_AGENTS = "false";
+  const originalFetch = globalThis.fetch;
+  let initLlmCalls = 0;
+  globalThis.fetch = async () => { initLlmCalls += 1; throw new Error("session/init must not call the LLM"); };
 
+  const initStartedAt = Date.now();
   const session = await initSession({ caseId: "P001", mode: "training", language: "zh", debug: true });
+  assert(Date.now() - initStartedAt < 3000, "local session/init should not approach the patient reply timeout");
+  assert(initLlmCalls === 0, "session/init should complete without a slow LLM call");
   assert(session.sessionId, "session/init should return sessionId");
   assert(!("completedPatientFacingProfile" in session), "session/init must not return the patient profile to the browser");
   assert(!("teacherOnlyData" in session), "session/init must not return teacher-only data");
   assert(session.patientOpeningStatement, "session/init should return patientOpeningStatement");
   assert(session.patientOpeningStatement.includes("小便颜色变红3月余") || session.patientOpeningStatement.includes("血尿3月余"), `opening should use simplified complaint: ${session.patientOpeningStatement}`);
   assertNotContains(session.patientOpeningStatement, ["无痛", "肉眼", "全程"], "session opening complaint");
+  assert(session.apiVersion === "2.6.0", `session/init should expose API version: ${session.apiVersion}`);
+  assert(session.deploymentSha, "session/init should expose deployment SHA");
+  assert(Date.parse(session.sessionExpiresAt) > Date.parse(session.sessionCreatedAt), "session should have a future expiration");
+  assert(["local-reviewed", "local-simulation"].includes(session.profileSource), "session should declare a local profile source");
+  const refreshed = await initSession({ caseId: "P001", mode: "training", language: "zh", forceRefresh: true });
+  assert(refreshed.sessionId !== session.sessionId, "forceRefresh must create a new sessionId");
+  globalThis.fetch = originalFetch;
 
   const profileText = JSON.stringify(getSession(session.sessionId, "P001")?.completedPatientFacingProfile || {});
   assertNotContains(profileText, ["imaging_finding", "final_diagnosis", "treatment_plan", "pathology_result", "evaluator_rubric"], "completedPatientFacingProfile");

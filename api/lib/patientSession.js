@@ -8,6 +8,37 @@ const answerCache = globalThis.__hematuriaAnswerCache || new Map();
 globalThis.__hematuriaSessionCache = sessionCache;
 globalThis.__hematuriaAnswerCache = answerCache;
 
+const SESSION_TTL_MS = Math.max(60_000, Number(process.env.PATIENT_SESSION_TTL_MS || 30 * 60 * 1000));
+const ANSWER_TTL_MS = Math.max(30_000, Number(process.env.PATIENT_ANSWER_TTL_MS || 15 * 60 * 1000));
+const SESSION_CACHE_MAX = Math.max(20, Number(process.env.PATIENT_SESSION_CACHE_MAX || 200));
+const ANSWER_CACHE_MAX = Math.max(50, Number(process.env.PATIENT_ANSWER_CACHE_MAX || 500));
+const DEPLOYMENT_SHA = String(process.env.VERCEL_GIT_COMMIT_SHA || process.env.NEXT_PUBLIC_GIT_SHA || "local").slice(0, 40);
+const API_VERSION = "2.6.0";
+
+function pruneCache(cache, maxEntries) {
+  const now = Date.now();
+  for (const [key, entry] of cache.entries()) {
+    if (!entry || Number(entry.expiresAt || 0) <= now || entry.deploymentSha !== DEPLOYMENT_SHA) cache.delete(key);
+  }
+  while (cache.size > maxEntries) cache.delete(cache.keys().next().value);
+}
+
+function cacheGet(cache, key, maxEntries) {
+  pruneCache(cache, maxEntries);
+  const entry = cache.get(key);
+  if (!entry) return null;
+  cache.delete(key);
+  cache.set(key, entry);
+  return entry.value;
+}
+
+function cacheSet(cache, key, value, ttlMs, maxEntries) {
+  pruneCache(cache, maxEntries);
+  cache.delete(key);
+  cache.set(key, { value, createdAt: Date.now(), expiresAt: Date.now() + ttlMs, deploymentSha: DEPLOYMENT_SHA });
+  pruneCache(cache, maxEntries);
+}
+
 const teacherOnlyKeys = [
   "urine_test_result",
   "blood_test_result",
@@ -243,91 +274,6 @@ function localCompleteProfile(rawProfile) {
   return clone;
 }
 
-function stripCodeFence(text) {
-  return String(text || "").replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
-}
-
-function parseProfileJson(text) {
-  const cleaned = stripCodeFence(text);
-  try {
-    return JSON.parse(cleaned);
-  } catch {
-    const start = cleaned.indexOf("{");
-    const end = cleaned.lastIndexOf("}");
-    if (start >= 0 && end > start) return JSON.parse(cleaned.slice(start, end + 1));
-    throw new Error("Profile completion did not return JSON");
-  }
-}
-
-function scrubProfile(profile, fallbackProfile) {
-  const allowedSources = new Set(["case_explicit", "ai_completed", "unknown"]);
-  const scrub = (node, fallback) => {
-    const result = Array.isArray(node) ? [] : {};
-    Object.keys(fallback || node || {}).forEach((key) => {
-      const value = node?.[key];
-      const fallbackValue = fallback?.[key];
-      if (value && typeof value === "object" && "value" in value && "source" in value) {
-        const clean = cleanPatientValue(value.value);
-        result[key] = {
-          value: clean || fallbackValue?.value || "不太清楚",
-          source: allowedSources.has(value.source) ? value.source : fallbackValue?.source || "unknown"
-        };
-      } else if (value && typeof value === "object") {
-        result[key] = scrub(value, fallbackValue || {});
-      } else if (fallbackValue && typeof fallbackValue === "object") {
-        // 模型缺少某个节点时完整保留本地病例事实，不能递归成空对象。
-        result[key] = JSON.parse(JSON.stringify(fallbackValue));
-      }
-    });
-    return result;
-  };
-  return scrub(profile, fallbackProfile);
-}
-
-const profilePrompt = `
-你是医学教育病例标准化患者档案生成器。你只能补齐患者本人可能知道或感受到的信息，不能补齐检查结果、影像结果、病理、诊断、治疗和评分点。
-允许补齐患者说话风格、情绪、健康素养、主观症状、一般情况，以及“不太清楚/没有注意到”。
-禁止输出尿常规数值、CT/超声/膀胱镜、病理、肾活检、诊断、治疗、手术、MDT、评分点、教师提示。
-每个字段必须是 { "value": "...", "source": "case_explicit|ai_completed|unknown" }；病例明确写了就保留 case_explicit，合理补齐用 ai_completed，不确定用 unknown。
-返回完整 JSON，不要解释。
-`.trim();
-
-async function completePatientFacingProfile(rawProfile) {
-  const localProfile = localCompleteProfile(rawProfile);
-  const config = getLLMProviderConfig();
-  if (!config.enabled) {
-    return { profile: localProfile, rawOutput: "", provider: config.provider, model: config.model, isFallback: true, providerReachable: false, rewriteTriggered: false };
-  }
-  try {
-    const result = await callLLM({
-      systemPrompt: profilePrompt,
-      userPayload: { rawPatientFacingProfile: rawProfile },
-      temperature: 0.2,
-      // 该调用需要返回完整结构化档案，不能沿用单轮患者回答的短输出上限。
-      maxTokens: Math.max(config.maxTokens || 500, 2200)
-    });
-    try {
-      const parsed = parseProfileJson(result.text);
-      // DeepSeek有时会按输入字段名包一层，兼容两种结构后再做白名单合并。
-      const parsedProfile = parsed.rawPatientFacingProfile || parsed.completedPatientFacingProfile || parsed;
-      const scrubbed = scrubProfile(parsedProfile, localProfile);
-      return { profile: scrubbed, rawOutput: result.text, provider: result.provider, model: result.model, isFallback: false, providerReachable: true, rewriteTriggered: false };
-    } catch (parseError) {
-      return {
-        profile: localProfile,
-        rawOutput: `Profile JSON parse failed: ${String(parseError?.message || parseError)}`,
-        provider: result.provider,
-        model: result.model,
-        isFallback: true,
-        providerReachable: true,
-        rewriteTriggered: false
-      };
-    }
-  } catch (error) {
-    return { profile: localProfile, rawOutput: String(error?.message || error), provider: config.provider, model: config.model, isFallback: true, providerReachable: false, rewriteTriggered: false };
-  }
-}
-
 function buildTeacherOnlyData(caseData) {
   return {
     urine_test_result: caseData.urineTestResult,
@@ -353,61 +299,81 @@ function makeSessionId(caseId, language, mode) {
   return `sess_${caseId}_${language || "zh"}_${mode || "training"}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-async function initSession({ caseId, mode = "training", language = "zh", debug = false }) {
+async function initSession({ caseId, mode = "training", language = "zh", debug = false, forceRefresh = false }) {
   const caseData = getCaseById(caseId);
   if (!caseData) throw new Error(`Unknown caseId: ${caseId}`);
-  const cacheKey = `${caseData.id}:${language}:${mode}`;
-  const cached = sessionCache.get(cacheKey);
-  if (cached) {
-    const sessionId = makeSessionId(caseData.id, language, mode);
-    sessionCache.set(sessionId, cached);
-    return {
-      sessionId,
-      caseId: caseData.id,
-      patientOpeningStatement: cached.completedPatientFacingProfile.patient_opening_statement?.value || "医生您好。",
-      cacheHit: true,
-      aiStatus: cached.providerReachable ? "connected" : "fallback",
-      ...(debug && process.env.NODE_ENV !== "production" ? { debug: { provider: cached.debug?.provider, model: cached.debug?.model, cacheHit: true } } : {})
-    };
-  }
-
   const rawPatientFacingProfile = buildRawPatientFacingProfile(caseData);
   validateRequiredProfileFacts(caseData, rawPatientFacingProfile);
-  const completion = await completePatientFacingProfile(rawPatientFacingProfile);
+  const completedPatientFacingProfile = localCompleteProfile(rawPatientFacingProfile);
   const teacherOnlyData = buildTeacherOnlyData(caseData);
+  const createdAt = Date.now();
+  const expiresAt = createdAt + SESSION_TTL_MS;
+  const config = getLLMProviderConfig();
   const profileRecord = {
     rawPatientFacingProfile,
-    completedPatientFacingProfile: completion.profile,
+    completedPatientFacingProfile,
     teacherOnlyFieldList: teacherOnlyKeys.filter((key) => teacherOnlyData[key]),
     teacherOnlyData,
     debug: {
-      provider: completion.provider,
-      model: completion.model,
-      rawDeepSeekOutput: completion.rawOutput,
+      provider: config.provider,
+      model: config.model,
       responseFilter: { ok: true, hits: [] },
-      rewriteTriggered: completion.rewriteTriggered,
       estimatedTokens: Math.ceil(JSON.stringify(rawPatientFacingProfile).length / 4),
-      cacheHit: false
+      cacheHit: false,
+      forceRefresh: Boolean(forceRefresh)
     },
-    isFallback: completion.isFallback,
-    providerReachable: completion.providerReachable
+    isFallback: false,
+    providerReachable: null,
+    createdAt,
+    expiresAt,
+    deploymentSha: DEPLOYMENT_SHA,
+    apiVersion: API_VERSION
   };
-  sessionCache.set(cacheKey, profileRecord);
   const sessionId = makeSessionId(caseData.id, language, mode);
-  sessionCache.set(sessionId, profileRecord);
+  cacheSet(sessionCache, sessionId, profileRecord, SESSION_TTL_MS, SESSION_CACHE_MAX);
   return {
     sessionId,
     caseId: caseData.id,
-    patientOpeningStatement: completion.profile.patient_opening_statement?.value || "医生您好。",
+    language,
+    mode,
+    patientOpeningStatement: completedPatientFacingProfile.patient_opening_statement?.value || "医生您好。",
     cacheHit: false,
-    aiStatus: completion.providerReachable ? "connected" : "fallback",
-    ...(debug && process.env.NODE_ENV !== "production" ? { debug: { provider: completion.provider, model: completion.model, cacheHit: false } } : {})
+    sessionCreatedAt: new Date(createdAt).toISOString(),
+    sessionExpiresAt: new Date(expiresAt).toISOString(),
+    deploymentSha: DEPLOYMENT_SHA,
+    apiVersion: API_VERSION,
+    aiStatus: config.enabled ? "available" : "degraded",
+    profileSource: caseData.medicalReview?.status === "approved" ? "local-reviewed" : "local-simulation",
+    ...(debug && process.env.NODE_ENV !== "production" ? { debug: { provider: config.provider, model: config.model, cacheHit: false, forceRefresh: Boolean(forceRefresh) } } : {})
   };
 }
 
 function getSession(sessionId, caseId, profile) {
   if (profile) return { completedPatientFacingProfile: profile, debug: { cacheHit: false } };
-  return sessionCache.get(sessionId) || sessionCache.get(`${caseId}:zh:training`) || null;
+  return cacheGet(sessionCache, sessionId, SESSION_CACHE_MAX) || null;
+}
+
+function providerFallbackReason(error) {
+  const message = String(error?.message || error || "").toLowerCase();
+  if (/429|rate limit|too many/.test(message)) return "provider_rate_limit";
+  if (/abort|timeout|timed out/.test(message)) return "provider_timeout";
+  return "provider_unavailable";
+}
+
+async function probePatientProvider() {
+  const config = getLLMProviderConfig();
+  if (!config.enabled || !config.apiKey || !config.baseUrl || !config.model) return { isFallback: true, provider: config.provider, model: config.model, fallbackReason: "provider_not_configured" };
+  try {
+    const result = await callLLM({
+      systemPrompt: "Return exactly OK. Do not include any patient or case information.",
+      userPayload: { probe: true },
+      temperature: 0,
+      maxTokens: 8
+    });
+    return { isFallback: false, provider: result.provider, model: result.model, fallbackReason: "" };
+  } catch (error) {
+    return { isFallback: true, provider: config.provider, model: config.model, fallbackReason: providerFallbackReason(error) };
+  }
 }
 
 function filterPatientOutput(text) {
@@ -529,7 +495,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   const config = getLLMProviderConfig();
   const normalized = normalize(studentInput);
   const answerKey = `${sessionId || caseId}:${language}:${normalized}`;
-  const cached = answerCache.get(answerKey);
+  const cached = cacheGet(answerCache, answerKey, ANSWER_CACHE_MAX);
   if (cached) return { ...cached, cacheHit: true };
 
   if (!config.enabled) return { ...fallback, provider: config.provider, model: config.model, isFallback: true, filter: { ok: true, hits: [] } };
@@ -550,7 +516,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     const firstLanguageOk = language !== "en" || !/[\u3400-\u9fff]/.test(firstText);
     if (filter.ok && firstLanguageOk && preservesAllowedAnswer(firstText, payload.currentAllowedAnswer)) {
       const result = { replyText: firstText, provider: first.provider, model: first.model, isFallback: false, filter, rewriteTriggered: false, safetyFlags: [], matchedSlotIds: canonical?.matchedSlotIds || structured?.matchedSlotIds || [], matchedFacts: canonical?.matchedFacts || structured?.matchedFacts || [], answerSource: canonical?.answerSource || structured?.answerSource || "ai", confidence: canonical?.confidence || structured?.confidence || 0.9, fallbackReason: "", allowedAnswer: payload.currentAllowedAnswer };
-      answerCache.set(answerKey, result);
+      cacheSet(answerCache, answerKey, result, ANSWER_TTL_MS, ANSWER_CACHE_MAX);
       return result;
     }
     const retry = await callLLM({
@@ -564,12 +530,12 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     const retryLanguageOk = language !== "en" || !/[\u3400-\u9fff]/.test(retryText);
     if (retryFilter.ok && retryLanguageOk && preservesAllowedAnswer(retryText, payload.currentAllowedAnswer)) {
       const result = { replyText: retryText, provider: retry.provider, model: retry.model, isFallback: false, filter: retryFilter, rewriteTriggered: true, safetyFlags: [], matchedSlotIds: canonical?.matchedSlotIds || structured?.matchedSlotIds || [], matchedFacts: canonical?.matchedFacts || structured?.matchedFacts || [], answerSource: canonical?.answerSource || structured?.answerSource || "ai", confidence: canonical?.confidence || structured?.confidence || 0.9, fallbackReason: "", allowedAnswer: payload.currentAllowedAnswer };
-      answerCache.set(answerKey, result);
+      cacheSet(answerCache, answerKey, result, ANSWER_TTL_MS, ANSWER_CACHE_MAX);
       return result;
     }
     return { ...fallback, provider: config.provider, model: config.model, isFallback: true, filter: retryFilter, rewriteTriggered: true, safetyFlags: [...fallback.safetyFlags, "ai_response_blocked"] };
   } catch (error) {
-    return { ...fallback, provider: config.provider, model: config.model, isFallback: true, filter: { ok: true, hits: [] }, error: String(error?.message || error) };
+    return { ...fallback, provider: config.provider, model: config.model, isFallback: true, filter: { ok: true, hits: [] }, error: String(error?.message || error), fallbackReason: providerFallbackReason(error) };
   }
 }
 
@@ -580,5 +546,7 @@ module.exports = {
   buildTeacherOnlyData,
   filterPatientOutput,
   getSession,
+  probePatientProvider,
+  providerFallbackReason,
   teacherOnlyKeys
 };
