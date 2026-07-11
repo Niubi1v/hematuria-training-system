@@ -416,8 +416,8 @@ function profileFallbackForQuestion(question, profile) {
 }
 
 function safeFallbackForQuestion(question, profile) {
-  if (hasAny(question, diagnosisWords)) return { replyText: "- 这个我不清楚，需要医生判断。", safetyFlags: ["blocked_diagnosis_request"] };
-  if (hasAny(question, reportWords)) return { replyText: "- 我说不清楚，得看检查报告。", safetyFlags: ["blocked_report_request"] };
+  if (hasAny(question, diagnosisWords)) return { replyText: "这个我不清楚，需要医生判断。", safetyFlags: ["blocked_diagnosis_request"] };
+  if (hasAny(question, reportWords)) return { replyText: "我说不清楚，得看检查报告。", safetyFlags: ["blocked_report_request"] };
   return { replyText: oneBullet(profileFallbackForQuestion(question, profile)), safetyFlags: ["llm_error_fallback"] };
 }
 

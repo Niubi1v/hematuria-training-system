@@ -80,6 +80,17 @@ async function main() {
   });
   assert(ct.safetyFlags.includes("blocked_report_request"), "CT result must be blocked in Patient Agent");
   assertNotContains(ct.replyText, ["CT提示", "占位", "诊断", "肿瘤"], "CT report");
+  assert(!/^[-•*#]/.test(ct.replyText.trim()), `CT safety reply must not use Markdown bullets: ${ct.replyText}`);
+
+  const diagnosis = await generatePatientAnswer({
+    sessionId: session.sessionId,
+    caseId: "P001",
+    studentInput: "这是什么病？",
+    conversationHistory: [],
+    language: "zh"
+  });
+  assert(diagnosis.safetyFlags.includes("blocked_diagnosis_request"), "Diagnosis request must be blocked in Patient Agent");
+  assert(!/^[-•*#]/.test(diagnosis.replyText.trim()), `Diagnosis safety reply must not use Markdown bullets: ${diagnosis.replyText}`);
 
   const filter = filterPatientOutput("- 根据原始病史：CT提示占位，诊断肿瘤。");
   assert(!filter.ok && filter.hits.length >= 3, "responseFilter should block raw history, CT, diagnosis leaks");
