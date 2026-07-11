@@ -15,7 +15,7 @@ export type VoiceLike = {
 
 export type ManualVoiceOverride = { voiceURI: string; name?: string };
 
-export type TtsPlaybackState = "idle" | "loading" | "playing" | "paused" | "failed" | "fallback-local" | "fallback-text";
+export type TtsPlaybackState = "idle" | "loading" | "playing" | "paused" | "failed" | "fallback-browser" | "fallback-text";
 export type TtsProviderPreference = "auto" | "browser" | "disabled";
 
 export const AZURE_VOICE_BY_PROFILE: Record<`${VoiceProfile["locale"]}:${VoiceProfile["gender"]}`, string> = {

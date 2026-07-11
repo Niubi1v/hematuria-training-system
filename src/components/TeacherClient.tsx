@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { publicApiConfig } from "@/src/lib/apiConfig";
 import { Download, FileSpreadsheet, Plus, Save, Trash2 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { allCases } from "@/src/lib/cases";
@@ -34,7 +35,7 @@ type AiPatientDebug = {
   debug?: Record<string, unknown>;
 };
 
-const sessionInitApiUrl = process.env.NEXT_PUBLIC_SESSION_INIT_API_URL || "https://hematuria-training-system.vercel.app/api/session/init/";
+const sessionInitApiUrl = publicApiConfig.sessionInit;
 
 function downloadText(filename: string, text: string, mime = "application/json") {
   const blob = new Blob([text], { type: `${mime};charset=utf-8` });

@@ -34,6 +34,8 @@ import orderCatalogPerioperativeJson from "@/data/order_catalog_perioperative.js
 import orderCatalogProceduresJson from "@/data/order_catalog_procedures.json";
 import physicalExamItemsJson from "@/data/physical_exam_items.json";
 import { simplifiedChiefComplaint } from "@/src/lib/chiefComplaint";
+import { ApiRequestError, createIdempotencyKey, fetchWithRecovery, requestJson, studentFacingApiMessage } from "@/src/lib/apiClient";
+import { publicApiConfig } from "@/src/lib/apiConfig";
 import { initializeStorageVersion, readJsonStorage, writeJsonStorage } from "@/src/lib/safeStorage";
 import { attemptPointerKey, attemptStorageKey, createAttempt, type AttemptIdentity, type AttemptMode } from "@/src/lib/attemptState";
 import {
@@ -119,6 +121,16 @@ type SessionInitResponse = {
   cacheHit: boolean;
   debug?: Record<string, unknown>;
 };
+type ServiceHealth = {
+  status: string;
+  deploymentTier: string;
+  gitSha: string;
+  patientServiceConfigured: boolean;
+  trainingStateConfigured: boolean;
+  cloudTtsConfigured: boolean;
+  allowedOriginConfigured: boolean;
+  apiVersion: string;
+};
 
 type SpeechRecognitionResultLike = { transcript: string };
 type SpeechRecognitionEventLike = { results: ArrayLike<ArrayLike<SpeechRecognitionResultLike>> };
@@ -148,13 +160,6 @@ const orderPrimaryTabs = ["检验", "检查", "病理/操作", "围术期评估"
 const labSecondaryOrder = ["尿液基础", "尿液感染", "尿液肿瘤", "尿液蛋白/肾小球线索", "血液基础", "炎症感染", "凝血/输血", "肾内免疫", "结石代谢", "大便/全身鉴别"];
 const imagingSecondaryOrder = ["超声", "X线", "CT", "MRI", "内镜", "核医学", "功能检查"];
 const consultGroupOrder = ["外科", "内科", "辅助/平台", "急诊/危重"];
-const defaultAgentApiUrl = "https://hematuria-training-system.vercel.app/api/agent-chat/";
-const defaultSessionInitApiUrl = "https://hematuria-training-system.vercel.app/api/session/init/";
-const defaultTrainingApiUrl = "https://hematuria-training-system.vercel.app/api/training-action";
-const buildTimeAgentApiUrl = process.env.NEXT_PUBLIC_AGENT_API_URL || process.env.NEXT_PUBLIC_PATIENT_AGENT_API_URL || defaultAgentApiUrl;
-const buildTimeSessionInitApiUrl = process.env.NEXT_PUBLIC_SESSION_INIT_API_URL || defaultSessionInitApiUrl;
-const buildTimeTrainingApiUrl = process.env.NEXT_PUBLIC_TRAINING_API_URL || defaultTrainingApiUrl;
-const buildTimeTtsApiUrl = process.env.NEXT_PUBLIC_TTS_API_URL || "https://hematuria-training-system.vercel.app/api/tts";
 const PATIENT_REPLY_TIMEOUT_MS = 12000;
 const isDevelopment = process.env.NODE_ENV !== "production";
 
@@ -334,37 +339,19 @@ function aiSessionCacheKey(caseId: string, language: LanguageCode, mode: Trainin
   return `hematuria-ai-patient-session-${caseId}-${language}-${mode}`;
 }
 
-async function requestSessionInit({ apiUrl, caseId, runtimeMode, language, debug }: {
-  apiUrl: string;
+async function requestSessionInit({ caseId, runtimeMode, language, debug, attemptId }: {
   caseId: string;
   runtimeMode: TrainingMode;
   language: LanguageCode;
   debug: boolean;
+  attemptId: string;
 }) {
-  const controller = new AbortController();
-  const timeoutId = globalThis.setTimeout(() => controller.abort(), PATIENT_REPLY_TIMEOUT_MS);
-  try {
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      cache: "no-store",
-      signal: controller.signal,
-      body: JSON.stringify({
-        caseId,
-        mode: runtimeMode,
-        language,
-        debug
-      })
-    });
-    if (!response.ok) throw new Error(`Session init API ${response.status}`);
-    return response.json() as Promise<SessionInitResponse>;
-  } finally {
-    globalThis.clearTimeout(timeoutId);
-  }
+  return requestJson<SessionInitResponse>(publicApiConfig.sessionInit, { caseId, mode: runtimeMode, language, debug }, {
+    timeoutMs: PATIENT_REPLY_TIMEOUT_MS, retries: 2, idempotencyKey: `${attemptId}:session-init`
+  });
 }
 
-async function requestAiPatientReply({ apiUrl, sessionId, caseId, question, messages, askedSlots, aiMode, language }: {
-  apiUrl: string;
+async function requestAiPatientReply({ sessionId, caseId, question, messages, askedSlots, aiMode, language, attemptId }: {
   sessionId?: string;
   caseId: string;
   question: string;
@@ -372,16 +359,9 @@ async function requestAiPatientReply({ apiUrl, sessionId, caseId, question, mess
   askedSlots: string[];
   aiMode: AiMode;
   language: LanguageCode;
+  attemptId: string;
 }) {
-  const controller = new AbortController();
-  const timeoutId = globalThis.setTimeout(() => controller.abort(), PATIENT_REPLY_TIMEOUT_MS);
-  try {
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      cache: "no-store",
-      signal: controller.signal,
-      body: JSON.stringify({
+  return requestJson<PatientReplyApiResponse>(publicApiConfig.patientAgent, {
         caseId,
         agentId: "standardized_patient",
         sessionId,
@@ -392,27 +372,22 @@ async function requestAiPatientReply({ apiUrl, sessionId, caseId, question, mess
         conversationHistory: messages.slice(-6).map((message) => ({ role: message.role, text: message.text })),
         askedSlotIds: askedSlots,
         askedQuestions: messages.filter((message) => message.role === "student").map((message) => message.text)
-      })
-    });
-    if (!response.ok) throw new Error(`Patient Agent API ${response.status}`);
-    return response.json() as Promise<PatientReplyApiResponse>;
-  } finally {
-    globalThis.clearTimeout(timeoutId);
-  }
+      }, { timeoutMs: PATIENT_REPLY_TIMEOUT_MS, retries: 2, idempotencyKey: createIdempotencyKey(attemptId, "patient", question.trim().toLowerCase()) });
 }
 
 async function requestTrainingAction<T>(body: Record<string, unknown>, stateToken = ""): Promise<{ payload: T; stateToken: string }> {
   const controller = new AbortController();
   const timeoutId = globalThis.setTimeout(() => controller.abort(), PATIENT_REPLY_TIMEOUT_MS);
   try {
-    const response = await fetch(buildTimeTrainingApiUrl, {
+    const response = await fetchWithRecovery(publicApiConfig.trainingAction, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...(stateToken ? { "X-Training-State": stateToken } : {}) },
       cache: "no-store",
       signal: controller.signal,
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
+      timeoutMs: PATIENT_REPLY_TIMEOUT_MS,
+      retries: 2
     });
-    if (!response.ok) throw new Error(`Training action API ${response.status}`);
     return { payload: await response.json() as T, stateToken: response.headers.get("X-Training-State") || stateToken };
   } finally {
     globalThis.clearTimeout(timeoutId);
@@ -578,6 +553,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [aiSessionId, setAiSessionId] = useState("");
   const [sessionInitLoading, setSessionInitLoading] = useState(false);
   const [sessionInitError, setSessionInitError] = useState("");
+  const [serviceHealth, setServiceHealth] = useState<ServiceHealth | null>(null);
+  const [healthCheckFailed, setHealthCheckFailed] = useState(false);
   const [lastTechnicalFailure, setLastTechnicalFailure] = useState("");
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error">("saved");
   const [storageWarning, setStorageWarning] = useState("");
@@ -587,6 +564,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const cloudAudioUrlRef = useRef("");
   const ttsAbortRef = useRef<AbortController | null>(null);
   const speechGenerationRef = useRef(0);
+  const ttsFallbackNotifiedRef = useRef(false);
   const timeoutHandledRef = useRef(false);
   const allowNavigationRef = useRef(false);
   const trainingStateTokenRef = useRef("");
@@ -730,6 +708,14 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }, [initialCaseData.id, mode, practiceDeployment]);
 
   useEffect(() => {
+    let cancelled = false;
+    void requestJson<ServiceHealth>(publicApiConfig.health, undefined, { method: "GET", timeoutMs: 7000, retries: 1 })
+      .then((health) => { if (!cancelled) { setServiceHealth(health); setHealthCheckFailed(false); } })
+      .catch(() => { if (!cancelled) setHealthCheckFailed(true); });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
     setMessages((current) => current.length ? current : [{ role: "patient", text: patientOpening(caseData, lang) }]);
   }, [caseData, lang]);
 
@@ -752,11 +738,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     setSessionInitError("");
     setAiStatus("checking");
     void requestSessionInit({
-      apiUrl: buildTimeSessionInitApiUrl,
       caseId: caseData.id,
       runtimeMode,
       language: lang,
-      debug: aiMode === "debug"
+      debug: aiMode === "debug",
+      attemptId: attempt.attemptId
     }).then((result) => {
       if (cancelled) return;
       setAiSessionId(result.sessionId);
@@ -769,7 +755,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       });
     }).catch((error) => {
       if (cancelled) return;
-      setSessionInitError(error instanceof Error ? error.message : "AI患者初始化失败");
+      const kind = error instanceof ApiRequestError ? error.kind : "patient-service";
+      setSessionInitError(studentFacingApiMessage(kind, lang));
       setAiStatus("error");
     }).finally(() => {
       if (!cancelled) setSessionInitLoading(false);
@@ -777,7 +764,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     return () => {
       cancelled = true;
     };
-  }, [aiMode, caseData, lang, runtimeMode]);
+  }, [aiMode, attempt.attemptId, caseData, lang, runtimeMode]);
 
   useEffect(() => {
     try { localStorage.setItem("hematuria-language", lang); } catch { setStorageWarning("语言偏好无法保存。 "); }
@@ -926,7 +913,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     const labels: Record<TtsPlaybackState, { zh: string; en: string }> = {
       idle: { zh: "空闲", en: "Idle" }, loading: { zh: "正在准备语音", en: "Preparing audio" },
       playing: { zh: "朗读中", en: "Speaking" }, paused: { zh: "已暂停", en: "Paused" },
-      "fallback-local": { zh: "使用浏览器语音", en: "Using browser voice" },
+      "fallback-browser": { zh: "云语音失败，使用浏览器语音", en: "Cloud failed; using browser voice" },
       "fallback-text": { zh: "仅文字模式", en: "Text only" }, failed: { zh: "语音失败", en: "Audio failed" }
     };
     return labels[speechState][lang];
@@ -953,7 +940,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       utterance.pitch = speechPitch;
       utterance.voice = voice;
       if (index === 0) utterance.onstart = () => {
-        if (speechGenerationRef.current === generation) setSpeechState("fallback-local");
+        if (speechGenerationRef.current === generation) setSpeechState("fallback-browser");
       };
       if (index === segments.length - 1) utterance.onend = () => {
         if (speechGenerationRef.current === generation) setSpeechState("idle");
@@ -984,13 +971,14 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       const controller = new AbortController();
       ttsAbortRef.current = controller;
       try {
-        const response = await fetch(buildTimeTtsApiUrl, {
+        const response = await fetchWithRecovery(publicApiConfig.tts, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           signal: controller.signal,
-          body: JSON.stringify({ text: clean, voiceName: AZURE_VOICE_BY_PROFILE[voicePreferenceKey({ ...voiceProfile, locale })], rate: speechRate, pitch: speechPitch })
+          body: JSON.stringify({ text: clean, voiceName: AZURE_VOICE_BY_PROFILE[voicePreferenceKey({ ...voiceProfile, locale })], rate: speechRate, pitch: speechPitch }),
+          timeoutMs: 10_000,
+          retries: 2
         });
-        if (!response.ok) throw new Error(`TTS ${response.status}`);
         const blob = await response.blob();
         if (speechGenerationRef.current !== generation) return;
         const url = URL.createObjectURL(blob);
@@ -1006,9 +994,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       } catch (error) {
         if (controller.signal.aborted || speechGenerationRef.current !== generation) return;
         const browserFallback = speakWithBrowser(clean, locale, generation);
-        setSpeechNotice(browserFallback
-          ? (lang === "en" ? "Cloud audio is unavailable; browser voice is being used." : "云语音暂时不可用，已切换为浏览器语音。")
-          : (lang === "en" ? "Audio is unavailable; continuing in text-only mode." : "语音暂时不可用，已切换为仅文字模式。"));
+        if (!ttsFallbackNotifiedRef.current) {
+          setSpeechNotice(browserFallback
+            ? (lang === "en" ? "Cloud audio is unavailable; browser voice is being used." : "云语音暂时不可用，已切换为浏览器语音。")
+            : (lang === "en" ? "Audio is unavailable; continuing in text-only mode." : "语音暂时不可用，已切换为仅文字模式。"));
+          ttsFallbackNotifiedRef.current = true;
+        }
         if (!browserFallback && error instanceof DOMException && error.name === "NotAllowedError") setSpeechNeedsGesture(true);
         return;
       }
@@ -1034,14 +1025,14 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     try {
       setAiStatus("checking");
       const aiResult = await requestAiPatientReply({
-        apiUrl: buildTimeAgentApiUrl,
         sessionId: aiSessionId,
         caseId: caseData.id,
         question: text,
         messages,
         askedSlots,
         aiMode,
-        language: lang
+        language: lang,
+        attemptId: attempt.attemptId
       });
       const safeAiReply = aiResult.replyText && !isUnsafePatientReply(text, aiResult.replyText, lang);
       answerText = safeAiReply ? aiResult.replyText : technicalFallback;
@@ -1049,8 +1040,9 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       matchedKeys = unique(matchedSlots.map((slot) => canonicalToCollected[slot]).filter(Boolean)) as KeyPointId[];
       setAiStatus(safeAiReply && !aiResult.isFallback ? "connected" : "fallback");
       if (safeAiReply) setLastTechnicalFailure("");
-    } catch {
-      answerText = technicalFallback;
+    } catch (error) {
+      const kind = error instanceof ApiRequestError ? error.kind : "patient-service";
+      answerText = studentFacingApiMessage(kind, lang);
       setAiStatus("error");
       setLastTechnicalFailure(text);
     } finally {
@@ -1078,14 +1070,14 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     setPatientReplyLoading(true);
     try {
       const aiResult = await requestAiPatientReply({
-        apiUrl: buildTimeAgentApiUrl,
         sessionId: aiSessionId,
         caseId: caseData.id,
         question: lastTechnicalFailure,
         messages,
         askedSlots,
         aiMode: "deepseek",
-        language: lang
+        language: lang,
+        attemptId: attempt.attemptId
       });
       if (!aiResult.replyText || aiResult.isFallback || isUnsafePatientReply(lastTechnicalFailure, aiResult.replyText, lang)) throw new Error("unsafe-or-fallback");
       setMessages((current) => current.map((message, index) => index === current.length - 1 && message.role === "patient" ? { ...message, text: aiResult.replyText } : message));
@@ -1403,6 +1395,13 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             <p className="text-sm font-medium text-clinic-blue">{activeAgent.agentName[lang]}</p>
             <h2 className="mt-1 text-xl font-semibold">{activeAgent.mainWindowFunction[lang]}</h2>
             <p className="mt-2 text-sm text-clinic-muted">{t(lang, "noFeedbackBeforeSubmit")}</p>
+            {(healthCheckFailed || serviceHealth?.patientServiceConfigured === false || serviceHealth?.trainingStateConfigured === false) && (
+              <p role="status" className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                {healthCheckFailed
+                  ? (lang === "en" ? "Backend health could not be confirmed. Text practice remains available." : "暂时无法确认后端健康状态，仍可继续文字练习。")
+                  : (lang === "en" ? "Some backend services are not configured. Unavailable functions will show a specific message." : "部分后端服务尚未配置，不可用功能将显示具体原因。")}
+              </p>
+            )}
           </div>
 
           <fieldset disabled={osceLocked && activeStageNo !== 7} className="min-w-0 border-0 p-0 disabled:opacity-75">
@@ -1438,7 +1437,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                     <label className="mt-4 block text-sm"><span>{t(lang, "speechPitch")} {speechPitch.toFixed(2)}</span><input className="mt-2 w-full" type="range" min="0.85" max="1.1" step="0.01" value={speechPitch} onChange={(event) => setSpeechPitch(Number(event.target.value))} /></label>
                     <div className="mt-5 flex flex-wrap gap-2">
                       <button type="button" onClick={() => void speak(lang === "en" ? "Hello doctor, I can hear you clearly." : "医生您好，我能听清您的问题。", true)} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-3 py-2 text-sm text-white"><Volume2 size={15} />{t(lang, "testVoice")}</button>
-                      {speechState === "playing" || speechState === "fallback-local" ? <button type="button" onClick={pauseSpeech} className="rounded-md border border-clinic-line p-2" title={t(lang, "pause")}><Pause size={16} /></button> : <button type="button" onClick={resumeSpeech} disabled={speechState !== "paused"} className="rounded-md border border-clinic-line p-2 disabled:opacity-50" title={t(lang, "resume")}><Play size={16} /></button>}
+                      {speechState === "playing" || speechState === "fallback-browser" ? <button type="button" onClick={pauseSpeech} className="rounded-md border border-clinic-line p-2" title={t(lang, "pause")}><Pause size={16} /></button> : <button type="button" onClick={resumeSpeech} disabled={speechState !== "paused"} className="rounded-md border border-clinic-line p-2 disabled:opacity-50" title={t(lang, "resume")}><Play size={16} /></button>}
                       <button type="button" onClick={() => stopSpeech()} className="rounded-md border border-clinic-line p-2" title={t(lang, "stop")}><Square size={16} /></button>
                       <button type="button" onClick={() => lastSpokenText && void speak(lastSpokenText, true)} disabled={!lastSpokenText} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm"><RotateCcw size={15} />{t(lang, "replay")}</button>
                     </div>

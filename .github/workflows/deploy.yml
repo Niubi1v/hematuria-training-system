@@ -50,6 +50,9 @@ jobs:
       - name: Unit and behavioral tests
         run: pnpm run test
 
+      - name: Medical review workbook contract
+        run: pnpm run test:medical-review
+
       - name: Adversarial scoring tests
         run: pnpm run test:adversarial
 
@@ -74,14 +77,21 @@ jobs:
           echo "NEXT_PUBLIC_SCORING_VERSION=360-event-v1" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_DEPLOYMENT_TIER=practice" >> "$GITHUB_ENV"
 
+      - name: Validate production API origin
+        env:
+          NEXT_PUBLIC_API_BASE_URL: https://hematuria-training-system.vercel.app
+        run: pnpm run validate:api-config
+
       - name: Build static site
         env:
           NEXT_PUBLIC_BASE_PATH: ${{ github.event.repository.name == format('{0}.github.io', github.repository_owner) && '' || format('/{0}', github.event.repository.name) }}
+          NEXT_PUBLIC_API_BASE_URL: https://hematuria-training-system.vercel.app
         run: pnpm run build
 
       - name: Static bundle secret and answer scan
         env:
           NEXT_PUBLIC_BASE_PATH: ${{ github.event.repository.name == format('{0}.github.io', github.repository_owner) && '' || format('/{0}', github.event.repository.name) }}
+          NEXT_PUBLIC_API_BASE_URL: https://hematuria-training-system.vercel.app
         run: pnpm run test:bundle
 
       - name: Upload Pages artifact

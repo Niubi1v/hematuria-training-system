@@ -83,18 +83,18 @@ test("cloud TTS failure visibly falls back to the matched browser voice", async 
       speak: (utterance) => { utterance.onstart?.(); setTimeout(() => utterance.onend?.(), 800); }
     } });
   });
-  await page.route("**/api/tts", (route) => route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ code: "cloud_tts_unavailable" }) }));
+  await page.route("**/api/tts/**", (route) => route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ code: "cloud_tts_unavailable" }) }));
   await page.goto("/cases/P001/");
   await page.getByRole("button", { name: /语音设置/ }).click();
   await page.getByRole("button", { name: "试听" }).click();
   await expect(page.getByText("云语音暂时不可用，已切换为浏览器语音。")).toBeVisible();
-  await expect(page.getByTestId("voice-profile")).toHaveAttribute("data-speech-state", "fallback-local");
+  await expect(page.getByTestId("voice-profile")).toHaveAttribute("data-speech-state", "fallback-browser");
 });
 
 test("English patient reply stays English and language switch creates a separate attempt", async ({ page }) => {
   await page.route("**/api/session/init/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: "e2e-session", patientOpeningStatement: "Hello doctor. My urine has been red.", aiStatus: "connected" }) }));
   await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "- I do not have pain or fever.", matchedSlotIds: ["pain", "fever_chills"], isFallback: false }) }));
-  await page.route("**/api/training-action", async (route) => {
+  await page.route("**/api/training-action/**", async (route) => {
     const body = route.request().postDataJSON();
     const payload = body.action === "init-attempt" ? { attemptId: body.attemptId, practiceOnly: true } : { recorded: true };
     await route.fulfill({ status: 200, contentType: "application/json", headers: { "X-Training-State": `e2e-${body.attemptId}` }, body: JSON.stringify(payload) });
