@@ -2,7 +2,7 @@
   "schemaVersion": "clinical-contradiction-v1",
   "caseCount": 42,
   "errorCount": 0,
-  "reviewCount": 572,
+  "reviewCount": 419,
   "issues": [
     {
       "caseId": "P001",
@@ -60,12 +60,6 @@
     },
     {
       "caseId": "P001",
-      "field": "transfusionHistory",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "P001",
       "field": "anticoagulantUse",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -109,12 +103,6 @@
     {
       "caseId": "P002",
       "field": "urinaryProcedureHistory",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "P002",
-      "field": "transfusionHistory",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
     },
@@ -180,12 +168,6 @@
     },
     {
       "caseId": "P003",
-      "field": "transfusionHistory",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "P003",
       "field": "anticoagulantUse",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -289,12 +271,6 @@
     {
       "caseId": "P005",
       "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "P005",
-      "field": "coronaryDisease",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
     },
@@ -900,36 +876,6 @@
     },
     {
       "caseId": "HX-ADD-001",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-001",
-      "field": "coronaryDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-001",
-      "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-001",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-001",
-      "field": "tuberculosis",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-001",
       "field": "urinaryProcedureHistory",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -954,18 +900,6 @@
     },
     {
       "caseId": "HX-ADD-001",
-      "field": "anticoagulantUse",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-001",
-      "field": "antiplateletUse",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-001",
       "field": "familyHistory",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -973,36 +907,6 @@
     {
       "caseId": "HX-ADD-002",
       "field": "alcoholHistory",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-002",
-      "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-002",
-      "field": "coronaryDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-002",
-      "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-002",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-002",
-      "field": "tuberculosis",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
     },
@@ -1068,36 +972,6 @@
     },
     {
       "caseId": "HX-ADD-003",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-003",
-      "field": "coronaryDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-003",
-      "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-003",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-003",
-      "field": "tuberculosis",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-003",
       "field": "urinaryProcedureHistory",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -1141,36 +1015,6 @@
     {
       "caseId": "HX-ADD-004",
       "field": "alcoholHistory",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-004",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-004",
-      "field": "coronaryDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-004",
-      "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-004",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-004",
-      "field": "tuberculosis",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
     },
@@ -1224,30 +1068,6 @@
     },
     {
       "caseId": "HX-ADD-005",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-005",
-      "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-005",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-005",
-      "field": "tuberculosis",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-005",
       "field": "urinaryProcedureHistory",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -1272,12 +1092,6 @@
     },
     {
       "caseId": "HX-ADD-005",
-      "field": "antiplateletUse",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-005",
       "field": "familyHistory",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -1290,18 +1104,6 @@
     },
     {
       "caseId": "HX-ADD-006",
-      "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-006",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-006",
       "field": "coronaryDisease",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -1309,18 +1111,6 @@
     {
       "caseId": "HX-ADD-006",
       "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-006",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-006",
-      "field": "tuberculosis",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
     },
@@ -1386,42 +1176,6 @@
     },
     {
       "caseId": "HX-ADD-007",
-      "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-007",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-007",
-      "field": "coronaryDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-007",
-      "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-007",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-007",
-      "field": "tuberculosis",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-007",
       "field": "urinaryProcedureHistory",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -1482,42 +1236,6 @@
     },
     {
       "caseId": "HX-ADD-008",
-      "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-008",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-008",
-      "field": "coronaryDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-008",
-      "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-008",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-008",
-      "field": "tuberculosis",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-008",
       "field": "urinaryProcedureHistory",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -1561,36 +1279,6 @@
     {
       "caseId": "HX-ADD-009",
       "field": "alcoholHistory",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-009",
-      "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-009",
-      "field": "coronaryDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-009",
-      "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-009",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-009",
-      "field": "tuberculosis",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
     },
@@ -1656,42 +1344,6 @@
     },
     {
       "caseId": "HX-ADD-010",
-      "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-010",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-010",
-      "field": "coronaryDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-010",
-      "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-010",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-010",
-      "field": "tuberculosis",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-010",
       "field": "urinaryProcedureHistory",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -1752,42 +1404,6 @@
     },
     {
       "caseId": "HX-ADD-011",
-      "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-011",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-011",
-      "field": "coronaryDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-011",
-      "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-011",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-011",
-      "field": "tuberculosis",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-011",
       "field": "urinaryProcedureHistory",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -1836,42 +1452,6 @@
     },
     {
       "caseId": "HX-ADD-012",
-      "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-012",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-012",
-      "field": "coronaryDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-012",
-      "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-012",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-012",
-      "field": "tuberculosis",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-012",
       "field": "urinaryProcedureHistory",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -1915,42 +1495,6 @@
     {
       "caseId": "HX-ADD-013",
       "field": "alcoholHistory",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-013",
-      "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-013",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-013",
-      "field": "coronaryDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-013",
-      "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-013",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-013",
-      "field": "tuberculosis",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
     },
@@ -2017,18 +1561,6 @@
     {
       "caseId": "HX-ADD-014",
       "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-014",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-014",
-      "field": "tuberculosis",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
     },
@@ -2094,42 +1626,6 @@
     },
     {
       "caseId": "HX-ADD-015",
-      "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-015",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-015",
-      "field": "coronaryDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-015",
-      "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-015",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-015",
-      "field": "tuberculosis",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-015",
       "field": "urinaryProcedureHistory",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -2178,36 +1674,6 @@
     },
     {
       "caseId": "HX-ADD-016",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-016",
-      "field": "coronaryDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-016",
-      "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-016",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-016",
-      "field": "tuberculosis",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-016",
       "field": "urinaryProcedureHistory",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -2250,36 +1716,6 @@
     },
     {
       "caseId": "HX-ADD-017",
-      "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-017",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-017",
-      "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-017",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-017",
-      "field": "tuberculosis",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-017",
       "field": "surgeryHistory",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -2298,12 +1734,6 @@
     },
     {
       "caseId": "HX-ADD-017",
-      "field": "anticoagulantUse",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-017",
       "field": "familyHistory",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -2311,36 +1741,6 @@
     {
       "caseId": "HX-ADD-018",
       "field": "alcoholHistory",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-018",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-018",
-      "field": "coronaryDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-018",
-      "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-018",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-018",
-      "field": "tuberculosis",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
     },
@@ -2388,18 +1788,6 @@
     },
     {
       "caseId": "HX-ADD-019",
-      "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-019",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-019",
       "field": "coronaryDisease",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -2407,18 +1795,6 @@
     {
       "caseId": "HX-ADD-019",
       "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-019",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-019",
-      "field": "tuberculosis",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
     },
@@ -2472,37 +1848,7 @@
     },
     {
       "caseId": "HX-ADD-020",
-      "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-020",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-020",
-      "field": "coronaryDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-020",
       "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-020",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-020",
-      "field": "tuberculosis",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
     },
@@ -2556,18 +1902,6 @@
     },
     {
       "caseId": "HX-ADD-021",
-      "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-021",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-021",
       "field": "coronaryDisease",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -2575,18 +1909,6 @@
     {
       "caseId": "HX-ADD-021",
       "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-021",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-021",
-      "field": "tuberculosis",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
     },
@@ -2652,18 +1974,6 @@
     },
     {
       "caseId": "HX-ADD-022",
-      "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-022",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-022",
       "field": "coronaryDisease",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -2671,18 +1981,6 @@
     {
       "caseId": "HX-ADD-022",
       "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-022",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-022",
-      "field": "tuberculosis",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
     },
@@ -2736,18 +2034,6 @@
     },
     {
       "caseId": "HX-ADD-023",
-      "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-023",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-023",
       "field": "coronaryDisease",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -2755,18 +2041,6 @@
     {
       "caseId": "HX-ADD-023",
       "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-023",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-023",
-      "field": "tuberculosis",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
     },
@@ -2832,18 +2106,6 @@
     },
     {
       "caseId": "HX-ADD-024",
-      "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-024",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-024",
       "field": "coronaryDisease",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -2851,18 +2113,6 @@
     {
       "caseId": "HX-ADD-024",
       "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-024",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-024",
-      "field": "tuberculosis",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
     },
@@ -2916,18 +2166,6 @@
     },
     {
       "caseId": "HX-ADD-025",
-      "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-025",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-025",
       "field": "coronaryDisease",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -2935,18 +2173,6 @@
     {
       "caseId": "HX-ADD-025",
       "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-025",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-025",
-      "field": "tuberculosis",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
     },
@@ -3012,18 +2238,6 @@
     },
     {
       "caseId": "HX-ADD-026",
-      "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-026",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-026",
       "field": "coronaryDisease",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -3031,18 +2245,6 @@
     {
       "caseId": "HX-ADD-026",
       "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-026",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-026",
-      "field": "tuberculosis",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
     },
@@ -3091,42 +2293,6 @@
     {
       "caseId": "HX-ADD-027",
       "field": "alcoholHistory",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-027",
-      "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-027",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-027",
-      "field": "coronaryDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-027",
-      "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-027",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-027",
-      "field": "tuberculosis",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
     },
@@ -3187,36 +2353,6 @@
     {
       "caseId": "HX-ADD-028",
       "field": "alcoholHistory",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-028",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-028",
-      "field": "coronaryDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-028",
-      "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-028",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-028",
-      "field": "tuberculosis",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
     },
@@ -3270,18 +2406,6 @@
     },
     {
       "caseId": "HX-ADD-029",
-      "field": "hypertension",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-029",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-029",
       "field": "coronaryDisease",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
@@ -3289,18 +2413,6 @@
     {
       "caseId": "HX-ADD-029",
       "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-029",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-029",
-      "field": "tuberculosis",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
     },
@@ -3361,36 +2473,6 @@
     {
       "caseId": "HX-ADD-030",
       "field": "alcoholHistory",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-030",
-      "field": "diabetes",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-030",
-      "field": "coronaryDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-030",
-      "field": "stroke",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-030",
-      "field": "liverDisease",
-      "message": "Author-added simulation fact requires clinical confirmation",
-      "severity": "review"
-    },
-    {
-      "caseId": "HX-ADD-030",
-      "field": "tuberculosis",
       "message": "Author-added simulation fact requires clinical confirmation",
       "severity": "review"
     },

@@ -67,6 +67,7 @@ type AiStatus = "unknown" | "checking" | "connected" | "fallback" | "error";
 type AgentStageNo = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 type StudentVisibleCase = {
   id: string;
+  displayCaseId?: string;
   studentChiefComplaint: string;
   chiefComplaint: string;
   chiefComplaintEn?: string;
@@ -311,7 +312,7 @@ function patientOpening(caseData: StudentVisibleCase, lang: LanguageCode) {
 
 function caseDisplay(caseData: StudentVisibleCase, lang: LanguageCode) {
   return {
-    title: lang === "en" ? `Training case ${caseData.id}` : `训练病例 ${caseData.id}`,
+    title: lang === "en" ? `Training case ${caseData.displayCaseId || caseData.id}` : `训练病例 ${caseData.displayCaseId || caseData.id}`,
     age: caseData.age,
     sex: lang === "en" ? caseData.sexEn || (caseData.sex === "女" ? "Female" : "Male") : caseData.sex,
     difficulty: caseData.difficulty || "",
@@ -1305,7 +1306,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     <main className="mx-auto max-w-[1500px] px-5 py-6">
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-medium text-clinic-blue">{caseData.id}</p>
+          <p className="text-sm font-medium text-clinic-blue">{caseData.displayCaseId || caseData.id}</p>
           <h1 className="mt-1 text-2xl font-semibold">{t(lang, "appTitle")}</h1>
           <p className="mt-1 text-sm text-clinic-muted">{t(lang, "appSubtitle")}</p>
         </div>

@@ -13,7 +13,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "最早3个月全部小便红色，像洗肉水那样，伴有小血块，一开始到结束都是这个颜色。小便时候不痛。这种症状时有时无。排尿稍费力，时有尿不尽感觉，夜尿1-2次/晚。也没有腰痛及发热，下腹部也不痛。当时到当地社区医院看了，没做什么检查，当时考虑是上火，吃了点消炎药后就好转了。一周前又出现血尿了，来这边就诊了。这三个月大便正常，胃口一般，体重没有明显变化。",
+      "patientAnswerZh": "患者因“间断小便变红3月余”就诊。血尿类型及定位线索：肉眼血尿。现病史关键阳性信息：肉眼血尿；全程血尿；洗肉水样；有小血块；无痛性；排尿稍费力、尿不尽、夜尿1-2次/晚；无泡沫尿、水肿、高血压肾损害线索；尿检以大量红细胞为主。关键阴性信息：否认腰痛；否认发热寒战。",
       "patientAnswerEn": "It started for about 3 months.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -194,7 +194,7 @@
     },
     "family_history": {
       "patientAnswerZh": "父母已经过世，子女身体健康。",
-      "patientAnswerEn": "There is no known similar hematuria or hereditary kidney disease in my family.",
+      "patientAnswerEn": "There is a family medical history, but I do not know all the details.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -237,7 +237,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "1月前出现左侧腰部疼痛，酸胀痛，疼痛没有放射到其他地方。体位改变全部小便红色，像洗肉水那样，伴有蚯蚓状血块，一开始到结束都是这个颜色。小便时候不痛。这种症状时有时无。也没有腰痛及发热，下腹部也不痛。当时到当地社区医院看了，没做什么检查，当时考虑是上火，吃了点消炎药后就好转了。一周前又出现血尿了，来这边就诊了。这三个月大便正常，胃口一般，体重没有明显变化。",
+      "patientAnswerZh": "患者因“反复左侧腰痛伴小便变红1月余”就诊。血尿类型及定位线索：肉眼血尿。现病史关键阳性信息：肉眼血尿；全程血尿；洗肉水样；蚯蚓状血块；伴左侧腰部酸胀痛，小便时不痛；左侧腰部酸胀痛；无泡沫尿、水肿、上感后茶色尿等肾小球线索。关键阴性信息：无明显尿频尿急尿痛；否认发热寒战。",
       "patientAnswerEn": "It started for about 1 months.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -418,7 +418,7 @@
     },
     "family_history": {
       "patientAnswerZh": "父母已经过世，子女身体健康。",
-      "patientAnswerEn": "There is no known similar hematuria or hereditary kidney disease in my family.",
+      "patientAnswerEn": "There is a family medical history, but I do not know all the details.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -461,7 +461,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "5月前无明显诱因出现肉眼血尿，鲜红色，排尿时无伴疼痛，有少量血块，全程血尿。无尿频、尿急、排尿困难症状，夜尿1-2次/晚。无腰部疼痛、发热。这种症状时有时无。未予以重视，1周前血尿症状明显加重，当地医院就诊，做泌尿系彩超提示：右肾盂内占位，可见血流，建议进一步检查。遂来我院就诊。平时有便秘，2-3天解一次大便。起病以来，胃口一般，体重下降5kg。",
+      "patientAnswerZh": "患者因“反复小便变红5月余，加重1周”就诊。血尿类型及定位线索：肉眼血尿。现病史关键阳性信息：肉眼血尿；全程血尿；鲜红色；少量血块；无痛性；无腰部疼痛；无尿频尿急排尿困难；无泡沫尿、水肿、肾炎线索。关键阴性信息：否认发热。",
       "patientAnswerEn": "It started for about 5 months.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -593,8 +593,8 @@
       "teacherReviewRequired": true
     },
     "surgery_history": {
-      "patientAnswerZh": "我以前做过手术或介入治疗。",
-      "patientAnswerEn": "I have had surgery or an interventional procedure before.",
+      "patientAnswerZh": "我以前做过胆囊切除手术。",
+      "patientAnswerEn": "I previously had my gallbladder removed.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -642,7 +642,7 @@
     },
     "family_history": {
       "patientAnswerZh": "父母已经过世，子女身体健康。",
-      "patientAnswerEn": "There is no known similar hematuria or hereditary kidney disease in my family.",
+      "patientAnswerEn": "There is a family medical history, but I do not know all the details.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -685,7 +685,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "1月余前无明显诱因出现肉眼血尿，鲜红色，排尿时无伴疼痛，全程血尿。无尿频、尿急、排尿困难症状，夜尿1-2次/晚。无腰部疼痛、发热。未予以重视，1周前血尿症状明显加重，当地医院就诊，中腹部CT提示：右肾巨大占位并腔静脉可疑癌栓，腹膜后多发淋巴结肿大，左侧第二肋骨骨质破坏并软组织形成。遂来我院就诊。大便正常。起病以来，胃口一般，体重下降5kg。",
+      "patientAnswerZh": "患者因“小便变红1月余”就诊。血尿类型及定位线索：肉眼血尿。现病史关键阳性信息：肉眼血尿；全程血尿；鲜红色；未主动诉血块，需追问；以无痛全程血尿为主；无痛性；无腰痛；无尿频尿急排尿困难；无肾小球性线索。关键阴性信息：否认发热。",
       "patientAnswerEn": "It started for about 1 months.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -866,7 +866,7 @@
     },
     "family_history": {
       "patientAnswerZh": "父母已经过世，子女身体健康。",
-      "patientAnswerEn": "There is no known similar hematuria or hereditary kidney disease in my family.",
+      "patientAnswerEn": "There is a family medical history, but I do not know all the details.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -909,7 +909,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "3年前出现尿频、尿急症状，诉出现尿意后如无法排尿可出现尿裤子。同时小便费力，尿线变细，尿分叉，偶有小便带血。夜尿增多，夜尿3-4次/晚。前往当地医院就诊，考虑：前列腺肥大。具体不详。间断吃坦索罗辛胶囊、非那雄胺片，症状改善。1月前开始间断出现肉眼血尿，鲜红色，饮水增多后消失。排尿困难症状加重，尿痛，伴有下腹部憋胀感，夜尿5-6次/晚。无发热，无腰背部、四肢疼痛。遂来我院就诊。平时2天解一次大便，排尿困难时候排便不畅。起病以来，胃口一般，体重无明显下降。",
+      "patientAnswerZh": "患者因“进行性排尿困难3年余，加重伴小便变红1月”就诊。血尿类型及定位线索：肉眼血尿为主，尿检镜下红细胞升高。现病史关键阳性信息：肉眼血尿为主，尿检镜下红细胞升高；间断血尿，饮水增多后可减轻，需追问是否全程/终末；合并下尿路梗阻；鲜红色；排尿困难加重时伴尿痛及下腹憋胀；尿频尿急、尿线变细、尿分叉、夜尿5-6次/晚、急迫性尿失禁、排尿困难；无泡沫尿、水肿、上感后血尿。关键阴性信息：未诉血块，追问可否认明显血块；否认腰背部及四肢疼痛；否认发热。",
       "patientAnswerEn": "It started for about 3 years.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -1041,8 +1041,8 @@
       "teacherReviewRequired": true
     },
     "surgery_history": {
-      "patientAnswerZh": "我以前做过手术或介入治疗。",
-      "patientAnswerEn": "I have had surgery or an interventional procedure before.",
+      "patientAnswerZh": "我以前做过冠脉支架介入治疗，不是泌尿系统操作。",
+      "patientAnswerEn": "I previously had a coronary stent procedure, not a urinary procedure.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1090,7 +1090,7 @@
     },
     "family_history": {
       "patientAnswerZh": "子女身体健康。",
-      "patientAnswerEn": "There is no known similar hematuria or hereditary kidney disease in my family.",
+      "patientAnswerEn": "There is a family medical history, but I do not know all the details.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1101,8 +1101,8 @@
       "teacherReviewRequired": true
     },
     "past_history": {
-      "patientAnswerZh": "有糖尿病。",
-      "patientAnswerEn": "I have diabetes.",
+      "patientAnswerZh": "有糖尿病。；有冠心病。",
+      "patientAnswerEn": "I have diabetes. I have coronary heart disease.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -1133,7 +1133,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "2天前突然出现小便刺痛，尿不尽感，灼热感。尿频明显，10分钟/次，便后用纸巾擦拭呈粉红色尿液，无血块，无腰痛及发热，期间自行前往药店购买“三金片”服用，症状无明显缓解。",
+      "patientAnswerZh": "患者因“尿频、尿急、尿痛伴小便变红2天”就诊。血尿类型及定位线索：肉眼淡红/擦拭粉红色，尿检镜下红细胞升高。现病史关键阳性信息：肉眼淡红/擦拭粉红色，尿检镜下红细胞升高；非典型全程血尿，主要排尿后纸巾粉红；需追问是否来自尿道或阴道；粉红色；无血块；排尿刺痛、灼热感明显；无腰痛；尿频明显、尿急、尿痛、尿不尽；无发热寒战；无泡沫尿、水肿、高血压、上感后茶色尿。关键阴性信息：原始资料未单列关键阴性病史，需根据问诊继续完善。",
       "patientAnswerEn": "It started for about 2 days.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -1314,7 +1314,7 @@
     },
     "family_history": {
       "patientAnswerZh": "原始资料中的家族史/子女情况：否认高血压、糖尿病、心脏病、肝炎、结核病史。",
-      "patientAnswerEn": "There is no known similar hematuria or hereditary kidney disease in my family.",
+      "patientAnswerEn": "There is a family medical history, but I do not know all the details.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1357,7 +1357,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "5年前出现小便分叉、尿线变细。尿频明显，半小时需要解手一次。夜尿增多，夜尿4-5次/晚。前往当地医院就诊，考虑：前列腺肥大。具体不详。间断吃前列疏通胶囊，症状改善。1天前饮酒后突然现肉眼血尿，淡红色。排尿困难症状加重，尿痛，伴有下腹部憋胀感，来我院急诊就诊，考虑：急性尿潴留，留置导尿，引流出600ml，淡红色尿液。无发热，无腰背部、四肢疼痛。遂来我院就诊。平时大便规律，起病以来，胃口一般，体重无明显下降。",
+      "patientAnswerZh": "患者因“反复排尿困难5年余，急性加重伴小便变红1天”就诊。血尿类型及定位线索：肉眼淡红尿+镜下血尿。现病史关键阳性信息：肉眼淡红尿+镜下血尿；急性尿潴留导尿后淡红色尿，可伴终末血尿；需与肿瘤性血尿鉴别；淡红色；未诉血块；排尿困难伴尿痛、下腹憋胀；无腰背部疼痛；尿线变细、尿分叉、尿频、夜尿4-5次/晚、急性尿潴留；无发热；无泡沫尿、水肿、上感后血尿。关键阴性信息：原始资料未单列关键阴性病史，需根据问诊继续完善。",
       "patientAnswerEn": "It started for about 5 years.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -1538,7 +1538,7 @@
     },
     "family_history": {
       "patientAnswerZh": "子女身体健康。",
-      "patientAnswerEn": "There is no known similar hematuria or hereditary kidney disease in my family.",
+      "patientAnswerEn": "There is a family medical history, but I do not know all the details.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1581,7 +1581,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "患者诉1年来间断出现肉眼血尿，淡红色，主要是排尿到最后出现，排尿是轻微刺痛，有时出现排尿突然停止情况，改变体位又可以排出尿液。无血块、腰痛、发热等。夜尿1-2次/晚。遂来我院就诊，门诊考虑：膀胱结石。平时大便规律，起病以来，胃口一般，体重无明显下降。",
+      "patientAnswerZh": "患者因“间断小便变红伴排尿中断1年余”就诊。血尿类型及定位线索：肉眼血尿。现病史关键阳性信息：肉眼血尿；终末血尿为主；淡红色；无血块；排尿时轻微刺痛，体位相关排尿中断；无腰痛；排尿中断、改变体位后可继续排尿；夜尿1-2次/晚；无发热；无肾小球线索。关键阴性信息：原始资料未单列关键阴性病史，需根据问诊继续完善。",
       "patientAnswerEn": "It started for about 1 years.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -1762,7 +1762,7 @@
     },
     "family_history": {
       "patientAnswerZh": "子女身体健康。",
-      "patientAnswerEn": "There is no known similar hematuria or hereditary kidney disease in my family.",
+      "patientAnswerEn": "There is a family medical history, but I do not know all the details.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1805,8 +1805,8 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "患者昨夜凌晨突发出现右侧腰疼痛，呈刀割样，阵发性加剧，疼痛向右下腹会阴区放射，同时伴恶心、呕吐症状。尿频、尿急症状，小便颜色呈现浓茶样改变。大便正常，无发热、头痛、头晕、腹泻、腹痛、腹胀等不适。来我院急诊就诊，考虑“肾绞痛”。这三个月大便正常，胃口一般，体重没有明显变化。",
-      "patientAnswerEn": "It started for about three months.",
+      "patientAnswerZh": "患者因“突发右侧腰痛伴小便变红半天”就诊。血尿类型及定位线索：肉眼茶色/镜下大量红细胞。现病史关键阳性信息：肉眼茶色/镜下大量红细胞；血尿与肾绞痛同时出现，非典型起始/终末；多为全程尿色加深；浓茶样；右腰刀割样阵发性疼痛，向右下腹及会阴放射，伴恶心呕吐；右侧肾绞痛明显；尿频尿急；无发热；无泡沫尿、水肿，茶色尿主要与结石血尿相关但需尿沉渣鉴别。关键阴性信息：无明显血块。",
+      "patientAnswerEn": "It started for about half days.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1986,7 +1986,7 @@
     },
     "family_history": {
       "patientAnswerZh": "父母、配偶、子女均身体健康。",
-      "patientAnswerEn": "There is no known similar hematuria or hereditary kidney disease in my family.",
+      "patientAnswerEn": "There is a family medical history, but I do not know all the details.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2029,7 +2029,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "患者3年前劳累后左侧腰部隐痛，无向别处放射，无排尿不适，间断剧烈运动后小便呈浓茶样改变，诉昨日打羽毛球后再次出现酱油样尿液，左侧腰部轻微隐痛。无尿频、尿急、尿痛、排尿困难，无发热、恶心、呕吐症状。无发热、头痛、头晕、腹泻、腹痛、腹胀等不适。来我院急诊就诊，考虑“肾结石”。这三个月大便正常，胃口一般，体重没有明显变化。",
+      "patientAnswerZh": "患者因“反复左侧腰部隐痛伴运动后小便变红3年余，再发1天”就诊。血尿类型及定位线索：肉眼血尿/镜下大量红细胞。现病史关键阳性信息：肉眼血尿/镜下大量红细胞；运动后全程尿色加深，非典型终末血尿；酱油样/浓茶样；未诉血块；左侧腰部隐痛，非典型肾绞痛；左腰隐痛；无尿频尿急尿痛；无发热；尿色茶/酱油需与肾小球性血尿鉴别；本例影像结石明确。关键阴性信息：原始资料未单列关键阴性病史，需根据问诊继续完善。",
       "patientAnswerEn": "It started for about 3 years.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -2210,7 +2210,7 @@
     },
     "family_history": {
       "patientAnswerZh": "父母、配偶、子女均身体健康。",
-      "patientAnswerEn": "There is no known similar hematuria or hereditary kidney disease in my family.",
+      "patientAnswerEn": "There is a family medical history, but I do not know all the details.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2253,7 +2253,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "3周前出现扁桃体发炎、伴发热，最高38度，伴双侧腰部酸胀痛。无咳嗽咳痰。晨起后眼睑水肿明显。1周前再次出现扁桃体发炎伴发热，于感染后数日内突发肉眼血尿，呈淡红色或洗肉水样。无尿频、尿急、尿痛。考虑：血尿查因。平时大便规律，起病以来，胃口一般，体重无明显下降。",
+      "patientAnswerZh": "患者因“咽痛3周，小便变红1周”就诊。血尿类型及定位线索：肉眼血尿+肾小球性镜下证据。现病史关键阳性信息：肉眼血尿+肾小球性镜下证据；感染后数日出现肉眼血尿，不按起始/终末定位；可表现为全程淡红或洗肉水样；淡红色或洗肉水样；无血块；无尿痛；可有双腰酸胀；双侧腰部酸胀痛，不是典型肾绞痛；无尿频尿急尿痛；有咽痛/扁桃体炎伴发热，最高38℃；眼睑水肿、尿蛋白+、病理管型+、畸形红细胞显著升高，上感后血尿，提示肾小球性血尿。关键阴性信息：原始资料未单列关键阴性病史，需根据问诊继续完善。",
       "patientAnswerEn": "It started for about 3 weeks.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -2434,7 +2434,7 @@
     },
     "family_history": {
       "patientAnswerZh": "原始资料中的家族史/子女情况：否认高血压、糖尿病、肝炎、结核病史。",
-      "patientAnswerEn": "There is no known similar hematuria or hereditary kidney disease in my family.",
+      "patientAnswerEn": "There is a family medical history, but I do not know all the details.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2477,7 +2477,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "患者半年感冒后出现血尿并尿泡沫增多，查24小时尿蛋白定量2.4g，口服“黄葵胶囊”，症状无缓解。半月前，半月前患者熬夜后再次出现上述症状，并且程度较前加重，复查24小时尿蛋白定量4.7g，肾功能正常。至我院门诊就诊，拟“蛋白尿查因”收入院。",
+      "patientAnswerZh": "患者因“反复小便变红伴尿泡沫增多半年余，加重半月”就诊。血尿类型及定位线索：肉眼/镜下血尿合并明显蛋白尿。现病史关键阳性信息：肉眼/镜下血尿合并明显蛋白尿；感冒后反复出现，不按起始/终末定位；常为全程尿色异常；可呈茶色、淡红或肉眼血尿，伴泡沫增多；无血块；无尿痛和肾绞痛；无典型腰痛；无尿频尿急尿痛；与感冒/上呼吸道感染相关，可无持续发热；泡沫尿、尿蛋白3+、24小时尿蛋白2.4g升至4.7g、畸形红细胞27000，强烈提示肾小球来源。关键阴性信息：原始资料未单列关键阴性病史，需根据问诊继续完善。",
       "patientAnswerEn": "It started for about half years.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -2658,7 +2658,7 @@
     },
     "family_history": {
       "patientAnswerZh": "原始资料中的家族史/子女情况：既往体健。",
-      "patientAnswerEn": "There is no known similar hematuria or hereditary kidney disease in my family.",
+      "patientAnswerEn": "There is a family medical history, but I do not know all the details.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2701,7 +2701,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "2个月前无明显诱因出现，间断发作，近1周次数增多。 血尿性质：肉眼，全程，颜色洗肉水样/暗红，血块：少量小血块，疼痛关系：无痛性。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力轻度乏力、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者2个月前无明显诱因首次发现尿液呈洗肉水样，整次排尿均发红，偶见少量米粒至黄豆大小血块，无尿痛。此后约每1～2周发作1次，每次持续半天至1天后自行转清，近2周发作频率增加。无尿频、尿急、排尿困难，无腰腹绞痛、发热寒战，无泡沫尿及眼睑或下肢水肿。未因血尿自行停药或使用抗生素。",
       "patientAnswerEn": "It started for about 2 months.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -2839,20 +2839,20 @@
       "teacherReviewRequired": true
     },
     "anticoagulant": {
-      "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-      "patientAnswerEn": "I do not take anticoagulants.",
+      "patientAnswerZh": "我在服用华法林、利伐沙班。",
+      "patientAnswerEn": "I take an anticoagulant.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "antiplatelet": {
-      "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-      "patientAnswerEn": "I do not take antiplatelet medication.",
+      "patientAnswerZh": "我在服用阿司匹林、氯吡格雷。",
+      "patientAnswerEn": "I take antiplatelet medication.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "medications": {
-      "patientAnswerZh": "我长期服用氨氯地平。",
-      "patientAnswerEn": "I am not taking any regular medication that I know of.",
+      "patientAnswerZh": "我长期服用阿司匹林、氯吡格雷、华法林、利伐沙班、氨氯地平。",
+      "patientAnswerEn": "I regularly take aspirin and clopidogrel and warfarin and rivaroxaban.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -2893,8 +2893,8 @@
       "teacherReviewRequired": true
     },
     "past_history": {
-      "patientAnswerZh": "有高血压。",
-      "patientAnswerEn": "I have hypertension.",
+      "patientAnswerZh": "有高血压。；有结核病。",
+      "patientAnswerEn": "I have hypertension. I have tuberculosis.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -2925,7 +2925,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "半年反复发作，近期抗感染后尿频减轻但血尿仍存在。 血尿性质：肉眼为主，间有镜下，全程，颜色淡红至暗红，血块：无明显血块，疼痛关系：轻度尿痛，非主要症状。伴随症状：尿频是、尿急是、尿痛轻度、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力近3个月体重下降约3kg、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者半年前开始反复出现尿频、尿急和轻度尿痛，间歇伴尿液由淡红转暗红，多为全程血尿，无明显血块。每次被当作“尿路感染”口服抗菌药后刺激症状可暂时减轻，但停药后数周再次出现，血尿并未完全消失。近1个月发作更频繁，夜间排尿次数增加。无明显腰痛、肾绞痛、发热寒战及排尿中断，无泡沫尿、水肿。",
       "patientAnswerEn": "It started for about half years.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -3149,7 +3149,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "1个月前出现无明显诱因血尿，伴左腰酸胀，无典型绞痛。 血尿性质：肉眼，全程，颜色暗红，血块：偶有条索状血块，疼痛关系：隐痛，不是绞痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛是、肾绞痛否、发热否、恶心呕吐否、体重/乏力轻度乏力、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者1个月前开始出现左腰部持续性隐胀不适，疼痛程度轻至中等，不呈阵发性绞痛，也不向腹股沟放射。同期发现全程暗红色肉眼血尿，间断出现，偶见细条索样血块；血尿与活动、体位关系不明显。无尿频、尿急、尿痛及排尿困难，无发热寒战、恶心呕吐。无泡沫尿、水肿或近期上呼吸道感染后茶色尿。",
       "patientAnswerEn": "It started for about 1 months.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -3373,7 +3373,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "3周内出现2次肉眼血尿，伴右腰胀感和乏力。 血尿性质：肉眼，全程，颜色暗红，血块：无明显血块，疼痛关系：无痛或胀痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛轻度、肾绞痛否、发热否、恶心呕吐否、体重/乏力乏力、食欲差、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者3周前首次发现全程暗红色肉眼血尿，无明显诱因，无明显血块，间歇出现，休息和饮水后可变淡但未完全消失。伴右侧腰部轻度胀感、乏力和食欲下降，不呈绞痛。无排尿烧灼感、尿频尿急、排尿困难，无发热寒战。未诉明显泡沫尿、水肿；近期无外伤、剧烈运动或泌尿操作。",
       "patientAnswerEn": "It started for about 3 weeks.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -3597,7 +3597,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "5天前出现全程肉眼血尿，无明显疼痛，抗凝药未自行停用。 血尿性质：肉眼，全程，颜色鲜红至暗红，血块：有小血块，疼痛关系：无痛性。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者5天前无明显诱因出现全程鲜红至暗红色肉眼血尿，间歇可见少量小血块，无明显尿痛、腰痛、发热或排尿困难。血尿发生前未跌倒、撞伤或进行泌尿操作，未自行加量服药。无鼻出血、牙龈出血、黑便等其他明显出血表现。患者担心与抗凝药有关，但尚未自行停用利伐沙班。",
       "patientAnswerEn": "It started for about 5 days.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -3741,14 +3741,14 @@
       "teacherReviewRequired": true
     },
     "antiplatelet": {
-      "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-      "patientAnswerEn": "I do not take antiplatelet medication.",
+      "patientAnswerZh": "我在服用阿司匹林、氯吡格雷。",
+      "patientAnswerEn": "I take antiplatelet medication.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "medications": {
-      "patientAnswerZh": "我长期服用利伐沙班、他汀。",
-      "patientAnswerEn": "I regularly take rivaroxaban.",
+      "patientAnswerZh": "我长期服用阿司匹林、氯吡格雷、利伐沙班、他汀。",
+      "patientAnswerEn": "I regularly take aspirin and clopidogrel and rivaroxaban.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -3821,7 +3821,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "2天前受凉/饮水少后出现尿频尿急尿痛，少量血尿。 血尿性质：肉眼少量/镜下，终末或排尿后擦拭可见，颜色淡红，血块：无，疼痛关系：排尿痛。伴随症状：尿频是、尿急是、尿痛是、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者2天前开始出现明显尿频、尿急和排尿烧灼痛，排尿末段可见淡红色血尿，尿量每次不多。下腹有轻度坠胀感，无肉眼血块。否认发热寒战、腰背部疼痛、恶心呕吐及排尿困难。饮水后症状稍缓解，尚未自行使用抗菌药。",
       "patientAnswerEn": "It started for about 2 days.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -4045,7 +4045,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "3天前尿路刺激症状，随后高热寒战和左腰痛。 血尿性质：镜下为主，偶见淡红，不清楚/全程轻度，颜色淡红或外观不明显，血块：无，疼痛关系：腰痛明显。伴随症状：尿频是、尿急是、尿痛是、排尿困难否、腰痛是、肾绞痛否、发热高热寒战、恶心呕吐恶心、体重/乏力乏力、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者3天前先出现尿频、尿急、尿痛，随后出现高热和寒战，体温最高约39℃，伴明显一侧腰背部持续痛和全身乏力，尿液外观可正常或略呈淡红。服用退热药后体温可短暂下降，但数小时后再次升高。无明显血块或排尿中断，暂未出现意识改变，但食欲差、饮水减少。",
       "patientAnswerEn": "It started for about 3 days.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -4269,7 +4269,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "2天前急起尿频尿痛，伴发热、寒战、会阴/下腹胀痛。 血尿性质：镜下或少量肉眼，终末/全程少量，颜色淡红，血块：无，疼痛关系：排尿痛+会阴胀痛。伴随症状：尿频是、尿急是、尿痛是、排尿困难有排尿费力、腰痛否、肾绞痛否、发热发热寒战、恶心呕吐否、体重/乏力乏力、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者2天前出现发热、寒战，随后出现尿频、尿急、排尿灼痛及会阴部持续胀痛，坐位时更明显。近半天尿线变细、排尿费力，但仍能排出少量尿液；尿色淡红，无明显血块。无腰部绞痛、恶心呕吐。发病前无导尿、膀胱镜、前列腺按摩或不洁泌尿操作。",
       "patientAnswerEn": "It started for about 2 days.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -4493,7 +4493,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "1周来尿频尿痛，尿色淡红，口渴乏力。 血尿性质：肉眼淡红/镜下，终末较明显，颜色淡红，血块：无，疼痛关系：排尿痛。伴随症状：尿频是、尿急是、尿痛是、排尿困难否、腰痛否、肾绞痛否、发热低热、恶心呕吐否、体重/乏力乏力、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者1周前开始出现尿频、尿急、尿痛，终末尿呈淡红色，伴轻度下腹坠胀和低热，无明显血块。症状逐渐加重，夜间多次起床排尿。无明显腰痛、寒战、恶心呕吐或排尿困难。既往类似发作多次，本次尚未留取尿培养即自行服过少量旧抗菌药，效果不明显。",
       "patientAnswerEn": "It started for about 1 weeks.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -4717,7 +4717,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "1年内多次尿路刺激症状，抗感染后症状好转但镜下血尿仍间断存在。 血尿性质：镜下为主，不清楚，颜色外观多正常，血块：无，疼痛关系：排尿痛发作期有。伴随症状：尿频发作时有、尿急发作时有、尿痛发作时有、排尿困难否、腰痛否、肾绞痛否、发热偶低热、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者近1年反复出现尿频、尿急、尿痛，每次持续数天，偶伴低热，口服抗菌药后症状可缓解。多次尿检提示镜下血尿，即使刺激症状消失后仍有红细胞阳性；肉眼观察尿色多正常。无明显腰痛、肾绞痛、血块、排尿困难或水肿。既往治疗多未保留尿培养和药敏结果。",
       "patientAnswerEn": "It started for about 1 years.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -4941,7 +4941,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "6小时前突发右腰腹剧烈绞痛，向右下腹/腹股沟放射。 血尿性质：肉眼/镜下均可，全程轻度，颜色淡红，血块：无，疼痛关系：剧烈绞痛。伴随症状：尿频可有、尿急可有、尿痛可有、排尿困难否、腰痛是、肾绞痛是、发热否、恶心呕吐恶心呕吐、体重/乏力否、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者6小时前无明显诱因突发右侧腰腹部剧烈阵发性绞痛，疼痛向右下腹及腹股沟放射，发作时辗转不安，伴恶心和肉眼淡红色血尿。可有轻度尿频、尿急，但无明显排尿困难。否认发热寒战、持续呕吐或尿量明显减少。发病后未自行服用抗菌药。",
       "patientAnswerEn": "It started for about 6 hours.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -5165,7 +5165,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "1天前劳累后左腰痛，活动后血尿明显。 血尿性质：肉眼，全程，颜色淡红，血块：无，疼痛关系：腰部钝痛，可阵发加重。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛是、肾绞痛轻度、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者1天前出现左腰部持续性钝痛，活动后略加重，无明显向腹股沟放射，同时发现全程淡红色肉眼血尿。无发热寒战、尿频尿急尿痛、恶心呕吐或排尿困难。既往有肾结石史，本次疼痛较既往绞痛轻，尚未使用止痛药。",
       "patientAnswerEn": "It started for about 1 days.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -5389,7 +5389,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "3个月排尿费力、尿线变细，排尿中断，改变体位后可继续。 血尿性质：肉眼少量，终末，颜色鲜红/淡红，血块：少量，疼痛关系：下腹不适。伴随症状：尿频有、尿急有、尿痛偶有、排尿困难明显、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者3个月来逐渐出现尿线变细、排尿费力和尿流中断，部分时候变换体位后可继续排尿，伴尿频、尿急和下腹不适。排尿末段常见淡红至鲜红色血尿，偶有少量血块，偶伴轻度尿痛。无发热寒战或腰部绞痛。近期夜尿增多，间断服用坦索罗辛后改善不明显。",
       "patientAnswerEn": "It started for about 3 months.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -5613,7 +5613,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "半年反复尿路感染样发作，伴右腰痛，近期高热。 血尿性质：肉眼/镜下，全程，颜色浑浊淡红，血块：无，疼痛关系：腰痛胀痛。伴随症状：尿频有、尿急有、尿痛有、排尿困难否、腰痛是、肾绞痛否、发热发热寒战、恶心呕吐恶心、体重/乏力乏力、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者近半年反复出现一侧腰部胀痛、发热和寒战，每次持续数天，伴尿频、尿急、尿痛，尿液浑浊并呈淡红色。曾多次自行或门诊使用抗菌药，症状可短暂缓解但很快复发。近1周发热和腰痛加重，乏力、食欲下降。无明显排尿中断或血块，但需警惕感染性梗阻和脓毒症。",
       "patientAnswerEn": "It started for about half years.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -5837,7 +5837,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "1天前突发左腰腹阵发痛，饮酒火锅后出现。 血尿性质：肉眼少量/镜下，全程，颜色淡红，血块：无，疼痛关系：阵发性绞痛。伴随症状：尿频否、尿急轻度、尿痛否、排尿困难否、腰痛是、肾绞痛是、发热否、恶心呕吐恶心、体重/乏力否、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者1天前突发左侧腰腹部阵发性绞痛，疼痛向下腹放射，伴轻度尿急和全程淡红色肉眼血尿。无发热寒战、明显尿痛、持续呕吐或尿量减少。既往有痛风和小结石发作，本次症状相似。发病前一段时间饮水少，降尿酸治疗不规律。",
       "patientAnswerEn": "It started for about 1 days.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -6061,7 +6061,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "多年尿线变细、夜尿增多，3天前出现终末或全程血尿。 血尿性质：肉眼，终末或全程，颜色鲜红/淡红，血块：可有小血块，疼痛关系：无明显疼痛。伴随症状：尿频有、尿急有、尿痛否、排尿困难明显、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者有多年尿频、夜尿、尿线细、排尿等待和尿不尽感，近3天无明显诱因出现全程淡红至鲜红色肉眼血尿，可见少量小血块，排尿困难较前加重。无尿痛、发热寒战或腰部绞痛。间断服用坦索罗辛和非那雄胺，依从性差。若血块增多或不能排尿，需按急症处理。",
       "patientAnswerEn": "It started for about 3 days.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -6285,8 +6285,8 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "急性尿潴留导尿后出现血尿，既往排尿困难多年。 血尿性质：肉眼，全程，颜色鲜红，血块：小血块可能，疼痛关系：下腹胀痛缓解后血尿。伴随症状：尿频有、尿急有、尿痛否、排尿困难明显、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
-      "patientAnswerEn": "It started for some time.",
+      "patientAnswerZh": "患者既往长期有尿频、夜尿、尿线细和排尿费力，1天前突发下腹明显胀痛并完全不能排尿，急诊导尿后尿潴留缓解。导尿后出现鲜红色肉眼血尿，尿袋内可见少量小血块。无发热寒战、腰痛或明显尿痛。需鉴别导尿损伤、前列腺增生相关出血及其他泌尿系病变。",
+      "patientAnswerEn": "It started for about 1 days.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -6423,8 +6423,8 @@
       "teacherReviewRequired": true
     },
     "anticoagulant": {
-      "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-      "patientAnswerEn": "I do not take anticoagulants.",
+      "patientAnswerZh": "我在服用华法林、利伐沙班。",
+      "patientAnswerEn": "I take an anticoagulant.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -6435,8 +6435,8 @@
       "teacherReviewRequired": true
     },
     "medications": {
-      "patientAnswerZh": "我长期服用阿司匹林、坦索罗辛。",
-      "patientAnswerEn": "I regularly take aspirin and tamsulosin.",
+      "patientAnswerZh": "我长期服用阿司匹林、华法林、利伐沙班、坦索罗辛。",
+      "patientAnswerEn": "I regularly take aspirin and warfarin and rivaroxaban and tamsulosin.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -6509,7 +6509,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "半年下尿路症状，体检PSA升高和镜下血尿。 血尿性质：镜下，不清楚，颜色外观正常，血块：无，疼痛关系：无痛。伴随症状：尿频有、尿急否、尿痛否、排尿困难明显、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力轻度消瘦、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者近半年逐渐出现尿线变细、排尿等待、排尿费力和尿不尽感，伴尿频，尿液外观一直正常。体检及复查尿检发现持续镜下血尿，无肉眼血尿、血块、尿痛、发热或腰痛。否认骨痛、下肢水肿和近期明显消瘦。尚未完成PSA复核、直肠指检及影像/病理评估。",
       "patientAnswerEn": "It started for about half years.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -6689,8 +6689,8 @@
       "teacherReviewRequired": true
     },
     "family_history": {
-      "patientAnswerZh": "兄弟前列腺癌。",
-      "patientAnswerEn": "There is no known similar hematuria or hereditary kidney disease in my family.",
+      "patientAnswerZh": "一名兄弟患前列腺癌。",
+      "patientAnswerEn": "One of my brothers had prostate cancer. There is no known hereditary kidney disease or similar hematuria in my family.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -6733,7 +6733,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "上呼吸道感染后1-2天出现肉眼血尿，反复类似发作。 血尿性质：肉眼，全程，颜色浓茶色/可乐色，血块：无，疼痛关系：无明显尿痛，可腰酸。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛轻度腰酸、肾绞痛否、发热低热/咽痛前驱、恶心呕吐否、体重/乏力否、泡沫尿可有泡沫、水肿轻度眼睑浮肿可有。",
+      "patientAnswerZh": "患者2天前在咽痛、低热期间发现全程浓茶色或可乐色肉眼血尿，时间上与上呼吸道症状几乎同步，伴轻度腰酸、尿液泡沫增多和晨起眼睑轻度浮肿。无血块、尿频尿急尿痛、排尿困难或典型肾绞痛。尿量未明显减少。既往感冒时是否出现类似尿色变化需进一步追问。",
       "patientAnswerEn": "It started for about 2 days.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -6957,7 +6957,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "皮肤感染后约2-3周出现茶色尿、水肿、血压升高。 血尿性质：肉眼/镜下，全程，颜色茶色/烟熏色，血块：无，疼痛关系：无尿痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛可有腰酸、肾绞痛否、发热无或低热、恶心呕吐否、体重/乏力乏力、泡沫尿可有、水肿眼睑/下肢水肿。",
+      "patientAnswerZh": "患者约3周前曾有皮肤脓疱感染，局部红肿后自行好转。1周前开始出现全程茶色或烟熏色尿，伴晨起眼睑及下肢水肿、泡沫尿，尿量较平时减少，可有轻度腰酸。无尿频、尿急、尿痛和血块，无明显高热寒战。近期是否有头痛、血压升高、气促需重点询问。",
       "patientAnswerEn": "It started for about 3 weeks.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -7181,7 +7181,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "3年体检反复镜下血尿，无肉眼血尿，无明显症状。 血尿性质：镜下，不清楚，颜色外观正常，血块：无，疼痛关系：无痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者3年前体检首次发现镜下血尿，之后多次复查仍有红细胞，尿液外观始终正常。期间无肉眼血尿、血块、腰痛、尿频尿急尿痛、排尿困难、泡沫尿或水肿。既往肾功能和血压大致正常，蛋白尿情况需以定量检查确认。血尿与运动、感染和月经无明确关系。",
       "patientAnswerEn": "It started for about 3 years.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -7405,7 +7405,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "少年期起镜下血尿，家族男性肾病史，逐渐出现听力问题。 血尿性质：镜下为主，可偶肉眼，不清楚，颜色外观多正常，血块：无，疼痛关系：无痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿可有、水肿无明显。",
+      "patientAnswerZh": "患者数年来反复镜下血尿，尿液外观多正常，近期听力逐渐下降，尤其在嘈杂环境中更明显。无尿频尿急尿痛、腰痛、血块或排尿困难，可有轻度泡沫尿但无明显水肿。既往是否在儿童期感染后出现肉眼血尿、是否伴视力或眼部异常需进一步询问。",
       "patientAnswerEn": "It started for some time.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -7629,7 +7629,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "2周来泡沫尿、镜下血尿，伴蝶形红斑、关节痛、乏力。 血尿性质：镜下，偶浓茶色，全程/不清楚，颜色外观多正常或茶色，血块：无，疼痛关系：无尿痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热低热、恶心呕吐否、体重/乏力乏力明显、泡沫尿明显泡沫尿、水肿下肢轻肿。",
+      "patientAnswerZh": "患者2周前开始出现尿液泡沫明显增多，尿检提示镜下血尿，尿色偶呈茶色，随后出现双下肢轻度水肿和低热。同期面颊及鼻梁部出现红色皮疹，日晒后可能加重，并可伴乏力、关节酸痛。无尿频、尿急、尿痛、血块或肾绞痛。尿量、血压和近期体重变化需进一步评估。",
       "patientAnswerEn": "It started for about 2 weeks.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -7853,7 +7853,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "长距离跑步后出现短暂淡红尿，无其他症状，休息后缓解。 血尿性质：肉眼短暂/镜下，全程，颜色淡红，血块：无，疼痛关系：无痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者完成长距离跑步后数小时发现一次全程淡红色肉眼血尿，无疼痛、血块、尿频尿急尿痛、腰痛或发热。停止运动、休息及补液后尿色逐渐恢复，既往无类似发作。运动中无明显碰撞、脱水晕厥或横纹肌溶解相关肌痛、无力；仍需复查尿沉渣确认是否真正血尿。",
       "patientAnswerEn": "It started for some time.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -8077,7 +8077,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "月经期体检尿潜血阳性，无泌尿症状。 血尿性质：镜下/假阳性可能，不适用，颜色外观受经血影响，血块：无，疼痛关系：无痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者体检留取尿标本时处于月经期，未采用规范清洁中段尿，尿潜血阳性。本人无肉眼血尿、尿频尿急尿痛、腰痛、血块、泡沫尿或水肿。月经结束后尚未完成规范复查。需同时确认是否有异常阴道流血、宫颈或其他妇科出血。",
       "patientAnswerEn": "It started for some time.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -8301,8 +8301,8 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "摩托车摔倒撞击左腰后出现腰痛和肉眼血尿。 血尿性质：肉眼，全程，颜色鲜红/暗红，血块：可有，疼痛关系：腰部疼痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛是、肾绞痛否、发热否、恶心呕吐恶心可有、体重/乏力否、泡沫尿否、水肿否。",
-      "patientAnswerEn": "It started for some time.",
+      "patientAnswerZh": "患者4小时前发生交通事故，腰腹部受到直接撞击，随后出现持续性腰痛和全程鲜红至暗红色肉眼血尿，可见少量血块。无既往血尿。需立即询问事故机制、是否短暂意识丧失、腹痛、头晕心悸、尿量和最后一次排尿情况，并评估生命体征。发病前未服抗凝或抗血小板药。",
+      "patientAnswerEn": "It started for about 4 hours.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -8525,7 +8525,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "半年反复腰痛和镜下/肉眼血尿，有长期NSAIDs使用。 血尿性质：肉眼间断/镜下，全程，颜色茶色或淡红，血块：可有坏死组织样碎片描述，疼痛关系：腰痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛是、肾绞痛可有绞痛样、发热偶低热、恶心呕吐否、体重/乏力乏力、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者近半年反复出现腰部持续性或阵发性疼痛，伴全程茶色或淡红色肉眼血尿，偶见类似灰白或褐色组织碎片样物，部分发作伴低热。无明显尿频尿急尿痛或排尿困难。长期因慢性疼痛自行服用布洛芬或复方止痛药，具体剂量和频率不清。近期发作次数增加。",
       "patientAnswerEn": "It started for about half years.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -8749,8 +8749,8 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "已知ADPKD，突发腰痛和肉眼血尿。 血尿性质：肉眼，全程，颜色暗红，血块：无或少量，疼痛关系：腰痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛是、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
-      "patientAnswerEn": "It started for some time.",
+      "patientAnswerZh": "患者1天前无明显诱因突发左侧腰部持续疼痛，伴全程暗红色肉眼血尿，无或仅少量血块。无发热寒战、尿频尿急尿痛和排尿困难。训练设定为既往影像发现双肾多发囊肿，近期无明显外伤。需评估疼痛和血尿是否自行缓解、血红蛋白及感染征象。",
+      "patientAnswerEn": "It started for about 1 days.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -8973,7 +8973,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "1年反复左腰酸痛、镜下血尿，站立或劳累后加重。 血尿性质：镜下为主，偶肉眼淡红，不清楚，颜色外观多正常，血块：无，疼痛关系：左腰酸痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛是、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者近1年反复左侧腰部酸胀不适，久站、步行或运动后较明显，休息后减轻；多次尿检发现镜下血尿，尿液外观通常正常。无尿频尿急尿痛、发热、血块、排尿困难、泡沫尿或水肿。体型偏瘦，需询问是否伴盆腔坠胀、月经期症状加重及直立性蛋白尿。",
       "patientAnswerEn": "It started for about 1 years.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -9197,7 +9197,7 @@
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
-      "patientAnswerZh": "1个月内两次尿检均镜下血尿，无症状。 血尿性质：镜下，不清楚，颜色外观正常，血块：无，疼痛关系：无痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
+      "patientAnswerZh": "患者1个月前体检发现镜下血尿，复查仍有红细胞，尿液外观正常。无肉眼血尿、血块、尿频尿急尿痛、排尿困难、腰痛、发热、泡沫尿或水肿。既往无类似检查异常，近期无剧烈运动、外伤或泌尿操作。因年龄、重度吸烟和化工暴露属于高危人群，需要完成风险分层评估。",
       "patientAnswerEn": "It started for about 1 months.",
       "provenance": "source",
       "teacherReviewRequired": true

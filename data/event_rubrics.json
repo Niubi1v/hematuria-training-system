@@ -1,7 +1,7 @@
 [
   {
     "caseId": "P001",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -188,28 +188,10 @@
             "key": "LAB-UR-002"
           },
           {
-            "id": "orders.LAB-UR-006",
-            "label": "LAB-UR-006",
-            "eventType": "order_placed",
-            "key": "LAB-UR-006"
-          },
-          {
             "id": "orders.LAB-BL-003",
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.IMG-CT-002",
-            "label": "IMG-CT-002",
-            "eventType": "order_placed",
-            "key": "IMG-CT-002"
-          },
-          {
-            "id": "orders.END-001",
-            "label": "END-001",
-            "eventType": "order_placed",
-            "key": "END-001"
           }
         ]
       },
@@ -318,7 +300,7 @@
   },
   {
     "caseId": "P002",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -511,28 +493,10 @@
             "key": "LAB-UR-002"
           },
           {
-            "id": "orders.LAB-UR-006",
-            "label": "LAB-UR-006",
-            "eventType": "order_placed",
-            "key": "LAB-UR-006"
-          },
-          {
             "id": "orders.LAB-BL-003",
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.IMG-CT-002",
-            "label": "IMG-CT-002",
-            "eventType": "order_placed",
-            "key": "IMG-CT-002"
-          },
-          {
-            "id": "orders.END-001",
-            "label": "END-001",
-            "eventType": "order_placed",
-            "key": "END-001"
           }
         ]
       },
@@ -641,7 +605,7 @@
   },
   {
     "caseId": "P003",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -828,28 +792,10 @@
             "key": "LAB-UR-002"
           },
           {
-            "id": "orders.LAB-UR-006",
-            "label": "LAB-UR-006",
-            "eventType": "order_placed",
-            "key": "LAB-UR-006"
-          },
-          {
             "id": "orders.LAB-BL-003",
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.IMG-CT-002",
-            "label": "IMG-CT-002",
-            "eventType": "order_placed",
-            "key": "IMG-CT-002"
-          },
-          {
-            "id": "orders.END-001",
-            "label": "END-001",
-            "eventType": "order_placed",
-            "key": "END-001"
           }
         ]
       },
@@ -958,7 +904,7 @@
   },
   {
     "caseId": "P004",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -1133,40 +1079,16 @@
         "max": 55,
         "requirements": [
           {
-            "id": "orders.LAB-UR-001",
-            "label": "LAB-UR-001",
-            "eventType": "order_placed",
-            "key": "LAB-UR-001"
-          },
-          {
             "id": "orders.LAB-UR-002",
             "label": "LAB-UR-002",
             "eventType": "order_placed",
             "key": "LAB-UR-002"
           },
           {
-            "id": "orders.LAB-UR-006",
-            "label": "LAB-UR-006",
-            "eventType": "order_placed",
-            "key": "LAB-UR-006"
-          },
-          {
             "id": "orders.LAB-BL-003",
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.IMG-CT-002",
-            "label": "IMG-CT-002",
-            "eventType": "order_placed",
-            "key": "IMG-CT-002"
-          },
-          {
-            "id": "orders.END-001",
-            "label": "END-001",
-            "eventType": "order_placed",
-            "key": "END-001"
           }
         ]
       },
@@ -1275,7 +1197,7 @@
   },
   {
     "caseId": "P005",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -1454,24 +1376,6 @@
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.IMG-US-001",
-            "label": "IMG-US-001",
-            "eventType": "order_placed",
-            "key": "IMG-US-001"
-          },
-          {
-            "id": "orders.FUNC-001",
-            "label": "FUNC-001",
-            "eventType": "order_placed",
-            "key": "FUNC-001"
-          },
-          {
-            "id": "orders.LAB-BL-015",
-            "label": "LAB-BL-015",
-            "eventType": "order_placed",
-            "key": "LAB-BL-015"
           }
         ]
       },
@@ -1580,7 +1484,7 @@
   },
   {
     "caseId": "P006",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -1761,22 +1665,10 @@
             "key": "LAB-UR-002"
           },
           {
-            "id": "orders.LAB-UR-008",
-            "label": "LAB-UR-008",
-            "eventType": "order_placed",
-            "key": "LAB-UR-008"
-          },
-          {
             "id": "orders.LAB-BL-001",
             "label": "LAB-BL-001",
             "eventType": "order_placed",
             "key": "LAB-BL-001"
-          },
-          {
-            "id": "orders.LAB-BL-002",
-            "label": "LAB-BL-002",
-            "eventType": "order_placed",
-            "key": "LAB-BL-002"
           },
           {
             "id": "orders.LAB-BL-003",
@@ -1891,7 +1783,7 @@
   },
   {
     "caseId": "P007",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -2070,24 +1962,6 @@
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.IMG-US-001",
-            "label": "IMG-US-001",
-            "eventType": "order_placed",
-            "key": "IMG-US-001"
-          },
-          {
-            "id": "orders.FUNC-001",
-            "label": "FUNC-001",
-            "eventType": "order_placed",
-            "key": "FUNC-001"
-          },
-          {
-            "id": "orders.LAB-BL-015",
-            "label": "LAB-BL-015",
-            "eventType": "order_placed",
-            "key": "LAB-BL-015"
           }
         ]
       },
@@ -2196,7 +2070,7 @@
   },
   {
     "caseId": "P008",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -2365,34 +2239,10 @@
         "max": 55,
         "requirements": [
           {
-            "id": "orders.LAB-UR-001",
-            "label": "LAB-UR-001",
+            "id": "orders.LAB-UR-002",
+            "label": "LAB-UR-002",
             "eventType": "order_placed",
-            "key": "LAB-UR-001"
-          },
-          {
-            "id": "orders.LAB-BL-003",
-            "label": "LAB-BL-003",
-            "eventType": "order_placed",
-            "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.IMG-US-001",
-            "label": "IMG-US-001",
-            "eventType": "order_placed",
-            "key": "IMG-US-001"
-          },
-          {
-            "id": "orders.FUNC-001",
-            "label": "FUNC-001",
-            "eventType": "order_placed",
-            "key": "FUNC-001"
-          },
-          {
-            "id": "orders.LAB-BL-015",
-            "label": "LAB-BL-015",
-            "eventType": "order_placed",
-            "key": "LAB-BL-015"
+            "key": "LAB-UR-002"
           }
         ]
       },
@@ -2501,7 +2351,7 @@
   },
   {
     "caseId": "P009",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -2682,22 +2532,10 @@
             "key": "LAB-UR-002"
           },
           {
-            "id": "orders.LAB-UR-008",
-            "label": "LAB-UR-008",
-            "eventType": "order_placed",
-            "key": "LAB-UR-008"
-          },
-          {
             "id": "orders.LAB-BL-001",
             "label": "LAB-BL-001",
             "eventType": "order_placed",
             "key": "LAB-BL-001"
-          },
-          {
-            "id": "orders.LAB-BL-002",
-            "label": "LAB-BL-002",
-            "eventType": "order_placed",
-            "key": "LAB-BL-002"
           },
           {
             "id": "orders.LAB-BL-003",
@@ -2812,7 +2650,7 @@
   },
   {
     "caseId": "P010",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -2997,18 +2835,6 @@
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.IMG-CT-001",
-            "label": "IMG-CT-001",
-            "eventType": "order_placed",
-            "key": "IMG-CT-001"
-          },
-          {
-            "id": "orders.IMG-US-001",
-            "label": "IMG-US-001",
-            "eventType": "order_placed",
-            "key": "IMG-US-001"
           }
         ]
       },
@@ -3117,7 +2943,7 @@
   },
   {
     "caseId": "P011",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -3298,34 +3124,10 @@
             "key": "LAB-UR-002"
           },
           {
-            "id": "orders.LAB-UR-003",
-            "label": "LAB-UR-003",
-            "eventType": "order_placed",
-            "key": "LAB-UR-003"
-          },
-          {
-            "id": "orders.LAB-UR-004",
-            "label": "LAB-UR-004",
-            "eventType": "order_placed",
-            "key": "LAB-UR-004"
-          },
-          {
             "id": "orders.LAB-BL-003",
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.LAB-BL-011",
-            "label": "LAB-BL-011",
-            "eventType": "order_placed",
-            "key": "LAB-BL-011"
-          },
-          {
-            "id": "orders.LAB-PATH-003",
-            "label": "LAB-PATH-003",
-            "eventType": "order_placed",
-            "key": "LAB-PATH-003"
           }
         ]
       },
@@ -3434,7 +3236,7 @@
   },
   {
     "caseId": "P012",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -3609,34 +3411,10 @@
             "key": "LAB-UR-002"
           },
           {
-            "id": "orders.LAB-UR-003",
-            "label": "LAB-UR-003",
-            "eventType": "order_placed",
-            "key": "LAB-UR-003"
-          },
-          {
-            "id": "orders.LAB-UR-004",
-            "label": "LAB-UR-004",
-            "eventType": "order_placed",
-            "key": "LAB-UR-004"
-          },
-          {
             "id": "orders.LAB-BL-003",
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.LAB-BL-011",
-            "label": "LAB-BL-011",
-            "eventType": "order_placed",
-            "key": "LAB-BL-011"
-          },
-          {
-            "id": "orders.LAB-PATH-003",
-            "label": "LAB-PATH-003",
-            "eventType": "order_placed",
-            "key": "LAB-PATH-003"
           }
         ]
       },
@@ -3745,7 +3523,7 @@
   },
   {
     "caseId": "HX-ADD-001",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -3932,28 +3710,10 @@
             "key": "LAB-UR-002"
           },
           {
-            "id": "orders.LAB-UR-006",
-            "label": "LAB-UR-006",
-            "eventType": "order_placed",
-            "key": "LAB-UR-006"
-          },
-          {
             "id": "orders.LAB-BL-003",
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.IMG-CT-002",
-            "label": "IMG-CT-002",
-            "eventType": "order_placed",
-            "key": "IMG-CT-002"
-          },
-          {
-            "id": "orders.END-001",
-            "label": "END-001",
-            "eventType": "order_placed",
-            "key": "END-001"
           }
         ]
       },
@@ -4062,7 +3822,7 @@
   },
   {
     "caseId": "HX-ADD-002",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -4255,28 +4015,10 @@
             "key": "LAB-UR-002"
           },
           {
-            "id": "orders.LAB-UR-006",
-            "label": "LAB-UR-006",
-            "eventType": "order_placed",
-            "key": "LAB-UR-006"
-          },
-          {
             "id": "orders.LAB-BL-003",
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.IMG-CT-002",
-            "label": "IMG-CT-002",
-            "eventType": "order_placed",
-            "key": "IMG-CT-002"
-          },
-          {
-            "id": "orders.END-001",
-            "label": "END-001",
-            "eventType": "order_placed",
-            "key": "END-001"
           }
         ]
       },
@@ -4385,7 +4127,7 @@
   },
   {
     "caseId": "HX-ADD-003",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -4572,28 +4314,10 @@
             "key": "LAB-UR-002"
           },
           {
-            "id": "orders.LAB-UR-006",
-            "label": "LAB-UR-006",
-            "eventType": "order_placed",
-            "key": "LAB-UR-006"
-          },
-          {
             "id": "orders.LAB-BL-003",
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.IMG-CT-002",
-            "label": "IMG-CT-002",
-            "eventType": "order_placed",
-            "key": "IMG-CT-002"
-          },
-          {
-            "id": "orders.END-001",
-            "label": "END-001",
-            "eventType": "order_placed",
-            "key": "END-001"
           }
         ]
       },
@@ -4702,7 +4426,7 @@
   },
   {
     "caseId": "HX-ADD-004",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -4877,40 +4601,16 @@
         "max": 55,
         "requirements": [
           {
-            "id": "orders.LAB-UR-001",
-            "label": "LAB-UR-001",
-            "eventType": "order_placed",
-            "key": "LAB-UR-001"
-          },
-          {
             "id": "orders.LAB-UR-002",
             "label": "LAB-UR-002",
             "eventType": "order_placed",
             "key": "LAB-UR-002"
           },
           {
-            "id": "orders.LAB-UR-006",
-            "label": "LAB-UR-006",
-            "eventType": "order_placed",
-            "key": "LAB-UR-006"
-          },
-          {
             "id": "orders.LAB-BL-003",
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.IMG-CT-002",
-            "label": "IMG-CT-002",
-            "eventType": "order_placed",
-            "key": "IMG-CT-002"
-          },
-          {
-            "id": "orders.END-001",
-            "label": "END-001",
-            "eventType": "order_placed",
-            "key": "END-001"
           }
         ]
       },
@@ -5019,7 +4719,7 @@
   },
   {
     "caseId": "HX-ADD-005",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -5204,12 +4904,6 @@
             "label": "LAB-BL-001",
             "eventType": "order_placed",
             "key": "LAB-BL-001"
-          },
-          {
-            "id": "orders.LAB-BL-006",
-            "label": "LAB-BL-006",
-            "eventType": "order_placed",
-            "key": "LAB-BL-006"
           },
           {
             "id": "orders.LAB-BL-003",
@@ -5324,7 +5018,7 @@
   },
   {
     "caseId": "HX-ADD-006",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -5493,40 +5187,10 @@
         "max": 55,
         "requirements": [
           {
-            "id": "orders.LAB-UR-001",
-            "label": "LAB-UR-001",
-            "eventType": "order_placed",
-            "key": "LAB-UR-001"
-          },
-          {
             "id": "orders.LAB-UR-002",
             "label": "LAB-UR-002",
             "eventType": "order_placed",
             "key": "LAB-UR-002"
-          },
-          {
-            "id": "orders.LAB-UR-008",
-            "label": "LAB-UR-008",
-            "eventType": "order_placed",
-            "key": "LAB-UR-008"
-          },
-          {
-            "id": "orders.LAB-BL-001",
-            "label": "LAB-BL-001",
-            "eventType": "order_placed",
-            "key": "LAB-BL-001"
-          },
-          {
-            "id": "orders.LAB-BL-002",
-            "label": "LAB-BL-002",
-            "eventType": "order_placed",
-            "key": "LAB-BL-002"
-          },
-          {
-            "id": "orders.LAB-BL-003",
-            "label": "LAB-BL-003",
-            "eventType": "order_placed",
-            "key": "LAB-BL-003"
           }
         ]
       },
@@ -5635,7 +5299,7 @@
   },
   {
     "caseId": "HX-ADD-007",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -5816,22 +5480,10 @@
             "key": "LAB-UR-002"
           },
           {
-            "id": "orders.LAB-UR-008",
-            "label": "LAB-UR-008",
-            "eventType": "order_placed",
-            "key": "LAB-UR-008"
-          },
-          {
             "id": "orders.LAB-BL-001",
             "label": "LAB-BL-001",
             "eventType": "order_placed",
             "key": "LAB-BL-001"
-          },
-          {
-            "id": "orders.LAB-BL-002",
-            "label": "LAB-BL-002",
-            "eventType": "order_placed",
-            "key": "LAB-BL-002"
           },
           {
             "id": "orders.LAB-BL-003",
@@ -5946,7 +5598,7 @@
   },
   {
     "caseId": "HX-ADD-008",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -6115,40 +5767,10 @@
         "max": 55,
         "requirements": [
           {
-            "id": "orders.LAB-UR-001",
-            "label": "LAB-UR-001",
-            "eventType": "order_placed",
-            "key": "LAB-UR-001"
-          },
-          {
-            "id": "orders.LAB-UR-002",
-            "label": "LAB-UR-002",
-            "eventType": "order_placed",
-            "key": "LAB-UR-002"
-          },
-          {
             "id": "orders.LAB-UR-008",
             "label": "LAB-UR-008",
             "eventType": "order_placed",
             "key": "LAB-UR-008"
-          },
-          {
-            "id": "orders.LAB-BL-001",
-            "label": "LAB-BL-001",
-            "eventType": "order_placed",
-            "key": "LAB-BL-001"
-          },
-          {
-            "id": "orders.LAB-BL-002",
-            "label": "LAB-BL-002",
-            "eventType": "order_placed",
-            "key": "LAB-BL-002"
-          },
-          {
-            "id": "orders.LAB-BL-003",
-            "label": "LAB-BL-003",
-            "eventType": "order_placed",
-            "key": "LAB-BL-003"
           }
         ]
       },
@@ -6257,7 +5879,7 @@
   },
   {
     "caseId": "HX-ADD-009",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -6438,22 +6060,10 @@
             "key": "LAB-UR-002"
           },
           {
-            "id": "orders.LAB-UR-008",
-            "label": "LAB-UR-008",
-            "eventType": "order_placed",
-            "key": "LAB-UR-008"
-          },
-          {
             "id": "orders.LAB-BL-001",
             "label": "LAB-BL-001",
             "eventType": "order_placed",
             "key": "LAB-BL-001"
-          },
-          {
-            "id": "orders.LAB-BL-002",
-            "label": "LAB-BL-002",
-            "eventType": "order_placed",
-            "key": "LAB-BL-002"
           },
           {
             "id": "orders.LAB-BL-003",
@@ -6568,7 +6178,7 @@
   },
   {
     "caseId": "HX-ADD-010",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -6879,7 +6489,7 @@
   },
   {
     "caseId": "HX-ADD-011",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -7064,18 +6674,6 @@
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.IMG-CT-001",
-            "label": "IMG-CT-001",
-            "eventType": "order_placed",
-            "key": "IMG-CT-001"
-          },
-          {
-            "id": "orders.IMG-US-001",
-            "label": "IMG-US-001",
-            "eventType": "order_placed",
-            "key": "IMG-US-001"
           }
         ]
       },
@@ -7184,7 +6782,7 @@
   },
   {
     "caseId": "HX-ADD-012",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -7369,18 +6967,6 @@
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.IMG-CT-001",
-            "label": "IMG-CT-001",
-            "eventType": "order_placed",
-            "key": "IMG-CT-001"
-          },
-          {
-            "id": "orders.IMG-US-001",
-            "label": "IMG-US-001",
-            "eventType": "order_placed",
-            "key": "IMG-US-001"
           }
         ]
       },
@@ -7489,7 +7075,7 @@
   },
   {
     "caseId": "HX-ADD-013",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -7658,34 +7244,10 @@
         "max": 55,
         "requirements": [
           {
-            "id": "orders.LAB-UR-001",
-            "label": "LAB-UR-001",
-            "eventType": "order_placed",
-            "key": "LAB-UR-001"
-          },
-          {
             "id": "orders.LAB-UR-002",
             "label": "LAB-UR-002",
             "eventType": "order_placed",
             "key": "LAB-UR-002"
-          },
-          {
-            "id": "orders.LAB-BL-003",
-            "label": "LAB-BL-003",
-            "eventType": "order_placed",
-            "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.IMG-CT-001",
-            "label": "IMG-CT-001",
-            "eventType": "order_placed",
-            "key": "IMG-CT-001"
-          },
-          {
-            "id": "orders.IMG-US-001",
-            "label": "IMG-US-001",
-            "eventType": "order_placed",
-            "key": "IMG-US-001"
           }
         ]
       },
@@ -7794,7 +7356,7 @@
   },
   {
     "caseId": "HX-ADD-014",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -7985,18 +7547,6 @@
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.IMG-CT-001",
-            "label": "IMG-CT-001",
-            "eventType": "order_placed",
-            "key": "IMG-CT-001"
-          },
-          {
-            "id": "orders.IMG-US-001",
-            "label": "IMG-US-001",
-            "eventType": "order_placed",
-            "key": "IMG-US-001"
           }
         ]
       },
@@ -8105,7 +7655,7 @@
   },
   {
     "caseId": "HX-ADD-015",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -8274,18 +7824,6 @@
         "max": 55,
         "requirements": [
           {
-            "id": "orders.LAB-UR-001",
-            "label": "LAB-UR-001",
-            "eventType": "order_placed",
-            "key": "LAB-UR-001"
-          },
-          {
-            "id": "orders.LAB-UR-002",
-            "label": "LAB-UR-002",
-            "eventType": "order_placed",
-            "key": "LAB-UR-002"
-          },
-          {
             "id": "orders.LAB-BL-003",
             "label": "LAB-BL-003",
             "eventType": "order_placed",
@@ -8296,12 +7834,6 @@
             "label": "IMG-CT-001",
             "eventType": "order_placed",
             "key": "IMG-CT-001"
-          },
-          {
-            "id": "orders.IMG-US-001",
-            "label": "IMG-US-001",
-            "eventType": "order_placed",
-            "key": "IMG-US-001"
           }
         ]
       },
@@ -8410,7 +7942,7 @@
   },
   {
     "caseId": "HX-ADD-016",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -8589,24 +8121,6 @@
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.IMG-US-001",
-            "label": "IMG-US-001",
-            "eventType": "order_placed",
-            "key": "IMG-US-001"
-          },
-          {
-            "id": "orders.FUNC-001",
-            "label": "FUNC-001",
-            "eventType": "order_placed",
-            "key": "FUNC-001"
-          },
-          {
-            "id": "orders.LAB-BL-015",
-            "label": "LAB-BL-015",
-            "eventType": "order_placed",
-            "key": "LAB-BL-015"
           }
         ]
       },
@@ -8715,7 +8229,7 @@
   },
   {
     "caseId": "HX-ADD-017",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -8894,24 +8408,6 @@
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.IMG-US-001",
-            "label": "IMG-US-001",
-            "eventType": "order_placed",
-            "key": "IMG-US-001"
-          },
-          {
-            "id": "orders.FUNC-001",
-            "label": "FUNC-001",
-            "eventType": "order_placed",
-            "key": "FUNC-001"
-          },
-          {
-            "id": "orders.LAB-BL-015",
-            "label": "LAB-BL-015",
-            "eventType": "order_placed",
-            "key": "LAB-BL-015"
           }
         ]
       },
@@ -9020,7 +8516,7 @@
   },
   {
     "caseId": "HX-ADD-018",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -9199,24 +8695,6 @@
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.IMG-US-001",
-            "label": "IMG-US-001",
-            "eventType": "order_placed",
-            "key": "IMG-US-001"
-          },
-          {
-            "id": "orders.FUNC-001",
-            "label": "FUNC-001",
-            "eventType": "order_placed",
-            "key": "FUNC-001"
-          },
-          {
-            "id": "orders.LAB-BL-015",
-            "label": "LAB-BL-015",
-            "eventType": "order_placed",
-            "key": "LAB-BL-015"
           }
         ]
       },
@@ -9325,7 +8803,7 @@
   },
   {
     "caseId": "HX-ADD-019",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -9494,40 +8972,10 @@
         "max": 55,
         "requirements": [
           {
-            "id": "orders.LAB-UR-002",
-            "label": "LAB-UR-002",
-            "eventType": "order_placed",
-            "key": "LAB-UR-002"
-          },
-          {
-            "id": "orders.LAB-UR-003",
-            "label": "LAB-UR-003",
-            "eventType": "order_placed",
-            "key": "LAB-UR-003"
-          },
-          {
-            "id": "orders.LAB-UR-004",
-            "label": "LAB-UR-004",
-            "eventType": "order_placed",
-            "key": "LAB-UR-004"
-          },
-          {
             "id": "orders.LAB-BL-003",
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.LAB-BL-011",
-            "label": "LAB-BL-011",
-            "eventType": "order_placed",
-            "key": "LAB-BL-011"
-          },
-          {
-            "id": "orders.LAB-PATH-003",
-            "label": "LAB-PATH-003",
-            "eventType": "order_placed",
-            "key": "LAB-PATH-003"
           }
         ]
       },
@@ -9636,7 +9084,7 @@
   },
   {
     "caseId": "HX-ADD-020",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -9805,40 +9253,10 @@
         "max": 55,
         "requirements": [
           {
-            "id": "orders.LAB-UR-002",
-            "label": "LAB-UR-002",
-            "eventType": "order_placed",
-            "key": "LAB-UR-002"
-          },
-          {
-            "id": "orders.LAB-UR-003",
-            "label": "LAB-UR-003",
-            "eventType": "order_placed",
-            "key": "LAB-UR-003"
-          },
-          {
-            "id": "orders.LAB-UR-004",
-            "label": "LAB-UR-004",
-            "eventType": "order_placed",
-            "key": "LAB-UR-004"
-          },
-          {
             "id": "orders.LAB-BL-003",
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.LAB-BL-011",
-            "label": "LAB-BL-011",
-            "eventType": "order_placed",
-            "key": "LAB-BL-011"
-          },
-          {
-            "id": "orders.LAB-PATH-003",
-            "label": "LAB-PATH-003",
-            "eventType": "order_placed",
-            "key": "LAB-PATH-003"
           }
         ]
       },
@@ -9947,7 +9365,7 @@
   },
   {
     "caseId": "HX-ADD-021",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -10122,40 +9540,10 @@
         "max": 55,
         "requirements": [
           {
-            "id": "orders.LAB-UR-002",
-            "label": "LAB-UR-002",
-            "eventType": "order_placed",
-            "key": "LAB-UR-002"
-          },
-          {
-            "id": "orders.LAB-UR-003",
-            "label": "LAB-UR-003",
-            "eventType": "order_placed",
-            "key": "LAB-UR-003"
-          },
-          {
-            "id": "orders.LAB-UR-004",
-            "label": "LAB-UR-004",
-            "eventType": "order_placed",
-            "key": "LAB-UR-004"
-          },
-          {
             "id": "orders.LAB-BL-003",
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.LAB-BL-011",
-            "label": "LAB-BL-011",
-            "eventType": "order_placed",
-            "key": "LAB-BL-011"
-          },
-          {
-            "id": "orders.LAB-PATH-003",
-            "label": "LAB-PATH-003",
-            "eventType": "order_placed",
-            "key": "LAB-PATH-003"
           }
         ]
       },
@@ -10264,7 +9652,7 @@
   },
   {
     "caseId": "HX-ADD-022",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -10433,40 +9821,10 @@
         "max": 55,
         "requirements": [
           {
-            "id": "orders.LAB-UR-002",
-            "label": "LAB-UR-002",
-            "eventType": "order_placed",
-            "key": "LAB-UR-002"
-          },
-          {
-            "id": "orders.LAB-UR-003",
-            "label": "LAB-UR-003",
-            "eventType": "order_placed",
-            "key": "LAB-UR-003"
-          },
-          {
-            "id": "orders.LAB-UR-004",
-            "label": "LAB-UR-004",
-            "eventType": "order_placed",
-            "key": "LAB-UR-004"
-          },
-          {
             "id": "orders.LAB-BL-003",
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.LAB-BL-011",
-            "label": "LAB-BL-011",
-            "eventType": "order_placed",
-            "key": "LAB-BL-011"
-          },
-          {
-            "id": "orders.LAB-PATH-003",
-            "label": "LAB-PATH-003",
-            "eventType": "order_placed",
-            "key": "LAB-PATH-003"
           }
         ]
       },
@@ -10575,7 +9933,7 @@
   },
   {
     "caseId": "HX-ADD-023",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -10750,40 +10108,16 @@
         "max": 55,
         "requirements": [
           {
-            "id": "orders.LAB-UR-002",
-            "label": "LAB-UR-002",
-            "eventType": "order_placed",
-            "key": "LAB-UR-002"
-          },
-          {
-            "id": "orders.LAB-UR-003",
-            "label": "LAB-UR-003",
-            "eventType": "order_placed",
-            "key": "LAB-UR-003"
-          },
-          {
-            "id": "orders.LAB-UR-004",
-            "label": "LAB-UR-004",
-            "eventType": "order_placed",
-            "key": "LAB-UR-004"
-          },
-          {
             "id": "orders.LAB-BL-003",
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
           },
           {
-            "id": "orders.LAB-BL-011",
-            "label": "LAB-BL-011",
+            "id": "orders.LAB-BL-013",
+            "label": "LAB-BL-013",
             "eventType": "order_placed",
-            "key": "LAB-BL-011"
-          },
-          {
-            "id": "orders.LAB-PATH-003",
-            "label": "LAB-PATH-003",
-            "eventType": "order_placed",
-            "key": "LAB-PATH-003"
+            "key": "LAB-BL-013"
           }
         ]
       },
@@ -10892,7 +10226,7 @@
   },
   {
     "caseId": "HX-ADD-024",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -11179,7 +10513,7 @@
   },
   {
     "caseId": "HX-ADD-025",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -11460,7 +10794,7 @@
   },
   {
     "caseId": "HX-ADD-026",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -11639,18 +10973,6 @@
             "label": "LAB-BL-003",
             "eventType": "order_placed",
             "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.LAB-BL-006",
-            "label": "LAB-BL-006",
-            "eventType": "order_placed",
-            "key": "LAB-BL-006"
-          },
-          {
-            "id": "orders.IMG-CT-005",
-            "label": "IMG-CT-005",
-            "eventType": "order_placed",
-            "key": "IMG-CT-005"
           }
         ]
       },
@@ -11759,7 +11081,7 @@
   },
   {
     "caseId": "HX-ADD-027",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -12052,7 +11374,7 @@
   },
   {
     "caseId": "HX-ADD-028",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -12339,7 +11661,7 @@
   },
   {
     "caseId": "HX-ADD-029",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -12508,22 +11830,10 @@
         "max": 55,
         "requirements": [
           {
-            "id": "orders.LAB-UR-001",
-            "label": "LAB-UR-001",
+            "id": "orders.LAB-UR-005",
+            "label": "LAB-UR-005",
             "eventType": "order_placed",
-            "key": "LAB-UR-001"
-          },
-          {
-            "id": "orders.LAB-UR-002",
-            "label": "LAB-UR-002",
-            "eventType": "order_placed",
-            "key": "LAB-UR-002"
-          },
-          {
-            "id": "orders.LAB-BL-003",
-            "label": "LAB-BL-003",
-            "eventType": "order_placed",
-            "key": "LAB-BL-003"
+            "key": "LAB-UR-005"
           }
         ]
       },
@@ -12632,7 +11942,7 @@
   },
   {
     "caseId": "HX-ADD-030",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "dimensions": [
       {
@@ -12807,34 +12117,10 @@
         "max": 55,
         "requirements": [
           {
-            "id": "orders.LAB-UR-001",
-            "label": "LAB-UR-001",
-            "eventType": "order_placed",
-            "key": "LAB-UR-001"
-          },
-          {
             "id": "orders.LAB-UR-002",
             "label": "LAB-UR-002",
             "eventType": "order_placed",
             "key": "LAB-UR-002"
-          },
-          {
-            "id": "orders.LAB-UR-006",
-            "label": "LAB-UR-006",
-            "eventType": "order_placed",
-            "key": "LAB-UR-006"
-          },
-          {
-            "id": "orders.LAB-BL-003",
-            "label": "LAB-BL-003",
-            "eventType": "order_placed",
-            "key": "LAB-BL-003"
-          },
-          {
-            "id": "orders.IMG-CT-002",
-            "label": "IMG-CT-002",
-            "eventType": "order_placed",
-            "key": "IMG-CT-002"
           },
           {
             "id": "orders.END-001",

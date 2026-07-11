@@ -1,6 +1,7 @@
 [
   {
     "id": "P001",
+    "displayCaseId": "P001",
     "age": "65",
     "sex": "男",
     "sexEn": "Male",
@@ -8,12 +9,13 @@
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "间断小便变红3月余",
     "chiefComplaintEn": "Intermittent painless gross hematuria for more than 3 months.",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "v2-core"
   },
   {
     "id": "P002",
+    "displayCaseId": "P002",
     "age": "67",
     "sex": "女",
     "sexEn": "Female",
@@ -21,12 +23,13 @@
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "反复左侧腰痛伴小便变红1月余",
     "chiefComplaintEn": "Recurrent left flank pain with hematuria for more than 1 month.",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "v2-core"
   },
   {
     "id": "P003",
+    "displayCaseId": "P003",
     "age": "70",
     "sex": "男",
     "sexEn": "Male",
@@ -34,12 +37,13 @@
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "反复小便变红5月余，加重1周",
     "chiefComplaintEn": "Recurrent hematuria for over 5 months, worsened for 1 week.",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "v2-core"
   },
   {
     "id": "P004",
+    "displayCaseId": "P004",
     "age": "65",
     "sex": "男",
     "sexEn": "Male",
@@ -47,12 +51,13 @@
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "小便变红1月余",
     "chiefComplaintEn": "Painless total gross hematuria for more than 1 month.",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "v2-core"
   },
   {
     "id": "P005",
+    "displayCaseId": "P005",
     "age": "83",
     "sex": "男",
     "sexEn": "Male",
@@ -60,12 +65,13 @@
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "进行性排尿困难3年余，加重伴小便变红1月",
     "chiefComplaintEn": "Progressive dysuria/voiding difficulty for over 3 years, worsened with hematuria for 1 month.",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "v2-core"
   },
   {
     "id": "P006",
+    "displayCaseId": "P006",
     "age": "23",
     "sex": "女",
     "sexEn": "Female",
@@ -73,12 +79,13 @@
     "difficultyEn": "Basic",
     "studentChiefComplaint": "尿频、尿急、尿痛伴小便变红2天",
     "chiefComplaintEn": "Frequency, urgency and dysuria with hematuria for 2 days.",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "v2-core"
   },
   {
     "id": "P007",
+    "displayCaseId": "P007",
     "age": "65",
     "sex": "男",
     "sexEn": "Male",
@@ -86,12 +93,13 @@
     "difficultyEn": "Standard",
     "studentChiefComplaint": "反复排尿困难5年余，急性加重伴小便变红1天",
     "chiefComplaintEn": "Recurrent voiding difficulty for over 5 years, acute worsening with hematuria for 1 day.",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "v2-core"
   },
   {
     "id": "P008",
+    "displayCaseId": "P008",
     "age": "56",
     "sex": "男",
     "sexEn": "Male",
@@ -99,12 +107,13 @@
     "difficultyEn": "Standard",
     "studentChiefComplaint": "间断小便变红伴排尿中断1年余",
     "chiefComplaintEn": "Intermittent hematuria with interrupted urinary stream for more than 1 year.",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "v2-core"
   },
   {
     "id": "P009",
+    "displayCaseId": "P009",
     "age": "36",
     "sex": "女",
     "sexEn": "Female",
@@ -112,12 +121,13 @@
     "difficultyEn": "Standard",
     "studentChiefComplaint": "突发右侧腰痛伴小便变红半天",
     "chiefComplaintEn": "Sudden right flank pain with hematuria for half a day.",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "v2-core"
   },
   {
     "id": "P010",
+    "displayCaseId": "P010",
     "age": "42",
     "sex": "男",
     "sexEn": "Male",
@@ -125,12 +135,13 @@
     "difficultyEn": "Standard",
     "studentChiefComplaint": "反复左侧腰部隐痛伴运动后小便变红3年余，再发1天",
     "chiefComplaintEn": "Recurrent left flank dull pain with exercise-related hematuria for over 3 years, recurrence for 1 day.",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "v2-core"
   },
   {
     "id": "P011",
+    "displayCaseId": "P011",
     "age": "13",
     "sex": "女",
     "sexEn": "Female",
@@ -138,12 +149,13 @@
     "difficultyEn": "Standard",
     "studentChiefComplaint": "咽痛3周，小便变红1周",
     "chiefComplaintEn": "Sore throat for 3 weeks and hematuria for 1 week.",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "v2-core"
   },
   {
     "id": "P012",
+    "displayCaseId": "P012",
     "age": "21",
     "sex": "男",
     "sexEn": "Male",
@@ -151,12 +163,13 @@
     "difficultyEn": "Standard",
     "studentChiefComplaint": "反复小便变红伴尿泡沫增多半年余，加重半月",
     "chiefComplaintEn": "Recurrent hematuria with increased foamy urine for over 6 months, worsened for half a month.",
-    "caseVersion": "V2-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "v2-core"
   },
   {
     "id": "HX-ADD-001",
+    "displayCaseId": "P013",
     "age": "68",
     "sex": "男",
     "sexEn": "Male",
@@ -164,12 +177,13 @@
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "间断肉眼血尿2个月",
     "chiefComplaintEn": "Hematuria for 2 months",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-002",
+    "displayCaseId": "P014",
     "age": "72",
     "sex": "女",
     "sexEn": "Female",
@@ -177,12 +191,13 @@
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "反复尿频伴血尿半年",
     "chiefComplaintEn": "Hematuria for half a year",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-003",
+    "displayCaseId": "P015",
     "age": "64",
     "sex": "男",
     "sexEn": "Male",
@@ -190,12 +205,13 @@
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "左腰隐痛伴肉眼血尿1个月",
     "chiefComplaintEn": "Hematuria for 1 month",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-004",
+    "displayCaseId": "P016",
     "age": "58",
     "sex": "男",
     "sexEn": "Male",
@@ -203,12 +219,13 @@
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "无痛性肉眼血尿3周",
     "chiefComplaintEn": "Hematuria for 3 weeks",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-005",
+    "displayCaseId": "P017",
     "age": "76",
     "sex": "男",
     "sexEn": "Male",
@@ -216,12 +233,13 @@
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "服用抗凝药后肉眼血尿5天",
     "chiefComplaintEn": "Hematuria for 5 days",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-006",
+    "displayCaseId": "P018",
     "age": "24",
     "sex": "女",
     "sexEn": "Female",
@@ -229,12 +247,13 @@
     "difficultyEn": "Foundation",
     "studentChiefComplaint": "尿频尿急尿痛伴血尿2天",
     "chiefComplaintEn": "Hematuria for 2 days",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-007",
+    "displayCaseId": "P019",
     "age": "35",
     "sex": "女",
     "sexEn": "Female",
@@ -242,12 +261,13 @@
     "difficultyEn": "Standard",
     "studentChiefComplaint": "发热腰痛伴尿频尿痛3天",
     "chiefComplaintEn": "Hematuria for 3 days",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-008",
+    "displayCaseId": "P020",
     "age": "47",
     "sex": "男",
     "sexEn": "Male",
@@ -255,12 +275,13 @@
     "difficultyEn": "Standard",
     "studentChiefComplaint": "发热、尿痛伴会阴胀痛2天",
     "chiefComplaintEn": "Hematuria for 2 days",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-009",
+    "displayCaseId": "P021",
     "age": "63",
     "sex": "女",
     "sexEn": "Female",
@@ -268,12 +289,13 @@
     "difficultyEn": "Standard",
     "studentChiefComplaint": "尿频尿痛伴血尿1周",
     "chiefComplaintEn": "Hematuria for 1 week",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-010",
+    "displayCaseId": "P022",
     "age": "55",
     "sex": "女",
     "sexEn": "Female",
@@ -281,12 +303,13 @@
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "反复尿痛伴镜下血尿1年",
     "chiefComplaintEn": "Hematuria for 1 year",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-011",
+    "displayCaseId": "P023",
     "age": "39",
     "sex": "男",
     "sexEn": "Male",
@@ -294,12 +317,13 @@
     "difficultyEn": "Standard",
     "studentChiefComplaint": "右腰腹绞痛伴血尿6小时",
     "chiefComplaintEn": "Hematuria for 6 hours",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-012",
+    "displayCaseId": "P024",
     "age": "45",
     "sex": "男",
     "sexEn": "Male",
@@ -307,12 +331,13 @@
     "difficultyEn": "Standard",
     "studentChiefComplaint": "左腰痛伴血尿1天",
     "chiefComplaintEn": "Hematuria for 1 day",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-013",
+    "displayCaseId": "P025",
     "age": "67",
     "sex": "男",
     "sexEn": "Male",
@@ -320,12 +345,13 @@
     "difficultyEn": "Standard",
     "studentChiefComplaint": "排尿困难伴终末血尿3个月",
     "chiefComplaintEn": "Hematuria for 3 months",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-014",
+    "displayCaseId": "P026",
     "age": "61",
     "sex": "女",
     "sexEn": "Female",
@@ -333,12 +359,13 @@
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "反复发热腰痛伴血尿半年",
     "chiefComplaintEn": "Hematuria for half a year",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-015",
+    "displayCaseId": "P027",
     "age": "52",
     "sex": "男",
     "sexEn": "Male",
@@ -346,12 +373,13 @@
     "difficultyEn": "Standard",
     "studentChiefComplaint": "左侧腰腹痛伴血尿1天",
     "chiefComplaintEn": "Hematuria for 1 day",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-016",
+    "displayCaseId": "P028",
     "age": "73",
     "sex": "男",
     "sexEn": "Male",
@@ -359,12 +387,13 @@
     "difficultyEn": "Standard",
     "studentChiefComplaint": "排尿困难伴肉眼血尿3天",
     "chiefComplaintEn": "Hematuria for 3 days",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-017",
+    "displayCaseId": "P029",
     "age": "80",
     "sex": "男",
     "sexEn": "Male",
@@ -372,12 +401,13 @@
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "导尿后肉眼血尿1天",
     "chiefComplaintEn": "Hematuria for 1 day",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-018",
+    "displayCaseId": "P030",
     "age": "69",
     "sex": "男",
     "sexEn": "Male",
@@ -385,12 +415,13 @@
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "排尿困难伴镜下血尿半年",
     "chiefComplaintEn": "Hematuria for half a year",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-019",
+    "displayCaseId": "P031",
     "age": "21",
     "sex": "男",
     "sexEn": "Male",
@@ -398,12 +429,13 @@
     "difficultyEn": "Standard",
     "studentChiefComplaint": "咽痛后肉眼血尿2天",
     "chiefComplaintEn": "Hematuria for 2 days",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-020",
+    "displayCaseId": "P032",
     "age": "16",
     "sex": "男",
     "sexEn": "Male",
@@ -411,12 +443,13 @@
     "difficultyEn": "Standard",
     "studentChiefComplaint": "皮肤感染后茶色尿伴眼睑水肿1周",
     "chiefComplaintEn": "Hematuria for 1 week",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-021",
+    "displayCaseId": "P033",
     "age": "28",
     "sex": "女",
     "sexEn": "Female",
@@ -424,12 +457,13 @@
     "difficultyEn": "Standard",
     "studentChiefComplaint": "体检发现镜下血尿3年",
     "chiefComplaintEn": "Hematuria for 3 years",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-022",
+    "displayCaseId": "P034",
     "age": "19",
     "sex": "男",
     "sexEn": "Male",
@@ -437,12 +471,13 @@
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "反复镜下血尿伴听力下降",
     "chiefComplaintEn": "Hematuria for several days",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-023",
+    "displayCaseId": "P035",
     "age": "25",
     "sex": "女",
     "sexEn": "Female",
@@ -450,12 +485,13 @@
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "泡沫尿、血尿伴面部皮疹2周",
     "chiefComplaintEn": "Hematuria for 2 weeks",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-024",
+    "displayCaseId": "P036",
     "age": "20",
     "sex": "男",
     "sexEn": "Male",
@@ -463,12 +499,13 @@
     "difficultyEn": "Foundation",
     "studentChiefComplaint": "长跑后肉眼血尿1次",
     "chiefComplaintEn": "Hematuria for several days",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-025",
+    "displayCaseId": "P037",
     "age": "31",
     "sex": "女",
     "sexEn": "Female",
@@ -476,12 +513,13 @@
     "difficultyEn": "Foundation",
     "studentChiefComplaint": "体检尿潜血阳性1天",
     "chiefComplaintEn": "Hematuria for 1 day",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-026",
+    "displayCaseId": "P038",
     "age": "29",
     "sex": "男",
     "sexEn": "Male",
@@ -489,12 +527,13 @@
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "车祸后腰痛伴肉眼血尿4小时",
     "chiefComplaintEn": "Hematuria for 4 hours",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-027",
+    "displayCaseId": "P039",
     "age": "56",
     "sex": "女",
     "sexEn": "Female",
@@ -502,12 +541,13 @@
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "腰痛伴血尿反复半年",
     "chiefComplaintEn": "Hematuria for half a year",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-028",
+    "displayCaseId": "P040",
     "age": "48",
     "sex": "男",
     "sexEn": "Male",
@@ -515,12 +555,13 @@
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "突发左腰痛伴肉眼血尿1天",
     "chiefComplaintEn": "Hematuria for 1 day",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-029",
+    "displayCaseId": "P041",
     "age": "23",
     "sex": "女",
     "sexEn": "Female",
@@ -528,12 +569,13 @@
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "反复左腰酸痛伴镜下血尿1年",
     "chiefComplaintEn": "Hematuria for 1 year",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   },
   {
     "id": "HX-ADD-030",
+    "displayCaseId": "P042",
     "age": "62",
     "sex": "男",
     "sexEn": "Male",
@@ -541,7 +583,7 @@
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "体检发现镜下血尿1个月",
     "chiefComplaintEn": "Hematuria for 1 month",
-    "caseVersion": "HX-ADD-2.2",
+    "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
   }

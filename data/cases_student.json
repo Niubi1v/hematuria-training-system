@@ -1,7 +1,7 @@
 [
   {
     "id": "P001",
-    "caseVersion": "V2-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "65",
     "sex": "男",
     "difficulty": "挑战",
@@ -11,7 +11,7 @@
   },
   {
     "id": "P002",
-    "caseVersion": "V2-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "67",
     "sex": "女",
     "difficulty": "挑战",
@@ -21,7 +21,7 @@
   },
   {
     "id": "P003",
-    "caseVersion": "V2-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "70",
     "sex": "男",
     "difficulty": "挑战",
@@ -31,7 +31,7 @@
   },
   {
     "id": "P004",
-    "caseVersion": "V2-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "65",
     "sex": "男",
     "difficulty": "挑战",
@@ -41,7 +41,7 @@
   },
   {
     "id": "P005",
-    "caseVersion": "V2-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "83",
     "sex": "男",
     "difficulty": "挑战",
@@ -51,7 +51,7 @@
   },
   {
     "id": "P006",
-    "caseVersion": "V2-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "23",
     "sex": "女",
     "difficulty": "基础",
@@ -61,7 +61,7 @@
   },
   {
     "id": "P007",
-    "caseVersion": "V2-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "65",
     "sex": "男",
     "difficulty": "标准",
@@ -71,7 +71,7 @@
   },
   {
     "id": "P008",
-    "caseVersion": "V2-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "56",
     "sex": "男",
     "difficulty": "标准",
@@ -81,7 +81,7 @@
   },
   {
     "id": "P009",
-    "caseVersion": "V2-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "36",
     "sex": "女",
     "difficulty": "标准",
@@ -91,7 +91,7 @@
   },
   {
     "id": "P010",
-    "caseVersion": "V2-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "42",
     "sex": "男",
     "difficulty": "标准",
@@ -101,7 +101,7 @@
   },
   {
     "id": "P011",
-    "caseVersion": "V2-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "13",
     "sex": "女",
     "difficulty": "标准",
@@ -111,7 +111,7 @@
   },
   {
     "id": "P012",
-    "caseVersion": "V2-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "21",
     "sex": "男",
     "difficulty": "标准",
@@ -121,7 +121,7 @@
   },
   {
     "id": "HX-ADD-001",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "68",
     "sex": "男",
     "difficulty": "挑战",
@@ -131,7 +131,7 @@
   },
   {
     "id": "HX-ADD-002",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "72",
     "sex": "女",
     "difficulty": "挑战",
@@ -141,7 +141,7 @@
   },
   {
     "id": "HX-ADD-003",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "64",
     "sex": "男",
     "difficulty": "挑战",
@@ -151,7 +151,7 @@
   },
   {
     "id": "HX-ADD-004",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "58",
     "sex": "男",
     "difficulty": "挑战",
@@ -161,7 +161,7 @@
   },
   {
     "id": "HX-ADD-005",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "76",
     "sex": "男",
     "difficulty": "挑战",
@@ -171,7 +171,7 @@
   },
   {
     "id": "HX-ADD-006",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "24",
     "sex": "女",
     "difficulty": "基础",
@@ -181,7 +181,7 @@
   },
   {
     "id": "HX-ADD-007",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "35",
     "sex": "女",
     "difficulty": "标准",
@@ -191,7 +191,7 @@
   },
   {
     "id": "HX-ADD-008",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "47",
     "sex": "男",
     "difficulty": "标准",
@@ -201,7 +201,7 @@
   },
   {
     "id": "HX-ADD-009",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "63",
     "sex": "女",
     "difficulty": "标准",
@@ -211,7 +211,7 @@
   },
   {
     "id": "HX-ADD-010",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "55",
     "sex": "女",
     "difficulty": "挑战",
@@ -221,7 +221,7 @@
   },
   {
     "id": "HX-ADD-011",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "39",
     "sex": "男",
     "difficulty": "标准",
@@ -231,7 +231,7 @@
   },
   {
     "id": "HX-ADD-012",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "45",
     "sex": "男",
     "difficulty": "标准",
@@ -241,7 +241,7 @@
   },
   {
     "id": "HX-ADD-013",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "67",
     "sex": "男",
     "difficulty": "标准",
@@ -251,7 +251,7 @@
   },
   {
     "id": "HX-ADD-014",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "61",
     "sex": "女",
     "difficulty": "挑战",
@@ -261,7 +261,7 @@
   },
   {
     "id": "HX-ADD-015",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "52",
     "sex": "男",
     "difficulty": "标准",
@@ -271,7 +271,7 @@
   },
   {
     "id": "HX-ADD-016",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "73",
     "sex": "男",
     "difficulty": "标准",
@@ -281,7 +281,7 @@
   },
   {
     "id": "HX-ADD-017",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "80",
     "sex": "男",
     "difficulty": "挑战",
@@ -291,7 +291,7 @@
   },
   {
     "id": "HX-ADD-018",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "69",
     "sex": "男",
     "difficulty": "挑战",
@@ -301,7 +301,7 @@
   },
   {
     "id": "HX-ADD-019",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "21",
     "sex": "男",
     "difficulty": "标准",
@@ -311,7 +311,7 @@
   },
   {
     "id": "HX-ADD-020",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "16",
     "sex": "男",
     "difficulty": "标准",
@@ -321,7 +321,7 @@
   },
   {
     "id": "HX-ADD-021",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "28",
     "sex": "女",
     "difficulty": "标准",
@@ -331,7 +331,7 @@
   },
   {
     "id": "HX-ADD-022",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "19",
     "sex": "男",
     "difficulty": "挑战",
@@ -341,7 +341,7 @@
   },
   {
     "id": "HX-ADD-023",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "25",
     "sex": "女",
     "difficulty": "挑战",
@@ -351,7 +351,7 @@
   },
   {
     "id": "HX-ADD-024",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "20",
     "sex": "男",
     "difficulty": "基础",
@@ -361,7 +361,7 @@
   },
   {
     "id": "HX-ADD-025",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "31",
     "sex": "女",
     "difficulty": "基础",
@@ -371,7 +371,7 @@
   },
   {
     "id": "HX-ADD-026",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "29",
     "sex": "男",
     "difficulty": "挑战",
@@ -381,7 +381,7 @@
   },
   {
     "id": "HX-ADD-027",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "56",
     "sex": "女",
     "difficulty": "挑战",
@@ -391,7 +391,7 @@
   },
   {
     "id": "HX-ADD-028",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "48",
     "sex": "男",
     "difficulty": "挑战",
@@ -401,7 +401,7 @@
   },
   {
     "id": "HX-ADD-029",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "23",
     "sex": "女",
     "difficulty": "挑战",
@@ -411,7 +411,7 @@
   },
   {
     "id": "HX-ADD-030",
-    "caseVersion": "HX-ADD-2.1",
+    "caseVersion": "v1.4-release-expanded",
     "age": "62",
     "sex": "男",
     "difficulty": "挑战",

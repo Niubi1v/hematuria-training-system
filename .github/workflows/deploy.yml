@@ -53,6 +53,9 @@ jobs:
       - name: Medical review workbook contract
         run: pnpm run test:medical-review
 
+      - name: Reviewed v1.4 case import contract
+        run: pnpm run test:release-v14
+
       - name: Adversarial scoring tests
         run: pnpm run test:adversarial
 

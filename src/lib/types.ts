@@ -408,6 +408,7 @@ export type AgentCaseProfile = {
 
 export type CaseData = {
   id: string;
+  displayCaseId?: string;
   schemaVersion?: string;
   caseVersion?: string;
   languages?: string[];
@@ -447,6 +448,35 @@ export type CaseData = {
     perioperative: string;
     followUp: string;
     critical: string[];
+  };
+  releaseV14?: {
+    sourceVersion: "v1.4-release-expanded";
+    sourceWorkbook: string;
+    formalUseAllowed: false;
+    reviewStatus: "needs_revision";
+    factCount: number;
+    orderRules: Array<{
+      orderId: string;
+      displayName: string;
+      classification: "必须" | "条件性" | "可选" | "不常规推荐" | "禁忌或不适用" | "待专家确认";
+      purpose: string;
+      indication: string;
+      prerequisite: string;
+      guidelineUrl: string;
+      guidelineSection: string;
+      reviewStatus: string;
+    }>;
+    treatmentRules: Array<{
+      category: string;
+      recommendation: string;
+      indication: string;
+      prerequisite: string;
+      contraindication: string;
+      dangerousSequenceError: string;
+      guidelineUrl: string;
+      guidelineSection: string;
+      reviewStatus: string;
+    }>;
   };
   sourcePatientId: string;
   title: string;

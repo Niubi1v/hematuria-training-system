@@ -87,7 +87,10 @@ function allocate(max: number, count: number, index: number) {
 export function caseRubric(caseData: CaseData): Dimension[] {
   const category = caseData.diseaseCategory || "";
   const riskSlots: CanonicalSlotId[] = unique([...(categoryRisk[category] || ["smoking", "anticoagulant", "family_history"] as CanonicalSlotId[]), ...(caseData.sex === "女" ? ["gynecologic_contamination" as CanonicalSlotId] : [])]);
-  const orderIds: string[] = categoryOrders[category] || ["LAB-UR-001", "LAB-UR-002", "LAB-BL-003"];
+  const caseSpecificOrderIds = caseData.releaseV14?.orderRules
+    .filter((item) => item.classification === "必须" && !item.orderId.startsWith("REVIEW-"))
+    .map((item) => item.orderId) || [];
+  const orderIds: string[] = unique(caseSpecificOrderIds.length ? caseSpecificOrderIds : (categoryOrders[category] || ["LAB-UR-001", "LAB-UR-002", "LAB-BL-003"]));
   const historyRequirements = baseHistory.map((slot) => ({ id: `history.${slot}`, label: slot, eventType: "slot_answered" as const, key: slot }));
   const riskRequirements = riskSlots.map((slot) => ({ id: `risk.${slot}`, label: slot, eventType: "slot_answered" as const, key: slot }));
   const examRequirements: Requirement[] = [

@@ -47,6 +47,28 @@ function detailedFact(raw: string, positive: RegExp, negative: RegExp, positiveZ
   }
   return authoredFact(negativeZh, negativeEn);
 }
+
+function familyAnswerEn(zh: string) {
+  if (/兄弟.*前列腺癌/.test(zh)) return "One of my brothers had prostate cancer. There is no known hereditary kidney disease or similar hematuria in my family.";
+  if (/母亲.*膀胱癌/.test(zh)) return "My mother had bladder cancer.";
+  if (/父亲.*膀胱癌/.test(zh)) return "My father had bladder cancer.";
+  if (/家族性肾病|类似血尿/.test(zh) && /否认|无|没有/.test(zh)) return "There is no known similar hematuria or hereditary kidney disease in my family.";
+  return "There is a family medical history, but I do not know all the details.";
+}
+
+function surgeryFact(corpus: string): StructuredPatientFact {
+  if (/冠脉[^。；]{0,20}支架|冠状动脉[^。；]{0,20}支架/.test(corpus)) return { status: "present", patientAnswerZh: "我以前做过冠脉支架介入治疗，不是泌尿系统操作。", patientAnswerEn: "I previously had a coronary stent procedure, not a urinary procedure.", provenance: "source", teacherReviewRequired: false };
+  if (/胆囊切除/.test(corpus)) return { status: "present", patientAnswerZh: "我以前做过胆囊切除手术。", patientAnswerEn: "I previously had my gallbladder removed.", provenance: "source", teacherReviewRequired: false };
+  if (/换(?:过)?(?:机械)?瓣膜|支架植入|切除术|做过[^。；]{0,20}手术/.test(corpus)) return { status: "present", patientAnswerZh: "我以前做过手术或介入治疗。", patientAnswerEn: "I have had surgery or an interventional procedure before.", provenance: "source", teacherReviewRequired: false };
+  if (/没有做过手术|否认手术/.test(corpus)) return { status: "absent", patientAnswerZh: "我以前没有做过手术。", patientAnswerEn: "I have never had surgery.", provenance: "source", teacherReviewRequired: false };
+  return authoredFact("我以前没有做过手术。", "I have never had surgery.");
+}
+
+function transfusionFact(corpus: string): StructuredPatientFact {
+  if (/(?:有|曾有|接受过|进行过|且有)输血|输血史明确/.test(corpus)) return { status: "present", patientAnswerZh: "我以前输过血。", patientAnswerEn: "I have had a blood transfusion before.", provenance: "source", teacherReviewRequired: false };
+  if (/没有(?:输过血|输血)|否认输血/.test(corpus)) return { status: "absent", patientAnswerZh: "我以前没有输过血。", patientAnswerEn: "I have never had a blood transfusion.", provenance: "source", teacherReviewRequired: false };
+  return authoredFact("我以前没有输过血。", "I have never had a blood transfusion.");
+}
 function smoking(c: MutableCase, corpus: string): StructuredSmokingHistory {
   const source = immutableSource(c);
   const raw = relevantClause(source.riskFactors?.smoking, /吸烟|抽烟|烟龄|包年/);
@@ -127,18 +149,18 @@ function createHistory(c: MutableCase): StructuredHistory {
   const familyClause = source.familyHistory.split(/[。；]/).find((clause) => /父母|子女|兄弟|姐妹/.test(clause))
     || corpus.split(/[。；]/).find((clause) => /父母|子女|兄弟|姐妹/.test(clause));
   const familyHistory: StructuredPatientFact = familyClause
-    ? { status: "present", patientAnswerZh: `${familyClause.replace(/^家族史[：:]?/, "")}。`, patientAnswerEn: "There is no known similar hematuria or hereditary kidney disease in my family.", provenance: "source", teacherReviewRequired: false }
+    ? { status: "present", patientAnswerZh: `${familyClause.replace(/^家族史[：:]?/, "")}。`, patientAnswerEn: familyAnswerEn(familyClause), provenance: "source", teacherReviewRequired: false }
     : authoredFact("家里没有人得过类似血尿或遗传性肾病。", "No one in my family has had similar hematuria or hereditary kidney disease.");
   return {
     smokingHistory: sh, alcoholHistory: ah, occupation, occupationalExposure: exposure,
-    hypertension: simple(/高血压/, "高血压", "hypertension"), diabetes: simple(/糖尿病/, "糖尿病", "diabetes"), coronaryDisease: simple(/冠心病|心绞痛|心肌梗死|心脏病/, "冠心病", "coronary heart disease"), stroke: simple(/脑梗|脑卒中|中风/, "脑卒中", "stroke"), liverDisease: simple(/肝炎|乙肝|丙肝|肝病/, "肝病", "liver disease"), tuberculosis: simple(/结核/, "结核病", "tuberculosis"),
+    hypertension: simple(/高血压/, "高血压", "hypertension"), diabetes: simple(/糖尿病/, "糖尿病", "diabetes"), coronaryDisease: simple(/冠心病|冠脉|冠状动脉|心绞痛|心肌梗死|心脏病/, "冠心病", "coronary heart disease"), stroke: simple(/脑梗|脑卒中|中风/, "脑卒中", "stroke"), liverDisease: simple(/肝炎|乙肝|丙肝|肝病/, "肝病", "liver disease"), tuberculosis: simple(/结核/, "结核病", "tuberculosis"),
     stoneHistory: detailedFact(clean(source.riskFactors?.stoneHistory), /结石/, /否认|无|没有|(?:[:：]否$)/, "以前得过泌尿系结石。", "以前没有得过泌尿系结石。", "I have had urinary stones before.", "I have never had urinary stones."),
     urinaryInfectionHistory: detailedFact(clean(source.riskFactors?.infectionHistory), /感染|膀胱炎|肾盂肾炎/, /否认|无|没有|(?:[:：]否$)/, "以前得过尿路感染。", "以前没有反复尿路感染。", "I have had a urinary tract infection before.", "I have no history of recurrent urinary tract infection."),
     malignancyHistory: detailedFact(clean(source.riskFactors?.tumorHistory), /肿瘤|癌/, /否认|无|没有|(?:[:：]否$)/, "以前得过肿瘤。", "以前没有得过肿瘤。", "I have a history of cancer.", "I have no previous history of cancer."),
     traumaHistory: detailedFact(clean(source.riskFactors?.trauma), /外伤|撞伤|跌伤/, /否认|无|没有|(?:[:：]否$)/, "以前有过相关外伤。", "近期没有相关外伤。", "I have had relevant trauma.", "I have not had relevant trauma."),
     urinaryProcedureHistory: detailedFact(clean(source.riskFactors?.trauma), /导尿|膀胱镜|尿路操作|泌尿手术/, /否认|无|没有/, "以前做过泌尿系统操作。", "以前没有做过导尿、膀胱镜等泌尿操作。", "I have had a urinary procedure before.", "I have not had catheterization, cystoscopy, or other urinary procedures."),
-    surgeryHistory: /换(?:过)?(?:机械)?瓣膜|支架植入|切除术|做过[^。；]{0,20}手术/.test(corpus) ? { status: "present", patientAnswerZh: "我以前做过手术或介入治疗。", patientAnswerEn: "I have had surgery or an interventional procedure before.", provenance: "source", teacherReviewRequired: false } : /没有做过手术|否认手术/.test(corpus) ? { status: "absent", patientAnswerZh: "我以前没有做过手术。", patientAnswerEn: "I have never had surgery.", provenance: "source", teacherReviewRequired: false } : authoredFact("我以前没有做过手术。", "I have never had surgery."),
-    transfusionHistory: /没有(?:输过血|输血)|否认输血/.test(corpus) ? { status: "absent", patientAnswerZh: "我以前没有输过血。", patientAnswerEn: "I have never had a blood transfusion.", provenance: "source", teacherReviewRequired: false } : authoredFact("我以前没有输过血。", "I have never had a blood transfusion."),
+    surgeryHistory: surgeryFact(corpus),
+    transfusionHistory: transfusionFact(corpus),
     allergyHistory,
     anticoagulantUse: anticoagulant ? { status: "present", patientAnswerZh: `我在服用${meds.filter((m) => /华法林|利伐沙班|达比加群|阿哌沙班/.test(m.name)).map((m) => m.name).join("、")}。`, patientAnswerEn: "I take an anticoagulant.", provenance: "source", teacherReviewRequired: false } : authoredFact("我没有服用华法林、利伐沙班等抗凝药。", "I do not take anticoagulants."),
     antiplateletUse: antiPlatelet ? { status: "present", patientAnswerZh: `我在服用${meds.filter((m) => /阿司匹林|氯吡格雷/.test(m.name)).map((m) => m.name).join("、")}。`, patientAnswerEn: "I take antiplatelet medication.", provenance: "source", teacherReviewRequired: false } : authoredFact("我没有服用阿司匹林或氯吡格雷。", "I do not take antiplatelet medication."),

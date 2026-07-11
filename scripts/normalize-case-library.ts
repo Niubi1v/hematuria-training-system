@@ -259,7 +259,7 @@ function enrichCase(caseData: MutableCase, orderResults: OrderResultItem[], exam
   const management = managementFor(caseData, meta.major);
   cleanHistory(caseData);
   caseData.schemaVersion = "2.1.0";
-  caseData.caseVersion = caseData.id.startsWith("HX-ADD") ? "HX-ADD-2.1" : "V2-2.1";
+  caseData.caseVersion = caseData.releaseV14?.sourceVersion || (caseData.id.startsWith("HX-ADD") ? "HX-ADD-2.1" : "V2-2.1");
   caseData.languages = caseData.id.startsWith("P") ? ["zh-CN", "en"] : ["zh-CN"];
   caseData.diseaseCategory = meta.major;
   caseData.diseaseSubcategory = meta.sub;

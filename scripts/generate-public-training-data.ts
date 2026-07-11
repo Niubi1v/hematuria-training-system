@@ -11,6 +11,7 @@ const publicCases = (cases as CaseData[]).map((item) => {
   const en = englishById.get(item.id) || {};
   return {
     id: item.id,
+    displayCaseId: item.displayCaseId || item.id,
     age: item.age,
     sex: item.sex,
     sexEn: String(en.sex || (item.sex === "女" ? "Female" : "Male")),

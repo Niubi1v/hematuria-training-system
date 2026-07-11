@@ -12,6 +12,7 @@ export default async function TrainingPage({ params }: { params: Promise<{ id: s
   if (!caseData) notFound();
   const studentVisibleCase = {
     id: caseData.id,
+    displayCaseId: caseData.displayCaseId,
     studentChiefComplaint: caseData.studentChiefComplaint,
     chiefComplaint: caseData.studentChiefComplaint,
     chiefComplaintEn: caseData.chiefComplaintEn,

@@ -5,6 +5,7 @@ import { Filter, Languages, Shuffle } from "lucide-react";
 
 export type PublicCase = {
   id: string;
+  displayCaseId?: string;
   age: string;
   sex: string;
   sexEn: string;
@@ -92,10 +93,10 @@ export default function CaseCatalogClient({ cases }: { cases: PublicCase[] }) {
         {filtered.map((item) => (
           <a key={item.id} href={caseHref(item.id)} className="rounded-lg border border-clinic-line bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-clinic-blue">
             <div className="flex items-start justify-between gap-3">
-              <span className="text-sm font-medium text-clinic-blue">{item.id}</span>
+              <span className="text-sm font-medium text-clinic-blue">{item.displayCaseId || item.id}</span>
               <span className="rounded-full bg-clinic-paper px-3 py-1 text-sm text-clinic-muted">{item.difficultyLabel || (lang === "en" ? "Unrated" : "未分级")}</span>
             </div>
-            <h2 className="mt-4 text-lg font-semibold">{lang === "en" ? `Training case ${item.id}` : `训练病例 ${item.id}`}</h2>
+            <h2 className="mt-4 text-lg font-semibold">{lang === "en" ? `Training case ${item.displayCaseId || item.id}` : `训练病例 ${item.displayCaseId || item.id}`}</h2>
             <p className="mt-1 text-sm text-clinic-muted">{item.ageLabel || "-"} / {item.sexLabel || "-"}</p>
             <p className="mt-3 text-sm leading-6 text-clinic-muted">{item.complaint || (lang === "en" ? "Hematuria" : "血尿")}</p>
           </a>
