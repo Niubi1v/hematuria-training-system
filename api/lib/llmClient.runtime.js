@@ -8,8 +8,14 @@ function getLLMProviderConfig() {
     temperature: Number(process.env.LLM_TEMPERATURE || 0.2),
     maxTokens: Number(process.env.LLM_MAX_TOKENS || 500),
     timeoutMs: Number(process.env.LLM_REQUEST_TIMEOUT_MS || 15000),
+    thinkingMode: process.env.LLM_THINKING_MODE || "disabled",
     enabled: process.env.LLM_ENABLE_AI_AGENTS === "true" || process.env.LLM_ENABLE_AI_PATIENT === "true"
   };
+}
+
+function deepSeekThinking(config) {
+  const isDeepSeek = config.provider.toLowerCase() === "deepseek" || config.baseUrl.toLowerCase().includes("deepseek.com");
+  return isDeepSeek ? { thinking: { type: config.thinkingMode } } : {};
 }
 
 function joinUrl(baseUrl, endpointType) {
@@ -42,6 +48,7 @@ async function callLLM({ systemPrompt, userPayload, temperature, maxTokens }) {
       },
       body: JSON.stringify({
         model: config.model,
+        ...deepSeekThinking(config),
         temperature: temperature ?? config.temperature,
         max_tokens: maxTokens ?? config.maxTokens,
         messages: [

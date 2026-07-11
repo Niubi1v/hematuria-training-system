@@ -314,6 +314,9 @@ async function callLLM(payload) {
       headers: { Authorization: `Bearer ${process.env.LLM_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: process.env.LLM_MODEL,
+        ...(String(process.env.LLM_PROVIDER || "deepseek").toLowerCase() === "deepseek" || String(process.env.LLM_API_BASE_URL).toLowerCase().includes("deepseek.com")
+          ? { thinking: { type: process.env.LLM_THINKING_MODE || "disabled" } }
+          : {}),
         temperature: Number(process.env.LLM_TEMPERATURE || 0.2),
         max_tokens: Math.min(Number(process.env.LLM_MAX_TOKENS || 120), 160),
         messages: [

@@ -53,6 +53,20 @@ async function main() {
   assert(!/sk-[A-Za-z0-9_-]{12,}/.test(combined), "source should not contain secret keys");
   assert(!/LLM_API_KEY\s*=\s*(?!your_)[^\s#]+/.test(combined), "source should not contain real LLM_API_KEY values");
 
+  const deepSeekClients = [
+    "api/lib/llmClient.runtime.js",
+    "api/lib/llmClient.ts",
+    "src/server/llmClient.ts",
+    "api/agent-chat.js",
+    "api/patient-reply.js"
+  ];
+  for (const file of deepSeekClients) {
+    const source = fs.readFileSync(file, "utf8");
+    assert(source.includes("LLM_THINKING_MODE"), `${file} must configure DeepSeek thinking mode`);
+    assert(source.includes("thinking:"), `${file} must send the DeepSeek thinking option`);
+    assert(source.includes('"disabled"'), `${file} must default patient-facing calls to disabled thinking`);
+  }
+
   console.log("LLM adapter and API safety tests passed.");
 }
 
