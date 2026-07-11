@@ -54,8 +54,8 @@ async function main() {
   assert(!/LLM_API_KEY\s*=\s*(?!your_)[^\s#]+/.test(combined), "source should not contain real LLM_API_KEY values");
 
   const deepSeekClients = [
-    "api/lib/llmClient.runtime.js",
-    "api/lib/llmClient.ts",
+    "server/llmClient.runtime.js",
+    "server/llmClient.ts",
     "src/server/llmClient.ts",
     "api/agent-chat.js",
     "api/patient-reply.js"
@@ -67,7 +67,7 @@ async function main() {
     assert(source.includes('"disabled"'), `${file} must default patient-facing calls to disabled thinking`);
   }
 
-  const dynamicSessionSource = fs.readFileSync("api/lib/patientSession.js", "utf8");
+  const dynamicSessionSource = fs.readFileSync("server/patientSession.js", "utf8");
   assert(
     !dynamicSessionSource.includes("completedPatientFacingProfile: session.completedPatientFacingProfile"),
     "dynamic Patient Agent must not send the whole patient profile to the per-question LLM call"

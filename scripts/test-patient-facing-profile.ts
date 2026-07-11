@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import type { CaseData } from "../src/lib/types";
 
 const require = createRequire(import.meta.url);
-const { initSession, getSession } = require("../api/lib/patientSession.js") as {
+const { initSession, getSession } = require("../server/patientSession.js") as {
   initSession: (input: { caseId: string; language: string; mode: string; debug: boolean }) => Promise<any>;
   getSession: (sessionId: string, caseId: string) => { completedPatientFacingProfile?: Record<string, { value?: string; source?: string }> } | null;
 };

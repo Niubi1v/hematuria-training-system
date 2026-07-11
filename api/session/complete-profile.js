@@ -1,4 +1,4 @@
-const { initSession } = require("../lib/patientSession.js");
+const { initSession } = require("../../server/patientSession.js");
 
 function setCors(res) {
   res.setHeader("Access-Control-Allow-Origin", process.env.AGENT_API_ALLOWED_ORIGIN || process.env.PATIENT_AGENT_ALLOWED_ORIGIN || "*");

@@ -8,8 +8,8 @@ const imaging = require("../data/order_catalog_imaging.json");
 const procedures = require("../data/order_catalog_procedures.json");
 const perioperative = require("../data/order_catalog_perioperative.json");
 const mdtTriggers = require("../data/mdt_triggers.json");
-const { matchHistoryQuestion, normalize, validateStage } = require("./lib/clinicalAssessment.js");
-const { appendEvents, createAttemptState, signAttemptState, verifyAttemptState } = require("./lib/trainingState.js");
+const { matchHistoryQuestion, normalize, validateStage } = require("../server/clinicalAssessment.js");
+const { appendEvents, createAttemptState, signAttemptState, verifyAttemptState } = require("../server/trainingState.js");
 
 const catalog = [...labs, ...imaging, ...procedures, ...perioperative];
 const allowedActions = new Set(["init-attempt", "history-log", "exam", "order", "mdt", "stage-feedback", "score"]);

@@ -1,4 +1,4 @@
-const cases = require("../../data/cases.json");
+const cases = require("../data/cases.json");
 const { callLLM, getLLMProviderConfig } = require("./llmClient.runtime.js");
 const { matchStructuredFacts } = require("./structuredFacts.js");
 const { matchCanonicalPatientFacts } = require("./canonicalFacts.js");

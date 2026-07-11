@@ -7,7 +7,7 @@ const {
   generatePatientAnswer,
   filterPatientOutput,
   getSession
-} = require("../api/lib/patientSession.js") as {
+} = require("../server/patientSession.js") as {
   initSession: (input: { caseId: string; mode?: string; language?: string; debug?: boolean; forceRefresh?: boolean }) => Promise<any>;
   generatePatientAnswer: (input: {
     sessionId?: string;
@@ -112,8 +112,8 @@ async function main() {
 
   const source = [
     ".env.example",
-    "api/lib/llmClient.runtime.js",
-    "api/lib/llmClient.ts",
+    "server/llmClient.runtime.js",
+    "server/llmClient.ts",
     "api/session/init.js",
     "api/agent-chat.js",
     "src/components/ClinicalTrainingClient.tsx"

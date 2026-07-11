@@ -1,5 +1,5 @@
 const cases = require("../data/cases.json");
-const { generatePatientAnswer, probePatientProvider } = require("./lib/patientSession.js");
+const { generatePatientAnswer, probePatientProvider } = require("../server/patientSession.js");
 
 const blockedTeacherKeys = ["diagnosis", "imaging", "pathology", "treatment", "teacherOnlyData", "case_card", "scoring"];
 const agentIds = new Set([

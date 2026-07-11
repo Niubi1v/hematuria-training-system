@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 
 process.env.TRAINING_STATE_SECRET = "unit-test-training-state-secret-with-adequate-length";
 const handler = require("../api/training-action.js");
-const { initSession } = require("../api/lib/patientSession.js");
+const { initSession } = require("../server/patientSession.js");
 const serverCases = require("../data/cases.json") as Array<{ id: string; medicalReview?: { status?: string } }>;
 
 async function call(body: Record<string, unknown>, token = "") {

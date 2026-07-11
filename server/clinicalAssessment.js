@@ -1,4 +1,4 @@
-const canonicalSlots = require("../../data/patient_slots_bilingual.json");
+const canonicalSlots = require("../data/patient_slots_bilingual.json");
 
 const filler = /^(?:无|没有|不知道|不清楚|同上|略|正常|随便|asdf|test|none|nothing|不知道写什么)[。.!！\s]*$/i;
 const templateSpam = /(肿瘤[、,，；; ]*结石[、,，；; ]*感染[、,，；; ]*肾小球|诊断诊断诊断|治疗治疗治疗)/i;

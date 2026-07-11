@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import casesJson from "../data/cases.json";
 import type { CaseData } from "../src/lib/types";
 
-const { validateDiagnosis, validateTreatment, validateStage } = require("../api/lib/clinicalAssessment.js");
+const { validateDiagnosis, validateTreatment, validateStage } = require("../server/clinicalAssessment.js");
 
 const cases = casesJson as CaseData[];
 const p001 = cases.find((item) => item.id === "P001")!;

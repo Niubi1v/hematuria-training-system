@@ -1,4 +1,4 @@
-const bilingualSlots = require("../../data/patient_slots_bilingual.json");
+const bilingualSlots = require("../data/patient_slots_bilingual.json");
 
 const matchers = [
   ["chief_complaint", /哪里不舒服|为什么来|主诉|怎么回事|what brings you|what is wrong|main complaint/i],

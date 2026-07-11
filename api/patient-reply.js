@@ -1,5 +1,5 @@
 const cases = require("../data/cases.json");
-const { matchStructuredFacts } = require("./lib/structuredFacts.js");
+const { matchStructuredFacts } = require("../server/structuredFacts.js");
 
 const blockedTerms = [
   "根据原始病史",
