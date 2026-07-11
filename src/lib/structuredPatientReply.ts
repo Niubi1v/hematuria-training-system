@@ -70,7 +70,7 @@ export function matchStructuredPatientQuestion(caseData: CaseData, question: str
   const uniqueAnswers = [...new Set(answers.map((item) => item.trim()).filter(Boolean))];
   if (!uniqueAnswers.length) return null;
   return {
-    replyText: uniqueAnswers.join(language === "en" ? " " : ""),
+    replyText: uniqueAnswers.join("\n"),
     matchedSlotIds: [...new Set(matchedSlotIds)],
     matchedFacts: [...new Set(matchedFacts)],
     answerSource: provenance(sources) as StructuredReply["answerSource"],

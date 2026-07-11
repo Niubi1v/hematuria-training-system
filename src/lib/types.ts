@@ -303,7 +303,17 @@ export type CaseCardItem = {
 
 export type OrderResultItem = {
   caseId: string;
-  orderId?: string;
+  orderId: string;
+  resultId?: string;
+  status?: "final" | "not_available" | "not_performed";
+  value?: string;
+  unit?: string;
+  referenceRange?: string;
+  impression?: string;
+  abnormalFlags?: string[];
+  availableAt?: "immediate" | "delayed";
+  prerequisites?: string[];
+  sourceVersion?: string;
   diagnosis: string;
   diseaseType: string;
   orderCategory: string;
@@ -417,8 +427,17 @@ export type CaseData = {
   emergencyRedFlags?: string[];
   criticalErrors?: string[];
   medicalReview?: {
-    status: "pending" | "reviewed" | "needs_revision";
-    references: Array<{ title: string; url: string }>;
+    status: "pending" | "reviewed" | "approved" | "needs_revision";
+    references: Array<{
+      title: string;
+      url: string;
+      guidelineTitle?: string;
+      year?: number;
+      section?: string;
+      reviewer?: string;
+      reviewDate?: string;
+      status?: "pending_clinical_review" | "reviewed" | "approved";
+    }>;
     lastReviewedDate: string;
   };
   structuredHistory?: StructuredHistory;

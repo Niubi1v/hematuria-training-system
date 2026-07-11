@@ -51,7 +51,7 @@ function matchStructuredFacts(caseData, question, language = "zh") {
   if (!answers.length) return null;
   const provenance = new Set(sources.map((item) => item.provenance));
   return {
-    replyText: [...new Set(answers)].join(language === "en" ? " " : ""),
+    replyText: [...new Set(answers)].join("\n"),
     matchedSlotIds: [...new Set(matchedSlotIds)],
     matchedFacts: [...new Set(matchedFacts)],
     answerSource: provenance.size > 1 ? "mixed" : ([...provenance][0] || "source"),

@@ -1,0 +1,3440 @@
+{
+  "schemaVersion": "clinical-contradiction-v1",
+  "caseCount": 42,
+  "errorCount": 0,
+  "reviewCount": 572,
+  "issues": [
+    {
+      "caseId": "P001",
+      "field": "smokingHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P001",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P001",
+      "field": "occupation",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P001",
+      "field": "occupationalExposure",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P001",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P001",
+      "field": "stoneHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P001",
+      "field": "malignancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P001",
+      "field": "traumaHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P001",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P001",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P001",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P002",
+      "field": "occupation",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P002",
+      "field": "occupationalExposure",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P002",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P002",
+      "field": "stoneHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P002",
+      "field": "malignancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P002",
+      "field": "traumaHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P002",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P002",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P002",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P002",
+      "field": "menstrualHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P002",
+      "field": "pregnancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P003",
+      "field": "occupation",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P003",
+      "field": "occupationalExposure",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P003",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P003",
+      "field": "stoneHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P003",
+      "field": "malignancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P003",
+      "field": "traumaHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P003",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P003",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P003",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P004",
+      "field": "smokingHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P004",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P004",
+      "field": "occupation",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P004",
+      "field": "occupationalExposure",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P004",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P004",
+      "field": "stoneHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P004",
+      "field": "malignancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P004",
+      "field": "traumaHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P004",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P004",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P004",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P004",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P005",
+      "field": "smokingHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P005",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P005",
+      "field": "occupation",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P005",
+      "field": "occupationalExposure",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P005",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P005",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P005",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P005",
+      "field": "stoneHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P005",
+      "field": "malignancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P005",
+      "field": "traumaHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P005",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P005",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P006",
+      "field": "smokingHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P006",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P006",
+      "field": "occupation",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P006",
+      "field": "occupationalExposure",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P006",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P006",
+      "field": "stoneHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P006",
+      "field": "malignancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P006",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P006",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P006",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P006",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P006",
+      "field": "menstrualHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P006",
+      "field": "pregnancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P007",
+      "field": "occupation",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P007",
+      "field": "occupationalExposure",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P007",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P007",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P007",
+      "field": "stoneHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P007",
+      "field": "malignancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P007",
+      "field": "traumaHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P007",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P007",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P007",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P007",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P008",
+      "field": "occupation",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P008",
+      "field": "occupationalExposure",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P008",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P008",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P008",
+      "field": "stoneHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P008",
+      "field": "malignancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P008",
+      "field": "traumaHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P008",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P008",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P008",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P009",
+      "field": "occupation",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P009",
+      "field": "occupationalExposure",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P009",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P009",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P009",
+      "field": "malignancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P009",
+      "field": "traumaHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P009",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P009",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P009",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P009",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P009",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P009",
+      "field": "menstrualHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P009",
+      "field": "pregnancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P010",
+      "field": "occupation",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P010",
+      "field": "occupationalExposure",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P010",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P010",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P010",
+      "field": "malignancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P010",
+      "field": "traumaHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P010",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P010",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P010",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P010",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P010",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P011",
+      "field": "smokingHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P011",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P011",
+      "field": "occupation",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P011",
+      "field": "occupationalExposure",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P011",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P011",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P011",
+      "field": "stoneHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P011",
+      "field": "urinaryInfectionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P011",
+      "field": "malignancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P011",
+      "field": "traumaHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P011",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P011",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P011",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P011",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P011",
+      "field": "menstrualHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P011",
+      "field": "pregnancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P012",
+      "field": "smokingHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P012",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P012",
+      "field": "occupation",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P012",
+      "field": "occupationalExposure",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P012",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P012",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P012",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P012",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P012",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P012",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P012",
+      "field": "stoneHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P012",
+      "field": "malignancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P012",
+      "field": "traumaHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P012",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P012",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P012",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P012",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P012",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "P012",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-001",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-001",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-001",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-001",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-001",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-001",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-001",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-001",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-001",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-001",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-001",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-001",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-001",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-002",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-002",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-002",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-002",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-002",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-002",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-002",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-002",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-002",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-002",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-002",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-002",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-002",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-002",
+      "field": "menstrualHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-002",
+      "field": "pregnancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-003",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-003",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-003",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-003",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-003",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-003",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-003",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-003",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-003",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-003",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-003",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-003",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-003",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-004",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-004",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-004",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-004",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-004",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-004",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-004",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-004",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-004",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-004",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-004",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-004",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-004",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-005",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-005",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-005",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-005",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-005",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-005",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-005",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-005",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-005",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-005",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-005",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-006",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-006",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-006",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-006",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-006",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-006",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-006",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-006",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-006",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-006",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-006",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-006",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-006",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-006",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-006",
+      "field": "menstrualHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-006",
+      "field": "pregnancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-007",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-007",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-007",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-007",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-007",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-007",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-007",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-007",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-007",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-007",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-007",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-007",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-007",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-007",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-007",
+      "field": "menstrualHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-007",
+      "field": "pregnancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-008",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-008",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-008",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-008",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-008",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-008",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-008",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-008",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-008",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-008",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-008",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-008",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-008",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-008",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-009",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-009",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-009",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-009",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-009",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-009",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-009",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-009",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-009",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-009",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-009",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-009",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-009",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-009",
+      "field": "menstrualHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-009",
+      "field": "pregnancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-010",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-010",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-010",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-010",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-010",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-010",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-010",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-010",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-010",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-010",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-010",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-010",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-010",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-010",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-010",
+      "field": "menstrualHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-010",
+      "field": "pregnancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-011",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-011",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-011",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-011",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-011",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-011",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-011",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-011",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-011",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-011",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-011",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-011",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-011",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-011",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-012",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-012",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-012",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-012",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-012",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-012",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-012",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-012",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-012",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-012",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-012",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-012",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-012",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-012",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-013",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-013",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-013",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-013",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-013",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-013",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-013",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-013",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-013",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-013",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-013",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-013",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-013",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-013",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-014",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-014",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-014",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-014",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-014",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-014",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-014",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-014",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-014",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-014",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-014",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-014",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-014",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-014",
+      "field": "menstrualHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-014",
+      "field": "pregnancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-015",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-015",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-015",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-015",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-015",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-015",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-015",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-015",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-015",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-015",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-015",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-015",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-015",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-015",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-016",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-016",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-016",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-016",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-016",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-016",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-016",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-016",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-016",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-016",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-016",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-016",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-017",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-017",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-017",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-017",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-017",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-017",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-017",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-017",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-017",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-017",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-017",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-018",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-018",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-018",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-018",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-018",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-018",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-018",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-018",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-018",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-018",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-018",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-018",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-019",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-019",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-019",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-019",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-019",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-019",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-019",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-019",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-019",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-019",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-019",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-019",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-019",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-019",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-020",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-020",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-020",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-020",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-020",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-020",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-020",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-020",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-020",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-020",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-020",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-020",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-020",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-020",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-021",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-021",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-021",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-021",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-021",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-021",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-021",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-021",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-021",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-021",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-021",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-021",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-021",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-021",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-021",
+      "field": "menstrualHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-021",
+      "field": "pregnancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-022",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-022",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-022",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-022",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-022",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-022",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-022",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-022",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-022",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-022",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-022",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-022",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-022",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-022",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-023",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-023",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-023",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-023",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-023",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-023",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-023",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-023",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-023",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-023",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-023",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-023",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-023",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-023",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-023",
+      "field": "menstrualHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-023",
+      "field": "pregnancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-024",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-024",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-024",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-024",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-024",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-024",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-024",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-024",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-024",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-024",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-024",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-024",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-024",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-024",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-025",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-025",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-025",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-025",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-025",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-025",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-025",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-025",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-025",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-025",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-025",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-025",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-025",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-025",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-025",
+      "field": "menstrualHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-025",
+      "field": "pregnancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-026",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-026",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-026",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-026",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-026",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-026",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-026",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-026",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-026",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-026",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-026",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-026",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-026",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-026",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-027",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-027",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-027",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-027",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-027",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-027",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-027",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-027",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-027",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-027",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-027",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-027",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-027",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-027",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-027",
+      "field": "menstrualHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-027",
+      "field": "pregnancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-028",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-028",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-028",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-028",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-028",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-028",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-028",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-028",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-028",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-028",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-028",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-028",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-028",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-029",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-029",
+      "field": "hypertension",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-029",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-029",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-029",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-029",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-029",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-029",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-029",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-029",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-029",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-029",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-029",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-029",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-029",
+      "field": "menstrualHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-029",
+      "field": "pregnancyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-030",
+      "field": "alcoholHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-030",
+      "field": "diabetes",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-030",
+      "field": "coronaryDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-030",
+      "field": "stroke",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-030",
+      "field": "liverDisease",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-030",
+      "field": "tuberculosis",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-030",
+      "field": "urinaryProcedureHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-030",
+      "field": "surgeryHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-030",
+      "field": "transfusionHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-030",
+      "field": "allergyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-030",
+      "field": "anticoagulantUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-030",
+      "field": "antiplateletUse",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    },
+    {
+      "caseId": "HX-ADD-030",
+      "field": "familyHistory",
+      "message": "Author-added simulation fact requires clinical confirmation",
+      "severity": "review"
+    }
+  ]
+}

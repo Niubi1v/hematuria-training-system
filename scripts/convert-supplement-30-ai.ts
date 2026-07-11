@@ -379,7 +379,7 @@ function main() {
   writeJson("case_set_config.json", {
     defaultCaseSet,
     supported: ["v2_only", "v2_plus_30"],
-    generatedAt: new Date().toISOString(),
+    generatedAt: process.env.CASE_LIBRARY_BUILD_ID || "deterministic",
     v2Count: v2Cases.length,
     addCount: addCases.length,
     totalCount: cases42.length
@@ -403,7 +403,7 @@ function main() {
 
   writeJson("supplement-30-import-report.json", {
     input,
-    generatedAt: new Date().toISOString(),
+    generatedAt: process.env.CASE_LIBRARY_BUILD_ID || "deterministic",
     caseSet: defaultCaseSet,
     totalSheetRows: totalRows.length,
     supplementCases: addCases.length,

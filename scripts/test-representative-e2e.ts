@@ -17,10 +17,10 @@ for (const id of representativeIds) {
   assert.ok(!/未诉|需追问|诊断|CT提示/.test(smoking.replyText), `${id} patient reply leaked`);
   const emptyOrders = matchOrderResults(caseData!, "尿常规");
   assert.ok(!emptyOrders.results.some((item) => /CTU/i.test(item.orderCategory)), `${id} leaked unopened CTU`);
-  const report = score360(caseData!, { askedSlots: smoking.matchedSlotIds, examTexts: [], orderTexts: [], diagnosisText: "", mdtDepartments: [], mdtPurpose: "", mdtStarted: false, treatmentText: "", followUpText: "" });
+  const report = score360(caseData!, { events: [{ eventId: `${id}-smoking`, type: "slot_answered", stageNo: 1, at: "2026-01-01T00:00:00.000Z", slotId: "smoking", text: "抽烟吗？" }], askedSlots: smoking.matchedSlotIds, examTexts: [], orderTexts: [], diagnosisText: "", mdtDepartments: [], mdtPurpose: "", mdtStarted: false, treatmentText: "", followUpText: "" });
   assert.equal(report.max, 360);
-  assert.equal(report.scoringVersion, "360-v2");
-  assert.equal(report.reportVersion, 1);
+  assert.equal(report.scoringVersion, "360-event-v1");
+  assert.equal(report.reportVersion, 2);
   assert.equal(report.caseVersion, caseData!.caseVersion);
   assert.ok(report.generatedAt);
 }

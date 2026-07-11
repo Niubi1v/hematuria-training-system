@@ -1,150 +1,135 @@
-# 血尿多智能体临床思维训练平台
+# 血尿7阶段临床思维训练系统
 
-面向临床医学本科生的血尿主题7阶段智能体教学系统。项目保留 Next.js、React、TypeScript、本地 JSON、Vercel AI API 和 GitHub Pages 静态部署架构。
+Next.js + React + TypeScript 教学平台，包含42个血尿病例、七阶段训练、DeepSeek增强标准化患者、精确医嘱结果释放、360分结构化事件评分和自动语音朗读。
 
-线上地址：<https://niubi1v.github.io/hematuria-training-system/>
+公开练习站：<https://niubi1v.github.io/hematuria-training-system/>
 
-## 当前版本
+## 当前边界
 
-- 产品版本：`2.3.0`
-- 病例库：`42-case-2.3`
-- 病例数：42例，包括 `P001-P012` 和 `HX-ADD-001-HX-ADD-030`
-- 评分：统一360分制，规则版本`360-v2`
-- 医学审核状态：程序校验已通过，病例仍标记为 `needs_revision`，需教师/临床专家终审
+- 应用版本：`2.4.0`
+- 病例库：`P001-P012` + `HX-ADD-001-HX-ADD-030`，共42例
+- 评分：唯一口径 `360-event-v1`
+- GitHub Pages 只用于练习，不可用于正式 OSCE、教师阅卷或 RCT 数据采集
+- 42例目前均为 `needs_revision`；正式模式只接受 `reviewed` / `approved`
+- 本系统只用于医学教学，不用于真实诊疗
 
-页面页脚会由GitHub Actions自动显示应用版本、Git提交短哈希、UTC构建时间、病例库版本和评分规则版本，用于核对线上是否为最新构建。
+## 七阶段
 
-Excel转换顺序固定为：病例导入 → 结构化病史 → schema校验 → 病史再同步 → 病例级查体生成 → UI/i18n覆盖。任何一步失败都会阻止发布，避免旧数据覆盖新界面。
+1. 标准化患者：按问题对应的语义槽位回答，不释放完整病史。
+2. 检查决策：查体、检验、影像、内镜和病理；开了什么才返回什么。
+3. 诊断推理：最可能诊断、依据、至少3项鉴别及支持/反对点。
+4. MDT：科室、触发原因、待解决问题和已掌握证据均为必填。
+5. 治疗决策：即时稳定、病因治疗和确定性治疗。
+6. 围术期管理：抗栓、感染、麻醉、心肺、肾功能、VTE和ERAS。
+7. 评估复盘：依据结构化事件生成360分报告，可立即重练并比较分差。
 
-## 7阶段流程
-
-1. 标准化患者智能体：问诊时只回答学生实际问到的信息。
-2. 检查决策智能体：处理查体、检验、影像、内镜和病理，开了什么才返回什么。
-3. 诊断推理智能体：评价定位、最可能诊断、至少3项鉴别和确认计划。
-4. 多学科协作智能体：要求科室、触发原因、待解决问题和已掌握证据齐全。
-5. 治疗决策智能体：评价急诊稳定、病因治疗和确定性治疗。
-6. 围术期管理智能体：独立评价抗栓、感染、麻醉、心肺、肾功能、VTE和ERAS。
-7. 评估复盘智能体：学生完成反思并点击最终按钮后生成360分报告。
-
-OSCE 模式不显示中途评分、病例特异提示或标准答案，反馈只在终末复盘显示。
-
-## 360分评分
-
-| 维度 | 分值 |
-| --- | ---: |
-| 病史采集与血尿定位 | 50 |
-| 危险因素和安全网 | 40 |
-| 查体与急症识别 | 35 |
-| 诊断与鉴别诊断 | 45 |
-| 检验、影像、内镜及病理决策 | 55 |
-| MDT与会诊 | 45 |
-| 治疗及围术期管理 | 50 |
-| 随访、教育和表达效率 | 40 |
-| 合计 | 360 |
-
-## 数据与校验
-
-原始 Excel 位于 `work/source/`。完整转换命令：
-
-```bash
-npm run convert:excel
-```
-
-转换结束后会自动运行 `scripts/normalize-case-library.ts`，生成或更新：
-
-```text
-data/cases.json
-data/cases_42.json
-data/cases_en.json
-data/cases_student.json
-data/case_validation_report.json
-data/evaluator_rubric.json
-data/osce_rubric.json
-data/debriefing_rubric.json
-data/case_history_qc_report.json
-```
-
-`scripts/structure-patient-history.ts` 会为42例生成 `structuredHistory`，将吸烟、饮酒、职业暴露、慢性病、手术/输血/过敏史、泌尿史和长期用药拆成可独立回答的事实。原始病例未明确记载而为教学模拟补全的字段统一标记 `author_added_for_simulation` 与 `teacherReviewRequired: true`，详见 `CASE_DATA_QC_REPORT.md`。
-
-病例 schema 及运行时校验位于 `src/lib/caseSchema.ts`。开发环境会报告 schema 错误；生产界面不渲染教师答案和病例特异漏项。
+360分由八个维度组成：`50 + 40 + 35 + 45 + 55 + 45 + 50 + 40 = 360`。数值评分只读取 `slot_answered`、`physical_exam_performed`、`order_placed`、`result_returned`、`diagnosis_supported`、`consult_requested`、`treatment_action`、`safety_net_provided` 等结构化事件；病史小结不能反向证明问过某个问题，LLM不能决定数值总分。
 
 ## 本地运行
 
+推荐 Node.js 20 和 pnpm：
+
 ```bash
-npm install
-npm run convert:excel
-npm run dev
+pnpm install --frozen-lockfile
+pnpm run convert:excel
+pnpm run dev
 ```
 
 打开 <http://127.0.0.1:3000/>。
 
-质量检查：
+完整质量门禁：
 
 ```bash
-npm run test
-npm run lint
-npm run typecheck
-npm run build
+pnpm run test:idempotency
+pnpm run test:product
+pnpm run test:clinical
+pnpm run test:bilingual
+pnpm run test
+pnpm run typecheck
+pnpm run lint
+pnpm exec playwright install chromium
+pnpm run test:e2e
+NEXT_PUBLIC_BASE_PATH=/hematuria-training-system pnpm run build
+pnpm run test:bundle
 ```
 
-## AI Patient Agent
+## 数据生成
 
-GitHub Pages 不保存 API Key。前端通过 Vercel API 请求 AI；API 不可用、超时或输出越界时自动切换到规则库，并在界面显示实际“回答来源”。只有技术失败时才提供同一问题的重新生成，不允许用刷新获得额外病史。
+`pnpm run convert:excel` 只读取 `work/source/` 中的不可变源文件。转换末尾生成：
 
-Vercel 环境变量示例：
+- `data/patient_slots_bilingual.json`：42例稳定中英文语义槽位
+- `data/order_results_structured.json`：`caseId + orderId -> resultId` 精确结果
+- `data/order_result_map.json`：显式映射索引
+- `data/cases_public.json`：学生静态页面允许使用的最小病例壳
+- `data/event_rubrics.json`：仅供服务端360分评分
+- `data/guideline_registry.json`：医学依据审核字段与状态
+- `data/clinical_contradiction_report.json`：病例事实冲突检查
+
+完整转换连续运行两次的64个受控JSON校验和必须一致。`author_added_for_simulation` 事实必须由医学教师逐项确认。
+
+## 服务端 API
+
+Vercel 提供三个服务端入口：
+
+- `/api/session/init`：只返回 `sessionId`、公开开场白和连接状态，不返回患者档案
+- `/api/agent-chat`：Patient Agent；DeepSeek失败时使用同一事实的服务端规则答案
+- `/api/training-action`：查体、开单、MDT、阶段反馈和结构化事件评分
+- `/api/tts`：Azure Speech；失败时前端降级到浏览器语音或文字
+
+Patient Agent 的 `language` 会贯穿规则匹配、模型提示、输出语言校验、过滤和TTS。复合问题会逐项返回命中的事实。检查/诊断/治疗泄露边界同时覆盖中文和英文。
+
+## 环境变量
+
+在 Vercel Project Settings -> Environment Variables 配置，真实密钥不得提交到 Git：
 
 ```text
 LLM_PROVIDER=deepseek
-LLM_API_KEY=your_key
+LLM_API_KEY=your_secret_key
 LLM_API_BASE_URL=https://api.deepseek.com
 LLM_MODEL=deepseek-v4-flash
 LLM_ENDPOINT_TYPE=chat_completions
 LLM_ENABLE_AI_AGENTS=true
 LLM_ENABLE_AI_PATIENT=true
-AGENT_API_ALLOWED_ORIGIN=https://niubi1v.github.io
+LLM_REQUEST_TIMEOUT_MS=15000
+
+AZURE_SPEECH_KEY=your_secret_key
+AZURE_SPEECH_REGION=eastasia
+TTS_ALLOWED_ORIGINS=https://niubi1v.github.io
+TRAINING_API_ALLOWED_ORIGINS=https://niubi1v.github.io
 ```
 
-不要把真实 API Key 写入代码、`.env.example` 或 GitHub。
+GitHub Pages 构建使用的公开配置：
 
-Patient Agent API 返回：`replyText`、`matchedSlotIds`、`matchedFacts`、`answerSource`、`confidence`、`safetyFlags` 和 `fallbackReason`。DeepSeek 只负责把当前已允许的事实润色成患者口吻，结构化事实和越界过滤仍由服务端控制；AI输出不合格时使用同一事实的确定性规则回答。
+```text
+NEXT_PUBLIC_DEPLOYMENT_TIER=practice
+NEXT_PUBLIC_AGENT_API_URL=https://hematuria-training-system.vercel.app/api/agent-chat/
+NEXT_PUBLIC_SESSION_INIT_API_URL=https://hematuria-training-system.vercel.app/api/session/init/
+NEXT_PUBLIC_TRAINING_API_URL=https://hematuria-training-system.vercel.app/api/training-action
+NEXT_PUBLIC_TTS_API_URL=https://hematuria-training-system.vercel.app/api/tts
+```
 
-## 语音设置
+自动音色映射：中文女声 `Xiaoxiao`、中文男声 `Yunxi`、英文女声 `Jenny`、英文男声 `Guy`。云语音失败后按在线浏览器音色、同语言本地音色、文字模式降级。手动覆盖按 `locale + gender + voiceURI` 保存，不跨语言或性别复用。
 
-默认使用浏览器 Web Speech API，不产生额外付费调用。支持中文/英文系统音色筛选、音色选择、试听、语速 `0.80-1.15`、音调 `0.85-1.10`、暂停、继续、停止和重播；偏好保存在本机 `localStorage`。接口预留 `browser | azure | disabled` 三种 provider，当前仅启用 `browser` 与 `disabled`。
+## 部署
 
-如后续接入 Azure Speech，API Key 和区域必须放在服务端环境变量中，由服务端签发短时令牌；不得把长期密钥写入 GitHub Pages、`NEXT_PUBLIC_*` 或浏览器存储。接入前还需完成费用、隐私和跨境数据评估。
-
-## GitHub Pages 部署
-
-仓库已配置 `.github/workflows/deploy.yml`，自动设置 `/hematuria-training-system/` basePath、构建52个静态页面并部署。
+`.github/workflows/deploy.yml` 使用 `pnpm install --frozen-lockfile`，依次执行转换幂等、schema、临床冲突、双语、行为测试、typecheck、lint、Playwright、构建和静态答案/密钥扫描，全部通过才部署 Pages。
 
 ```bash
-git add .
-git commit -m "Product audit and 360 scoring hardening"
+git add <本次修改文件>
+git commit -m "fix: harden bilingual training scoring and automatic TTS"
 git push origin main
 ```
 
-GitHub 仓库设置：`Settings -> Pages -> Source: GitHub Actions`。
+GitHub Pages 设置保持 `Settings -> Pages -> Source: GitHub Actions`。`trailingSlash` 与 `/hematuria-training-system/` basePath 已配置，动态病例刷新路径会生成实体 `index.html`。
 
-## RCT模块边界
+## 正式考核与研究
 
-RCT 页面定位为“离线原型数据采集”，支持字段校验、重复ID检查、修改/删除确认、JSON/CSV导入导出和数据字典。不得录入姓名、学号、住院号、手机号或身份证号。
+公开站不打包教师答案；`/teacher` 和 `/rct` 只显示安全边界说明。正式 OSCE/RCT 下一阶段仍需要：
 
-`localStorage` 可能因清理缓存而丢失，不是正式研究数据库。正式研究还需要服务端数据库、身份权限、知情同意版本管理、不可篡改审计日志、集中备份、数据加密和伦理审批流程。样本量必须根据主要终点、效应量、α、检验效能和脱落率正式估算。
+- 教师/学生身份验证与角色权限
+- 服务端病例事实、阶段释放和评分API
+- 后端数据库、不可变attempt、审计日志和集中备份
+- 版本化知情同意、伪匿名participant ID、病例/评分版本
+- 响应延迟、TTS成功率/降级原因、前后测和方案偏离记录
 
-## 静态部署限制
-
-- 教师模式是演示功能，没有真实身份验证或权限隔离。
-- GitHub Pages 的静态资源可被技术用户检查。学生界面不会提前渲染答案，但“浏览器源码中绝对不可访问教师数据”只有改为服务端按权限释放后才能实现。
-- 训练记录和RCT原型数据只保存在当前浏览器，不能跨设备同步，也没有研究级审计能力。
-- AI 是否真实可用取决于 Vercel 环境变量、DeepSeek账户余额、网络和API状态；失败时系统明确显示规则库/降级模式。
-
-下一阶段建议增加独立后端、PostgreSQL、教师/学生身份认证、服务端病例答案与检查报告释放、研究数据审计和集中备份。
-
-## 本轮病例事实复核
-
-工程层已完成42例结构化校验和17类问题回归。病例原表大量生活史字段未明确记载，因此自动补全报告中仍有需教师审核的事实；正式OSCE前应由导师逐例确认，尤其是吸烟量、饮酒量、职业、女性月经/妊娠和既往阴性史。程序不会把这些补全项标记为原始资料。
-
-## 医学边界
-
-本系统仅用于医学教学和临床思维训练，不用于真实患者诊疗。病例参考 AUA/SUFU Microhematuria、EAU Urological Infections/Urolithiasis/NMIBC 和 KDIGO IgA nephropathy 等指南路径，仍需本地教师与临床专家审核后用于正式考核。
+医学上仍需泌尿外科、肾内科、医学教育和双语教师审核病例事实、检查适应证、治疗路径、评分权重及英文患者表达。

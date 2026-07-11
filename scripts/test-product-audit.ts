@@ -31,7 +31,7 @@ assert.ok(cases.every((item) => item.differentialDiagnosis.length >= 3), "每例
 for (const id of ["P001", "P006", "P009", "P007", "P011", "HX-ADD-026", "HX-ADD-025"]) {
   const item = byId.get(id);
   assert.ok(item, `缺少代表病例${id}`);
-  const evaluation = score360(item!, { askedSlots: [], examTexts: [], orderTexts: [], diagnosisText: "", mdtDepartments: [], mdtPurpose: "", mdtStarted: false, treatmentText: "", followUpText: "" });
+  const evaluation = score360(item!, { events: [], askedSlots: [], examTexts: [], orderTexts: [], diagnosisText: "", mdtDepartments: [], mdtPurpose: "", mdtStarted: false, treatmentText: "", followUpText: "" });
   assert.equal(evaluation.max, 360, `${id}终末评分口径必须为360`);
 }
 
@@ -43,7 +43,7 @@ const p001 = byId.get("P001");
 assert.ok(p001, "缺少P001");
 const withoutCtu = matchOrderResults(p001!, "尿常规");
 assert.ok(!withoutCtu.results.some((item) => /CTU/i.test(`${item.orderCategory} ${item.synonyms.join(" ")}`)), "未开CTU不得显示CTU结果");
-const withCtu = matchOrderResults(p001!, "CTU");
+const withCtu = matchOrderResults(p001!, "CTU", { previousOrderIds: ["LAB-BL-003"], stageNo: 2 });
 assert.ok(withCtu.matchedOrders.some((item) => /CTU/i.test(item.displayName)), "CTU同义词应匹配规范医嘱");
 assert.ok(withCtu.results.length > 0, "开立CTU后应返回该病例已配置报告");
 const repeatedCtu = matchOrderResults(p001!, "CTU", { previousOrderIds: withCtu.matchedOrders.map((item) => item.orderId), stageNo: 2 });

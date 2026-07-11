@@ -483,7 +483,7 @@ function main() {
   writeJson("excel-import-report.json", {
     input,
     caseLibraryVersion: "V2-only",
-    generatedAt: new Date().toISOString(),
+    generatedAt: process.env.CASE_LIBRARY_BUILD_ID || "deterministic",
     cases: cases.length,
     caseCards: cards.length,
     questionAnswers: qa.length,

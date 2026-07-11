@@ -1,6 +1,6 @@
 {
   "input": "work/source/v2_bilingual.xlsx",
-  "generatedAt": "2026-07-11T01:15:35.876Z",
+  "generatedAt": "deterministic",
   "casesEn": 12,
   "casesZh": 12,
   "cardsEn": 360,

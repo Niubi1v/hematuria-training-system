@@ -69,9 +69,9 @@ function providerLabel() {
   };
 }
 
-function toRuleResponse(ruleReply: ReturnType<typeof generatePatientReply>, isFallback: boolean, provider = "rule", model = "local-rule"): PatientReplyResponse {
+function toRuleResponse(ruleReply: ReturnType<typeof generatePatientReply>, isFallback: boolean, provider = "rule", model = "local-rule", language: "zh" | "en" = "zh"): PatientReplyResponse {
   return {
-    replyText: sanitizeRuleReply(ruleReply.replyText),
+    replyText: sanitizeRuleReply(ruleReply.replyText, language),
     matchedSlotIds: ruleReply.matchedSlotIds,
     revealedFields: ruleReply.revealedFields,
     blockedFields: [...new Set(ruleReply.blockedTeacherFields)],
@@ -102,18 +102,19 @@ export async function handlePatientReplyRequest(input: PatientReplyRequest): Pro
   });
 
   if (input.mode === "rule" || !ruleReply.matchedSlotIds.length || ruleReply.safetyFlags.length) {
-    return toRuleResponse(ruleReply, true);
+    return toRuleResponse(ruleReply, true, "rule", "local-rule", input.language || "zh");
   }
 
   const config = getLLMProviderConfig();
   const labels = providerLabel();
-  if (!config.enabled) return toRuleResponse(ruleReply, true, labels.provider, labels.model);
+  if (!config.enabled) return toRuleResponse(ruleReply, true, labels.provider, labels.model, input.language || "zh");
 
   const payload = {
     studentQuestion: question,
     patientFacingProfile: buildPatientFacingPayload(caseData, ruleReply.matchedSlotIds, ruleReply.replyText),
     conversationHistory: (input.conversationHistory || []).slice(-4),
     askedSlotIds: input.askedSlotIds || [],
+    requiredOutputLanguage: input.language === "en" ? "English only; do not output Chinese characters." : "Chinese only.",
     stageGuardrails: [
       "只回答当前问题对应的 currentAllowedAnswer。",
       "不得输出检查报告、影像、病理、诊断、治疗、MDT、评分点。",
@@ -128,10 +129,10 @@ export async function handlePatientReplyRequest(input: PatientReplyRequest): Pro
       userPayload: payload,
       maxTokens: Math.min(config.maxTokens || 120, 160)
     });
-    const filteredFirst = filterPatientReply(first.text);
+    const filteredFirst = filterPatientReply(first.text, input.language || "zh");
     if (filteredFirst.ok) {
       return {
-        ...toRuleResponse(ruleReply, false, first.provider, first.model),
+        ...toRuleResponse(ruleReply, false, first.provider, first.model, input.language || "zh"),
         replyText: first.text
       };
     }
@@ -141,21 +142,21 @@ export async function handlePatientReplyRequest(input: PatientReplyRequest): Pro
       userPayload: payload,
       maxTokens: Math.min(config.maxTokens || 120, 160)
     });
-    const filteredRetry = filterPatientReply(retry.text);
+    const filteredRetry = filterPatientReply(retry.text, input.language || "zh");
     if (filteredRetry.ok) {
       return {
-        ...toRuleResponse(ruleReply, false, retry.provider, retry.model),
+        ...toRuleResponse(ruleReply, false, retry.provider, retry.model, input.language || "zh"),
         replyText: retry.text,
         blockedFields: [...new Set([...ruleReply.blockedTeacherFields, ...filteredFirst.hits])]
       };
     }
 
     return {
-      ...toRuleResponse(ruleReply, true, labels.provider, labels.model),
+      ...toRuleResponse(ruleReply, true, labels.provider, labels.model, input.language || "zh"),
       blockedFields: [...new Set([...ruleReply.blockedTeacherFields, ...filteredFirst.hits, ...filteredRetry.hits])],
       safetyFlags: [...new Set([...ruleReply.safetyFlags, "ai_response_blocked"])]
     };
   } catch {
-    return toRuleResponse(ruleReply, true, labels.provider, labels.model);
+    return toRuleResponse(ruleReply, true, labels.provider, labels.model, input.language || "zh");
   }
 }

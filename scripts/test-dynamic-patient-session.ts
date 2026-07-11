@@ -5,7 +5,8 @@ const require = createRequire(import.meta.url);
 const {
   initSession,
   generatePatientAnswer,
-  filterPatientOutput
+  filterPatientOutput,
+  getSession
 } = require("../api/lib/patientSession.js") as {
   initSession: (input: { caseId: string; mode?: string; language?: string; debug?: boolean }) => Promise<any>;
   generatePatientAnswer: (input: {
@@ -17,6 +18,7 @@ const {
     completedPatientFacingProfile?: Record<string, unknown>;
   }) => Promise<any>;
   filterPatientOutput: (text: string) => { ok: boolean; hits: string[] };
+  getSession: (sessionId: string, caseId: string) => { completedPatientFacingProfile?: Record<string, unknown> } | null;
 };
 
 function assert(condition: unknown, message: string) {
@@ -34,12 +36,13 @@ async function main() {
 
   const session = await initSession({ caseId: "P001", mode: "training", language: "zh", debug: true });
   assert(session.sessionId, "session/init should return sessionId");
-  assert(session.completedPatientFacingProfile, "session/init should return completedPatientFacingProfile");
+  assert(!("completedPatientFacingProfile" in session), "session/init must not return the patient profile to the browser");
+  assert(!("teacherOnlyData" in session), "session/init must not return teacher-only data");
   assert(session.patientOpeningStatement, "session/init should return patientOpeningStatement");
   assert(session.patientOpeningStatement.includes("小便颜色变红3月余") || session.patientOpeningStatement.includes("血尿3月余"), `opening should use simplified complaint: ${session.patientOpeningStatement}`);
   assertNotContains(session.patientOpeningStatement, ["无痛", "肉眼", "全程"], "session opening complaint");
 
-  const profileText = JSON.stringify(session.completedPatientFacingProfile);
+  const profileText = JSON.stringify(getSession(session.sessionId, "P001")?.completedPatientFacingProfile || {});
   assertNotContains(profileText, ["imaging_finding", "final_diagnosis", "treatment_plan", "pathology_result", "evaluator_rubric"], "completedPatientFacingProfile");
   assert(profileText.includes('"source":"ai_completed"'), "AI-completed fields should carry source ai_completed");
 
@@ -65,7 +68,6 @@ async function main() {
     sessionId: session.sessionId,
     caseId: "P004",
     studentInput: "尿鲜红色吗？",
-    completedPatientFacingProfile: session.completedPatientFacingProfile,
     conversationHistory: [],
     language: "zh"
   });

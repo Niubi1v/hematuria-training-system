@@ -27,7 +27,7 @@
   "generating": "Generating",
   "voiceAsk": "Voice question",
   "historySummary": "History summary",
-  "noFeedbackBeforeSubmit": "Before submission, case-specific omissions, scoring points, and standard answers are hidden.",
+  "noFeedbackBeforeSubmit": "Complete the current task independently; stage feedback is released after submission.",
   "stageFeedback": "Stage feedback",
   "labs": "Laboratory",
   "imaging": "Imaging / tests",

@@ -21,12 +21,25 @@
     "test:profile-qc": "tsx scripts/test-patient-facing-profile.ts",
     "test:stage-flow": "tsx scripts/test-stage-567-flow.ts",
     "test:language": "tsx scripts/test-language-purity.ts",
-    "test": "tsx scripts/test-patient-agent.ts && tsx scripts/test-history-rubric.ts && tsx scripts/test-dynamic-patient-session.ts && tsx scripts/test-chief-complaint.ts && tsx scripts/test-product-audit.ts && tsx scripts/test-structured-history-matrix.ts && tsx scripts/test-representative-e2e.ts && tsx scripts/test-physical-exam-qc.ts && tsx scripts/test-patient-facing-profile.ts && tsx scripts/test-stage-567-flow.ts && tsx scripts/test-language-purity.ts",
+    "test:tts": "tsx scripts/test-tts.ts",
+    "test:bilingual": "tsx scripts/test-bilingual-patient.ts",
+    "test:orders": "tsx scripts/test-order-mapping.ts",
+    "test:clinical": "tsx scripts/test-clinical-contradictions.ts",
+    "test:idempotency": "tsx scripts/test-conversion-idempotency.ts",
+    "test:scoring-v3": "tsx scripts/test-event-scoring.ts",
+    "test:attempts": "tsx scripts/test-attempt-isolation.ts",
+    "test:training-api": "tsx scripts/test-training-api.ts",
+    "test:e2e": "playwright test",
+    "test:bundle": "tsx scripts/scan-static-bundle.ts",
+    "test": "tsx scripts/test-patient-agent.ts && tsx scripts/test-history-rubric.ts && tsx scripts/test-dynamic-patient-session.ts && tsx scripts/test-chief-complaint.ts && tsx scripts/test-product-audit.ts && tsx scripts/test-structured-history-matrix.ts && tsx scripts/test-representative-e2e.ts && tsx scripts/test-physical-exam-qc.ts && tsx scripts/test-patient-facing-profile.ts && tsx scripts/test-stage-567-flow.ts && tsx scripts/test-language-purity.ts && tsx scripts/test-tts.ts && tsx scripts/test-bilingual-patient.ts && tsx scripts/test-order-mapping.ts && tsx scripts/test-clinical-contradictions.ts && tsx scripts/test-event-scoring.ts && tsx scripts/test-attempt-isolation.ts && tsx scripts/test-training-api.ts",
     "dev:api": "tsx scripts/dev-patient-api.ts",
     "start": "next dev",
     "lint": "node scripts/run-lint.mjs",
     "structure:history": "tsx scripts/structure-patient-history.ts",
-    "convert:excel": "tsx scripts/convert-tutor-template-cases.ts work/source/v2_only_cases.xlsx data && tsx scripts/convert-frontend-fixes.ts work/source/frontend_order_consult_fix.xlsx data && tsx scripts/convert-diagnostic-knowledge.ts work/source/hematuria_diagnostics_scoring_rules.xlsx data && tsx scripts/convert-bilingual-7agent.ts work/source/v2_bilingual.xlsx data && tsx scripts/convert-supplement-30-ai.ts work/source/supplement_30_ai.xlsx data && tsx scripts/structure-patient-history.ts && tsx scripts/normalize-case-library.ts && tsx scripts/structure-patient-history.ts && tsx scripts/generate-physical-exams.ts && tsx scripts/apply-ui-overrides.ts"
+    "generate:bilingual": "tsx scripts/generate-bilingual-patient-slots.ts",
+    "generate:orders": "tsx scripts/generate-structured-order-results.ts",
+    "generate:public": "tsx scripts/generate-public-training-data.ts",
+    "convert:excel": "tsx scripts/convert-tutor-template-cases.ts work/source/v2_only_cases.xlsx data && tsx scripts/convert-frontend-fixes.ts work/source/frontend_order_consult_fix.xlsx data && tsx scripts/convert-diagnostic-knowledge.ts work/source/hematuria_diagnostics_scoring_rules.xlsx data && tsx scripts/convert-bilingual-7agent.ts work/source/v2_bilingual.xlsx data && tsx scripts/convert-supplement-30-ai.ts work/source/supplement_30_ai.xlsx data && tsx scripts/structure-patient-history.ts && tsx scripts/normalize-case-library.ts && tsx scripts/structure-patient-history.ts && tsx scripts/generate-physical-exams.ts && tsx scripts/apply-ui-overrides.ts && tsx scripts/generate-bilingual-patient-slots.ts && tsx scripts/generate-structured-order-results.ts && tsx scripts/generate-public-training-data.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -37,6 +50,8 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@playwright/test": "^1.61.1",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

@@ -27,7 +27,7 @@
   "generating": "生成中",
   "voiceAsk": "语音提问",
   "historySummary": "病史小结",
-  "noFeedbackBeforeSubmit": "提交前不显示病例特异漏项、得分点或标准答案。",
+  "noFeedbackBeforeSubmit": "请独立完成当前任务，提交后查看本阶段反馈。",
   "stageFeedback": "阶段反馈",
   "labs": "检验",
   "imaging": "检查",

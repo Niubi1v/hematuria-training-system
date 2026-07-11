@@ -21,29 +21,65 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
-      - name: Convert Excel data
-        run: npm run convert:excel
+      - name: Conversion idempotency
+        run: pnpm run test:idempotency
+
+      - name: Schema validation
+        run: pnpm run test:product
+
+      - name: Clinical contradiction checks
+        run: pnpm run test:clinical
+
+      - name: Bilingual fixtures
+        run: pnpm run test:bilingual
+
+      - name: Unit and behavioral tests
+        run: pnpm run test
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Playwright E2E
+        run: pnpm run test:e2e
 
       - name: Prepare build metadata
         run: |
-          echo "NEXT_PUBLIC_APP_VERSION=2.3.0" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_APP_VERSION=2.4.0" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_GIT_SHA=${GITHUB_SHA::7}" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_BUILD_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
-          echo "NEXT_PUBLIC_CASE_LIBRARY_VERSION=42-case-2.3" >> "$GITHUB_ENV"
-          echo "NEXT_PUBLIC_SCORING_VERSION=360-v2" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_CASE_LIBRARY_VERSION=42-case-2.4" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SCORING_VERSION=360-event-v1" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_DEPLOYMENT_TIER=practice" >> "$GITHUB_ENV"
 
       - name: Build static site
         env:
           NEXT_PUBLIC_BASE_PATH: ${{ github.event.repository.name == format('{0}.github.io', github.repository_owner) && '' || format('/{0}', github.event.repository.name) }}
-        run: npm run build
+        run: pnpm run build
+
+      - name: Static bundle secret and answer scan
+        env:
+          NEXT_PUBLIC_BASE_PATH: ${{ github.event.repository.name == format('{0}.github.io', github.repository_owner) && '' || format('/{0}', github.event.repository.name) }}
+        run: pnpm run test:bundle
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

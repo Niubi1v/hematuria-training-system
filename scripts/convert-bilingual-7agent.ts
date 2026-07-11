@@ -181,7 +181,7 @@ function zhI18n() {
     generating: "生成中",
     voiceAsk: "语音提问",
     historySummary: "病史小结",
-    noFeedbackBeforeSubmit: "提交前不显示病例特异漏项、得分点或标准答案。",
+    noFeedbackBeforeSubmit: "请独立完成当前任务，提交后查看本阶段反馈。",
     stageFeedback: "阶段反馈",
     labs: "检验",
     imaging: "检查",
@@ -244,7 +244,7 @@ function enI18n() {
     generating: "Generating",
     voiceAsk: "Voice question",
     historySummary: "History summary",
-    noFeedbackBeforeSubmit: "Before submission, case-specific omissions, scoring points, and standard answers are hidden.",
+    noFeedbackBeforeSubmit: "Complete the current task independently; stage feedback is released after submission.",
     stageFeedback: "Stage feedback",
     labs: "Laboratory",
     imaging: "Imaging / tests",
@@ -330,7 +330,7 @@ function main() {
   writeJson("debriefing_rubric.json", rubric("debriefing"));
   writeJson("bilingual-import-report.json", {
     input,
-    generatedAt: new Date().toISOString(),
+    generatedAt: process.env.CASE_LIBRARY_BUILD_ID || "deterministic",
     casesEn: casesEn.length,
     casesZh: casesZh.length,
     cardsEn: cardsEn.length,

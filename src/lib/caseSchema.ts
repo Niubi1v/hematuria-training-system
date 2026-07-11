@@ -76,9 +76,15 @@ export function validateCase(caseData: CaseData): CaseValidationIssue[] {
   if (!Array.isArray(caseData.medicalReview?.references) || caseData.medicalReview.references.length === 0) {
     issues.push({ caseId: id, path: "medicalReview.references", severity: "warning", message: "尚未关联医学依据。" });
   }
-  if (caseData.medicalReview?.status !== "reviewed") {
+  if (!new Set(["reviewed", "approved"]).has(caseData.medicalReview?.status || "")) {
     issues.push({ caseId: id, path: "medicalReview.status", severity: "warning", message: "病例仍需教师/临床专家终审。" });
   }
+  (caseData.medicalReview?.references || []).forEach((reference, index) => {
+    if (!reference.title) issues.push({ caseId: id, path: `medicalReview.references.${index}.title`, severity: "error", message: "医学依据缺少标题。" });
+    if (reference.status && !["pending_clinical_review", "reviewed", "approved"].includes(reference.status)) {
+      issues.push({ caseId: id, path: `medicalReview.references.${index}.status`, severity: "error", message: "医学依据审核状态无效。" });
+    }
+  });
 
   const collision = `${caseData.pastHistory}\n${caseData.personalHistory}`;
   if (/家族史[:：]/.test(caseData.personalHistory || "")) {

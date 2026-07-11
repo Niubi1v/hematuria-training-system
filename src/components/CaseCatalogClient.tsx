@@ -1,35 +1,33 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { Filter, Languages, Shuffle } from "lucide-react";
-import casesEnJson from "@/data/cases_en.json";
-import { simplifiedChiefComplaint } from "@/src/lib/chiefComplaint";
-import type { CaseData } from "@/src/lib/types";
 
-type LanguageCode = "zh" | "en";
-type EnglishCase = {
+export type PublicCase = {
   id: string;
-  title: string;
   age: string;
   sex: string;
+  sexEn: string;
   difficulty: string;
-  diseaseCategory: string;
-  chiefComplaint: string;
+  difficultyEn: string;
+  studentChiefComplaint: string;
+  chiefComplaintEn: string;
+  caseVersion: string;
+  medicalReviewStatus: string;
+  sourceGroup: "v2-core" | "supplementary";
 };
 
-const englishCases = casesEnJson as EnglishCase[];
+type LanguageCode = "zh" | "en";
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
-function staticCaseHref(caseId: string) {
+function caseHref(caseId: string) {
   return `${basePath}/cases/${caseId}/index.html`;
 }
 
-export default function CaseCatalogClient({ cases }: { cases: CaseData[] }) {
+export default function CaseCatalogClient({ cases }: { cases: PublicCase[] }) {
   const [lang, setLang] = useState<LanguageCode>("zh");
-  const [difficulty, setDifficulty] = useState("全部");
-  const [category, setCategory] = useState("全部");
-  const [source, setSource] = useState("全部");
+  const [difficulty, setDifficulty] = useState("all");
+  const [source, setSource] = useState("all");
 
   useEffect(() => {
     const saved = localStorage.getItem("hematuria-language");
@@ -38,43 +36,31 @@ export default function CaseCatalogClient({ cases }: { cases: CaseData[] }) {
 
   useEffect(() => {
     localStorage.setItem("hematuria-language", lang);
+    window.dispatchEvent(new CustomEvent("hematuria-language-change", { detail: lang }));
   }, [lang]);
 
-  const rows = useMemo(() => cases.map((item) => {
-    const en = englishCases.find((caseItem) => caseItem.id === item.id);
-    return {
-      id: item.id,
-      age: lang === "en" ? en?.age || item.age : item.age,
-      sex: lang === "en" ? en?.sex || item.sex : item.sex,
-      difficulty: lang === "en" ? en?.difficulty || item.difficulty || "" : item.difficulty || "",
-      category: lang === "en" ? en?.diseaseCategory || item.diseaseCategory || "" : item.diseaseCategory || "",
-      complaint: simplifiedChiefComplaint(item.studentChiefComplaint || item.chiefComplaint, lang, en?.chiefComplaint),
-      title: lang === "en" ? en?.title || item.title : item.title,
-      source: item.id.startsWith("HX-ADD") ? (lang === "en" ? "Supplementary cases" : "补充病例") : (lang === "en" ? "V2 core cases" : "V2核心病例")
-    };
-  }), [cases, lang]);
+  const rows = useMemo(() => cases.map((item) => ({
+    ...item,
+    ageLabel: item.age,
+    sexLabel: lang === "en" ? item.sexEn : item.sex,
+    difficultyLabel: lang === "en" ? item.difficultyEn || item.difficulty : item.difficulty,
+    complaint: lang === "en" ? item.chiefComplaintEn : item.studentChiefComplaint,
+    sourceLabel: item.sourceGroup === "supplementary"
+      ? (lang === "en" ? "Supplementary" : "补充病例")
+      : (lang === "en" ? "V2 core" : "V2核心")
+  })), [cases, lang]);
 
-  const difficulties = useMemo(() => ["全部", ...Array.from(new Set(rows.map((item) => item.difficulty).filter(Boolean)))], [rows]);
-  const categories = useMemo(() => ["全部", ...Array.from(new Set(rows.map((item) => item.category).filter(Boolean)))], [rows]);
-  const sources = useMemo(() => ["全部", ...Array.from(new Set(rows.map((item) => item.source).filter(Boolean)))], [rows]);
-  const filtered = rows.filter((item) => {
-    const difficultyMatch = difficulty === "全部" || item.difficulty === difficulty;
-    const categoryMatch = category === "全部" || item.category === category;
-    const sourceMatch = source === "全部" || item.source === source;
-    return difficultyMatch && categoryMatch && sourceMatch;
-  });
+  const difficulties = useMemo(() => [...new Set(rows.map((item) => item.difficultyLabel).filter(Boolean))], [rows]);
+  const filtered = rows.filter((item) => (difficulty === "all" || item.difficultyLabel === difficulty)
+    && (source === "all" || item.sourceGroup === source));
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="mb-2 text-sm font-medium text-clinic-blue">42 cases · V2 core + supplementary library</p>
-          <h1 className="text-3xl font-semibold">{lang === "en" ? "Case Selection" : "病例选择"}</h1>
-          <p className="mt-2 text-clinic-muted">
-            {lang === "en"
-              ? "Select a case and complete the seven-stage clinical reasoning workflow in order."
-              : "选择病例后，按7阶段顺序完成完整临床思维训练。"}
-          </p>
+          <p className="mb-2 text-sm font-medium text-clinic-blue">{cases.length} {lang === "en" ? "practice cases" : "个练习病例"}</p>
+          <h1 className="text-3xl font-semibold">{lang === "en" ? "Case selection" : "病例选择"}</h1>
+          <p className="mt-2 text-clinic-muted">{lang === "en" ? "Public case cards omit disease labels and hidden answers." : "公开病例卡不显示疾病标签与隐藏答案。"}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="inline-flex items-center gap-1 rounded-md border border-clinic-line bg-white p-1">
@@ -82,37 +68,36 @@ export default function CaseCatalogClient({ cases }: { cases: CaseData[] }) {
             <button type="button" onClick={() => setLang("zh")} className={`rounded px-3 py-1 text-sm ${lang === "zh" ? "bg-clinic-blue text-white" : "text-clinic-muted"}`}>中文</button>
             <button type="button" onClick={() => setLang("en")} className={`rounded px-3 py-1 text-sm ${lang === "en" ? "bg-clinic-blue text-white" : "text-clinic-muted"}`}>English</button>
           </div>
-          <Link className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white hover:bg-clinic-teal" href="/random">
+          <a className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white hover:bg-clinic-teal" href={`${basePath}/random/index.html`}>
             <Shuffle size={16} /> {lang === "en" ? "Random case" : "随机抽题"}
-          </Link>
+          </a>
         </div>
       </div>
 
-      <section className="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-clinic-line bg-white p-4">
+      <section className="mb-5 flex flex-wrap items-center gap-3 border-y border-clinic-line py-4">
         <span className="inline-flex items-center gap-2 text-sm font-medium text-clinic-muted"><Filter size={16} /> {lang === "en" ? "Filters" : "筛选"}</span>
-        <select value={difficulty} onChange={(event) => setDifficulty(event.target.value)} className="rounded-md border border-clinic-line px-3 py-2 text-sm">
-          {difficulties.map((item) => <option key={item} value={item}>{item === "全部" && lang === "en" ? "All difficulty" : item}</option>)}
+        <select aria-label={lang === "en" ? "Difficulty" : "难度"} value={difficulty} onChange={(event) => setDifficulty(event.target.value)} className="rounded-md border border-clinic-line px-3 py-2 text-sm">
+          <option value="all">{lang === "en" ? "All difficulty" : "全部难度"}</option>
+          {difficulties.map((item) => <option key={item} value={item}>{item}</option>)}
         </select>
-        <select value={category} onChange={(event) => setCategory(event.target.value)} className="rounded-md border border-clinic-line px-3 py-2 text-sm">
-          {categories.map((item) => <option key={item} value={item}>{item === "全部" && lang === "en" ? "All categories" : item}</option>)}
-        </select>
-        <select value={source} onChange={(event) => setSource(event.target.value)} className="rounded-md border border-clinic-line px-3 py-2 text-sm">
-          {sources.map((item) => <option key={item} value={item}>{item === "全部" && lang === "en" ? "All sources" : item}</option>)}
+        <select aria-label={lang === "en" ? "Source" : "来源"} value={source} onChange={(event) => setSource(event.target.value)} className="rounded-md border border-clinic-line px-3 py-2 text-sm">
+          <option value="all">{lang === "en" ? "All sources" : "全部来源"}</option>
+          <option value="v2-core">{lang === "en" ? "V2 core" : "V2核心"}</option>
+          <option value="supplementary">{lang === "en" ? "Supplementary" : "补充病例"}</option>
         </select>
         <span className="text-sm text-clinic-muted">{lang === "en" ? "Showing" : "当前"} {filtered.length} / {rows.length}</span>
       </section>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {filtered.map((caseItem) => (
-          <a key={caseItem.id} href={staticCaseHref(caseItem.id)} className="rounded-lg border border-clinic-line bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-clinic-blue">
+        {filtered.map((item) => (
+          <a key={item.id} href={caseHref(item.id)} className="rounded-lg border border-clinic-line bg-white p-5 shadow-soft transition hover:-translate-y-0.5 hover:border-clinic-blue">
             <div className="flex items-start justify-between gap-3">
-              <span className="text-sm font-medium text-clinic-blue">{caseItem.id}</span>
-              <span className="rounded-full bg-clinic-paper px-3 py-1 text-sm text-clinic-muted">{caseItem.difficulty || (lang === "en" ? "Unrated" : "未分级")}</span>
+              <span className="text-sm font-medium text-clinic-blue">{item.id}</span>
+              <span className="rounded-full bg-clinic-paper px-3 py-1 text-sm text-clinic-muted">{item.difficultyLabel || (lang === "en" ? "Unrated" : "未分级")}</span>
             </div>
-            <h2 className="mt-4 text-lg font-semibold leading-7">{caseItem.title || `${caseItem.age} / ${caseItem.sex}`}</h2>
-            <p className="mt-1 text-sm text-clinic-muted">{caseItem.age || "-"} / {caseItem.sex || "-"}</p>
-            {caseItem.category && <p className="mt-2 text-xs text-clinic-blue">{caseItem.category}</p>}
-            <p className="mt-3 text-sm leading-6 text-clinic-muted">{caseItem.complaint || (lang === "en" ? "Hematuria-related chief complaint" : "血尿相关主诉")}</p>
+            <h2 className="mt-4 text-lg font-semibold">{lang === "en" ? `Training case ${item.id}` : `训练病例 ${item.id}`}</h2>
+            <p className="mt-1 text-sm text-clinic-muted">{item.ageLabel || "-"} / {item.sexLabel || "-"}</p>
+            <p className="mt-3 text-sm leading-6 text-clinic-muted">{item.complaint || (lang === "en" ? "Hematuria" : "血尿")}</p>
           </a>
         ))}
       </div>

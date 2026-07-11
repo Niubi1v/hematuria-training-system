@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 
 const buildMeta = {
-  appVersion: process.env.NEXT_PUBLIC_APP_VERSION || "2.3.0-dev",
+  appVersion: process.env.NEXT_PUBLIC_APP_VERSION || "2.4.0-dev",
   gitSha: process.env.NEXT_PUBLIC_GIT_SHA || "local",
   buildTime: process.env.NEXT_PUBLIC_BUILD_TIME || "local development build",
-  caseLibraryVersion: process.env.NEXT_PUBLIC_CASE_LIBRARY_VERSION || "42-case-2.3",
-  scoringVersion: process.env.NEXT_PUBLIC_SCORING_VERSION || "360-v2"
+  caseLibraryVersion: process.env.NEXT_PUBLIC_CASE_LIBRARY_VERSION || "42-case-2.4",
+  scoringVersion: process.env.NEXT_PUBLIC_SCORING_VERSION || "360-event-v1"
 };
 
 export default function BuildMetaFooter() {

@@ -71,7 +71,7 @@ export default function TrainingClient({ caseData }: { caseData: CaseData }) {
     if (!text) return;
 
     // 真实训练模式下不在页面提示采集点，但仍在后台记录，用于结束后的评分反馈。
-    const result = askPatient(caseData, text);
+    const result = askPatient(caseData, text, "zh");
     const nextCollected = mergeCollected(collected, result.matchedKeys);
     const nextMessages: ChatMessage[] = [
       ...messages,

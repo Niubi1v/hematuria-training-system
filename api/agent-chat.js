@@ -121,8 +121,7 @@ module.exports = async function handler(req, res) {
         caseId: body.caseId,
         studentInput: body.studentInput,
         conversationHistory: body.conversationHistory || [],
-        language: body.language || "zh",
-        completedPatientFacingProfile: body.completedPatientFacingProfile || body.sessionProfile
+        language: body.language || "zh"
       });
       return res.status(200).json({
         agentId,

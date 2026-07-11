@@ -1,6 +1,6 @@
 {
   "input": "work/source/supplement_30_ai.xlsx",
-  "generatedAt": "2026-07-11T01:15:36.402Z",
+  "generatedAt": "deterministic",
   "caseSet": "v2_plus_30",
   "totalSheetRows": 42,
   "supplementCases": 30,

@@ -2,6 +2,8 @@ import { EMPTY_COLLECTED } from "./keyPoints";
 import questionSlotsJson from "../../data/question_slots.json";
 import type { CaseData, CollectedMap, InterviewAnswer, InterviewSlot, KeyPointId } from "./types";
 import { matchStructuredPatientQuestion } from "./structuredPatientReply";
+import bilingualPatientSlotsJson from "../../data/patient_slots_bilingual.json";
+import { matchCanonicalSlots, type CanonicalSlotId } from "./canonicalSlots";
 
 export type PatientReplyResult = {
   replyText: string;
@@ -90,6 +92,11 @@ const reportQuestionWords = [
 ];
 
 const diagnosisQuestionWords = ["什么病", "诊断", "是不是癌", "癌症", "肿瘤", "严重吗", "能治好吗", "预后"];
+const diagnosisQuestionWordsEn = ["what disease", "diagnosis", "is it cancer", "do i have cancer", "what is wrong with me", "prognosis"];
+const reportQuestionWordsEn = ["ct result", "ct scan result", "ultrasound result", "cystoscopy result", "pathology result", "urinalysis result", "lab result", "test result", "report"];
+
+type BilingualSlotAnswer = { patientAnswerZh: string; patientAnswerEn: string; provenance: string; teacherReviewRequired: boolean };
+const bilingualPatientSlots = bilingualPatientSlotsJson as Record<string, Partial<Record<CanonicalSlotId, BilingualSlotAnswer>>>;
 
 const semanticToKeyPoint: Record<string, KeyPointId | undefined> = {
   onset: "onset",
@@ -112,6 +119,19 @@ const semanticToKeyPoint: Record<string, KeyPointId | undefined> = {
   family: "tumorFamilyHistory",
   past: "historyBundle",
   glomerular: "historyBundle"
+};
+
+const canonicalToKeyPoint: Partial<Record<CanonicalSlotId, KeyPointId>> = {
+  chief_complaint: "historyBundle", hematuria_visibility: "hematuriaType", hematuria_onset: "onset",
+  hematuria_frequency: "onset", hematuria_phase: "hematuriaPhase", urine_color: "colorClots", clots: "colorClots",
+  dysuria: "irritativeSymptoms", urinary_frequency: "irritativeSymptoms", urinary_urgency: "irritativeSymptoms",
+  voiding_difficulty: "voidingDifficulty", retention: "voidingDifficulty", flank_pain: "flankPain", renal_colic: "flankPain",
+  radiating_pain: "flankPain", fever_chills: "fever", triggers: "trauma", stone_history: "stoneHistory",
+  uti_history: "infectionHistory", urinary_procedure_history: "trauma", surgery_history: "historyBundle",
+  anticoagulant: "anticoagulants", antiplatelet: "anticoagulants", medications: "anticoagulants", smoking: "smoking",
+  alcohol: "historyBundle", occupation_exposure: "occupation", family_history: "tumorFamilyHistory",
+  gynecologic_contamination: "historyBundle", bleeding_tendency: "historyBundle", glomerular_features: "historyBundle",
+  recent_uri: "historyBundle", past_history: "historyBundle", prior_care: "historyBundle", general_condition: "historyBundle"
 };
 
 const slotIdToKeyPoint: Record<string, KeyPointId | undefined> = {
@@ -517,13 +537,49 @@ export function generatePatientReply({
   language?: "zh" | "en";
 }): PatientReplyResult {
   const question = userQuestion.trim();
+  const diagnosisWords = language === "en" ? diagnosisQuestionWordsEn : diagnosisQuestionWords;
+  const reportWords = language === "en" ? reportQuestionWordsEn : reportQuestionWords;
+  if (patientHasAny(question, diagnosisWords)) {
+    return {
+      replyText: language === "en" ? "I do not know the diagnosis. The doctor will need to decide." : "这个我不清楚，需要医生判断。",
+      matchedSlotIds: [], revealedFields: [], blockedTeacherFields: ["diagnosis", "teacherOnlyData"], safetyFlags: ["blocked_diagnosis_request"]
+    };
+  }
+  if (patientHasAny(question, reportWords)) {
+    return {
+      replyText: language === "en" ? "I cannot explain the exact results. Please check the formal report." : "我做过的检查具体结果说不清楚，您需要查看检查报告。",
+      matchedSlotIds: [], revealedFields: [], blockedTeacherFields: ["imaging_finding", "urine_test_result", "pathology", "order_results"], safetyFlags: ["blocked_report_request"]
+    };
+  }
+
+  // Specific structured history questions take precedence over broad canonical slots.
+  // This prevents "hypertension?" from returning an entire combined past-history paragraph.
   const structured = matchStructuredPatientQuestion(caseData, question, language);
   if (structured) return { ...structured, revealedFields: structured.matchedFacts, blockedTeacherFields: [] };
+
+  const canonicalMatches = matchCanonicalSlots(question, language);
+  if (canonicalMatches.length) {
+    const answers = canonicalMatches.map((slotId) => bilingualPatientSlots[caseData.id]?.[slotId])
+      .filter((item): item is BilingualSlotAnswer => Boolean(item))
+      .map((item) => language === "en" ? item.patientAnswerEn : item.patientAnswerZh)
+      .filter(Boolean);
+    if (answers.length) {
+      return {
+        replyText: [...new Set(answers)].join("\n"),
+        matchedSlotIds: canonicalMatches,
+        revealedFields: canonicalMatches,
+        blockedTeacherFields: [],
+        safetyFlags: [],
+        matchedFacts: canonicalMatches,
+        answerSource: "source"
+      };
+    }
+  }
   const semantic = semanticFromQuestion(question);
 
   if (semantic === "diagnosis") {
     return {
-      replyText: asBullets(["这个我不清楚，需要医生判断。"]),
+      replyText: language === "en" ? "I do not know the diagnosis. The doctor will need to decide." : asBullets(["这个我不清楚，需要医生判断。"]),
       matchedSlotIds: [],
       revealedFields: [],
       blockedTeacherFields: ["diagnosis", "teacherOnlyData"],
@@ -533,7 +589,7 @@ export function generatePatientReply({
 
   if (semantic === "report") {
     return {
-      replyText: asBullets(["我做过的检查具体结果说不清楚，您需要查看检查报告。"]),
+      replyText: language === "en" ? "I cannot explain the exact results. Please check the formal report." : asBullets(["我做过的检查具体结果说不清楚，您需要查看检查报告。"]),
       matchedSlotIds: [],
       revealedFields: [],
       blockedTeacherFields: ["imaging_finding", "urine_test_result", "pathology", "order_results"],
@@ -565,7 +621,7 @@ export function generatePatientReply({
   }
 
   return {
-    replyText: asBullets(["医生，您能问得再具体一点吗？我不太明白您想问哪方面。"]),
+    replyText: language === "en" ? "Doctor, could you ask more specifically? I am not sure which symptom you mean." : asBullets(["医生，您能问得再具体一点吗？我不太明白您想问哪方面。"]),
     matchedSlotIds: [],
     revealedFields: [],
     blockedTeacherFields: [],
@@ -573,12 +629,12 @@ export function generatePatientReply({
   };
 }
 
-export function askPatient(caseData: CaseData, question: string): { answer: string; matchedKeys: KeyPointId[]; matchedSlots: string[] } {
-  const result = generatePatientReply({ caseData, userQuestion: question });
+export function askPatient(caseData: CaseData, question: string, language: "zh" | "en" = "zh"): { answer: string; matchedKeys: KeyPointId[]; matchedSlots: string[] } {
+  const result = generatePatientReply({ caseData, userQuestion: question, language });
   const matchedKeys = [
     ...new Set(
       result.revealedFields
-        .map((field) => semanticToKeyPoint[field] || semanticToKeyPoint[field.replace(/^HX\d+$/, "")])
+        .map((field) => canonicalToKeyPoint[field as CanonicalSlotId] || semanticToKeyPoint[field])
         .concat(result.matchedSlotIds.map((slotId) => keyPointFromSlot(caseData, slotId)))
         .filter(Boolean)
     )

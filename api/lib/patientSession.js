@@ -1,6 +1,7 @@
 const cases = require("../../data/cases.json");
 const { callLLM, getLLMProviderConfig } = require("./llmClient.runtime.js");
 const { matchStructuredFacts } = require("./structuredFacts.js");
+const { matchCanonicalPatientFacts } = require("./canonicalFacts.js");
 
 const sessionCache = globalThis.__hematuriaSessionCache || new Map();
 const answerCache = globalThis.__hematuriaAnswerCache || new Map();
@@ -57,6 +58,8 @@ const patientBlockedTerms = [
 
 const reportWords = ["ct", "ctu", "彩超", "超声", "b超", "膀胱镜", "病理", "尿常规", "尿检", "肌酐", "egfr", "psa", "培养", "药敏", "肾活检", "报告", "检查结果", "片子", "影像"];
 const diagnosisWords = ["什么病", "诊断", "是不是癌", "癌症", "肿瘤", "严重吗", "能治好吗", "预后"];
+const reportWordsEn = ["ct result", "ct scan result", "ultrasound result", "cystoscopy result", "pathology result", "urinalysis result", "lab result", "test result", "report"];
+const diagnosisWordsEn = ["what disease", "diagnosis", "is it cancer", "do i have cancer", "what is wrong with me", "prognosis"];
 
 function getCaseById(caseId) {
   return cases.find((item) => String(item.id).toLowerCase() === String(caseId).toLowerCase());
@@ -362,10 +365,9 @@ async function initSession({ caseId, mode = "training", language = "zh", debug =
       sessionId,
       caseId: caseData.id,
       patientOpeningStatement: cached.completedPatientFacingProfile.patient_opening_statement?.value || "医生您好。",
-      completedPatientFacingProfile: cached.completedPatientFacingProfile,
       cacheHit: true,
       aiStatus: cached.providerReachable ? "connected" : "fallback",
-      ...(debug ? { debug: { ...cached.debug, cacheHit: true } } : {})
+      ...(debug && process.env.NODE_ENV !== "production" ? { debug: { provider: cached.debug?.provider, model: cached.debug?.model, cacheHit: true } } : {})
     };
   }
 
@@ -397,10 +399,9 @@ async function initSession({ caseId, mode = "training", language = "zh", debug =
     sessionId,
     caseId: caseData.id,
     patientOpeningStatement: completion.profile.patient_opening_statement?.value || "医生您好。",
-    completedPatientFacingProfile: completion.profile,
     cacheHit: false,
     aiStatus: completion.providerReachable ? "connected" : "fallback",
-    ...(debug ? { debug: { ...profileRecord.debug, rawPatientFacingProfile, teacherOnlyFieldList: profileRecord.teacherOnlyFieldList } } : {})
+    ...(debug && process.env.NODE_ENV !== "production" ? { debug: { provider: completion.provider, model: completion.model, cacheHit: false } } : {})
   };
 }
 
@@ -507,20 +508,22 @@ function preservesAllowedAnswer(reply, allowedAnswer) {
 async function generatePatientAnswer({ sessionId, caseId, studentInput, conversationHistory = [], language = "zh", completedPatientFacingProfile }) {
   const session = getSession(sessionId, caseId, completedPatientFacingProfile);
   const caseData = getCaseById(caseId);
-  if (hasAny(studentInput, diagnosisWords)) {
-    return { replyText: "这个我不清楚，需要医生判断。", provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, safetyFlags: ["blocked_diagnosis_request"], matchedSlotIds: [], matchedFacts: [], answerSource: "rule", confidence: 1, fallbackReason: "diagnosis_boundary" };
+  if (hasAny(studentInput, language === "en" ? diagnosisWordsEn : diagnosisWords)) {
+    return { replyText: language === "en" ? "I do not know the diagnosis. The doctor will need to decide." : "这个我不清楚，需要医生判断。", provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, safetyFlags: ["blocked_diagnosis_request"], matchedSlotIds: [], matchedFacts: [], answerSource: "rule", confidence: 1, fallbackReason: "diagnosis_boundary" };
   }
-  if (hasAny(studentInput, reportWords)) {
-    return { replyText: "我说不清楚，得看检查报告。", provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, safetyFlags: ["blocked_report_request"], matchedSlotIds: [], matchedFacts: [], answerSource: "rule", confidence: 1, fallbackReason: "report_boundary" };
+  if (hasAny(studentInput, language === "en" ? reportWordsEn : reportWords)) {
+    return { replyText: language === "en" ? "I cannot explain the exact results. Please check the formal report." : "我说不清楚，得看检查报告。", provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, safetyFlags: ["blocked_report_request"], matchedSlotIds: [], matchedFacts: [], answerSource: "rule", confidence: 1, fallbackReason: "report_boundary" };
   }
   // Vercel的会话初始化与问答可能落到不同Serverless实例；每问均从当前病例重建安全档案，
   // 不依赖另一个实例的内存缓存，也不信任客户端传回的数据完整性。
   const authoritativeProfile = caseData ? localCompleteProfile(buildRawPatientFacingProfile(caseData)) : null;
   const runtimeProfile = authoritativeProfile || session?.completedPatientFacingProfile || completedPatientFacingProfile;
   const structured = matchStructuredFacts(caseData, studentInput, language);
+  const canonical = structured ? null : matchCanonicalPatientFacts(caseId, studentInput, language);
   const genericFallback = safeFallbackForQuestion(studentInput, runtimeProfile);
-  const fallback = structured ? { ...structured, provider: "rule", model: "local-rule", isFallback: true } : genericFallback;
+  const fallback = canonical ? { ...canonical, provider: "rule", model: "local-rule", isFallback: true } : structured ? { ...structured, provider: "rule", model: "local-rule", isFallback: true } : genericFallback;
   if (fallback.safetyFlags[0]?.startsWith("blocked_")) return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] } };
+  if ((fallback.matchedSlotIds || []).length > 1) return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, fallbackReason: "compound_question_preserves_all_facts" };
   if (!runtimeProfile) return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] } };
 
   const config = getLLMProviderConfig();
@@ -532,19 +535,21 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   if (!config.enabled) return { ...fallback, provider: config.provider, model: config.model, isFallback: true, filter: { ok: true, hits: [] } };
 
   const payload = {
-    currentAllowedAnswer: structured?.replyText || fallback.replyText,
-    matchedFacts: structured?.matchedFacts || [],
+    currentAllowedAnswer: canonical?.replyText || structured?.replyText || fallback.replyText,
+    matchedFacts: canonical?.matchedFacts || structured?.matchedFacts || [],
     patientPersona: runtimeProfile.patient_persona,
     studentInput,
     conversationHistory: conversationHistory.slice(-2),
-    language
+    language,
+    requiredOutputLanguage: language === "en" ? "English only" : "Chinese only"
   };
   try {
     const first = await callLLM({ systemPrompt: patientPrompt, userPayload: payload, temperature: 0.3, maxTokens: 300 });
     const firstText = formatPatientReply(first.text);
     let filter = filterPatientOutput(firstText);
-    if (filter.ok && preservesAllowedAnswer(firstText, payload.currentAllowedAnswer)) {
-      const result = { replyText: firstText, provider: first.provider, model: first.model, isFallback: false, filter, rewriteTriggered: false, safetyFlags: [], matchedSlotIds: structured?.matchedSlotIds || [], matchedFacts: structured?.matchedFacts || [], answerSource: structured?.answerSource || "ai", confidence: structured?.confidence || 0.9, fallbackReason: "", allowedAnswer: payload.currentAllowedAnswer };
+    const firstLanguageOk = language !== "en" || !/[\u3400-\u9fff]/.test(firstText);
+    if (filter.ok && firstLanguageOk && preservesAllowedAnswer(firstText, payload.currentAllowedAnswer)) {
+      const result = { replyText: firstText, provider: first.provider, model: first.model, isFallback: false, filter, rewriteTriggered: false, safetyFlags: [], matchedSlotIds: canonical?.matchedSlotIds || structured?.matchedSlotIds || [], matchedFacts: canonical?.matchedFacts || structured?.matchedFacts || [], answerSource: canonical?.answerSource || structured?.answerSource || "ai", confidence: canonical?.confidence || structured?.confidence || 0.9, fallbackReason: "", allowedAnswer: payload.currentAllowedAnswer };
       answerCache.set(answerKey, result);
       return result;
     }
@@ -556,8 +561,9 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     });
     const retryText = formatPatientReply(retry.text);
     const retryFilter = filterPatientOutput(retryText);
-    if (retryFilter.ok && preservesAllowedAnswer(retryText, payload.currentAllowedAnswer)) {
-      const result = { replyText: retryText, provider: retry.provider, model: retry.model, isFallback: false, filter: retryFilter, rewriteTriggered: true, safetyFlags: [], matchedSlotIds: structured?.matchedSlotIds || [], matchedFacts: structured?.matchedFacts || [], answerSource: structured?.answerSource || "ai", confidence: structured?.confidence || 0.9, fallbackReason: "", allowedAnswer: payload.currentAllowedAnswer };
+    const retryLanguageOk = language !== "en" || !/[\u3400-\u9fff]/.test(retryText);
+    if (retryFilter.ok && retryLanguageOk && preservesAllowedAnswer(retryText, payload.currentAllowedAnswer)) {
+      const result = { replyText: retryText, provider: retry.provider, model: retry.model, isFallback: false, filter: retryFilter, rewriteTriggered: true, safetyFlags: [], matchedSlotIds: canonical?.matchedSlotIds || structured?.matchedSlotIds || [], matchedFacts: canonical?.matchedFacts || structured?.matchedFacts || [], answerSource: canonical?.answerSource || structured?.answerSource || "ai", confidence: canonical?.confidence || structured?.confidence || 0.9, fallbackReason: "", allowedAnswer: payload.currentAllowedAnswer };
       answerCache.set(answerKey, result);
       return result;
     }

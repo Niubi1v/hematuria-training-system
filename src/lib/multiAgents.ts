@@ -1,14 +1,13 @@
-import evaluatorRubricJson from "@/data/evaluator_rubric.json";
 import mdtTriggersJson from "@/data/mdt_triggers.json";
 import orderCatalogImagingJson from "@/data/order_catalog_imaging.json";
 import orderCatalogLabsJson from "@/data/order_catalog_labs.json";
 import orderCatalogPerioperativeJson from "@/data/order_catalog_perioperative.json";
 import orderCatalogProceduresJson from "@/data/order_catalog_procedures.json";
-import orderResultsJson from "@/data/order_results.json";
+import orderResultsStructuredJson from "@/data/order_results_structured.json";
 import physicalExamItemsJson from "@/data/physical_exam_items.json";
 import physicalExamResultsJson from "@/data/physical_exam_results.json";
-import ragRulesJson from "@/data/rag_rules.json";
-import type { CaseData, EvaluatorRubricItem, MdtTrigger, OrderCatalogItem, OrderResultItem, PhysicalExamItem, PhysicalExamResult } from "./types";
+import type { CaseData, MdtTrigger, OrderCatalogItem, OrderResultItem, PhysicalExamItem, PhysicalExamResult } from "./types";
+import { scoreTrainingEvents, type TrainingEvent } from "./eventScoring";
 
 export type OrderResultLog = {
   id: string;
@@ -25,6 +24,9 @@ export type OrderResultLog = {
   status?: "ordered" | "reported" | "no-result";
   duplicateOrderIds?: string[];
   unmetPrerequisites?: string[];
+  selectedOrderCount?: number;
+  recognizedOrderCount?: number;
+  returnedReportCount?: number;
 };
 
 export type ExamResultLog = {
@@ -45,6 +47,7 @@ export type MdtOpinion = {
 };
 
 export type Evaluator360State = {
+  events?: TrainingEvent[];
   askedSlots: string[];
   examTexts: string[];
   orderTexts: string[];
@@ -72,6 +75,7 @@ export type Evaluator360Report = {
     criticalErrors: string[];
     improvements: string[];
     comment: string;
+    rubricItems?: Array<{ rubricItemId: string; status: string; score: number; max: number; eventId?: string; evidenceText?: string; timestamp?: string }>;
   }>;
   redFlags: string[];
   ragGuardrails: string[];
@@ -79,9 +83,15 @@ export type Evaluator360Report = {
   caseVersion: string;
   generatedAt: string;
   reportVersion: number;
+  calculation?: string;
 };
 
-const orderResults = orderResultsJson as OrderResultItem[];
+type StructuredResult = {
+  resultId: string; caseId: string; orderId: string; status: "final" | "not_available" | "not_performed";
+  value: string; unit: string; referenceRange: string; impression: string; abnormalFlags: string[];
+  availableAt: "immediate" | "delayed"; prerequisites: string[]; sourceVersion: string;
+};
+const orderResults = orderResultsStructuredJson as StructuredResult[];
 const physicalExamItems = physicalExamItemsJson as PhysicalExamItem[];
 const physicalExamResults = physicalExamResultsJson as PhysicalExamResult[];
 const orderCatalog = [
@@ -91,7 +101,6 @@ const orderCatalog = [
   ...(orderCatalogPerioperativeJson as OrderCatalogItem[])
 ];
 const mdtTriggers = mdtTriggersJson as MdtTrigger[];
-const evaluatorRubric = (evaluatorRubricJson as EvaluatorRubricItem[]).filter((item) => !/^总分$/.test(item.dimension));
 
 function normalize(text: string) {
   return (text || "").toLowerCase().replace(/\s+/g, "");
@@ -110,8 +119,15 @@ function includesAny(text: string, words: string[]) {
   return words.some((word) => word && target.includes(normalize(word)));
 }
 
-function synonymHit(left: string[], right: string[]) {
-  return left.some((a) => right.some((b) => normalize(a).includes(normalize(b)) || normalize(b).includes(normalize(a))));
+function exactOrderMatches(input: string) {
+  const requested = splitText(input.replace(/\s+和\s+|以及|并且| and /gi, "；"));
+  const matched = requested.flatMap((segment) => {
+    const normalized = normalize(segment);
+    const order = orderCatalog.find((item) => item.orderId.toLowerCase() === segment.toLowerCase()
+      || [item.displayName, ...item.synonyms].some((name) => normalize(name) === normalized));
+    return order ? [order] : [];
+  });
+  return [...new Map(matched.map((item) => [item.orderId, item])).values()];
 }
 
 function caseMdt(caseId: string) {
@@ -120,16 +136,38 @@ function caseMdt(caseId: string) {
 
 export function matchOrderResults(caseData: CaseData, input: string, context?: { previousOrderIds?: string[]; stageNo?: number }): OrderResultLog {
   const text = input.trim();
-  const matchedOrders = orderCatalog.filter((item) => includesAny(text, [item.displayName, ...item.synonyms]));
+  const matchedOrders = exactOrderMatches(text);
   const previousOrderIds = context?.previousOrderIds ?? [];
   const duplicateOrderIds = matchedOrders.map((item) => item.orderId).filter((orderId) => previousOrderIds.includes(orderId));
-  const candidates = orderResults.filter((item) => item.caseId === caseData.id);
-  const matched = candidates.flatMap((item) => {
-    const resultSynonyms = item.synonyms.flatMap(splitText);
-    const matchedOrder = matchedOrders.find((order) => synonymHit([order.displayName, ...order.synonyms], [...resultSynonyms, item.orderCategory]));
-    if (!matchedOrder) return [];
-    return [{ ...item, orderId: matchedOrder.orderId }];
+  const availableOrderIds = new Set([...previousOrderIds, ...matchedOrders.map((item) => item.orderId)]);
+  const configured = matchedOrders.flatMap((order) => {
+    const result = orderResults.find((item) => item.caseId === caseData.id && item.orderId === order.orderId);
+    return result ? [{ order, result }] : [];
   });
+  const unmetPrerequisites = unique(configured.flatMap(({ result }) => result.prerequisites.filter((prerequisite) => !availableOrderIds.has(prerequisite))));
+  const matched = configured.filter(({ order, result }) => !duplicateOrderIds.includes(order.orderId) && result.prerequisites.every((prerequisite) => availableOrderIds.has(prerequisite))).map(({ order, result }) => ({
+    caseId: result.caseId,
+    orderId: result.orderId,
+    resultId: result.resultId,
+    status: result.status,
+    value: result.value,
+    unit: result.unit,
+    referenceRange: result.referenceRange,
+    impression: result.impression,
+    abnormalFlags: result.abnormalFlags,
+    availableAt: result.availableAt,
+    prerequisites: result.prerequisites,
+    sourceVersion: result.sourceVersion,
+    diagnosis: "",
+    diseaseType: "",
+    orderCategory: `${order.primaryCategory}/${order.secondaryCategory}`,
+    synonyms: [order.displayName],
+    result: result.value || result.impression,
+    abnormalLevel: result.abnormalFlags.join("、") || result.status,
+    teachingExplanation: "仅返回当前caseId与已开orderId的结构化结果。",
+    isKey: true,
+    prerequisite: result.prerequisites.join("、")
+  } satisfies OrderResultItem));
 
   const at = new Date().toISOString();
   return {
@@ -144,8 +182,13 @@ export function matchOrderResults(caseData: CaseData, input: string, context?: {
     stageNo: context?.stageNo ?? 2,
     status: matched.length ? "reported" : "no-result",
     duplicateOrderIds,
-    unmetPrerequisites: [],
-    message: matchedOrders.length && matched.length
+    unmetPrerequisites,
+    selectedOrderCount: splitText(text).length,
+    recognizedOrderCount: matchedOrders.length,
+    returnedReportCount: matched.length,
+    message: unmetPrerequisites.length
+      ? `医嘱已开立，但缺少前置条件：${unmetPrerequisites.join("、")}；未提前返回报告。`
+      : matchedOrders.length && matched.length
       ? duplicateOrderIds.length
         ? "医嘱已识别，但包含重复开立项目；结果不会重复计入效率得分。"
         : "已根据你开立的具体项目返回模拟检查结果。"
@@ -220,161 +263,7 @@ export function generateMdtOpinions(caseData: CaseData, departments: string[], p
   });
 }
 
-function departmentHas(departments: string[], word: string) {
-  return departments.some((department) => department.includes(word));
-}
-
-function evaluateMdtRuleMisses(caseData: CaseData, state: Evaluator360State) {
-  const caseCoreSignal = [
-    caseData.diagnosis,
-    caseData.diseaseCategory,
-    caseData.clinical?.redFlags,
-    caseData.clinical?.consultDepartments,
-    caseData.agentProfile?.mdtTrigger
-  ].join("；");
-  const antiSignal = [caseCoreSignal, caseData.medication].join("；");
-  const departments = state.mdtDepartments;
-  const misses: string[] = [];
-  const questions: string[] = [];
-
-  if (includesAny(caseCoreSignal, ["蛋白尿", "畸形红细胞", "RBC管型", "水肿", "高血压", "上感后", "茶色尿", "IgA", "肾小球"])) {
-    if (!departmentHas(departments, "肾内")) misses.push("肾小球性血尿安全网未触发肾内科会诊。");
-    if (!departmentHas(departments, "风湿") && includesAny(caseCoreSignal, ["狼疮", "ANCA", "抗GBM", "免疫"])) misses.push("疑系统性/免疫性肾炎时可加请风湿免疫科。");
-    questions.push("肾内科专家质询：尿蛋白、红细胞形态、RBC管型、肾功能和肾活检指征是否评估完整？");
-  }
-  if (includesAny(caseCoreSignal, ["发热寒战", "发热", "腰痛", "肾区叩痛"]) && includesAny(caseCoreSignal, ["结石", "肾积水", "梗阻", "AKI", "脓肾"])) {
-    if (!departmentHas(departments, "泌尿")) misses.push("感染性梗阻/结石红旗未触发泌尿外科急会诊。");
-    if (!departmentHas(departments, "感染")) misses.push("感染性梗阻/系统感染风险未考虑感染科。");
-    if (includesAny(caseCoreSignal, ["脓毒症", "休克"]) && !departmentHas(departments, "ICU") && !departmentHas(departments, "重症")) misses.push("脓毒症或休克风险未加请ICU。");
-    if (includesAny(caseCoreSignal, ["肾造瘘", "脓肾", "引流"]) && !departmentHas(departments, "介入")) misses.push("需肾造瘘/脓肾引流时未考虑介入放射科。");
-    questions.push("感染科/泌尿外科质询：感染控制前是否避免直接碎石，并优先培养、抗感染和引流？");
-  }
-  if (includesAny(caseCoreSignal, ["下腔静脉瘤栓", "肾静脉瘤栓", "巨大肾肿瘤", "IVC瘤栓"])) {
-    ["泌尿", "影像", "血管", "麻醉", "ICU", "肿瘤"].forEach((word) => {
-      if (!departmentHas(departments, word)) misses.push(`巨大肾肿瘤/瘤栓MDT未包含${word}相关科室。`);
-    });
-    if (!departmentHas(departments, "输血")) misses.push("瘤栓或复杂大手术病例必要时需考虑输血科。");
-  }
-  if (includesAny(antiSignal, ["阿司匹林", "氯吡格雷", "华法林", "利伐沙班", "抗凝", "抗血小板"]) && includesAny(state.treatmentText + state.diagnosisText, ["手术", "TURBT", "电切", "围术期"])) {
-    if (!departmentHas(departments, "心内") && !departmentHas(departments, "神经")) misses.push("长期抗凝/抗血小板且拟手术时未请心内科或神经内科评估停药风险。");
-    if (!departmentHas(departments, "麻醉")) misses.push("抗栓用药拟手术时未请麻醉科进行围术期风险评估。");
-  }
-  if (caseData.sex === "女" && includesAny(caseCoreSignal, ["月经", "阴道", "污染", "假性血尿"])) {
-    if (!departmentHas(departments, "妇")) misses.push("女性血尿样表现未考虑妇产科，以排除月经/阴道出血污染。");
-  }
-
-  return { misses: unique(misses), questions: unique(questions) };
-}
-
-function scoreByEvidence(max: number, evidenceCount: number, expected = 4) {
-  return Math.min(max, Math.round((Math.min(evidenceCount, expected) / expected) * max));
-}
-
 export function score360(caseData: CaseData, state: Evaluator360State): Evaluator360Report {
-  const clinical = caseData.clinical;
-  const orderText = state.orderTexts.join("；");
-  const allText = [
-    state.examTexts.join("；"),
-    orderText,
-    state.diagnosisText,
-    state.mdtDepartments.join("；"),
-    state.mdtPurpose,
-    state.treatmentText,
-    state.followUpText
-  ].join("；");
-  const mdt = caseMdt(caseData.id);
-  const duplicateOrderIds = unique((state.orderLogs ?? []).flatMap((item) => item.duplicateOrderIds ?? []));
-  const treatmentSubmit = (state.timeline ?? []).find((event) => event.type === "submit" && event.stageNo === 5);
-  const diagnosisSubmit = (state.timeline ?? []).find((event) => event.type === "submit" && event.stageNo === 3);
-  const treatmentBeforeDiagnosis = Boolean(treatmentSubmit && (!diagnosisSubmit || new Date(treatmentSubmit.at).getTime() < new Date(diagnosisSubmit.at).getTime()));
-
-  const items = evaluatorRubric.map((item) => {
-    const evidence: string[] = [];
-    const misses: string[] = [];
-    const sequenceIssues: string[] = [];
-    const overuse: string[] = [];
-    const criticalErrors: string[] = [];
-    if (/病史|定位/.test(item.dimension)) {
-      evidence.push(...state.askedSlots.slice(0, 12));
-      ["HX002", "HX005", "HX006", "HX011", "HX012", "HX021", "HX022"].forEach((slot) => {
-        if (!state.askedSlots.includes(slot)) misses.push(slot);
-      });
-    } else if (/危险|红旗/.test(item.dimension)) {
-      ["HX029", "HX032", "HX034", "HX035", "HX039", "HX040"].forEach((slot) => {
-        if (state.askedSlots.includes(slot)) evidence.push(slot);
-        else misses.push(slot);
-      });
-    } else if (/查体|急症识别/.test(item.dimension)) {
-      ["生命体征", "血压", "腹部", "肾区", "膀胱", "水肿", "尿量"].forEach((word) => includesAny(state.examTexts.join("；"), [word]) ? evidence.push(word) : misses.push(word));
-      if (includesAny(`${caseData.emergencyRedFlags?.join("；")}；${caseData.clinical?.redFlags}`, ["休克", "脓毒", "尿潴留", "AKI", "外伤"]) && !includesAny(state.treatmentText, ["复苏", "生命体征", "导尿", "引流", "尿量", "急诊"])) {
-        criticalErrors.push("存在急症红旗但未记录优先稳定和处置。 ");
-      }
-    } else if (/诊断|鉴别/.test(item.dimension)) {
-      ["肿瘤", "结石", "感染", "肾小球", "抗凝", "假性血尿"].forEach((word) => includesAny(state.diagnosisText, [word]) ? evidence.push(word) : misses.push(word));
-    } else if (/检验|影像|内镜|病理/.test(item.dimension)) {
-      ["尿常规", "尿沉渣", "尿培养", "肾功能", "凝血", "CTU", "CT KUB", "超声", "膀胱镜", "病理", "肾活检"].forEach((word) => includesAny(orderText, [word]) ? evidence.push(word) : misses.push(word));
-      if (duplicateOrderIds.length) overuse.push(`重复医嘱：${duplicateOrderIds.join("、")}`);
-      if (caseData.diseaseCategory === "感染" && includesAny(orderText, ["CTU", "膀胱镜", "肾活检"]) && !includesAny(caseData.diagnosis, ["复发", "持续", "肿瘤"])) overuse.push("单纯感染初始阶段存在高级检查过度使用风险。 ");
-      if (caseData.diseaseCategory === "肾小球疾病" && includesAny(orderText, ["CTU", "膀胱镜"])) overuse.push("肾小球性线索明确时应避免无指征的CTU或膀胱镜。 ");
-    } else if (/会诊|急诊/.test(item.dimension)) {
-      if (state.mdtStarted) evidence.push("已发起会诊");
-      if (state.mdtDepartments.length) evidence.push(...state.mdtDepartments.slice(0, 4));
-      if (mdt?.required && !state.mdtStarted) misses.push("本病例应触发MDT/专科会诊");
-      misses.push(...evaluateMdtRuleMisses(caseData, state).misses);
-      if (state.mdtStarted && state.mdtDepartments.length > 0 && state.mdtPurpose.trim().length < 8) misses.push("会诊目的不聚焦或过短。");
-      if (!includesAny(state.treatmentText, ["急诊", "导尿", "引流", "抗感染", "冲洗", "备血", "AKI"])) misses.push("急诊意识或即时处理不足");
-    } else if (/治疗/.test(item.dimension)) {
-      ["即时", "导尿", "冲洗", "引流", "抗感染", "TURBT", "病理", "手术", "药物"].forEach((word) => includesAny(state.treatmentText, [word]) ? evidence.push(word) : misses.push(word));
-      if (treatmentBeforeDiagnosis) sequenceIssues.push("在完成诊断推理前提交了确定性治疗。 ");
-    } else if (/随访|教育/.test(item.dimension)) {
-      ["复查", "随访", "尿常规", "肾功能", "膀胱镜", "复诊", "戒烟", "用药"].forEach((word) => includesAny(state.followUpText, [word]) ? evidence.push(word) : misses.push(word));
-    } else {
-      if (allText.length > 50) evidence.push("表达完整");
-      else misses.push("表达过少");
-    }
-
-    if (overuse.length) sequenceIssues.push("存在重复或可能过度检查，需说明适应证。 ");
-    const score = Math.max(0, scoreByEvidence(item.max, evidence.length, /病史/.test(item.dimension) ? 8 : 4) - overuse.length * 2 - sequenceIssues.length * 2 - criticalErrors.length * 5);
-    const improvements = unique([
-      ...misses.slice(0, 3).map((miss) => `下次训练主动补充：${miss}`),
-      ...sequenceIssues.map((issue) => `调整操作顺序：${issue}`),
-      ...overuse.map((issue) => `减少资源浪费：${issue}`)
-    ]).slice(0, 5);
-    return {
-      label: item.dimension,
-      max: item.max,
-      score,
-      evidence: unique(evidence).slice(0, 8),
-      misses: unique(misses).slice(0, 8),
-      sequenceIssues: unique(sequenceIssues),
-      overuse: unique(overuse),
-      criticalErrors: unique(criticalErrors),
-      improvements,
-      comment: score >= item.max * 0.8 ? "达成较好。" : score >= item.max * 0.5 ? "部分达标，建议补足关键漏项。" : "覆盖不足，需要重新梳理临床路径。"
-    };
-  });
-
-  const redFlags: string[] = [];
-  redFlags.push(...items.flatMap((item) => item.criticalErrors));
-  const source = `${clinical?.redFlags ?? ""}；${clinical?.orderReason ?? ""}；${clinical?.immediateTreatment ?? ""}；${caseData.medication}`;
-  if (includesAny(source, ["阿司匹林", "氯吡格雷", "华法林", "利伐沙班", "抗凝", "抗血小板"]) && includesAny(state.diagnosisText, ["抗凝", "阿司匹林", "药物"]) && !includesAny(state.diagnosisText + orderText, ["肿瘤", "膀胱镜", "CTU", "结石", "感染", "器质"])) {
-    redFlags.push("高危错误：不能把血尿直接归因于抗凝/抗血小板药，应继续排查器质性病变。");
-  }
-  if (includesAny(source, ["梗阻感染", "感染性梗阻"]) && includesAny(state.treatmentText, ["碎石"]) && !includesAny(state.treatmentText, ["引流", "支架", "造瘘"])) {
-    redFlags.push("高危错误：感染性梗阻结石不能直接碎石，应先抗感染并紧急引流。");
-  }
-  if (includesAny(source + caseData.diseaseCategory, ["肿瘤", "癌"]) && includesAny(state.treatmentText, ["根治", "化疗", "放疗"]) && !includesAny(orderText + state.treatmentText, ["病理", "膀胱镜", "TURBT", "分期"])) {
-    redFlags.push("高危错误：肿瘤确定性治疗前应先取得病理和分期依据。");
-  }
-  if (mdt?.required && !state.mdtStarted) redFlags.push("本病例存在MDT/专科会诊触发条件，但学生未发起会诊。");
-  redFlags.push(...evaluateMdtRuleMisses(caseData, state).misses.slice(0, 4));
-  if (state.mdtStarted && state.mdtDepartments.length > 0 && state.mdtPurpose.trim().length < 8) redFlags.push("会诊目的和要解决的问题过于笼统，不能只勾选科室。");
-
-  const rag = ragRulesJson as { structuredRules?: Array<{ guardrail?: string; standardPath?: string }> };
-  const ragGuardrails = unique((rag.structuredRules ?? []).flatMap((item) => [item.guardrail || "", item.standardPath || ""]).filter(Boolean)).slice(0, 5);
-  const max = items.reduce((sum, item) => sum + item.max, 0);
-  const raw = items.reduce((sum, item) => sum + item.score, 0);
-  const total = Math.max(0, Math.min(max, raw - redFlags.length * 10));
-
-  return { total, max, items, redFlags, ragGuardrails, scoringVersion: "360-v2", caseVersion: caseData.caseVersion || "unknown", generatedAt: new Date().toISOString(), reportVersion: 1 };
+  if (!state.events) throw new Error("360-event-v1 scoring requires structured events; free text and summaries are not numeric evidence.");
+  return scoreTrainingEvents(caseData, state.events);
 }

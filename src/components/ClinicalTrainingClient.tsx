@@ -25,8 +25,6 @@ import {
   Volume2
 } from "lucide-react";
 import agentsJson from "@/data/agents.json";
-import casesJson from "@/data/cases.json";
-import casesEnJson from "@/data/cases_en.json";
 import consultCatalogJson from "@/data/consult_catalog.json";
 import i18nEnJson from "@/data/i18n/en.json";
 import i18nZhJson from "@/data/i18n/zh.json";
@@ -34,32 +32,30 @@ import orderCatalogImagingJson from "@/data/order_catalog_imaging.json";
 import orderCatalogLabsJson from "@/data/order_catalog_labs.json";
 import orderCatalogPerioperativeJson from "@/data/order_catalog_perioperative.json";
 import orderCatalogProceduresJson from "@/data/order_catalog_procedures.json";
-import orderPackagesJson from "@/data/order_packages.json";
 import physicalExamItemsJson from "@/data/physical_exam_items.json";
-import { evaluateStage, type FullProcessAnswers, type StageEvaluation } from "@/src/lib/fullProcessScoring";
 import { simplifiedChiefComplaint } from "@/src/lib/chiefComplaint";
+import type { TrainingEvent } from "@/src/lib/eventScoring";
 import { initializeStorageVersion, readJsonStorage, writeJsonStorage } from "@/src/lib/safeStorage";
-import { askPatient, createEmptyCollected, mergeCollected } from "@/src/lib/patientEngine";
+import { attemptPointerKey, attemptStorageKey, createAttempt, type AttemptIdentity, type AttemptMode } from "@/src/lib/attemptState";
 import {
-  generateMdtOpinions,
-  generatePhysicalExamResult,
-  applicablePhysicalExamIds,
-  matchOrderResults,
-  score360,
-  type Evaluator360Report,
-  type ExamResultLog,
-  type MdtOpinion,
-  type OrderResultLog
-} from "@/src/lib/multiAgents";
+  AZURE_VOICE_BY_PROFILE,
+  cleanSpeechText,
+  detectReplyLocale,
+  profileForCase,
+  selectBestVoice,
+  voicePreferenceKey,
+  type ManualVoiceOverride,
+  type TtsPlaybackState,
+  type TtsProviderPreference
+} from "@/src/lib/tts";
+import type { Evaluator360Report, ExamResultLog, FullProcessAnswers, MdtOpinion, OrderResultLog, StageEvaluation } from "@/src/lib/trainingContracts";
 import type {
-  CaseData,
   ChatMessage,
   CollectedMap,
   ConsultCatalogItem,
+  KeyPointId,
   OrderCatalogItem,
-  OrderPackage,
-  PhysicalExamItem,
-  StageKey
+  PhysicalExamItem
 } from "@/src/lib/types";
 import FormattedText from "./FormattedText";
 
@@ -67,14 +63,21 @@ type TrainingMode = "free" | "osce" | "demo" | "rct" | "random";
 type LanguageCode = "zh" | "en";
 type AiMode = "deepseek" | "rule" | "debug";
 type AiStatus = "unknown" | "checking" | "connected" | "fallback" | "error";
-type SpeechState = "off" | "speaking" | "paused";
-type SpeechProvider = "browser" | "azure" | "disabled";
 type AgentStageNo = 1 | 2 | 3 | 4 | 5 | 6 | 7;
-type StudentVisibleCase = Pick<CaseData, "id" | "studentChiefComplaint" | "chiefComplaint" | "age" | "sex" | "difficulty">;
+type StudentVisibleCase = {
+  id: string;
+  studentChiefComplaint: string;
+  chiefComplaint: string;
+  chiefComplaintEn?: string;
+  age: string;
+  sex: string;
+  sexEn?: string;
+  difficulty?: string;
+};
 type TimelineEvent = {
   id: string;
   stageNo: AgentStageNo;
-  type: "ask" | "answer" | "exam" | "order" | "result" | "diagnosis" | "mdt" | "treatment" | "perioperative" | "submit";
+  type: "ask" | "answer" | "exam" | "order" | "result" | "diagnosis" | "mdt" | "treatment" | "perioperative" | "submit" | "timeout";
   label: string;
   detail: string;
   at: string;
@@ -88,26 +91,6 @@ type AgentConfig = {
   competency: Record<LanguageCode, string>;
   mainWindowFunction: Record<LanguageCode, string>;
   keyRule: string;
-};
-
-type EnglishCase = {
-  id: string;
-  title: string;
-  age: string;
-  sex: string;
-  difficulty: string;
-  diseaseCategory: string;
-  chiefComplaint: string;
-  initialDiagnosis: string;
-  admissionLabs: string;
-  admissionImaging: string;
-  initialTreatmentPlan: string;
-  definitiveTreatment: string;
-  perioperativePoints: string;
-  mdtDepartments: string;
-  mdtQuestion: string;
-  evaluatorKeyPoints: string;
-  nextManagement: string;
 };
 
 type PatientReplyApiResponse = {
@@ -133,7 +116,6 @@ type PatientReplyApiResponse = {
 type SessionInitResponse = {
   sessionId: string;
   patientOpeningStatement: string;
-  completedPatientFacingProfile: Record<string, unknown>;
   aiStatus: "connected" | "fallback";
   cacheHit: boolean;
   debug?: Record<string, unknown>;
@@ -153,8 +135,6 @@ type SpeechRecognitionLike = {
 };
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 
-const allClientCases = casesJson as CaseData[];
-const allEnglishCases = casesEnJson as EnglishCase[];
 const agents = (agentsJson as AgentConfig[]).sort((a, b) => a.stageNo - b.stageNo);
 const i18n = { zh: i18nZhJson as Record<string, string>, en: i18nEnJson as Record<string, string> };
 const orderCatalog = [
@@ -163,7 +143,6 @@ const orderCatalog = [
   ...(orderCatalogProceduresJson as OrderCatalogItem[]),
   ...(orderCatalogPerioperativeJson as OrderCatalogItem[])
 ];
-const orderPackages = orderPackagesJson as OrderPackage[];
 const physicalExamItems = physicalExamItemsJson as PhysicalExamItem[];
 const consultCatalog = consultCatalogJson as ConsultCatalogItem[];
 const orderPrimaryTabs = ["检验", "检查", "病理/操作", "围术期评估"];
@@ -172,8 +151,11 @@ const imagingSecondaryOrder = ["超声", "X线", "CT", "MRI", "内镜", "核医�
 const consultGroupOrder = ["外科", "内科", "辅助/平台", "急诊/危重"];
 const defaultAgentApiUrl = "https://hematuria-training-system.vercel.app/api/agent-chat/";
 const defaultSessionInitApiUrl = "https://hematuria-training-system.vercel.app/api/session/init/";
+const defaultTrainingApiUrl = "https://hematuria-training-system.vercel.app/api/training-action";
 const buildTimeAgentApiUrl = process.env.NEXT_PUBLIC_AGENT_API_URL || process.env.NEXT_PUBLIC_PATIENT_AGENT_API_URL || defaultAgentApiUrl;
 const buildTimeSessionInitApiUrl = process.env.NEXT_PUBLIC_SESSION_INIT_API_URL || defaultSessionInitApiUrl;
+const buildTimeTrainingApiUrl = process.env.NEXT_PUBLIC_TRAINING_API_URL || defaultTrainingApiUrl;
+const buildTimeTtsApiUrl = process.env.NEXT_PUBLIC_TTS_API_URL || "https://hematuria-training-system.vercel.app/api/tts";
 const PATIENT_REPLY_TIMEOUT_MS = 12000;
 const isDevelopment = process.env.NODE_ENV !== "production";
 
@@ -191,23 +173,25 @@ const patientReplyForbiddenTerms = [
   "膀胱镜",
   "病理",
   "占位",
-  "肿瘤",
-  "膀胱癌",
   "癌栓",
   "淋巴结",
-  "诊断",
-  "治疗",
-  "手术",
   "化疗",
-  "放疗"
+  "放疗",
+  "the diagnosis is",
+  "you have cancer",
+  "ct shows",
+  "pathology shows",
+  "the treatment is",
+  "you need surgery"
 ];
 
-function isUnsafePatientReply(question: string, reply: string) {
+function isUnsafePatientReply(question: string, reply: string, language: LanguageCode) {
   const compactQuestion = question.replace(/\s+/g, "");
   const compactReply = reply.replace(/\s+/g, "");
   if (!reply.trim()) return true;
   if (patientReplyForbiddenTerms.some((term) => reply.includes(term))) return true;
-  if (compactReply.length > 180) return true;
+  if (language === "en" && /[\u3400-\u9fff]/.test(reply)) return true;
+  if (compactReply.length > 600) return true;
 
   const askedSmoking = /吸烟|抽烟|烟龄|几包|包年/.test(compactQuestion);
   const askedAlcohol = /喝酒|饮酒|白酒|酒量/.test(compactQuestion);
@@ -253,12 +237,30 @@ function t(lang: LanguageCode, key: string) {
   return i18n[lang][key] || i18n.zh[key] || key;
 }
 
-function sessionKey(caseId: string) {
-  return `hematuria-7agent-bilingual-session-${caseId}`;
-}
-
 function unique(values: string[]) {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+}
+
+const collectedKeys: KeyPointId[] = ["onset", "hematuriaType", "hematuriaPhase", "colorClots", "irritativeSymptoms", "flankPain", "fever", "voidingDifficulty", "smoking", "occupation", "stoneHistory", "infectionHistory", "trauma", "anticoagulants", "tumorFamilyHistory", "historyBundle"];
+const canonicalToCollected: Record<string, KeyPointId> = {
+  hematuria_onset: "onset", hematuria_visibility: "hematuriaType", hematuria_phase: "hematuriaPhase",
+  urine_color: "colorClots", clots: "colorClots", dysuria: "irritativeSymptoms", urinary_frequency: "irritativeSymptoms",
+  urinary_urgency: "irritativeSymptoms", flank_pain: "flankPain", renal_colic: "flankPain", fever_chills: "fever",
+  voiding_difficulty: "voidingDifficulty", retention: "voidingDifficulty", smoking: "smoking", occupation_exposure: "occupation",
+  stone_history: "stoneHistory", uti_history: "infectionHistory", triggers: "trauma", anticoagulant: "anticoagulants",
+  antiplatelet: "anticoagulants", family_history: "tumorFamilyHistory", past_history: "historyBundle",
+  medications: "historyBundle", general_condition: "historyBundle", gynecologic_contamination: "historyBundle",
+  glomerular_features: "historyBundle", recent_uri: "historyBundle", bleeding_tendency: "historyBundle"
+};
+
+function createEmptyCollected(): CollectedMap {
+  return Object.fromEntries(collectedKeys.map((key) => [key, false])) as CollectedMap;
+}
+
+function collectedFromSlots(current: CollectedMap, slots: string[]) {
+  const next = { ...current };
+  slots.forEach((slot) => { const key = canonicalToCollected[slot]; if (key) next[key] = true; });
+  return next;
 }
 
 function nowEventId() {
@@ -283,7 +285,7 @@ function getSpeechRecognition() {
   return browserWindow.SpeechRecognition || browserWindow.webkitSpeechRecognition;
 }
 
-function stageScoreKey(stageNo: AgentStageNo): StageKey {
+function stageScoreKey(stageNo: AgentStageNo) {
   if (stageNo === 1) return "history";
   if (stageNo === 2) return "orders";
   if (stageNo === 3) return "diagnosis";
@@ -297,68 +299,26 @@ function nextStage(stageNo: AgentStageNo): AgentStageNo | null {
   return stageNo < 7 ? ((stageNo + 1) as AgentStageNo) : null;
 }
 
-function patientOpening(caseData: CaseData, lang: LanguageCode, enCase?: EnglishCase) {
-  const complaint = simplifiedChiefComplaint(caseData.studentChiefComplaint || caseData.chiefComplaint, lang, enCase?.chiefComplaint);
+function patientOpening(caseData: StudentVisibleCase, lang: LanguageCode) {
+  const complaint = simplifiedChiefComplaint(caseData.studentChiefComplaint || caseData.chiefComplaint, lang, caseData.chiefComplaintEn);
   if (lang === "en") return `Hello doctor. I came because of ${complaint || "abnormal urine color"}.`;
   return `医生您好，我是因为${complaint || "小便颜色异常"}来看病的。`;
 }
 
-function caseDisplay(caseData: CaseData, lang: LanguageCode, enCase?: EnglishCase) {
-  if (lang === "en" && enCase) {
-    return {
-      title: enCase.title,
-      age: enCase.age,
-      sex: enCase.sex,
-      difficulty: enCase.difficulty,
-      diseaseCategory: enCase.diseaseCategory,
-      chiefComplaint: simplifiedChiefComplaint(caseData.studentChiefComplaint || caseData.chiefComplaint, "en", enCase.chiefComplaint),
-      standardPath: [
-        `Diagnosis: ${enCase.initialDiagnosis}`,
-        `Essential labs: ${enCase.admissionLabs}`,
-        `Imaging/procedures: ${enCase.admissionImaging}`,
-        `MDT: ${enCase.mdtDepartments} ${enCase.mdtQuestion}`,
-        `Treatment: ${enCase.initialTreatmentPlan} ${enCase.definitiveTreatment}`,
-        `Perioperative: ${enCase.perioperativePoints}`,
-        `Follow-up: ${enCase.nextManagement}`
-      ].join("\n")
-    };
-  }
+function caseDisplay(caseData: StudentVisibleCase, lang: LanguageCode) {
   return {
-    title: caseData.title || caseData.id,
+    title: lang === "en" ? `Training case ${caseData.id}` : `训练病例 ${caseData.id}`,
     age: caseData.age,
-    sex: caseData.sex,
+    sex: lang === "en" ? caseData.sexEn || (caseData.sex === "女" ? "Female" : "Male") : caseData.sex,
     difficulty: caseData.difficulty || "",
-    diseaseCategory: caseData.diseaseCategory || "",
-    chiefComplaint: simplifiedChiefComplaint(caseData.studentChiefComplaint || caseData.chiefComplaint, "zh"),
-    standardPath: [
-      `诊断思路：${caseData.clinical?.diagnosticReasoning ?? caseData.diagnosis}`,
-      `基础检验：${caseData.clinical?.requiredLabs ?? ""}`,
-      `影像/内镜/功能：${caseData.clinical?.imagingAndProcedures ?? ""}`,
-      `会诊：${caseData.clinical?.consultDepartments ?? ""}；${caseData.clinical?.consultQuestions ?? ""}`,
-      `即时处理：${caseData.clinical?.immediateTreatment ?? ""}`,
-      `后续治疗：${caseData.clinical?.definitiveTreatment ?? ""}`,
-      `随访：${caseData.clinical?.followUp ?? ""}`
-    ].join("\n")
+    chiefComplaint: simplifiedChiefComplaint(caseData.studentChiefComplaint || caseData.chiefComplaint, lang, caseData.chiefComplaintEn)
   };
 }
 
-function groupPhysicalExamItems(caseData: CaseData) {
-  const allowed = new Set(applicablePhysicalExamIds(caseData));
+function groupPhysicalExamItems() {
   const grouped = new Map<string, PhysicalExamItem[]>();
-  physicalExamItems.filter((item) => allowed.has(item.examId)).forEach((item) => grouped.set(item.category, [...(grouped.get(item.category) ?? []), item]));
+  physicalExamItems.forEach((item) => grouped.set(item.category, [...(grouped.get(item.category) ?? []), item]));
   return Array.from(grouped.entries()).map(([category, items]) => ({ category, items }));
-}
-
-function splitPackageOrders(pkg: OrderPackage) {
-  return unique([pkg.basicLabs, pkg.specialTests, pkg.imagingAndProcedures].flatMap((text) => (text || "").split(/[；;、\n]/)));
-}
-
-function matchCatalogByName(name: string) {
-  const normalized = name.replace(/\s+/g, "");
-  return orderCatalog.find((item) => [item.displayName, ...item.synonyms].some((candidate) => {
-    const value = candidate.replace(/\s+/g, "");
-    return value && (value.includes(normalized) || normalized.includes(value));
-  }));
 }
 
 function stageAnswerText(stageNo: AgentStageNo, answers: FullProcessAnswers, messages: ChatMessage[], examLogs: ExamResultLog[], orderLogs: OrderResultLog[], mdtOpinions: MdtOpinion[]) {
@@ -404,10 +364,9 @@ async function requestSessionInit({ apiUrl, caseId, runtimeMode, language, debug
   }
 }
 
-async function requestAiPatientReply({ apiUrl, sessionId, completedPatientFacingProfile, caseId, question, messages, askedSlots, aiMode, language }: {
+async function requestAiPatientReply({ apiUrl, sessionId, caseId, question, messages, askedSlots, aiMode, language }: {
   apiUrl: string;
   sessionId?: string;
-  completedPatientFacingProfile?: Record<string, unknown> | null;
   caseId: string;
   question: string;
   messages: ChatMessage[];
@@ -431,7 +390,6 @@ async function requestAiPatientReply({ apiUrl, sessionId, completedPatientFacing
         mode: aiMode === "rule" ? "rule" : aiMode === "debug" ? "debug" : "training",
         language,
         studentInput: question,
-        completedPatientFacingProfile,
         conversationHistory: messages.slice(-6).map((message) => ({ role: message.role, text: message.text })),
         askedSlotIds: askedSlots,
         askedQuestions: messages.filter((message) => message.role === "student").map((message) => message.text)
@@ -439,6 +397,24 @@ async function requestAiPatientReply({ apiUrl, sessionId, completedPatientFacing
     });
     if (!response.ok) throw new Error(`Patient Agent API ${response.status}`);
     return response.json() as Promise<PatientReplyApiResponse>;
+  } finally {
+    globalThis.clearTimeout(timeoutId);
+  }
+}
+
+async function requestTrainingAction<T>(body: Record<string, unknown>): Promise<T> {
+  const controller = new AbortController();
+  const timeoutId = globalThis.setTimeout(() => controller.abort(), PATIENT_REPLY_TIMEOUT_MS);
+  try {
+    const response = await fetch(buildTimeTrainingApiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      signal: controller.signal,
+      body: JSON.stringify(body)
+    });
+    if (!response.ok) throw new Error(`Training action API ${response.status}`);
+    return response.json() as Promise<T>;
   } finally {
     globalThis.clearTimeout(timeoutId);
   }
@@ -555,13 +531,16 @@ function AgentIcon({ stageNo }: { stageNo: AgentStageNo }) {
 }
 
 export default function ClinicalTrainingClient({ caseData: initialCaseData, mode = "free" }: { caseData: StudentVisibleCase; mode?: TrainingMode }) {
-  const [caseData] = useState<CaseData | null>(() => allClientCases.find((item) => item.id === initialCaseData.id) ?? null);
+  const [caseData] = useState<StudentVisibleCase>(initialCaseData);
   const [runtimeMode, setRuntimeMode] = useState<TrainingMode>(mode);
   const [lang, setLang] = useState<LanguageCode>("zh");
+  const [attempt, setAttempt] = useState<AttemptIdentity>(() => createAttempt(initialCaseData.id, "free", "zh"));
+  const [attemptReady, setAttemptReady] = useState(false);
   const [activeStageNo, setActiveStageNo] = useState<AgentStageNo>(1);
   const [answers, setAnswers] = useState<FullProcessAnswers>(emptyAnswers);
   const [submitted, setSubmitted] = useState<Partial<Record<AgentStageNo, StageEvaluation>>>({});
   const [finalReport, setFinalReport] = useState<Evaluator360Report | null>(null);
+  const [previousAttemptScore, setPreviousAttemptScore] = useState<number | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [question, setQuestion] = useState("");
   const [askedSlots, setAskedSlots] = useState<string[]>([]);
@@ -579,19 +558,20 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [speechInputSupported, setSpeechInputSupported] = useState(false);
   const [speechOutputSupported, setSpeechOutputSupported] = useState(false);
   const [listening, setListening] = useState(false);
-  const [autoSpeak, setAutoSpeak] = useState(false);
+  const [autoSpeak, setAutoSpeak] = useState(true);
   const [speechSettingsOpen, setSpeechSettingsOpen] = useState(false);
   const [speechVoices, setSpeechVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const [speechVoiceName, setSpeechVoiceName] = useState("");
+  const [manualVoiceOverrides, setManualVoiceOverrides] = useState<Record<string, ManualVoiceOverride>>({});
   const [speechRate, setSpeechRate] = useState(0.92);
   const [speechPitch, setSpeechPitch] = useState(1);
-  const [speechState, setSpeechState] = useState<SpeechState>("off");
-  const [speechProvider, setSpeechProvider] = useState<SpeechProvider>("browser");
+  const [speechState, setSpeechState] = useState<TtsPlaybackState>("idle");
+  const [speechProvider, setSpeechProvider] = useState<TtsProviderPreference>("auto");
+  const [speechNeedsGesture, setSpeechNeedsGesture] = useState(false);
+  const [speechGestureDismissed, setSpeechGestureDismissed] = useState(false);
   const [lastSpokenText, setLastSpokenText] = useState("");
   const [aiMode, setAiMode] = useState<AiMode>("deepseek");
   const [aiStatus, setAiStatus] = useState<AiStatus>("unknown");
   const [aiSessionId, setAiSessionId] = useState("");
-  const [completedPatientFacingProfile, setCompletedPatientFacingProfile] = useState<Record<string, unknown> | null>(null);
   const [sessionInitLoading, setSessionInitLoading] = useState(false);
   const [sessionInitError, setSessionInitError] = useState("");
   const [lastTechnicalFailure, setLastTechnicalFailure] = useState("");
@@ -599,11 +579,23 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [storageWarning, setStorageWarning] = useState("");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
+  const cloudAudioRef = useRef<HTMLAudioElement | null>(null);
+  const cloudAudioUrlRef = useRef("");
+  const ttsAbortRef = useRef<AbortController | null>(null);
+  const speechGenerationRef = useRef(0);
+  const timeoutHandledRef = useRef(false);
   const allowNavigationRef = useRef(false);
-  const isOsce = runtimeMode === "osce";
-  const enCase = useMemo(() => allEnglishCases.find((item) => item.id === initialCaseData.id), [initialCaseData.id]);
-  const display = caseData ? caseDisplay(caseData, lang, enCase) : null;
-  const physicalGroups = useMemo(() => caseData ? groupPhysicalExamItems(caseData) : [], [caseData]);
+  const practiceDeployment = process.env.NEXT_PUBLIC_DEPLOYMENT_TIER !== "formal";
+  const isOsce = !practiceDeployment && runtimeMode === "osce";
+  const osceLocked = isOsce && osceTimeLeft === 0;
+  const display = caseDisplay(caseData, lang);
+  const voiceProfile = useMemo(() => profileForCase(lang, caseData?.sex || initialCaseData.sex), [caseData?.sex, initialCaseData.sex, lang]);
+  const voiceKey = voicePreferenceKey(voiceProfile);
+  const selectedBrowserVoice = useMemo(
+    () => selectBestVoice(speechVoices, { ...voiceProfile, manualOverride: manualVoiceOverrides[voiceKey] }),
+    [manualVoiceOverrides, speechVoices, voiceKey, voiceProfile]
+  );
+  const physicalGroups = useMemo(() => groupPhysicalExamItems(), []);
 
   const orderGroups = useMemo(() => {
     const keyword = orderSearch.trim().toLowerCase();
@@ -638,22 +630,35 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     } catch {
       setStorageWarning("浏览器存储不可用，本次训练可能无法断点续训。");
     }
-    if (savedLang === "zh" || savedLang === "en") setLang(savedLang);
+    const targetLang: LanguageCode = savedLang === "en" ? "en" : "zh";
+    setLang(targetLang);
     if (savedAiMode === "deepseek" || savedAiMode === "rule" || savedAiMode === "debug") setAiMode(savedAiMode);
     const urlMode = new URLSearchParams(window.location.search).get("mode");
-    if (urlMode === "osce") setRuntimeMode("osce");
-    else if (urlMode === "demo") setRuntimeMode("demo");
-    else if (urlMode === "rct") setRuntimeMode("rct");
-    else if (urlMode === "random") setRuntimeMode("random");
-    else setRuntimeMode(mode);
+    const requestedMode: TrainingMode = urlMode === "random" ? "random" : urlMode === "osce" ? "osce" : urlMode === "rct" ? "rct" : mode;
+    const targetMode: TrainingMode = practiceDeployment && (requestedMode === "osce" || requestedMode === "rct") ? "free" : requestedMode;
+    setRuntimeMode(targetMode);
+    const attemptMode: AttemptMode = targetMode === "osce" ? "osce" : targetMode === "rct" ? "rct" : "free";
+    const pointer = attemptPointerKey(initialCaseData.id, attemptMode, targetLang);
+    const savedAttempt = readJsonStorage<AttemptIdentity | null>(pointer, null).value;
+    const activeAttempt = savedAttempt?.schemaVersion === "attempt-v3"
+      ? savedAttempt
+      : createAttempt(initialCaseData.id, attemptMode, targetLang);
+    setAttempt(activeAttempt);
+    writeJsonStorage(pointer, activeAttempt);
     setSpeechInputSupported(Boolean(getSpeechRecognition()));
-    setSpeechOutputSupported("speechSynthesis" in window);
-    const savedSpeech = readJsonStorage("hematuria-speech-preferences", { enabled: false, provider: "browser" as SpeechProvider, voiceName: "", rate: 0.92, pitch: 1 }).value;
-    setAutoSpeak(Boolean(savedSpeech.enabled));
-    setSpeechVoiceName(String(savedSpeech.voiceName || ""));
+    setSpeechOutputSupported("Audio" in window || "speechSynthesis" in window);
+    const savedSpeech = readJsonStorage<{
+      enabled?: boolean;
+      provider?: TtsProviderPreference;
+      manualOverrides?: Record<string, ManualVoiceOverride>;
+      rate?: number;
+      pitch?: number;
+    }>("hematuria-speech-preferences", { enabled: true, provider: "auto", manualOverrides: {}, rate: 0.92, pitch: 1 }).value;
+    setAutoSpeak(savedSpeech.enabled !== false);
+    setManualVoiceOverrides(savedSpeech.manualOverrides || {});
     setSpeechRate(Math.min(1.15, Math.max(0.8, Number(savedSpeech.rate) || 0.92)));
     setSpeechPitch(Math.min(1.1, Math.max(0.85, Number(savedSpeech.pitch) || 1)));
-    setSpeechProvider(savedSpeech.provider === "disabled" || savedSpeech.provider === "azure" ? savedSpeech.provider : "browser");
+    setSpeechProvider(savedSpeech.provider === "disabled" || savedSpeech.provider === "browser" ? savedSpeech.provider : "auto");
 
     const savedResult = readJsonStorage<{
       activeStageNo?: AgentStageNo;
@@ -668,7 +673,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       mdtOpinions?: MdtOpinion[];
       timeline?: TimelineEvent[];
       osceTimeLeft?: number;
-    }>(sessionKey(initialCaseData.id), {});
+    }>(attemptStorageKey(activeAttempt), {});
     const saved = savedResult.value;
     if (savedResult.recovered) setStorageWarning("检测到损坏的训练缓存，已安全恢复为空白会话。");
     if (saved.activeStageNo) setActiveStageNo(saved.activeStageNo);
@@ -683,26 +688,25 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     if (saved.mdtOpinions) setMdtOpinions(saved.mdtOpinions);
     if (saved.timeline) setTimeline(saved.timeline);
     if (typeof saved.osceTimeLeft === "number") setOsceTimeLeft(saved.osceTimeLeft);
-  }, [initialCaseData.id, mode]);
+    setAttemptReady(true);
+  }, [initialCaseData.id, mode, practiceDeployment]);
 
   useEffect(() => {
-    if (!caseData) return;
-    setMessages((current) => current.length ? current : [{ role: "patient", text: patientOpening(caseData, lang, enCase) }]);
-  }, [caseData, enCase, lang]);
+    setMessages((current) => current.length ? current : [{ role: "patient", text: patientOpening(caseData, lang) }]);
+  }, [caseData, lang]);
 
   useEffect(() => {
-    if (!caseData || aiMode === "rule") return;
+    if (aiMode === "rule") return;
     let cancelled = false;
     const cacheKey = aiSessionCacheKey(caseData.id, lang, runtimeMode);
     const cached = readJsonStorage<SessionInitResponse | null>(cacheKey, null).value;
-    if (cached?.sessionId && cached.completedPatientFacingProfile) {
+    if (cached?.sessionId) {
       setAiSessionId(cached.sessionId);
-      setCompletedPatientFacingProfile(cached.completedPatientFacingProfile);
       setAiStatus(cached.aiStatus === "connected" ? "connected" : "fallback");
       setMessages((current) => {
         const hasStudentMessage = current.some((message) => message.role === "student");
         if (hasStudentMessage) return current;
-        return [{ role: "patient", text: cached.patientOpeningStatement || patientOpening(caseData, lang, enCase) }];
+        return [{ role: "patient", text: cached.patientOpeningStatement || patientOpening(caseData, lang) }];
       });
       return;
     }
@@ -718,13 +722,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     }).then((result) => {
       if (cancelled) return;
       setAiSessionId(result.sessionId);
-      setCompletedPatientFacingProfile(result.completedPatientFacingProfile);
       setAiStatus(result.aiStatus === "connected" ? "connected" : "fallback");
       writeJsonStorage(cacheKey, result);
       setMessages((current) => {
         const hasStudentMessage = current.some((message) => message.role === "student");
         if (hasStudentMessage) return current;
-        return [{ role: "patient", text: result.patientOpeningStatement || patientOpening(caseData, lang, enCase) }];
+        return [{ role: "patient", text: result.patientOpeningStatement || patientOpening(caseData, lang) }];
       });
     }).catch((error) => {
       if (cancelled) return;
@@ -736,7 +739,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     return () => {
       cancelled = true;
     };
-  }, [aiMode, caseData, enCase, lang, runtimeMode]);
+  }, [aiMode, caseData, lang, runtimeMode]);
 
   useEffect(() => {
     try { localStorage.setItem("hematuria-language", lang); } catch { setStorageWarning("语言偏好无法保存。 "); }
@@ -748,8 +751,10 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }, [aiMode]);
 
   useEffect(() => {
+    if (!attemptReady) return;
     setSaveStatus("saving");
-    const result = writeJsonStorage(sessionKey(initialCaseData.id), {
+    const result = writeJsonStorage(attemptStorageKey(attempt), {
+      attempt,
       activeStageNo,
       answers,
       submitted,
@@ -765,13 +770,26 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     });
     setSaveStatus(result.ok ? "saved" : "error");
     if (!result.ok) setStorageWarning("自动保存失败，请勿关闭页面；可在浏览器释放存储空间后重试。 ");
-  }, [activeStageNo, answers, askedSlots, collected, examLogs, finalReport, initialCaseData.id, mdtOpinions, messages, orderLogs, osceTimeLeft, submitted, timeline]);
+  }, [activeStageNo, answers, askedSlots, attempt, attemptReady, collected, examLogs, finalReport, mdtOpinions, messages, orderLogs, osceTimeLeft, submitted, timeline]);
 
   useEffect(() => {
     if (!isOsce || activeStageNo === 7 || finalReport) return;
     const timer = window.setInterval(() => setOsceTimeLeft((value) => Math.max(0, value - 1)), 1000);
     return () => window.clearInterval(timer);
   }, [activeStageNo, finalReport, isOsce]);
+
+  useEffect(() => {
+    if (!osceLocked || timeoutHandledRef.current || finalReport) return;
+    timeoutHandledRef.current = true;
+    const at = new Date().toISOString();
+    const timeoutEvent: TrainingEvent = { eventId: `${attempt.attemptId}-timeout`, type: "timeout", stageNo: activeStageNo, at, text: "OSCE timer reached 00:00" };
+    setTimeline((current) => current.some((item) => item.type === "timeout") ? current : [...current, { id: timeoutEvent.eventId, stageNo: activeStageNo, type: "timeout", label: "OSCE timeout", detail: timeoutEvent.text || "timeout", at }]);
+    void requestTrainingAction<Evaluator360Report>({ action: "score", caseId: caseData.id, events: [...buildScoringEvents(), timeoutEvent], language: lang, attemptId: attempt.attemptId, mode: "osce" })
+      .then((report) => { setFinalReport(report); setActiveStageNo(7); })
+      .catch(() => setStorageWarning(lang === "en" ? "Automatic timeout submission failed; responses remain locked." : "超时自动交卷失败，作答仍保持锁定。"));
+  // The timeout transition is deliberately keyed only to identity/timer state and runs once.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeStageNo, attempt.attemptId, caseData.id, finalReport, lang, osceLocked]);
 
   useEffect(() => {
     if (!timeline.length || finalReport) return;
@@ -792,28 +810,22 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   useEffect(() => {
     if (!speechOutputSupported) return;
     const loadVoices = () => {
-      const locale = lang === "en" ? /en-(US|GB)/i : /zh-(CN|Hans)|Mandarin/i;
-      const available = window.speechSynthesis.getVoices().filter((voice) => locale.test(`${voice.lang} ${voice.name}`));
-      setSpeechVoices(available);
-      if (available.length && !available.some((voice) => voice.name === speechVoiceName)) {
-        const isFemale = caseData?.sex === "女";
-        const preferred = available.find((voice) => isFemale ? /Xiaoxiao|Xiaoyi|Tingting|female/i.test(voice.name) : /Yunxi|Yunjian|male/i.test(voice.name))
-          || available.find((voice) => /Microsoft|Google/i.test(voice.name))
-          || available[0];
-        setSpeechVoiceName(preferred.name);
-      }
+      setSpeechVoices("speechSynthesis" in window ? window.speechSynthesis.getVoices() : []);
     };
     loadVoices();
     window.speechSynthesis.addEventListener("voiceschanged", loadVoices);
     return () => window.speechSynthesis.removeEventListener("voiceschanged", loadVoices);
-  }, [caseData?.sex, lang, speechOutputSupported, speechVoiceName]);
+  }, [caseData?.id, caseData?.sex, lang, speechOutputSupported]);
 
   useEffect(() => {
-    writeJsonStorage("hematuria-speech-preferences", { enabled: autoSpeak, provider: speechProvider, voiceName: speechVoiceName, rate: speechRate, pitch: speechPitch });
-  }, [autoSpeak, speechPitch, speechProvider, speechRate, speechVoiceName]);
+    writeJsonStorage("hematuria-speech-preferences", { enabled: autoSpeak, provider: speechProvider, manualOverrides: manualVoiceOverrides, rate: speechRate, pitch: speechPitch });
+  }, [autoSpeak, manualVoiceOverrides, speechPitch, speechProvider, speechRate]);
 
   useEffect(() => () => {
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    ttsAbortRef.current?.abort();
+    cloudAudioRef.current?.pause();
+    if (cloudAudioUrlRef.current) URL.revokeObjectURL(cloudAudioUrlRef.current);
   }, []);
 
   function addTimeline(type: TimelineEvent["type"], label: string, detail: string, stageNo: AgentStageNo = activeStageNo) {
@@ -821,80 +833,168 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }
 
   function setLanguage(next: LanguageCode) {
+    if (next === lang) return;
+    if (timeline.length > 0 && !window.confirm(next === "en" ? "Switching language starts a separate attempt. Continue?" : "切换语言将开始独立训练记录，是否继续？")) return;
+    const attemptMode: AttemptMode = runtimeMode === "osce" ? "osce" : runtimeMode === "rct" ? "rct" : "free";
+    const nextAttempt = createAttempt(caseData.id, attemptMode, next);
+    setAttempt(nextAttempt);
+    writeJsonStorage(attemptPointerKey(caseData.id, attemptMode, next), nextAttempt);
     setLang(next);
+    setActiveStageNo(1);
+    setAnswers(emptyAnswers);
+    setSubmitted({});
+    setFinalReport(null);
+    setAskedSlots([]);
+    setCollected(createEmptyCollected());
+    setExamLogs([]);
+    setOrderLogs([]);
+    setMdtOpinions([]);
+    setTimeline([]);
+    setOsceTimeLeft(20 * 60);
+    setAiSessionId("");
     window.dispatchEvent(new CustomEvent("hematuria-language-change", { detail: next }));
-    if (caseData && messages.length <= 1) setMessages([{ role: "patient", text: patientOpening(caseData, next, enCase) }]);
+    setMessages([{ role: "patient", text: patientOpening(caseData, next) }]);
   }
 
   function updateAnswer<K extends keyof FullProcessAnswers>(key: K, value: FullProcessAnswers[K]) {
+    if (osceLocked) return;
     setAnswers((current) => ({ ...current, [key]: value }));
   }
 
-  function speak(text: string, force = false) {
-    if (!speechOutputSupported || speechProvider !== "browser" || (!autoSpeak && !force)) return;
-    window.speechSynthesis.cancel();
-    const clean = text.replace(/^患者[:：]\s*/i, "").replace(/^[-•*#]\s*/gm, "").replace(/\s+/g, " ").trim();
-    const segments = clean.split(/(?<=[。！？!?])/).map((item) => item.trim()).filter(Boolean);
-    const voice = speechVoices.find((item) => item.name === speechVoiceName);
-    setLastSpokenText(clean);
-    setSpeechState("speaking");
-    segments.forEach((segment, index) => {
-      const utterance = new SpeechSynthesisUtterance(segment);
-      utterance.lang = lang === "en" ? "en-US" : "zh-CN";
-      utterance.rate = speechRate;
-      utterance.pitch = speechPitch;
-      if (voice) utterance.voice = voice;
-      if (index === segments.length - 1) utterance.onend = () => setSpeechState("off");
-      utterance.onerror = () => setSpeechState("off");
-      window.speechSynthesis.speak(utterance);
-    });
+  function stopSpeech(nextState: TtsPlaybackState = "idle") {
+    speechGenerationRef.current += 1;
+    ttsAbortRef.current?.abort();
+    ttsAbortRef.current = null;
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    if (cloudAudioRef.current) {
+      cloudAudioRef.current.pause();
+      cloudAudioRef.current.src = "";
+      cloudAudioRef.current = null;
+    }
+    if (cloudAudioUrlRef.current) {
+      URL.revokeObjectURL(cloudAudioUrlRef.current);
+      cloudAudioUrlRef.current = "";
+    }
+    setSpeechState(nextState);
   }
 
-  function pauseSpeech() { window.speechSynthesis.pause(); setSpeechState("paused"); }
-  function resumeSpeech() { window.speechSynthesis.resume(); setSpeechState("speaking"); }
-  function stopSpeech() { window.speechSynthesis.cancel(); setSpeechState("off"); }
+  function speakWithBrowser(clean: string, locale: "zh-CN" | "en-US", generation: number) {
+    if (!("speechSynthesis" in window)) {
+      setSpeechState("fallback-text");
+      return false;
+    }
+    const profile = { ...voiceProfile, locale };
+    const key = voicePreferenceKey(profile);
+    const voice = selectBestVoice(speechVoices, { ...profile, manualOverride: manualVoiceOverrides[key] });
+    if (!voice) {
+      setSpeechState("fallback-text");
+      return false;
+    }
+    const segments = clean.split(/(?<=[。！？!?])/).map((item) => item.trim()).filter(Boolean);
+    setSpeechState("fallback-local");
+    segments.forEach((segment, index) => {
+      const utterance = new SpeechSynthesisUtterance(segment);
+      utterance.lang = locale;
+      utterance.rate = speechRate;
+      utterance.pitch = speechPitch;
+      utterance.voice = voice;
+      if (index === segments.length - 1) utterance.onend = () => {
+        if (speechGenerationRef.current === generation) setSpeechState("idle");
+      };
+      utterance.onerror = () => {
+        if (speechGenerationRef.current === generation) {
+          setSpeechState("fallback-text");
+          setSpeechNeedsGesture(true);
+        }
+      };
+      window.speechSynthesis.speak(utterance);
+    });
+    return true;
+  }
+
+  async function speak(text: string, force = false) {
+    stopSpeech();
+    if (!speechOutputSupported || speechProvider === "disabled" || (!autoSpeak && !force)) return;
+    const clean = cleanSpeechText(text);
+    if (!clean) return;
+    const locale = detectReplyLocale(clean, voiceProfile.locale);
+    setLastSpokenText(clean);
+    const generation = speechGenerationRef.current;
+
+    if (speechProvider === "auto") {
+      setSpeechState("loading");
+      const controller = new AbortController();
+      ttsAbortRef.current = controller;
+      try {
+        const response = await fetch(buildTimeTtsApiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({ text: clean, voiceName: AZURE_VOICE_BY_PROFILE[voicePreferenceKey({ ...voiceProfile, locale })], rate: speechRate, pitch: speechPitch })
+        });
+        if (!response.ok) throw new Error(`TTS ${response.status}`);
+        const blob = await response.blob();
+        if (speechGenerationRef.current !== generation) return;
+        const url = URL.createObjectURL(blob);
+        cloudAudioUrlRef.current = url;
+        const audio = new Audio(url);
+        cloudAudioRef.current = audio;
+        audio.onplay = () => speechGenerationRef.current === generation && setSpeechState("playing");
+        audio.onpause = () => speechGenerationRef.current === generation && !audio.ended && setSpeechState("paused");
+        audio.onended = () => speechGenerationRef.current === generation && stopSpeech();
+        audio.onerror = () => speechGenerationRef.current === generation && speakWithBrowser(clean, locale, generation);
+        await audio.play();
+        return;
+      } catch (error) {
+        if (controller.signal.aborted || speechGenerationRef.current !== generation) return;
+        if (!speakWithBrowser(clean, locale, generation) && error instanceof DOMException && error.name === "NotAllowedError") setSpeechNeedsGesture(true);
+        return;
+      }
+    }
+    speakWithBrowser(clean, locale, generation);
+  }
+
+  function pauseSpeech() { cloudAudioRef.current?.pause(); if ("speechSynthesis" in window) window.speechSynthesis.pause(); setSpeechState("paused"); }
+  function resumeSpeech() { if (cloudAudioRef.current) void cloudAudioRef.current.play(); else if ("speechSynthesis" in window) window.speechSynthesis.resume(); setSpeechState("playing"); }
 
   async function submitQuestion(textOverride?: string) {
-    if (!caseData) return;
+    if (osceLocked) return;
     const text = (textOverride ?? question).trim();
     if (!text || patientReplyLoading) return;
+    stopSpeech();
     setPatientReplyLoading(true);
-    const ruleResult = askPatient(caseData, text);
-    let answerText = ruleResult.answer;
-    let matchedSlots = ruleResult.matchedSlots;
-    let matchedKeys = ruleResult.matchedKeys;
+    const technicalFallback = lang === "en"
+      ? "I am sorry, the patient service is temporarily unavailable. Please try again."
+      : "抱歉，患者服务暂时不可用，请稍后重试。";
+    let answerText = technicalFallback;
+    let matchedSlots: string[] = [];
+    let matchedKeys: KeyPointId[] = [];
     try {
-      if (aiMode === "rule") {
-        setAiStatus("fallback");
-      } else {
-        setAiStatus("checking");
-        const aiResult = await requestAiPatientReply({
-          apiUrl: buildTimeAgentApiUrl,
-          sessionId: aiSessionId,
-          completedPatientFacingProfile,
-          caseId: caseData.id,
-          question: text,
-          messages,
-          askedSlots,
-          aiMode,
-          language: lang
-        });
-        const safeAiReply = aiResult.replyText && !isUnsafePatientReply(text, aiResult.replyText);
-        answerText = safeAiReply ? aiResult.replyText : ruleResult.answer;
-        matchedSlots = aiResult.matchedSlotIds?.length ? aiResult.matchedSlotIds : ruleResult.matchedSlots;
-        setAiStatus(safeAiReply && !aiResult.isFallback ? "connected" : "fallback");
-        if (safeAiReply && !aiResult.isFallback) setLastTechnicalFailure("");
-      }
+      setAiStatus("checking");
+      const aiResult = await requestAiPatientReply({
+        apiUrl: buildTimeAgentApiUrl,
+        sessionId: aiSessionId,
+        caseId: caseData.id,
+        question: text,
+        messages,
+        askedSlots,
+        aiMode,
+        language: lang
+      });
+      const safeAiReply = aiResult.replyText && !isUnsafePatientReply(text, aiResult.replyText, lang);
+      answerText = safeAiReply ? aiResult.replyText : technicalFallback;
+      matchedSlots = aiResult.matchedSlotIds || [];
+      matchedKeys = unique(matchedSlots.map((slot) => canonicalToCollected[slot]).filter(Boolean)) as KeyPointId[];
+      setAiStatus(safeAiReply && !aiResult.isFallback ? "connected" : "fallback");
+      if (safeAiReply) setLastTechnicalFailure("");
     } catch {
-      answerText = ruleResult.answer;
-      matchedSlots = ruleResult.matchedSlots;
-      matchedKeys = ruleResult.matchedKeys;
+      answerText = technicalFallback;
       setAiStatus("error");
       setLastTechnicalFailure(text);
     } finally {
       setPatientReplyLoading(false);
     }
-    const nextCollected = mergeCollected(collected, matchedKeys);
+    const nextCollected = collectedFromSlots(collected, matchedSlots);
     const nextAskedSlots = unique([...askedSlots, ...(matchedSlots ?? [])]);
     const nextMessages: ChatMessage[] = [...messages, { role: "student", text }, { role: "patient", text: answerText, matchedKeys, matchedSlots }];
     setMessages(nextMessages);
@@ -903,7 +1003,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     setQuestion("");
     addTimeline("ask", lang === "en" ? "Student question" : "学生提问", text, 1);
     addTimeline("answer", lang === "en" ? "Patient answer" : "患者回答", answerText, 1);
-    speak(answerText);
+    void speak(answerText);
   }
 
   async function retryTechnicalReply() {
@@ -913,7 +1013,6 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       const aiResult = await requestAiPatientReply({
         apiUrl: buildTimeAgentApiUrl,
         sessionId: aiSessionId,
-        completedPatientFacingProfile,
         caseId: caseData.id,
         question: lastTechnicalFailure,
         messages,
@@ -921,7 +1020,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         aiMode: "deepseek",
         language: lang
       });
-      if (!aiResult.replyText || aiResult.isFallback || isUnsafePatientReply(lastTechnicalFailure, aiResult.replyText)) throw new Error("unsafe-or-fallback");
+      if (!aiResult.replyText || aiResult.isFallback || isUnsafePatientReply(lastTechnicalFailure, aiResult.replyText, lang)) throw new Error("unsafe-or-fallback");
       setMessages((current) => current.map((message, index) => index === current.length - 1 && message.role === "patient" ? { ...message, text: aiResult.replyText } : message));
       setAiStatus("connected");
       setLastTechnicalFailure("");
@@ -953,15 +1052,19 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     recognition.start();
   }
 
-  function submitExam(textOverride?: string) {
-    if (!caseData) return;
+  async function submitExam(textOverride?: string) {
+    if (osceLocked) return;
     const text = (textOverride ?? examInput).trim();
     if (!text) return;
-    const log = generatePhysicalExamResult(caseData, text);
-    setExamLogs((current) => [...current, log]);
-    updateAnswer("physicalExam", `${answers.physicalExam}\n${text}：${log.result}`.trim());
-    addTimeline("exam", lang === "en" ? "Physical examination" : "查体", `${text}：${log.result}`, 2);
-    setExamInput("");
+    try {
+      const log = await requestTrainingAction<ExamResultLog>({ action: "exam", caseId: caseData.id, input: text, language: lang, attemptId: attempt.attemptId });
+      setExamLogs((current) => [...current, log]);
+      updateAnswer("physicalExam", `${answers.physicalExam}\n${text}：${log.result}`.trim());
+      addTimeline("exam", lang === "en" ? "Physical examination" : "查体", `${text}：${log.result}`, 2);
+      setExamInput("");
+    } catch {
+      setStorageWarning(lang === "en" ? "The examination service is unavailable. No result was released." : "查体服务暂时不可用，未释放结果。" );
+    }
   }
 
   function toggleOrder(item: string) {
@@ -971,34 +1074,32 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     }));
   }
 
-  function applyOrderPackage(pkg: OrderPackage) {
-    const matched = splitPackageOrders(pkg).map((name) => matchCatalogByName(name)?.displayName ?? name);
-    setAnswers((current) => ({ ...current, selectedOrders: unique([...current.selectedOrders, ...matched]) }));
-    addTimeline("order", lang === "en" ? "Order package" : "选择医嘱套餐", `${pkg.name || pkg.scenario}：${matched.join("；")}`, 2);
-  }
-
-  function submitOrder(textOverride?: string) {
-    if (!caseData) return;
+  async function submitOrder(textOverride?: string) {
+    if (osceLocked) return;
     const text = (textOverride ?? orderInput).trim();
     if (!text) return;
     const previousOrderIds = orderLogs.flatMap((item) => item.matchedOrders.map((order) => order.orderId));
-    const matchedLog = matchOrderResults(caseData, text, { previousOrderIds, stageNo: 2 });
-    const hasReport = matchedLog.results.length > 0;
-    const log: OrderResultLog = hasReport
-      ? { ...matchedLog, pendingResults: matchedLog.results, results: [], returnedAt: undefined, status: "ordered", message: lang === "en" ? "Order placed. The simulated report is pending." : "医嘱已开具，模拟报告返回中。" }
-      : matchedLog;
-    setOrderLogs((current) => [...current, log]);
-    addTimeline("order", lang === "en" ? "Order placed" : "开立医嘱", text, 2);
-    if (hasReport) {
-      window.setTimeout(() => {
-        const returnedAt = new Date().toISOString();
-        setOrderLogs((current) => current.map((item) => item.id === log.id
-          ? { ...item, results: item.pendingResults ?? [], pendingResults: undefined, returnedAt, at: returnedAt, status: "reported", message: matchedLog.message }
-          : item));
-        addTimeline("result", lang === "en" ? "Report returned" : "返回检查结果", matchedLog.results.map((item) => `${item.orderCategory}：${item.result}`).join("\n"), 2);
-      }, 500);
+    try {
+      const matchedLog = await requestTrainingAction<OrderResultLog>({ action: "order", caseId: caseData.id, input: text, previousOrderIds, language: lang, attemptId: attempt.attemptId });
+      const hasReport = matchedLog.results.length > 0;
+      const log: OrderResultLog = hasReport
+        ? { ...matchedLog, pendingResults: matchedLog.results, results: [], returnedAt: undefined, status: "ordered", message: lang === "en" ? "Order placed. The simulated report is pending." : "医嘱已开具，模拟报告返回中。" }
+        : matchedLog;
+      setOrderLogs((current) => [...current, log]);
+      addTimeline("order", lang === "en" ? "Order placed" : "开立医嘱", text, 2);
+      if (hasReport) {
+        window.setTimeout(() => {
+          const returnedAt = new Date().toISOString();
+          setOrderLogs((current) => current.map((item) => item.id === log.id
+            ? { ...item, results: item.pendingResults ?? [], pendingResults: undefined, returnedAt, at: returnedAt, status: "reported", message: matchedLog.message }
+            : item));
+          addTimeline("result", lang === "en" ? "Report returned" : "返回检查结果", matchedLog.results.map((item) => `${item.orderCategory}：${item.result}`).join("\n"), 2);
+        }, 500);
+      }
+      setOrderInput("");
+    } catch {
+      setStorageWarning(lang === "en" ? "The order service is unavailable. No report was released." : "开单服务暂时不可用，未释放报告。" );
     }
-    setOrderInput("");
   }
 
   function submitSelectedOrders() {
@@ -1013,37 +1114,61 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     }));
   }
 
-  function startMdt() {
-    if (!caseData) return;
+  async function startMdt() {
+    if (osceLocked) return;
     if (answers.consultNeeded === "需要会诊" && (answers.consultDepartments.length === 0 || answers.consultPurpose.trim().length < 6 || answers.consultQuestions.trim().length < 6 || answers.consultSummary.trim().length < 6)) {
       alert(t(lang, "purposeRequired"));
       return;
     }
     const purpose = [answers.consultPurpose, answers.consultQuestions, answers.consultSummary].filter(Boolean).join("；");
-    const opinions = generateMdtOpinions(caseData, answers.consultDepartments, purpose);
-    setMdtOpinions(opinions);
-    addTimeline("mdt", "MDT", `${answers.consultDepartments.join("；") || "未选择科室"} - ${purpose}`, 4);
+    try {
+      const opinions = await requestTrainingAction<MdtOpinion[]>({ action: "mdt", caseId: caseData.id, departments: answers.consultDepartments, purpose, language: lang, attemptId: attempt.attemptId });
+      setMdtOpinions(opinions);
+      addTimeline("mdt", "MDT", `${answers.consultDepartments.join("；") || "未选择科室"} - ${purpose}`, 4);
+    } catch {
+      setStorageWarning(lang === "en" ? "The MDT service is unavailable." : "MDT服务暂时不可用。" );
+    }
   }
 
-  function generateReport() {
-    if (!caseData) return null;
-    return score360(caseData, {
-      askedSlots,
-      examTexts: examLogs.map((item) => `${item.input}：${item.result}`),
-      orderTexts: [...answers.selectedOrders, answers.customOrders, ...orderLogs.map((item) => item.input)],
-      diagnosisText: `${answers.diagnosis}；${answers.differentials}；${answers.differentialAnalysis}；${answers.diagnosticEvidence}；${answers.confirmatoryTests}`,
-      mdtDepartments: answers.consultDepartments,
-      mdtPurpose: `${answers.consultPurpose}；${answers.consultQuestions}；${answers.consultSummary}`,
-      mdtStarted: mdtOpinions.length > 0 || answers.consultNeeded === "需要会诊",
-      treatmentText: `${answers.immediateTreatment}；${answers.admissionTreatment}；${answers.definitiveTreatment}；${answers.perioperativePreparation}；${answers.mdtRevisedPlan}`,
-      followUpText: `${answers.followUp}；${answers.patientEducation}`,
-      orderLogs,
-      timeline
+  function buildScoringEvents() {
+    const at = new Date().toISOString();
+    let eventIndex = 0;
+    const event = (type: TrainingEvent["type"], stageNo: number, fields: Partial<TrainingEvent> = {}): TrainingEvent => ({ eventId: `score-${initialCaseData.id}-${eventIndex++}`, type, stageNo, at, ...fields });
+    const scoringEvents: TrainingEvent[] = [];
+    askedSlots.forEach((slotId) => {
+      if (!/^HX\d+$/i.test(slotId)) scoringEvents.push(event("slot_answered", 1, { slotId: slotId as TrainingEvent["slotId"], text: messages.find((message) => message.role === "student" && message.matchedSlots?.includes(slotId))?.text || slotId }));
     });
+    examLogs.forEach((log) => {
+      const exam = physicalExamItems.find((item) => item.displayName === log.input || item.synonyms.includes(log.input));
+      scoringEvents.push(event("physical_exam_performed", 2, { actionId: exam?.examId || log.input, text: log.input }));
+    });
+    orderLogs.forEach((log) => {
+      log.matchedOrders.forEach((order) => scoringEvents.push(event("order_placed", 2, { actionId: order.orderId, text: order.displayName, metadata: { duplicate: Boolean(log.duplicateOrderIds?.includes(order.orderId)) } })));
+      log.results.forEach((result) => scoringEvents.push(event("result_returned", 2, { actionId: result.orderId, text: result.impression || result.result })));
+    });
+    if (answers.diagnosis.trim() && answers.diagnosticEvidence.trim()) scoringEvents.push(event("diagnosis_supported", 3, { actionId: "primary", text: `${answers.diagnosis}：${answers.diagnosticEvidence}` }));
+    answers.differentials.split(/[；;、,，\n]/).map((item) => item.trim()).filter(Boolean).slice(0, 3).forEach((item, index) => scoringEvents.push(event("diagnosis_supported", 3, { actionId: `differential_${index + 1}`, text: item })));
+    if (answers.confirmatoryTests.trim()) scoringEvents.push(event("diagnosis_supported", 3, { actionId: "confirmation", text: answers.confirmatoryTests }));
+    if (answers.consultDepartments.length) scoringEvents.push(event("consult_requested", 4, { actionId: "department", text: answers.consultDepartments.join("；") }));
+    if (answers.consultPurpose.trim()) scoringEvents.push(event("consult_requested", 4, { actionId: "trigger", text: answers.consultPurpose }));
+    if (answers.consultQuestions.trim()) scoringEvents.push(event("consult_requested", 4, { actionId: "question", text: answers.consultQuestions }));
+    if (answers.consultSummary.trim()) scoringEvents.push(event("consult_requested", 4, { actionId: "evidence", text: answers.consultSummary }));
+    if (answers.immediateTreatment.trim()) scoringEvents.push(event("treatment_action", 5, { actionId: "immediate", text: answers.immediateTreatment }));
+    if (answers.admissionTreatment.trim()) scoringEvents.push(event("treatment_action", 5, { actionId: "etiologic", text: answers.admissionTreatment }));
+    if (answers.definitiveTreatment.trim()) scoringEvents.push(event("treatment_action", 5, { actionId: "definitive", text: answers.definitiveTreatment }));
+    if (answers.perioperativePreparation.trim()) scoringEvents.push(event("treatment_action", 6, { actionId: "perioperative", text: answers.perioperativePreparation }));
+    if (answers.followUp.trim()) scoringEvents.push(event("safety_net_provided", 5, { actionId: "followup", text: answers.followUp }));
+    if (answers.patientEducation.trim()) scoringEvents.push(event("safety_net_provided", 5, { actionId: "education", text: answers.patientEducation }));
+    if (answers.debriefReflection.trim().length >= 30) scoringEvents.push(event("reflection_submitted", 7, { actionId: "quality", text: answers.debriefReflection }));
+    return scoringEvents;
   }
 
-  function submitStage() {
-    if (!caseData) return;
+  async function generateReport() {
+    return requestTrainingAction<Evaluator360Report>({ action: "score", caseId: caseData.id, events: buildScoringEvents(), language: lang, attemptId: attempt.attemptId });
+  }
+
+  async function submitStage() {
+    if (osceLocked) return;
     if (submitted[activeStageNo]) return;
     if (activeStageNo === 4 && answers.consultNeeded === "需要会诊" && (answers.consultDepartments.length === 0 || answers.consultPurpose.trim().length < 6 || answers.consultQuestions.trim().length < 6 || answers.consultSummary.trim().length < 6)) {
       alert(t(lang, "purposeRequired"));
@@ -1060,13 +1185,17 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       stageAnswerText(activeStageNo, answers, messages, examLogs, orderLogs, mdtOpinions),
       activeStageNo === 1 ? askedSlots.join("；") : ""
     ].filter(Boolean).join("；");
-    const evaluation = evaluateStage(caseData, stageScoreKey(activeStageNo), answerText);
-    setSubmitted((current) => ({ ...current, [activeStageNo]: evaluation }));
-    addTimeline("submit", lang === "en" ? "Stage submitted" : "提交阶段", `${agents.find((item) => item.stageNo === activeStageNo)?.agentName[lang] ?? activeStageNo}：${evaluation.score}/${evaluation.max}`, activeStageNo);
+    try {
+      const evaluation = await requestTrainingAction<StageEvaluation>({ action: "stage-feedback", caseId: caseData.id, stageKey: stageScoreKey(activeStageNo), answerText, language: lang, attemptId: attempt.attemptId });
+      setSubmitted((current) => ({ ...current, [activeStageNo]: evaluation }));
+      addTimeline("submit", lang === "en" ? "Stage submitted" : "提交阶段", `${agents.find((item) => item.stageNo === activeStageNo)?.agentName[lang] ?? activeStageNo}：${evaluation.score}/${evaluation.max}`, activeStageNo);
+    } catch {
+      setStorageWarning(lang === "en" ? "Stage submission failed. Please retry." : "阶段提交失败，请重试。" );
+    }
   }
 
-  function completeTraining() {
-    if (!caseData || finalReport) return;
+  async function completeTraining() {
+    if (finalReport) return;
     for (let stage = 1 as AgentStageNo; stage <= 6; stage = (stage + 1) as AgentStageNo) {
       if (!submitted[stage]) { alert(lang === "en" ? "Complete stages 1-6 first." : "请先完成并提交第1至第6阶段。"); return; }
     }
@@ -1074,12 +1203,23 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       alert(t(lang, "finalReflectionRequired"));
       return;
     }
-    const evaluation = evaluateStage(caseData, "debrief", answers.debriefReflection);
-    const report = generateReport();
-    if (!report) return;
-    setSubmitted((current) => ({ ...current, 7: evaluation }));
-    setFinalReport(report);
-    addTimeline("submit", lang === "en" ? "Final report generated" : "完成训练并生成最终报告", `${report.total}/${report.max}`, 7);
+    try {
+      const [evaluation, report] = await Promise.all([
+        requestTrainingAction<StageEvaluation>({ action: "stage-feedback", caseId: caseData.id, stageKey: "debrief", answerText: answers.debriefReflection, language: lang, attemptId: attempt.attemptId }),
+        generateReport()
+      ]);
+      setSubmitted((current) => ({ ...current, 7: evaluation }));
+      setFinalReport(report);
+      const summaries = readJsonStorage<Array<{ attemptId: string; caseId: string; language: LanguageCode; total: number; completedAt: string }>>("hematuria-practice-attempt-summaries-v1", []).value;
+      const previous = [...summaries].reverse().find((item) => item.caseId === caseData.id && item.language === lang && item.attemptId !== attempt.attemptId);
+      setPreviousAttemptScore(previous?.total ?? null);
+      if (!summaries.some((item) => item.attemptId === attempt.attemptId)) {
+        writeJsonStorage("hematuria-practice-attempt-summaries-v1", [...summaries, { attemptId: attempt.attemptId, caseId: caseData.id, language: lang, total: report.total, completedAt: new Date().toISOString() }]);
+      }
+      addTimeline("submit", lang === "en" ? "Final report generated" : "完成训练并生成最终报告", `${report.total}/${report.max}`, 7);
+    } catch {
+      setStorageWarning(lang === "en" ? "Final scoring is temporarily unavailable." : "终末评分服务暂时不可用。" );
+    }
   }
 
   function canOpenStage(stageNo: AgentStageNo) {
@@ -1106,7 +1246,10 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   function restartTraining() {
     if (!window.confirm(lang === "en" ? "Restart this case and clear the saved attempt?" : "确定重新开始并清除本病例当前训练记录吗？")) return;
     allowNavigationRef.current = true;
-    try { localStorage.removeItem(sessionKey(initialCaseData.id)); } catch { /* Reload still resets the in-memory attempt. */ }
+    try {
+      localStorage.removeItem(attemptStorageKey(attempt));
+      localStorage.removeItem(attemptPointerKey(attempt.caseId, attempt.mode, attempt.language));
+    } catch { /* Reload still resets the in-memory attempt. */ }
     window.location.reload();
   }
 
@@ -1205,7 +1348,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                       </span>
                       <span>
                         <span className="block text-sm font-semibold leading-5">{agent.leftNavLabel[lang]}</span>
-                        <span className={`mt-1 block text-xs leading-5 ${active ? "text-white/80" : "text-clinic-muted"}`}>{agent.competency[lang]}</span>
+                        <span className={`mt-1 block text-xs leading-5 ${active ? "text-white" : "text-clinic-muted"}`}>{agent.competency[lang]}</span>
                       </span>
                     </div>
                   </button>
@@ -1229,6 +1372,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             <p className="mt-2 text-sm text-clinic-muted">{t(lang, "noFeedbackBeforeSubmit")}</p>
           </div>
 
+          <fieldset disabled={osceLocked && activeStageNo !== 7} className="min-w-0 border-0 p-0 disabled:opacity-75">
           {activeStageNo === 1 && (
             <div>
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1246,20 +1390,33 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                       <button type="button" onClick={() => setSpeechSettingsOpen(false)} className="rounded-md px-2 py-1 text-sm hover:bg-clinic-paper" aria-label={t(lang, "close")}>×</button>
                     </div>
                     <label className="mt-4 flex items-center justify-between gap-3 text-sm"><span>{t(lang, "autoRead")}</span><input type="checkbox" checked={autoSpeak} onChange={(event) => setAutoSpeak(event.target.checked)} /></label>
-                    <label className="mt-4 block text-sm"><span>{t(lang, "speechProvider")}</span><select value={speechProvider} onChange={(event) => setSpeechProvider(event.target.value as SpeechProvider)} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2"><option value="browser">{t(lang, "browserVoice")}</option><option value="disabled">{t(lang, "disabled")}</option><option value="azure" disabled>{lang === "en" ? "Azure Speech (not configured)" : "Azure语音服务（未配置）"}</option></select></label>
-                    <label className="mt-4 block text-sm"><span>{t(lang, "voiceTone")}</span><select value={speechVoiceName} onChange={(event) => setSpeechVoiceName(event.target.value)} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2">{speechVoices.map((voice) => <option key={voice.voiceURI} value={voice.name}>{voice.name}</option>)}</select></label>
-                    {!speechVoices.length && <p className="mt-2 text-xs text-amber-700">{t(lang, "noVoice")}</p>}
+                    <label className="mt-4 block text-sm"><span>{t(lang, "speechProvider")}</span><select value={speechProvider} onChange={(event) => setSpeechProvider(event.target.value as TtsProviderPreference)} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2"><option value="auto">{lang === "en" ? "Automatic (cloud with browser fallback)" : "自动（云语音，浏览器降级）"}</option><option value="browser">{t(lang, "browserVoice")}</option><option value="disabled">{t(lang, "disabled")}</option></select></label>
+                    <label className="mt-4 block text-sm"><span>{t(lang, "voiceTone")}</span><select value={manualVoiceOverrides[voiceKey]?.voiceURI || ""} onChange={(event) => setManualVoiceOverrides((current) => {
+                      const next = { ...current };
+                      if (!event.target.value) delete next[voiceKey];
+                      else {
+                        const voice = speechVoices.find((item) => item.voiceURI === event.target.value);
+                        next[voiceKey] = { voiceURI: event.target.value, name: voice?.name };
+                      }
+                      return next;
+                    })} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2"><option value="">{lang === "en" ? "Automatic voice" : "自动匹配音色"}</option>{speechVoices.filter((voice) => voice.lang.toLowerCase().startsWith(voiceProfile.locale.slice(0, 2).toLowerCase())).map((voice) => <option key={voice.voiceURI} value={voice.voiceURI}>{voice.name}</option>)}</select></label>
+                    {!selectedBrowserVoice && <p className="mt-2 text-xs text-amber-700">{t(lang, "noVoice")}</p>}
                     <label className="mt-4 block text-sm"><span>{t(lang, "speechRate")} {speechRate.toFixed(2)}</span><input className="mt-2 w-full" type="range" min="0.8" max="1.15" step="0.01" value={speechRate} onChange={(event) => setSpeechRate(Number(event.target.value))} /></label>
                     <label className="mt-4 block text-sm"><span>{t(lang, "speechPitch")} {speechPitch.toFixed(2)}</span><input className="mt-2 w-full" type="range" min="0.85" max="1.1" step="0.01" value={speechPitch} onChange={(event) => setSpeechPitch(Number(event.target.value))} /></label>
                     <div className="mt-5 flex flex-wrap gap-2">
-                      <button type="button" onClick={() => speak(lang === "en" ? "Hello doctor, I can hear you clearly." : "医生您好，我能听清您的问题。", true)} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-3 py-2 text-sm text-white"><Volume2 size={15} />{t(lang, "testVoice")}</button>
-                      {speechState === "speaking" ? <button type="button" onClick={pauseSpeech} className="rounded-md border border-clinic-line p-2" title={t(lang, "pause")}><Pause size={16} /></button> : <button type="button" onClick={resumeSpeech} disabled={speechState !== "paused"} className="rounded-md border border-clinic-line p-2 disabled:opacity-50" title={t(lang, "resume")}><Play size={16} /></button>}
-                      <button type="button" onClick={stopSpeech} className="rounded-md border border-clinic-line p-2" title={t(lang, "stop")}><Square size={16} /></button>
-                      <button type="button" onClick={() => lastSpokenText && speak(lastSpokenText, true)} disabled={!lastSpokenText} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm"><RotateCcw size={15} />{t(lang, "replay")}</button>
+                      <button type="button" onClick={() => void speak(lang === "en" ? "Hello doctor, I can hear you clearly." : "医生您好，我能听清您的问题。", true)} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-3 py-2 text-sm text-white"><Volume2 size={15} />{t(lang, "testVoice")}</button>
+                      {speechState === "playing" || speechState === "fallback-local" ? <button type="button" onClick={pauseSpeech} className="rounded-md border border-clinic-line p-2" title={t(lang, "pause")}><Pause size={16} /></button> : <button type="button" onClick={resumeSpeech} disabled={speechState !== "paused"} className="rounded-md border border-clinic-line p-2 disabled:opacity-50" title={t(lang, "resume")}><Play size={16} /></button>}
+                      <button type="button" onClick={() => stopSpeech()} className="rounded-md border border-clinic-line p-2" title={t(lang, "stop")}><Square size={16} /></button>
+                      <button type="button" onClick={() => lastSpokenText && void speak(lastSpokenText, true)} disabled={!lastSpokenText} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm"><RotateCcw size={15} />{t(lang, "replay")}</button>
                     </div>
-                    <p className="mt-3 text-xs text-clinic-muted">{t(lang, "speechStatus")}：{speechState === "speaking" ? t(lang, "speechSpeaking") : speechState === "paused" ? t(lang, "speechPaused") : t(lang, "speechOff")}</p>
+                    <p className="mt-3 text-xs text-clinic-muted">{t(lang, "speechStatus")}：{speechState}</p>
                   </section>
                 </div>
+              )}
+              {speechNeedsGesture && !speechGestureDismissed && (
+                <button type="button" onClick={() => { setSpeechGestureDismissed(true); setSpeechNeedsGesture(false); if (lastSpokenText) void speak(lastSpokenText, true); }} className="mt-3 rounded-md bg-clinic-blue px-4 py-2 text-sm font-medium text-white">
+                  {lang === "en" ? "Start interview and enable audio" : "开始问诊并启用语音"}
+                </button>
               )}
               {(sessionInitLoading || sessionInitError) && (
                 <div className={`mt-3 rounded-md px-3 py-2 text-sm ${sessionInitError ? "bg-amber-50 text-amber-800" : "bg-clinic-paper text-clinic-muted"}`}>
@@ -1335,21 +1492,6 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                     </button>
                   ))}
                 </div>
-                {!isOsce && orderPackages.length > 0 && (
-                  <section className="mt-4 rounded-md border border-clinic-line bg-clinic-paper p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <h4 className="font-medium text-clinic-blue">{t(lang, "commonOrderPackages")}</h4>
-                      <span className="text-xs text-clinic-muted">{t(lang, "packageDisclaimer")}</span>
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {orderPackages.map((pkg) => (
-                        <button key={pkg.packageId} type="button" onClick={() => applyOrderPackage(pkg)} className="rounded-md border border-clinic-line bg-white px-3 py-2 text-sm hover:border-clinic-blue">
-                          {pkg.name || pkg.scenario}
-                        </button>
-                      ))}
-                    </div>
-                  </section>
-                )}
                 <input value={orderSearch} onChange={(event) => setOrderSearch(event.target.value)} className="mt-4 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" placeholder={t(lang, "orderSearch")} />
                 <div className="mt-4 space-y-5">
                   {orderGroups.map((group) => (
@@ -1481,7 +1623,15 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 <span className="font-medium">{t(lang, "reflection")}</span>
                 <textarea disabled={Boolean(finalReport)} value={answers.debriefReflection} onChange={(event) => updateAnswer("debriefReflection", event.target.value)} rows={4} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue disabled:bg-clinic-paper" />
               </label>
-              <div className="mt-5">{finalReport && <FinalReport report={finalReport} lang={lang} />}</div>
+              <div className="mt-5">{finalReport && <>
+                <FinalReport report={finalReport} lang={lang} />
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-y border-clinic-line py-4">
+                  <p className="text-sm text-clinic-muted">{previousAttemptScore === null
+                    ? (lang === "en" ? "This is your first completed attempt for this case and language." : "这是本病例当前语言的首次完整训练。")
+                    : (lang === "en" ? `Change from the previous attempt: ${finalReport.total - previousAttemptScore >= 0 ? "+" : ""}${finalReport.total - previousAttemptScore}` : `较上次训练：${finalReport.total - previousAttemptScore >= 0 ? "+" : ""}${finalReport.total - previousAttemptScore} 分`)}</p>
+                  <button type="button" onClick={restartTraining} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white"><RotateCcw size={16} />{lang === "en" ? "Retrain this case" : "立即重练同病例"}</button>
+                </div>
+              </>}</div>
               <section className="mt-5 rounded-lg border border-clinic-line bg-clinic-paper p-4">
                 <h4 className="font-semibold">{t(lang, "timeline")}</h4>
                 <div className="mt-3 max-h-[360px] space-y-3 overflow-auto">
@@ -1510,7 +1660,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 </div>
                 <div className="rounded-lg border border-clinic-line bg-white p-4">
                   <h4 className="font-semibold text-clinic-blue">{t(lang, "standardPath")}</h4>
-                  <FormattedText text={display.standardPath} />
+                  <FormattedText text={Object.values(submitted).map((item) => item?.standardAnswer || "").filter(Boolean).join("\n\n")} />
                 </div>
               </section>
             </div>
@@ -1535,6 +1685,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
               </button>
             )}
           </div>
+          </fieldset>
 
           {showStageFeedback && activeEvaluation && <FeedbackBox evaluation={activeEvaluation} lang={lang} />}
         </section>

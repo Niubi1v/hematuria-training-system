@@ -1,0 +1,21 @@
+{
+  "version": "guideline-registry-v1",
+  "formalUseAllowed": false,
+  "note": "All scoring rules, order indications and pathways require named specialist review before formal OSCE/RCT use.",
+  "fields": [
+    "guidelineTitle",
+    "year",
+    "section",
+    "reviewer",
+    "reviewDate",
+    "status"
+  ],
+  "defaultReview": {
+    "guidelineTitle": "",
+    "year": 0,
+    "section": "",
+    "reviewer": "",
+    "reviewDate": "",
+    "status": "pending_clinical_review"
+  }
+}
