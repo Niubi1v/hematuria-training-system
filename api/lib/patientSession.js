@@ -272,7 +272,8 @@ function scrubProfile(profile, fallbackProfile) {
       } else if (value && typeof value === "object") {
         result[key] = scrub(value, fallbackValue || {});
       } else if (fallbackValue && typeof fallbackValue === "object") {
-        result[key] = scrub(fallbackValue, fallbackValue);
+        // 模型缺少某个节点时完整保留本地病例事实，不能递归成空对象。
+        result[key] = JSON.parse(JSON.stringify(fallbackValue));
       }
     });
     return result;
@@ -304,7 +305,9 @@ async function completePatientFacingProfile(rawProfile) {
     });
     try {
       const parsed = parseProfileJson(result.text);
-      const scrubbed = scrubProfile(parsed, localProfile);
+      // DeepSeek有时会按输入字段名包一层，兼容两种结构后再做白名单合并。
+      const parsedProfile = parsed.rawPatientFacingProfile || parsed.completedPatientFacingProfile || parsed;
+      const scrubbed = scrubProfile(parsedProfile, localProfile);
       return { profile: scrubbed, rawOutput: result.text, provider: result.provider, model: result.model, isFallback: false, providerReachable: true, rewriteTriggered: false };
     } catch (parseError) {
       return {
@@ -504,6 +507,12 @@ function preservesAllowedAnswer(reply, allowedAnswer) {
 async function generatePatientAnswer({ sessionId, caseId, studentInput, conversationHistory = [], language = "zh", completedPatientFacingProfile }) {
   const session = getSession(sessionId, caseId, completedPatientFacingProfile);
   const caseData = getCaseById(caseId);
+  if (hasAny(studentInput, diagnosisWords)) {
+    return { replyText: "这个我不清楚，需要医生判断。", provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, safetyFlags: ["blocked_diagnosis_request"], matchedSlotIds: [], matchedFacts: [], answerSource: "rule", confidence: 1, fallbackReason: "diagnosis_boundary" };
+  }
+  if (hasAny(studentInput, reportWords)) {
+    return { replyText: "我说不清楚，得看检查报告。", provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, safetyFlags: ["blocked_report_request"], matchedSlotIds: [], matchedFacts: [], answerSource: "rule", confidence: 1, fallbackReason: "report_boundary" };
+  }
   const structured = matchStructuredFacts(caseData, studentInput, language);
   const genericFallback = safeFallbackForQuestion(studentInput, session?.completedPatientFacingProfile || completedPatientFacingProfile);
   const fallback = structured ? { ...structured, provider: "rule", model: "local-rule", isFallback: true } : genericFallback;

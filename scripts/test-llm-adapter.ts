@@ -74,6 +74,8 @@ async function main() {
   );
   assert(dynamicSessionSource.includes("currentAllowedAnswer:"), "dynamic Patient Agent must send only the current allowed answer");
   assert(dynamicSessionSource.includes("preservesAllowedAnswer"), "dynamic Patient Agent must reject factual drift");
+  assert(dynamicSessionSource.includes("parsed.rawPatientFacingProfile"), "dynamic profile completion must unwrap DeepSeek profile envelopes");
+  assert(dynamicSessionSource.includes('fallbackReason: "diagnosis_boundary"'), "diagnosis requests must be blocked before slot matching");
 
   console.log("LLM adapter and API safety tests passed.");
 }
