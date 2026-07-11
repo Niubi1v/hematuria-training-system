@@ -1,5 +1,13 @@
 # TEST REPORT
 
+## DeepSeek V4线上修复（2026-07-11）
+
+- DeepSeek V4请求显式使用 `thinking.type=disabled`；标准化患者只需要最终短答，不读取或回传模型推理内容。
+- 单轮问诊只向模型发送 `currentAllowedAnswer`、患者表达风格和最近两轮对话，不再发送完整患者档案。
+- 增加事实保持校验：明确的吸烟/饮酒肯定或否定事实不得被模型改写为“不清楚”。
+- 档案补全与实时问诊状态分离；档案JSON格式失败可安全回退，但真实问诊API可用时仍正确显示AI连接。
+- 本地 `lint`、`typecheck`、Patient Agent安全测试、全量回归测试及52页生产构建通过。
+
 ## 2.3.0整改回归
 
 - GitHub Actions等价Excel重建：通过，42例schema校验0错误、42条医学终审提醒。

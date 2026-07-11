@@ -292,20 +292,33 @@ async function completePatientFacingProfile(rawProfile) {
   const localProfile = localCompleteProfile(rawProfile);
   const config = getLLMProviderConfig();
   if (!config.enabled) {
-    return { profile: localProfile, rawOutput: "", provider: config.provider, model: config.model, isFallback: true, rewriteTriggered: false };
+    return { profile: localProfile, rawOutput: "", provider: config.provider, model: config.model, isFallback: true, providerReachable: false, rewriteTriggered: false };
   }
   try {
     const result = await callLLM({
       systemPrompt: profilePrompt,
       userPayload: { rawPatientFacingProfile: rawProfile },
       temperature: 0.2,
-      maxTokens: Math.min(config.maxTokens || 500, 900)
+      // 该调用需要返回完整结构化档案，不能沿用单轮患者回答的短输出上限。
+      maxTokens: Math.max(config.maxTokens || 500, 2200)
     });
-    const parsed = parseProfileJson(result.text);
-    const scrubbed = scrubProfile(parsed, localProfile);
-    return { profile: scrubbed, rawOutput: result.text, provider: result.provider, model: result.model, isFallback: false, rewriteTriggered: false };
+    try {
+      const parsed = parseProfileJson(result.text);
+      const scrubbed = scrubProfile(parsed, localProfile);
+      return { profile: scrubbed, rawOutput: result.text, provider: result.provider, model: result.model, isFallback: false, providerReachable: true, rewriteTriggered: false };
+    } catch (parseError) {
+      return {
+        profile: localProfile,
+        rawOutput: `Profile JSON parse failed: ${String(parseError?.message || parseError)}`,
+        provider: result.provider,
+        model: result.model,
+        isFallback: true,
+        providerReachable: true,
+        rewriteTriggered: false
+      };
+    }
   } catch (error) {
-    return { profile: localProfile, rawOutput: String(error?.message || error), provider: config.provider, model: config.model, isFallback: true, rewriteTriggered: false };
+    return { profile: localProfile, rawOutput: String(error?.message || error), provider: config.provider, model: config.model, isFallback: true, providerReachable: false, rewriteTriggered: false };
   }
 }
 
@@ -348,7 +361,7 @@ async function initSession({ caseId, mode = "training", language = "zh", debug =
       patientOpeningStatement: cached.completedPatientFacingProfile.patient_opening_statement?.value || "医生您好。",
       completedPatientFacingProfile: cached.completedPatientFacingProfile,
       cacheHit: true,
-      aiStatus: cached.isFallback ? "fallback" : "connected",
+      aiStatus: cached.providerReachable ? "connected" : "fallback",
       ...(debug ? { debug: { ...cached.debug, cacheHit: true } } : {})
     };
   }
@@ -371,7 +384,8 @@ async function initSession({ caseId, mode = "training", language = "zh", debug =
       estimatedTokens: Math.ceil(JSON.stringify(rawPatientFacingProfile).length / 4),
       cacheHit: false
     },
-    isFallback: completion.isFallback
+    isFallback: completion.isFallback,
+    providerReachable: completion.providerReachable
   };
   sessionCache.set(cacheKey, profileRecord);
   const sessionId = makeSessionId(caseData.id, language, mode);
@@ -382,7 +396,7 @@ async function initSession({ caseId, mode = "training", language = "zh", debug =
     patientOpeningStatement: completion.profile.patient_opening_statement?.value || "医生您好。",
     completedPatientFacingProfile: completion.profile,
     cacheHit: false,
-    aiStatus: completion.isFallback ? "fallback" : "connected",
+    aiStatus: completion.providerReachable ? "connected" : "fallback",
     ...(debug ? { debug: { ...profileRecord.debug, rawPatientFacingProfile, teacherOnlyFieldList: profileRecord.teacherOnlyFieldList } } : {})
   };
 }
@@ -424,6 +438,7 @@ function oneBullet(value) {
 
 function profileFallbackForQuestion(question, profile) {
   if (!profile) return "";
+  if (hasAny(question, ["哪里不舒服", "怎么不舒服", "怎么回事", "为什么来看", "主要症状", "主诉"])) return readProfileField(profile, "current_symptoms_patient_safe") || readProfileField(profile, "chief_complaint");
   if (hasAny(question, ["吸烟", "抽烟", "烟龄", "几包", "包年"])) return readProfileField(profile, "smoking_history");
   if (hasAny(question, ["喝酒", "饮酒", "白酒", "酒量"])) return readProfileField(profile, "drinking_history");
   if (hasAny(question, ["鲜红", "暗红", "洗肉水", "茶色", "酱油色", "颜色", "红色"])) return readProfileField(profile, "hematuria_color");
@@ -451,7 +466,7 @@ function safeFallbackForQuestion(question, profile) {
 
 const patientPrompt = `
 你是血尿临床思维训练系统中的标准化病人，不是医生、教师或病历摘要器。
-你只能根据 completedPatientFacingProfile 中患者本人知道的信息回答问题。
+你只能根据 currentAllowedAnswer 回答问题。currentAllowedAnswer 是本轮唯一允许使用的医学事实，必须保持它的肯定、否定、数量和时间含义，不得改成“不清楚”。
 绝对规则：
 1. 问什么答什么，没问不说。
 2. 不主动总结完整病史。
@@ -466,6 +481,25 @@ const patientPrompt = `
 11. 回答简短，1-2句，不超过80字，不使用Markdown项目符号或“患者：”前缀。
 12. 只回答当前问题，不要顺带回答未问内容。
 `.trim();
+
+function preservesAllowedAnswer(reply, allowedAnswer) {
+  const replyText = normalize(reply);
+  const allowedText = normalize(allowedAnswer);
+  const allowedIsUnknown = hasAny(allowedText, ["不太清楚", "没有注意", "说不清楚"]);
+  if (!allowedIsUnknown && hasAny(replyText, ["不太清楚", "不知道", "没注意", "说不清楚"])) return false;
+
+  const factGroups = [
+    ["吸烟", "抽烟", "烟龄", "包年"],
+    ["喝酒", "饮酒", "酒量"]
+  ];
+  for (const words of factGroups) {
+    if (!hasAny(allowedText, words)) continue;
+    if (!hasAny(replyText, words)) return false;
+    const allowedNegative = hasAny(allowedText, ["不吸烟", "不抽烟", "没有吸烟", "不喝酒", "不饮酒", "没有饮酒", "否认"]);
+    if (allowedNegative && !hasAny(replyText, ["不", "没", "否认"])) return false;
+  }
+  return true;
+}
 
 async function generatePatientAnswer({ sessionId, caseId, studentInput, conversationHistory = [], language = "zh", completedPatientFacingProfile }) {
   const session = getSession(sessionId, caseId, completedPatientFacingProfile);
@@ -485,31 +519,31 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   if (!config.enabled) return { ...fallback, provider: config.provider, model: config.model, isFallback: true, filter: { ok: true, hits: [] } };
 
   const payload = {
-    completedPatientFacingProfile: session.completedPatientFacingProfile,
     currentAllowedAnswer: structured?.replyText || fallback.replyText,
     matchedFacts: structured?.matchedFacts || [],
+    patientPersona: session.completedPatientFacingProfile.patient_persona,
     studentInput,
-    conversationHistory: conversationHistory.slice(-6),
+    conversationHistory: conversationHistory.slice(-2),
     language
   };
   try {
     const first = await callLLM({ systemPrompt: patientPrompt, userPayload: payload, temperature: 0.3, maxTokens: 300 });
     const firstText = formatPatientReply(first.text);
     let filter = filterPatientOutput(firstText);
-    if (filter.ok) {
+    if (filter.ok && preservesAllowedAnswer(firstText, payload.currentAllowedAnswer)) {
       const result = { replyText: firstText, provider: first.provider, model: first.model, isFallback: false, filter, rewriteTriggered: false, safetyFlags: [], matchedSlotIds: structured?.matchedSlotIds || [], matchedFacts: structured?.matchedFacts || [], answerSource: structured?.answerSource || "ai", confidence: structured?.confidence || 0.9, fallbackReason: "" };
       answerCache.set(answerKey, result);
       return result;
     }
     const retry = await callLLM({
-      systemPrompt: `${patientPrompt}\n\n上一次回答包含禁止内容或格式不合格：${filter.hits.join("、")}。请只回答当前问题，必须分点且不超过45字。`,
+      systemPrompt: `${patientPrompt}\n\n上一次回答包含禁止内容、改变了获准事实或格式不合格：${filter.hits.join("、")}。请严格保持 currentAllowedAnswer 的事实含义，只用1-2句且不超过45字。`,
       userPayload: payload,
       temperature: 0.2,
       maxTokens: 220
     });
     const retryText = formatPatientReply(retry.text);
     const retryFilter = filterPatientOutput(retryText);
-    if (retryFilter.ok) {
+    if (retryFilter.ok && preservesAllowedAnswer(retryText, payload.currentAllowedAnswer)) {
       const result = { replyText: retryText, provider: retry.provider, model: retry.model, isFallback: false, filter: retryFilter, rewriteTriggered: true, safetyFlags: [], matchedSlotIds: structured?.matchedSlotIds || [], matchedFacts: structured?.matchedFacts || [], answerSource: structured?.answerSource || "ai", confidence: structured?.confidence || 0.9, fallbackReason: "" };
       answerCache.set(answerKey, result);
       return result;

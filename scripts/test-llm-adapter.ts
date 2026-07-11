@@ -67,6 +67,14 @@ async function main() {
     assert(source.includes('"disabled"'), `${file} must default patient-facing calls to disabled thinking`);
   }
 
+  const dynamicSessionSource = fs.readFileSync("api/lib/patientSession.js", "utf8");
+  assert(
+    !dynamicSessionSource.includes("completedPatientFacingProfile: session.completedPatientFacingProfile"),
+    "dynamic Patient Agent must not send the whole patient profile to the per-question LLM call"
+  );
+  assert(dynamicSessionSource.includes("currentAllowedAnswer:"), "dynamic Patient Agent must send only the current allowed answer");
+  assert(dynamicSessionSource.includes("preservesAllowedAnswer"), "dynamic Patient Agent must reject factual drift");
+
   console.log("LLM adapter and API safety tests passed.");
 }
 
