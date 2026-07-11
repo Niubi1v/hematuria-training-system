@@ -513,11 +513,15 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   if (hasAny(studentInput, reportWords)) {
     return { replyText: "我说不清楚，得看检查报告。", provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, safetyFlags: ["blocked_report_request"], matchedSlotIds: [], matchedFacts: [], answerSource: "rule", confidence: 1, fallbackReason: "report_boundary" };
   }
+  // Vercel的会话初始化与问答可能落到不同Serverless实例；每问均从当前病例重建安全档案，
+  // 不依赖另一个实例的内存缓存，也不信任客户端传回的数据完整性。
+  const authoritativeProfile = caseData ? localCompleteProfile(buildRawPatientFacingProfile(caseData)) : null;
+  const runtimeProfile = authoritativeProfile || session?.completedPatientFacingProfile || completedPatientFacingProfile;
   const structured = matchStructuredFacts(caseData, studentInput, language);
-  const genericFallback = safeFallbackForQuestion(studentInput, session?.completedPatientFacingProfile || completedPatientFacingProfile);
+  const genericFallback = safeFallbackForQuestion(studentInput, runtimeProfile);
   const fallback = structured ? { ...structured, provider: "rule", model: "local-rule", isFallback: true } : genericFallback;
   if (fallback.safetyFlags[0]?.startsWith("blocked_")) return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] } };
-  if (!session?.completedPatientFacingProfile) return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] } };
+  if (!runtimeProfile) return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] } };
 
   const config = getLLMProviderConfig();
   const normalized = normalize(studentInput);
@@ -530,7 +534,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   const payload = {
     currentAllowedAnswer: structured?.replyText || fallback.replyText,
     matchedFacts: structured?.matchedFacts || [],
-    patientPersona: session.completedPatientFacingProfile.patient_persona,
+    patientPersona: runtimeProfile.patient_persona,
     studentInput,
     conversationHistory: conversationHistory.slice(-2),
     language
@@ -540,7 +544,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     const firstText = formatPatientReply(first.text);
     let filter = filterPatientOutput(firstText);
     if (filter.ok && preservesAllowedAnswer(firstText, payload.currentAllowedAnswer)) {
-      const result = { replyText: firstText, provider: first.provider, model: first.model, isFallback: false, filter, rewriteTriggered: false, safetyFlags: [], matchedSlotIds: structured?.matchedSlotIds || [], matchedFacts: structured?.matchedFacts || [], answerSource: structured?.answerSource || "ai", confidence: structured?.confidence || 0.9, fallbackReason: "" };
+      const result = { replyText: firstText, provider: first.provider, model: first.model, isFallback: false, filter, rewriteTriggered: false, safetyFlags: [], matchedSlotIds: structured?.matchedSlotIds || [], matchedFacts: structured?.matchedFacts || [], answerSource: structured?.answerSource || "ai", confidence: structured?.confidence || 0.9, fallbackReason: "", allowedAnswer: payload.currentAllowedAnswer };
       answerCache.set(answerKey, result);
       return result;
     }
@@ -553,7 +557,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     const retryText = formatPatientReply(retry.text);
     const retryFilter = filterPatientOutput(retryText);
     if (retryFilter.ok && preservesAllowedAnswer(retryText, payload.currentAllowedAnswer)) {
-      const result = { replyText: retryText, provider: retry.provider, model: retry.model, isFallback: false, filter: retryFilter, rewriteTriggered: true, safetyFlags: [], matchedSlotIds: structured?.matchedSlotIds || [], matchedFacts: structured?.matchedFacts || [], answerSource: structured?.answerSource || "ai", confidence: structured?.confidence || 0.9, fallbackReason: "" };
+      const result = { replyText: retryText, provider: retry.provider, model: retry.model, isFallback: false, filter: retryFilter, rewriteTriggered: true, safetyFlags: [], matchedSlotIds: structured?.matchedSlotIds || [], matchedFacts: structured?.matchedFacts || [], answerSource: structured?.answerSource || "ai", confidence: structured?.confidence || 0.9, fallbackReason: "", allowedAnswer: payload.currentAllowedAnswer };
       answerCache.set(answerKey, result);
       return result;
     }
