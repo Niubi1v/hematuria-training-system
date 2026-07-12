@@ -292,6 +292,39 @@ test("twenty interview turns do not reinitialize the active language session", a
   await expect(page.getByLabel("Simulated patient conversation").getByText("Patient answer 20.", { exact: true })).toHaveCount(1);
 });
 
+test("page refresh resumes the same pending history log request", async ({ page }) => {
+  let historyCalls = 0;
+  const historyRequestIds = [];
+  await page.route("**/api/health/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" }) }));
+  await page.route("**/api/session/init/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: "refresh-sync-session", caseId: "P001", language: "en", mode: "free", patientOpeningStatement: "Hello doctor.", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) }));
+  await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "It began this morning.", matchedSlotIds: ["hematuria_onset"], matchedFacts: ["onset=today"], provider: "deepseek", generationSource: "live_ai", isFallback: false }) }));
+  await page.route("**/api/training-action/**", async (route) => {
+    const body = route.request().postDataJSON();
+    if (body.action === "history-log") {
+      historyCalls += 1;
+      historyRequestIds.push(body.requestId);
+      if (historyCalls === 1) await new Promise((resolve) => setTimeout(resolve, 3000));
+    }
+    const payload = body.action === "init-attempt" ? { attemptId: body.attemptId, practiceOnly: true } : { recorded: true, requestId: body.requestId };
+    return route.fulfill({ status: 200, contentType: "application/json", headers: { "X-Training-State": `e2e-${body.attemptId}` }, body: JSON.stringify(payload) });
+  });
+  await page.goto("/cases/P001/");
+  await page.getByRole("button", { name: "English" }).click();
+  await page.getByPlaceholder("Enter an interview question").fill("When did it begin?");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByText("This answer is saved. Scoring is synchronizing.")).toBeVisible();
+  await expect.poll(() => page.evaluate(() => {
+    const key = Object.keys(localStorage).find((item) => item.startsWith("hematuria-attempt-v3:P001:free:en:"));
+    const saved = key ? JSON.parse(localStorage.getItem(key)) : null;
+    return saved?.pendingHistoryLogs?.length || 0;
+  })).toBe(1);
+  await page.reload();
+  await expect(page.getByLabel("Simulated patient conversation").getByText("It began this morning.", { exact: true })).toHaveCount(1);
+  await expect(page.getByText("Scoring is synchronized.")).toBeVisible();
+  expect(historyCalls).toBeGreaterThanOrEqual(2);
+  expect(new Set(historyRequestIds).size).toBe(1);
+});
+
 test("public teacher and RCT routes do not expose formal functions", async ({ page }) => {
   await page.goto("/teacher/");
   await expect(page.getByText(/演示|practice|正式考核/i).first()).toBeVisible();
