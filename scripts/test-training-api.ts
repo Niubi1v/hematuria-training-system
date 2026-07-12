@@ -3,7 +3,11 @@ import assert from "node:assert/strict";
 process.env.TRAINING_STATE_SECRET = "unit-test-training-state-secret-with-adequate-length";
 const handler = require("../api/training-action.js");
 const { initSession } = require("../server/patientSession.js");
-const serverCases = require("../data/cases.json") as Array<{ id: string; medicalReview?: { status?: string } }>;
+const serverCases = require("../data/cases.json") as Array<{
+  id: string;
+  medicalReview?: { status?: string; [key: string]: unknown };
+  medicalReviewImport?: { formalUseAllowed?: boolean; [key: string]: unknown };
+}>;
 
 async function call(body: Record<string, unknown>, token = "") {
   let statusCode = 200;
@@ -44,6 +48,8 @@ async function main() {
 
   const forged = await call({ action: "score", caseId: "P008", attemptId, mode: "free", events: [{ type: "diagnosis_supported", actionId: "primary", metadata: { validated: true } }] }, response.token);
   assert.ok(Number(forged.payload.total) < 360, "forged client events must not create a perfect score");
+  assert.equal(forged.payload.scoringVersion, "360-event-v1", "score reports must use the repository-wide public scoring identifier");
+  assert.equal(forged.payload.reportVersion, 3, "reportVersion tracks implementation evolution independently of scoringVersion");
 
   const changedMode = await call({ action: "score", caseId: "P008", attemptId, mode: "osce" }, response.token);
   assert.equal(changedMode.statusCode, 409, "client must not change a practice attempt into formal mode");
@@ -51,10 +57,30 @@ async function main() {
   const formal = await call({ action: "init-attempt", caseId: "P008", attemptId: "formal-test", mode: "osce", language: "zh" });
   assert.equal(formal.statusCode, 403);
 
-  const formalCase = serverCases.find((item) => item.id === "P008")!;
-  const originalReview = formalCase.medicalReview?.status;
-  formalCase.medicalReview = { ...(formalCase.medicalReview || {}), status: "approved" };
   process.env.TRAINING_DEPLOYMENT_TIER = "formal";
+  for (const caseData of serverCases) {
+    const blocked = await call({ action: "init-attempt", caseId: caseData.id, attemptId: `formal-current-${caseData.id}`, mode: "osce", language: "zh" });
+    assert.equal(blocked.statusCode, 403, `current case ${caseData.id} must remain blocked from formal attempts`);
+    assert.equal(blocked.token, "", `blocked formal case ${caseData.id} must not receive a signed state token`);
+  }
+
+  const formalCase = serverCases.find((item) => item.id === "P008")!;
+  const originalReview = formalCase.medicalReview;
+  const originalReviewImport = formalCase.medicalReviewImport;
+  formalCase.medicalReview = { ...(formalCase.medicalReview || {}), status: "approved" };
+
+  const statusOnly = await call({ action: "init-attempt", caseId: "P008", attemptId: "formal-status-only-test", mode: "osce", language: "zh" });
+  assert.equal(statusOnly.statusCode, 403, "reviewed/approved status alone must not bypass explicit formal-use governance");
+
+  formalCase.medicalReviewImport = { ...(formalCase.medicalReviewImport || {}), formalUseAllowed: true };
+  const dedicatedSecret = process.env.TRAINING_STATE_SECRET;
+  process.env.LLM_API_KEY = "legacy-practice-signing-fallback-only";
+  delete process.env.TRAINING_STATE_SECRET;
+  const missingFormalSecret = await call({ action: "init-attempt", caseId: "P008", attemptId: "formal-missing-secret-test", mode: "osce", language: "zh" });
+  assert.equal(missingFormalSecret.statusCode, 503, "formal tier must not sign state with the LLM_API_KEY fallback");
+  assert.equal(missingFormalSecret.payload.error, "training_state_secret_missing");
+  process.env.TRAINING_STATE_SECRET = dedicatedSecret;
+
   let approvedFormal = await call({ action: "init-attempt", caseId: "P008", attemptId: "formal-approved-test", mode: "osce", language: "zh" });
   assert.equal(approvedFormal.statusCode, 200);
   approvedFormal = await call({ action: "stage-feedback", caseId: "P008", attemptId: "formal-approved-test", mode: "osce", stageKey: "diagnosis", submission: {
@@ -63,8 +89,16 @@ async function main() {
   assert.equal(approvedFormal.payload.standardAnswer, "", "formal attempt must not release the standard answer before completion");
   const formalDowngrade = await call({ action: "score", caseId: "P008", attemptId: "formal-approved-test", mode: "free" }, approvedFormal.token);
   assert.equal(formalDowngrade.statusCode, 409, "formal mode cannot be bypassed by changing client mode to free");
-  formalCase.medicalReview = { ...(formalCase.medicalReview || {}), status: originalReview };
+  formalCase.medicalReview = originalReview;
+  formalCase.medicalReviewImport = originalReviewImport;
   process.env.TRAINING_DEPLOYMENT_TIER = "practice";
+
+  const practiceSecret = process.env.TRAINING_STATE_SECRET;
+  delete process.env.TRAINING_STATE_SECRET;
+  const legacyPractice = await call({ action: "init-attempt", caseId: "P008", attemptId: "practice-legacy-secret-test", mode: "free", language: "zh" });
+  assert.equal(legacyPractice.statusCode, 200, "practice tier retains the documented migration fallback to LLM_API_KEY");
+  assert.ok(legacyPractice.token);
+  process.env.TRAINING_STATE_SECRET = practiceSecret;
 
   const revisionId = `revision-${Date.now()}`;
   let revision = await call({ action: "init-attempt", caseId: "P001", attemptId: revisionId, mode: "free", language: "zh" });
@@ -87,7 +121,7 @@ async function main() {
   assert.equal("teacherOnlyData" in session, false);
   assert.equal(typeof session.sessionId, "string");
 
-  console.log("Training API signed state, exact release, anti-forgery, mode lock, and approval gate passed.");
+  console.log("Training API signed state, exact release, anti-forgery, formal governance, independent-secret, and mode-lock gates passed.");
 }
 
 void main();

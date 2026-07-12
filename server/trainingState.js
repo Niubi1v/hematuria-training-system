@@ -4,7 +4,16 @@ const TOKEN_VERSION = 1;
 const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 function signingSecret() {
-  return process.env.TRAINING_STATE_SECRET || process.env.LLM_API_KEY || "";
+  const dedicatedSecret = process.env.TRAINING_STATE_SECRET || "";
+  if (dedicatedSecret) return dedicatedSecret;
+
+  // Public practice keeps the legacy fallback so an existing practice-only
+  // deployment does not lose signed-state support during migration. Formal
+  // deployments must use a separately managed signing secret; coupling formal
+  // attempt integrity to an LLM credential would make rotation and revocation
+  // unsafe.
+  if (process.env.TRAINING_DEPLOYMENT_TIER !== "formal") return process.env.LLM_API_KEY || "";
+  return "";
 }
 
 function encode(value) {

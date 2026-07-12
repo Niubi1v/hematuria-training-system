@@ -1,5 +1,6 @@
 const cases = require("../data/cases.json");
 const { generatePatientAnswer, probePatientProvider } = require("../server/patientSession.js");
+const { applyAgentCors, positiveInteger, setRateLimitHeaders, takeRateLimit } = require("../server/requestSecurity.js");
 
 const blockedTeacherKeys = ["diagnosis", "imaging", "pathology", "treatment", "teacherOnlyData", "case_card", "scoring"];
 const agentIds = new Set([
@@ -11,12 +12,8 @@ const agentIds = new Set([
   "perioperative_management",
   "assessment_debriefing"
 ]);
-
-function setCors(res) {
-  res.setHeader("Access-Control-Allow-Origin", process.env.AGENT_API_ALLOWED_ORIGIN || process.env.PATIENT_AGENT_ALLOWED_ORIGIN || "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Request-Id, X-Idempotency-Key");
-}
+const requestWindows = globalThis.__hematuriaAgentChatRequestWindows || new Map();
+globalThis.__hematuriaAgentChatRequestWindows = requestWindows;
 
 function getProviderConfig() {
   return {
@@ -104,15 +101,23 @@ function fallbackFor(agentId, language) {
 }
 
 module.exports = async function handler(req, res) {
-  setCors(res);
+  const origin = applyAgentCors(req, res);
+  if (!origin.allowed) return res.status(403).json({ error: "origin_not_allowed" });
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  const rate = takeRateLimit(req, {
+    store: requestWindows,
+    limit: positiveInteger(process.env.AGENT_CHAT_RATE_LIMIT_PER_MINUTE || process.env.AGENT_API_RATE_LIMIT_PER_MINUTE, 30, 10000),
+    windowMs: positiveInteger(process.env.AGENT_API_RATE_LIMIT_WINDOW_MS, 60_000)
+  });
+  setRateLimitHeaders(res, rate);
+  if (rate.limited) return res.status(429).json({ error: "rate_limited" });
 
   try {
     const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
     const agentId = agentIds.has(body.agentId) ? body.agentId : "standardized_patient";
     const caseData = cases.find((item) => String(item.id).toLowerCase() === String(body.caseId).toLowerCase());
-    if (!caseData) return res.status(400).json({ error: `Unknown caseId: ${body.caseId}` });
+    if (!caseData) return res.status(400).json({ error: "unknown_case" });
     if (!body.probe && !String(body.studentInput || "").trim()) return res.status(400).json({ error: "studentInput is required" });
 
     if (agentId === "standardized_patient") {
@@ -141,8 +146,8 @@ module.exports = async function handler(req, res) {
         matchedFacts: patient.matchedFacts || [],
         answerSource: patient.answerSource || (patient.isFallback ? "rule" : patient.provider),
         confidence: patient.confidence ?? (patient.isFallback ? 0.85 : 0.95),
-        fallbackReason: patient.fallbackReason || (patient.isFallback ? patient.error || "ai_unavailable_or_rule_mode" : ""),
-        ...(body.debug ? { debug: { responseFilter: patient.filter, rewriteTriggered: patient.rewriteTriggered, cacheHit: Boolean(patient.cacheHit), error: patient.error || "", allowedAnswer: patient.allowedAnswer || "", deploymentCommit: process.env.VERCEL_GIT_COMMIT_SHA || "local" } } : {})
+        fallbackReason: patient.fallbackReason || (patient.isFallback ? "ai_unavailable_or_rule_mode" : ""),
+        ...(body.debug ? { debug: { responseAccepted: Boolean(patient.filter?.ok), rewriteTriggered: Boolean(patient.rewriteTriggered), cacheHit: Boolean(patient.cacheHit), deploymentCommit: process.env.VERCEL_GIT_COMMIT_SHA || "local" } } : {})
       });
     }
 
@@ -202,7 +207,7 @@ module.exports = async function handler(req, res) {
         isFallback: true
       });
     }
-  } catch (error) {
-    return res.status(500).json({ error: error instanceof Error ? error.message : "Agent API failed" });
+  } catch {
+    return res.status(500).json({ error: "agent_api_failed" });
   }
 };

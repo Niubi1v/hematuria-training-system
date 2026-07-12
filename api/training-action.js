@@ -52,6 +52,7 @@ function requestedAttemptMode(mode) {
 function assertFormalAllowed(caseData) {
   if (process.env.TRAINING_DEPLOYMENT_TIER !== "formal") throw new Error("formal_attempts_disabled");
   if (!["reviewed", "approved"].includes(caseData.medicalReview?.status)) throw new Error("case_not_clinically_approved");
+  if (caseData.medicalReviewImport?.formalUseAllowed !== true) throw new Error("case_formal_use_not_allowed");
 }
 
 function writeState(res, state) {
@@ -161,7 +162,7 @@ function score(caseId, events, language) {
     };
   });
   const total = Math.max(0, Math.min(360, items.reduce((sum, item) => sum + item.score, 0)));
-  return { total, max: 360, items, redFlags: critical.map((event) => event.text), ragGuardrails: [], scoringVersion: "360-server-validated-v2", caseVersion: row.caseVersion, generatedAt: new Date().toISOString(), reportVersion: 3, calculation: `${items.map((item) => `${item.score}/${item.max}`).join(" + ")} = ${total}/360` };
+  return { total, max: 360, items, redFlags: critical.map((event) => event.text), ragGuardrails: [], scoringVersion: "360-event-v1", caseVersion: row.caseVersion, generatedAt: new Date().toISOString(), reportVersion: 3, calculation: `${items.map((item) => `${item.score}/${item.max}`).join(" + ")} = ${total}/360` };
 }
 
 function standardFor(caseData, stageKey) {

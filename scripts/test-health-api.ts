@@ -6,7 +6,8 @@ process.env.LLM_MODEL = "test-model";
 process.env.TRAINING_STATE_SECRET = "test-only-state-secret-at-least-32-bytes";
 process.env.AZURE_SPEECH_KEY = "test-placeholder";
 process.env.AZURE_SPEECH_REGION = "eastasia";
-process.env.AGENT_API_ALLOWED_ORIGIN = "https://niubi1v.github.io";
+process.env.AGENT_API_ALLOWED_ORIGINS = "https://niubi1v.github.io";
+delete process.env.AGENT_API_ALLOWED_ORIGIN;
 const handler = require("../api/health.js");
 
 async function call(method: string) {
@@ -34,9 +35,17 @@ async function main() {
   assert.ok(health.payload.deploymentSha);
   assert.equal(health.headers["access-control-allow-origin"], "https://niubi1v.github.io");
   assert.equal(JSON.stringify(health.payload).includes("test-placeholder"), false, "health must never expose secret values");
+
+  const dedicatedSecret = process.env.TRAINING_STATE_SECRET;
+  delete process.env.TRAINING_STATE_SECRET;
+  const legacyFallbackOnly = await call("GET");
+  assert.equal(legacyFallbackOnly.payload.patientServiceConfigured, true, "LLM configuration should remain independently visible");
+  assert.equal(legacyFallbackOnly.payload.trainingStateConfigured, false, "LLM_API_KEY fallback must not be reported as an independent training-state secret");
+  process.env.TRAINING_STATE_SECRET = dedicatedSecret;
+
   const options = await call("OPTIONS");
   assert.equal(options.statusCode, 204);
-  console.log("Health API boolean-only configuration and CORS contract passed.");
+  console.log("Health API independent training-state configuration, boolean-only output, and CORS contract passed.");
 }
 
 void main();

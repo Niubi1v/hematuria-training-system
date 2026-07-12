@@ -16,16 +16,29 @@ export function createAttempt(caseId: string, mode: AttemptMode, language: Attem
   return { attemptId: random, caseId, mode, language, participantId, schemaVersion: "attempt-v3", createdAt: new Date().toISOString() };
 }
 
-export function attemptStorageKey(attempt: Pick<AttemptIdentity, "caseId" | "mode" | "language" | "attemptId">) {
-  return `hematuria-attempt-v3:${attempt.caseId}:${attempt.mode}:${attempt.language}:${attempt.attemptId}`;
+function participantScope(participantId: string, schemaVersion: AttemptIdentity["schemaVersion"]) {
+  // Preserve existing public-practice keys while isolating named OSCE/RCT participants.
+  return participantId === "practice-user" ? "" : `:participant:${encodeURIComponent(participantId)}:${schemaVersion}`;
 }
 
-export function attemptPointerKey(caseId: string, mode: AttemptMode, language: AttemptLanguage) {
-  return `hematuria-attempt-pointer-v3:${caseId}:${mode}:${language}`;
+export function attemptStorageKey(attempt: Pick<AttemptIdentity, "caseId" | "mode" | "language" | "attemptId" | "participantId" | "schemaVersion">) {
+  return `hematuria-attempt-v3:${attempt.caseId}:${attempt.mode}:${attempt.language}${participantScope(attempt.participantId, attempt.schemaVersion)}:${attempt.attemptId}`;
 }
 
-export function isAttemptCompatible(attempt: AttemptIdentity, expected: Pick<AttemptIdentity, "caseId" | "mode" | "language">) {
-  return attempt.schemaVersion === "attempt-v3" && attempt.caseId === expected.caseId && attempt.mode === expected.mode && attempt.language === expected.language;
+export function attemptPointerKey(caseId: string, mode: AttemptMode, language: AttemptLanguage, participantId = "practice-user", schemaVersion: AttemptIdentity["schemaVersion"] = "attempt-v3") {
+  return `hematuria-attempt-pointer-v3:${caseId}:${mode}:${language}${participantScope(participantId, schemaVersion)}`;
+}
+
+export function isAttemptCompatible(
+  attempt: AttemptIdentity,
+  expected: Pick<AttemptIdentity, "caseId" | "mode" | "language"> & Partial<Pick<AttemptIdentity, "participantId" | "schemaVersion">>
+) {
+  return attempt.schemaVersion === "attempt-v3"
+    && attempt.caseId === expected.caseId
+    && attempt.mode === expected.mode
+    && attempt.language === expected.language
+    && (!expected.participantId || attempt.participantId === expected.participantId)
+    && (!expected.schemaVersion || attempt.schemaVersion === expected.schemaVersion);
 }
 
 export function recordTimeoutOnce(events: Array<{ type: string; [key: string]: unknown }>, at = new Date().toISOString()) {

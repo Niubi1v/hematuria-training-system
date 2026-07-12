@@ -1,15 +1,21 @@
 const { initSession } = require("../../server/patientSession.js");
+const { applyAgentCors, positiveInteger, setRateLimitHeaders, takeRateLimit } = require("../../server/requestSecurity.js");
 
-function setCors(res) {
-  res.setHeader("Access-Control-Allow-Origin", process.env.AGENT_API_ALLOWED_ORIGIN || process.env.PATIENT_AGENT_ALLOWED_ORIGIN || "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Request-Id, X-Idempotency-Key");
-}
+const requestWindows = globalThis.__hematuriaSessionInitRequestWindows || new Map();
+globalThis.__hematuriaSessionInitRequestWindows = requestWindows;
 
 module.exports = async function handler(req, res) {
-  setCors(res);
+  const origin = applyAgentCors(req, res);
+  if (!origin.allowed) return res.status(403).json({ error: "origin_not_allowed" });
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  const rate = takeRateLimit(req, {
+    store: requestWindows,
+    limit: positiveInteger(process.env.SESSION_INIT_RATE_LIMIT_PER_MINUTE || process.env.AGENT_API_RATE_LIMIT_PER_MINUTE, 60, 10000),
+    windowMs: positiveInteger(process.env.AGENT_API_RATE_LIMIT_WINDOW_MS, 60_000)
+  });
+  setRateLimitHeaders(res, rate);
+  if (rate.limited) return res.status(429).json({ error: "rate_limited" });
 
   try {
     const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
@@ -22,7 +28,7 @@ module.exports = async function handler(req, res) {
       forceRefresh: Boolean(body.forceRefresh)
     });
     return res.status(200).json(result);
-  } catch (error) {
-    return res.status(500).json({ error: error instanceof Error ? error.message : "Session init failed" });
+  } catch {
+    return res.status(500).json({ error: "session_init_failed" });
   }
 };
