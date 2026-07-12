@@ -19,7 +19,7 @@
 | 离线恢复 | 记录保留，恢复在线后可继续 | PASS | Playwright desktop/mobile 22/22 |
 | CORS与限流 | 仅允许配置Origin；公开Agent/session有界限流 | PASS | `test:health`、`test:agent-api-security` |
 | 正式模式防绕过 | 客户端改mode不能解锁；独立签名secret；病例必须formalUseAllowed | PASS | `test:training-api` |
-| PR CI | PR运行完整质量门禁且不部署Pages | PASS | PR #1 run #42 build全绿；Pages artifact/deploy均按设计跳过 |
+| PR CI | PR运行完整质量门禁且不部署Pages | PASS | 当前HEAD `558fadd`：run `29206657625` build全绿；Pages artifact/deploy均按设计跳过 |
 
 ## Patient Agent与双语
 
@@ -31,7 +31,7 @@
 | 不泄露JSON、prompt、教师字段、诊断、检查、病理、治疗或完整病史 | PASS | `test:patient`、`test:llm`、`test:agent`、bundle scan |
 | 每问LLM仅接收当前允许答案，不接收完整profile | PASS | `test:llm` |
 | DeepSeek真实中文5次、英文5次 | PENDING | 生产smoke此前`fetch failed`，不得用规则fixture替代 |
-| 中英文患者事实语义一致 | BLOCKED/HUMAN | HEM-P0-023：严格确认18条相反陈述，涉及11例；全部待具名医学/双语负责人裁决 |
+| 中英文患者事实语义一致 | BLOCKED/HUMAN | HEM-P0-023：18条已做运行时/评分隔离并生成裁决包；医学真值全部待具名医学/双语负责人裁决 |
 
 ## 临床数据Agent
 
@@ -77,17 +77,17 @@
 
 | 强制标准 | 当前状态 | 当前证据 |
 |---|---|---|
-| TypeScript、ESLint、完整行为链 | PASS | 当前分支本地通过；`test`已纳入`test:llm`与`test:agent` |
+| TypeScript、ESLint、完整行为链 | PASS | 当前分支本地32/32；run `29206657625`的Unit and behavioral tests、Typecheck、Lint均success |
 | 69 JSON幂等、生成数据无漂移 | PASS | `test:idempotency`及`git diff -- data` |
 | 52页生产构建 | PASS | clean build |
-| 静态答案/密钥扫描 | PASS | 24 JS bundle；235仓库文件 |
-| Playwright桌面/移动 | PASS | 本地22/22；PR #1 run #42 Playwright E2E success |
+| 静态答案/密钥扫描 | PASS | 24 JS bundle；本地252候选文件；当前Actions repo/bundle scan success |
+| Playwright桌面/移动 | PASS | 本地24/24；当前run `29206657625` Playwright E2E success |
 | 专项分支普通push | PASS | `origin/codex/hematuria-production-goal` |
-| draft PR与GitHub Actions | PASS | PR #1保持Draft；run #42 completed/success |
-| Pages/Vercel SHA与live alias | PASS/PENDING | `3190b27` Vercel Preview success；PR Pages部署按设计跳过，正式live alias仍未验证 |
+| draft PR与GitHub Actions | PASS | PR #1保持Draft；当前HEAD `558fadd`的run `29206657625` completed/success |
+| Pages/Vercel SHA与live alias | PASS/PENDING | `558fadd` Vercel Preview success；PR Pages部署按设计跳过，正式live alias仍未验证 |
 | 生产health、10次session、中文5次、英文5次 | PENDING | 当前环境生产smoke为`fetch failed` |
 | 正式教师鉴权、RCT数据库、正式OSCE | BLOCKED/HUMAN | 需要安全后端、approved病例及具名医学签署 |
 
 ## 当前结论
 
-工程本地专项回归已覆盖矩阵核心路径，但强制验收尚未完成：`HEM-P0-001`需要医学裁决；PR/CI、当前SHA预览/部署状态和生产10+5+5真实冒烟缺少证据；Azure按未配置状态为SKIP。任何这些项目不得被登记为PASS或据此宣称生产验收完成。
+工程本地专项回归、当前SHA PR Actions与Vercel Preview均已通过，但强制验收尚未完成：`HEM-P0-001`及`HEM-P0-023`需要医学裁决；受保护Preview真实AI/日志/自然度/P95、生产10+5+5、正式live alias仍缺证据；Azure按未配置状态为SKIP。任何这些项目不得被登记为PASS或据此宣称生产验收完成。

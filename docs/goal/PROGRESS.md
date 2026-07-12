@@ -132,3 +132,4 @@
 - 新增隔离专项、LLM fallback和签名训练状态集成断言；完整32项行为链、TypeScript、ESLint、252文件secret扫描及Vercel等价52页构建全部exit0。
 - 生成18行双语医学专家裁决表和说明文档；专家最终值、决定、依据、审核/复核人、日期及导入状态全部留空。HEM-P0-023医学真值仍阻断PR Ready/合并/发布。
 - 两个小步提交`ff02d76`与`0d60a90`已普通push；Draft PR #1 head更新为`0d60a90`。Actions run `29206516554` completed/success，Vercel Preview success，Pages deploy按PR规则skipped；PR仍为Draft且未合并。
+- 证据提交后当前HEAD `558fadd`的run `29206657625`及Vercel再次success；据此关闭仅缺CI的HEM-P1-002/004/005/010/011/012工程项，生产权限部分继续保持PENDING/BLOCKED。

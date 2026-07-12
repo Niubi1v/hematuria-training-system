@@ -30,6 +30,7 @@
 - 裁决工作簿结构检查：18行×21列，专家输入列均为空；公式错误扫描0项；“填写说明”和“18条冲突裁决”两张工作表均完成目视检查。
 - 远程证据：Draft PR #1 head `0d60a902737ce29c22702f484fafa58221844717`；GitHub Actions run `29206516554`于2026-07-12T19:52:05Z completed/success。Conversion idempotency、generated-data diff、schema、contradiction、bilingual fixtures、完整行为、医学审核、评分、TypeScript、Lint、repo secret、Playwright、build和bundle scan均success；Pages artifact/deploy在PR事件skipped。
 - 外部检查：Vercel deployment `AxCLzXdwr6K488oiuCHfauG6hDTz` success；Vercel Preview Comments success。部署成功不替代受保护Preview中的真实DeepSeek、日志验证、P95和自然度人工验收。
+- 当前证据HEAD `558fadd48ac02eaf9ebfb91f581364f345687e22`：Actions run `29206657625` build success（3m10s），Vercel deployment `Hunh8QF1fNuDz5BdpboEQsoBx1XK` success，Vercel Preview Comments success，Pages deploy skipped。
 
 | 开始—结束 | 精确命令/入口 | 退出码 | 结果 | 关键证据 |
 |---|---|---:|---|---|
