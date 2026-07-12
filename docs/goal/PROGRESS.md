@@ -106,3 +106,12 @@
 - 证据提交`a9ace13`连同前两项已普通push到专项分支；Draft PR #1保持open/draft/mergeable，base仍为main。
 - PR head `a9ace13`的GitHub Actions run #46（id `29203919549`）completed/success，build全部步骤通过；Pages artifact与deploy按PR规则skipped。Vercel deployment `7miajb1rg8DuVXPMHB1bG6fFpM8y`及Preview Comments均success。
 - 新Preview仍受Deployment Protection影响；in-app浏览器导航在20秒内未取得可交互DOM并超时。没有使用或输出bypass凭据，真实AI验收继续登记为权限阻塞。
+
+## 2026-07-13 02:31—02:55 自主验收循环
+
+- 新增并通过日志503后自动恢复测试：desktop/mobile 2/2；同一history requestId重试，AI回答不被替换。提交`af896d0`，Actions run #48 success，Vercel success。
+- 新增快速双击发送与20轮会话稳定性测试：desktop/mobile各2项通过。20轮测试首次因主动中英切换合法地产生两个language session而断言失败，修正基线后证明活跃英文session在20轮内未重复初始化。提交`fde34a2`，Actions run #49 success，Vercel success。
+- 新增刷新后pending history-log恢复测试：desktop/mobile 2/2，同一requestId恢复且聊天记录保留。提交`a821200`，Actions run #50 success，Vercel success。
+- 用失败测试证明复合问题安全边界被误标`rule_fallback`，最小修复后分类为`safety_boundary`；API安全、AI恢复、Agent Chat、TypeScript及项目Lint入口通过。提交`96d0990`，Actions run #51 completed/success，Vercel success。
+- CI持续出现官方Action Node20弃用注释，当前未导致失败，登记为P2；没有在用户体验P0/P1之前扩展修复范围。
+- 随后只读自然度抽查发现HEM-P0-023重大双语医学矛盾：严格18条相反陈述、11例、全部待审核。按医学治理规则停止自动数据修复并请求具名负责人裁决。

@@ -166,3 +166,22 @@
 - `Upload Pages artifact` skipped；deploy job `86680180729` skipped，未触发正式Pages部署。
 - Vercel deployment `7miajb1rg8DuVXPMHB1bG6fFpM8y`通过；Vercel Preview Comments通过。
 - Preview URL：`https://hematuria-training-system-git-codex-he-a06e54-niubi1vs-projects.vercel.app`。浏览器直达P001在20秒内未取得DOM，故真实AI/日志/性能验收仍未通过。
+
+## 自主连接/日志验收增量
+
+| 场景 | 首次结果 | 最终结果 | 证据 |
+|---|---|---|---|
+| history-log首次503后恢复 | 无既有浏览器覆盖 | desktop/mobile 2/2 | 两次请求同一requestId，AI回答只出现一次，最终评分同步 |
+| 快速双击发送 | 无既有浏览器覆盖 | desktop/mobile 2/2 | Patient API 1次、学生消息1条、患者回答1条 |
+| 20轮不重复初始化 | 首次2/2失败：预期1、实际2 | desktop/mobile 2/2 | 首次失败由主动中英切换各建1个隔离session；以英文初始化完成为基线后20轮计数不增长 |
+| pending日志刷新恢复 | 无既有浏览器覆盖 | desktop/mobile 2/2 | localStorage持久队列恢复，同一requestId，聊天回答保留 |
+| 复合问题来源分类 | 首次exit1：实际`rule_fallback`、预期`safety_boundary` | 相关专项exit0 | `compound_question_preserves_all_facts`不再冒充provider/rule故障 |
+
+- 远程：`af896d0` run #48、`fde34a2` run #49、`a821200` run #50均completed/success；各自Vercel Deployment success，Pages deploy skipped。
+- `96d0990` run #51（id `29204729994`）completed/success；Vercel Deployment success，Pages deploy skipped。
+
+## 双语医学一致性只读审计
+
+- 严格规则只统计明确相反短句：中文`无痛性/无尿痛/无尿频/无尿急`与英文明确肯定`I have pain`、`hurts or burns`、`urinating more often`、`urgent need`。
+- 结果：18条，11例；pain 5、dysuria 3、urinary_frequency 1、urinary_urgency 9；source 4、derived 14；全部`teacherReviewRequired=true`。
+- 该结果是失败/阻断证据，不是通过；未运行写入型生成器，未修改`data/**`。

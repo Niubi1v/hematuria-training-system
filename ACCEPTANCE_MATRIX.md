@@ -31,6 +31,7 @@
 | 不泄露JSON、prompt、教师字段、诊断、检查、病理、治疗或完整病史 | PASS | `test:patient`、`test:llm`、`test:agent`、bundle scan |
 | 每问LLM仅接收当前允许答案，不接收完整profile | PASS | `test:llm` |
 | DeepSeek真实中文5次、英文5次 | PENDING | 生产smoke此前`fetch failed`，不得用规则fixture替代 |
+| 中英文患者事实语义一致 | BLOCKED/HUMAN | HEM-P0-023：严格确认18条相反陈述，涉及11例；全部待具名医学/双语负责人裁决 |
 
 ## 临床数据Agent
 

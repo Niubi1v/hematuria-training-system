@@ -2,6 +2,16 @@
 
 ## 开放缺陷
 
+### HEM-P0-023：双语患者槽位存在明确医学极性矛盾
+
+- 级别：P0，重大医学风险；阻断英文真实AI、fallback验收、PR Ready、合并与发布。
+- 发现方式：对`data/patient_slots_bilingual.json`做只读严格词义核对；没有修改任何病例、事实、provenance、审批或`needs_revision`。
+- 严格确认18条相反陈述，涉及11例：`pain` 5条、`dysuria` 3条、`urinary_frequency` 1条、`urinary_urgency` 9条；其中4条标为`source`、14条为`derived_from_case_facts`，18条均`teacherReviewRequired=true`。
+- 代表证据：P001中文`pain=无痛性`，英文为`I have pain with it.`；P001中文`dysuria=无痛性`，英文为`It hurts or burns when I urinate.`；P002中文`无明显尿频尿急尿痛`，英文frequency为`I have been urinating more often.`。
+- 另有体验/泄露证据：P001中文问“什么时候开始”时rule fallback返回整段病例摘要；英文未匹配既往史问题可返回中文“不太清楚”。
+- 粗筛曾得到372条极性差异，但包含长摘要中其他阴性词等假阳性，禁止把372当作迁移清单或自动批量修复。
+- 必须由具名医学/双语负责人确定每条权威语义和受控修复范围；AI不得自动翻转极性、批量改数据、批准事实或解除`needs_revision`。
+
 ### HEM-P0-018：Preview AI连接、日志同步与回答来源体验失败
 
 - 级别：P0，PR #1发布阻断；状态：本地工程修复完成，待新Preview真实AI复验。
