@@ -75,3 +75,4 @@
 - 用户提供日志后确认根因是preview未注入`NEXT_PUBLIC_API_BASE_URL`，导致P001预渲染主动失败。
 - 已实现Vercel同源相对API回退，同时保持非Vercel生产构建fail-closed；新增API配置测试并纳入聚合门禁。
 - 本地Vercel等价环境52页构建、完整31项行为、TypeScript和ESLint通过。远程Vercel状态必须以修复提交后的新检查为准，PR继续保持Draft。
+- 修复提交`3190b27`远程验证完成：Vercel Preview success；GitHub Actions run #44 completed/success。未发生Pages部署、main写入、PR合并或Ready状态变更。

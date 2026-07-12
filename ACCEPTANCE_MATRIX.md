@@ -83,7 +83,7 @@
 | Playwright桌面/移动 | PASS | 本地22/22；PR #1 run #42 Playwright E2E success |
 | 专项分支普通push | PASS | `origin/codex/hematuria-production-goal` |
 | draft PR与GitHub Actions | PASS | PR #1保持Draft；run #42 completed/success |
-| Pages/Vercel SHA与live alias | PENDING | PR Pages部署按设计跳过；外部Vercel Deployment failure且日志不可访问，live alias未验证 |
+| Pages/Vercel SHA与live alias | PASS/PENDING | `3190b27` Vercel Preview success；PR Pages部署按设计跳过，正式live alias仍未验证 |
 | 生产health、10次session、中文5次、英文5次 | PENDING | 当前环境生产smoke为`fetch failed` |
 | 正式教师鉴权、RCT数据库、正式OSCE | BLOCKED/HUMAN | 需要安全后端、approved病例及具名医学签署 |
 

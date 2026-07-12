@@ -91,3 +91,4 @@
 - 用户提供真实Build Log后定位首条根因：生产模式预渲染P001时缺少`NEXT_PUBLIC_API_BASE_URL`并抛错。
 - 新增失败测试并实施Vercel同源相对API最小回退；非Vercel生产构建继续要求显式HTTPS origin。
 - 专项测试、TypeScript、ESLint、完整31项行为链及Vercel等价52页构建均通过；待普通push后观察PR #1新一轮Actions与Vercel Preview。
+- 修复提交`3190b27`已普通push；Vercel Preview转为success，GitHub Actions run #44全绿。PR仍为Draft，Pages artifact和deploy均按设计跳过。

@@ -130,6 +130,8 @@
 
 - 本机真实pnpm入口不可用，首次`pnpm run build`尝试在启动前报命令不存在；随后直接执行其实际映射的`next build`，环境条件与Vercel失败构建一致。
 - 修复未添加、输出或修改环境变量/密钥；Vercel未配置时使用同一部署origin的相对API路径。
+- 远程head `3190b27daf54958d396432f50e7795383a8204c6`：Vercel deployment `FoixbND34sRTAzDKevxagLuM7L3w` state=success。
+- GitHub Actions run #44（id `29201836729`）completed/success；build job `86674417595`全部质量步骤success，Pages artifact skipped；deploy job `86674658667` skipped。
 
 - CI/Linux环境在拟发布SHA复跑安全专项、完整行为、generated data diff、repo secret scan和Playwright全量；本地22/22不能替代CI。
 - 拟发布SHA上的完整质量门禁，而非仅当前worktree。
