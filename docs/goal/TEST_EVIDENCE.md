@@ -28,6 +28,8 @@
 - `scripts/test-training-api.ts`确认被隔离事件不进入签名attempt state；重复计分边界未放宽。
 - Git差异核对：`git diff --name-only -- data`为空；未批准医学事实、未解除`needs_revision`。
 - 裁决工作簿结构检查：18行×21列，专家输入列均为空；公式错误扫描0项；“填写说明”和“18条冲突裁决”两张工作表均完成目视检查。
+- 远程证据：Draft PR #1 head `0d60a902737ce29c22702f484fafa58221844717`；GitHub Actions run `29206516554`于2026-07-12T19:52:05Z completed/success。Conversion idempotency、generated-data diff、schema、contradiction、bilingual fixtures、完整行为、医学审核、评分、TypeScript、Lint、repo secret、Playwright、build和bundle scan均success；Pages artifact/deploy在PR事件skipped。
+- 外部检查：Vercel deployment `AxCLzXdwr6K488oiuCHfauG6hDTz` success；Vercel Preview Comments success。部署成功不替代受保护Preview中的真实DeepSeek、日志验证、P95和自然度人工验收。
 
 | 开始—结束 | 精确命令/入口 | 退出码 | 结果 | 关键证据 |
 |---|---|---:|---|---|
