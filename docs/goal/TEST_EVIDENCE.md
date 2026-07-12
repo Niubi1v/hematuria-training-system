@@ -77,6 +77,8 @@
 
 - 21:00:20—21:00:41与21:01:24—21:01:45，两次普通`git push -u origin codex/hematuria-production-goal`均exit 128：`github.com:443`不可达；不得登记为push成功。
 - PR工作流现已允许`pull_request`到`main`执行build测试，但Pages artifact上传与deploy job在PR事件明确跳过；此项仍需GitHub Actions实际运行确认。
+- 约21:05第三次执行push前门禁：fetch成功，`origin/main=5a3ad11`，本地`dbc819e`领先5/落后0，`data/**`无差异，235文件secret扫描exit0；随后普通push专项分支成功并建立远程跟踪。
+- `gh --version`失败（命令不存在），故draft PR和PR CI均未创建或运行。
 
 - CI/Linux环境在拟发布SHA复跑安全专项、完整行为、generated data diff、repo secret scan和Playwright全量；本地22/22不能替代CI。
 - 拟发布SHA上的完整质量门禁，而非仅当前worktree。

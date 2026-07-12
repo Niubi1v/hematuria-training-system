@@ -60,12 +60,19 @@
 
 ## 已通过文档修订处置
 
-### HEM-P1-014：专项分支无法连接GitHub远程
+### HEM-P1-014：专项分支曾无法连接GitHub远程（已解除）
 
-- 状态：外部网络阻塞，工程工作继续。
+- 状态：已解除；第三次联网核验及普通push成功。
 - 证据：21:00及21:01两次`git push -u origin codex/hematuria-production-goal`均exit 128，错误为无法连接`github.com`端口443。
 - 安全影响：远程分支、PR和CI均尚未产生；本地提交与工作树完整，未发现未知远程提交或冲突。
-- 解除条件：网络恢复后重新执行`git fetch --prune`及全部push前门禁，再进行普通push；禁止用force push或直接写main规避。
+- 解除证据：重新执行`git fetch --prune`及全部push前门禁后，`dbc819e`已普通push到专项分支；未使用force push或直接写main。
+
+### HEM-P1-015：draft PR创建缺少必需的GitHub CLI
+
+- 状态：阻塞PR/CI，不阻塞本地工程；需要安装并认证`gh`。
+- 证据：专项分支已成功普通push，但`gh --version`返回命令不存在；发布技能要求先通过`gh --version`与`gh auth status`。
+- 安全影响：PR未创建，PR触发的Actions未运行；不得用直接push main或部署规避。
+- 解除条件：用户安装`gh`并完成`gh auth login`，随后创建指向`main`的draft PR并记录CI。
 
 - HEM-BLK-013：Git写入额度阻塞已解除；20:48成功fetch，随后创建`2bc3305`与`58f456e`两个小步提交。仍须完成push前复核、普通push专项分支、PR与CI。
 

@@ -48,3 +48,8 @@
 - 两次普通push均因`github.com:443`网络不可达失败，专项分支尚未出现在远程，PR与CI尚未创建或运行。
 - 本地已补充PR验证触发，并确保PR事件不上传Pages artifact、不执行Pages deploy；网络恢复后需重新完成push前核验、普通push、draft PR及CI记录。
 - 该阻塞不改变医学治理门禁：HEM-P0-001仍需具名医学负责人裁决，且禁止自动批准419条模拟事实或解除42例`needs_revision`。
+
+### 最新远程状态
+
+- 网络恢复后，`dbc819e`已普通push到`origin/codex/hematuria-production-goal`；远程main仍为`5a3ad11`，未执行force push、main写入、合并或部署。
+- 本机缺少发布技能要求的`gh`，因此draft PR、PR Actions和预览状态仍阻塞；需安装并认证GitHub CLI后继续。
