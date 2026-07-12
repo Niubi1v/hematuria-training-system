@@ -74,6 +74,14 @@
 - 安全影响：PR未创建，PR触发的Actions未运行；不得用直接push main或部署规避。
 - 解除条件：用户安装`gh`并完成`gh auth login`，随后创建指向`main`的draft PR并记录CI。
 
+### HEM-P1-016：完整行为门禁遗漏LLM与统一Agent入口（已修复）
+
+- 状态：本地已修复，待PR CI确认。
+- 发现证据：21:21直接运行`test:llm`和`test:agent`失败；现有`package.json scripts.test`没有执行这两个已声明入口。
+- 根因：两个测试仍断言旧DeepSeek profile envelope和前端硬编码端点；生产实现已使用本地权威profile及集中API配置，导致测试契约漂移，同时聚合门禁没有暴露漂移。
+- 修复：按当前安全架构更新断言，并将两个入口加入完整行为链。
+- 复验：21:25更新后的完整30项行为链exit0；TypeScript与ESLint exit0。不得据此替代PR CI或生产冒烟。
+
 - HEM-BLK-013：Git写入额度阻塞已解除；20:48成功fetch，随后创建`2bc3305`与`58f456e`两个小步提交。仍须完成push前复核、普通push专项分支、PR与CI。
 
 - HEM-P2-006：将“572条事实总数”统一说明为“572条审核追踪项”。

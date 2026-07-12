@@ -80,6 +80,23 @@
 - 约21:05第三次执行push前门禁：fetch成功，`origin/main=5a3ad11`，本地`dbc819e`领先5/落后0，`data/**`无差异，235文件secret扫描exit0；随后普通push专项分支成功并建立远程跟踪。
 - `gh --version`失败（命令不存在），故draft PR和PR CI均未创建或运行。
 
+## 验收矩阵专项回归
+
+| 开始—结束 | 精确命令/入口 | 退出码 | 结果 |
+|---|---|---:|---|
+| 约21:21—21:24 | fallback pnpm包装器并行专项测试尝试 | 124 | 未运行产品测试；包装器访问npm registry被EACCES并在180秒超时，不登记为产品失败 |
+| 约21:24 | 直接`tsx scripts/test-llm-adapter.ts`、`tsx scripts/test-agent-chat.ts` | 1 / 1 | 首次失败；发现旧断言及聚合门禁遗漏 |
+| 约21:24 | 更新断言后直接重跑上述两项 | 0 / 0 | LLM/API安全和统一Agent Chat契约通过 |
+| 约21:24 | 查体、医嘱、代表性E2E、阶段5/6/7 | 0 | 42例376项查体、P008映射、11例E2E及阶段流程通过 |
+| 约21:24 | 事件评分、对抗评分、attempt、training API | 0 | 42例360分、反伪造、隔离和formal门禁通过 |
+| 约21:24 | session、health、API/AI recovery、TTS/TTS API | 0 | 会话、错误恢复和四象限选声/降级契约通过 |
+| 21:25左右 | 更新后的`package.json scripts.test`（通过`cmd /c`执行） | 0 | 完整30项行为链通过；新增`test:llm`与`test:agent` |
+| 21:26左右 | `tsc --noEmit`；`node scripts/run-lint.mjs` | 0 / 0 | TypeScript与ESLint通过 |
+
+- 42例中文证据：structured history 42×17。
+- 42例英文证据：bilingual Patient Agent 42×6。
+- 上述均为本地确定性fixture/契约证据，不是生产DeepSeek中文5/5、英文5/5证据。
+
 - CI/Linux环境在拟发布SHA复跑安全专项、完整行为、generated data diff、repo secret scan和Playwright全量；本地22/22不能替代CI。
 - 拟发布SHA上的完整质量门禁，而非仅当前worktree。
 - GitHub Actions、Pages、Vercel SHA/live alias核对。

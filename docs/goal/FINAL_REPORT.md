@@ -53,3 +53,10 @@
 
 - 网络恢复后，`dbc819e`已普通push到`origin/codex/hematuria-production-goal`；远程main仍为`5a3ad11`，未执行force push、main写入、合并或部署。
 - 本机缺少发布技能要求的`gh`，因此draft PR、PR Actions和预览状态仍阻塞；需安装并认证GitHub CLI后继续。
+
+## 最新本地验收增量
+
+- 已将此前未跟踪且状态过时的`ACCEPTANCE_MATRIX.md`纳入专项分支，并按本轮证据区分PASS、PENDING、HUMAN和BLOCKED。
+- 发现完整行为门禁遗漏`test:llm`与`test:agent`；更新已漂移的安全架构断言后，将两项纳入聚合门禁。
+- 更新后的完整30项行为链、TypeScript和ESLint均exit0；42例中文42×17、英文42×6、临床数据Agent、恢复、TTS和360评分取得本地可重复证据。
+- 这些结果不解除医学P0，也不替代PR Actions、生产DeepSeek 5+5、生产session 10/10、Pages/Vercel SHA/live alias或Azure云语音证据。
