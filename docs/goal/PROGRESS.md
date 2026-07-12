@@ -123,3 +123,11 @@
 - 当前安装版本 `codex-cli 0.144.0-alpha.4`；官方配置参考确认该布尔键用于强制不发送 reasoning metadata。
 - `scripts/test-codex-agent-config.mjs` 通过，7份项目 TOML 解析通过；`codex doctor` 返回 configuration loaded、0 fail。
 - 实际远程 Spark Agent 启动被当前安全审查器拒绝：私有仓库上下文会发送到尚未建立信任的外部服务。未绕过该限制；因此“真实请求不再返回 unsupported parameter”仍需在已批准的受信任会话中复验。
+
+## 2026-07-13 HEM-P0-023 安全工程隔离
+
+- 未修改`data/**`：18条冲突事实的当前值、provenance、`teacherReviewRequired=true`及11例`needs_revision`保持不变。
+- 新增固定18项隔离清单；命中冲突字段时不进入确定性Patient Agent上下文、不调用上游AI、不参与评分，仅按会话语言返回自然不确定表达并记录固定reason。
+- 修复未匹配fallback泄露与跨语言兜底：中文未知问题不再返回病例摘要；英文未知问题返回自然英文；单字段onset回答不再泄露整段结构化摘要。
+- 新增隔离专项、LLM fallback和签名训练状态集成断言；完整32项行为链、TypeScript、ESLint、252文件secret扫描及Vercel等价52页构建全部exit0。
+- 生成18行双语医学专家裁决表和说明文档；专家最终值、决定、依据、审核/复核人、日期及导入状态全部留空。HEM-P0-023医学真值仍阻断PR Ready/合并/发布。

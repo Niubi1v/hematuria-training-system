@@ -94,3 +94,11 @@
 - 已实现Vercel同源相对API回退，同时保持非Vercel生产构建fail-closed；新增API配置测试并纳入聚合门禁。
 - 本地Vercel等价环境52页构建、完整31项行为、TypeScript和ESLint通过。远程Vercel状态必须以修复提交后的新检查为准，PR继续保持Draft。
 - 修复提交`3190b27`远程验证完成：Vercel Preview success；GitHub Actions run #44 completed/success。未发生Pages部署、main写入、PR合并或Ready状态变更。
+
+## HEM-P0-023 安全隔离增量（2026-07-13）
+
+- 工程完成：fallback最小披露、双语未知回答、18项冲突事实上下文/评分隔离、固定reason日志、专项与集成测试、专家裁决包。
+- 本地门禁：完整32项行为链、TypeScript、ESLint、252文件仓库secret扫描、Vercel等价52页生产构建全部exit0。
+- 数据治理：`data/**`零差异；没有翻转、翻译、批准或删除18条事实，没有改变provenance、`teacherReviewRequired`或`needs_revision`。
+- 未完成且不可伪造：18条医学最终语义仍需具名专家与复核人裁决；真实Preview DeepSeek、日志10/10、自然度人工验收及性能P95仍须在具有Preview权限/变量的环境复验。
+- 回滚：对本增量提交执行普通revert可移除运行时隔离与测试；不得通过修改医学数据或审核状态替代回滚。裁决包仅为待填审核工件，不应导入生产。

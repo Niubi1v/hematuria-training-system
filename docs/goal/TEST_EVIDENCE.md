@@ -15,6 +15,20 @@
 
 官方依据：OpenAI Codex Configuration Reference 将 `model_supports_reasoning_summaries` 定义为布尔值，用于强制发送或不发送 reasoning metadata；`model_reasoning_effort` 支持 `medium`。
 
+## 2026-07-13 HEM-P0-023 隔离与fallback门禁
+
+| 开始—结束 | 精确命令/入口 | 退出码 | 结果 | 关键证据 |
+| --- | --- | ---: | --- | --- |
+| 03:43:14—03:43:24 | 逐项使用bundled Node运行`package.json scripts.test`的32个tsx入口 | 0 | PASS，32/32 | 18项隔离、中文/英文fallback、42×17中文矩阵、42×6英文fixture、临床Agent、TTS、恢复、360评分、签名状态均通过 |
+| 03:43:45—03:43:47 | `node node_modules/typescript/bin/tsc --noEmit` | 0 | PASS | TypeScript无错误 |
+| 03:43:57—03:44:20 | `node scripts/run-lint.mjs`；`node scripts/scan-repository-secrets.mjs`；`VERCEL=1 node node_modules/next/dist/bin/next build` | 0 | PASS | ESLint通过；252个tracked/candidate文件无密钥；52/52页面构建成功 |
+| 03:32—03:42 | pnpm包装的组合门禁两次无输出挂起 | 已终止 | 非产品失败 | 终止本轮创建的残留包装进程后，逐项运行相同有效测试全部通过；未把挂起登记为PASS |
+
+- `scripts/test-bilingual-conflict-quarantine.ts`确认固定18项、双语不确定回答、0个上游provider调用、0个确定性matched fact、评分事件过滤及结构化reason日志。
+- `scripts/test-training-api.ts`确认被隔离事件不进入签名attempt state；重复计分边界未放宽。
+- Git差异核对：`git diff --name-only -- data`为空；未批准医学事实、未解除`needs_revision`。
+- 裁决工作簿结构检查：18行×21列，专家输入列均为空；公式错误扫描0项；“填写说明”和“18条冲突裁决”两张工作表均完成目视检查。
+
 | 开始—结束 | 精确命令/入口 | 退出码 | 结果 | 关键证据 |
 |---|---|---:|---|---|
 | 14:44:54—14:44:57 | `node node_modules/typescript/bin/tsc --noEmit` | 0 | 通过 | TypeScript无错误 |
