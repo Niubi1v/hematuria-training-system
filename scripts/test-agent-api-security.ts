@@ -144,11 +144,23 @@ async function verifySessionIdempotency() {
   assert.equal((first.payload as { sessionId: string }).sessionId, (second.payload as { sessionId: string }).sessionId, "same session init idempotency key must return one session");
 }
 
+async function verifyGenerationSourceClassification() {
+  const compound = await call(agentHandler, {
+    origin: "https://allowed.example",
+    ip: "generation-source-compound",
+    body: { caseId: "P001", agentId: "standardized_patient", studentInput: "有血块吗？有发热吗？", language: "zh" }
+  });
+  assert.equal(compound.statusCode, 200);
+  assert.equal((compound.payload as { fallbackReason: string }).fallbackReason, "compound_question_preserves_all_facts");
+  assert.equal((compound.payload as { generationSource: string }).generationSource, "safety_boundary", "fact-preserving compound fallback must not be reported as a provider/rule failure");
+}
+
 async function main() {
   await verifyOriginAndCors(agentHandler, "agent-chat");
   await verifyOriginAndCors(sessionHandler, "session-init");
   await verifyOptionalServerToken(sessionHandler);
   await verifySessionIdempotency();
+  await verifyGenerationSourceClassification();
   await verifyProviderFailureNonDisclosure();
   await verifyRateLimit(agentHandler, "agent-chat");
   await verifyRateLimit(sessionHandler, "session-init");

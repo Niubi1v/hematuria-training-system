@@ -14,6 +14,19 @@ const agentIds = new Set([
 ]);
 const requestWindows = globalThis.__hematuriaAgentChatRequestWindows || new Map();
 globalThis.__hematuriaAgentChatRequestWindows = requestWindows;
+const safetyFallbackReasons = new Set([
+  "diagnosis_boundary",
+  "report_boundary",
+  "compound_question_preserves_all_facts",
+  "ai_response_blocked",
+  "safety_filter"
+]);
+
+function safetyBoundaryFallback(patient) {
+  const reason = String(patient.fallbackReason || "").toLowerCase();
+  return safetyFallbackReasons.has(reason)
+    || (patient.safetyFlags || []).some((flag) => flag.startsWith("blocked_") || flag === "ai_response_blocked");
+}
 
 function getProviderConfig() {
   return {
@@ -133,7 +146,7 @@ module.exports = async function handler(req, res) {
         language: body.language || "zh"
       });
       const generationSource = patient.isFallback
-        ? ((patient.fallbackReason || "").includes("boundary") || (patient.safetyFlags || []).some((flag) => flag.startsWith("blocked_")) ? "safety_boundary" : "rule_fallback")
+        ? (safetyBoundaryFallback(patient) ? "safety_boundary" : "rule_fallback")
         : patient.cacheHit ? "ai_cache" : "live_ai";
       return res.status(200).json({
         agentId,
