@@ -97,6 +97,16 @@
 - 42例英文证据：bilingual Patient Agent 42×6。
 - 上述均为本地确定性fixture/契约证据，不是生产DeepSeek中文5/5、英文5/5证据。
 
+## 生产只读冒烟复跑
+
+| 开始—结束 | 精确命令 | 退出码 | 结果 |
+|---|---|---:|---|
+| 约21:28—21:31（169.2秒） | `node scripts/smoke-production.mjs` | 1 | health、session 10/10、中文5/5、英文5/5、training action和四音色均无成功样本 |
+
+- 原始计数：session-init无成功样本；patient-reply无成功样本；real-ai=0、fallback=0、success-rate=0%；429/502/503/504均为0。
+- 失败均表现为`fetch failed`或“session initialization failed”，不是HTTP应用错误码证据。
+- 网页访问通道直接打开health URL返回安全/open内部错误，搜索该URL无结果；不能据此判断生产服务真实状态。
+
 - CI/Linux环境在拟发布SHA复跑安全专项、完整行为、generated data diff、repo secret scan和Playwright全量；本地22/22不能替代CI。
 - 拟发布SHA上的完整质量门禁，而非仅当前worktree。
 - GitHub Actions、Pages、Vercel SHA/live alias核对。

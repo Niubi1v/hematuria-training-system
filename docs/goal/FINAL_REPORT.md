@@ -60,3 +60,4 @@
 - 发现完整行为门禁遗漏`test:llm`与`test:agent`；更新已漂移的安全架构断言后，将两项纳入聚合门禁。
 - 更新后的完整30项行为链、TypeScript和ESLint均exit0；42例中文42×17、英文42×6、临床数据Agent、恢复、TTS和360评分取得本地可重复证据。
 - 这些结果不解除医学P0，也不替代PR Actions、生产DeepSeek 5+5、生产session 10/10、Pages/Vercel SHA/live alias或Azure云语音证据。
+- 21:28—21:31生产只读smoke再次exit1且所有网络请求无成功样本；当前环境仍无法获取生产health或10+5+5证据，故保持PENDING并列为已知限制。

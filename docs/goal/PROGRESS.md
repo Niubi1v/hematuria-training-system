@@ -71,3 +71,9 @@
 - 首次直接运行`test:llm`和`test:agent`均失败，证明原`test`链遗漏两个已声明入口。审查确认断言仍依赖旧profile envelope实现和旧前端端点字面量，而当前实现已改为本地权威profile及`publicApiConfig.patientAgent`。
 - 已更新两项契约断言，并把它们加入完整`test`链；随后完整30项行为链exit0，42例中文42×17、英文42×6、临床Agent、恢复、TTS和360评分均通过本地回归。
 - TypeScript与ESLint随后exit0。生产DeepSeek 5+5、生产10次session、PR CI与live alias仍为PENDING，不得由本地fixture替代。
+
+## 2026-07-12 21:28—21:31 生产只读冒烟复跑
+
+- 对公开Vercel API执行`node scripts/smoke-production.mjs`，169.2秒后exit1。
+- health、10次session初始化、中文5次、英文5次、training action及四个TTS音色均为`fetch failed`或因session失败而跳过；成功样本0，真实AI=0，fallback=0。
+- 独立网页访问通道也无法直接打开health URL，搜索无结果；现有证据不能区分服务不可达与执行环境出口限制，因此继续登记PENDING/阻塞，不得宣称生产失败已定位或生产通过。
