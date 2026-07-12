@@ -2,6 +2,16 @@
 
 结论：**尚未完成，禁止宣称生产验收通过。**
 
+## 2026-07-13最新检查点
+
+- Draft PR #1仍为open/draft，未转Ready、未合并、未部署生产；当前远程head在本轮提交前为`cbdc4cf`。
+- 用户实测的连接抖动、规则库降级、重复警告、日志不计分和模板化回答已列为P0发布阻断。本地已完成单飞/取消/幂等状态链、日志异步安全同步、提示收敛、动态Preview同源校验和双语Patient prompt修复。
+- 本里程碑完整门禁真实通过：完整行为链、生产构建52/52、Playwright desktop/mobile 24/24、bundle 24 JS、repository secret 246文件；相关后续小改专项回归、TypeScript和ESLint亦通过。
+- 匿名Preview被Vercel Deployment Protection拦截，无法取得登录态真实DeepSeek、签名日志、P95或自然度样本。所需Preview变量只审计了名称，未读取/修改值；真实AI和日志10/10仍为阻塞，不得写成通过。
+- 项目级子Agent成本策略已按官方当前格式落盘：最多3线程、深度1、Spark/Terra/GPT-5.6按职责分配；当前会话不能热重载验证显示，需后续新会话确认Codex UI识别。
+- 42例仍为`needs_revision`，419条模拟事实未批准，医学数据和审批状态无改动。
+- 本轮本地提交为`28b82d7`和`3792980`；证据文档提交及普通push尚在本检查点之后执行，未提前写成成功。
+
 ## 当前交付状态
 
 - 仓库基线已核对到`5a3ad11`；专项分支`codex/hematuria-production-goal`当前为`c3c18d3`，包含`2bc3305`运行时安全、`58f456e`CI门禁和`c3c18d3`执行文档三个小步提交，尚未push、未建PR、未部署。

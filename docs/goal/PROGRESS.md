@@ -92,3 +92,14 @@
 - 新增失败测试并实施Vercel同源相对API最小回退；非Vercel生产构建继续要求显式HTTPS origin。
 - 专项测试、TypeScript、ESLint、完整31项行为链及Vercel等价52页构建均通过；待普通push后观察PR #1新一轮Actions与Vercel Preview。
 - 修复提交`3190b27`已普通push；Vercel Preview转为success，GitHub Actions run #44全绿。PR仍为Draft，Pages artifact和deploy均按设计跳过。
+
+## 2026-07-13 00:54—02:24 Preview实测阻塞专项
+
+- 用户在`cbdc4cf`对应Draft Preview实测到AI状态反复切换、规则库降级、旧失败提示叠加及日志验证不计分；这些问题登记为发布阻塞，PR #1继续保持Draft。
+- 匿名复现请求被Vercel Deployment Protection截获：`GET /cases/P001/`返回保护页HTTP 200/3228ms，`GET /api/health/`返回保护页HTTP 200/1732ms，`POST /api/session/init/`返回HTTP 401/302ms。当前执行环境无法取得登录态Preview的真实AI网络时间线；未把保护页当作应用成功。
+- 代码根因证据：health effect缺少取消、session init受health结果再次触发、每轮问答把连接状态改为checking、AI回答同步等待history-log、多个警告独立渲染、训练动作并发可竞争签名state、动态Preview同源Origin不在静态默认白名单。
+- 已实施：health取消、session初始化单飞与服务端幂等、旧请求/退避可取消、有限连接状态事件、问答不再触发checking、日志异步持久队列/幂等重试/训练动作串行化、单一同步提示、动态Preview严格同源校验、回答生成来源与事实来源分离、英文患者prompt及6轮上下文。
+- 本里程碑唯一一次完整门禁通过：完整行为链、24 JS bundle、246文件secret扫描均exit0；桌面/移动Playwright 24/24；Vercel等价生产构建52/52。随后英文retry文案和幂等缓存上限的小改仅运行相关专项、TypeScript与ESLint，均exit0，未重复全量门禁。
+- 已按Codex官方当前项目级格式创建`.codex/config.toml`及6个Agent定义；TOML解析、必填字段、唯一name、模型/推理/sandbox约束验证exit0。当前会话无法热重载新Agent清单，实际识别需新会话确认。
+- 仍需人工/外部权限的验收：核对Vercel Preview作用域中的变量名称是否齐全并重新部署；在可登录Preview执行真实DeepSeek中文/英文、20轮、日志10/10、P95和自然度人工抽查。未读取、输出或修改任何变量值。
+- 已创建两个可回滚提交：`28b82d7`（项目级Agent配置）与`3792980`（AI恢复、日志同步、来源标识及专项测试）；push前fetch确认远程专项分支仍为`cbdc4cf`，无未知远程提交。

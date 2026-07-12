@@ -138,3 +138,22 @@
 - GitHub Actions、Pages、Vercel SHA/live alias核对。
 - `/api/health/`、session init 10/10、中文5/5、英文5/5真实生产冒烟。
 - Azure配置后的四音色MP3；未配置时必须明确SKIP。
+
+## Preview体验阻塞专项（2026-07-13）
+
+| 时间/条件 | 精确命令或入口 | 退出码/状态 | 结果 |
+|---|---|---:|---|
+| 匿名Preview探针 | `GET /cases/P001/` | HTTP 200，3228ms | Vercel Deployment Protection HTML，不是应用页面 |
+| 匿名Preview探针 | `GET /api/health/` | HTTP 200，1732ms | Vercel Deployment Protection HTML，不是health JSON |
+| 匿名Preview探针 | `POST /api/session/init/` | HTTP 401，302ms | 被Preview保护拦截，未到应用API |
+| 约01:55 | `tsx test-agent-api-security.ts`; `test-training-api.ts`; `test-api-recovery.ts`; `test-ai-recovery.ts`; `tsc --noEmit`; `eslint .` | 0 | 同源拒绝/允许、init幂等、日志幂等、可取消退避、状态转换、类型与Lint通过 |
+| 约02:05 | Patient、LLM adapter、Agent Chat、dynamic session、bilingual专项 | 0 | Patient Agent链通过；英文42例×6 fixtures通过，属于确定性测试而非真实DeepSeek |
+| 约02:06 | 无API origin且`VERCEL=1`执行`next build` | 0 | 52/52页面构建通过 |
+| 约02:18 | 定向Playwright：rule fallback、offline reconnect、异步日志同步 | 0 | desktop/mobile 6/6；首次因定位器匹配两元素失败2项，收紧到聊天区域后通过，未放宽700ms超时 |
+| 02:20左右 | `package.json scripts.test`完整链 + `scan-static-bundle.ts` + `scan-repository-secrets.mjs` | 0 | 全链通过；24 JS；246 tracked/candidate文件，无secret值输出 |
+| 02:20左右 | `playwright test` | 0 | desktop/mobile 24/24，22.7s |
+| 02:22左右 | Agent security、LLM adapter、42例双语、TypeScript、ESLint相关回归 | 0 | 英文retry提示和init缓存上限改动后专项通过；未重复全量门禁 |
+| 02:23 | Python `tomllib`解析`.codex/config.toml`及`.codex/agents/*.toml` | 0 | 1份全局配置、6份唯一Agent定义，必填字段及sandbox枚举通过 |
+| 02:25左右 | push前`git diff --check`、`data/**`差异检查、`scan-repository-secrets.mjs` | 0 | data无差异；244个当前tracked/candidate文件通过，未输出secret值 |
+
+说明：当前非流式Patient API不能提供真实首Token指标；受保护Preview无法在本执行环境取得登录态真实AI样本。上述两项保持待验证。

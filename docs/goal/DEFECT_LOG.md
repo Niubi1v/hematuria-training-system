@@ -2,6 +2,32 @@
 
 ## 开放缺陷
 
+### HEM-P0-018：Preview AI连接、日志同步与回答来源体验失败
+
+- 级别：P0，PR #1发布阻断；状态：本地工程修复完成，待新Preview真实AI复验。
+- 用户证据：连接状态反复切换，同时出现规则库、上次AI失败和日志不计分提示，回答模板化且无法确认真实DeepSeek来源。
+- 根因：初始化与health生命周期耦合、缺少单飞/旧请求取消、问答过程误用连接checking、AI展示同步等待签名日志、独立警告叠加、动态Preview同源CORS依赖静态白名单、生成来源与事实来源混用。
+- 修复：单飞初始化和重连、服务端init幂等、AbortController及可取消退避、脱敏状态转换、history-log持久幂等队列与签名动作串行化、单提示UI、严格同源Preview接受、`generationSource`/`factSource`分离、双语患者prompt改进。
+- 本地证据：专项API/恢复/训练测试、TypeScript、ESLint、完整行为链、构建52页、Playwright24/24、bundle24及secret246均通过。
+- 关闭条件：登录态Preview连续20轮无意外fallback，真实AI中英各10/10，日志验证10/10且无重复计分，状态无抖动，人工自然度通过；本地fixture不得替代。
+
+### HEM-P1-019：Preview服务端变量作用域待人工核验
+
+- 状态：阻断真实AI/签名远程验收，不阻断本地工程。
+- 必须仅核对名称、不得读取或输出值：`LLM_ENABLE_AI_PATIENT`或`LLM_ENABLE_AI_AGENTS`、`LLM_API_KEY`、`LLM_API_BASE_URL`、`LLM_MODEL`、`TRAINING_STATE_SECRET`；按部署需要核对`AGENT_API_ALLOWED_ORIGINS`、`TRAINING_API_ALLOWED_ORIGINS`及相关限流变量。
+- 要求：变量须处于Vercel Preview或该专项分支Preview作用域，变更后重新部署；任何密钥不得使用`NEXT_PUBLIC_`前缀。
+
+### HEM-P1-020：当前执行环境无法访问受保护Preview应用
+
+- 状态：外部权限阻塞；匿名GET被Deployment Protection HTML替代，POST session为401。
+- 影响：无法从当前环境采集用户登录态的控制台、API错误码、DeepSeek耗时、首Token、日志签名耗时和真实回答样本。
+- 处置：由具备Preview访问权限的会话复跑Playwright/network trace；不得提交或输出bypass token、Cookie或Authorization。
+
+### HEM-P1-021：真实首Token指标当前不可测
+
+- 状态：设计限制，待验证；当前Patient Agent接口为非流式响应，只能测完整请求耗时。
+- 处置：若首Token仍为强制指标，需要另行设计不泄露内容的服务端计时或流式协议；不得用完整响应时间冒充首Token时间。
+
 ### HEM-P0-001：151条source记录的辅助来源标记冲突
 
 - 级别：P0，正式签署与发布阻断。
