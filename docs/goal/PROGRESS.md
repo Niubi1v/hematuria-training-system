@@ -85,3 +85,9 @@
 - 外部Vercel提交状态实际为failure；“Vercel Preview Comments”与部署状态不是同一检查。Vercel bot评论显示Deployment Error且没有preview URL。
 - 当前无法访问Vercel部署日志，故未修改代码；只有取得可重复失败日志后才允许实施针对性修复。
 - docs证据提交`10a2782`后的Actions run #43亦完成success，全部质量步骤通过、Pages部署步骤跳过；Vercel deployment `14bJLhnhGaJcGuxE56udffnckoLe`再次failure，确认失败可重复但根因日志仍不可见。
+
+## 2026-07-13 Vercel Preview修复
+
+- 用户提供真实Build Log后定位首条根因：生产模式预渲染P001时缺少`NEXT_PUBLIC_API_BASE_URL`并抛错。
+- 新增失败测试并实施Vercel同源相对API最小回退；非Vercel生产构建继续要求显式HTTPS origin。
+- 专项测试、TypeScript、ESLint、完整31项行为链及Vercel等价52页构建均通过；待普通push后观察PR #1新一轮Actions与Vercel Preview。

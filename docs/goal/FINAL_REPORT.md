@@ -69,3 +69,9 @@
 - 外部Vercel Deployment状态为failure，不是通过；Vercel Preview Comments通过不能替代Deployment状态。错误详情链接需要Vercel访问权限/可用页面，当前未取得真实日志，根因保持未知。
 - 因无失败日志，本轮未进行代码修复，也未放宽或隐藏任何测试。PR继续保持Draft。
 - 后续head `10a2782`的Actions run #43再次全绿；Vercel再次failure。当前可审计结论是“GitHub Actions通过、外部Vercel失败且日志/权限阻塞”，不是“全部CI通过”。
+
+## Vercel Preview修复状态
+
+- 用户提供日志后确认根因是preview未注入`NEXT_PUBLIC_API_BASE_URL`，导致P001预渲染主动失败。
+- 已实现Vercel同源相对API回退，同时保持非Vercel生产构建fail-closed；新增API配置测试并纳入聚合门禁。
+- 本地Vercel等价环境52页构建、完整31项行为、TypeScript和ESLint通过。远程Vercel状态必须以修复提交后的新检查为准，PR继续保持Draft。

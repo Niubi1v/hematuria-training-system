@@ -118,6 +118,19 @@
 - 证据文档提交后，head `10a2782`触发run #43（run id `29201123342`）：build job `86672572046` completed/success，以上全部质量步骤再次success；artifact上传和deploy job `86672831733`再次skipped。
 - `10a2782`对应Vercel deployment `14bJLhnhGaJcGuxE56udffnckoLe`进入failure终态；失败在Actions尚运行时已出现，仍无可访问日志，未实施代码修改。
 
+## Vercel Preview P1修复证据（2026-07-13）
+
+| 命令/条件 | 退出码 | 结果 |
+|---|---:|---|
+| 首次`tsx scripts/test-public-api-config.ts` | 1 | 预期失败：`resolvePublicApiBaseUrl is not a function`，证明缺少同源preview契约 |
+| 修复后`tsx scripts/test-public-api-config.ts` | 0 | Vercel同源、非Vercel fail-closed、HTTPS及纯origin约束全部通过 |
+| `tsc --noEmit`；`node scripts/run-lint.mjs` | 0 / 0 | 类型与Lint通过 |
+| 清除`NEXT_PUBLIC_API_BASE_URL`，设置`VERCEL=1`、`VERCEL_ENV=preview`后执行`next build` | 0 | 20.2秒；52/52静态页，P001-P042全部预渲染成功 |
+| 更新后的完整`package.json scripts.test` | 0 | 31项行为链全部通过，包含新增API配置回归 |
+
+- 本机真实pnpm入口不可用，首次`pnpm run build`尝试在启动前报命令不存在；随后直接执行其实际映射的`next build`，环境条件与Vercel失败构建一致。
+- 修复未添加、输出或修改环境变量/密钥；Vercel未配置时使用同一部署origin的相对API路径。
+
 - CI/Linux环境在拟发布SHA复跑安全专项、完整行为、generated data diff、repo secret scan和Playwright全量；本地22/22不能替代CI。
 - 拟发布SHA上的完整质量门禁，而非仅当前worktree。
 - GitHub Actions、Pages、Vercel SHA/live alias核对。

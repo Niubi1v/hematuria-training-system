@@ -83,6 +83,14 @@
 - 修复：按当前安全架构更新断言，并将两个入口加入完整行为链。
 - 复验：21:25更新后的完整30项行为链exit0；TypeScript与ESLint exit0。不得据此替代PR CI或生产冒烟。
 
+### HEM-P1-017：Vercel Preview缺少公开API origin导致预渲染失败（已修复，待CI）
+
+- 级别：P1，阻断Preview Deployment。
+- 首条根因：预渲染`/cases/P001`时`src/lib/apiConfig.ts`抛出`NEXT_PUBLIC_API_BASE_URL is required for production builds.`；末尾ELIFECYCLE仅是结果，不是根因。
+- 失败条件：Vercel preview使用production构建，但项目没有向该preview注入`NEXT_PUBLIC_API_BASE_URL`。
+- 最小修复：仅当`VERCEL=1`且没有显式origin时使用同源相对`/api/*`；非Vercel production/static export继续fail-closed，显式origin继续要求HTTPS且不得带路径、query或fragment。
+- 回归：新增`test:api-config`并纳入完整行为链；Vercel等价无origin环境`next build`成功生成52页，包括P001-P042。仍需Vercel Preview CI确认。
+
 - HEM-BLK-013：Git写入额度阻塞已解除；20:48成功fetch，随后创建`2bc3305`与`58f456e`两个小步提交。仍须完成push前复核、普通push专项分支、PR与CI。
 
 - HEM-P2-006：将“572条事实总数”统一说明为“572条审核追踪项”。
