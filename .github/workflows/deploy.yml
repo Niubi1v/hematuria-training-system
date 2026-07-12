@@ -38,6 +38,9 @@ jobs:
       - name: Conversion idempotency
         run: pnpm run test:idempotency
 
+      - name: Generated data matches the committed baseline
+        run: git diff --exit-code -- data
+
       - name: Schema validation
         run: pnpm run test:product
 
@@ -67,6 +70,9 @@ jobs:
 
       - name: Lint
         run: pnpm run lint
+
+      - name: Repository secret scan
+        run: pnpm run test:secrets
 
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
