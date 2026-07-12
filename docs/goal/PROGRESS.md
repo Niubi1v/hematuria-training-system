@@ -84,3 +84,4 @@
 - GitHub Actions run #42已完成success；build job所有质量步骤成功，PR的Pages artifact上传与deploy job按安全条件跳过。
 - 外部Vercel提交状态实际为failure；“Vercel Preview Comments”与部署状态不是同一检查。Vercel bot评论显示Deployment Error且没有preview URL。
 - 当前无法访问Vercel部署日志，故未修改代码；只有取得可重复失败日志后才允许实施针对性修复。
+- docs证据提交`10a2782`后的Actions run #43亦完成success，全部质量步骤通过、Pages部署步骤跳过；Vercel deployment `14bJLhnhGaJcGuxE56udffnckoLe`再次failure，确认失败可重复但根因日志仍不可见。

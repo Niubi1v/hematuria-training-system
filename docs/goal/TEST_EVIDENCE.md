@@ -115,6 +115,8 @@
 - PR事件的`Upload Pages artifact`为skipped；deploy job `86671495596`为skipped，证明PR没有触发Pages部署。
 - 外部提交状态`Vercel`为failure，目标为`https://vercel.com/niubi1vs-projects/hematuria-training-system/BkWPP88EtwxFRdSDUAesLgVK6FwB`；Vercel bot评论同样显示Deployment Error且preview URL为空。
 - 两次尝试通过浏览器读取Vercel部署详情均在页面加载时超时，未取得构建日志；因此只能登记外部检查失败，不能断言根因，也没有进行猜测性代码修复。
+- 证据文档提交后，head `10a2782`触发run #43（run id `29201123342`）：build job `86672572046` completed/success，以上全部质量步骤再次success；artifact上传和deploy job `86672831733`再次skipped。
+- `10a2782`对应Vercel deployment `14bJLhnhGaJcGuxE56udffnckoLe`进入failure终态；失败在Actions尚运行时已出现，仍无可访问日志，未实施代码修改。
 
 - CI/Linux环境在拟发布SHA复跑安全专项、完整行为、generated data diff、repo secret scan和Playwright全量；本地22/22不能替代CI。
 - 拟发布SHA上的完整质量门禁，而非仅当前worktree。

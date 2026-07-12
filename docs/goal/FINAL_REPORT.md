@@ -68,3 +68,4 @@
 - GitHub Actions `Deploy to GitHub Pages` run #42成功；build job的全部测试、Playwright、构建和安全扫描步骤通过。Pages artifact及deploy在PR事件均跳过，未发生正式Pages部署。
 - 外部Vercel Deployment状态为failure，不是通过；Vercel Preview Comments通过不能替代Deployment状态。错误详情链接需要Vercel访问权限/可用页面，当前未取得真实日志，根因保持未知。
 - 因无失败日志，本轮未进行代码修复，也未放宽或隐藏任何测试。PR继续保持Draft。
+- 后续head `10a2782`的Actions run #43再次全绿；Vercel再次failure。当前可审计结论是“GitHub Actions通过、外部Vercel失败且日志/权限阻塞”，不是“全部CI通过”。
