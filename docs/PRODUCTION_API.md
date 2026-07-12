@@ -8,6 +8,10 @@ NEXT_PUBLIC_API_BASE_URL=https://hematuria-training-system.vercel.app
 
 所有接口路径由 `src/lib/apiConfig.ts` 生成，并统一使用尾斜杠。不要再分别配置 Patient、Session、Training 或 TTS URL。
 
+前端主路径共有五个入口：`/api/health/`、`/api/session/init/`、`/api/agent-chat/`、`/api/training-action/` 和 `/api/tts/`。`/api/patient-reply/` 为兼容路径，`/api/session/complete-profile/` 不是前端主路径；不得为这些兼容路径建立第二套公开 base URL 配置。
+
+本地与 CI 验证环境应对齐 `.github/workflows/deploy.yml`：Node.js `22.14`、pnpm `11.7.0`。
+
 ## Vercel 服务端变量
 
 在 Vercel 项目的 `Settings -> Environment Variables` 中为 Production 和 Preview 配置：
@@ -34,7 +38,12 @@ TRAINING_DEPLOYMENT_TIER=practice
 AZURE_SPEECH_KEY=<Azure Speech密钥>
 AZURE_SPEECH_REGION=<资源区域，例如eastasia>
 
-AGENT_API_ALLOWED_ORIGIN=https://niubi1v.github.io
+AGENT_API_ALLOWED_ORIGINS=https://niubi1v.github.io
+AGENT_CHAT_RATE_LIMIT_PER_MINUTE=30
+SESSION_INIT_RATE_LIMIT_PER_MINUTE=60
+AGENT_API_RATE_LIMIT_WINDOW_MS=60000
+# 可选；配置后，无 Origin 的服务间调用必须发送 x-agent-api-token
+AGENT_API_SERVER_TOKEN=<独立服务间令牌>
 TRAINING_API_ALLOWED_ORIGINS=https://niubi1v.github.io
 TTS_ALLOWED_ORIGINS=https://niubi1v.github.io
 ```
@@ -43,7 +52,7 @@ TTS_ALLOWED_ORIGINS=https://niubi1v.github.io
 
 ## 健康检查
 
-部署后访问 `https://hematuria-training-system.vercel.app/api/health/`。该接口只返回布尔配置状态、部署层级、短提交号和 API 版本，不返回密钥。期望 `patientServiceConfigured`、`trainingStateConfigured`、`cloudTtsConfigured` 和 `allowedOriginConfigured` 均为 `true`。
+部署后访问 `https://hematuria-training-system.vercel.app/api/health/`。该接口只返回布尔配置状态、部署层级、短提交号和 API 版本，不返回密钥。启用 Patient Agent 与签名训练状态时，期望 `patientServiceConfigured`、`trainingStateConfigured` 和 `allowedOriginConfigured` 为 `true`。只有实际配置 Azure Speech 后才期望 `cloudTtsConfigured=true`；未配置时必须为 `false`，并在冒烟测试中明确记为 `SKIP`，不能冒充云语音通过。
 
 `session/init` 使用本地病例事实快速建立会话，不再同步等待大模型补全。会话默认 30 分钟失效，回答幂等缓存默认 15 分钟失效；部署 SHA 或 API 版本变化后，浏览器会自动丢弃旧会话。页面中的“重新连接AI”只更新 AI 会话，不会清空学生的训练记录。
 
@@ -74,4 +83,11 @@ pnpm run smoke:production
 
 ## 当前教学边界
 
-42 个病例仍为 `needs_revision`，572 条程序或 AI 补充事实仍待医学专家确认。GitHub Pages 不可用于正式 OSCE、教师阅卷或正式 RCT 数据采集。
+42 个病例仍为 `needs_revision`。医学审核队列包含572条审核追踪项，不代表病例库全部结构化事实：其中153条来源追踪项待具名来源核对，419条模拟补充事实已完成AI内容预审但仍待持证专家逐条终签。GitHub Pages 不可用于正式 OSCE、教师阅卷或正式 RCT 数据采集。
+
+## 当前生产复核状态（2026-07-12）
+
+- 本地目标仓库、`origin/main` 和 GitHub API compare 均指向 `5a3ad11`；这只证明提交指针一致，不证明部署内容已完成验收。
+- GitHub connector 仅显示该提交的 Vercel status 为 success；GitHub Actions、Pages 部署、Pages live alias 与 Vercel live alias 仍待独立核验。
+- 普通与提权环境运行 `pnpm run smoke:production` 均因 `fetch failed` 未能连接生产 API。`/api/health/`、连续10次 session init、中文5次和英文5次真实请求均为“待验证”，不得登记为通过。
+- Azure Speech 尚未在本轮验证；未配置时应保持浏览器语音或文字降级，并将云TTS标为 `SKIP`。

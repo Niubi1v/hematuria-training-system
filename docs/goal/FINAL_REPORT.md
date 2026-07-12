@@ -1,0 +1,43 @@
+# 最终报告（执行中草案）
+
+结论：**尚未完成，禁止宣称生产验收通过。**
+
+## 当前交付状态
+
+- 仓库基线已核对到`5a3ad11`；专项分支`codex/hematuria-production-goal`已形成运行时安全提交`2bc3305`和CI门禁提交`58f456e`，尚未push、未建PR、未部署。
+- 已实施formal fail-closed、独立训练签名secret/health、Agent/session Origin与限流防护、participant命名key隔离、统一评分/报告版本、Playwright readiness修复及CI生成数据/仓库secret门禁。
+- 工程加固后本地专项6/6、typecheck/lint、完整行为28/28、幂等69、offline reconnect重复6/6、Playwright22/22、clean build52、repo secret 235候选和bundle 24 JS均通过；仍需CI在拟发布commit确认。
+- 生产smoke两次均因`fetch failed`失败，health、10+5+5、Actions、Pages/live alias与Vercel live alias仍待验证。
+- GitHub connector的Vercel success状态只能作为辅助信号，不能替代live部署与API证据。
+- 早前Git写入额度阻塞已于20:48解除；`git fetch --prune origin`成功且远程仍为`5a3ad11`，随后两个小步提交成功。push/PR/CI仍待push前最终复核。
+- 实施后再次通过GitHub API compare确认远程`main`仍等于`5a3ad11`；本地候选差异未修改`data/**`，暂存区为空。
+
+## 医学治理状态
+
+- 42例全部`needs_revision`、`formalUseAllowed=false`。
+- 572条审核追踪项由153条来源追踪项和419条模拟补充事实组成；419条持证专家终签为0，病例级负责人签署为0/42。
+- P003 `transfusionHistory`和P005 `coronaryDisease`的旧来源记录已按source对齐，但仍待具名来源核对。
+- 151条source辅助标记冲突为P0正式发布阻断；本阶段没有修改医学事实、批准状态或`needs_revision`。
+
+## 本阶段文档交付
+
+- 建立生产目标、执行计划、追加式进度、缺陷日志、测试证据、最终报告草案和回滚计划。
+- README与生产API文档统一572审核追踪口径、五个前端主API入口、Node/pnpm CI版本和生产待验证状态。
+
+## 工程实施摘要
+
+- formal-attempt新增病例`formalUseAllowed === true`门禁；42例数据未被改成true。
+- `TRAINING_STATE_SECRET`成为正式状态唯一签名secret，health不再用LLM key报告配置完成。
+- `agent-chat`与`session init`执行Origin白名单、限流和非泄露错误响应。
+- participant进入attempt storage/pointer key命名空间；评分统一`360-event-v1`与`reportVersion: 3`。
+- Playwright readiness竞态已修复；CI新增generated data diff与repo secret scan，固定Node/pnpm及ESLint插件解析。
+- 这些结论仅代表本地实现与测试，不代表push、PR、Actions、部署或生产冒烟完成。
+
+## 未完成项与批准门
+
+1. 需要具名医学负责人裁决151条source辅助标记语义；该事项不可由AI或脚本代替。
+2. 需要CI在拟发布commit复核安全专项、28项行为、69 JSON、generated diff、secret scan、Playwright22项和52页build，并在联网环境完成Actions/Pages/Vercel和生产10+5+5验证。
+3. 项目负责人已授权在完成fetch、差异审查、测试和密钥扫描后普通push `codex/*`专项分支；该授权不包括push/合并`main`、自动合并PR或生产部署。
+4. Azure未配置时保持SKIP；配置密钥需要单独授权且不得进入仓库。
+
+只有`HEMATURIA_PRODUCTION_GOAL.md`的全部完成条件满足后，才可将本文件状态改为“最终验收完成”。

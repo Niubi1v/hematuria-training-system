@@ -1,0 +1,62 @@
+# 测试证据
+
+基线日期：2026-07-12，Asia/Shanghai。测试在隔离snapshot/worktree执行，未修改生产数据。以下仅记录实际运行事实；未保留的单项时间或argv明确标注，不补造。
+
+| 开始—结束 | 精确命令/入口 | 退出码 | 结果 | 关键证据 |
+|---|---|---:|---|---|
+| 14:44:54—14:44:57 | `node node_modules/typescript/bin/tsc --noEmit` | 0 | 通过 | TypeScript无错误 |
+| 14:44:54—14:44:58 | `node scripts/run-lint.mjs` | 0 | 通过 | ESLint通过 |
+| 14:45:13—14:45:24 | `pnpm test`（`package.json`的`scripts.test`） | 0 | 通过，27/27 | 完整单元/行为脚本链 |
+| 14:47:00—14:47:12 | `pnpm run test:idempotency` | 0 | 通过，69 JSON | 连续转换校验和一致；此前审计包装器参数错误导致一次失败，修正包装器后原测试通过 |
+| 14:47:24—14:47:40 | `pnpm run build` | 0 | 通过，52 pages | 42个病例路径；隔离junction环境出现内置ESLint模块警告但未导致build失败 |
+| 14:47:57（结束时间未单独保留） | `pnpm run test:bundle` | 0 | 通过，24 JS | 静态答案与密钥扫描通过 |
+| 14:50:19—14:50:44 | `pnpm run test:e2e` | 1 | 失败，21/22 | mobile-chromium offline reconnect场景失败 |
+| 14:50:56—14:50:58 | Playwright对失败的mobile offline reconnect场景定向重跑（完整argv未保留） | 0 | 通过，1/1 | 说明存在波动；不能替代全量通过 |
+| 单项时间未保留 | `pnpm run test:medical-review` | 0 | 通过 | 医学审核工作簿合同 |
+| 单项时间未保留 | `pnpm run test:medical-review-queue` | 0 | 通过 | 审核队列合同 |
+| 单项时间未保留 | `pnpm run test:medical-review-import` | 0 | 通过 | 候选导入合同 |
+| 单项时间未保留 | `pnpm run test:release-v14` | 0 | 通过 | v1.4导入合同；四项医学合同合计4/4 |
+| 普通环境时间未单独保留 | `pnpm run smoke:production` | 非0 | 失败 | `fetch failed`，没有生产健康或10+5+5证据 |
+| 14:51:39—14:53:46 | `pnpm run smoke:production`（提权网络重试） | 非0 | 失败 | 同为`fetch failed`；不得登记为生产通过 |
+
+## 工程加固后的复验
+
+| 开始—结束 | 精确命令/入口 | 退出码 | 结果 | 关键证据 |
+|---|---|---:|---|---|
+| 15:19:03—15:19:06 | 工程安全专项测试集合（交接摘要未保留逐条argv） | 0 | 通过，6/6 | 覆盖formal gate、独立签名secret/health、Origin/限流/非泄露、participant key和评分版本 |
+| 15:20:23—15:20:29 | `pnpm run typecheck`、`pnpm run lint` | 0 | 通过 | 类型与直接Next legacy ESLint插件路径均通过 |
+| 15:21:34—15:21:48 | `pnpm test` | 0 | 通过，28/28 | 完整单元/行为链，比基线新增安全专项合同 |
+| 15:22:34—15:22:48 | `pnpm run test:idempotency` | 0 | 通过，69 JSON | 生成文本归一化与基线69/69一致；53字节hash差异仅CRLF/LF行尾 |
+| 15:26:36—15:26:41 | desktop/mobile offline reconnect重复测试 | 0 | 通过，6/6 | readiness竞态修复后重复运行 |
+| 15:26:54—15:27:11 | `pnpm run test:e2e` | 0 | 通过，22/22 | desktop/mobile全量通过 |
+| 15:41:58—15:42:16 | clean `pnpm run build` | 0 | 通过，52 pages | 清洁构建成功 |
+| 15:42:32—15:42:36 | `pnpm run typecheck`、`pnpm run lint`、repo secret scan、`pnpm run test:bundle` | 0 | 全部通过 | secret扫描235个候选文件；bundle扫描24 JS |
+| 时间未单独保留 | pnpm lockfile-only frozen offline检查 | 0 | 通过 | 固定lockfile可离线冻结解析 |
+
+说明：专项集合和offline repeat的完整逐条argv未包含在主线程交接摘要中，因此不补造；结果计数和时间按实际运行记录保留。
+
+## Git与部署证据
+
+- 原仓库`main`、HEAD、`origin/main`与GitHub API compare均为`5a3ad11`。
+- `git fetch --prune`挂起约30秒后终止；未获得成功退出码。
+- GitHub connector仅确认`5a3ad11`的Vercel status为success；没有当次Actions、Pages或live alias证据。
+- 当前专项分支`codex/hematuria-production-goal`起点为`5a3ad11`，尚未push、未创建PR、未部署。
+- 本轮新增工程修复仍只存在于本地专项worktree；没有PR、Actions或生产部署证据。
+- 首次文档小步提交在命令执行前因Codex提权用量额度耗尽被权限审查器拒绝；没有把未提交状态伪报为commit或push成功。
+- 20:48:31–20:48:33 `git fetch --prune origin` exit0；HEAD与`origin/main`起点均为`5a3ad11`，ahead/behind 0/0。
+- 本地提交`2bc3305525398b12a53725dfdaedcaa0fb280fc7`包含运行时安全/测试；`58f456e48690e8617417d8f64e9b150038b6d779`包含CI与Playwright门禁。两者尚未push，不能作为远程CI证据。
+
+## 医学治理交叉检查
+
+- 追踪项：572 = 153 sourceTrace + 419 simulation queue。
+- 优先级：P0/P1/P2 = 191/148/80。
+- 42例保持`needs_revision`；419条不得自动approved。
+- 辅助标记交叉统计：simulation/是419、source/否2、source/是151。此检查暴露HEM-P0-001，现有工作簿合同测试未覆盖正确分离。
+
+## 待运行门禁
+
+- CI/Linux环境在拟发布SHA复跑安全专项、完整行为、generated data diff、repo secret scan和Playwright全量；本地22/22不能替代CI。
+- 拟发布SHA上的完整质量门禁，而非仅当前worktree。
+- GitHub Actions、Pages、Vercel SHA/live alias核对。
+- `/api/health/`、session init 10/10、中文5/5、英文5/5真实生产冒烟。
+- Azure配置后的四音色MP3；未配置时必须明确SKIP。
