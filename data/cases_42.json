@@ -26,18 +26,18 @@
       "voidingDifficulty": "排尿稍费力、尿不尽、夜尿1-2次/晚"
     },
     "riskFactors": {
-      "smoking": "未诉/需主动询问",
-      "alcohol": "未诉/需主动询问",
-      "occupation": "未诉/需主动询问",
-      "stoneHistory": "未诉/否认明确结石史",
-      "infectionHistory": "否认发热寒战",
-      "trauma": "未诉/否认外伤",
-      "anticoagulants": "长期服用阿司匹林",
-      "tumorHistory": "未诉/否认肿瘤史",
-      "familyHistory": "高血压病史10年，服用缬沙坦 1片 qd，血压控制良好。平时劳累后心前区不适，胸闷；否认糖尿病、心脏病、肝炎、结核病史。否认药物过敏史、没有做过手术、输血病史。按期预防接种。父母已经过世，子女身体健康。"
+      "smoking": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+      "alcohol": "平时喝酒的种类和量，我现在记不太清。",
+      "occupation": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "stoneHistory": "以前有没有得过泌尿系结石，我记不太清。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期有没有伤到腰腹部，我记得不太清楚。",
+      "anticoagulants": "平时吃的药名我记不全，需要看看药盒。 我在服用阿司匹林。",
+      "tumorHistory": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "familyHistory": "父母已经过世，子女身体健康。"
     },
     "pastHistory": "高血压病史10年，服用缬沙坦 1片 qd，血压控制良好。平时劳累后心前区不适，胸闷；否认糖尿病、肝炎、结核病史。否认药物过敏史、否认输血史。按期预防接种；结石史：未诉/否认明确结石史；尿路感染史：否认发热寒战；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史；结石史：未诉/否认明确结石史；尿路感染史：否认发热寒战；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "具体抽没抽烟、抽了多少年，我现在记不准确。；平时喝酒的种类和量，我现在记不太清。；我做过几种工作，具体工种和年限一时说不清。；工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
     "familyHistory": "父母已经过世，子女身体健康。",
     "medication": "缬沙坦、阿司匹林",
     "urineTestResult": "红细胞5562个/ul",
@@ -61,7 +61,9 @@
       "stoneClues": "否认腰痛",
       "tumorRisk": "高龄男性、无痛性肉眼血尿、血块、长期阿司匹林；需警惕膀胱癌，不能仅归因于阿司匹林",
       "glomerularClues": "无泡沫尿、水肿、高血压肾损害线索；尿检以大量红细胞为主",
-      "opening": "间断小便变红3月余"
+      "opening": "间断小便变红3月余",
+      "smoking": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+      "alcohol": "平时喝酒的种类和量，我现在记不太清。"
     },
     "patientPersona": {
       "emotion": "退休男性，担心肿瘤，表达较清楚；一开始只强调尿红，不主动说阿司匹林和血块，需追问。",
@@ -905,8 +907,8 @@
         "years": 0,
         "quitYears": 0,
         "packYears": 0,
-        "patientAnswerZh": "我不吸烟。",
-        "patientAnswerEn": "I do not smoke.",
+        "patientAnswerZh": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+        "patientAnswerEn": "I cannot reliably recall whether or how long I smoked.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -916,22 +918,22 @@
         "amount": "0",
         "frequency": "never",
         "years": 0,
-        "patientAnswerZh": "我平时不喝酒。",
-        "patientAnswerEn": "I do not drink alcohol.",
+        "patientAnswerZh": "平时喝酒的种类和量，我现在记不太清。",
+        "patientAnswerEn": "I cannot clearly recall the type or amount of alcohol I usually drank.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "occupation": {
         "status": "absent",
-        "patientAnswerZh": "我做普通工作。",
-        "patientAnswerEn": "I have a regular job.",
+        "patientAnswerZh": "我做过几种工作，具体工种和年限一时说不清。",
+        "patientAnswerEn": "I have had several jobs and cannot clearly recall every job or how long I did it.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "occupationalExposure": {
         "status": "absent",
-        "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-        "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+        "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+        "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -958,8 +960,8 @@
       },
       "stroke": {
         "status": "absent",
-        "patientAnswerZh": "没有脑卒中。",
-        "patientAnswerEn": "I do not have stroke.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过脑卒中。",
+        "patientAnswerEn": "I do not clearly remember whether I was ever diagnosed with a stroke.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -979,8 +981,8 @@
       },
       "stoneHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过泌尿系结石。",
-        "patientAnswerEn": "I have never had urinary stones.",
+        "patientAnswerZh": "以前有没有得过泌尿系结石，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had urinary stones.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -993,22 +995,22 @@
       },
       "malignancyHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过肿瘤。",
-        "patientAnswerEn": "I have no previous history of cancer.",
+        "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "traumaHistory": {
         "status": "absent",
-        "patientAnswerZh": "近期没有相关外伤。",
-        "patientAnswerEn": "I have not had relevant trauma.",
+        "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
+        "patientAnswerEn": "I do not clearly remember any recent injury to my flank or abdomen.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "urinaryProcedureHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-        "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+        "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -1035,8 +1037,8 @@
       },
       "anticoagulantUse": {
         "status": "absent",
-        "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-        "patientAnswerEn": "I do not take anticoagulants.",
+        "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+        "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -1253,6 +1255,15 @@
         "未取得病理和分期即实施确定性肿瘤治疗",
         "血块尿潴留或严重出血未处理"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -1282,18 +1293,18 @@
       "voidingDifficulty": "无明显尿频尿急尿痛"
     },
     "riskFactors": {
-      "smoking": "既往风心病史，换机械瓣膜，服用华法林抗凝。2年前脑梗，保守治疗，恢复良好。否认糖尿病、心脏病、肝炎、结核病史。否认吸烟酗酒史。青霉素过敏。没有做过手术、输血病史。按期预防接种。父母已经过世，子女身体健康。",
-      "alcohol": "既往风心病史，换机械瓣膜，服用华法林抗凝。2年前脑梗，保守治疗，恢复良好。否认糖尿病、心脏病、肝炎、结核病史。否认吸烟酗酒史。青霉素过敏。没有做过手术、输血病史。按期预防接种。父母已经过世，子女身体健康。",
-      "occupation": "未诉/需主动询问",
-      "stoneHistory": "未诉/否认明确结石史",
-      "infectionHistory": "否认发热寒战",
-      "trauma": "未诉/否认外伤",
-      "anticoagulants": "长期失眠，服用舒乐安定",
-      "tumorHistory": "未诉/否认肿瘤史",
-      "familyHistory": "既往风心病史，换机械瓣膜，服用华法林抗凝。2年前脑梗，保守治疗，恢复良好。否认糖尿病、心脏病、肝炎、结核病史。否认吸烟酗酒史。青霉素过敏。没有做过手术、输血病史。按期预防接种。父母已经过世，子女身体健康。"
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "stoneHistory": "以前有没有得过泌尿系结石，我记不太清。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期有没有伤到腰腹部，我记得不太清楚。",
+      "anticoagulants": "我在服用华法林。 平时吃的药名我记不全，需要看看药盒。",
+      "tumorHistory": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "familyHistory": "父母已经过世，子女身体健康。"
     },
     "pastHistory": "既往风心病史，换机械瓣膜，服用华法林抗凝。2年前脑梗，保守治疗，恢复良好。否认糖尿病、肝炎、结核病史。青霉素过敏。否认输血史。按期预防接种；结石史：未诉/否认明确结石史；尿路感染史：否认发热寒战；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史；结石史：未诉/否认明确结石史；尿路感染史：否认发热寒战；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "我不吸烟。；我平时不喝酒。；我做过几种工作，具体工种和年限一时说不清。；工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
     "familyHistory": "父母已经过世，子女身体健康。",
     "medication": "华法林",
     "urineTestResult": "红细胞4768个/ul，尿白细胞45个/ul",
@@ -1317,7 +1328,9 @@
       "stoneClues": "左侧腰部酸胀痛",
       "tumorRisk": "上尿路占位+肾积水；机械瓣膜华法林并不能解释血尿，仍需肿瘤排查",
       "glomerularClues": "无泡沫尿、水肿、上感后茶色尿等肾小球线索",
-      "opening": "反复左侧腰痛伴小便变红1月余"
+      "opening": "反复左侧腰痛伴小便变红1月余",
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "老年女性，有瓣膜置换史，对手术和停抗凝非常担心；用药史需主动追问。",
@@ -2179,22 +2192,22 @@
       },
       "occupation": {
         "status": "absent",
-        "patientAnswerZh": "我做普通工作。",
-        "patientAnswerEn": "I have a regular job.",
+        "patientAnswerZh": "我做过几种工作，具体工种和年限一时说不清。",
+        "patientAnswerEn": "I have had several jobs and cannot clearly recall every job or how long I did it.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "occupationalExposure": {
         "status": "absent",
-        "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-        "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+        "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+        "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "hypertension": {
         "status": "absent",
-        "patientAnswerZh": "没有高血压。",
-        "patientAnswerEn": "I do not have hypertension.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过高血压。",
+        "patientAnswerEn": "I do not clearly remember whether I was diagnosed with hypertension.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -2235,8 +2248,8 @@
       },
       "stoneHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过泌尿系结石。",
-        "patientAnswerEn": "I have never had urinary stones.",
+        "patientAnswerZh": "以前有没有得过泌尿系结石，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had urinary stones.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -2249,22 +2262,22 @@
       },
       "malignancyHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过肿瘤。",
-        "patientAnswerEn": "I have no previous history of cancer.",
+        "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "traumaHistory": {
         "status": "absent",
-        "patientAnswerZh": "近期没有相关外伤。",
-        "patientAnswerEn": "I have not had relevant trauma.",
+        "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
+        "patientAnswerEn": "I do not clearly remember any recent injury to my flank or abdomen.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "urinaryProcedureHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-        "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+        "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -2298,8 +2311,8 @@
       },
       "antiplateletUse": {
         "status": "absent",
-        "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-        "patientAnswerEn": "I do not take antiplatelet medication.",
+        "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+        "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -2312,15 +2325,15 @@
       },
       "menstrualHistory": {
         "status": "absent",
-        "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-        "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+        "patientAnswerZh": "我已经绝经多年，本次尿色异常不是阴道出血。",
+        "patientAnswerEn": "I have been postmenopausal for years, and this episode was not vaginal bleeding.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "pregnancyHistory": {
         "status": "absent",
-        "patientAnswerZh": "目前没有怀孕。",
-        "patientAnswerEn": "I am not currently pregnant.",
+        "patientAnswerZh": "我已绝经，目前无妊娠可能。",
+        "patientAnswerEn": "I am postmenopausal and there is no possibility of pregnancy.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -2501,6 +2514,15 @@
         "未取得病理和分期即实施确定性肿瘤治疗",
         "血块尿潴留或严重出血未处理"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -2530,18 +2552,18 @@
       "voidingDifficulty": "无尿频尿急排尿困难"
     },
     "riskFactors": {
-      "smoking": "COPD病史，有咳嗽咳痰，白色泡沫痰。高血压20余年，服用厄贝沙坦控制。否认糖尿病、心脏病、肝炎、结核病史。吸烟30余年，1包/每天，少量饮酒。否认药物过敏史。5年前行胆囊切除术、输血病史。按期预防接种。父母已经过世，子女身体健康。",
-      "alcohol": "COPD病史，有咳嗽咳痰，白色泡沫痰。高血压20余年，服用厄贝沙坦控制。否认糖尿病、心脏病、肝炎、结核病史。吸烟30余年，1包/每天，少量饮酒。否认药物过敏史。5年前行胆囊切除术、输血病史。按期预防接种。父母已经过世，子女身体健康。",
-      "occupation": "未诉/需主动询问",
-      "stoneHistory": "未诉/否认明确结石史",
-      "infectionHistory": "否认发热",
-      "trauma": "未诉/否认外伤",
-      "anticoagulants": "长期服用阿司匹林、厄贝沙坦",
-      "tumorHistory": "未诉/否认肿瘤史",
-      "familyHistory": "COPD病史，有咳嗽咳痰，白色泡沫痰。高血压20余年，服用厄贝沙坦控制。否认糖尿病、心脏病、肝炎、结核病史。吸烟30余年，1包/每天，少量饮酒。否认药物过敏史。5年前行胆囊切除术、输血病史。按期预防接种。父母已经过世，子女身体健康。"
+      "smoking": "吸烟，每天约20支，吸了30年，累计约30包年。",
+      "alcohol": "喝酒，偶尔少量。",
+      "occupation": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "stoneHistory": "以前有没有得过泌尿系结石，我记不太清。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期有没有伤到腰腹部，我记得不太清楚。",
+      "anticoagulants": "平时吃的药名我记不全，需要看看药盒。 我在服用阿司匹林。",
+      "tumorHistory": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "familyHistory": "父母已经过世，子女身体健康。"
     },
     "pastHistory": "COPD病史，有咳嗽咳痰，白色泡沫痰。高血压20余年，服用厄贝沙坦控制。否认糖尿病、肝炎、结核病史。否认药物过敏史。5年前行胆囊切除术，且有输血史。按期预防接种；结石史：未诉/否认明确结石史；尿路感染史：否认发热；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史；结石史：未诉/否认明确结石史；尿路感染史：否认发热；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史",
-    "personalHistory": "吸烟，每天约20支，吸了30年，累计约30包年。；喝酒，偶尔少量。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "吸烟，每天约20支，吸了30年，累计约30包年。；喝酒，偶尔少量。；我做过几种工作，具体工种和年限一时说不清。；工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
     "familyHistory": "父母已经过世，子女身体健康。",
     "medication": "阿司匹林、厄贝沙坦",
     "urineTestResult": "红细胞4448个/ul，尿白细胞3个/ul",
@@ -2565,7 +2587,9 @@
       "stoneClues": "无腰部疼痛",
       "tumorRisk": "70岁男性、吸烟30余年、无痛性全程肉眼血尿、体重下降，提示尿路上皮癌高危",
       "glomerularClues": "无泡沫尿、水肿、肾炎线索",
-      "opening": "反复小便变红5月余，加重1周"
+      "opening": "反复小便变红5月余，加重1周",
+      "smoking": "吸烟，每天约20支，吸了30年，累计约30包年。",
+      "alcohol": "喝酒，偶尔少量。"
     },
     "patientPersona": {
       "emotion": "老年男性，长期吸烟，咳痰，担心自己不能耐受手术；吸烟史和COPD需追问。",
@@ -3427,15 +3451,15 @@
       },
       "occupation": {
         "status": "absent",
-        "patientAnswerZh": "我做普通工作。",
-        "patientAnswerEn": "I have a regular job.",
+        "patientAnswerZh": "我做过几种工作，具体工种和年限一时说不清。",
+        "patientAnswerEn": "I have had several jobs and cannot clearly recall every job or how long I did it.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "occupationalExposure": {
         "status": "absent",
-        "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-        "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+        "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+        "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -3462,8 +3486,8 @@
       },
       "stroke": {
         "status": "absent",
-        "patientAnswerZh": "没有脑卒中。",
-        "patientAnswerEn": "I do not have stroke.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过脑卒中。",
+        "patientAnswerEn": "I do not clearly remember whether I was ever diagnosed with a stroke.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -3483,8 +3507,8 @@
       },
       "stoneHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过泌尿系结石。",
-        "patientAnswerEn": "I have never had urinary stones.",
+        "patientAnswerZh": "以前有没有得过泌尿系结石，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had urinary stones.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -3497,22 +3521,22 @@
       },
       "malignancyHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过肿瘤。",
-        "patientAnswerEn": "I have no previous history of cancer.",
+        "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "traumaHistory": {
         "status": "absent",
-        "patientAnswerZh": "近期没有相关外伤。",
-        "patientAnswerEn": "I have not had relevant trauma.",
+        "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
+        "patientAnswerEn": "I do not clearly remember any recent injury to my flank or abdomen.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "urinaryProcedureHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-        "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+        "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -3525,8 +3549,8 @@
       },
       "transfusionHistory": {
         "status": "present",
-        "patientAnswerZh": "我以前输过血。",
-        "patientAnswerEn": "I have had a blood transfusion before.",
+        "patientAnswerZh": "5年前做胆囊切除时输过血。",
+        "patientAnswerEn": "I received a blood transfusion during gallbladder surgery five years ago.",
         "provenance": "source",
         "teacherReviewRequired": false
       },
@@ -3539,8 +3563,8 @@
       },
       "anticoagulantUse": {
         "status": "absent",
-        "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-        "patientAnswerEn": "I do not take anticoagulants.",
+        "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+        "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -3757,6 +3781,15 @@
         "未取得病理和分期即实施确定性肿瘤治疗",
         "血块尿潴留或严重出血未处理"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -3786,18 +3819,18 @@
       "voidingDifficulty": "无尿频尿急排尿困难"
     },
     "riskFactors": {
-      "smoking": "未诉/需主动询问",
-      "alcohol": "未诉/需主动询问",
-      "occupation": "未诉/需主动询问",
-      "stoneHistory": "未诉/否认明确结石史",
-      "infectionHistory": "否认发热",
-      "trauma": "未诉/否认外伤",
-      "anticoagulants": "长期服用贝那普利、硝苯地平缓释片、氢氯噻嗪、达格列净、二甲双胍",
-      "tumorHistory": "未诉/否认肿瘤史",
-      "familyHistory": "高血压20余年，服用贝那普利、硝苯地平缓释片、氢氯噻嗪控制良好。二型糖尿病，平时注射胰岛素及达格列净、二甲双胍控制，具体血糖未监测。否认心脏病、肝炎、结核病史。否认药物过敏史。否认手术术、输血病史。按期预防接种。父母已经过世，子女身体健康。"
+      "smoking": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+      "alcohol": "平时喝酒的种类和量，我现在记不太清。",
+      "occupation": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "stoneHistory": "以前有没有得过泌尿系结石，我记不太清。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期有没有伤到腰腹部，我记得不太清楚。",
+      "anticoagulants": "平时吃的药名我记不全，需要看看药盒。 平时吃的药名我记不全，需要看看药盒。",
+      "tumorHistory": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "familyHistory": "父母已经过世，子女身体健康。"
     },
     "pastHistory": "高血压20余年，服用贝那普利、硝苯地平缓释片、氢氯噻嗪控制良好。二型糖尿病，平时注射胰岛素及达格列净、二甲双胍控制，具体血糖未监测。否认心脏病、肝炎、结核病史。否认药物过敏史。否认手术术、输血病史。按期预防接种；结石史：未诉/否认明确结石史；尿路感染史：否认发热；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史；结石史：未诉/否认明确结石史；尿路感染史：否认发热；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "具体抽没抽烟、抽了多少年，我现在记不准确。；平时喝酒的种类和量，我现在记不太清。；我做过几种工作，具体工种和年限一时说不清。；工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
     "familyHistory": "父母已经过世，子女身体健康。",
     "medication": "达格列净、二甲双胍、胰岛素、硝苯地平、贝那普利",
     "urineTestResult": "红细胞4448个/ul，尿白细胞3个/ul",
@@ -3821,7 +3854,9 @@
       "stoneClues": "无腰痛",
       "tumorRisk": "巨大肾占位+腔静脉癌栓+骨转移，属于复杂肿瘤MDT病例",
       "glomerularClues": "无肾小球性线索",
-      "opening": "小便变红1月余"
+      "opening": "小便变红1月余",
+      "smoking": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+      "alcohol": "平时喝酒的种类和量，我现在记不太清。"
     },
     "patientPersona": {
       "emotion": "老年男性，对“癌栓”和转移感到焦虑；既往糖尿病高血压用药需追问。",
@@ -4665,8 +4700,8 @@
         "years": 0,
         "quitYears": 0,
         "packYears": 0,
-        "patientAnswerZh": "我不吸烟。",
-        "patientAnswerEn": "I do not smoke.",
+        "patientAnswerZh": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+        "patientAnswerEn": "I cannot reliably recall whether or how long I smoked.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -4676,22 +4711,22 @@
         "amount": "0",
         "frequency": "never",
         "years": 0,
-        "patientAnswerZh": "我平时不喝酒。",
-        "patientAnswerEn": "I do not drink alcohol.",
+        "patientAnswerZh": "平时喝酒的种类和量，我现在记不太清。",
+        "patientAnswerEn": "I cannot clearly recall the type or amount of alcohol I usually drank.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "occupation": {
         "status": "absent",
-        "patientAnswerZh": "我做普通工作。",
-        "patientAnswerEn": "I have a regular job.",
+        "patientAnswerZh": "我做过几种工作，具体工种和年限一时说不清。",
+        "patientAnswerEn": "I have had several jobs and cannot clearly recall every job or how long I did it.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "occupationalExposure": {
         "status": "absent",
-        "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-        "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+        "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+        "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -4718,8 +4753,8 @@
       },
       "stroke": {
         "status": "absent",
-        "patientAnswerZh": "没有脑卒中。",
-        "patientAnswerEn": "I do not have stroke.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过脑卒中。",
+        "patientAnswerEn": "I do not clearly remember whether I was ever diagnosed with a stroke.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -4739,8 +4774,8 @@
       },
       "stoneHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过泌尿系结石。",
-        "patientAnswerEn": "I have never had urinary stones.",
+        "patientAnswerZh": "以前有没有得过泌尿系结石，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had urinary stones.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -4753,22 +4788,22 @@
       },
       "malignancyHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过肿瘤。",
-        "patientAnswerEn": "I have no previous history of cancer.",
+        "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "traumaHistory": {
         "status": "absent",
-        "patientAnswerZh": "近期没有相关外伤。",
-        "patientAnswerEn": "I have not had relevant trauma.",
+        "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
+        "patientAnswerEn": "I do not clearly remember any recent injury to my flank or abdomen.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "urinaryProcedureHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-        "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+        "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -4781,8 +4816,8 @@
       },
       "transfusionHistory": {
         "status": "absent",
-        "patientAnswerZh": "我以前没有输过血。",
-        "patientAnswerEn": "I have never had a blood transfusion.",
+        "patientAnswerZh": "以前是否输过血，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously received a blood transfusion.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -4795,15 +4830,15 @@
       },
       "anticoagulantUse": {
         "status": "absent",
-        "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-        "patientAnswerEn": "I do not take anticoagulants.",
+        "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+        "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "antiplateletUse": {
         "status": "absent",
-        "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-        "patientAnswerEn": "I do not take antiplatelet medication.",
+        "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+        "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -5037,12 +5072,21 @@
         "未取得病理和分期即实施确定性肿瘤治疗",
         "血块尿潴留或严重出血未处理"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
     "id": "P005",
     "sourcePatientId": "P005",
-    "title": "前列腺癌",
+    "title": "前列腺增生，前列腺癌待排/鉴别",
     "difficulty": "挑战",
     "diseaseCategory": "前列腺疾病",
     "age": "83",
@@ -5066,18 +5110,18 @@
       "voidingDifficulty": "尿频尿急、尿线变细、尿分叉、夜尿5-6次/晚、急迫性尿失禁、排尿困难"
     },
     "riskFactors": {
-      "smoking": "未诉/需主动询问",
-      "alcohol": "未诉/需主动询问",
-      "occupation": "未诉/需主动询问",
-      "stoneHistory": "未诉/否认明确结石史",
-      "infectionHistory": "否认发热",
-      "trauma": "未诉/否认外伤",
-      "anticoagulants": "长期服用阿司匹林、氯吡格雷、达格列净、二甲双胍",
-      "tumorHistory": "未诉/否认肿瘤史",
-      "familyHistory": "糖尿病十余年，服用达格列净、二甲双胍控制，具体血糖不详。6年前因冠脉狭窄行支架植入术。否认肝炎、结核病史。自诉磺胺类药物、清开灵过敏。否认输血病史。子女身体健康。"
+      "smoking": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+      "alcohol": "平时喝酒的种类和量，我现在记不太清。",
+      "occupation": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "stoneHistory": "以前有没有得过泌尿系结石，我记不太清。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期有没有伤到腰腹部，我记得不太清楚。",
+      "anticoagulants": "平时吃的药名我记不全，需要看看药盒。 我在服用阿司匹林、氯吡格雷。",
+      "tumorHistory": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "familyHistory": "子女身体健康。"
     },
     "pastHistory": "糖尿病十余年，服用达格列净、二甲双胍控制，具体血糖不详。6年前因冠脉狭窄行支架植入术。否认肝炎、结核病史。自诉磺胺类药物、清开灵过敏。否认输血病史；结石史：未诉/否认明确结石史；尿路感染史：否认发热；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史；结石史：未诉/否认明确结石史；尿路感染史：否认发热；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "具体抽没抽烟、抽了多少年，我现在记不准确。；平时喝酒的种类和量，我现在记不太清。；我做过几种工作，具体工种和年限一时说不清。；工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
     "familyHistory": "子女身体健康。",
     "medication": "阿司匹林、氯吡格雷、达格列净、二甲双胍、非那雄胺、坦索罗辛",
     "urineTestResult": "红细胞328个/ul，尿白细胞88个/ul",
@@ -5101,7 +5145,9 @@
       "stoneClues": "否认腰背部及四肢疼痛",
       "tumorRisk": "高龄男性、PSA显著升高、MRI PI-RADS 5、精囊侵犯可能，需考虑前列腺癌；双抗不能作为血尿唯一解释",
       "glomerularClues": "无泡沫尿、水肿、上感后血尿",
-      "opening": "进行性排尿困难3年余，加重伴小便变红1月"
+      "opening": "进行性排尿困难3年余，加重伴小便变红1月",
+      "smoking": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+      "alcohol": "平时喝酒的种类和量，我现在记不太清。"
     },
     "patientPersona": {
       "emotion": "高龄男性，对排尿困难最关心，对前列腺穿刺有顾虑；冠脉支架和双抗需追问。",
@@ -5124,14 +5170,14 @@
       "尿道狭窄",
       "神经源性膀胱"
     ],
-    "teacherComment": "重点评价学生能否识别前列腺增生的定位线索、危险信号和正确操作顺序。",
+    "teacherComment": "重点评价学生能否识别前列腺增生/前列腺癌鉴别的定位线索、危险信号和正确操作顺序。",
     "scoringKey": [
       "问诊、查体、诊断、开单、MDT、治疗、围术期和随访证据均纳入360分评分。",
       "本病例严重错误：尿潴留或血块堵塞未及时解除；仅凭PSA直接诊断前列腺癌"
     ],
     "clinical": {
       "source": "V2原始病例",
-      "diseaseCategory": "前列腺疾病/前列腺增生",
+      "diseaseCategory": "前列腺疾病/前列腺增生/前列腺癌鉴别",
       "difficulty": "挑战",
       "triage": "泌尿外科；心内科；内分泌科；麻醉科；必要时肿瘤内科/放疗科。",
       "primaryProblem": "前列腺增生",
@@ -5934,8 +5980,8 @@
         "years": 0,
         "quitYears": 0,
         "packYears": 0,
-        "patientAnswerZh": "我不吸烟。",
-        "patientAnswerEn": "I do not smoke.",
+        "patientAnswerZh": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+        "patientAnswerEn": "I cannot reliably recall whether or how long I smoked.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -5945,29 +5991,29 @@
         "amount": "0",
         "frequency": "never",
         "years": 0,
-        "patientAnswerZh": "我平时不喝酒。",
-        "patientAnswerEn": "I do not drink alcohol.",
+        "patientAnswerZh": "平时喝酒的种类和量，我现在记不太清。",
+        "patientAnswerEn": "I cannot clearly recall the type or amount of alcohol I usually drank.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "occupation": {
         "status": "absent",
-        "patientAnswerZh": "我做普通工作。",
-        "patientAnswerEn": "I have a regular job.",
+        "patientAnswerZh": "我做过几种工作，具体工种和年限一时说不清。",
+        "patientAnswerEn": "I have had several jobs and cannot clearly recall every job or how long I did it.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "occupationalExposure": {
         "status": "absent",
-        "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-        "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+        "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+        "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "hypertension": {
         "status": "absent",
-        "patientAnswerZh": "没有高血压。",
-        "patientAnswerEn": "I do not have hypertension.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过高血压。",
+        "patientAnswerEn": "I do not clearly remember whether I was diagnosed with hypertension.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -5980,15 +6026,15 @@
       },
       "coronaryDisease": {
         "status": "present",
-        "patientAnswerZh": "有冠心病。",
-        "patientAnswerEn": "I have coronary heart disease.",
+        "patientAnswerZh": "6年前因冠脉狭窄做过冠脉支架植入。",
+        "patientAnswerEn": "I had a coronary stent placed for coronary artery stenosis six years ago.",
         "provenance": "source",
         "teacherReviewRequired": false
       },
       "stroke": {
         "status": "absent",
-        "patientAnswerZh": "没有脑卒中。",
-        "patientAnswerEn": "I do not have stroke.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过脑卒中。",
+        "patientAnswerEn": "I do not clearly remember whether I was ever diagnosed with a stroke.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -6008,8 +6054,8 @@
       },
       "stoneHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过泌尿系结石。",
-        "patientAnswerEn": "I have never had urinary stones.",
+        "patientAnswerZh": "以前有没有得过泌尿系结石，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had urinary stones.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -6022,22 +6068,22 @@
       },
       "malignancyHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过肿瘤。",
-        "patientAnswerEn": "I have no previous history of cancer.",
+        "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "traumaHistory": {
         "status": "absent",
-        "patientAnswerZh": "近期没有相关外伤。",
-        "patientAnswerEn": "I have not had relevant trauma.",
+        "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
+        "patientAnswerEn": "I do not clearly remember any recent injury to my flank or abdomen.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "urinaryProcedureHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-        "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+        "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -6064,8 +6110,8 @@
       },
       "anticoagulantUse": {
         "status": "absent",
-        "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-        "patientAnswerEn": "I do not take anticoagulants.",
+        "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+        "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -6156,7 +6202,7 @@
       "zh-CN",
       "en"
     ],
-    "diseaseSubcategory": "前列腺增生",
+    "diseaseSubcategory": "前列腺增生/前列腺癌鉴别",
     "standardChiefComplaint": "进行性排尿困难3年余，加重伴血尿1月",
     "patientRole": {
       "identity": "83岁男性教学模拟患者",
@@ -6317,6 +6363,15 @@
         "尿潴留或血块堵塞未及时解除",
         "仅凭PSA直接诊断前列腺癌"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -6346,20 +6401,20 @@
       "voidingDifficulty": "尿频明显、尿急、尿痛、尿不尽"
     },
     "riskFactors": {
-      "smoking": "未诉/需主动询问",
-      "alcohol": "未诉/需主动询问",
-      "occupation": "未诉/需主动询问",
-      "stoneHistory": "未诉/否认明确结石史",
-      "infectionHistory": "无发热寒战",
-      "trauma": "否认高血压、糖尿病、心脏病、肝炎、结核病史。否认药物过敏、外伤、手术病史。未婚未孕，初潮14岁，末次月经上月15日，经期28-30天",
-      "anticoagulants": "无",
-      "tumorHistory": "未诉/否认肿瘤史",
-      "familyHistory": "未诉/需主动询问"
+      "smoking": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+      "alcohol": "平时喝酒的种类和量，我现在记不太清。",
+      "occupation": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "stoneHistory": "以前有没有得过泌尿系结石，我记不太清。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "平时吃的药名我记不全，需要看看药盒。 平时吃的药名我记不全，需要看看药盒。",
+      "tumorHistory": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "familyHistory": "原始资料中的家族史/子女情况：否认高血压、糖尿病、心脏病、肝炎、结核病史。"
     },
     "pastHistory": "否认高血压、糖尿病、心脏病、肝炎、结核病史。否认药物过敏、外伤、手术病史；结石史：未诉/否认明确结石史；尿路感染史：无发热寒战；外伤/泌尿操作史：否认高血压、糖尿病、心脏病、肝炎、结核病史。否认药物过敏、外伤、手术病史；结石史：未诉/否认明确结石史；尿路感染史：无发热寒战；外伤/泌尿操作史：否认高血压、糖尿病、心脏病、肝炎、结核病史。否认药物过敏、外伤、手术病史。未婚未孕，初潮14岁，末次月经上月15日，经期28-30天；肿瘤史：未诉/否认肿瘤史",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "具体抽没抽烟、抽了多少年，我现在记不准确。；平时喝酒的种类和量，我现在记不太清。；我做过几种工作，具体工种和年限一时说不清。；工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
     "familyHistory": "原始资料中的家族史/子女情况：否认高血压、糖尿病、心脏病、肝炎、结核病史。",
-    "medication": "我没有长期服药",
+    "medication": "无长期用药",
     "urineTestResult": "红细胞48个/ul，尿白细胞58个/ul",
     "investigations": [
       {
@@ -6381,7 +6436,9 @@
       "stoneClues": "无腰痛",
       "tumorRisk": "年轻女性需排除月经污染、妊娠及性活动相关；无高危肿瘤特征",
       "glomerularClues": "无泡沫尿、水肿、高血压、上感后茶色尿",
-      "opening": "尿频、尿急、尿痛伴小便变红2天"
+      "opening": "尿频、尿急、尿痛伴小便变红2天",
+      "smoking": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+      "alcohol": "平时喝酒的种类和量，我现在记不太清。"
     },
     "patientPersona": {
       "emotion": "年轻女性，疼痛和尿频让她烦躁；对妇科/月经问题较羞于主动说，需医生温和追问。",
@@ -7225,8 +7282,8 @@
         "years": 0,
         "quitYears": 0,
         "packYears": 0,
-        "patientAnswerZh": "我不吸烟。",
-        "patientAnswerEn": "I do not smoke.",
+        "patientAnswerZh": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+        "patientAnswerEn": "I cannot reliably recall whether or how long I smoked.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -7236,22 +7293,22 @@
         "amount": "0",
         "frequency": "never",
         "years": 0,
-        "patientAnswerZh": "我平时不喝酒。",
-        "patientAnswerEn": "I do not drink alcohol.",
+        "patientAnswerZh": "平时喝酒的种类和量，我现在记不太清。",
+        "patientAnswerEn": "I cannot clearly recall the type or amount of alcohol I usually drank.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "occupation": {
         "status": "absent",
-        "patientAnswerZh": "我做普通工作。",
-        "patientAnswerEn": "I have a regular job.",
+        "patientAnswerZh": "我做过几种工作，具体工种和年限一时说不清。",
+        "patientAnswerEn": "I have had several jobs and cannot clearly recall every job or how long I did it.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "occupationalExposure": {
         "status": "absent",
-        "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-        "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+        "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+        "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -7278,8 +7335,8 @@
       },
       "stroke": {
         "status": "absent",
-        "patientAnswerZh": "没有脑卒中。",
-        "patientAnswerEn": "I do not have stroke.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过脑卒中。",
+        "patientAnswerEn": "I do not clearly remember whether I was ever diagnosed with a stroke.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -7299,8 +7356,8 @@
       },
       "stoneHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过泌尿系结石。",
-        "patientAnswerEn": "I have never had urinary stones.",
+        "patientAnswerZh": "以前有没有得过泌尿系结石，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had urinary stones.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -7313,8 +7370,8 @@
       },
       "malignancyHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过肿瘤。",
-        "patientAnswerEn": "I have no previous history of cancer.",
+        "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -7334,15 +7391,15 @@
       },
       "surgeryHistory": {
         "status": "absent",
-        "patientAnswerZh": "我以前没有做过手术。",
-        "patientAnswerEn": "I have never had surgery.",
+        "patientAnswerZh": "以前做过哪些手术，我一时记不全。",
+        "patientAnswerEn": "I cannot recall all the operations I may have had.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "transfusionHistory": {
         "status": "absent",
-        "patientAnswerZh": "我以前没有输过血。",
-        "patientAnswerEn": "I have never had a blood transfusion.",
+        "patientAnswerZh": "以前是否输过血，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously received a blood transfusion.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -7355,15 +7412,15 @@
       },
       "anticoagulantUse": {
         "status": "absent",
-        "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-        "patientAnswerEn": "I do not take anticoagulants.",
+        "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+        "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "antiplateletUse": {
         "status": "absent",
-        "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-        "patientAnswerEn": "I do not take antiplatelet medication.",
+        "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+        "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -7376,15 +7433,15 @@
       },
       "menstrualHistory": {
         "status": "absent",
-        "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-        "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+        "patientAnswerZh": "月经的具体情况我记不太清。",
+        "patientAnswerEn": "I cannot clearly recall the details of my menstrual history.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "pregnancyHistory": {
         "status": "absent",
-        "patientAnswerZh": "目前没有怀孕。",
-        "patientAnswerEn": "I am not currently pregnant.",
+        "patientAnswerZh": "以前怀孕的具体情况，我记不太清。",
+        "patientAnswerEn": "I cannot clearly recall the details of my pregnancy history.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -7556,6 +7613,15 @@
         "脓毒症或感染性梗阻未及时识别",
         "未留取培养即长期盲目用药"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -7585,20 +7651,20 @@
       "voidingDifficulty": "尿线变细、尿分叉、尿频、夜尿4-5次/晚、急性尿潴留"
     },
     "riskFactors": {
-      "smoking": "否认高血压、糖尿病、肝炎、结核病史。药物过敏未发现，未吸烟，少量饮酒，每天50-100ml白酒。否认输血病史。子女身体健康。",
-      "alcohol": "否认高血压、糖尿病、肝炎、结核病史。药物过敏未发现，未吸烟，少量饮酒，每天50-100ml白酒。否认输血病史。子女身体健康。",
-      "occupation": "未诉/需主动询问",
-      "stoneHistory": "未诉/否认明确结石史",
-      "infectionHistory": "无发热",
-      "trauma": "未诉/否认外伤",
-      "anticoagulants": "无特殊长期用药或原表未记录；训练中若被问及，按病例设定回答“无”。",
-      "tumorHistory": "未诉/否认肿瘤史",
-      "familyHistory": "否认高血压、糖尿病、肝炎、结核病史。药物过敏未发现，未吸烟，少量饮酒，每天50-100ml白酒。否认输血病史。子女身体健康。"
+      "smoking": "吸烟，每天都吸。",
+      "alcohol": "喝酒，白酒，每天50-100ml白酒。",
+      "occupation": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "stoneHistory": "以前有没有得过泌尿系结石，我记不太清。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期有没有伤到腰腹部，我记得不太清楚。",
+      "anticoagulants": "平时吃的药名我记不全，需要看看药盒。 平时吃的药名我记不全，需要看看药盒。",
+      "tumorHistory": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "familyHistory": "子女身体健康。"
     },
     "pastHistory": "否认高血压、糖尿病、肝炎、结核病史。否认输血病史；结石史：未诉/否认明确结石史；尿路感染史：无发热；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史；结石史：未诉/否认明确结石史；尿路感染史：无发热；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史",
-    "personalHistory": "吸烟，每天都吸。；喝酒，白酒，每天50-100ml白酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "吸烟，每天都吸。；喝酒，白酒，每天50-100ml白酒。；我做过几种工作，具体工种和年限一时说不清。；工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
     "familyHistory": "子女身体健康。",
-    "medication": "我没有长期服药",
+    "medication": "无长期用药",
     "urineTestResult": "红细胞78个/ul，尿白细胞88个/ul，TPSA:7ng/ml, fPSA:0.5ng/m",
     "investigations": [
       {
@@ -7620,7 +7686,9 @@
       "stoneClues": "无腰背部疼痛",
       "tumorRisk": "高龄男性、前列腺增大、PSA 7，需要排除前列腺癌；饮酒后尿潴留诱发",
       "glomerularClues": "无泡沫尿、水肿、上感后血尿",
-      "opening": "反复排尿困难5年余，急性加重伴小便变红1天"
+      "opening": "反复排尿困难5年余，急性加重伴小便变红1天",
+      "smoking": "吸烟，每天都吸。",
+      "alcohol": "喝酒，白酒，每天50-100ml白酒。"
     },
     "patientPersona": {
       "emotion": "老年男性，最担心“尿不出来”；对直肠指检和手术有顾虑。",
@@ -8471,15 +8539,15 @@
       },
       "occupation": {
         "status": "absent",
-        "patientAnswerZh": "我做普通工作。",
-        "patientAnswerEn": "I have a regular job.",
+        "patientAnswerZh": "我做过几种工作，具体工种和年限一时说不清。",
+        "patientAnswerEn": "I have had several jobs and cannot clearly recall every job or how long I did it.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "occupationalExposure": {
         "status": "absent",
-        "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-        "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+        "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+        "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -8499,15 +8567,15 @@
       },
       "coronaryDisease": {
         "status": "absent",
-        "patientAnswerZh": "没有冠心病。",
-        "patientAnswerEn": "I do not have coronary heart disease.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过冠心病。",
+        "patientAnswerEn": "I do not clearly remember whether I was diagnosed with coronary heart disease.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "stroke": {
         "status": "absent",
-        "patientAnswerZh": "没有脑卒中。",
-        "patientAnswerEn": "I do not have stroke.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过脑卒中。",
+        "patientAnswerEn": "I do not clearly remember whether I was ever diagnosed with a stroke.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -8527,8 +8595,8 @@
       },
       "stoneHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过泌尿系结石。",
-        "patientAnswerEn": "I have never had urinary stones.",
+        "patientAnswerZh": "以前有没有得过泌尿系结石，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had urinary stones.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -8541,29 +8609,29 @@
       },
       "malignancyHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过肿瘤。",
-        "patientAnswerEn": "I have no previous history of cancer.",
+        "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "traumaHistory": {
         "status": "absent",
-        "patientAnswerZh": "近期没有相关外伤。",
-        "patientAnswerEn": "I have not had relevant trauma.",
+        "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
+        "patientAnswerEn": "I do not clearly remember any recent injury to my flank or abdomen.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "urinaryProcedureHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-        "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+        "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "surgeryHistory": {
         "status": "absent",
-        "patientAnswerZh": "我以前没有做过手术。",
-        "patientAnswerEn": "I have never had surgery.",
+        "patientAnswerZh": "以前做过哪些手术，我一时记不全。",
+        "patientAnswerEn": "I cannot recall all the operations I may have had.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -8583,15 +8651,15 @@
       },
       "anticoagulantUse": {
         "status": "absent",
-        "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-        "patientAnswerEn": "I do not take anticoagulants.",
+        "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+        "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "antiplateletUse": {
         "status": "absent",
-        "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-        "patientAnswerEn": "I do not take antiplatelet medication.",
+        "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+        "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -8787,6 +8855,15 @@
         "尿潴留或血块堵塞未及时解除",
         "仅凭PSA直接诊断前列腺癌"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -8816,18 +8893,18 @@
       "voidingDifficulty": "排尿中断、改变体位后可继续排尿；夜尿1-2次/晚"
     },
     "riskFactors": {
-      "smoking": "既往乙肝小三阳，未治疗。否认高血压、糖尿病、结核病史。药物过敏未发现。吸烟20余年，每天半包。偶尔应酬喝酒。否认输血病史。子女身体健康。",
-      "alcohol": "既往乙肝小三阳，未治疗。否认高血压、糖尿病、结核病史。药物过敏未发现。吸烟20余年，每天半包。偶尔应酬喝酒。否认输血病史。子女身体健康。",
-      "occupation": "未诉/需主动询问",
-      "stoneHistory": "未诉/否认明确结石史",
-      "infectionHistory": "无发热",
-      "trauma": "未诉/否认外伤",
-      "anticoagulants": "长期服用阿司匹林",
-      "tumorHistory": "未诉/否认肿瘤史",
-      "familyHistory": "既往乙肝小三阳，未治疗。否认高血压、糖尿病、结核病史。药物过敏未发现。吸烟20余年，每天半包。偶尔应酬喝酒。否认输血病史。子女身体健康。"
+      "smoking": "吸烟，每天约10支，吸了20年，累计约10包年。",
+      "alcohol": "喝酒，偶尔少量。",
+      "occupation": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "stoneHistory": "以前有没有得过泌尿系结石，我记不太清。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期有没有伤到腰腹部，我记得不太清楚。",
+      "anticoagulants": "平时吃的药名我记不全，需要看看药盒。 我在服用阿司匹林。",
+      "tumorHistory": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "familyHistory": "子女身体健康。"
     },
     "pastHistory": "既往乙肝小三阳，未治疗。否认高血压、糖尿病、结核病史。药物过敏未发现。偶尔应酬喝酒。否认输血病史；结石史：未诉/否认明确结石史；尿路感染史：无发热；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史；结石史：未诉/否认明确结石史；尿路感染史：无发热；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史",
-    "personalHistory": "吸烟，每天约10支，吸了20年，累计约10包年。；喝酒，偶尔少量。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "吸烟，每天约10支，吸了20年，累计约10包年。；喝酒，偶尔少量。；我做过几种工作，具体工种和年限一时说不清。；工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
     "familyHistory": "子女身体健康。",
     "medication": "阿司匹林",
     "urineTestResult": "红细胞279个/ul，尿白细胞3个/ul",
@@ -8851,7 +8928,9 @@
       "stoneClues": "无腰痛",
       "tumorRisk": "吸烟20年、长期阿司匹林；仍需排除膀胱肿瘤，同时结石+BPH解释较强",
       "glomerularClues": "无肾小球线索",
-      "opening": "间断小便变红伴排尿中断1年余"
+      "opening": "间断小便变红伴排尿中断1年余",
+      "smoking": "吸烟，每天约10支，吸了20年，累计约10包年。",
+      "alcohol": "喝酒，偶尔少量。"
     },
     "patientPersona": {
       "emotion": "中年男性，反复排尿中断影响生活；不主动提吸烟和阿司匹林，需追问。",
@@ -9691,15 +9770,15 @@
       },
       "occupation": {
         "status": "absent",
-        "patientAnswerZh": "我做普通工作。",
-        "patientAnswerEn": "I have a regular job.",
+        "patientAnswerZh": "我做过几种工作，具体工种和年限一时说不清。",
+        "patientAnswerEn": "I have had several jobs and cannot clearly recall every job or how long I did it.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "occupationalExposure": {
         "status": "absent",
-        "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-        "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+        "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+        "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -9719,15 +9798,15 @@
       },
       "coronaryDisease": {
         "status": "absent",
-        "patientAnswerZh": "没有冠心病。",
-        "patientAnswerEn": "I do not have coronary heart disease.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过冠心病。",
+        "patientAnswerEn": "I do not clearly remember whether I was diagnosed with coronary heart disease.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "stroke": {
         "status": "absent",
-        "patientAnswerZh": "没有脑卒中。",
-        "patientAnswerEn": "I do not have stroke.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过脑卒中。",
+        "patientAnswerEn": "I do not clearly remember whether I was ever diagnosed with a stroke.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -9747,8 +9826,8 @@
       },
       "stoneHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过泌尿系结石。",
-        "patientAnswerEn": "I have never had urinary stones.",
+        "patientAnswerZh": "以前有没有得过泌尿系结石，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had urinary stones.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -9761,29 +9840,29 @@
       },
       "malignancyHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过肿瘤。",
-        "patientAnswerEn": "I have no previous history of cancer.",
+        "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "traumaHistory": {
         "status": "absent",
-        "patientAnswerZh": "近期没有相关外伤。",
-        "patientAnswerEn": "I have not had relevant trauma.",
+        "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
+        "patientAnswerEn": "I do not clearly remember any recent injury to my flank or abdomen.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "urinaryProcedureHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-        "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+        "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "surgeryHistory": {
         "status": "absent",
-        "patientAnswerZh": "我以前没有做过手术。",
-        "patientAnswerEn": "I have never had surgery.",
+        "patientAnswerZh": "以前做过哪些手术，我一时记不全。",
+        "patientAnswerEn": "I cannot recall all the operations I may have had.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -9803,8 +9882,8 @@
       },
       "anticoagulantUse": {
         "status": "absent",
-        "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-        "patientAnswerEn": "I do not take anticoagulants.",
+        "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+        "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -10017,6 +10096,15 @@
         "尿潴留或血块堵塞未及时解除",
         "仅凭PSA直接诊断前列腺癌"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -10046,20 +10134,20 @@
       "voidingDifficulty": "尿频尿急"
     },
     "riskFactors": {
-      "smoking": "否认糖尿病、心脏病、肝炎、结核、结石病史。否认吸烟饮酒史。否认药物过敏史。否认、输血病史。未婚未孕，初潮14岁，末次月经上月6日，经期28-30天按期预防接种。父母、配偶、子女均身体健康。",
-      "alcohol": "否认糖尿病、心脏病、肝炎、结核、结石病史。否认吸烟饮酒史。否认药物过敏史。否认、输血病史。未婚未孕，初潮14岁，末次月经上月6日，经期28-30天按期预防接种。父母、配偶、子女均身体健康。",
-      "occupation": "未诉/需主动询问",
-      "stoneHistory": "否认糖尿病、心脏病、肝炎、结核、结石病史。否认吸烟饮酒史。否认药物过敏史。否认、输血病史。未婚未孕，初潮14岁，末次月经上月6日，经期28-30天按期预防接种。父母、配偶、子女均身体健康。",
-      "infectionHistory": "无发热",
-      "trauma": "未诉/否认外伤",
-      "anticoagulants": "无",
-      "tumorHistory": "未诉/否认肿瘤史",
-      "familyHistory": "否认糖尿病、心脏病、肝炎、结核、结石病史。否认吸烟饮酒史。否认药物过敏史。否认、输血病史。未婚未孕，初潮14岁，末次月经上月6日，经期28-30天按期预防接种。父母、配偶、子女均身体健康。"
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期有没有伤到腰腹部，我记得不太清楚。",
+      "anticoagulants": "平时吃的药名我记不全，需要看看药盒。 平时吃的药名我记不全，需要看看药盒。",
+      "tumorHistory": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "familyHistory": "父母、配偶、子女均身体健康。"
     },
     "pastHistory": "否认糖尿病、心脏病、肝炎、结核、结石病史。否认药物过敏史。否认、输血病史；结石史：否认糖尿病、心脏病、肝炎、结核、结石病史。否认药物过敏史。否认、输血病史。；尿路感染史：无发热；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史；结石史：否认糖尿病、心脏病、肝炎、结核、结石病史。否认吸烟饮酒史。否认药物过敏史。否认、输血病史。未婚未孕，初潮14岁，末次月经上月6日，经期28-30天按期预防接种。父母、配偶、子女均身体健康。；尿路感染史：无发热；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "我不吸烟。；我平时不喝酒。；我做过几种工作，具体工种和年限一时说不清。；工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
     "familyHistory": "父母、配偶、子女均身体健康。",
-    "medication": "我没有长期服药",
+    "medication": "无长期用药",
     "urineTestResult": "红细胞5689个/ul，尿白细胞45个/ul",
     "investigations": [
       {
@@ -10081,7 +10169,9 @@
       "stoneClues": "右侧肾绞痛明显",
       "tumorRisk": "输尿管结石9×8mm伴轻度积水，尿白细胞升高；需警惕感染性梗阻进展",
       "glomerularClues": "无泡沫尿、水肿，茶色尿主要与结石血尿相关但需尿沉渣鉴别",
-      "opening": "突发右侧腰痛伴小便变红半天"
+      "opening": "突发右侧腰痛伴小便变红半天",
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "年轻女性，疼痛明显、焦虑，回答较急躁；月经史需追问排除污染。",
@@ -10943,22 +11033,22 @@
       },
       "occupation": {
         "status": "absent",
-        "patientAnswerZh": "我做普通工作。",
-        "patientAnswerEn": "I have a regular job.",
+        "patientAnswerZh": "我做过几种工作，具体工种和年限一时说不清。",
+        "patientAnswerEn": "I have had several jobs and cannot clearly recall every job or how long I did it.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "occupationalExposure": {
         "status": "absent",
-        "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-        "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+        "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+        "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "hypertension": {
         "status": "absent",
-        "patientAnswerZh": "没有高血压。",
-        "patientAnswerEn": "I do not have hypertension.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过高血压。",
+        "patientAnswerEn": "I do not clearly remember whether I was diagnosed with hypertension.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -10978,8 +11068,8 @@
       },
       "stroke": {
         "status": "absent",
-        "patientAnswerZh": "没有脑卒中。",
-        "patientAnswerEn": "I do not have stroke.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过脑卒中。",
+        "patientAnswerEn": "I do not clearly remember whether I was ever diagnosed with a stroke.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -11013,36 +11103,36 @@
       },
       "malignancyHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过肿瘤。",
-        "patientAnswerEn": "I have no previous history of cancer.",
+        "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "traumaHistory": {
         "status": "absent",
-        "patientAnswerZh": "近期没有相关外伤。",
-        "patientAnswerEn": "I have not had relevant trauma.",
+        "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
+        "patientAnswerEn": "I do not clearly remember any recent injury to my flank or abdomen.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "urinaryProcedureHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-        "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+        "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "surgeryHistory": {
         "status": "absent",
-        "patientAnswerZh": "我以前没有做过手术。",
-        "patientAnswerEn": "I have never had surgery.",
+        "patientAnswerZh": "以前做过哪些手术，我一时记不全。",
+        "patientAnswerEn": "I cannot recall all the operations I may have had.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "transfusionHistory": {
         "status": "absent",
-        "patientAnswerZh": "我以前没有输过血。",
-        "patientAnswerEn": "I have never had a blood transfusion.",
+        "patientAnswerZh": "以前是否输过血，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously received a blood transfusion.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -11055,15 +11145,15 @@
       },
       "anticoagulantUse": {
         "status": "absent",
-        "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-        "patientAnswerEn": "I do not take anticoagulants.",
+        "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+        "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "antiplateletUse": {
         "status": "absent",
-        "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-        "patientAnswerEn": "I do not take antiplatelet medication.",
+        "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+        "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -11076,15 +11166,15 @@
       },
       "menstrualHistory": {
         "status": "absent",
-        "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-        "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+        "patientAnswerZh": "月经的具体情况我记不太清。",
+        "patientAnswerEn": "I cannot clearly recall the details of my menstrual history.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "pregnancyHistory": {
         "status": "absent",
-        "patientAnswerZh": "目前没有怀孕。",
-        "patientAnswerEn": "I am not currently pregnant.",
+        "patientAnswerZh": "以前怀孕的具体情况，我记不太清。",
+        "patientAnswerEn": "I cannot clearly recall the details of my pregnancy history.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -11257,6 +11347,15 @@
         "脓毒症或感染性梗阻未及时识别",
         "未留取培养即长期盲目用药"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -11286,20 +11385,20 @@
       "voidingDifficulty": "无尿频尿急尿痛"
     },
     "riskFactors": {
-      "smoking": "否认糖尿病、心脏病、肝炎、结核、结石病史。否认吸烟饮酒史。否认药物过敏史。否认、输血病史。父母、配偶、子女均身体健康。",
-      "alcohol": "否认糖尿病、心脏病、肝炎、结核、结石病史。否认吸烟饮酒史。否认药物过敏史。否认、输血病史。父母、配偶、子女均身体健康。",
-      "occupation": "未诉/需主动询问",
-      "stoneHistory": "否认糖尿病、心脏病、肝炎、结核、结石病史。否认吸烟饮酒史。否认药物过敏史。否认、输血病史。父母、配偶、子女均身体健康。",
-      "infectionHistory": "无发热",
-      "trauma": "未诉/否认外伤",
-      "anticoagulants": "无",
-      "tumorHistory": "未诉/否认肿瘤史",
-      "familyHistory": "否认糖尿病、心脏病、肝炎、结核、结石病史。否认吸烟饮酒史。否认药物过敏史。否认、输血病史。父母、配偶、子女均身体健康。"
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期有没有伤到腰腹部，我记得不太清楚。",
+      "anticoagulants": "平时吃的药名我记不全，需要看看药盒。 平时吃的药名我记不全，需要看看药盒。",
+      "tumorHistory": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "familyHistory": "父母、配偶、子女均身体健康。"
     },
     "pastHistory": "否认糖尿病、心脏病、肝炎、结核、结石病史。否认药物过敏史。否认、输血病史；结石史：否认糖尿病、心脏病、肝炎、结核、结石病史。否认药物过敏史。否认、输血病史。；尿路感染史：无发热；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史；结石史：否认糖尿病、心脏病、肝炎、结核、结石病史。否认吸烟饮酒史。否认药物过敏史。否认、输血病史。父母、配偶、子女均身体健康。；尿路感染史：无发热；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "我不吸烟。；我平时不喝酒。；我做过几种工作，具体工种和年限一时说不清。；工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
     "familyHistory": "父母、配偶、子女均身体健康。",
-    "medication": "我没有长期服药",
+    "medication": "无长期用药",
     "urineTestResult": "红细胞5689个/ul，尿白细胞55个/ul",
     "investigations": [
       {
@@ -11321,7 +11420,9 @@
       "stoneClues": "左腰隐痛",
       "tumorRisk": "左肾铸型结石35×30mm，伴轻度积水和感染风险；需术前尿培养和抗感染",
       "glomerularClues": "尿色茶/酱油需与肾小球性血尿鉴别；本例影像结石明确",
-      "opening": "反复左侧腰部隐痛伴运动后小便变红3年余，再发1天"
+      "opening": "反复左侧腰部隐痛伴运动后小便变红3年余，再发1天",
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "中年男性，认为只是运动后尿色深，不太重视；需追问疼痛、发热和既往结石史。",
@@ -12172,22 +12273,22 @@
       },
       "occupation": {
         "status": "absent",
-        "patientAnswerZh": "我做普通工作。",
-        "patientAnswerEn": "I have a regular job.",
+        "patientAnswerZh": "我做过几种工作，具体工种和年限一时说不清。",
+        "patientAnswerEn": "I have had several jobs and cannot clearly recall every job or how long I did it.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "occupationalExposure": {
         "status": "absent",
-        "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-        "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+        "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+        "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "hypertension": {
         "status": "absent",
-        "patientAnswerZh": "没有高血压。",
-        "patientAnswerEn": "I do not have hypertension.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过高血压。",
+        "patientAnswerEn": "I do not clearly remember whether I was diagnosed with hypertension.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -12207,8 +12308,8 @@
       },
       "stroke": {
         "status": "absent",
-        "patientAnswerZh": "没有脑卒中。",
-        "patientAnswerEn": "I do not have stroke.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过脑卒中。",
+        "patientAnswerEn": "I do not clearly remember whether I was ever diagnosed with a stroke.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -12242,36 +12343,36 @@
       },
       "malignancyHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过肿瘤。",
-        "patientAnswerEn": "I have no previous history of cancer.",
+        "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "traumaHistory": {
         "status": "absent",
-        "patientAnswerZh": "近期没有相关外伤。",
-        "patientAnswerEn": "I have not had relevant trauma.",
+        "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
+        "patientAnswerEn": "I do not clearly remember any recent injury to my flank or abdomen.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "urinaryProcedureHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-        "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+        "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "surgeryHistory": {
         "status": "absent",
-        "patientAnswerZh": "我以前没有做过手术。",
-        "patientAnswerEn": "I have never had surgery.",
+        "patientAnswerZh": "以前做过哪些手术，我一时记不全。",
+        "patientAnswerEn": "I cannot recall all the operations I may have had.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "transfusionHistory": {
         "status": "absent",
-        "patientAnswerZh": "我以前没有输过血。",
-        "patientAnswerEn": "I have never had a blood transfusion.",
+        "patientAnswerZh": "以前是否输过血，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously received a blood transfusion.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -12284,15 +12385,15 @@
       },
       "anticoagulantUse": {
         "status": "absent",
-        "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-        "patientAnswerEn": "I do not take anticoagulants.",
+        "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+        "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "antiplateletUse": {
         "status": "absent",
-        "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-        "patientAnswerEn": "I do not take antiplatelet medication.",
+        "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+        "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -12486,6 +12587,15 @@
         "感染性梗阻未引流即碎石",
         "未评估肾功能和感染"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -12515,20 +12625,20 @@
       "voidingDifficulty": "无尿频尿急尿痛"
     },
     "riskFactors": {
-      "smoking": "未诉/需主动询问",
-      "alcohol": "未诉/需主动询问",
-      "occupation": "未诉/需主动询问",
-      "stoneHistory": "未诉/否认明确结石史",
-      "infectionHistory": "有咽痛/扁桃体炎伴发热，最高38℃",
-      "trauma": "未诉/否认外伤",
-      "anticoagulants": "无特殊长期用药或原表未记录；训练中若被问及，按病例设定回答“无”。",
-      "tumorHistory": "未诉/否认肿瘤史",
-      "familyHistory": "未诉/需主动询问"
+      "smoking": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+      "alcohol": "平时喝酒的种类和量，我现在记不太清。",
+      "occupation": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "stoneHistory": "以前有没有得过泌尿系结石，我记不太清。",
+      "infectionHistory": "以前有没有反复尿路感染，我记不太清。",
+      "trauma": "近期有没有伤到腰腹部，我记得不太清楚。",
+      "anticoagulants": "平时吃的药名我记不全，需要看看药盒。 平时吃的药名我记不全，需要看看药盒。",
+      "tumorHistory": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "familyHistory": "原始资料中的家族史/子女情况：否认高血压、糖尿病、肝炎、结核病史。"
     },
     "pastHistory": "否认高血压、糖尿病、肝炎、结核病史。药物过敏未发现。否认输血病史。按期预防接种；结石史：未诉/否认明确结石史；尿路感染史：有咽痛/扁桃体炎伴发热，最高38℃；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史；结石史：未诉/否认明确结石史；尿路感染史：有咽痛/扁桃体炎伴发热，最高38℃；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "具体抽没抽烟、抽了多少年，我现在记不准确。；平时喝酒的种类和量，我现在记不太清。；我做过几种工作，具体工种和年限一时说不清。；工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
     "familyHistory": "原始资料中的家族史/子女情况：否认高血压、糖尿病、肝炎、结核病史。",
-    "medication": "我没有长期服药",
+    "medication": "无长期用药",
     "urineTestResult": "红细胞279个/ul，尿白细胞3个/ul，尿蛋白+，病理管型+，红细胞位相：畸形红细胞9000",
     "investigations": [
       {
@@ -12550,7 +12660,9 @@
       "stoneClues": "双侧腰部酸胀痛，不是典型肾绞痛",
       "tumorRisk": "儿童/青少年上感后血尿需优先考虑肾小球来源，不应按泌尿系肿瘤或结石处理",
       "glomerularClues": "眼睑水肿、尿蛋白+、病理管型+、畸形红细胞显著升高，上感后血尿，提示肾小球性血尿",
-      "opening": "咽痛3周，小便变红1周"
+      "opening": "咽痛3周，小便变红1周",
+      "smoking": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+      "alcohol": "平时喝酒的种类和量，我现在记不太清。"
     },
     "patientPersona": {
       "emotion": "青少年女性，家属焦虑，患者表达一般；咽痛和眼睑水肿需追问才能明确。",
@@ -13394,8 +13506,8 @@
         "years": 0,
         "quitYears": 0,
         "packYears": 0,
-        "patientAnswerZh": "我不吸烟。",
-        "patientAnswerEn": "I do not smoke.",
+        "patientAnswerZh": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+        "patientAnswerEn": "I cannot reliably recall whether or how long I smoked.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -13405,22 +13517,22 @@
         "amount": "0",
         "frequency": "never",
         "years": 0,
-        "patientAnswerZh": "我平时不喝酒。",
-        "patientAnswerEn": "I do not drink alcohol.",
+        "patientAnswerZh": "平时喝酒的种类和量，我现在记不太清。",
+        "patientAnswerEn": "I cannot clearly recall the type or amount of alcohol I usually drank.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "occupation": {
         "status": "absent",
-        "patientAnswerZh": "我做普通工作。",
-        "patientAnswerEn": "I have a regular job.",
+        "patientAnswerZh": "我做过几种工作，具体工种和年限一时说不清。",
+        "patientAnswerEn": "I have had several jobs and cannot clearly recall every job or how long I did it.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "occupationalExposure": {
         "status": "absent",
-        "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-        "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+        "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+        "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -13440,15 +13552,15 @@
       },
       "coronaryDisease": {
         "status": "absent",
-        "patientAnswerZh": "没有冠心病。",
-        "patientAnswerEn": "I do not have coronary heart disease.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过冠心病。",
+        "patientAnswerEn": "I do not clearly remember whether I was diagnosed with coronary heart disease.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "stroke": {
         "status": "absent",
-        "patientAnswerZh": "没有脑卒中。",
-        "patientAnswerEn": "I do not have stroke.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过脑卒中。",
+        "patientAnswerEn": "I do not clearly remember whether I was ever diagnosed with a stroke.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -13468,43 +13580,43 @@
       },
       "stoneHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过泌尿系结石。",
-        "patientAnswerEn": "I have never had urinary stones.",
+        "patientAnswerZh": "以前有没有得过泌尿系结石，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had urinary stones.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "urinaryInfectionHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有反复尿路感染。",
-        "patientAnswerEn": "I have no history of recurrent urinary tract infection.",
+        "patientAnswerZh": "以前有没有反复尿路感染，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I had recurrent urinary infections.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "malignancyHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过肿瘤。",
-        "patientAnswerEn": "I have no previous history of cancer.",
+        "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "traumaHistory": {
         "status": "absent",
-        "patientAnswerZh": "近期没有相关外伤。",
-        "patientAnswerEn": "I have not had relevant trauma.",
+        "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
+        "patientAnswerEn": "I do not clearly remember any recent injury to my flank or abdomen.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "urinaryProcedureHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-        "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+        "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "surgeryHistory": {
         "status": "absent",
-        "patientAnswerZh": "我以前没有做过手术。",
-        "patientAnswerEn": "I have never had surgery.",
+        "patientAnswerZh": "以前做过哪些手术，我一时记不全。",
+        "patientAnswerEn": "I cannot recall all the operations I may have had.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -13524,15 +13636,15 @@
       },
       "anticoagulantUse": {
         "status": "absent",
-        "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-        "patientAnswerEn": "I do not take anticoagulants.",
+        "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+        "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "antiplateletUse": {
         "status": "absent",
-        "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-        "patientAnswerEn": "I do not take antiplatelet medication.",
+        "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+        "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -13545,15 +13657,15 @@
       },
       "menstrualHistory": {
         "status": "absent",
-        "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-        "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+        "patientAnswerZh": "月经的具体情况我记不太清。",
+        "patientAnswerEn": "I cannot clearly recall the details of my menstrual history.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "pregnancyHistory": {
         "status": "absent",
-        "patientAnswerZh": "目前没有怀孕。",
-        "patientAnswerEn": "I am not currently pregnant.",
+        "patientAnswerZh": "以前怀孕的具体情况，我记不太清。",
+        "patientAnswerEn": "I cannot clearly recall the details of my pregnancy history.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -13726,6 +13838,15 @@
         "忽略蛋白尿、畸形红细胞或RBC管型",
         "肾功能恶化时未触发肾内科安全网"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -13755,20 +13876,20 @@
       "voidingDifficulty": "无尿频尿急尿痛"
     },
     "riskFactors": {
-      "smoking": "未诉/需主动询问",
-      "alcohol": "未诉/需主动询问",
-      "occupation": "未诉/需主动询问",
-      "stoneHistory": "未诉/否认明确结石史",
-      "infectionHistory": "与感冒/上呼吸道感染相关，可无持续发热",
-      "trauma": "未诉/否认外伤",
-      "anticoagulants": "无",
-      "tumorHistory": "未诉/否认肿瘤史",
-      "familyHistory": "未诉/需主动询问"
+      "smoking": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+      "alcohol": "平时喝酒的种类和量，我现在记不太清。",
+      "occupation": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "stoneHistory": "以前有没有得过泌尿系结石，我记不太清。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期有没有伤到腰腹部，我记得不太清楚。",
+      "anticoagulants": "平时吃的药名我记不全，需要看看药盒。 平时吃的药名我记不全，需要看看药盒。",
+      "tumorHistory": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "familyHistory": "原始资料中的家族史/子女情况：既往体健。"
     },
     "pastHistory": "既往体健；结石史：未诉/否认明确结石史；尿路感染史：与感冒/上呼吸道感染相关，可无持续发热；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史；结石史：未诉/否认明确结石史；尿路感染史：与感冒/上呼吸道感染相关，可无持续发热；外伤/泌尿操作史：未诉/否认外伤；肿瘤史：未诉/否认肿瘤史",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "具体抽没抽烟、抽了多少年，我现在记不准确。；平时喝酒的种类和量，我现在记不太清。；我做过几种工作，具体工种和年限一时说不清。；工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
     "familyHistory": "原始资料中的家族史/子女情况：既往体健。",
-    "medication": "我没有长期服药",
+    "medication": "无长期用药",
     "urineTestResult": "尿常规：蛋白3+，潜血3+，红细胞5689个/ul，红细胞位相：畸形红细胞27000",
     "investigations": [
       {
@@ -13790,7 +13911,9 @@
       "stoneClues": "无典型腰痛",
       "tumorRisk": "年轻男性反复上感后血尿+蛋白尿，需考虑IgA肾病；不应按结石/肿瘤路径单独处理",
       "glomerularClues": "泡沫尿、尿蛋白3+、24小时尿蛋白2.4g升至4.7g、畸形红细胞27000，强烈提示肾小球来源",
-      "opening": "反复小便变红伴尿泡沫增多半年余，加重半月"
+      "opening": "反复小便变红伴尿泡沫增多半年余，加重半月",
+      "smoking": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+      "alcohol": "平时喝酒的种类和量，我现在记不太清。"
     },
     "patientPersona": {
       "emotion": "年轻男性，担心反复血尿和泡沫尿影响肾功能；能较清楚描述感冒后加重。",
@@ -14634,8 +14757,8 @@
         "years": 0,
         "quitYears": 0,
         "packYears": 0,
-        "patientAnswerZh": "我不吸烟。",
-        "patientAnswerEn": "I do not smoke.",
+        "patientAnswerZh": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+        "patientAnswerEn": "I cannot reliably recall whether or how long I smoked.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -14645,71 +14768,71 @@
         "amount": "0",
         "frequency": "never",
         "years": 0,
-        "patientAnswerZh": "我平时不喝酒。",
-        "patientAnswerEn": "I do not drink alcohol.",
+        "patientAnswerZh": "平时喝酒的种类和量，我现在记不太清。",
+        "patientAnswerEn": "I cannot clearly recall the type or amount of alcohol I usually drank.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "occupation": {
         "status": "absent",
-        "patientAnswerZh": "我做普通工作。",
-        "patientAnswerEn": "I have a regular job.",
+        "patientAnswerZh": "我做过几种工作，具体工种和年限一时说不清。",
+        "patientAnswerEn": "I have had several jobs and cannot clearly recall every job or how long I did it.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "occupationalExposure": {
         "status": "absent",
-        "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-        "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+        "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+        "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "hypertension": {
         "status": "absent",
-        "patientAnswerZh": "没有高血压。",
-        "patientAnswerEn": "I do not have hypertension.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过高血压。",
+        "patientAnswerEn": "I do not clearly remember whether I was diagnosed with hypertension.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "diabetes": {
         "status": "absent",
-        "patientAnswerZh": "没有糖尿病。",
-        "patientAnswerEn": "I do not have diabetes.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过糖尿病。",
+        "patientAnswerEn": "I do not clearly remember whether I was diagnosed with diabetes.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "coronaryDisease": {
         "status": "absent",
-        "patientAnswerZh": "没有冠心病。",
-        "patientAnswerEn": "I do not have coronary heart disease.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过冠心病。",
+        "patientAnswerEn": "I do not clearly remember whether I was diagnosed with coronary heart disease.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "stroke": {
         "status": "absent",
-        "patientAnswerZh": "没有脑卒中。",
-        "patientAnswerEn": "I do not have stroke.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过脑卒中。",
+        "patientAnswerEn": "I do not clearly remember whether I was ever diagnosed with a stroke.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "liverDisease": {
         "status": "absent",
-        "patientAnswerZh": "没有肝病。",
-        "patientAnswerEn": "I do not have liver disease.",
+        "patientAnswerZh": "我记不清以前有没有被诊断过肝病。",
+        "patientAnswerEn": "I do not clearly remember whether I was diagnosed with liver disease.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "tuberculosis": {
         "status": "absent",
-        "patientAnswerZh": "没有结核病。",
-        "patientAnswerEn": "I do not have tuberculosis.",
+        "patientAnswerZh": "我记不清以前有没有得过结核。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had tuberculosis.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "stoneHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过泌尿系结石。",
-        "patientAnswerEn": "I have never had urinary stones.",
+        "patientAnswerZh": "以前有没有得过泌尿系结石，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had urinary stones.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -14722,57 +14845,57 @@
       },
       "malignancyHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有得过肿瘤。",
-        "patientAnswerEn": "I have no previous history of cancer.",
+        "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "traumaHistory": {
         "status": "absent",
-        "patientAnswerZh": "近期没有相关外伤。",
-        "patientAnswerEn": "I have not had relevant trauma.",
+        "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
+        "patientAnswerEn": "I do not clearly remember any recent injury to my flank or abdomen.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "urinaryProcedureHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-        "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+        "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "surgeryHistory": {
         "status": "absent",
-        "patientAnswerZh": "我以前没有做过手术。",
-        "patientAnswerEn": "I have never had surgery.",
+        "patientAnswerZh": "以前做过哪些手术，我一时记不全。",
+        "patientAnswerEn": "I cannot recall all the operations I may have had.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "transfusionHistory": {
         "status": "absent",
-        "patientAnswerZh": "我以前没有输过血。",
-        "patientAnswerEn": "I have never had a blood transfusion.",
+        "patientAnswerZh": "以前是否输过血，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I previously received a blood transfusion.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "allergyHistory": {
         "status": "absent",
-        "patientAnswerZh": "我没有已知药物或食物过敏。",
-        "patientAnswerEn": "I have no known drug or food allergies.",
+        "patientAnswerZh": "以前有没有药物过敏，我记不太清。",
+        "patientAnswerEn": "I do not clearly remember whether I have any medication allergies.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "anticoagulantUse": {
         "status": "absent",
-        "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-        "patientAnswerEn": "I do not take anticoagulants.",
+        "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+        "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "antiplateletUse": {
         "status": "absent",
-        "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-        "patientAnswerEn": "I do not take antiplatelet medication.",
+        "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+        "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -14966,6 +15089,15 @@
         "忽略蛋白尿、畸形红细胞或RBC管型",
         "肾功能恶化时未触发肾内科安全网"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -14995,20 +15127,20 @@
       "voidingDifficulty": "尿频否；尿急否；尿痛否；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：40包年，已戒5年",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：染料/芳香胺相关职业暴露30余年",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "氨氯地平",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：无明确家族史"
+      "smoking": "以前每天吸烟约20支，吸了40年，5年前戒烟，累计约40包年。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中接触过职业暴露：染料/芳香胺相关职业暴露30余年。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "据我所知，家族中没有膀胱或上尿路肿瘤，也没有反复血尿或遗传性肾病。"
     },
     "pastHistory": "有高血压病史，平时口服氨氯地平，血压总体平稳。否认糖尿病、冠心病、脑卒中、慢性肝病、结核病史；既往无明确泌尿系结石、反复尿路感染、泌尿系外伤或导尿/膀胱镜操作史，无肿瘤及放化疗史。既往无手术、输血史，否认已知药物和食物过敏；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "以前吸烟，具体每天多少支记不准，吸了5年，累计约40包年，现在已经戒了。；我平时不喝酒。；工作中接触过职业暴露：染料/芳香胺相关职业暴露30余年。",
-    "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "阿司匹林、氯吡格雷、华法林、利伐沙班、氨氯地平",
+    "personalHistory": "以前每天吸烟约20支，吸了40年，5年前戒烟，累计约40包年。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中接触过职业暴露：染料/芳香胺相关职业暴露30余年。",
+    "familyHistory": "据我所知，家族中没有膀胱或上尿路肿瘤，也没有反复血尿或遗传性肾病。",
+    "medication": "氨氯地平",
     "urineTestResult": "尿潜血+++，RBC大量，蛋白阴性或微量",
     "investigations": [
       {
@@ -15030,7 +15162,9 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：40包年，已戒5年；职业暴露：染料/芳香胺相关职业暴露30余年；结石史：否；感染史：否；外伤/操作：否；家族史：无明确家族史",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "医生，我这两个月断断续续尿血，但一点也不疼，会不会是哪里长东西了？"
+      "opening": "医生，我这两个月断断续续尿血，但一点也不疼，会不会是哪里长东西了？",
+      "smoking": "以前每天吸烟约20支，吸了40年，5年前戒烟，累计约40包年。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -15952,12 +16086,12 @@
     "structuredHistory": {
       "smokingHistory": {
         "status": "former",
-        "cigarettesPerDay": 0,
-        "years": 5,
-        "quitYears": 0,
+        "cigarettesPerDay": 20,
+        "years": 40,
+        "quitYears": 5,
         "packYears": 40,
-        "patientAnswerZh": "以前吸烟，具体每天多少支记不准，吸了5年，累计约40包年，现在已经戒了。",
-        "patientAnswerEn": "I used to smoke but have quit.",
+        "patientAnswerZh": "以前每天吸烟约20支，吸了40年，5年前戒烟，累计约40包年。",
+        "patientAnswerEn": "I used to smoke 20 cigarettes a day for 40 years and quit five years ago, totaling about 40 pack-years.",
         "provenance": "source",
         "teacherReviewRequired": false
       },
@@ -16085,23 +16219,23 @@
         "teacherReviewRequired": true
       },
       "anticoagulantUse": {
-        "status": "present",
-        "patientAnswerZh": "我在服用华法林、利伐沙班。",
-        "patientAnswerEn": "I take an anticoagulant.",
+        "status": "absent",
+        "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
+        "patientAnswerEn": "I do not take warfarin, rivaroxaban, or another anticoagulant.",
         "provenance": "source",
         "teacherReviewRequired": false
       },
       "antiplateletUse": {
-        "status": "present",
-        "patientAnswerZh": "我在服用阿司匹林、氯吡格雷。",
-        "patientAnswerEn": "I take antiplatelet medication.",
+        "status": "absent",
+        "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
+        "patientAnswerEn": "I do not take aspirin or clopidogrel.",
         "provenance": "source",
         "teacherReviewRequired": false
       },
       "familyHistory": {
         "status": "absent",
-        "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-        "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+        "patientAnswerZh": "据我所知，家族中没有膀胱或上尿路肿瘤，也没有反复血尿或遗传性肾病。",
+        "patientAnswerEn": "To my knowledge, there is no family history of bladder or upper-tract urothelial cancer, recurrent hematuria, or hereditary kidney disease.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -16121,48 +16255,16 @@
       },
       "medicationList": [
         {
-          "name": "阿司匹林",
-          "dose": "",
-          "frequency": "",
-          "indication": "抗血小板",
-          "provenance": "source",
-          "teacherReviewRequired": false
-        },
-        {
-          "name": "氯吡格雷",
-          "dose": "",
-          "frequency": "",
-          "indication": "",
-          "provenance": "source",
-          "teacherReviewRequired": false
-        },
-        {
-          "name": "华法林",
-          "dose": "",
-          "frequency": "",
-          "indication": "",
-          "provenance": "source",
-          "teacherReviewRequired": false
-        },
-        {
-          "name": "利伐沙班",
-          "dose": "",
-          "frequency": "",
-          "indication": "",
-          "provenance": "source",
-          "teacherReviewRequired": false
-        },
-        {
           "name": "氨氯地平",
           "dose": "",
-          "frequency": "",
-          "indication": "",
+          "frequency": "每日",
+          "indication": "高血压",
           "provenance": "source",
           "teacherReviewRequired": false
         }
       ],
-      "medicationAnswerZh": "我长期服用阿司匹林、氯吡格雷、华法林、利伐沙班、氨氯地平。",
-      "medicationAnswerEn": "I regularly take aspirin and clopidogrel and warfarin and rivaroxaban and amlodipine."
+      "medicationAnswerZh": "我长期服用氨氯地平。",
+      "medicationAnswerEn": "I regularly take amlodipine."
     },
     "schemaVersion": "2.2.0",
     "reproductiveHistory": "不适用",
@@ -16278,6 +16380,15 @@
         "未取得病理和分期即实施确定性肿瘤治疗",
         "血块尿潴留或严重出血未处理"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -16307,18 +16418,18 @@
       "voidingDifficulty": "尿频是；尿急是；尿痛轻度；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：不吸烟",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无明确",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：反复尿路感染样发作",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "二甲双胍",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：母亲膀胱肿瘤史不详"
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前得过尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家里没有人得过类似血尿或遗传性肾病。"
     },
     "pastHistory": "有2型糖尿病病史，口服二甲双胍，平时血糖监测不规律。既往多次按尿路感染治疗，但缺少完整尿培养资料；否认泌尿系结石、外伤、导尿或膀胱镜操作史，否认肿瘤、放疗或化疗史。无高血压、冠心病、脑卒中、肝病及结核病史。既往无手术、输血史，无已知药物或食物过敏；结石史：结石史：否；尿路感染史：感染史：反复尿路感染样发作；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "我不吸烟。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
     "medication": "二甲双胍",
     "urineTestResult": "尿RBC 50-100/HPF，白细胞轻度升高，尿培养阴性或反复不一致",
@@ -16342,7 +16453,9 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无明确；结石史：否；感染史：反复尿路感染样发作；外伤/操作：否；家族史：母亲膀胱肿瘤史不详",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "医生，我这半年老是尿频、尿急，有时候尿里还有血，吃消炎药好一点又会犯。"
+      "opening": "医生，我这半年老是尿频、尿急，有时候尿里还有血，吃消炎药好一点又会犯。",
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -17419,15 +17532,15 @@
       },
       "menstrualHistory": {
         "status": "absent",
-        "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-        "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+        "patientAnswerZh": "我已绝经20多年，近期没有阴道流血；这次红尿与月经无关。",
+        "patientAnswerEn": "I have been postmenopausal for more than 20 years and have had no recent vaginal bleeding; the red urine was not menstrual.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "pregnancyHistory": {
         "status": "absent",
-        "patientAnswerZh": "目前没有怀孕。",
-        "patientAnswerEn": "I am not currently pregnant.",
+        "patientAnswerZh": "我已绝经，目前无妊娠可能。",
+        "patientAnswerEn": "I am postmenopausal and there is no possibility of pregnancy.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -17558,6 +17671,15 @@
         "未取得病理和分期即实施确定性肿瘤治疗",
         "血块尿潴留或严重出血未处理"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -17587,19 +17709,19 @@
       "voidingDifficulty": "尿频否；尿急否；尿痛否；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：30包年",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：皮革/染料接触20年",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "缬沙坦",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：无"
+      "smoking": "吸烟，具体每天多少支记不准，累计约30包年。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中接触过职业暴露：皮革/染料接触20年。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家族中没有肾盂、输尿管或膀胱肿瘤，也没有已知Lynch综合征、反复血尿或遗传性肾病。"
     },
     "pastHistory": "有高血压病史，长期口服缬沙坦。否认糖尿病、冠心病、脑卒中、慢性肝病、结核；否认既往泌尿系结石、反复尿路感染、泌尿系统外伤及导尿/膀胱镜等操作史。无既往肿瘤及放化疗史，无手术、输血史，无已知药物和食物过敏；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "吸烟，具体每天多少支记不准，累计约30包年。；我平时不喝酒。；工作中接触过职业暴露：皮革/染料接触20年。",
-    "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
+    "personalHistory": "吸烟，具体每天多少支记不准，累计约30包年。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中接触过职业暴露：皮革/染料接触20年。",
+    "familyHistory": "家族中没有肾盂、输尿管或膀胱肿瘤，也没有已知Lynch综合征、反复血尿或遗传性肾病。",
     "medication": "缬沙坦",
     "urineTestResult": "尿潜血+++，RBC大量，蛋白阴性",
     "investigations": [
@@ -17622,7 +17744,9 @@
       "stoneClues": "是",
       "tumorRisk": "吸烟：30包年；职业暴露：皮革/染料接触20年；结石史：否；感染史：否；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "医生，我左边腰一直有点胀，最近尿是暗红色的，有时还能看到细长的血块。"
+      "opening": "医生，我左边腰一直有点胀，最近尿是暗红色的，有时还能看到细长的血块。",
+      "smoking": "吸烟，具体每天多少支记不准，累计约30包年。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -18692,8 +18816,8 @@
       },
       "familyHistory": {
         "status": "absent",
-        "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-        "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+        "patientAnswerZh": "家族中没有肾盂、输尿管或膀胱肿瘤，也没有已知Lynch综合征、反复血尿或遗传性肾病。",
+        "patientAnswerEn": "There is no family history of renal-pelvic, ureteral, or bladder cancer, known Lynch syndrome, recurrent hematuria, or hereditary kidney disease.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -18839,6 +18963,15 @@
         "未取得病理和分期即实施确定性肿瘤治疗",
         "血块尿潴留或严重出血未处理"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -18868,19 +19001,19 @@
       "voidingDifficulty": "尿频否；尿急否；尿痛否；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：20包年",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无明确",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "降压药",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：父亲肾脏肿瘤史不详"
+      "smoking": "吸烟，具体每天多少支记不准，累计约20包年。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家族中没有肾癌、双侧或多发肾肿瘤，也没有已知VHL相关肿瘤或遗传性肾病。"
     },
     "pastHistory": "有高血压病史，口服降压药，具体名称及剂量需核实。否认糖尿病、冠心病、脑卒中、慢性肝病、结核病；既往无泌尿系结石、反复感染、外伤或泌尿操作史，无肿瘤及放化疗史。无手术、输血史，无已知药物或食物过敏；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "吸烟，具体每天多少支记不准，累计约20包年。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
-    "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
+    "personalHistory": "吸烟，具体每天多少支记不准，累计约20包年。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "familyHistory": "家族中没有肾癌、双侧或多发肾肿瘤，也没有已知VHL相关肿瘤或遗传性肾病。",
     "medication": "降压药",
     "urineTestResult": "尿潜血+++，RBC大量，蛋白少量",
     "investigations": [
@@ -18903,7 +19036,9 @@
       "stoneClues": "轻度",
       "tumorRisk": "吸烟：20包年；职业暴露：无明确；结石史：否；感染史：否；外伤/操作：否；家族史：父亲肾脏肿瘤史不详",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我这三周尿一直断断续续发红，但不痛，右腰偶尔有点胀。"
+      "opening": "我这三周尿一直断断续续发红，但不痛，右腰偶尔有点胀。",
+      "smoking": "吸烟，具体每天多少支记不准，累计约20包年。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -19973,8 +20108,8 @@
       },
       "familyHistory": {
         "status": "absent",
-        "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-        "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+        "patientAnswerZh": "家族中没有肾癌、双侧或多发肾肿瘤，也没有已知VHL相关肿瘤或遗传性肾病。",
+        "patientAnswerEn": "There is no family history of renal cancer, bilateral or multifocal renal tumors, known VHL-related tumors, or hereditary kidney disease.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -20119,6 +20254,15 @@
         "未取得病理和分期即实施确定性肿瘤治疗",
         "血块尿潴留或严重出血未处理"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -20148,19 +20292,19 @@
       "voidingDifficulty": "尿频否；尿急否；尿痛否；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：25包年",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无明确",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "利伐沙班、阿托伐他汀",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：无"
+      "smoking": "吸烟，具体每天多少支记不准，累计约25包年。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我在服用利伐沙班。 我在服用阿司匹林、氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家族中没有遗传性出血病、反复不明原因血尿或泌尿系肿瘤。"
     },
     "pastHistory": "训练设定为因非瓣膜性房颤长期接受抗凝，并服用阿托伐他汀；其余心血管病史需核实。否认糖尿病、脑卒中、肝病、结核；既往无泌尿系结石、反复尿路感染、泌尿操作或肿瘤史。无手术、输血史，无已知药物或食物过敏；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "吸烟，具体每天多少支记不准，累计约25包年。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
-    "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
+    "personalHistory": "吸烟，具体每天多少支记不准，累计约25包年。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "familyHistory": "家族中没有遗传性出血病、反复不明原因血尿或泌尿系肿瘤。",
     "medication": "阿司匹林、氯吡格雷、利伐沙班、他汀",
     "urineTestResult": "尿RBC大量；凝血功能需评估；蛋白阴性",
     "investigations": [
@@ -20183,7 +20327,9 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：25包年；职业暴露：无明确；结石史：否；感染史：否；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "医生，我吃着利伐沙班，这几天尿里突然有血和小血块，我是不是药吃多了？"
+      "opening": "医生，我吃着利伐沙班，这几天尿里突然有血和小血块，我是不是药吃多了？",
+      "smoking": "吸烟，具体每天多少支记不准，累计约25包年。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -21242,8 +21388,8 @@
       },
       "familyHistory": {
         "status": "absent",
-        "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-        "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+        "patientAnswerZh": "家族中没有遗传性出血病、反复不明原因血尿或泌尿系肿瘤。",
+        "patientAnswerEn": "There is no family history of inherited bleeding disorders, recurrent unexplained hematuria, or urinary tract cancer.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -21412,6 +21558,15 @@
         "将抗凝或抗血小板药作为血尿唯一解释",
         "未评估血栓风险即自行停药"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -21441,20 +21596,20 @@
       "voidingDifficulty": "尿频是；尿急是；尿痛是；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：不吸烟",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：偶有尿路感染",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "无",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：无"
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前得过尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家里没有人得过类似血尿或遗传性肾病。"
     },
     "pastHistory": "既往偶有类似下尿路感染发作，均为短程治疗后缓解，具体次数和尿培养结果需核实。否认高血压、糖尿病、肝病、结核病；无泌尿系结石、泌尿操作、肿瘤、手术及输血史。无已知药物或食物过敏；结石史：结石史：否；尿路感染史：感染史：偶有尿路感染；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "我不吸烟。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "我没有长期服药",
+    "medication": "无长期用药",
     "urineTestResult": "尿白细胞++，亚硝酸盐可阳性，RBC 10-30/HPF",
     "investigations": [
       {
@@ -21476,7 +21631,9 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：偶有尿路感染；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "医生，我这两天一小会儿就想尿，尿的时候特别刺痛，最后还有点血。"
+      "opening": "医生，我这两天一小会儿就想尿，尿的时候特别刺痛，最后还有点血。",
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -22509,8 +22666,8 @@
       },
       "menstrualHistory": {
         "status": "absent",
-        "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-        "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+        "patientAnswerZh": "月经规律，本次尿频尿痛和血尿发生在非经期，留取中段尿时没有阴道流血。",
+        "patientAnswerEn": "My periods are regular; the dysuria and hematuria occurred between periods, and there was no vaginal bleeding when the midstream urine was collected.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -22639,6 +22796,15 @@
         "脓毒症或感染性梗阻未及时识别",
         "未留取培养即长期盲目用药"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -22668,20 +22834,20 @@
       "voidingDifficulty": "尿频是；尿急是；尿痛是；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：不吸烟",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：既往有膀胱炎",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "退热药",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：无"
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前得过尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家里没有人得过类似血尿或遗传性肾病。"
     },
     "pastHistory": "既往曾有膀胱炎发作，具体培养和耐药史需追问。否认高血压、糖尿病、冠心病、脑卒中、肝病、结核；无泌尿系结石、导尿/膀胱镜操作、肿瘤、手术或输血史。无已知药物或食物过敏；结石史：结石史：否；尿路感染史：感染史：既往有膀胱炎；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "我不吸烟。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "我没有长期服药",
+    "medication": "无长期用药",
     "urineTestResult": "尿白细胞+++，RBC 20-50/HPF，尿培养阳性可能",
     "investigations": [
       {
@@ -22703,7 +22869,9 @@
       "stoneClues": "是",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：既往有膀胱炎；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我这三天发高烧、打冷战，腰也很痛，还一直尿频尿痛。"
+      "opening": "我这三天发高烧、打冷战，腰也很痛，还一直尿频尿痛。",
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -23911,6 +24079,15 @@
         "脓毒症或感染性梗阻未及时识别",
         "未留取培养即长期盲目用药"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -23940,20 +24117,20 @@
       "voidingDifficulty": "尿频是；尿急是；尿痛是；排尿困难有排尿费力"
     },
     "riskFactors": {
-      "smoking": "吸烟：10包年",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "无",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：无"
+      "smoking": "吸烟，具体每天多少支记不准，累计约10包年。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家里没有人得过类似血尿或遗传性肾病。"
     },
     "pastHistory": "既往体健，否认高血压、糖尿病、冠心病、脑卒中、肝病、结核；无泌尿系结石、反复尿路感染、外伤、泌尿操作或肿瘤史。无手术、输血史，无已知药物或食物过敏。既往无前列腺炎、前列腺增生或性传播感染诊断，近期无不洁性接触史，相关信息需在保护隐私的前提下询问；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "吸烟，具体每天多少支记不准，累计约10包年。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "吸烟，具体每天多少支记不准，累计约10包年。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "我没有长期服药",
+    "medication": "无长期用药",
     "urineTestResult": "尿白细胞++，RBC+，细菌培养可阳性",
     "investigations": [
       {
@@ -23975,7 +24152,9 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：10包年；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "医生，我发烧、尿痛，会阴里面胀得难受，现在小便也越来越费劲。"
+      "opening": "医生，我发烧、尿痛，会阴里面胀得难受，现在小便也越来越费劲。",
+      "smoking": "吸烟，具体每天多少支记不准，累计约10包年。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -24992,8 +25171,8 @@
       },
       "urinaryProcedureHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-        "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+        "patientAnswerZh": "发病前没有导尿、膀胱镜、前列腺穿刺或其他泌尿操作。",
+        "patientAnswerEn": "Before this illness I had no catheterization, cystoscopy, prostate biopsy, or other urinary instrumentation.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -25173,6 +25352,15 @@
         "脓毒症或感染性梗阻未及时识别",
         "未留取培养即长期盲目用药"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -25202,18 +25390,18 @@
       "voidingDifficulty": "尿频是；尿急是；尿痛是；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：不吸烟",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：反复UTI",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "胰岛素间断使用",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：无"
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前得过尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家里没有人得过类似血尿或遗传性肾病。"
     },
     "pastHistory": "有2型糖尿病病史，平时胰岛素使用不规律，近期血糖监测少；既往反复尿路感染。否认高血压、冠心病、脑卒中、肝病、结核；无泌尿系结石、泌尿操作、肿瘤、手术或输血史。无已知药物和食物过敏；结石史：结石史：否；尿路感染史：感染史：反复UTI；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "我不吸烟。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
     "medication": "胰岛素",
     "urineTestResult": "尿WBC+++，RBC++，尿糖阳性，培养可阳性",
@@ -25237,7 +25425,9 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：反复UTI；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "医生，我这一个星期尿得特别频，尿的时候疼，最后还有点血，血糖最近也没好好管。"
+      "opening": "医生，我这一个星期尿得特别频，尿的时候疼，最后还有点血，血糖最近也没好好管。",
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -26314,15 +26504,15 @@
       },
       "menstrualHistory": {
         "status": "absent",
-        "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-        "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+        "patientAnswerZh": "我已经绝经，近期没有阴道流血，本次血尿不是经血污染。",
+        "patientAnswerEn": "I am postmenopausal, have had no recent vaginal bleeding, and the hematuria was not menstrual contamination.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "pregnancyHistory": {
         "status": "absent",
-        "patientAnswerZh": "目前没有怀孕。",
-        "patientAnswerEn": "I am not currently pregnant.",
+        "patientAnswerZh": "我已绝经，目前无妊娠可能。",
+        "patientAnswerEn": "I am postmenopausal and there is no possibility of pregnancy.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -26453,6 +26643,15 @@
         "脓毒症或感染性梗阻未及时识别",
         "未留取培养即长期盲目用药"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -26482,20 +26681,20 @@
       "voidingDifficulty": "尿频发作时有；尿急发作时有；尿痛发作时有；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：不吸烟",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：反复UTI",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "无",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：无"
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前得过尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家里没有人得过类似血尿或遗传性肾病。"
     },
     "pastHistory": "既往被诊断为反复尿路感染，无已知泌尿系结石、糖尿病、泌尿操作、肿瘤或放化疗史。否认高血压、冠心病、脑卒中、肝病、结核；无手术、输血史，无已知药物或食物过敏。既往肾功能大致正常，无妇科肿瘤或盆腔放疗史，未接受膀胱镜或上尿路影像系统评估；结石史：结石史：否；尿路感染史：感染史：反复UTI；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "我不吸烟。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "我没有长期服药",
+    "medication": "无长期用药",
     "urineTestResult": "感染期WBC升高；治疗后RBC仍10-20/HPF",
     "investigations": [
       {
@@ -26517,7 +26716,9 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：反复UTI；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我这一年总是尿痛、尿急，吃药时好一点，但每次复查尿里还是有红细胞。"
+      "opening": "我这一年总是尿痛、尿急，吃药时好一点，但每次复查尿里还是有红细胞。",
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -27490,8 +27691,8 @@
       },
       "urinaryProcedureHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-        "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+        "patientAnswerZh": "以前没有做过膀胱镜，也没有完成过系统的上尿路影像评估；没有长期导尿史。",
+        "patientAnswerEn": "I have never undergone cystoscopy or a complete upper-tract imaging evaluation, and I have no history of long-term catheterization.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -27670,6 +27871,15 @@
         "脓毒症或感染性梗阻未及时识别",
         "未留取培养即长期盲目用药"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -27699,20 +27909,20 @@
       "voidingDifficulty": "尿频可有；尿急可有；尿痛可有；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：5包年",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：既往小结石1次",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "无",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：父亲结石史"
+      "smoking": "吸烟，具体每天多少支记不准，累计约5包年。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家里没有人得过类似血尿或遗传性肾病。"
     },
     "pastHistory": "数年前曾排出过一次小结石，未接受手术治疗；否认反复尿路感染、泌尿操作、肿瘤、慢性肾病。无高血压、糖尿病、冠心病、脑卒中、肝病、结核；无手术、输血史，无已知过敏。既往肾功能检查未发现明确异常，无痛风或甲状旁腺疾病史，未做24小时尿代谢评估。既往未因结石出现感染性休克或急性肾损伤；结石史：结石史：既往小结石1次；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "吸烟，具体每天多少支记不准，累计约5包年。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "吸烟，具体每天多少支记不准，累计约5包年。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "我没有长期服药",
+    "medication": "无长期用药",
     "urineTestResult": "尿RBC++，白细胞不高或轻度",
     "investigations": [
       {
@@ -27734,7 +27944,9 @@
       "stoneClues": "是",
       "tumorRisk": "吸烟：5包年；职业暴露：无；结石史：既往小结石1次；感染史：否；外伤/操作：否；家族史：父亲结石史",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "医生，我右边腰突然像绞一样疼，坐也坐不住，尿也变红了。"
+      "opening": "医生，我右边腰突然像绞一样疼，坐也坐不住，尿也变红了。",
+      "smoking": "吸烟，具体每天多少支记不准，累计约5包年。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -28758,8 +28970,8 @@
       },
       "surgeryHistory": {
         "status": "absent",
-        "patientAnswerZh": "我以前没有做过手术。",
-        "patientAnswerEn": "I have never had surgery.",
+        "patientAnswerZh": "几年前的小结石是自行排出的，未做过体外碎石、输尿管镜或经皮肾镜手术。",
+        "patientAnswerEn": "A small stone passed spontaneously several years ago; I have never had shock-wave lithotripsy, ureteroscopy, or percutaneous stone surgery.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -28931,6 +29143,15 @@
         "感染性梗阻未引流即碎石",
         "未评估肾功能和感染"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -28960,20 +29181,20 @@
       "voidingDifficulty": "尿频否；尿急否；尿痛否；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：10包年",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：有肾结石史",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "无",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：无"
+      "smoking": "吸烟，具体每天多少支记不准，累计约10包年。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家里没有人得过类似血尿或遗传性肾病。"
     },
     "pastHistory": "既往有肾结石，曾经保守治疗或自行排石，具体结石成分和代谢评估未做。否认反复尿路感染、泌尿操作、肿瘤及慢性肾病。无高血压、糖尿病、冠心病、脑卒中、肝病、结核；无手术、输血史，无已知过敏。既往肾功能大致正常，无痛风、肠道手术或长期补钙史；未系统进行结石成分和代谢评估；结石史：结石史：有肾结石史；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "吸烟，具体每天多少支记不准，累计约10包年。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "吸烟，具体每天多少支记不准，累计约10包年。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "我没有长期服药",
+    "medication": "无长期用药",
     "urineTestResult": "尿潜血++，RBC 50/HPF",
     "investigations": [
       {
@@ -28995,7 +29216,9 @@
       "stoneClues": "是",
       "tumorRisk": "吸烟：10包年；职业暴露：无；结石史：有肾结石史；感染史：否；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我左边腰这一天一直钝钝地疼，尿也有点红，不像以前那种很剧烈的绞痛。"
+      "opening": "我左边腰这一天一直钝钝地疼，尿也有点红，不像以前那种很剧烈的绞痛。",
+      "smoking": "吸烟，具体每天多少支记不准，累计约10包年。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -30019,8 +30242,8 @@
       },
       "surgeryHistory": {
         "status": "absent",
-        "patientAnswerZh": "我以前没有做过手术。",
-        "patientAnswerEn": "I have never had surgery.",
+        "patientAnswerZh": "既往肾结石采用保守治疗，从未接受体外碎石、输尿管镜或经皮肾镜。",
+        "patientAnswerEn": "My previous renal stone was managed conservatively; I have never had shock-wave lithotripsy, ureteroscopy, or percutaneous nephrolithotomy.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -30192,6 +30415,15 @@
         "感染性梗阻未引流即碎石",
         "未评估肾功能和感染"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -30221,18 +30453,18 @@
       "voidingDifficulty": "尿频有；尿急有；尿痛偶有；排尿困难明显"
     },
     "riskFactors": {
-      "smoking": "吸烟：20包年",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：反复尿路感染",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "坦索罗辛间断",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：无"
+      "smoking": "吸烟，具体每天多少支记不准，累计约20包年。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前得过尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家里没有人得过类似血尿或遗传性肾病。"
     },
     "pastHistory": "既往有反复尿路感染样症状，但无明确泌尿系结石诊断。否认糖尿病、慢性肾病、泌尿操作、肿瘤或放化疗史。无高血压、冠心病、脑卒中、肝病、结核；无手术、输血史，无已知过敏；结石史：结石史：否；尿路感染史：感染史：反复尿路感染；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "吸烟，具体每天多少支记不准，累计约20包年。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "吸烟，具体每天多少支记不准，累计约20包年。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
     "medication": "坦索罗辛",
     "urineTestResult": "尿RBC+，可有WBC+",
@@ -30256,7 +30488,9 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：20包年；职业暴露：无；结石史：否；感染史：反复尿路感染；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "医生，我这三个月小便越来越不顺，尿到一半会突然停，最后还会滴几滴血。"
+      "opening": "医生，我这三个月小便越来越不顺，尿到一半会突然停，最后还会滴几滴血。",
+      "smoking": "吸烟，具体每天多少支记不准，累计约20包年。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -31251,8 +31485,8 @@
       },
       "urinaryProcedureHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-        "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+        "patientAnswerZh": "此前没有长期导尿，也未做过膀胱镜或膀胱碎石术。",
+        "patientAnswerEn": "I have no history of long-term catheterization and have never undergone cystoscopy or bladder-stone surgery.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -31441,6 +31675,15 @@
         "感染性梗阻未引流即碎石",
         "未评估肾功能和感染"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -31470,20 +31713,20 @@
       "voidingDifficulty": "尿频有；尿急有；尿痛有；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：不吸烟",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：否认已知，但影像发现",
-      "infectionHistory": "感染史：反复UTI",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "降糖药",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：无"
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前得过尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家里没有人得过类似血尿或遗传性肾病。"
     },
     "pastHistory": "有糖尿病病史，口服降糖药，血糖控制情况需核实；既往反复尿路感染，之前未明确诊断结石，后续影像提示鹿角形结石。否认泌尿操作、肿瘤、放化疗及慢性肝病、结核。无手术、输血史，无已知药物过敏；结石史：结石史：否认已知，但影像发现；尿路感染史：感染史：反复UTI；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "我不吸烟。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "我没有长期服药",
+    "medication": "无长期用药",
     "urineTestResult": "尿WBC+++，RBC++，尿培养阳性；尿pH偏碱可见",
     "investigations": [
       {
@@ -31505,7 +31748,9 @@
       "stoneClues": "是",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否认已知，但影像发现；感染史：反复UTI；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我这半年反复发烧、腰痛，尿又浑又红，吃消炎药好一阵又复发。"
+      "opening": "我这半年反复发烧、腰痛，尿又浑又红，吃消炎药好一阵又复发。",
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -32571,15 +32816,15 @@
       },
       "menstrualHistory": {
         "status": "absent",
-        "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-        "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+        "patientAnswerZh": "我已绝经多年，近期没有阴道流血，本次血尿不是月经污染。",
+        "patientAnswerEn": "I have been postmenopausal for years, with no recent vaginal bleeding; the hematuria was not menstrual contamination.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "pregnancyHistory": {
         "status": "absent",
-        "patientAnswerZh": "目前没有怀孕。",
-        "patientAnswerEn": "I am not currently pregnant.",
+        "patientAnswerZh": "我已绝经，目前无妊娠可能。",
+        "patientAnswerEn": "I am postmenopausal and there is no possibility of pregnancy.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -32702,6 +32947,15 @@
         "感染未控制或未引流即直接碎石",
         "脓毒症时延误复苏和引流"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -32731,20 +32985,20 @@
       "voidingDifficulty": "尿频否；尿急轻度；尿痛否；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：15包年",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：痛风/既往小结石",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "别嘌醇不规律",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：父亲痛风"
+      "smoking": "吸烟，具体每天多少支记不准，累计约15包年。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家族中没有明确的痛风性结石、早发反复结石或遗传性肾病。"
     },
     "pastHistory": "有痛风病史，既往曾发现或排出小结石，未做结石成分分析。否认反复尿路感染、泌尿操作、肿瘤及慢性肾病。无高血压、糖尿病、冠心病、脑卒中、肝病、结核；无手术、输血史，无已知过敏。既往肾功能资料不全，无肠道手术、甲状旁腺疾病或长期补钙史；未接受规范结石代谢评估。既往无感染性梗阻或急性肾损伤；结石史：结石史：痛风/既往小结石；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "吸烟，具体每天多少支记不准，累计约15包年。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
-    "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "我没有长期服药",
+    "personalHistory": "吸烟，具体每天多少支记不准，累计约15包年。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "familyHistory": "家族中没有明确的痛风性结石、早发反复结石或遗传性肾病。",
+    "medication": "无长期用药",
     "urineTestResult": "尿RBC++；尿pH偏酸；尿酸升高",
     "investigations": [
       {
@@ -32766,7 +33020,9 @@
       "stoneClues": "是",
       "tumorRisk": "吸烟：15包年；职业暴露：无；结石史：痛风/既往小结石；感染史：否；外伤/操作：否；家族史：父亲痛风",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我左边腰突然一阵阵绞痛，尿里有血。我有痛风，降尿酸药也没怎么按时吃。"
+      "opening": "我左边腰突然一阵阵绞痛，尿里有血。我有痛风，降尿酸药也没怎么按时吃。",
+      "smoking": "吸烟，具体每天多少支记不准，累计约15包年。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -33779,8 +34035,8 @@
       },
       "surgeryHistory": {
         "status": "absent",
-        "patientAnswerZh": "我以前没有做过手术。",
-        "patientAnswerEn": "I have never had surgery.",
+        "patientAnswerZh": "以前的小结石自行排出，未做过碎石或内镜手术；也未做结石成分分析。",
+        "patientAnswerEn": "A previous small stone passed spontaneously; I have never had lithotripsy or endoscopic stone surgery, and the stone was not analyzed.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -33814,8 +34070,8 @@
       },
       "familyHistory": {
         "status": "absent",
-        "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-        "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+        "patientAnswerZh": "家族中没有明确的痛风性结石、早发反复结石或遗传性肾病。",
+        "patientAnswerEn": "There is no known family history of gout-related stones, early recurrent stone disease, or hereditary kidney disease.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -33952,6 +34208,15 @@
         "感染性梗阻未引流即碎石",
         "未评估肾功能和感染"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -33981,18 +34246,18 @@
       "voidingDifficulty": "尿频有；尿急有；尿痛否；排尿困难明显"
     },
     "riskFactors": {
-      "smoking": "吸烟：20包年",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "坦索罗辛、非那雄胺不规律，阿司匹林",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：无"
+      "smoking": "吸烟，具体每天多少支记不准，累计约20包年。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我在服用阿司匹林。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家里没有人得过类似血尿或遗传性肾病。"
     },
     "pastHistory": "既往考虑良性前列腺增生，未规律复诊；否认糖尿病、冠心病、脑卒中、肝病、结核、泌尿系结石及反复感染。无导尿或膀胱镜操作史，无肿瘤及放化疗史。无手术、输血史，无已知过敏；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "吸烟，具体每天多少支记不准，累计约20包年。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "吸烟，具体每天多少支记不准，累计约20包年。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
     "medication": "阿司匹林、非那雄胺、坦索罗辛",
     "urineTestResult": "尿RBC++，蛋白阴性；PSA按需评估",
@@ -34016,7 +34281,9 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：20包年；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "医生，我本来就小便费劲，这三天尿突然变红了，有时还有小血块。"
+      "opening": "医生，我本来就小便费劲，这三天尿突然变红了，有时还有小血块。",
+      "smoking": "吸烟，具体每天多少支记不准，累计约20包年。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -35240,6 +35507,15 @@
         "尿潴留或血块堵塞未及时解除",
         "仅凭PSA直接诊断前列腺癌"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -35269,18 +35545,18 @@
       "voidingDifficulty": "尿频有；尿急有；尿痛否；排尿困难明显"
     },
     "riskFactors": {
-      "smoking": "吸烟：不吸烟",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：导尿操作",
-      "anticoagulants": "阿司匹林、坦索罗辛",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：无"
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "以前有过相关外伤。",
+      "anticoagulants": "我在服用华法林、利伐沙班。 我在服用阿司匹林。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家里没有人得过类似血尿或遗传性肾病。"
     },
     "pastHistory": "既往诊断或高度怀疑良性前列腺增生，长期服用坦索罗辛。否认高血压、糖尿病、脑卒中、肝病、结核、结石和反复尿路感染。此次为已知导尿操作；此前无泌尿手术或肿瘤史。无手术、输血史，无已知过敏；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：导尿操作；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "我不吸烟。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
     "medication": "阿司匹林、华法林、利伐沙班、坦索罗辛",
     "urineTestResult": "尿RBC大量；注意血红蛋白变化",
@@ -35304,7 +35580,9 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：导尿操作；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我昨晚完全尿不出来，医院插了尿管以后尿变成鲜红色，还带点小血块。"
+      "opening": "我昨晚完全尿不出来，医院插了尿管以后尿变成鲜红色，还带点小血块。",
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -36328,8 +36606,8 @@
       },
       "surgeryHistory": {
         "status": "absent",
-        "patientAnswerZh": "我以前没有做过手术。",
-        "patientAnswerEn": "I have never had surgery.",
+        "patientAnswerZh": "我以前没有做过泌尿手术；这次急性尿潴留后急诊导尿是第一次泌尿操作。",
+        "patientAnswerEn": "I have never had urologic surgery; the emergency catheterization for this episode of acute urinary retention was my first urinary procedure.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -36536,12 +36814,21 @@
         "尿潴留或血块堵塞未及时解除",
         "仅凭PSA直接诊断前列腺癌"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
     "id": "HX-ADD-018",
     "sourcePatientId": "HM-SUP-018",
-    "title": "前列腺癌合并血尿/需鉴别",
+    "title": "前列腺癌待排/鉴别",
     "difficulty": "挑战",
     "diseaseCategory": "前列腺疾病",
     "age": "69",
@@ -36565,18 +36852,18 @@
       "voidingDifficulty": "尿频有；尿急否；尿痛否；排尿困难明显"
     },
     "riskFactors": {
-      "smoking": "吸烟：30包年",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "降压药",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：兄弟前列腺癌"
+      "smoking": "吸烟，具体每天多少支记不准，累计约30包年。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "一名兄弟患前列腺癌。"
     },
     "pastHistory": "有高血压病史，口服降压药。否认糖尿病、冠心病、脑卒中、肝病、结核、泌尿系结石、反复尿路感染、导尿或膀胱镜操作史。无既往肿瘤及放化疗史，无手术、输血史，无已知过敏；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "吸烟，具体每天多少支记不准，累计约30包年。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "吸烟，具体每天多少支记不准，累计约30包年。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "一名兄弟患前列腺癌。",
     "medication": "降压药",
     "urineTestResult": "尿RBC 10-20/HPF；PSA升高",
@@ -36600,7 +36887,9 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：30包年；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：兄弟前列腺癌",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我这半年小便越来越困难，体检又发现尿里有红细胞，担心是不是前列腺癌。"
+      "opening": "我这半年小便越来越困难，体检又发现尿里有红细胞，担心是不是前列腺癌。",
+      "smoking": "吸烟，具体每天多少支记不准，累计约30包年。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -36647,7 +36936,7 @@
       "mdtQuestion": "选择排石/ESWL/URS/PCNL；评估是否感染性梗阻；制定代谢评估和预防",
       "evaluator": "问诊重点：血尿可见性、时相、颜色、血块、疼痛关系、尿路刺激症状、发热腰痛、泡沫尿/水肿、诱因、既往史、药物史、吸烟/职业暴露、女性污染或全身出血倾向；禁止提交前泄露这些得分点。 不要把镜下血尿全部归因于PSA高；问前列腺症状同时按血尿路径追问"
     },
-    "diagnosis": "前列腺癌合并血尿/需鉴别",
+    "diagnosis": "前列腺癌待排/鉴别",
     "teachingPoints": [
       "先确认真性血尿并完成前列腺疾病方向的定位。",
       "血尿时相是定位线索，不能替代尿沉渣、影像、内镜或病理。",
@@ -36660,17 +36949,17 @@
       "膀胱肿瘤",
       "尿路感染"
     ],
-    "teacherComment": "重点评价学生能否识别前列腺癌相关血尿的定位线索、危险信号和正确操作顺序。",
+    "teacherComment": "重点评价学生能否识别前列腺癌待排/鉴别的定位线索、危险信号和正确操作顺序。",
     "scoringKey": [
       "问诊、查体、诊断、开单、MDT、治疗、围术期和随访证据均纳入360分评分。",
       "本病例严重错误：尿潴留或血块堵塞未及时解除；仅凭PSA直接诊断前列腺癌"
     ],
     "clinical": {
       "source": "原补充病例按V2导师模板重构",
-      "diseaseCategory": "前列腺疾病/前列腺癌相关血尿",
+      "diseaseCategory": "前列腺疾病/前列腺癌待排/鉴别",
       "difficulty": "标准",
       "triage": "泌尿外科",
-      "primaryProblem": "前列腺癌合并血尿/需鉴别",
+      "primaryProblem": "前列腺癌待排/鉴别",
       "redFlags": "吸烟：30包年；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：兄弟前列腺癌；泌尿外科",
       "diagnosticReasoning": "1、前列腺癌合并血尿/需鉴别；2、血尿查因；3、需结合入院检查确认合并症和风险因素。",
       "mustDifferentials": "问诊重点：血尿可见性、时相、颜色、血块、疼痛关系、尿路刺激症状、发热腰痛、泡沫尿/水肿、诱因、既往史、药物史、吸烟/职业暴露、女性污染或全身出血倾向；禁止提交前泄露这些得分点。",
@@ -37617,8 +37906,8 @@
       },
       "urinaryProcedureHistory": {
         "status": "absent",
-        "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-        "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+        "patientAnswerZh": "此前没有导尿、膀胱镜或前列腺穿刺；这次镜下血尿出现前也没有泌尿操作。",
+        "patientAnswerEn": "I had no catheterization, cystoscopy, or prostate biopsy before the microscopic hematuria appeared.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -37696,7 +37985,7 @@
     "languages": [
       "zh-CN"
     ],
-    "diseaseSubcategory": "前列腺癌相关血尿",
+    "diseaseSubcategory": "前列腺癌待排/鉴别",
     "standardChiefComplaint": "排尿困难伴镜下血尿半年",
     "patientRole": {
       "identity": "69岁男性教学模拟患者",
@@ -37807,6 +38096,15 @@
         "尿潴留或血块堵塞未及时解除",
         "仅凭PSA直接诊断前列腺癌"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -37836,20 +38134,20 @@
       "voidingDifficulty": "尿频否；尿急否；尿痛否；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：不吸烟",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "无",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：无"
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家族中没有反复血尿、早发肾衰竭，也没有血尿合并听力下降的亲属。"
     },
     "pastHistory": "既往体健，否认高血压、糖尿病、肝病、结核、泌尿系结石、尿路感染、泌尿操作或肿瘤史。无手术、输血史，无已知过敏；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
-    "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "我没有长期服药",
+    "personalHistory": "我不吸烟。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "familyHistory": "家族中没有反复血尿、早发肾衰竭，也没有血尿合并听力下降的亲属。",
+    "medication": "无长期用药",
     "urineTestResult": "尿RBC+++，蛋白+~++，可见畸形RBC",
     "investigations": [
       {
@@ -37871,7 +38169,9 @@
       "stoneClues": "轻度腰酸",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿可有泡沫；水肿轻度眼睑浮肿可有",
-      "opening": "我前两天咽痛，几乎同时尿就变成可乐色了，早上眼皮还有点肿。"
+      "opening": "我前两天咽痛，几乎同时尿就变成可乐色了，早上眼皮还有点肿。",
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -38875,8 +39175,8 @@
       },
       "familyHistory": {
         "status": "absent",
-        "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-        "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+        "patientAnswerZh": "家族中没有反复血尿、早发肾衰竭，也没有血尿合并听力下降的亲属。",
+        "patientAnswerEn": "There is no family history of recurrent hematuria, early kidney failure, or hematuria accompanied by hearing loss.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -39013,6 +39313,15 @@
         "忽略蛋白尿、畸形红细胞或RBC管型",
         "肾功能恶化时未触发肾内科安全网"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -39042,20 +39351,20 @@
       "voidingDifficulty": "尿频否；尿急否；尿痛否；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：不吸烟",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "无",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：无"
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家族中没有肾炎、反复血尿、听力下降或早发肾衰竭。"
     },
     "pastHistory": "既往体健，无高血压、糖尿病、肝病、结核、结石、反复尿路感染、泌尿操作或肿瘤史。无手术、输血史，无已知药物或食物过敏；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
-    "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "我没有长期服药",
+    "personalHistory": "我不吸烟。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "familyHistory": "家族中没有肾炎、反复血尿、听力下降或早发肾衰竭。",
+    "medication": "无长期用药",
     "urineTestResult": "尿RBC+++，蛋白++，可见管型；补体可降低",
     "investigations": [
       {
@@ -39077,7 +39386,9 @@
       "stoneClues": "可有腰酸",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿可有；水肿眼睑/下肢水肿",
-      "opening": "两三周前腿上长过脓疱，现在尿像浓茶，眼皮和脚都有点肿。"
+      "opening": "两三周前腿上长过脓疱，现在尿像浓茶，眼皮和脚都有点肿。",
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -40081,8 +40392,8 @@
       },
       "familyHistory": {
         "status": "absent",
-        "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-        "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+        "patientAnswerZh": "家族中没有肾炎、反复血尿、听力下降或早发肾衰竭。",
+        "patientAnswerEn": "There is no family history of nephritis, recurrent hematuria, hearing loss, or early kidney failure.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -40219,12 +40530,21 @@
         "忽略蛋白尿、畸形红细胞或RBC管型",
         "肾功能恶化时未触发肾内科安全网"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
     "id": "HX-ADD-021",
     "sourcePatientId": "HM-SUP-021",
-    "title": "薄基底膜肾病/家族性良性血尿",
+    "title": "COL4相关薄基底膜病待确认",
     "difficulty": "标准",
     "diseaseCategory": "肾小球疾病",
     "age": "28",
@@ -40248,20 +40568,20 @@
       "voidingDifficulty": "尿频否；尿急否；尿痛否；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：不吸烟",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "无",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：母亲也长期尿潜血"
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家人过去很少做尿检，我不能确定一级亲属是否有镜下血尿；需要补查父母和兄弟姐妹的尿常规、肾功能和听力史。"
     },
     "pastHistory": "既往体健，否认高血压、糖尿病、肝病、结核、泌尿系结石、反复尿路感染、泌尿操作或肿瘤史。无手术、输血史，无已知过敏；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
-    "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "我没有长期服药",
+    "personalHistory": "我不吸烟。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "familyHistory": "家人过去很少做尿检，我不能确定一级亲属是否有镜下血尿；需要补查父母和兄弟姐妹的尿常规、肾功能和听力史。",
+    "medication": "无长期用药",
     "urineTestResult": "尿RBC 5-20/HPF，蛋白阴性或微量，肾功能正常",
     "investigations": [
       {
@@ -40283,7 +40603,9 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：母亲也长期尿潜血",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我连续三年体检都说尿里有红细胞，但自己看尿一直正常，也没有不舒服。"
+      "opening": "我连续三年体检都说尿里有红细胞，但自己看尿一直正常，也没有不舒服。",
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -40330,7 +40652,7 @@
       "mdtQuestion": "选择排石/ESWL/URS/PCNL；评估是否感染性梗阻；制定代谢评估和预防",
       "evaluator": "问诊重点：血尿可见性、时相、颜色、血块、疼痛关系、尿路刺激症状、发热腰痛、泡沫尿/水肿、诱因、既往史、药物史、吸烟/职业暴露、女性污染或全身出血倾向；禁止提交前泄露这些得分点。 问家族史、听力眼病、蛋白尿、肾功能、肉眼血尿发作"
     },
-    "diagnosis": "薄基底膜肾病/家族性良性血尿",
+    "diagnosis": "COL4相关薄基底膜病待确认",
     "teachingPoints": [
       "先确认真性血尿并完成肾小球疾病方向的定位。",
       "血尿时相是定位线索，不能替代尿沉渣、影像、内镜或病理。",
@@ -40343,17 +40665,17 @@
       "泌尿系结石",
       "高钙尿症"
     ],
-    "teacherComment": "重点评价学生能否识别薄基底膜肾病的定位线索、危险信号和正确操作顺序。",
+    "teacherComment": "重点评价学生能否识别COL4相关薄基底膜病待确认的定位线索、危险信号和正确操作顺序。",
     "scoringKey": [
       "问诊、查体、诊断、开单、MDT、治疗、围术期和随访证据均纳入360分评分。",
       "本病例严重错误：忽略蛋白尿、畸形红细胞或RBC管型；肾功能恶化时未触发肾内科安全网"
     ],
     "clinical": {
       "source": "原补充病例按V2导师模板重构",
-      "diseaseCategory": "肾小球疾病/薄基底膜肾病",
+      "diseaseCategory": "肾小球疾病/COL4相关薄基底膜病待确认",
       "difficulty": "标准",
       "triage": "泌尿外科",
-      "primaryProblem": "薄基底膜肾病/家族性良性血尿",
+      "primaryProblem": "COL4相关薄基底膜病待确认",
       "redFlags": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：母亲也长期尿潜血；泌尿外科",
       "diagnosticReasoning": "1、薄基底膜肾病/家族性良性血尿；2、血尿查因；3、需结合入院检查确认合并症和风险因素。",
       "mustDifferentials": "问诊重点：血尿可见性、时相、颜色、血块、疼痛关系、尿路刺激症状、发热腰痛、泡沫尿/水肿、诱因、既往史、药物史、吸烟/职业暴露、女性污染或全身出血倾向；禁止提交前泄露这些得分点。",
@@ -41287,8 +41609,8 @@
       },
       "familyHistory": {
         "status": "absent",
-        "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-        "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+        "patientAnswerZh": "家人过去很少做尿检，我不能确定一级亲属是否有镜下血尿；需要补查父母和兄弟姐妹的尿常规、肾功能和听力史。",
+        "patientAnswerEn": "My first-degree relatives have rarely had urinalysis, so I cannot exclude microscopic hematuria; their urinalysis, kidney function, and hearing history should be checked.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -41315,7 +41637,7 @@
     "languages": [
       "zh-CN"
     ],
-    "diseaseSubcategory": "薄基底膜肾病",
+    "diseaseSubcategory": "COL4相关薄基底膜病待确认",
     "standardChiefComplaint": "体检发现镜下血尿3年",
     "patientRole": {
       "identity": "28岁女性教学模拟患者",
@@ -41425,12 +41747,21 @@
         "忽略蛋白尿、畸形红细胞或RBC管型",
         "肾功能恶化时未触发肾内科安全网"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
     "id": "HX-ADD-022",
     "sourcePatientId": "HM-SUP-022",
-    "title": "Alport综合征",
+    "title": "疑似Alport综合征（待遗传学/病理证实）",
     "difficulty": "挑战",
     "diseaseCategory": "肾小球疾病",
     "age": "19",
@@ -41454,20 +41785,20 @@
       "voidingDifficulty": "尿频否；尿急否；尿痛否；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：不吸烟",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "无",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：舅舅年轻时肾衰，母亲尿潜血"
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家里有人有类似血尿或肾病，但具体诊断我不清楚。"
     },
     "pastHistory": "既往无高血压、糖尿病、肝病、结核、结石、尿路感染、泌尿操作和肿瘤史。无手术、输血史，无已知药物或食物过敏；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
-    "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "我没有长期服药",
+    "personalHistory": "我不吸烟。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "familyHistory": "家里有人有类似血尿或肾病，但具体诊断我不清楚。",
+    "medication": "无长期用药",
     "urineTestResult": "尿RBC持续阳性，蛋白可逐渐增加",
     "investigations": [
       {
@@ -41489,7 +41820,9 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：舅舅年轻时肾衰，母亲尿潜血",
       "glomerularClues": "泡沫尿可有；水肿无明显",
-      "opening": "我体检反复发现尿里有红细胞，最近也觉得听别人说话没以前清楚。"
+      "opening": "我体检反复发现尿里有红细胞，最近也觉得听别人说话没以前清楚。",
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -41536,7 +41869,7 @@
       "mdtQuestion": "选择排石/ESWL/URS/PCNL；评估是否感染性梗阻；制定代谢评估和预防",
       "evaluator": "问诊重点：血尿可见性、时相、颜色、血块、疼痛关系、尿路刺激症状、发热腰痛、泡沫尿/水肿、诱因、既往史、药物史、吸烟/职业暴露、女性污染或全身出血倾向；禁止提交前泄露这些得分点。 问听力、眼部、家族肾衰、长期蛋白尿/肾功能"
     },
-    "diagnosis": "Alport综合征",
+    "diagnosis": "疑似Alport综合征（待遗传学/病理证实）",
     "teachingPoints": [
       "先确认真性血尿并完成肾小球疾病方向的定位。",
       "血尿时相是定位线索，不能替代尿沉渣、影像、内镜或病理。",
@@ -41549,17 +41882,17 @@
       "遗传性耳聋伴非肾性血尿",
       "其他遗传性肾病"
     ],
-    "teacherComment": "重点评价学生能否识别Alport综合征的定位线索、危险信号和正确操作顺序。",
+    "teacherComment": "重点评价学生能否识别疑似Alport综合征（待遗传学/病理证实）的定位线索、危险信号和正确操作顺序。",
     "scoringKey": [
       "问诊、查体、诊断、开单、MDT、治疗、围术期和随访证据均纳入360分评分。",
       "本病例严重错误：忽略蛋白尿、畸形红细胞或RBC管型；肾功能恶化时未触发肾内科安全网"
     ],
     "clinical": {
       "source": "原补充病例按V2导师模板重构",
-      "diseaseCategory": "肾小球疾病/Alport综合征",
+      "diseaseCategory": "肾小球疾病/疑似Alport综合征（待遗传学/病理证实）",
       "difficulty": "挑战",
       "triage": "泌尿外科",
-      "primaryProblem": "Alport综合征",
+      "primaryProblem": "疑似Alport综合征（待遗传学/病理证实）",
       "redFlags": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：舅舅年轻时肾衰，母亲尿潜血；泌尿外科",
       "diagnosticReasoning": "1、Alport综合征；2、血尿查因；3、需结合入院检查确认合并症和风险因素。",
       "mustDifferentials": "问诊重点：血尿可见性、时相、颜色、血块、疼痛关系、尿路刺激症状、发热腰痛、泡沫尿/水肿、诱因、既往史、药物史、吸烟/职业暴露、女性污染或全身出血倾向；禁止提交前泄露这些得分点。",
@@ -42504,8 +42837,8 @@
       },
       "familyHistory": {
         "status": "absent",
-        "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-        "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+        "patientAnswerZh": "家里有人有类似血尿或肾病，但具体诊断我不清楚。",
+        "patientAnswerEn": "A relative had similar hematuria or kidney disease, but I do not know the exact diagnosis.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -42532,7 +42865,7 @@
     "languages": [
       "zh-CN"
     ],
-    "diseaseSubcategory": "Alport综合征",
+    "diseaseSubcategory": "疑似Alport综合征（待遗传学/病理证实）",
     "standardChiefComplaint": "反复镜下血尿伴听力下降",
     "patientRole": {
       "identity": "19岁男性教学模拟患者",
@@ -42642,6 +42975,15 @@
         "忽略蛋白尿、畸形红细胞或RBC管型",
         "肾功能恶化时未触发肾内科安全网"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -42671,20 +43013,20 @@
       "voidingDifficulty": "尿频否；尿急否；尿痛否；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：不吸烟",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "无",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：自身免疫病家族史不详"
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家里没有人得过类似血尿或遗传性肾病。"
     },
     "pastHistory": "既往无明确肾病、自身免疫病、高血压、糖尿病、肝病、结核、结石、尿路感染或泌尿操作史。无肿瘤及放化疗史，无手术、输血史，无已知药物或食物过敏；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "我不吸烟。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "我没有长期服药",
+    "medication": "无长期用药",
     "urineTestResult": "尿蛋白++~+++，RBC++，可有管型；ANA/补体异常线索",
     "investigations": [
       {
@@ -42706,7 +43048,9 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：自身免疫病家族史不详",
       "glomerularClues": "泡沫尿明显泡沫尿；水肿下肢轻肿",
-      "opening": "我这两周尿泡沫很多，检查有血尿，脸上还出了红疹，腿也有点肿。"
+      "opening": "我这两周尿泡沫很多，检查有血尿，脸上还出了红疹，腿也有点肿。",
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -43717,15 +44061,15 @@
       },
       "menstrualHistory": {
         "status": "absent",
-        "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-        "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+        "patientAnswerZh": "月经基本规律，没有反复流产史；本次尿异常不在经期，也没有异常阴道流血。",
+        "patientAnswerEn": "My periods are generally regular, with no history of recurrent miscarriage; the urine abnormality was not during menstruation and there was no abnormal vaginal bleeding.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "pregnancyHistory": {
         "status": "absent",
-        "patientAnswerZh": "目前没有怀孕。",
-        "patientAnswerEn": "I am not currently pregnant.",
+        "patientAnswerZh": "目前没有停经，自述无妊娠可能；开始可能致畸的免疫抑制治疗前仍需妊娠试验确认。",
+        "patientAnswerEn": "I have not missed a period and report no possibility of pregnancy; a pregnancy test is still required before potentially teratogenic immunosuppressive therapy.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -43848,6 +44192,15 @@
         "忽略蛋白尿、畸形红细胞或RBC管型",
         "肾功能恶化时未触发肾内科安全网"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -43877,20 +44230,20 @@
       "voidingDifficulty": "尿频否；尿急否；尿痛否；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：不吸烟",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "无",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：无"
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷，长跑前也没有服用布洛芬等止痛药。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家里没有人得过类似血尿或遗传性肾病。"
     },
     "pastHistory": "既往体健，无高血压、糖尿病、肝病、结核、结石、尿路感染、泌尿外伤、泌尿操作或肿瘤史。无手术、输血史，无已知过敏。既往运动体检无异常，无横纹肌溶解、热射病或严重脱水史，近期未患上呼吸道感染；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "我不吸烟。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "我没有长期服药",
+    "medication": "无长期用药",
     "urineTestResult": "运动后尿潜血+，复查可转阴",
     "investigations": [
       {
@@ -43912,7 +44265,9 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我昨天跑完长跑后尿变红了一次，休息喝水后今天已经淡下来了。"
+      "opening": "我昨天跑完长跑后尿变红了一次，休息喝水后今天已经淡下来了。",
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -44942,8 +45297,8 @@
       },
       "antiplateletUse": {
         "status": "absent",
-        "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-        "patientAnswerEn": "I do not take antiplatelet medication.",
+        "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷，长跑前也没有服用布洛芬等止痛药。",
+        "patientAnswerEn": "I do not take aspirin or clopidogrel, and I did not take ibuprofen or other analgesics before the run.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -45086,6 +45441,15 @@
         "未复查即把血尿归因于运动",
         "忽略色素尿或肾损伤"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -45115,20 +45479,20 @@
       "voidingDifficulty": "尿频否；尿急否；尿痛否；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：不吸烟",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "无",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：无"
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家里没有人得过类似血尿或遗传性肾病。"
     },
     "pastHistory": "既往体健，无高血压、糖尿病、肝病、结核、结石、反复尿路感染、泌尿操作或肿瘤史。无手术、输血史，无已知药物或食物过敏。妇科方面无已知子宫肌瘤、宫颈病变或异常阴道出血史，既往妇科体检大致正常；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "我不吸烟。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "我没有长期服药",
+    "medication": "无长期用药",
     "urineTestResult": "经期尿潜血+；建议经期后清洁中段尿复查",
     "investigations": [
       {
@@ -45150,7 +45514,9 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我体检那天正好来月经，尿检说潜血阳性，但我自己没有尿痛或看到尿血。"
+      "opening": "我体检那天正好来月经，尿检说潜血阳性，但我自己没有尿痛或看到尿血。",
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -46161,15 +46527,15 @@
       },
       "menstrualHistory": {
         "status": "absent",
-        "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-        "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+        "patientAnswerZh": "我正值月经期，这次尿样可能混入了经血。",
+        "patientAnswerEn": "I am menstruating, so the urine sample may have been contaminated by menstrual blood.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "pregnancyHistory": {
         "status": "absent",
-        "patientAnswerZh": "目前没有怀孕。",
-        "patientAnswerEn": "I am not currently pregnant.",
+        "patientAnswerZh": "目前月经来潮，无停经，自述无妊娠可能。",
+        "patientAnswerEn": "I am currently menstruating, have not missed a period, and report no possibility of pregnancy.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -46292,6 +46658,15 @@
         "未确认真性血尿即进行侵入性检查",
         "女性未排除月经或阴道污染"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -46321,20 +46696,20 @@
       "voidingDifficulty": "尿频否；尿急否；尿痛否；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：不吸烟",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：明显外伤",
-      "anticoagulants": "无",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：无"
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "以前有过相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家里没有人得过类似血尿或遗传性肾病。"
     },
     "pastHistory": "既往体健，无高血压、糖尿病、肝病、结核、结石、尿路感染、泌尿操作或肿瘤史。无既往手术、输血史，无已知过敏。既往无出血性疾病、凝血功能异常或脆性骨折史，近期无其他外伤或住院治疗。平时肾功能检查未提示明确异常；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：明显外伤；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "我不吸烟。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "我没有长期服药",
+    "medication": "无长期用药",
     "urineTestResult": "尿RBC大量；评估血红蛋白",
     "investigations": [
       {
@@ -46356,7 +46731,9 @@
       "stoneClues": "是",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：明显外伤；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我四小时前出了车祸，左边腰被撞得很痛，后来尿出来都是红的。"
+      "opening": "我四小时前出了车祸，左边腰被撞得很痛，后来尿出来都是红的。",
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -47376,8 +47753,8 @@
       },
       "transfusionHistory": {
         "status": "absent",
-        "patientAnswerZh": "我以前没有输过血。",
-        "patientAnswerEn": "I have never had a blood transfusion.",
+        "patientAnswerZh": "车祸前从未输过血；本次到院截至目前也还没有接受输血。",
+        "patientAnswerEn": "I had never received a transfusion before the crash, and I have not received one during this visit so far.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -47542,6 +47919,15 @@
         "血流动力学不稳定时延误复苏",
         "未评估合并伤或贸然进行不合适检查"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -47571,20 +47957,20 @@
       "voidingDifficulty": "尿频否；尿急否；尿痛否；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：不吸烟",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "布洛芬/复方止痛药长期自行服用",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：无"
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷，但长期自行服用布洛芬和复方止痛药。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家里没有人得过类似血尿或遗传性肾病。"
     },
     "pastHistory": "否认糖尿病、镰状细胞病、泌尿系结石、反复感染、泌尿操作、肿瘤及放化疗史；无高血压、冠心病、脑卒中、肝病、结核。训练设定为有慢性头痛或肌肉骨骼痛导致镇痛药长期使用，需核实。无手术、输血史，无已知过敏；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "personalHistory": "我不吸烟。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "我没有长期服药",
+    "medication": "无长期用药",
     "urineTestResult": "尿RBC+~++，可有蛋白轻度；肾功能需评估",
     "investigations": [
       {
@@ -47606,7 +47992,9 @@
       "stoneClues": "是",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我这半年腰痛、尿血反复发作，有时尿里好像还有一点组织碎片。我平时经常吃止痛药。"
+      "opening": "我这半年腰痛、尿血反复发作，有时尿里好像还有一点组织碎片。我平时经常吃止痛药。",
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -48636,8 +49024,8 @@
       },
       "antiplateletUse": {
         "status": "absent",
-        "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-        "patientAnswerEn": "I do not take antiplatelet medication.",
+        "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷，但长期自行服用布洛芬和复方止痛药。",
+        "patientAnswerEn": "I do not take aspirin or clopidogrel, but I have used ibuprofen and compound painkillers for a long time.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -48780,6 +49168,15 @@
         "忽略药物和基础病因",
         "梗阻感染未引流"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -48809,19 +49206,19 @@
       "voidingDifficulty": "尿频否；尿急否；尿痛否；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：不吸烟",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "ARB类降压药",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：父亲多囊肾"
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家里有人得过多囊肾，具体情况我不太清楚。"
     },
     "pastHistory": "有高血压病史，口服ARB类降压药；既往检查提示双肾多发囊肿，但随访不规律，肾功能基线需核实。否认糖尿病、冠心病、脑卒中、肝病、结核、结石、反复尿路感染、泌尿操作和肿瘤史。无手术、输血史，无已知过敏。既往无肉眼血尿或囊肿感染住院史，未接受肾囊肿穿刺、硬化或手术治疗；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
-    "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
+    "personalHistory": "我不吸烟。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "familyHistory": "家里有人得过多囊肾，具体情况我不太清楚。",
     "medication": "降压药",
     "urineTestResult": "尿RBC++，蛋白可轻度，肾功能按病情",
     "investigations": [
@@ -48844,7 +49241,9 @@
       "stoneClues": "是",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：父亲多囊肾",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我突然左边腰痛，尿也变成暗红色。我以前查出两边肾上有很多囊肿。"
+      "opening": "我突然左边腰痛，尿也变成暗红色。我以前查出两边肾上有很多囊肿。",
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -49881,8 +50280,8 @@
       },
       "familyHistory": {
         "status": "absent",
-        "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-        "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+        "patientAnswerZh": "家里有人得过多囊肾，具体情况我不太清楚。",
+        "patientAnswerEn": "Someone in my family had polycystic kidney disease, but I do not know the details.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -50027,6 +50426,15 @@
         "未排除感染或肿瘤",
         "严重出血未评估血流动力学"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
@@ -50056,20 +50464,20 @@
       "voidingDifficulty": "尿频否；尿急否；尿痛否；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：不吸烟",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：无",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "无",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：无"
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家里有没有类似血尿或肾病，我不太清楚。"
     },
     "pastHistory": "既往体健，无高血压、糖尿病、肝病、结核、结石、尿路感染、泌尿操作或肿瘤史。无手术、输血史，无已知药物或食物过敏。既往肾功能和血压大致正常，未做肾静脉彩超、CTA或静脉压测定，也无盆腔手术史；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "我不吸烟。；我平时不喝酒。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
-    "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "我没有长期服药",
+    "personalHistory": "我不吸烟。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
+    "familyHistory": "家里有没有类似血尿或肾病，我不太清楚。",
+    "medication": "无长期用药",
     "urineTestResult": "尿RBC 10-50/HPF，蛋白少量或阴性",
     "investigations": [
       {
@@ -50091,7 +50499,9 @@
       "stoneClues": "是",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我这一年左腰总是酸，体检反复说有镜下血尿，站久或运动后更明显。"
+      "opening": "我这一年左腰总是酸，体检反复说有镜下血尿，站久或运动后更明显。",
+      "smoking": "我不吸烟。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -51095,15 +51505,15 @@
       },
       "familyHistory": {
         "status": "absent",
-        "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-        "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+        "patientAnswerZh": "家里有没有类似血尿或肾病，我不太清楚。",
+        "patientAnswerEn": "I am not sure whether anyone in my family had similar hematuria or kidney disease.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
       "menstrualHistory": {
         "status": "absent",
-        "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-        "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+        "patientAnswerZh": "月经规律，本次镜下血尿在非经期复查仍存在，没有异常阴道流血。",
+        "patientAnswerEn": "My periods are regular; microscopic hematuria persisted on repeat testing between periods, with no abnormal vaginal bleeding.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -51232,12 +51642,21 @@
         "未确认真性血尿",
         "忽略急症红旗"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   },
   {
     "id": "HX-ADD-030",
     "sourcePatientId": "HM-SUP-030",
-    "title": "高危无症状镜下血尿需肿瘤筛查",
+    "title": "高危无症状镜下血尿待查（肿瘤筛查路径）",
     "difficulty": "挑战",
     "diseaseCategory": "泌尿系肿瘤",
     "age": "62",
@@ -51261,19 +51680,19 @@
       "voidingDifficulty": "尿频否；尿急否；尿痛否；排尿困难否"
     },
     "riskFactors": {
-      "smoking": "吸烟：45包年",
-      "alcohol": "否认/未诉饮酒史",
-      "occupation": "职业暴露：苯/芳香胺相关化工暴露",
-      "stoneHistory": "结石史：否",
-      "infectionHistory": "感染史：否",
-      "trauma": "外伤/操作：否",
-      "anticoagulants": "降压药",
-      "tumorHistory": "肿瘤/放化疗：否",
-      "familyHistory": "家族史：无"
+      "smoking": "吸烟，具体每天多少支记不准，累计约45包年。",
+      "alcohol": "我平时不喝酒。",
+      "occupation": "工作中接触过职业暴露：苯/芳香胺相关化工暴露。",
+      "stoneHistory": "以前没有得过泌尿系结石。",
+      "infectionHistory": "以前没有反复尿路感染。",
+      "trauma": "近期没有相关外伤。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我没有服用阿司匹林或氯吡格雷。",
+      "tumorHistory": "以前没有得过肿瘤。",
+      "familyHistory": "家族中没有膀胱或上尿路尿路上皮癌、Lynch综合征、反复血尿或遗传性肾病。"
     },
     "pastHistory": "有高血压病史，长期服用降压药，具体名称和肾功能基线需核实。否认糖尿病、冠心病、脑卒中、肝病、结核、泌尿系结石、反复尿路感染、泌尿操作或肿瘤史。无手术、输血史，无已知过敏；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
-    "personalHistory": "吸烟，具体每天多少支记不准，累计约45包年。；我平时不喝酒。；工作中接触过职业暴露：苯/芳香胺相关化工暴露。",
-    "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
+    "personalHistory": "吸烟，具体每天多少支记不准，累计约45包年。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中接触过职业暴露：苯/芳香胺相关化工暴露。",
+    "familyHistory": "家族中没有膀胱或上尿路尿路上皮癌、Lynch综合征、反复血尿或遗传性肾病。",
     "medication": "降压药",
     "urineTestResult": "尿RBC 30/HPF，重复阳性，蛋白阴性",
     "investigations": [
@@ -51296,7 +51715,9 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：45包年；职业暴露：苯/芳香胺相关化工暴露；结石史：否；感染史：否；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我体检两次都说尿里有红细胞，但自己完全看不出来，也没有不舒服。"
+      "opening": "我体检两次都说尿里有红细胞，但自己完全看不出来，也没有不舒服。",
+      "smoking": "吸烟，具体每天多少支记不准，累计约45包年。",
+      "alcohol": "我平时不喝酒。"
     },
     "patientPersona": {
       "emotion": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -51343,7 +51764,7 @@
       "mdtQuestion": "明确病理和分期；评估手术/系统治疗/放疗选择；讨论围术期风险和随访策略",
       "evaluator": "问诊重点：血尿可见性、时相、颜色、血块、疼痛关系、尿路刺激症状、发热腰痛、泡沫尿/水肿、诱因、既往史、药物史、吸烟/职业暴露、女性污染或全身出血倾向；禁止提交前泄露这些得分点。 问年龄、吸烟包年、职业暴露、既往肉眼血尿；理解镜下血尿也需风险分层"
     },
-    "diagnosis": "高危无症状镜下血尿需肿瘤筛查",
+    "diagnosis": "高危无症状镜下血尿待查（肿瘤筛查路径）",
     "teachingPoints": [
       "先确认真性血尿并完成泌尿系肿瘤方向的定位。",
       "血尿时相是定位线索，不能替代尿沉渣、影像、内镜或病理。",
@@ -51356,17 +51777,17 @@
       "肾小球性血尿",
       "泌尿系结石"
     ],
-    "teacherComment": "重点评价学生能否识别高危无症状镜下血尿的定位线索、危险信号和正确操作顺序。",
+    "teacherComment": "重点评价学生能否识别高危无症状镜下血尿待查（肿瘤筛查路径）的定位线索、危险信号和正确操作顺序。",
     "scoringKey": [
       "问诊、查体、诊断、开单、MDT、治疗、围术期和随访证据均纳入360分评分。",
       "本病例严重错误：未取得病理和分期即实施确定性肿瘤治疗；血块尿潴留或严重出血未处理"
     ],
     "clinical": {
       "source": "原补充病例按V2导师模板重构",
-      "diseaseCategory": "泌尿系肿瘤/高危无症状镜下血尿",
+      "diseaseCategory": "泌尿系肿瘤/高危无症状镜下血尿待查（肿瘤筛查路径）",
       "difficulty": "挑战",
       "triage": "泌尿外科、影像科、病理科、肿瘤内科",
-      "primaryProblem": "高危无症状镜下血尿需肿瘤筛查",
+      "primaryProblem": "高危无症状镜下血尿待查（肿瘤筛查路径）",
       "redFlags": "吸烟：45包年；职业暴露：苯/芳香胺相关化工暴露；结石史：否；感染史：否；外伤/操作：否；家族史：无；泌尿外科、影像科、病理科、肿瘤内科",
       "diagnosticReasoning": "1、高危无症状镜下血尿需肿瘤筛查；2、血尿查因；3、需结合入院检查确认合并症和风险因素。",
       "mustDifferentials": "问诊重点：血尿可见性、时相、颜色、血块、疼痛关系、尿路刺激症状、发热腰痛、泡沫尿/水肿、诱因、既往史、药物史、吸烟/职业暴露、女性污染或全身出血倾向；禁止提交前泄露这些得分点。",
@@ -52322,8 +52743,8 @@
       },
       "familyHistory": {
         "status": "absent",
-        "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-        "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+        "patientAnswerZh": "家族中没有膀胱或上尿路尿路上皮癌、Lynch综合征、反复血尿或遗传性肾病。",
+        "patientAnswerEn": "There is no family history of bladder or upper-tract urothelial cancer, Lynch syndrome, recurrent hematuria, or hereditary kidney disease.",
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
@@ -52359,7 +52780,7 @@
     "languages": [
       "zh-CN"
     ],
-    "diseaseSubcategory": "高危无症状镜下血尿",
+    "diseaseSubcategory": "高危无症状镜下血尿待查（肿瘤筛查路径）",
     "standardChiefComplaint": "体检发现镜下血尿1个月",
     "patientRole": {
       "identity": "62岁男性教学模拟患者",
@@ -52468,6 +52889,15 @@
         "未取得病理和分期即实施确定性肿瘤治疗",
         "血块尿潴留或严重出血未处理"
       ]
+    },
+    "medicalReviewImport": {
+      "version": "medical-review-candidate-2026-07-12",
+      "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+      "sourceSha256": "ca5a8ae1deebc2c3d2801814256dcb96e3cadc30dd2d77b1c7529bb7433bd3d6",
+      "importedOn": "2026-07-12",
+      "userAcceptedForPractice": true,
+      "licensedExpertSignoffPending": true,
+      "formalUseAllowed": false
     }
   }
 ]

@@ -91,4 +91,16 @@ assert.match(runtime("P005")?.surgeryHistory.patientAnswerEn || "", /coronary st
 assert.equal(runtime("P005")?.coronaryDisease.status, "present");
 assert.match(runtime("HX-ADD-018")?.familyHistory.patientAnswerEn || "", /brother.*prostate cancer/i);
 
+const importedCases = JSON.parse(fs.readFileSync("data/cases.json", "utf8")) as Array<{ id: string; displayCaseId?: string; title: string; diagnosis: string; structuredHistory?: { smokingHistory: { cigarettesPerDay: number; years: number; quitYears: number; packYears: number }; medicationList: Array<{ name: string }> } }>;
+const imported = (displayId: string) => importedCases.find((item) => (item.displayCaseId || item.id) === displayId);
+assert.equal(imported("P005")?.title, "前列腺增生，前列腺癌待排/鉴别");
+assert.equal(imported("P005")?.diagnosis, "前列腺增生");
+const importedSmoking = imported("P013")?.structuredHistory?.smokingHistory;
+assert.deepEqual(importedSmoking && { cigarettesPerDay: importedSmoking.cigarettesPerDay, years: importedSmoking.years, quitYears: importedSmoking.quitYears, packYears: importedSmoking.packYears }, { cigarettesPerDay: 20, years: 40, quitYears: 5, packYears: 40 });
+assert.deepEqual(imported("P013")?.structuredHistory?.medicationList.map((item) => item.name), ["氨氯地平"]);
+assert.equal(imported("P030")?.diagnosis, "前列腺癌待排/鉴别");
+assert.match(imported("P033")?.diagnosis || "", /COL4/);
+assert.match(imported("P034")?.diagnosis || "", /疑似Alport/);
+assert.match(imported("P042")?.diagnosis || "", /待查/);
+
 console.log("Reviewed v1.4 import checks passed: 42 cases, 572 facts, case-specific templates, 360-point rubrics.");

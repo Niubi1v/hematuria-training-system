@@ -441,6 +441,15 @@ export type CaseData = {
     }>;
     lastReviewedDate: string;
   };
+  medicalReviewImport?: {
+    version: string;
+    sourceWorkbook: string;
+    sourceSha256: string;
+    importedOn: string;
+    userAcceptedForPractice: boolean;
+    licensedExpertSignoffPending: boolean;
+    formalUseAllowed: false;
+  };
   structuredHistory?: StructuredHistory;
   standardManagement?: {
     immediate: string;

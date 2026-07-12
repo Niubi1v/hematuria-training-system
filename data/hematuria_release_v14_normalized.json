@@ -2700,7 +2700,7 @@
       "personalHistory": "未诉/需主动询问；未诉/需主动询问；长期服用阿司匹林、氯吡格雷、达格列净、二甲双胍",
       "familyHistory": "原始资料未记录明确家族性血尿、遗传性肾病或泌尿系肿瘤史，需主动询问。",
       "menstrualHistory": "不适用。",
-      "diagnosis": "前列腺增生",
+      "diagnosis": "前列腺增生，前列腺癌待排/鉴别",
       "diseaseCategory": "前列腺疾病/前列腺增生",
       "reviewStatus": "needs_revision",
       "orders": [
@@ -18764,7 +18764,7 @@
       "personalHistory": "吸烟约30包年，不饮酒，无明确职业性化学暴露。",
       "familyHistory": "一名兄弟患前列腺癌；否认已知家族性肾病或类似血尿。",
       "menstrualHistory": "不适用。",
-      "diagnosis": "前列腺癌合并血尿/需鉴别",
+      "diagnosis": "前列腺癌待排/鉴别",
       "diseaseCategory": "前列腺疾病/前列腺癌相关血尿",
       "reviewStatus": "needs_revision",
       "orders": [
@@ -20583,7 +20583,7 @@
       "personalHistory": "不吸烟、不饮酒，无职业性化学暴露。",
       "familyHistory": "原始资料否认明确家族性血尿或遗传性肾病，但薄基底膜相关疾病仍需再次追问一级亲属尿检、听力及肾功能情况。",
       "menstrualHistory": "月经规律，采尿时避开月经期；目前无妊娠。",
-      "diagnosis": "薄基底膜肾病/家族性良性血尿",
+      "diagnosis": "COL4相关薄基底膜病待确认",
       "diseaseCategory": "肾小球疾病/薄基底膜肾病",
       "reviewStatus": "needs_revision",
       "orders": [
@@ -21184,7 +21184,7 @@
       "personalHistory": "不吸烟、不饮酒，无职业性噪声及化学物暴露史；详细噪声暴露需核实。",
       "familyHistory": "原始资料未记录类似家族史；需重点追问母系/父系亲属中是否有血尿、听力下降、眼部异常或早发肾衰竭。",
       "menstrualHistory": "不适用。",
-      "diagnosis": "Alport综合征",
+      "diagnosis": "疑似Alport综合征（待遗传学/病理证实）",
       "diseaseCategory": "肾小球疾病/Alport综合征",
       "reviewStatus": "needs_revision",
       "orders": [
@@ -25808,7 +25808,7 @@
       "personalHistory": "吸烟约45包年；长期从事苯/芳香胺相关化工工作，职业暴露明确。平时不饮酒。",
       "familyHistory": "否认泌尿系统肿瘤、家族性血尿或遗传性肾病。",
       "menstrualHistory": "不适用。",
-      "diagnosis": "高危无症状镜下血尿需肿瘤筛查",
+      "diagnosis": "高危无症状镜下血尿待查（肿瘤筛查路径）",
       "diseaseCategory": "泌尿系肿瘤/高危无症状镜下血尿",
       "reviewStatus": "needs_revision",
       "orders": [
@@ -29058,13 +29058,13 @@
       "caseId": "P003",
       "originalCaseId": "P003",
       "原字段": "transfusionHistory",
-      "当前内容": "{\"status\":\"absent\",\"patientAnswerZh\":\"我以前没有输过血。\",\"patientAnswerEn\":\"I have never had a blood transfusion.\",\"provenance\":\"author_added_for_simulation\",\"teacherReviewRequired\":true}",
-      "来源": "author_added_for_simulation",
-      "是否程序或AI补充": "是",
+      "当前内容": "{\"status\":\"present\",\"patientAnswerZh\":\"5年前做胆囊切除时输过血。\",\"patientAnswerEn\":\"I received a blood transfusion during gallbladder surgery five years ago.\",\"provenance\":\"source\",\"teacherReviewRequired\":false}",
+      "来源": "source",
+      "是否程序或AI补充": "否",
       "是否与其他字段矛盾": "原表存在，已在修订字段中更正",
       "是否影响诊断": "待确认",
       "是否影响评分": "待确认",
-      "保留/修改/删除/待确认": "待确认",
+      "保留/修改/删除/待确认": "来源纠正，待持证专家核对",
       "建议修改": "",
       "专家意见": "",
       "文献依据": "https://www.auanet.org/guidelines-and-quality/guidelines/microhematuria\nhttps://uroweb.org/guidelines/urological-infections\nhttps://uroweb.org/guidelines/urolithiasis\nhttps://uroweb.org/guidelines/non-muscle-invasive-bladder-cancer\nhttps://kdigo.org/guidelines/iga-nephropathy/"
@@ -29343,13 +29343,13 @@
       "caseId": "P005",
       "originalCaseId": "P005",
       "原字段": "coronaryDisease",
-      "当前内容": "{\"status\":\"absent\",\"patientAnswerZh\":\"没有冠心病。\",\"patientAnswerEn\":\"I do not have coronary heart disease.\",\"provenance\":\"author_added_for_simulation\",\"teacherReviewRequired\":true}",
-      "来源": "author_added_for_simulation",
-      "是否程序或AI补充": "是",
+      "当前内容": "{\"status\":\"present\",\"patientAnswerZh\":\"6年前因冠脉狭窄做过冠脉支架植入。\",\"patientAnswerEn\":\"I had a coronary stent placed for coronary artery stenosis six years ago.\",\"provenance\":\"source\",\"teacherReviewRequired\":false}",
+      "来源": "source",
+      "是否程序或AI补充": "否",
       "是否与其他字段矛盾": "程序未检出确定性冲突；仍待语义复核",
       "是否影响诊断": "待确认",
       "是否影响评分": "待确认",
-      "保留/修改/删除/待确认": "待确认",
+      "保留/修改/删除/待确认": "来源纠正，待持证专家核对",
       "建议修改": "",
       "专家意见": "",
       "文献依据": "https://www.auanet.org/guidelines-and-quality/guidelines/microhematuria\nhttps://uroweb.org/guidelines/urological-infections\nhttps://uroweb.org/guidelines/urolithiasis\nhttps://uroweb.org/guidelines/non-muscle-invasive-bladder-cancer\nhttps://kdigo.org/guidelines/iga-nephropathy/"
@@ -37462,5 +37462,13 @@
       "专家意见": "",
       "修改状态": "待确认"
     }
-  ]
+  ],
+  "medicalReviewImport": {
+    "version": "medical-review-candidate-2026-07-12",
+    "sourceWorkbook": "血尿病例_42例医学内容审校修订候选版_待人工终签.xlsx",
+    "importedOn": "2026-07-12",
+    "userAcceptedForPractice": true,
+    "licensedExpertSignoffPending": true,
+    "formalUseAllowed": false
+  }
 }

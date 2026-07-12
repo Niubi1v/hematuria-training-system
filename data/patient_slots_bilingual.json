@@ -115,14 +115,14 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "未诉/否认外伤",
+      "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
       "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "stone_history": {
-      "patientAnswerZh": "以前没有得过泌尿系结石。",
-      "patientAnswerEn": "I have never had urinary stones.",
+      "patientAnswerZh": "以前有没有得过泌尿系结石，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had urinary stones.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -133,14 +133,14 @@
       "teacherReviewRequired": true
     },
     "tumor_history": {
-      "patientAnswerZh": "以前没有得过肿瘤。",
-      "patientAnswerEn": "I have no previous history of cancer.",
+      "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "urinary_procedure_history": {
-      "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-      "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+      "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -151,8 +151,8 @@
       "teacherReviewRequired": true
     },
     "anticoagulant": {
-      "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-      "patientAnswerEn": "I do not take anticoagulants.",
+      "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+      "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -169,20 +169,20 @@
       "teacherReviewRequired": true
     },
     "smoking": {
-      "patientAnswerZh": "我不吸烟。",
-      "patientAnswerEn": "I do not smoke.",
+      "patientAnswerZh": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+      "patientAnswerEn": "I cannot reliably recall whether or how long I smoked.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "alcohol": {
-      "patientAnswerZh": "我平时不喝酒。",
-      "patientAnswerEn": "I do not drink alcohol.",
+      "patientAnswerZh": "平时喝酒的种类和量，我现在记不太清。",
+      "patientAnswerEn": "I cannot clearly recall the type or amount of alcohol I usually drank.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "occupation_exposure": {
-      "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-      "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+      "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -339,14 +339,14 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "未诉/否认外伤",
+      "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
       "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "stone_history": {
-      "patientAnswerZh": "以前没有得过泌尿系结石。",
-      "patientAnswerEn": "I have never had urinary stones.",
+      "patientAnswerZh": "以前有没有得过泌尿系结石，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had urinary stones.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -357,14 +357,14 @@
       "teacherReviewRequired": true
     },
     "tumor_history": {
-      "patientAnswerZh": "以前没有得过肿瘤。",
-      "patientAnswerEn": "I have no previous history of cancer.",
+      "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "urinary_procedure_history": {
-      "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-      "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+      "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -381,8 +381,8 @@
       "teacherReviewRequired": true
     },
     "antiplatelet": {
-      "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-      "patientAnswerEn": "I do not take antiplatelet medication.",
+      "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+      "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -405,14 +405,14 @@
       "teacherReviewRequired": true
     },
     "occupation_exposure": {
-      "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-      "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+      "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "gynecologic_contamination": {
-      "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-      "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+      "patientAnswerZh": "我已经绝经多年，本次尿色异常不是阴道出血。",
+      "patientAnswerEn": "I have been postmenopausal for years, and this episode was not vaginal bleeding.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -563,14 +563,14 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "未诉/否认外伤",
+      "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
       "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "stone_history": {
-      "patientAnswerZh": "以前没有得过泌尿系结石。",
-      "patientAnswerEn": "I have never had urinary stones.",
+      "patientAnswerZh": "以前有没有得过泌尿系结石，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had urinary stones.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -581,14 +581,14 @@
       "teacherReviewRequired": true
     },
     "tumor_history": {
-      "patientAnswerZh": "以前没有得过肿瘤。",
-      "patientAnswerEn": "I have no previous history of cancer.",
+      "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "urinary_procedure_history": {
-      "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-      "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+      "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -599,8 +599,8 @@
       "teacherReviewRequired": true
     },
     "anticoagulant": {
-      "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-      "patientAnswerEn": "I do not take anticoagulants.",
+      "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+      "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -629,8 +629,8 @@
       "teacherReviewRequired": true
     },
     "occupation_exposure": {
-      "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-      "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+      "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -787,14 +787,14 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "未诉/否认外伤",
+      "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
       "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "stone_history": {
-      "patientAnswerZh": "以前没有得过泌尿系结石。",
-      "patientAnswerEn": "I have never had urinary stones.",
+      "patientAnswerZh": "以前有没有得过泌尿系结石，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had urinary stones.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -805,14 +805,14 @@
       "teacherReviewRequired": true
     },
     "tumor_history": {
-      "patientAnswerZh": "以前没有得过肿瘤。",
-      "patientAnswerEn": "I have no previous history of cancer.",
+      "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "urinary_procedure_history": {
-      "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-      "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+      "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -823,14 +823,14 @@
       "teacherReviewRequired": true
     },
     "anticoagulant": {
-      "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-      "patientAnswerEn": "I do not take anticoagulants.",
+      "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+      "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "antiplatelet": {
-      "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-      "patientAnswerEn": "I do not take antiplatelet medication.",
+      "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+      "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -841,20 +841,20 @@
       "teacherReviewRequired": true
     },
     "smoking": {
-      "patientAnswerZh": "我不吸烟。",
-      "patientAnswerEn": "I do not smoke.",
+      "patientAnswerZh": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+      "patientAnswerEn": "I cannot reliably recall whether or how long I smoked.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "alcohol": {
-      "patientAnswerZh": "我平时不喝酒。",
-      "patientAnswerEn": "I do not drink alcohol.",
+      "patientAnswerZh": "平时喝酒的种类和量，我现在记不太清。",
+      "patientAnswerEn": "I cannot clearly recall the type or amount of alcohol I usually drank.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "occupation_exposure": {
-      "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-      "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+      "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -1011,14 +1011,14 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "未诉/否认外伤",
+      "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
       "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "stone_history": {
-      "patientAnswerZh": "以前没有得过泌尿系结石。",
-      "patientAnswerEn": "I have never had urinary stones.",
+      "patientAnswerZh": "以前有没有得过泌尿系结石，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had urinary stones.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1029,14 +1029,14 @@
       "teacherReviewRequired": true
     },
     "tumor_history": {
-      "patientAnswerZh": "以前没有得过肿瘤。",
-      "patientAnswerEn": "I have no previous history of cancer.",
+      "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "urinary_procedure_history": {
-      "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-      "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+      "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -1047,8 +1047,8 @@
       "teacherReviewRequired": true
     },
     "anticoagulant": {
-      "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-      "patientAnswerEn": "I do not take anticoagulants.",
+      "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+      "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1065,20 +1065,20 @@
       "teacherReviewRequired": true
     },
     "smoking": {
-      "patientAnswerZh": "我不吸烟。",
-      "patientAnswerEn": "I do not smoke.",
+      "patientAnswerZh": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+      "patientAnswerEn": "I cannot reliably recall whether or how long I smoked.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "alcohol": {
-      "patientAnswerZh": "我平时不喝酒。",
-      "patientAnswerEn": "I do not drink alcohol.",
+      "patientAnswerZh": "平时喝酒的种类和量，我现在记不太清。",
+      "patientAnswerEn": "I cannot clearly recall the type or amount of alcohol I usually drank.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "occupation_exposure": {
-      "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-      "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+      "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -1101,8 +1101,8 @@
       "teacherReviewRequired": true
     },
     "past_history": {
-      "patientAnswerZh": "有糖尿病。；有冠心病。",
-      "patientAnswerEn": "I have diabetes. I have coronary heart disease.",
+      "patientAnswerZh": "有糖尿病。；6年前因冠脉狭窄做过冠脉支架植入。",
+      "patientAnswerEn": "I have diabetes. I had a coronary stent placed for coronary artery stenosis six years ago.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -1235,14 +1235,14 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "否认高血压、糖尿病、心脏病、肝炎、结核病史。否认药物过敏、外伤、手术病史。未婚未孕，初潮14岁，末次月经上月15日，经期28-30天",
+      "patientAnswerZh": "近期没有相关外伤。",
       "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "stone_history": {
-      "patientAnswerZh": "以前没有得过泌尿系结石。",
-      "patientAnswerEn": "I have never had urinary stones.",
+      "patientAnswerZh": "以前有没有得过泌尿系结石，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had urinary stones.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1253,8 +1253,8 @@
       "teacherReviewRequired": true
     },
     "tumor_history": {
-      "patientAnswerZh": "以前没有得过肿瘤。",
-      "patientAnswerEn": "I have no previous history of cancer.",
+      "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -1265,20 +1265,20 @@
       "teacherReviewRequired": true
     },
     "surgery_history": {
-      "patientAnswerZh": "我以前没有做过手术。",
-      "patientAnswerEn": "I have never had surgery.",
+      "patientAnswerZh": "以前做过哪些手术，我一时记不全。",
+      "patientAnswerEn": "I cannot recall all the operations I may have had.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "anticoagulant": {
-      "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-      "patientAnswerEn": "I do not take anticoagulants.",
+      "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+      "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "antiplatelet": {
-      "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-      "patientAnswerEn": "I do not take antiplatelet medication.",
+      "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+      "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -1289,26 +1289,26 @@
       "teacherReviewRequired": true
     },
     "smoking": {
-      "patientAnswerZh": "我不吸烟。",
-      "patientAnswerEn": "I do not smoke.",
+      "patientAnswerZh": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+      "patientAnswerEn": "I cannot reliably recall whether or how long I smoked.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "alcohol": {
-      "patientAnswerZh": "我平时不喝酒。",
-      "patientAnswerEn": "I do not drink alcohol.",
+      "patientAnswerZh": "平时喝酒的种类和量，我现在记不太清。",
+      "patientAnswerEn": "I cannot clearly recall the type or amount of alcohol I usually drank.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "occupation_exposure": {
-      "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-      "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+      "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "gynecologic_contamination": {
-      "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-      "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+      "patientAnswerZh": "月经的具体情况我记不太清。",
+      "patientAnswerEn": "I cannot clearly recall the details of my menstrual history.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1459,14 +1459,14 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "未诉/否认外伤",
+      "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
       "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "stone_history": {
-      "patientAnswerZh": "以前没有得过泌尿系结石。",
-      "patientAnswerEn": "I have never had urinary stones.",
+      "patientAnswerZh": "以前有没有得过泌尿系结石，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had urinary stones.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1477,32 +1477,32 @@
       "teacherReviewRequired": true
     },
     "tumor_history": {
-      "patientAnswerZh": "以前没有得过肿瘤。",
-      "patientAnswerEn": "I have no previous history of cancer.",
+      "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "urinary_procedure_history": {
-      "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-      "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+      "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "surgery_history": {
-      "patientAnswerZh": "我以前没有做过手术。",
-      "patientAnswerEn": "I have never had surgery.",
+      "patientAnswerZh": "以前做过哪些手术，我一时记不全。",
+      "patientAnswerEn": "I cannot recall all the operations I may have had.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "anticoagulant": {
-      "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-      "patientAnswerEn": "I do not take anticoagulants.",
+      "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+      "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "antiplatelet": {
-      "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-      "patientAnswerEn": "I do not take antiplatelet medication.",
+      "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+      "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -1525,8 +1525,8 @@
       "teacherReviewRequired": true
     },
     "occupation_exposure": {
-      "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-      "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+      "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -1683,14 +1683,14 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "未诉/否认外伤",
+      "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
       "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "stone_history": {
-      "patientAnswerZh": "以前没有得过泌尿系结石。",
-      "patientAnswerEn": "I have never had urinary stones.",
+      "patientAnswerZh": "以前有没有得过泌尿系结石，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had urinary stones.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1701,26 +1701,26 @@
       "teacherReviewRequired": true
     },
     "tumor_history": {
-      "patientAnswerZh": "以前没有得过肿瘤。",
-      "patientAnswerEn": "I have no previous history of cancer.",
+      "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "urinary_procedure_history": {
-      "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-      "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+      "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "surgery_history": {
-      "patientAnswerZh": "我以前没有做过手术。",
-      "patientAnswerEn": "I have never had surgery.",
+      "patientAnswerZh": "以前做过哪些手术，我一时记不全。",
+      "patientAnswerEn": "I cannot recall all the operations I may have had.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "anticoagulant": {
-      "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-      "patientAnswerEn": "I do not take anticoagulants.",
+      "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+      "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1749,8 +1749,8 @@
       "teacherReviewRequired": true
     },
     "occupation_exposure": {
-      "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-      "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+      "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -1907,7 +1907,7 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "未诉/否认外伤",
+      "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
       "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -1925,32 +1925,32 @@
       "teacherReviewRequired": true
     },
     "tumor_history": {
-      "patientAnswerZh": "以前没有得过肿瘤。",
-      "patientAnswerEn": "I have no previous history of cancer.",
+      "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "urinary_procedure_history": {
-      "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-      "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+      "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "surgery_history": {
-      "patientAnswerZh": "我以前没有做过手术。",
-      "patientAnswerEn": "I have never had surgery.",
+      "patientAnswerZh": "以前做过哪些手术，我一时记不全。",
+      "patientAnswerEn": "I cannot recall all the operations I may have had.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "anticoagulant": {
-      "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-      "patientAnswerEn": "I do not take anticoagulants.",
+      "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+      "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "antiplatelet": {
-      "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-      "patientAnswerEn": "I do not take antiplatelet medication.",
+      "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+      "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -1973,14 +1973,14 @@
       "teacherReviewRequired": true
     },
     "occupation_exposure": {
-      "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-      "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+      "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "gynecologic_contamination": {
-      "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-      "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+      "patientAnswerZh": "月经的具体情况我记不太清。",
+      "patientAnswerEn": "I cannot clearly recall the details of my menstrual history.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2131,7 +2131,7 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "未诉/否认外伤",
+      "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
       "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -2149,32 +2149,32 @@
       "teacherReviewRequired": true
     },
     "tumor_history": {
-      "patientAnswerZh": "以前没有得过肿瘤。",
-      "patientAnswerEn": "I have no previous history of cancer.",
+      "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "urinary_procedure_history": {
-      "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-      "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+      "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "surgery_history": {
-      "patientAnswerZh": "我以前没有做过手术。",
-      "patientAnswerEn": "I have never had surgery.",
+      "patientAnswerZh": "以前做过哪些手术，我一时记不全。",
+      "patientAnswerEn": "I cannot recall all the operations I may have had.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "anticoagulant": {
-      "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-      "patientAnswerEn": "I do not take anticoagulants.",
+      "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+      "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "antiplatelet": {
-      "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-      "patientAnswerEn": "I do not take antiplatelet medication.",
+      "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+      "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -2197,8 +2197,8 @@
       "teacherReviewRequired": true
     },
     "occupation_exposure": {
-      "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-      "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+      "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -2355,50 +2355,50 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "未诉/否认外伤",
+      "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
       "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "stone_history": {
-      "patientAnswerZh": "以前没有得过泌尿系结石。",
-      "patientAnswerEn": "I have never had urinary stones.",
+      "patientAnswerZh": "以前有没有得过泌尿系结石，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had urinary stones.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "uti_history": {
-      "patientAnswerZh": "以前没有反复尿路感染。",
-      "patientAnswerEn": "I have no history of recurrent urinary tract infection.",
+      "patientAnswerZh": "以前有没有反复尿路感染，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I had recurrent urinary infections.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "tumor_history": {
-      "patientAnswerZh": "以前没有得过肿瘤。",
-      "patientAnswerEn": "I have no previous history of cancer.",
+      "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "urinary_procedure_history": {
-      "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-      "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+      "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "surgery_history": {
-      "patientAnswerZh": "我以前没有做过手术。",
-      "patientAnswerEn": "I have never had surgery.",
+      "patientAnswerZh": "以前做过哪些手术，我一时记不全。",
+      "patientAnswerEn": "I cannot recall all the operations I may have had.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "anticoagulant": {
-      "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-      "patientAnswerEn": "I do not take anticoagulants.",
+      "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+      "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "antiplatelet": {
-      "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-      "patientAnswerEn": "I do not take antiplatelet medication.",
+      "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+      "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -2409,26 +2409,26 @@
       "teacherReviewRequired": true
     },
     "smoking": {
-      "patientAnswerZh": "我不吸烟。",
-      "patientAnswerEn": "I do not smoke.",
+      "patientAnswerZh": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+      "patientAnswerEn": "I cannot reliably recall whether or how long I smoked.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "alcohol": {
-      "patientAnswerZh": "我平时不喝酒。",
-      "patientAnswerEn": "I do not drink alcohol.",
+      "patientAnswerZh": "平时喝酒的种类和量，我现在记不太清。",
+      "patientAnswerEn": "I cannot clearly recall the type or amount of alcohol I usually drank.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "occupation_exposure": {
-      "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-      "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+      "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "gynecologic_contamination": {
-      "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-      "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+      "patientAnswerZh": "月经的具体情况我记不太清。",
+      "patientAnswerEn": "I cannot clearly recall the details of my menstrual history.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2579,14 +2579,14 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "未诉/否认外伤",
+      "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
       "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "stone_history": {
-      "patientAnswerZh": "以前没有得过泌尿系结石。",
-      "patientAnswerEn": "I have never had urinary stones.",
+      "patientAnswerZh": "以前有没有得过泌尿系结石，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had urinary stones.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2597,32 +2597,32 @@
       "teacherReviewRequired": true
     },
     "tumor_history": {
-      "patientAnswerZh": "以前没有得过肿瘤。",
-      "patientAnswerEn": "I have no previous history of cancer.",
+      "patientAnswerZh": "以前有没有得过肿瘤或做过放化疗，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I previously had cancer or received radiotherapy or chemotherapy.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "urinary_procedure_history": {
-      "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-      "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+      "patientAnswerZh": "以前有没有插过尿管或做过膀胱镜，我记不太清。",
+      "patientAnswerEn": "I do not clearly remember whether I had a catheter, cystoscopy, or another urinary procedure.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "surgery_history": {
-      "patientAnswerZh": "我以前没有做过手术。",
-      "patientAnswerEn": "I have never had surgery.",
+      "patientAnswerZh": "以前做过哪些手术，我一时记不全。",
+      "patientAnswerEn": "I cannot recall all the operations I may have had.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "anticoagulant": {
-      "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
-      "patientAnswerEn": "I do not take anticoagulants.",
+      "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+      "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "antiplatelet": {
-      "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-      "patientAnswerEn": "I do not take antiplatelet medication.",
+      "patientAnswerZh": "平时吃的药名我记不全，需要看看药盒。",
+      "patientAnswerEn": "I cannot recall all my regular medicines and would need to check the packages.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -2633,20 +2633,20 @@
       "teacherReviewRequired": true
     },
     "smoking": {
-      "patientAnswerZh": "我不吸烟。",
-      "patientAnswerEn": "I do not smoke.",
+      "patientAnswerZh": "具体抽没抽烟、抽了多少年，我现在记不准确。",
+      "patientAnswerEn": "I cannot reliably recall whether or how long I smoked.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "alcohol": {
-      "patientAnswerZh": "我平时不喝酒。",
-      "patientAnswerEn": "I do not drink alcohol.",
+      "patientAnswerZh": "平时喝酒的种类和量，我现在记不太清。",
+      "patientAnswerEn": "I cannot clearly recall the type or amount of alcohol I usually drank.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "occupation_exposure": {
-      "patientAnswerZh": "工作中没有接触染料、橡胶、皮革、化工或重金属。",
-      "patientAnswerEn": "I have not worked with dyes, rubber, leather, industrial chemicals, or heavy metals.",
+      "patientAnswerZh": "工作中有没有接触过染料、橡胶、皮革或化工原料，我记不清了。",
+      "patientAnswerEn": "I do not clearly remember whether I was exposed to dyes, rubber, leather, or industrial chemicals at work.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -2803,8 +2803,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2839,26 +2839,26 @@
       "teacherReviewRequired": true
     },
     "anticoagulant": {
-      "patientAnswerZh": "我在服用华法林、利伐沙班。",
-      "patientAnswerEn": "I take an anticoagulant.",
+      "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
+      "patientAnswerEn": "I do not take warfarin, rivaroxaban, or another anticoagulant.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "antiplatelet": {
-      "patientAnswerZh": "我在服用阿司匹林、氯吡格雷。",
-      "patientAnswerEn": "I take antiplatelet medication.",
+      "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
+      "patientAnswerEn": "I do not take aspirin or clopidogrel.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "medications": {
-      "patientAnswerZh": "我长期服用阿司匹林、氯吡格雷、华法林、利伐沙班、氨氯地平。",
-      "patientAnswerEn": "I regularly take aspirin and clopidogrel and warfarin and rivaroxaban.",
+      "patientAnswerZh": "我长期服用氨氯地平。",
+      "patientAnswerEn": "I am not taking any regular medication that I know of.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "smoking": {
-      "patientAnswerZh": "以前吸烟，具体每天多少支记不准，吸了5年，累计约40包年，现在已经戒了。",
-      "patientAnswerEn": "I used to smoke but have quit.",
+      "patientAnswerZh": "以前每天吸烟约20支，吸了40年，5年前戒烟，累计约40包年。",
+      "patientAnswerEn": "I used to smoke 20 cigarettes a day for 40 years and quit five years ago, totaling about 40 pack-years.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2881,8 +2881,8 @@
       "teacherReviewRequired": true
     },
     "family_history": {
-      "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-      "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+      "patientAnswerZh": "据我所知，家族中没有膀胱或上尿路肿瘤，也没有反复血尿或遗传性肾病。",
+      "patientAnswerEn": "To my knowledge, there is no family history of bladder or upper-tract urothelial cancer, recurrent hematuria, or hereditary kidney disease.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -3027,8 +3027,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -3099,8 +3099,8 @@
       "teacherReviewRequired": true
     },
     "gynecologic_contamination": {
-      "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-      "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+      "patientAnswerZh": "我已绝经20多年，近期没有阴道流血；这次红尿与月经无关。",
+      "patientAnswerEn": "I have been postmenopausal for more than 20 years and have had no recent vaginal bleeding; the red urine was not menstrual.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -3251,8 +3251,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -3329,8 +3329,8 @@
       "teacherReviewRequired": true
     },
     "family_history": {
-      "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-      "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+      "patientAnswerZh": "家族中没有肾盂、输尿管或膀胱肿瘤，也没有已知Lynch综合征、反复血尿或遗传性肾病。",
+      "patientAnswerEn": "There is no family history of renal-pelvic, ureteral, or bladder cancer, known Lynch syndrome, recurrent hematuria, or hereditary kidney disease.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -3475,8 +3475,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -3553,8 +3553,8 @@
       "teacherReviewRequired": true
     },
     "family_history": {
-      "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-      "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+      "patientAnswerZh": "家族中没有肾癌、双侧或多发肾肿瘤，也没有已知VHL相关肿瘤或遗传性肾病。",
+      "patientAnswerEn": "There is no family history of renal cancer, bilateral or multifocal renal tumors, known VHL-related tumors, or hereditary kidney disease.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -3699,8 +3699,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -3777,8 +3777,8 @@
       "teacherReviewRequired": true
     },
     "family_history": {
-      "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-      "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+      "patientAnswerZh": "家族中没有遗传性出血病、反复不明原因血尿或泌尿系肿瘤。",
+      "patientAnswerEn": "There is no family history of inherited bleeding disorders, recurrent unexplained hematuria, or urinary tract cancer.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -3923,8 +3923,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -3995,8 +3995,8 @@
       "teacherReviewRequired": true
     },
     "gynecologic_contamination": {
-      "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-      "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+      "patientAnswerZh": "月经规律，本次尿频尿痛和血尿发生在非经期，留取中段尿时没有阴道流血。",
+      "patientAnswerEn": "My periods are regular; the dysuria and hematuria occurred between periods, and there was no vaginal bleeding when the midstream urine was collected.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -4147,8 +4147,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -4371,8 +4371,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -4395,8 +4395,8 @@
       "teacherReviewRequired": true
     },
     "urinary_procedure_history": {
-      "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-      "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+      "patientAnswerZh": "发病前没有导尿、膀胱镜、前列腺穿刺或其他泌尿操作。",
+      "patientAnswerEn": "Before this illness I had no catheterization, cystoscopy, prostate biopsy, or other urinary instrumentation.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -4595,8 +4595,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -4667,8 +4667,8 @@
       "teacherReviewRequired": true
     },
     "gynecologic_contamination": {
-      "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-      "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+      "patientAnswerZh": "我已经绝经，近期没有阴道流血，本次血尿不是经血污染。",
+      "patientAnswerEn": "I am postmenopausal, have had no recent vaginal bleeding, and the hematuria was not menstrual contamination.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -4819,8 +4819,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -4843,8 +4843,8 @@
       "teacherReviewRequired": true
     },
     "urinary_procedure_history": {
-      "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-      "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+      "patientAnswerZh": "以前没有做过膀胱镜，也没有完成过系统的上尿路影像评估；没有长期导尿史。",
+      "patientAnswerEn": "I have never undergone cystoscopy or a complete upper-tract imaging evaluation, and I have no history of long-term catheterization.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -5043,8 +5043,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -5073,8 +5073,8 @@
       "teacherReviewRequired": true
     },
     "surgery_history": {
-      "patientAnswerZh": "我以前没有做过手术。",
-      "patientAnswerEn": "I have never had surgery.",
+      "patientAnswerZh": "几年前的小结石是自行排出的，未做过体外碎石、输尿管镜或经皮肾镜手术。",
+      "patientAnswerEn": "A small stone passed spontaneously several years ago; I have never had shock-wave lithotripsy, ureteroscopy, or percutaneous stone surgery.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -5267,8 +5267,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -5297,8 +5297,8 @@
       "teacherReviewRequired": true
     },
     "surgery_history": {
-      "patientAnswerZh": "我以前没有做过手术。",
-      "patientAnswerEn": "I have never had surgery.",
+      "patientAnswerZh": "既往肾结石采用保守治疗，从未接受体外碎石、输尿管镜或经皮肾镜。",
+      "patientAnswerEn": "My previous renal stone was managed conservatively; I have never had shock-wave lithotripsy, ureteroscopy, or percutaneous nephrolithotomy.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -5491,8 +5491,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -5515,8 +5515,8 @@
       "teacherReviewRequired": true
     },
     "urinary_procedure_history": {
-      "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-      "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+      "patientAnswerZh": "此前没有长期导尿，也未做过膀胱镜或膀胱碎石术。",
+      "patientAnswerEn": "I have no history of long-term catheterization and have never undergone cystoscopy or bladder-stone surgery.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -5715,8 +5715,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -5787,8 +5787,8 @@
       "teacherReviewRequired": true
     },
     "gynecologic_contamination": {
-      "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-      "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+      "patientAnswerZh": "我已绝经多年，近期没有阴道流血，本次血尿不是月经污染。",
+      "patientAnswerEn": "I have been postmenopausal for years, with no recent vaginal bleeding; the hematuria was not menstrual contamination.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -5939,8 +5939,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -5969,8 +5969,8 @@
       "teacherReviewRequired": true
     },
     "surgery_history": {
-      "patientAnswerZh": "我以前没有做过手术。",
-      "patientAnswerEn": "I have never had surgery.",
+      "patientAnswerZh": "以前的小结石自行排出，未做过碎石或内镜手术；也未做结石成分分析。",
+      "patientAnswerEn": "A previous small stone passed spontaneously; I have never had lithotripsy or endoscopic stone surgery, and the stone was not analyzed.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -6017,8 +6017,8 @@
       "teacherReviewRequired": true
     },
     "family_history": {
-      "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-      "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+      "patientAnswerZh": "家族中没有明确的痛风性结石、早发反复结石或遗传性肾病。",
+      "patientAnswerEn": "There is no known family history of gout-related stones, early recurrent stone disease, or hereditary kidney disease.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -6163,8 +6163,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -6387,7 +6387,7 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：导尿操作",
+      "patientAnswerZh": "以前有过相关外伤。",
       "patientAnswerEn": "There was a possible trigger before this started.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -6417,8 +6417,8 @@
       "teacherReviewRequired": true
     },
     "surgery_history": {
-      "patientAnswerZh": "我以前没有做过手术。",
-      "patientAnswerEn": "I have never had surgery.",
+      "patientAnswerZh": "我以前没有做过泌尿手术；这次急性尿潴留后急诊导尿是第一次泌尿操作。",
+      "patientAnswerEn": "I have never had urologic surgery; the emergency catheterization for this episode of acute urinary retention was my first urinary procedure.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -6611,8 +6611,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -6635,8 +6635,8 @@
       "teacherReviewRequired": true
     },
     "urinary_procedure_history": {
-      "patientAnswerZh": "以前没有做过导尿、膀胱镜等泌尿操作。",
-      "patientAnswerEn": "I have not had catheterization, cystoscopy, or other urinary procedures.",
+      "patientAnswerZh": "此前没有导尿、膀胱镜或前列腺穿刺；这次镜下血尿出现前也没有泌尿操作。",
+      "patientAnswerEn": "I had no catheterization, cystoscopy, or prostate biopsy before the microscopic hematuria appeared.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -6835,8 +6835,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -6913,8 +6913,8 @@
       "teacherReviewRequired": true
     },
     "family_history": {
-      "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-      "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+      "patientAnswerZh": "家族中没有反复血尿、早发肾衰竭，也没有血尿合并听力下降的亲属。",
+      "patientAnswerEn": "There is no family history of recurrent hematuria, early kidney failure, or hematuria accompanied by hearing loss.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -7059,8 +7059,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -7137,8 +7137,8 @@
       "teacherReviewRequired": true
     },
     "family_history": {
-      "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-      "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+      "patientAnswerZh": "家族中没有肾炎、反复血尿、听力下降或早发肾衰竭。",
+      "patientAnswerEn": "There is no family history of nephritis, recurrent hematuria, hearing loss, or early kidney failure.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -7283,8 +7283,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -7361,8 +7361,8 @@
       "teacherReviewRequired": true
     },
     "family_history": {
-      "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-      "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+      "patientAnswerZh": "家人过去很少做尿检，我不能确定一级亲属是否有镜下血尿；需要补查父母和兄弟姐妹的尿常规、肾功能和听力史。",
+      "patientAnswerEn": "My first-degree relatives have rarely had urinalysis, so I cannot exclude microscopic hematuria; their urinalysis, kidney function, and hearing history should be checked.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -7507,8 +7507,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -7585,8 +7585,8 @@
       "teacherReviewRequired": true
     },
     "family_history": {
-      "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-      "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+      "patientAnswerZh": "家里有人有类似血尿或肾病，但具体诊断我不清楚。",
+      "patientAnswerEn": "A relative had similar hematuria or kidney disease, but I do not know the exact diagnosis.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -7731,8 +7731,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -7803,8 +7803,8 @@
       "teacherReviewRequired": true
     },
     "gynecologic_contamination": {
-      "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-      "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+      "patientAnswerZh": "月经基本规律，没有反复流产史；本次尿异常不在经期，也没有异常阴道流血。",
+      "patientAnswerEn": "My periods are generally regular, with no history of recurrent miscarriage; the urine abnormality was not during menstruation and there was no abnormal vaginal bleeding.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -7955,8 +7955,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -7997,8 +7997,8 @@
       "teacherReviewRequired": true
     },
     "antiplatelet": {
-      "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-      "patientAnswerEn": "I do not take antiplatelet medication.",
+      "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷，长跑前也没有服用布洛芬等止痛药。",
+      "patientAnswerEn": "I do not take aspirin or clopidogrel, and I did not take ibuprofen or other analgesics before the run.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -8179,8 +8179,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -8251,8 +8251,8 @@
       "teacherReviewRequired": true
     },
     "gynecologic_contamination": {
-      "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-      "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+      "patientAnswerZh": "我正值月经期，这次尿样可能混入了经血。",
+      "patientAnswerEn": "I am menstruating, so the urine sample may have been contaminated by menstrual blood.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -8403,7 +8403,7 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：明显外伤",
+      "patientAnswerZh": "以前有过相关外伤。",
       "patientAnswerEn": "There was a possible trigger before this started.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -8627,8 +8627,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -8669,8 +8669,8 @@
       "teacherReviewRequired": true
     },
     "antiplatelet": {
-      "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷。",
-      "patientAnswerEn": "I do not take antiplatelet medication.",
+      "patientAnswerZh": "我没有服用阿司匹林或氯吡格雷，但长期自行服用布洛芬和复方止痛药。",
+      "patientAnswerEn": "I do not take aspirin or clopidogrel, but I have used ibuprofen and compound painkillers for a long time.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -8851,8 +8851,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -8929,8 +8929,8 @@
       "teacherReviewRequired": true
     },
     "family_history": {
-      "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-      "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+      "patientAnswerZh": "家里有人得过多囊肾，具体情况我不太清楚。",
+      "patientAnswerEn": "Someone in my family had polycystic kidney disease, but I do not know the details.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -9075,8 +9075,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -9147,14 +9147,14 @@
       "teacherReviewRequired": true
     },
     "gynecologic_contamination": {
-      "patientAnswerZh": "月经情况正常，这次尿色异常不是在月经期。",
-      "patientAnswerEn": "My periods are regular, and this episode did not occur during menstruation.",
+      "patientAnswerZh": "月经规律，本次镜下血尿在非经期复查仍存在，没有异常阴道流血。",
+      "patientAnswerEn": "My periods are regular; microscopic hematuria persisted on repeat testing between periods, with no abnormal vaginal bleeding.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "family_history": {
-      "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-      "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+      "patientAnswerZh": "家里有没有类似血尿或肾病，我不太清楚。",
+      "patientAnswerEn": "I am not sure whether anyone in my family had similar hematuria or kidney disease.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -9299,8 +9299,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "外伤/操作：否",
-      "patientAnswerEn": "There was a possible trigger before this started.",
+      "patientAnswerZh": "近期没有相关外伤。",
+      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -9377,8 +9377,8 @@
       "teacherReviewRequired": true
     },
     "family_history": {
-      "patientAnswerZh": "家里没有人得过类似血尿或遗传性肾病。",
-      "patientAnswerEn": "No one in my family has had similar hematuria or hereditary kidney disease.",
+      "patientAnswerZh": "家族中没有膀胱或上尿路尿路上皮癌、Lynch综合征、反复血尿或遗传性肾病。",
+      "patientAnswerEn": "There is no family history of bladder or upper-tract urothelial cancer, Lynch syndrome, recurrent hematuria, or hereditary kidney disease.",
       "provenance": "source",
       "teacherReviewRequired": true
     },

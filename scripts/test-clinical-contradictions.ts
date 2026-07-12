@@ -47,6 +47,9 @@ const p005 = requireCase("P005").structuredHistory!;
 if (p005.allergyHistory.status !== "present" || p005.surgeryHistory.status !== "present" || new Set(p005.medicationList.map((item) => item.name)).size !== p005.medicationList.length) add("P005", "fixedRegression", "Allergy, coronary stent, and deduplicated medications must be preserved");
 const p008 = requireCase("P008").structuredHistory!;
 if (p008.smokingHistory.cigarettesPerDay !== 10 || p008.smokingHistory.packYears !== 10 || /包/.test(p008.alcoholHistory.patientAnswerZh) || p008.allergyHistory.status !== "absent") add("P008", "fixedRegression", "Half-pack smoking, occasional alcohol, and no-known-allergy facts are inconsistent");
+const p013 = requireCase("HX-ADD-001").structuredHistory!;
+if (p013.smokingHistory.cigarettesPerDay !== 20 || p013.smokingHistory.years !== 40 || p013.smokingHistory.quitYears !== 5 || p013.smokingHistory.packYears !== 40) add("HX-ADD-001", "fixedRegression", "P013 smoking duration, quit interval, and pack-years are inconsistent");
+if (p013.medicationList.map((item) => item.name).join("、") !== "氨氯地平" || p013.anticoagulantUse.status !== "absent" || p013.antiplateletUse.status !== "absent") add("HX-ADD-001", "fixedRegression", "P013 medication list still contains contaminated antithrombotic drugs");
 
 const report = { schemaVersion: "clinical-contradiction-v1", caseCount: cases.length, errorCount: issues.filter((item) => item.severity === "error").length, reviewCount: issues.filter((item) => item.severity === "review").length, issues };
 fs.writeFileSync("data/clinical_contradiction_report.json", `${JSON.stringify(report, null, 2)}\n`, "utf8");
