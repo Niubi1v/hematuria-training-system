@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 process.env.TRAINING_STATE_SECRET = "unit-test-training-state-secret-with-adequate-length";
 const handler = require("../api/training-action.js");
 const { initSession } = require("../server/patientSession.js");
+const { verifyAttemptState } = require("../server/trainingState.js");
 const serverCases = require("../data/cases.json") as Array<{
   id: string;
   medicalReview?: { status?: string; [key: string]: unknown };
@@ -35,6 +36,14 @@ async function main() {
   assert.equal(response.statusCode, 200);
   assert.equal(response.payload.practiceOnly, true);
   assert.ok(response.token, "practice attempt must receive a signed state token");
+
+  const conflictAttemptId = `conflict-api-test-${Date.now()}`;
+  const conflictInit = await call({ action: "init-attempt", caseId: "P001", attemptId: conflictAttemptId, mode: "free", language: "en" });
+  const conflictHistory = await call({ action: "history-log", caseId: "P001", attemptId: conflictAttemptId, mode: "free", language: "en", question: "Do you have urinary urgency?", requestId: "conflict-history-test" }, conflictInit.token);
+  assert.equal(conflictHistory.payload.reason, "medical_bilingual_conflict_pending_review");
+  assert.deepEqual(conflictHistory.payload.quarantinedSlotIds, ["urinary_urgency"]);
+  const conflictState = verifyAttemptState(conflictHistory.token, { caseId: "P001", attemptId: conflictAttemptId });
+  assert.equal(conflictState.events.some((event: { slotId?: string }) => event.slotId === "urinary_urgency"), false, "quarantined bilingual facts must not enter signed scoring state");
 
   const originalToken = response.token;
   const historyBody = { action: "history-log", caseId: "P008", attemptId, mode: "free", language: "zh", question: "idempotent history question", requestId: "history-idempotency-test" };

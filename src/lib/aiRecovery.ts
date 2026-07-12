@@ -52,7 +52,7 @@ const connectionFailureReasons = new Set([
 ]);
 
 const safetyFallbackReasons = new Set([
-  "diagnosis_boundary", "report_boundary", "compound_question_preserves_all_facts", "ai_response_blocked", "safety_filter"
+  "diagnosis_boundary", "report_boundary", "compound_question_preserves_all_facts", "ai_response_blocked", "medical_bilingual_conflict_pending_review", "safety_filter"
 ]);
 
 export function isConnectionFailureFallback(reason = "") {

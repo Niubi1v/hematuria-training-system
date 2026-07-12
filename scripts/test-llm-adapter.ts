@@ -79,6 +79,20 @@ async function main() {
   assert(dynamicSessionSource.includes('fallbackReason: "diagnosis_boundary"'), "diagnosis requests must be blocked before slot matching");
   assert(dynamicSessionSource.includes("authoritativeProfile"), "serverless Patient Agent must rebuild authoritative patient facts per request");
 
+  const zhSession = await (require("../server/patientSession.js")).initSession({ caseId: "P001", language: "zh" });
+  const zhUnmatched = await (require("../server/patientSession.js")).generatePatientAnswer({ sessionId: zhSession.sessionId, caseId: "P001", studentInput: "你今天心情怎么样？", language: "zh" });
+  assert(zhUnmatched.replyText === "这项情况我现在不太清楚。", `Chinese unmatched fallback must be concise and natural: ${zhUnmatched.replyText}`);
+  assertNotContains(zhUnmatched.replyText, ["患者因", "现病史关键", "诊断", "评分"], "Chinese unmatched fallback");
+
+  const enSession = await (require("../server/patientSession.js")).initSession({ caseId: "P001", language: "en" });
+  const enUnmatched = await (require("../server/patientSession.js")).generatePatientAnswer({ sessionId: enSession.sessionId, caseId: "P001", studentInput: "What illnesses have you had before?", language: "en" });
+  assert(enUnmatched.replyText === "I'm not sure about that right now.", `English unmatched fallback must be concise and natural: ${enUnmatched.replyText}`);
+  assert(!/[\u3400-\u9fff]/.test(enUnmatched.replyText), "English unmatched fallback must not contain Chinese");
+
+  const onset = await (require("../server/patientSession.js")).generatePatientAnswer({ sessionId: zhSession.sessionId, caseId: "P001", studentInput: "什么时候开始的？", language: "zh" });
+  assert(onset.replyText.length <= 40, `matched onset fallback must not expose a case summary: ${onset.replyText}`);
+  assertNotContains(onset.replyText, ["患者因", "现病史关键", "关键阴性", "尿检"], "onset fallback");
+
   console.log("LLM adapter and API safety tests passed.");
 }
 

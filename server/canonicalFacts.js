@@ -13,7 +13,7 @@ const matchers = [
   ["renal_colic", /肾绞痛|绞痛|renal colic|colicky pain/i],
   ["radiating_pain", /放射痛|放射到|radiat.*pain|pain.*groin/i],
   ["pain", /疼不疼|有没有痛|疼痛|\bpain\b|does it hurt|any pain/i],
-  ["urinary_frequency", /尿频|小便次数多|urinary frequency|frequent urination|urinate often/i],
+  ["urinary_frequency", /尿频|小便次数多|urinary frequency|frequent urination|urinate often|urinat(?:e|ing) more often/i],
   ["urinary_urgency", /尿急|憋不住|\burgency\b|urgent need|cannot hold urine/i],
   ["voiding_difficulty", /排尿困难|尿线细|尿流中断|尿不尽|排尿费力|difficulty urinating|weak stream|incomplete emptying|straining/i],
   ["retention", /尿潴留|尿不出来|urinary retention|cannot pass urine/i],

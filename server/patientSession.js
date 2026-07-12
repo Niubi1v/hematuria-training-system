@@ -1,5 +1,6 @@
 const cases = require("../data/cases.json");
 const { callLLM, getLLMProviderConfig } = require("./llmClient.runtime.js");
+const { BILINGUAL_CONFLICT_REASON, quarantineForMatchedSlots, uncertainConflictReply } = require("./bilingualConflictQuarantine.js");
 const { matchStructuredFacts } = require("./structuredFacts.js");
 const { matchCanonicalPatientFacts } = require("./canonicalFacts.js");
 
@@ -401,9 +402,20 @@ function readProfileField(profile, path) {
   return typeof value?.value === "string" ? value.value : "";
 }
 
-function oneBullet(value) {
-  const clean = cleanPatientValue(value) || "这个我不太清楚。";
+function oneBullet(value, language = "zh") {
+  const clean = cleanPatientValue(value) || (language === "en" ? "I'm not sure about that right now." : "这项情况我现在不太清楚。");
   return clean.length > 80 ? `${clean.slice(0, 80)}。` : clean;
+}
+
+function conciseDeterministicReply(result, language = "zh") {
+  const replyText = String(result?.replyText || "").trim();
+  if (!replyText) return { ...result, replyText: language === "en" ? "I'm not sure about that right now." : "这项情况我现在不太清楚。" };
+  if (replyText.length <= 80 && !/患者因|现病史关键|关键阴性|病例资料|标准病例摘要/.test(replyText)) return result;
+  if (language === "zh" && result.matchedSlotIds?.length === 1 && result.matchedSlotIds[0] === "hematuria_onset") {
+    const duration = replyText.match(/(\d+(?:\.\d+)?)(天|周|月|年)(余|多)?/);
+    if (duration) return { ...result, replyText: `大概${duration[1]}${duration[2]}${duration[3] ? "多" : ""}了。` };
+  }
+  return { ...result, replyText: language === "en" ? "I'm not sure about that right now." : "这项情况我现在不太清楚。" };
 }
 
 function profileFallbackForQuestion(question, profile) {
@@ -428,10 +440,11 @@ function profileFallbackForQuestion(question, profile) {
   return "";
 }
 
-function safeFallbackForQuestion(question, profile) {
-  if (hasAny(question, diagnosisWords)) return { replyText: "这个我不清楚，需要医生判断。", safetyFlags: ["blocked_diagnosis_request"] };
-  if (hasAny(question, reportWords)) return { replyText: "我说不清楚，得看检查报告。", safetyFlags: ["blocked_report_request"] };
-  return { replyText: oneBullet(profileFallbackForQuestion(question, profile)), safetyFlags: ["llm_error_fallback"] };
+function safeFallbackForQuestion(question, profile, language = "zh") {
+  if (hasAny(question, language === "en" ? diagnosisWordsEn : diagnosisWords)) return { replyText: language === "en" ? "I do not know the diagnosis. The doctor will need to decide." : "这个我不清楚，需要医生判断。", safetyFlags: ["blocked_diagnosis_request"] };
+  if (hasAny(question, language === "en" ? reportWordsEn : reportWords)) return { replyText: language === "en" ? "I cannot explain the exact results. Please check the formal report." : "我说不清楚，得看检查报告。", safetyFlags: ["blocked_report_request"] };
+  const matched = language === "en" ? "" : profileFallbackForQuestion(question, profile);
+  return { replyText: oneBullet(matched, language), safetyFlags: ["llm_error_fallback"] };
 }
 
 const patientPrompt = `
@@ -495,8 +508,31 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   const runtimeProfile = authoritativeProfile || session?.completedPatientFacingProfile || completedPatientFacingProfile;
   const structured = matchStructuredFacts(caseData, studentInput, language);
   const canonical = structured ? null : matchCanonicalPatientFacts(caseId, studentInput, language);
-  const genericFallback = safeFallbackForQuestion(studentInput, runtimeProfile);
-  const fallback = canonical ? { ...canonical, provider: "rule", model: "local-rule", isFallback: true } : structured ? { ...structured, provider: "rule", model: "local-rule", isFallback: true } : genericFallback;
+  const genericFallback = safeFallbackForQuestion(studentInput, runtimeProfile, language);
+  const matched = canonical || structured;
+  const quarantine = quarantineForMatchedSlots(caseId, matched?.matchedSlotIds || []);
+  if (quarantine.conflictingSlotIds.length) {
+    console.warn("patient_fact_quarantined", { caseId, slotIds: quarantine.conflictingSlotIds, reason: BILINGUAL_CONFLICT_REASON });
+    return {
+      replyText: uncertainConflictReply(language),
+      provider: "rule",
+      model: "local-rule",
+      isFallback: true,
+      filter: { ok: true, hits: [] },
+      safetyFlags: [BILINGUAL_CONFLICT_REASON],
+      matchedSlotIds: [],
+      matchedFacts: [],
+      answerSource: "pending_medical_review",
+      confidence: 0,
+      fallbackReason: BILINGUAL_CONFLICT_REASON,
+      quarantinedSlotIds: quarantine.conflictingSlotIds
+    };
+  }
+  const fallback = conciseDeterministicReply(canonical
+    ? { ...canonical, provider: "rule", model: "local-rule", isFallback: true }
+    : structured
+      ? { ...structured, provider: "rule", model: "local-rule", isFallback: true }
+      : genericFallback, language);
   if (fallback.safetyFlags[0]?.startsWith("blocked_")) return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] } };
   if ((fallback.matchedSlotIds || []).length > 1) return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, fallbackReason: "compound_question_preserves_all_facts" };
   if (!runtimeProfile) return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] } };

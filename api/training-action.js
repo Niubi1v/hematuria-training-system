@@ -10,6 +10,7 @@ const perioperative = require("../data/order_catalog_perioperative.json");
 const mdtTriggers = require("../data/mdt_triggers.json");
 const { matchHistoryQuestion, normalize, validateStage } = require("../server/clinicalAssessment.js");
 const { appendEvents, createAttemptState, signAttemptState, verifyAttemptState } = require("../server/trainingState.js");
+const { BILINGUAL_CONFLICT_REASON, filterQuarantinedEvents } = require("../server/bilingualConflictQuarantine.js");
 
 const catalog = [...labs, ...imaging, ...procedures, ...perioperative];
 const allowedActions = new Set(["init-attempt", "history-log", "exam", "order", "mdt", "stage-feedback", "score"]);
@@ -246,11 +247,15 @@ module.exports = async function handler(req, res) {
 
     if (body.action === "history-log") {
       const requestId = String(body.requestId || req.headers?.["x-idempotency-key"] || "").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 120);
-      const events = matchHistoryQuestion(caseData.id, body.question, at, state.sequence + 1)
+      const matchedEvents = matchHistoryQuestion(caseData.id, body.question, at, state.sequence + 1)
         .map((event, index) => ({ ...event, eventId: requestId ? `${requestId}-${index}` : event.eventId }));
-      appendEvents(state, events);
+      const quarantine = filterQuarantinedEvents(caseData.id, matchedEvents);
+      if (quarantine.quarantinedSlotIds.length) {
+        console.warn("training_fact_quarantined", { caseId: caseData.id, slotIds: quarantine.quarantinedSlotIds, reason: BILINGUAL_CONFLICT_REASON });
+      }
+      appendEvents(state, quarantine.events);
       writeState(res, state);
-      return res.status(200).json({ recorded: true, requestId });
+      return res.status(200).json({ recorded: true, requestId, quarantinedSlotIds: quarantine.quarantinedSlotIds, reason: quarantine.reason });
     }
     if (body.action === "exam") {
       const result = handleExam(caseData.id, body.input, language);

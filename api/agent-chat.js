@@ -19,6 +19,7 @@ const safetyFallbackReasons = new Set([
   "report_boundary",
   "compound_question_preserves_all_facts",
   "ai_response_blocked",
+  "medical_bilingual_conflict_pending_review",
   "safety_filter"
 ]);
 
