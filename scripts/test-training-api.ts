@@ -9,11 +9,11 @@ const serverCases = require("../data/cases.json") as Array<{
   medicalReviewImport?: { formalUseAllowed?: boolean; [key: string]: unknown };
 }>;
 
-async function call(body: Record<string, unknown>, token = "") {
+async function call(body: Record<string, unknown>, token = "", requestHeaders: Record<string, string> = {}) {
   let statusCode = 200;
   let payload: unknown;
   const headers: Record<string, string> = {};
-  const req = { method: "POST", body, headers: token ? { "x-training-state": token } : {}, socket: { remoteAddress: `test-${Math.random()}` } };
+  const req = { method: "POST", body, headers: { ...(token ? { "x-training-state": token } : {}), ...requestHeaders }, socket: { remoteAddress: `test-${Math.random()}` } };
   const res = {
     setHeader(name: string, value: string) { headers[name.toLowerCase()] = value; },
     status(code: number) { statusCode = code; return this; },
@@ -25,11 +25,25 @@ async function call(body: Record<string, unknown>, token = "") {
 }
 
 async function main() {
+  const sameOrigin = await call({}, "", { origin: "https://goal-preview.example", host: "goal-preview.example", "x-forwarded-proto": "https" });
+  assert.notEqual(sameOrigin.statusCode, 403, "training API must accept an exact same-origin Preview hostname");
+  const crossOrigin = await call({}, "", { origin: "https://evil.example", host: "goal-preview.example", "x-forwarded-proto": "https" });
+  assert.equal(crossOrigin.statusCode, 403, "training API must reject a mismatched Origin and host");
+
   const attemptId = `api-test-${Date.now()}`;
   let response = await call({ action: "init-attempt", caseId: "P008", attemptId, mode: "free", language: "zh" });
   assert.equal(response.statusCode, 200);
   assert.equal(response.payload.practiceOnly, true);
   assert.ok(response.token, "practice attempt must receive a signed state token");
+
+  const originalToken = response.token;
+  const historyBody = { action: "history-log", caseId: "P008", attemptId, mode: "free", language: "zh", question: "idempotent history question", requestId: "history-idempotency-test" };
+  const firstHistory = await call(historyBody, originalToken);
+  const repeatedHistory = await call(historyBody, originalToken);
+  assert.equal(firstHistory.statusCode, 200);
+  assert.equal(repeatedHistory.statusCode, 200);
+  assert.equal(firstHistory.token, repeatedHistory.token, "repeating one history requestId from the same state must be idempotent");
+  response = firstHistory;
 
   response = await call({ action: "order", caseId: "P008", attemptId, input: "血常规", language: "zh" }, response.token);
   assert.deepEqual((response.payload.matchedOrders as Array<{ orderId: string }>).map((item) => item.orderId), ["LAB-BL-001"]);

@@ -21,14 +21,26 @@ function allowedOrigins() {
     .split(",").map((item) => item.trim()).filter(Boolean);
 }
 
+function sameOriginRequest(req, origin) {
+  if (!origin) return false;
+  try {
+    const host = String(req.headers?.["x-forwarded-host"] || req.headers?.host || "").split(",")[0].trim();
+    const protocol = String(req.headers?.["x-forwarded-proto"] || "https").split(",")[0].trim();
+    const url = new URL(origin);
+    return Boolean(host) && url.host === host && url.protocol === `${protocol}:`;
+  } catch {
+    return false;
+  }
+}
+
 function setCors(req, res) {
   const origin = String(req.headers?.origin || "");
-  const accepted = !origin || allowedOrigins().includes(origin);
+  const accepted = !origin || allowedOrigins().includes(origin) || sameOriginRequest(req, origin);
   if (origin && accepted) res.setHeader("Access-Control-Allow-Origin", origin);
   res.setHeader("Access-Control-Expose-Headers", "X-Training-State");
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Training-State");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Training-State, X-Request-Id, X-Idempotency-Key");
   return accepted;
 }
 
@@ -233,9 +245,12 @@ module.exports = async function handler(req, res) {
     const at = new Date().toISOString();
 
     if (body.action === "history-log") {
-      appendEvents(state, matchHistoryQuestion(caseData.id, body.question, at, state.sequence + 1));
+      const requestId = String(body.requestId || req.headers?.["x-idempotency-key"] || "").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 120);
+      const events = matchHistoryQuestion(caseData.id, body.question, at, state.sequence + 1)
+        .map((event, index) => ({ ...event, eventId: requestId ? `${requestId}-${index}` : event.eventId }));
+      appendEvents(state, events);
       writeState(res, state);
-      return res.status(200).json({ recorded: true });
+      return res.status(200).json({ recorded: true, requestId });
     }
     if (body.action === "exam") {
       const result = handleExam(caseData.id, body.input, language);

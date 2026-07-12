@@ -3,6 +3,21 @@ const { applyAgentCors, positiveInteger, setRateLimitHeaders, takeRateLimit } = 
 
 const requestWindows = globalThis.__hematuriaSessionInitRequestWindows || new Map();
 globalThis.__hematuriaSessionInitRequestWindows = requestWindows;
+const idempotentSessions = globalThis.__hematuriaSessionInitIdempotency || new Map();
+globalThis.__hematuriaSessionInitIdempotency = idempotentSessions;
+const IDEMPOTENCY_TTL_MS = 30 * 60 * 1000;
+const MAX_IDEMPOTENT_SESSIONS = 5000;
+
+function requestHeader(req, name) {
+  const value = req.headers?.[name] ?? req.headers?.[name.toLowerCase()];
+  return Array.isArray(value) ? String(value[0] || "") : String(value || "");
+}
+
+function pruneIdempotency(now) {
+  for (const [key, entry] of idempotentSessions) {
+    if (entry.expiresAt <= now) idempotentSessions.delete(key);
+  }
+}
 
 module.exports = async function handler(req, res) {
   const origin = applyAgentCors(req, res);
@@ -20,13 +35,31 @@ module.exports = async function handler(req, res) {
   try {
     const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
     if (!body.caseId) return res.status(400).json({ error: "caseId is required" });
-    const result = await initSession({
-      caseId: body.caseId,
-      mode: body.mode || "training",
-      language: body.language || "zh",
-      debug: Boolean(body.debug),
-      forceRefresh: Boolean(body.forceRefresh)
-    });
+    const idempotencyKey = requestHeader(req, "x-idempotency-key").slice(0, 200);
+    const scope = idempotencyKey
+      ? `${idempotencyKey}:${body.caseId}:${body.mode || "training"}:${body.language || "zh"}:${Boolean(body.forceRefresh)}`
+      : "";
+    const now = Date.now();
+    pruneIdempotency(now);
+    let entry = scope ? idempotentSessions.get(scope) : null;
+    if (!entry) {
+      const promise = initSession({
+        caseId: body.caseId,
+        mode: body.mode || "training",
+        language: body.language || "zh",
+        debug: Boolean(body.debug),
+        forceRefresh: Boolean(body.forceRefresh)
+      });
+      entry = { promise, expiresAt: now + IDEMPOTENCY_TTL_MS };
+      if (scope) {
+        if (!idempotentSessions.has(scope) && idempotentSessions.size >= MAX_IDEMPOTENT_SESSIONS) {
+          idempotentSessions.delete(idempotentSessions.keys().next().value);
+        }
+        idempotentSessions.set(scope, entry);
+      }
+      promise.catch(() => { if (scope && idempotentSessions.get(scope) === entry) idempotentSessions.delete(scope); });
+    }
+    const result = await entry.promise;
     return res.status(200).json(result);
   } catch {
     return res.status(500).json({ error: "session_init_failed" });

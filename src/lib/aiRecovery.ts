@@ -1,6 +1,36 @@
 import type { CollectedMap, KeyPointId } from "./types";
 
 export type AiConnectionStatus = "unknown" | "checking" | "connected" | "degraded" | "reconnecting" | "offline" | "error";
+export type PublicConnectionState = "idle" | "initializing" | "ready" | "degraded" | "reconnecting" | "offline" | "failed";
+export type ConnectionTransition = {
+  at: string;
+  from: PublicConnectionState;
+  to: PublicConnectionState;
+};
+
+export function publicConnectionState(status: AiConnectionStatus): PublicConnectionState {
+  return ({
+    unknown: "idle",
+    checking: "initializing",
+    connected: "ready",
+    degraded: "degraded",
+    reconnecting: "reconnecting",
+    offline: "offline",
+    error: "failed"
+  } as const)[status];
+}
+
+export function recordConnectionTransition(
+  history: ConnectionTransition[],
+  from: AiConnectionStatus,
+  to: AiConnectionStatus,
+  at = new Date().toISOString(),
+  limit = 50
+) {
+  const event = { at, from: publicConnectionState(from), to: publicConnectionState(to) };
+  if (event.from === event.to) return history;
+  return [...history, event].slice(-limit);
+}
 
 export type CachedPatientSession = {
   sessionId: string;

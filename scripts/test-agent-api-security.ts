@@ -8,6 +8,7 @@ process.env.LLM_API_KEY = "unit-test-secret-must-not-appear";
 
 delete (globalThis as Record<string, unknown>).__hematuriaAgentChatRequestWindows;
 delete (globalThis as Record<string, unknown>).__hematuriaSessionInitRequestWindows;
+delete (globalThis as Record<string, unknown>).__hematuriaSessionInitIdempotency;
 
 const agentHandler = require("../api/agent-chat.js");
 const sessionHandler = require("../api/session/init.js");
@@ -19,6 +20,7 @@ type CallOptions = {
   ip?: string;
   body?: Record<string, unknown> | string;
   headers?: Record<string, string>;
+  host?: string;
 };
 
 async function call(handler: ApiHandler, options: CallOptions = {}) {
@@ -28,6 +30,11 @@ async function call(handler: ApiHandler, options: CallOptions = {}) {
   const responseHeaders: Record<string, string> = {};
   const requestHeaders: Record<string, string> = { ...(options.headers || {}) };
   if (options.origin !== undefined) requestHeaders.origin = options.origin;
+  if (options.host !== undefined) {
+    requestHeaders.host = options.host;
+    requestHeaders["x-forwarded-host"] = options.host;
+    requestHeaders["x-forwarded-proto"] = "https";
+  }
   const req = {
     method: options.method || "POST",
     body: options.body || {},
@@ -61,6 +68,14 @@ async function verifyOriginAndCors(handler: ApiHandler, label: string) {
   assert.equal(preflight.headers["access-control-allow-origin"], "https://allowed.example");
   assert.match(preflight.headers["access-control-allow-methods"], /POST/);
   assert.match(preflight.headers["access-control-allow-headers"], /Content-Type/);
+
+  const previewOrigin = `https://${label}.preview.example`;
+  const sameOriginPreflight = await call(handler, { method: "OPTIONS", origin: previewOrigin, host: `${label}.preview.example` });
+  assert.equal(sameOriginPreflight.statusCode, 204, `${label} must accept an exact same-origin Preview hostname`);
+  assert.equal(sameOriginPreflight.headers["access-control-allow-origin"], previewOrigin);
+
+  const spoofedPreview = await call(handler, { method: "OPTIONS", origin: "https://evil.example", host: `${label}.preview.example` });
+  assert.equal(spoofedPreview.statusCode, 403, `${label} must not trust a mismatched forwarded host`);
 
   const direct = await call(handler, { ip: `${label}-direct`, body: {} });
   assert.notEqual(direct.statusCode, 403, `${label} must retain no-Origin server-to-server compatibility`);
@@ -115,10 +130,25 @@ async function verifyProviderFailureNonDisclosure() {
   }
 }
 
+async function verifySessionIdempotency() {
+  const headers = { "x-idempotency-key": "attempt-1:session-init:default" };
+  const options = {
+    origin: "https://allowed.example",
+    ip: "session-idempotency",
+    headers,
+    body: { caseId: "P001", mode: "free", language: "zh" }
+  };
+  const [first, second] = await Promise.all([call(sessionHandler, options), call(sessionHandler, options)]);
+  assert.equal(first.statusCode, 200);
+  assert.equal(second.statusCode, 200);
+  assert.equal((first.payload as { sessionId: string }).sessionId, (second.payload as { sessionId: string }).sessionId, "same session init idempotency key must return one session");
+}
+
 async function main() {
   await verifyOriginAndCors(agentHandler, "agent-chat");
   await verifyOriginAndCors(sessionHandler, "session-init");
   await verifyOptionalServerToken(sessionHandler);
+  await verifySessionIdempotency();
   await verifyProviderFailureNonDisclosure();
   await verifyRateLimit(agentHandler, "agent-chat");
   await verifyRateLimit(sessionHandler, "session-init");

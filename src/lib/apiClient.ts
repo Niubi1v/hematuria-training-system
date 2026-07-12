@@ -68,6 +68,24 @@ export function recoveryDelayMs(attempt: number, retryAfter = 0) {
   return Math.max(retryAfter, base + jitter);
 }
 
+export function waitForRecoveryDelay(delayMs: number, signal?: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException("Aborted", "AbortError"));
+      return;
+    }
+    const abort = () => {
+      globalThis.clearTimeout(timeout);
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+    const timeout = globalThis.setTimeout(() => {
+      signal?.removeEventListener("abort", abort);
+      resolve();
+    }, delayMs);
+    signal?.addEventListener("abort", abort, { once: true });
+  });
+}
+
 type RecoveryOptions = RequestInit & {
   timeoutMs?: number;
   retries?: number;
@@ -100,7 +118,7 @@ export async function fetchWithRecovery(url: string, init: RecoveryOptions = {})
       const retryableFailure = transientStatuses.has(response.status) && !["not-configured", "backend-outdated", "not-deployed", "safety-filter"].includes(error.kind);
       if (!retryableFailure || attempt === retries) throw error;
       lastError = error;
-      await new Promise((resolve) => globalThis.setTimeout(resolve, recoveryDelayMs(attempt, retryAfterMs(response))));
+      await waitForRecoveryDelay(recoveryDelayMs(attempt, retryAfterMs(response)), externalSignal || undefined);
     } catch (error) {
       const normalized = error instanceof ApiRequestError
         ? error
@@ -111,7 +129,7 @@ export async function fetchWithRecovery(url: string, init: RecoveryOptions = {})
         throw normalized;
       }
       lastError = normalized;
-      await new Promise((resolve) => globalThis.setTimeout(resolve, recoveryDelayMs(attempt)));
+      await waitForRecoveryDelay(recoveryDelayMs(attempt), externalSignal || undefined);
     } finally {
       globalThis.clearTimeout(timeout);
       externalSignal?.removeEventListener("abort", abortFromExternal);

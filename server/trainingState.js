@@ -72,13 +72,15 @@ function verifyAttemptState(token, expected = {}) {
 
 function appendEvents(state, events) {
   const existing = new Set(state.events.map((event) => event.eventId));
+  let appended = 0;
   for (const event of events) {
     if (!existing.has(event.eventId)) {
       state.events.push(event);
       existing.add(event.eventId);
+      appended += 1;
     }
   }
-  state.sequence += 1;
+  if (appended > 0) state.sequence += 1;
   return state;
 }
 

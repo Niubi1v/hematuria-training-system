@@ -167,6 +167,9 @@ test("offline reconnect sends no request and can recover after the online event"
   await page.route("**/api/session/init/**", (route) => { sessionCalls += 1; return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: `session-${Date.now()}`, caseId: "P001", language: "zh", mode: "free", patientOpeningStatement: "医生您好。", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) }); });
   await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "", matchedSlotIds: [], matchedFacts: [], provider: "deepseek", isFallback: false }) }));
   await page.goto("/cases/P001/");
+  await expect.poll(() => sessionCalls).toBe(1);
+  await page.waitForTimeout(500);
+  expect(sessionCalls).toBe(1);
   // The network-listener effect is registered before the session-init effect.
   // Observing the first session request therefore gives a deterministic
   // hydration/listener-ready boundary before emulating an offline transition.
@@ -181,6 +184,26 @@ test("offline reconnect sends no request and can recover after the online event"
   await page.getByRole("button", { name: "重新连接AI", exact: true }).click();
   await expect(page.getByText("已重新连接AI")).toBeVisible();
   expect(healthCalls).toBeGreaterThan(before);
+});
+
+test("AI reply renders before history log synchronization and uses one sync notice", async ({ page }) => {
+  await page.route("**/api/health/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" }) }));
+  await page.route("**/api/session/init/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: "sync-session", caseId: "P001", language: "en", mode: "free", patientOpeningStatement: "Hello doctor.", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) }));
+  await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "I first noticed the red urine this morning.", matchedSlotIds: ["hematuria_onset"], matchedFacts: ["onset=today"], provider: "deepseek", generationSource: "live_ai", isFallback: false }) }));
+  await page.route("**/api/training-action/**", async (route) => {
+    const body = route.request().postDataJSON();
+    if (body.action === "history-log") await new Promise((resolve) => setTimeout(resolve, 1500));
+    const payload = body.action === "init-attempt" ? { attemptId: body.attemptId, practiceOnly: true } : { recorded: true, requestId: body.requestId };
+    await route.fulfill({ status: 200, contentType: "application/json", headers: { "X-Training-State": `e2e-${body.attemptId}` }, body: JSON.stringify(payload) });
+  });
+  await page.goto("/cases/P001/");
+  await page.getByRole("button", { name: "English" }).click();
+  await page.getByPlaceholder("Enter an interview question").fill("When did you first notice it?");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByLabel("Simulated patient conversation").getByText("I first noticed the red urine this morning.")).toBeVisible({ timeout: 700 });
+  await expect(page.getByText("This answer is saved. Scoring is synchronizing.")).toBeVisible();
+  await expect(page.getByText("The question log could not be verified; it will not count toward scoring.")).toHaveCount(0);
+  await expect(page.getByText("Scoring is synchronized.")).toBeVisible();
 });
 
 test("public teacher and RCT routes do not expose formal functions", async ({ page }) => {

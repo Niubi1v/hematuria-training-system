@@ -75,6 +75,19 @@ async function main() {
     externalController.abort();
     await assert.rejects(cancelled, (error: unknown) => error instanceof ApiRequestError && error.kind === "timeout");
     assert.equal(calls, 1, "an explicitly cancelled obsolete request must not retry");
+
+    calls = 0;
+    const backoffController = new AbortController();
+    globalThis.fetch = async () => {
+      calls += 1;
+      return new Response(JSON.stringify({ error: "temporary" }), { status: 503 });
+    };
+    const startedAt = Date.now();
+    const backoffRequest = fetchWithRecovery("https://api.example.test/api/health/", { retries: 2, signal: backoffController.signal });
+    globalThis.setTimeout(() => backoffController.abort(), 20);
+    await assert.rejects(backoffRequest, (error: unknown) => error instanceof ApiRequestError);
+    assert.equal(calls, 1, "aborting during recovery backoff must prevent a stale retry");
+    assert.ok(Date.now() - startedAt < 250, "aborting recovery backoff must settle promptly");
   } finally {
     globalThis.fetch = originalFetch;
   }

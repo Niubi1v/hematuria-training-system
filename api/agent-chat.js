@@ -132,6 +132,9 @@ module.exports = async function handler(req, res) {
         conversationHistory: body.conversationHistory || [],
         language: body.language || "zh"
       });
+      const generationSource = patient.isFallback
+        ? ((patient.fallbackReason || "").includes("boundary") || (patient.safetyFlags || []).some((flag) => flag.startsWith("blocked_")) ? "safety_boundary" : "rule_fallback")
+        : patient.cacheHit ? "ai_cache" : "live_ai";
       return res.status(200).json({
         agentId,
         replyText: patient.replyText,
@@ -142,9 +145,11 @@ module.exports = async function handler(req, res) {
         blockedDataKeys: blockedTeacherKeys,
         safetyFlags: patient.safetyFlags || [],
         isFallback: Boolean(patient.isFallback),
+        generationSource,
         matchedSlotIds: patient.matchedSlotIds || [],
         matchedFacts: patient.matchedFacts || [],
         answerSource: patient.answerSource || (patient.isFallback ? "rule" : patient.provider),
+        factSource: patient.answerSource || "unknown",
         confidence: patient.confidence ?? (patient.isFallback ? 0.85 : 0.95),
         fallbackReason: patient.fallbackReason || (patient.isFallback ? "ai_unavailable_or_rule_mode" : ""),
         ...(body.debug ? { debug: { responseAccepted: Boolean(patient.filter?.ok), rewriteTriggered: Boolean(patient.rewriteTriggered), cacheHit: Boolean(patient.cacheHit), deploymentCommit: process.env.VERCEL_GIT_COMMIT_SHA || "local" } } : {})

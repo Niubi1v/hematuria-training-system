@@ -17,6 +17,20 @@ function allowedOrigins() {
   return new Set(String(configured).split(",").map((value) => value.trim()).filter((value) => value && value !== "*"));
 }
 
+function sameOriginRequest(req, origin) {
+  if (!origin) return false;
+  try {
+    const originUrl = new URL(origin);
+    const forwardedHost = headerValue(req, "x-forwarded-host").split(",")[0].trim();
+    const host = forwardedHost || headerValue(req, "host").split(",")[0].trim();
+    const forwardedProto = headerValue(req, "x-forwarded-proto").split(",")[0].trim();
+    const protocol = forwardedProto || (originUrl.protocol === "http:" ? "http" : "https");
+    return Boolean(host) && originUrl.host === host && originUrl.protocol === `${protocol}:`;
+  } catch {
+    return false;
+  }
+}
+
 function safeTokenEqual(actual, expected) {
   const actualBuffer = Buffer.from(String(actual || ""));
   const expectedBuffer = Buffer.from(String(expected || ""));
@@ -30,7 +44,7 @@ function applyAgentCors(req, res) {
   const configuredServerToken = String(process.env.AGENT_API_SERVER_TOKEN || "");
   const directRequestAllowed = !configuredServerToken
     || safeTokenEqual(headerValue(req, "x-agent-api-token"), configuredServerToken);
-  const allowed = origin ? allowedOrigins().has(origin) : directRequestAllowed;
+  const allowed = origin ? allowedOrigins().has(origin) || sameOriginRequest(req, origin) : directRequestAllowed;
 
   if (origin && allowed) res.setHeader("Access-Control-Allow-Origin", origin);
   res.setHeader("Vary", "Origin");

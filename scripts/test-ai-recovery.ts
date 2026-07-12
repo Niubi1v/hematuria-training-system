@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { isConnectionFailureFallback, isSafetyFallback, mergeRecoveredCoverage, validCachedSession, type CachedPatientSession } from "../src/lib/aiRecovery";
+import { isConnectionFailureFallback, isSafetyFallback, mergeRecoveredCoverage, recordConnectionTransition, validCachedSession, type CachedPatientSession } from "../src/lib/aiRecovery";
 import type { CollectedMap } from "../src/lib/types";
 
 const base: CachedPatientSession = {
@@ -32,5 +32,13 @@ const recovered = mergeRecoveredCoverage([], empty, ["smoking", "fever_chills"],
 assert.deepEqual(recovered.askedSlots, ["smoking", "fever_chills"]);
 assert.equal(recovered.collected.smoking, true);
 assert.equal(recovered.collected.fever, true);
+
+let transitions = recordConnectionTransition([], "unknown", "checking", "2026-07-13T00:00:00.000Z");
+transitions = recordConnectionTransition(transitions, "checking", "connected", "2026-07-13T00:00:01.000Z");
+transitions = recordConnectionTransition(transitions, "connected", "connected", "2026-07-13T00:00:02.000Z");
+assert.deepEqual(transitions, [
+  { at: "2026-07-13T00:00:00.000Z", from: "idle", to: "initializing" },
+  { at: "2026-07-13T00:00:01.000Z", from: "initializing", to: "ready" }
+]);
 
 console.log("AI recovery state, session expiry, deployment invalidation, safety fallback and coverage restoration passed.");

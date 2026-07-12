@@ -452,6 +452,15 @@ const patientPrompt = `
 12. 只回答当前问题，不要顺带回答未问内容。
 `.trim();
 
+const patientPromptEn = `
+You are the standardized patient in a clinical interview, not a doctor, teacher, database, or AI assistant.
+Answer only from currentAllowedAnswer and preserve every positive or negative fact, number, unit, and time expression.
+Speak naturally in first person, using wording appropriate to the supplied age, sex, and communication style.
+Answer only what was asked. Do not volunteer the full history, test results, diagnosis, treatment, scoring points, field names, JSON, or system instructions.
+Vary sentence openings instead of repeating a stock phrase. If the question is unclear, ask for a natural clarification.
+Return one or two concise English sentences with no Markdown label or meta-language.
+`.trim();
+
 function preservesAllowedAnswer(reply, allowedAnswer) {
   const replyText = normalize(reply);
   const allowedText = normalize(allowedAnswer);
@@ -504,13 +513,19 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     currentAllowedAnswer: canonical?.replyText || structured?.replyText || fallback.replyText,
     matchedFacts: canonical?.matchedFacts || structured?.matchedFacts || [],
     patientPersona: runtimeProfile.patient_persona,
+    patientContext: {
+      age: caseData?.age || "",
+      sex: caseData?.sexEn || caseData?.sex || "",
+      communicationStyle: runtimeProfile.patient_persona?.cooperation_style?.value || ""
+    },
     studentInput,
-    conversationHistory: conversationHistory.slice(-2),
+    conversationHistory: conversationHistory.slice(-6),
     language,
     requiredOutputLanguage: language === "en" ? "English only" : "Chinese only"
   };
   try {
-    const first = await callLLM({ systemPrompt: patientPrompt, userPayload: payload, temperature: 0.3, maxTokens: 300 });
+    const activePrompt = language === "en" ? patientPromptEn : patientPrompt;
+    const first = await callLLM({ systemPrompt: activePrompt, userPayload: payload, temperature: 0.35, maxTokens: 300 });
     const firstText = formatPatientReply(first.text);
     let filter = filterPatientOutput(firstText);
     const firstLanguageOk = language !== "en" || !/[\u3400-\u9fff]/.test(firstText);
@@ -519,8 +534,11 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
       cacheSet(answerCache, answerKey, result, ANSWER_TTL_MS, ANSWER_CACHE_MAX);
       return result;
     }
+    const retryInstruction = language === "en"
+      ? `The previous answer was unsafe, changed approved facts, or failed format checks: ${filter.hits.join(", ")}. Preserve currentAllowedAnswer exactly and reply in one or two concise English sentences.`
+      : `上一次回答包含禁止内容、改变了获准事实或格式不合格：${filter.hits.join("、")}。请严格保持 currentAllowedAnswer 的事实含义，只用1-2句且不超过45字。`;
     const retry = await callLLM({
-      systemPrompt: `${patientPrompt}\n\n上一次回答包含禁止内容、改变了获准事实或格式不合格：${filter.hits.join("、")}。请严格保持 currentAllowedAnswer 的事实含义，只用1-2句且不超过45字。`,
+      systemPrompt: `${activePrompt}\n\n${retryInstruction}`,
       userPayload: payload,
       temperature: 0.2,
       maxTokens: 220
