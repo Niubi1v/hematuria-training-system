@@ -235,6 +235,63 @@ test("history log transient failure retries one idempotent request without repla
   await expect(page.getByText("The question log could not be verified; it will not count toward scoring.")).toHaveCount(0);
 });
 
+test("rapid double send creates one patient request and one conversation turn", async ({ page }) => {
+  let patientCalls = 0;
+  await page.route("**/api/health/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" }) }));
+  await page.route("**/api/session/init/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: "double-send-session", caseId: "P001", language: "zh", mode: "free", patientOpeningStatement: "医生您好。", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) }));
+  await page.route("**/api/agent-chat/**", async (route) => {
+    patientCalls += 1;
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "今天早上开始的。", matchedSlotIds: ["hematuria_onset"], matchedFacts: ["onset=today"], provider: "deepseek", generationSource: "live_ai", isFallback: false }) });
+  });
+  await page.route("**/api/training-action/**", (route) => {
+    const body = route.request().postDataJSON();
+    const payload = body.action === "init-attempt" ? { attemptId: body.attemptId, practiceOnly: true } : { recorded: true, requestId: body.requestId };
+    return route.fulfill({ status: 200, contentType: "application/json", headers: { "X-Training-State": `e2e-${body.attemptId}` }, body: JSON.stringify(payload) });
+  });
+  await page.goto("/cases/P001/");
+  await page.getByPlaceholder("输入问诊问题").fill("什么时候开始的？");
+  const send = page.getByRole("button", { name: "发送" });
+  await send.evaluate((button) => { button.click(); button.click(); });
+  const conversation = page.getByRole("log", { name: "模拟问诊对话" });
+  await expect(conversation.getByText("今天早上开始的。", { exact: true })).toBeVisible();
+  expect(patientCalls).toBe(1);
+  await expect(conversation.getByText("什么时候开始的？", { exact: true })).toHaveCount(1);
+  await expect(conversation.getByText("今天早上开始的。", { exact: true })).toHaveCount(1);
+});
+
+test("twenty interview turns do not reinitialize the active language session", async ({ page }) => {
+  let sessionCalls = 0;
+  let patientCalls = 0;
+  await page.route("**/api/health/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" }) }));
+  await page.route("**/api/session/init/**", (route) => {
+    sessionCalls += 1;
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: "twenty-turn-session", caseId: "P001", language: "en", mode: "free", patientOpeningStatement: "Hello doctor.", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) });
+  });
+  await page.route("**/api/agent-chat/**", (route) => {
+    patientCalls += 1;
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: `Patient answer ${patientCalls}.`, matchedSlotIds: [], matchedFacts: [], provider: "deepseek", generationSource: "live_ai", isFallback: false }) });
+  });
+  await page.route("**/api/training-action/**", (route) => {
+    const body = route.request().postDataJSON();
+    const payload = body.action === "init-attempt" ? { attemptId: body.attemptId, practiceOnly: true } : { recorded: true, requestId: body.requestId };
+    return route.fulfill({ status: 200, contentType: "application/json", headers: { "X-Training-State": `e2e-${body.attemptId}` }, body: JSON.stringify(payload) });
+  });
+  await page.goto("/cases/P001/");
+  await page.getByRole("button", { name: "English" }).click();
+  await expect.poll(() => sessionCalls).toBe(2);
+  const initializedLanguageSessions = sessionCalls;
+  const input = page.getByPlaceholder("Enter an interview question");
+  for (let turn = 1; turn <= 20; turn += 1) {
+    await input.fill(`Question ${turn}?`);
+    await page.getByRole("button", { name: "Send" }).click();
+    await expect(page.getByLabel("Simulated patient conversation").getByText(`Patient answer ${turn}.`, { exact: true })).toBeVisible();
+  }
+  expect(sessionCalls).toBe(initializedLanguageSessions);
+  expect(patientCalls).toBe(20);
+  await expect(page.getByLabel("Simulated patient conversation").getByText("Patient answer 20.", { exact: true })).toHaveCount(1);
+});
+
 test("public teacher and RCT routes do not expose formal functions", async ({ page }) => {
   await page.goto("/teacher/");
   await expect(page.getByText(/演示|practice|正式考核/i).first()).toBeVisible();
