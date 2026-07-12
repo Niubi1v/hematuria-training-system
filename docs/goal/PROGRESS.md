@@ -115,3 +115,11 @@
 - 用失败测试证明复合问题安全边界被误标`rule_fallback`，最小修复后分类为`safety_boundary`；API安全、AI恢复、Agent Chat、TypeScript及项目Lint入口通过。提交`96d0990`，Actions run #51 completed/success，Vercel success。
 - CI持续出现官方Action Node20弃用注释，当前未导致失败，登记为P2；没有在用户体验P0/P1之前扩展修复范围。
 - 随后只读自然度抽查发现HEM-P0-023重大双语医学矛盾：严格18条相反陈述、11例、全部待审核。按医学治理规则停止自动数据修复并请求具名负责人裁决。
+
+## 2026-07-13 Spark reasoning summary 兼容修复
+
+- 只读核对项目 `.codex/config.toml`、6份项目 Agent 配置及用户级 `~/.codex/config.toml`；修改前均未显式设置 `model_reasoning_summary`、`model_supports_reasoning_summaries` 或 `reasoning.summary`，用户级配置未修改。
+- 三个 Spark 专属角色新增 `model_supports_reasoning_summaries=false`，并统一保留 `model_reasoning_effort="medium"`；Sol、Terra及其他角色未改变。
+- 当前安装版本 `codex-cli 0.144.0-alpha.4`；官方配置参考确认该布尔键用于强制不发送 reasoning metadata。
+- `scripts/test-codex-agent-config.mjs` 通过，7份项目 TOML 解析通过；`codex doctor` 返回 configuration loaded、0 fail。
+- 实际远程 Spark Agent 启动被当前安全审查器拒绝：私有仓库上下文会发送到尚未建立信任的外部服务。未绕过该限制；因此“真实请求不再返回 unsupported parameter”仍需在已批准的受信任会话中复验。

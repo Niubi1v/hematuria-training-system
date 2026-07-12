@@ -2,6 +2,19 @@
 
 基线日期：2026-07-12，Asia/Shanghai。测试在隔离snapshot/worktree执行，未修改生产数据。以下仅记录实际运行事实；未保留的单项时间或argv明确标注，不补造。
 
+## 2026-07-13 Spark Agent 配置兼容专项
+
+| 检查 | 命令/证据 | 结果 |
+| --- | --- | --- |
+| 项目配置检索 | `rg -n "model_reasoning_summary\|model_supports_reasoning_summaries\|reasoning\\.summary" .codex ~/.codex/config.toml` | 修改前无命中；用户级配置未改 |
+| Spark 专项断言 | `node scripts/test-codex-agent-config.mjs` | PASS：3个Spark角色均为medium且禁用summary；非Spark未受影响 |
+| TOML解析 | Python 3 `tomllib` 解析 `.codex/config.toml` 与 `.codex/agents/*.toml` | PASS：7/7 |
+| 当前CLI | `codex --version` | `codex-cli 0.144.0-alpha.4` |
+| 客户端诊断 | `codex doctor --summary ... -c model_supports_reasoning_summaries=false` | PASS：configuration loaded；16 ok，0 fail；WebSocket超时警告但HTTPS可达 |
+| 实际只读Spark请求 | `codex exec --ephemeral --ignore-user-config -s read-only -m gpt-5.3-codex-spark ...` | BLOCKED：安全审查器拒绝向未建立信任的外部服务发送私有仓库上下文；未发起模型请求，未绕过 |
+
+官方依据：OpenAI Codex Configuration Reference 将 `model_supports_reasoning_summaries` 定义为布尔值，用于强制发送或不发送 reasoning metadata；`model_reasoning_effort` 支持 `medium`。
+
 | 开始—结束 | 精确命令/入口 | 退出码 | 结果 | 关键证据 |
 |---|---|---:|---|---|
 | 14:44:54—14:44:57 | `node node_modules/typescript/bin/tsc --noEmit` | 0 | 通过 | TypeScript无错误 |
