@@ -22,6 +22,7 @@
 - 状态：外部权限阻塞；匿名GET被Deployment Protection HTML替代，POST session为401。
 - 影响：无法从当前环境采集用户登录态的控制台、API错误码、DeepSeek耗时、首Token、日志签名耗时和真实回答样本。
 - 处置：由具备Preview访问权限的会话复跑Playwright/network trace；不得提交或输出bypass token、Cookie或Authorization。
+- 最新复验：`a9ace13`对应Vercel Deployment已success，但in-app浏览器直达`/cases/P001/`仍在20秒内无法取得DOM；部署成功与应用登录态体验通过必须分开登记。
 
 ### HEM-P1-021：真实首Token指标当前不可测
 

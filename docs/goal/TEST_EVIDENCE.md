@@ -157,3 +157,12 @@
 | 02:25左右 | push前`git diff --check`、`data/**`差异检查、`scan-repository-secrets.mjs` | 0 | data无差异；244个当前tracked/candidate文件通过，未输出secret值 |
 
 说明：当前非流式Patient API不能提供真实首Token指标；受保护Preview无法在本执行环境取得登录态真实AI样本。上述两项保持待验证。
+
+## PR head `a9ace13`远程检查
+
+- 普通push成功：`cbdc4cf..a9ace13`到`origin/codex/hematuria-production-goal`；未force、未写main。
+- GitHub Actions run #46，id `29203919549`，event=`pull_request`，head=`a9ace1341339dbd14c7ca93f164aa82a6a945591`，completed/success。
+- build job `86679925670`：install、69 JSON、generated diff、schema、临床矛盾、双语、完整行为、医学合同、对抗评分、typecheck、lint、repo secret、Playwright、API origin、build及bundle全部success。
+- `Upload Pages artifact` skipped；deploy job `86680180729` skipped，未触发正式Pages部署。
+- Vercel deployment `7miajb1rg8DuVXPMHB1bG6fFpM8y`通过；Vercel Preview Comments通过。
+- Preview URL：`https://hematuria-training-system-git-codex-he-a06e54-niubi1vs-projects.vercel.app`。浏览器直达P001在20秒内未取得DOM，故真实AI/日志/性能验收仍未通过。
