@@ -60,6 +60,13 @@
 
 ## 已通过文档修订处置
 
+### HEM-P1-014：专项分支无法连接GitHub远程
+
+- 状态：外部网络阻塞，工程工作继续。
+- 证据：21:00及21:01两次`git push -u origin codex/hematuria-production-goal`均exit 128，错误为无法连接`github.com`端口443。
+- 安全影响：远程分支、PR和CI均尚未产生；本地提交与工作树完整，未发现未知远程提交或冲突。
+- 解除条件：网络恢复后重新执行`git fetch --prune`及全部push前门禁，再进行普通push；禁止用force push或直接写main规避。
+
 - HEM-BLK-013：Git写入额度阻塞已解除；20:48成功fetch，随后创建`2bc3305`与`58f456e`两个小步提交。仍须完成push前复核、普通push专项分支、PR与CI。
 
 - HEM-P2-006：将“572条事实总数”统一说明为“572条审核追踪项”。
