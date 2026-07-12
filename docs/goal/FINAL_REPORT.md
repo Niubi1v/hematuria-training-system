@@ -4,13 +4,14 @@
 
 ## 当前交付状态
 
-- 仓库基线已核对到`5a3ad11`；专项分支`codex/hematuria-production-goal`已形成运行时安全提交`2bc3305`和CI门禁提交`58f456e`，尚未push、未建PR、未部署。
+- 仓库基线已核对到`5a3ad11`；专项分支`codex/hematuria-production-goal`当前为`c3c18d3`，包含`2bc3305`运行时安全、`58f456e`CI门禁和`c3c18d3`执行文档三个小步提交，尚未push、未建PR、未部署。
 - 已实施formal fail-closed、独立训练签名secret/health、Agent/session Origin与限流防护、participant命名key隔离、统一评分/报告版本、Playwright readiness修复及CI生成数据/仓库secret门禁。
 - 工程加固后本地专项6/6、typecheck/lint、完整行为28/28、幂等69、offline reconnect重复6/6、Playwright22/22、clean build52、repo secret 235候选和bundle 24 JS均通过；仍需CI在拟发布commit确认。
 - 生产smoke两次均因`fetch failed`失败，health、10+5+5、Actions、Pages/live alias与Vercel live alias仍待验证。
 - GitHub connector的Vercel success状态只能作为辅助信号，不能替代live部署与API证据。
 - 早前Git写入额度阻塞已于20:48解除；`git fetch --prune origin`成功且远程仍为`5a3ad11`，随后两个小步提交成功。push/PR/CI仍待push前最终复核。
 - 实施后再次通过GitHub API compare确认远程`main`仍等于`5a3ad11`；本地候选差异未修改`data/**`，暂存区为空。
+- 对拟push SHA `c3c18d3`的最终复验已通过：typecheck、lint、28/28、69 JSON、52页、24 JS、Playwright22/22、235文件secret扫描和frozen lockfile；命令、时间与退出码见`TEST_EVIDENCE.md`。
 
 ## 医学治理状态
 

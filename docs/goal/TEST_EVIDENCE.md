@@ -46,6 +46,24 @@
 - 20:48:31–20:48:33 `git fetch --prune origin` exit0；HEAD与`origin/main`起点均为`5a3ad11`，ahead/behind 0/0。
 - 本地提交`2bc3305525398b12a53725dfdaedcaa0fb280fc7`包含运行时安全/测试；`58f456e48690e8617417d8f64e9b150038b6d779`包含CI与Playwright门禁。两者尚未push，不能作为远程CI证据。
 
+## 拟push提交 `c3c18d3` 的最终本地复验
+
+以下测试从`git archive c3c18d3e0a6a07535b469f0abfdcb999d61869cc`生成的隔离快照运行；测试产生的QC报告、转换数据和构建产物没有回写专项worktree。
+
+| 开始—结束 | 命令/入口 | 退出码 | 结果 |
+|---|---|---:|---|
+| 20:52:21–20:52:24 | `tsc --noEmit` | 0 | TypeScript通过 |
+| 20:52:21–20:52:26 | `node scripts/run-lint.mjs` | 0 | ESLint通过 |
+| 20:52:21–20:52:32 | `package.json`完整`scripts.test`链 | 0 | 28/28通过 |
+| 20:53:14–20:53:24 | `scripts/test-conversion-idempotency.ts`，package等价隔离runner | 0 | 69 JSON两次转换幂等；与提交基线归一化文本69/69一致 |
+| 20:54:05–20:54:19 | `next build` + `scripts/scan-static-bundle.ts` | 0 / 0 | 52页；24个JS扫描通过 |
+| 20:56:54–20:57:12 | `playwright test` | 0 | desktop/mobile 22/22通过 |
+| 20:57:40–20:57:41 | `node scripts/scan-repository-secrets.mjs` | 0 | 235个tracked/candidate文件，无输出secret值 |
+| 20:57:41 | `pnpm install --lockfile-only --offline --frozen-lockfile --ignore-scripts` | 0 | lockfile冻结解析通过；本机Node24产生预期engine警告，CI固定Node22.14 |
+
+- 20:55:06–20:55:07再次`git fetch --prune origin` exit0；当时`origin/main=5a3ad11`，专项分支领先3、落后0，无未知远程提交。
+- 当前三项本地提交为`2bc3305`、`58f456e`、`c3c18d3`；仍须普通push后以远程SHA和Actions结果作为CI证据。
+
 ## 医学治理交叉检查
 
 - 追踪项：572 = 153 sourceTrace + 419 simulation queue。
