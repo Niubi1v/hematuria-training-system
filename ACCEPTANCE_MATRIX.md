@@ -19,7 +19,7 @@
 | 离线恢复 | 记录保留，恢复在线后可继续 | PASS | Playwright desktop/mobile 22/22 |
 | CORS与限流 | 仅允许配置Origin；公开Agent/session有界限流 | PASS | `test:health`、`test:agent-api-security` |
 | 正式模式防绕过 | 客户端改mode不能解锁；独立签名secret；病例必须formalUseAllowed | PASS | `test:training-api` |
-| PR CI | PR运行完整质量门禁且不部署Pages | PENDING | workflow已配置；尚无PR Actions实跑 |
+| PR CI | PR运行完整质量门禁且不部署Pages | PASS | PR #1 run #42 build全绿；Pages artifact/deploy均按设计跳过 |
 
 ## Patient Agent与双语
 
@@ -80,10 +80,10 @@
 | 69 JSON幂等、生成数据无漂移 | PASS | `test:idempotency`及`git diff -- data` |
 | 52页生产构建 | PASS | clean build |
 | 静态答案/密钥扫描 | PASS | 24 JS bundle；235仓库文件 |
-| Playwright桌面/移动 | PASS/PENDING | 本地22/22；Linux PR CI待运行 |
+| Playwright桌面/移动 | PASS | 本地22/22；PR #1 run #42 Playwright E2E success |
 | 专项分支普通push | PASS | `origin/codex/hematuria-production-goal` |
-| draft PR与GitHub Actions | PENDING | 本机缺少发布流程要求的已认证`gh` |
-| Pages/Vercel SHA与live alias | PENDING | 禁止用历史941b7b5状态替代当前分支证据 |
+| draft PR与GitHub Actions | PASS | PR #1保持Draft；run #42 completed/success |
+| Pages/Vercel SHA与live alias | PENDING | PR Pages部署按设计跳过；外部Vercel Deployment failure且日志不可访问，live alias未验证 |
 | 生产health、10次session、中文5次、英文5次 | PENDING | 当前环境生产smoke为`fetch failed` |
 | 正式教师鉴权、RCT数据库、正式OSCE | BLOCKED/HUMAN | 需要安全后端、approved病例及具名医学签署 |
 

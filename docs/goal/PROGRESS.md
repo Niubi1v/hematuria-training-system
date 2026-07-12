@@ -77,3 +77,10 @@
 - 对公开Vercel API执行`node scripts/smoke-production.mjs`，169.2秒后exit1。
 - health、10次session初始化、中文5次、英文5次、training action及四个TTS音色均为`fetch failed`或因session失败而跳过；成功样本0，真实AI=0，fallback=0。
 - 独立网页访问通道也无法直接打开health URL，搜索无结果；现有证据不能区分服务不可达与执行环境出口限制，因此继续登记PENDING/阻塞，不得宣称生产失败已定位或生产通过。
+
+## 2026-07-13 PR #1与CI
+
+- Draft PR #1已创建，base=`main`、head=`codex/hematuria-production-goal`；PR保持Draft、未合并、mergeable=true。
+- GitHub Actions run #42已完成success；build job所有质量步骤成功，PR的Pages artifact上传与deploy job按安全条件跳过。
+- 外部Vercel提交状态实际为failure；“Vercel Preview Comments”与部署状态不是同一检查。Vercel bot评论显示Deployment Error且没有preview URL。
+- 当前无法访问Vercel部署日志，故未修改代码；只有取得可重复失败日志后才允许实施针对性修复。

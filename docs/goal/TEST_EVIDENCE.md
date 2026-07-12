@@ -107,6 +107,15 @@
 - 失败均表现为`fetch failed`或“session initialization failed”，不是HTTP应用错误码证据。
 - 网页访问通道直接打开health URL返回安全/open内部错误，搜索该URL无结果；不能据此判断生产服务真实状态。
 
+## PR #1 CI证据（2026-07-13）
+
+- PR：`https://github.com/Niubi1v/hematuria-training-system/pull/1`；base=`main@5a3ad11`，head=`codex/hematuria-production-goal@4d1d36e`；状态open、draft=true、merged=false、mergeable=true。
+- GitHub Actions：`Deploy to GitHub Pages` run #42（run id `29200619323`）completed/success。
+- build job `86671244262`成功；依赖安装、69 JSON幂等、generated-data diff、schema、临床矛盾、双语、完整行为链、医学审核合同、对抗评分、typecheck、lint、仓库secret扫描、Playwright、API origin校验、52页构建和bundle扫描全部success。
+- PR事件的`Upload Pages artifact`为skipped；deploy job `86671495596`为skipped，证明PR没有触发Pages部署。
+- 外部提交状态`Vercel`为failure，目标为`https://vercel.com/niubi1vs-projects/hematuria-training-system/BkWPP88EtwxFRdSDUAesLgVK6FwB`；Vercel bot评论同样显示Deployment Error且preview URL为空。
+- 两次尝试通过浏览器读取Vercel部署详情均在页面加载时超时，未取得构建日志；因此只能登记外部检查失败，不能断言根因，也没有进行猜测性代码修复。
+
 - CI/Linux环境在拟发布SHA复跑安全专项、完整行为、generated data diff、repo secret scan和Playwright全量；本地22/22不能替代CI。
 - 拟发布SHA上的完整质量门禁，而非仅当前worktree。
 - GitHub Actions、Pages、Vercel SHA/live alias核对。
