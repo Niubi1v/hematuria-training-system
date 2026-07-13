@@ -269,6 +269,36 @@ test("history log transient failure retries one idempotent request without repla
   await expect(page.getByText("The question log could not be verified; it will not count toward scoring.")).toHaveCount(0);
 });
 
+test("history log exhausted retries exposes one manual idempotent retry", async ({ page }) => {
+  let historyCalls = 0;
+  const historyRequestIds = [];
+  await page.route("**/api/health/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" }) }));
+  await page.route("**/api/session/init/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: "manual-retry-session", caseId: "P001", language: "en", mode: "free", patientOpeningStatement: "Hello doctor.", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) }));
+  await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "It started this morning.", matchedSlotIds: ["hematuria_onset"], matchedFacts: ["onset=today"], provider: "deepseek", generationSource: "live_ai", isFallback: false }) }));
+  await page.route("**/api/training-action/**", (route) => {
+    const body = route.request().postDataJSON();
+    if (body.action === "history-log") {
+      historyCalls += 1;
+      historyRequestIds.push(body.requestId);
+      if (historyCalls <= 3) return route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ code: "temporary_log_unavailable" }) });
+    }
+    const payload = body.action === "init-attempt" ? { attemptId: body.attemptId, practiceOnly: true } : { recorded: true, requestId: body.requestId };
+    return route.fulfill({ status: 200, contentType: "application/json", headers: { "X-Training-State": `e2e-${body.attemptId}` }, body: JSON.stringify(payload) });
+  });
+
+  await page.goto("/cases/P001/");
+  await page.getByRole("button", { name: "English" }).click();
+  await page.getByPlaceholder("Enter an interview question").fill("When did it start?");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByRole("button", { name: "Retry sync" })).toBeVisible();
+  expect(historyCalls).toBe(3);
+  await page.getByRole("button", { name: "Retry sync" }).click();
+  await expect(page.getByText("Scoring synced")).toBeVisible();
+  expect(historyCalls).toBe(4);
+  expect(new Set(historyRequestIds).size).toBe(1);
+  await expect(page.getByLabel("Simulated patient conversation").getByText("It started this morning.", { exact: true })).toHaveCount(1);
+});
+
 test("rapid double send creates one patient request and one conversation turn", async ({ page }) => {
   let patientCalls = 0;
   await page.route("**/api/health/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" }) }));

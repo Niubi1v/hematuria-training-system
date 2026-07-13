@@ -145,3 +145,13 @@
 - 提交`bde01a0`普通push后，Vercel Deployment与Preview Comments通过；Actions run `29225138570`在Playwright阶段失败，32项通过、2项失败，Pages deploy跳过。
 - 首条真实失败不是产品末端exit code，而是测试fixture语义不一致：HTTP 503不能满足“网络连接失败”精确文案。已把health/session fixture改为`route.abort("failed")`真实网络中断，保留精确文案及“泛化提示为0”断言，待下一轮CI。
 - 修正提交`2520645`已普通push；Actions run `29225349342` completed/success，Playwright、52页构建、类型、Lint、行为、医学合同与安全扫描全部通过；Vercel Deployment及Preview Comments通过，Pages artifact/deploy跳过。PR保持open/draft且mergeState=CLEAN。
+
+## 2026-07-13 UI/UX专项安全集成
+
+- 集成前Production Goal为`74c140fb77844ee557c739112c68076113375e25`；远程UI专项为`a6630a3547c50ec16ddf4dc68ce61578f3e10f62`；merge-base等于`74c140f`，左右提交计数为`0/3`。
+- 完整审查UI三项提交后确认其不修改`data/**`、API/server/scripts、医学事实或审批状态、Patient Agent医学语义、连接状态机、签名日志安全、360分算法、环境变量或密钥。关键评分/恢复/Patient服务文件相对基线哈希不变。
+- 采用逐项cherry-pick，得到`c1bdc4a`、`dec4e74`、`6cc1e2a`；三次均无冲突，没有用旧分支覆盖Production Goal。
+- 集成审查发现UI提交移除了history-log重试耗尽后的手动恢复操作。新增失败场景并恢复同一`requestId`的“重新同步/Retry sync”按钮；不绕过签名、不重复计分、不替换AI回答。
+- 本地TypeScript、ESLint、32项完整行为链、专项连接/日志/Patient/临床Agent/360评分、Vercel等价52页构建、25个JS bundle扫描及281文件敏感信息扫描均exit0。
+- 69 JSON幂等命令在当前Windows运行环境连续两次无输出挂起（分别约5分钟和7分钟后终止），两次均未产生`data/**`差异；按同一根因两次无效规则停止本机重试，等待Draft PR Linux CI复核。
+- 集成后的Playwright在本机浏览器启动阶段超时，未到断言；新增手动同步用例及desktop/mobile完整结果必须以Draft PR Linux CI为准。UI专项既有1280、360、390截图仅作为布局审查证据，不能替代集成后浏览器CI。

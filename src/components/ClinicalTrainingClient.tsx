@@ -1639,9 +1639,14 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                     ? t(lang, "ruleFallback")
                     : t(lang, "degradedMode")}
           </span>
-          {logSyncStatus !== "idle" && <span aria-live="polite" className={`ui-status ${logSyncStatus === "failed" ? "ui-status-warning" : "ui-status-info"}`}>
-            {logSyncStatus === "verified" ? (lang === "en" ? "Scoring synced" : "评分已同步") : (lang === "en" ? "Scoring sync pending" : "评分待同步")}
-          </span>}
+          {logSyncStatus !== "idle" && <div role="status" aria-live="polite" className={`ui-status ${logSyncStatus === "failed" ? "ui-status-warning" : "ui-status-info"}`}>
+            <span>{logSyncStatus === "verified"
+              ? (lang === "en" ? "Scoring synced" : "评分已同步")
+              : logSyncStatus === "failed"
+                ? (lang === "en" ? "Scoring sync paused" : "评分同步已暂停")
+                : (lang === "en" ? "Scoring sync pending" : "评分待同步")}</span>
+            {logSyncStatus === "failed" && <button type="button" onClick={() => { setLogSyncStatus("pending"); setLogRetryNonce((value) => value + 1); }} className="font-semibold underline underline-offset-2">{lang === "en" ? "Retry sync" : "重新同步"}</button>}
+          </div>}
           {showReconnect && !connectionMessage && <button
             type="button"
             onClick={() => void reconnectAiPatient()}

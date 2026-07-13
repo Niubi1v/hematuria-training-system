@@ -92,3 +92,14 @@
 ## 当前结论
 
 工程本地专项回归、当前SHA PR Actions与Vercel Preview均已通过，但强制验收尚未完成：`HEM-P0-001`及`HEM-P0-023`需要医学裁决；受保护Preview真实AI/日志/自然度/P95、生产10+5+5、正式live alias仍缺证据；Azure按未配置状态为SKIP。任何这些项目不得被登记为PASS或据此宣称生产验收完成。
+
+## UI集成增量（待远程确认）
+
+| 强制标准 | 当前状态 | 当前证据 |
+|---|---|---|
+| UI提交不覆盖Production后续安全修复 | PASS | merge-base=`74c140f`，三提交逐项cherry-pick且关键安全文件hash不变 |
+| 1280桌面、360/390移动布局 | PASS/PENDING | UI专项截图审查通过；集成后Playwright待Linux CI |
+| Enter/Shift+Enter、滚动保持、单一状态提示 | PASS/PENDING | 代码路径及既有UI用例已审计；集成后远程回归待执行 |
+| 日志失败后的幂等手动同步 | PENDING | HEM-P1-025本地已补测试/修复；Playwright断言待Draft PR CI |
+| TypeScript、ESLint、行为、构建、扫描 | PASS | 本地32/32、52/52、25 JS、281文件；退出码均0 |
+| 69 JSON幂等与desktop/mobile Playwright | PENDING | 本机运行环境阻塞且`data/**`零差异；必须以本次PR Linux CI为准 |

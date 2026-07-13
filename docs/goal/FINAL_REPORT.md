@@ -113,3 +113,14 @@
 - 本增量未修改`data/**`、医学审核状态、环境变量或密钥；回滚方式为普通revert本次专项提交。
 - `bde01a0`对应Vercel通过，但Actions run `29225138570`因新增测试fixture语义错误而失败：HTTP 503未产生所断言的网络错误文案，Playwright 32/34。fixture已改为真实请求中断且断言未放宽；当前仍等待下一轮CI，PR保持Draft。
 - 修正提交`2520645`远程门禁完成：Actions run `29225349342`全绿，Vercel Deployment与Preview Comments通过，Pages deploy跳过；HEM-P1-024工程项解除。该结果不解除Preview真实AI、性能、密钥作用域或医学人工阻塞。
+
+## UI/UX专项集成检查点（2026-07-13）
+
+- 集成前Production HEAD：`74c140fb77844ee557c739112c68076113375e25`；UI HEAD：`a6630a3547c50ec16ddf4dc68ce61578f3e10f62`；merge-base：`74c140f`。
+- 集成方式：在最新Production Goal上逐个cherry-pick三项UI提交，生成`c1bdc4a`、`dec4e74`、`6cc1e2a`；无冲突、无覆盖后续修复。
+- 审计确认UI分支没有修改医学数据/审批、Patient Agent医学语义、连接状态机、签名日志规则、360评分算法、环境变量或密钥。
+- 集成过程中发现HEM-P1-025：日志自动重试耗尽后手动同步入口被移除。已以最小UI补丁恢复幂等重试并补充失败场景；远程CI前不登记为最终通过。
+- 本地通过：TypeScript、ESLint、32/32完整行为、连接/日志/Patient/临床Agent/360评分专项、52/52构建、25 JS bundle及281文件secret扫描。69 JSON本机连续两次挂起但未产生数据差异；集成Playwright本机启动受阻，二者均等待Linux CI。
+- UI截图审查覆盖1280桌面及360/390移动；最终axe、desktop/mobile、手动同步回归及Vercel Preview必须以本次集成提交的远程检查为准。
+- 医学边界未改变：HEM-P0-001、HEM-P0-023继续阻断Ready/合并/发布；42例`needs_revision`及419条未批准状态保持。
+- 建议回滚顺序：先普通revert手动同步修复/证据提交，再按`6cc1e2a`、`dec4e74`、`c1bdc4a`逆序revert；禁止reset或force push。

@@ -250,3 +250,24 @@
 - Vercel deployment `2ibBiZGa47BCsj8A1sLAsqQNFGHp` success；Vercel Preview Comments success。
 - PR事件的Pages artifact上传与deploy job `86738432785`均skipped；未正式部署生产。
 - PR #1仍为Open/Draft，base=`main`、head=`codex/hematuria-production-goal`、mergeState=`CLEAN`。
+
+## UI/UX专项集成本地证据（2026-07-13）
+
+| 检查 | 精确命令/范围 | 退出码/状态 | 结果 |
+|---|---|---:|---|
+| 分支关系 | `git rev-list --left-right --count 74c140f...a6630a3`；`git merge-base` | 0 | Production/UI为`0/3`；merge-base=`74c140f` |
+| 禁止范围 | 三项提交完整`git show`、`git diff --name-only`、关键文件hash比对 | 0 | `data/**`与医学/审批/API/server/评分/签名/连接核心零修改 |
+| 集成 | 依次cherry-pick `a4df6c8`、`961c6cc`、`a6630a3` | 0 | 生成`c1bdc4a`、`dec4e74`、`6cc1e2a`，无冲突 |
+| TypeScript | `node node_modules/typescript/bin/tsc --noEmit` | 0 | 通过 |
+| ESLint | `node scripts/run-lint.mjs` | 0 | 通过 |
+| 连接与日志专项 | `test-ai-recovery.ts`、`test-api-recovery.ts`、`test-training-api.ts` | 0 | 取消、幂等、恢复及签名门禁通过 |
+| Patient/临床Agent/评分 | `test-patient-agent.ts`、`test-physical-exam-qc.ts`、`test-order-mapping.ts`、`test-event-scoring.ts`、`test-language-purity.ts` | 0 | 42例/376查体项、order映射、42例评分与语言纯度通过 |
+| 完整行为链 | 按`package.json scripts.test`顺序直接执行32个入口 | 0 | 32/32；含42×17中文、42×6英文、419约束、医学合同、360评分与对抗测试 |
+| Vercel等价构建 | `VERCEL=1 VERCEL_ENV=preview`、无公开API origin，直接执行Next build | 0 | 静态生成52/52页；`/cases/[id]` First Load JS 153 kB |
+| bundle隐藏信息 | `scan-static-bundle.ts` | 0 | 25个JS资源通过 |
+| 仓库敏感信息 | `scan-repository-secrets.mjs` | 0 | 281个tracked/candidate文件通过，未输出secret值 |
+| 69 JSON幂等 | 直接执行`test-conversion-idempotency.ts`并设置本地pnpm execpath | BLOCKED | 两次分别约5/7分钟无输出挂起后终止；`data/**`两次均零差异，待Linux CI复核 |
+| 集成后Playwright | 本机CI Chromium与Chrome通道定向尝试 | BLOCKED | 浏览器/服务器启动阶段180秒超时，未到断言；不得记为通过，待Draft PR CI |
+
+- 新增失败回归`history log exhausted retries exposes one manual idempotent retry`：前三次503后出现单一手动重试入口；第四次须复用同一requestId并只保留一个AI回答。该断言尚待Linux CI执行。
+- 既有UI截图目视核对：1280桌面双栏、360/390移动问诊未见横向溢出；Enter发送、Shift+Enter换行、手动上翻保持、单一连接提示及缺失数据非正常语义均有代码路径。截图不是集成后自动化通过证据。
