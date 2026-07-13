@@ -2,6 +2,7 @@ import { defineConfig } from "@playwright/test";
 
 const artifacts = "artifacts/exploratory-qa";
 const node = JSON.stringify(process.execPath);
+const baseURL = process.env.QA_BASE_URL || "http://127.0.0.1:3000";
 
 export default defineConfig({
   testDir: "./tests/exploratory",
@@ -18,7 +19,7 @@ export default defineConfig({
     ["junit", { outputFile: `${artifacts}/reports/junit.xml` }]
   ],
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    baseURL,
     browserName: "chromium",
     channel: "chrome",
     headless: true,
@@ -28,7 +29,7 @@ export default defineConfig({
   },
   webServer: {
     command: `${node} node_modules/next/dist/bin/next dev`,
-    url: "http://127.0.0.1:3000",
+    url: baseURL,
     reuseExistingServer: true,
     timeout: 120_000
   },
