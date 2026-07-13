@@ -133,3 +133,4 @@
 - 生成18行双语医学专家裁决表和说明文档；专家最终值、决定、依据、审核/复核人、日期及导入状态全部留空。HEM-P0-023医学真值仍阻断PR Ready/合并/发布。
 - 两个小步提交`ff02d76`与`0d60a90`已普通push；Draft PR #1 head更新为`0d60a90`。Actions run `29206516554` completed/success，Vercel Preview success，Pages deploy按PR规则skipped；PR仍为Draft且未合并。
 - 证据提交后当前HEAD `558fadd`的run `29206657625`及Vercel再次success；据此关闭仅缺CI的HEM-P1-002/004/005/010/011/012工程项，生产权限部分继续保持PENDING/BLOCKED。
+- 按裁决人反馈扩充HEM-P0-023工作簿：主表新增病种与原始病历索引，并新增11例“原始病历”工作表；内容直接来自`data/cases.json.raw`，未修改病例或专家空白字段。

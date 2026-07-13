@@ -31,6 +31,7 @@
 - 远程证据：Draft PR #1 head `0d60a902737ce29c22702f484fafa58221844717`；GitHub Actions run `29206516554`于2026-07-12T19:52:05Z completed/success。Conversion idempotency、generated-data diff、schema、contradiction、bilingual fixtures、完整行为、医学审核、评分、TypeScript、Lint、repo secret、Playwright、build和bundle scan均success；Pages artifact/deploy在PR事件skipped。
 - 外部检查：Vercel deployment `AxCLzXdwr6K488oiuCHfauG6hDTz` success；Vercel Preview Comments success。部署成功不替代受保护Preview中的真实DeepSeek、日志验证、P95和自然度人工验收。
 - 当前证据HEAD `558fadd48ac02eaf9ebfb91f581364f345687e22`：Actions run `29206657625` build success（3m10s），Vercel deployment `Hunh8QF1fNuDz5BdpboEQsoBx1XK` success，Vercel Preview Comments success，Pages deploy skipped。
+- HEM-P0-023裁决包增量：主表18行×23列；原始病历表11例×8列；每个主表病例均有病种与原始病历索引；专家最终值、决定、依据、审核/复核人、日期及导入状态仍为空；三张工作表完成目视检查，公式错误扫描0项。
 
 | 开始—结束 | 精确命令/入口 | 退出码 | 结果 | 关键证据 |
 |---|---|---:|---|---|
