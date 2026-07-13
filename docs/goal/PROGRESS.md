@@ -160,3 +160,5 @@
 - 修复后TypeScript、ESLint、training API签名/幂等、API recovery与AI recovery专项均exit0；原Playwright断言没有放宽，下一轮由Linux CI直接复跑。
 - 第二轮run `29231718708`仍为Playwright 38/40且同一断言失败，Vercel通过。代码追踪确认pending attempts的state写回会立即重启effect并绕过退避，第三次失败后自动第4次成功覆盖failed提示。
 - 已为history-log退避加入单一waiting锁；三次失败后effect稳定停止，人工按钮重置队首attempt计数再以原requestId重试。原测试继续要求3次失败、按钮可见、第4次成功与回答唯一。
+- 第三轮head `789243d`的Actions run `29232093193` completed/success：Playwright 40/40；69 JSON、generated diff、42例/572/419医学合同、32项行为、360评分、TypeScript、ESLint、281文件secret、52页build及23 JS bundle均通过。Vercel Deployment `YStbn7Yhk3gQPaCdUbF7wWzgmvpT`与Preview Comments通过；Pages artifact/deploy按PR规则跳过。
+- Draft PR #1保持open/draft，base=`main`、head=`codex/hematuria-production-goal`、mergeState=`CLEAN`；未转Ready、未合并、未部署Production。

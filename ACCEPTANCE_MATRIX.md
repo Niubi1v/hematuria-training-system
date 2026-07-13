@@ -20,7 +20,7 @@
 | 离线恢复 | 记录保留，恢复在线后可继续 | PASS | Playwright desktop/mobile 22/22 |
 | CORS与限流 | 仅允许配置Origin；公开Agent/session有界限流 | PASS | `test:health`、`test:agent-api-security` |
 | 正式模式防绕过 | 客户端改mode不能解锁；独立签名secret；病例必须formalUseAllowed | PASS | `test:training-api` |
-| PR CI | PR运行完整质量门禁且不部署Pages | PASS | 当前HEAD `558fadd`：run `29206657625` build全绿；Pages artifact/deploy均按设计跳过 |
+| PR CI | PR运行完整质量门禁且不部署Pages | PASS | UI集成HEAD `789243d`：run `29232093193` build全绿；Pages artifact/deploy均按设计跳过 |
 
 ## Patient Agent与双语
 
@@ -78,14 +78,14 @@
 
 | 强制标准 | 当前状态 | 当前证据 |
 |---|---|---|
-| TypeScript、ESLint、完整行为链 | PASS | 当前分支本地32/32；run `29206657625`的Unit and behavioral tests、Typecheck、Lint均success |
-| 69 JSON幂等、生成数据无漂移 | PASS | `test:idempotency`及`git diff -- data` |
-| 52页生产构建 | PASS | clean build |
-| 静态答案/密钥扫描 | PASS | 24 JS bundle；本地252候选文件；当前Actions repo/bundle scan success |
-| Playwright桌面/移动 | PASS | 本地24/24；当前run `29206657625` Playwright E2E success |
+| TypeScript、ESLint、完整行为链 | PASS | UI集成HEAD `789243d`：run `29232093193` Unit/behavior、Typecheck、Lint均success |
+| 69 JSON幂等、生成数据无漂移 | PASS | run `29232093193`明确69 JSON及generated diff success；`data/**`零集成差异 |
+| 52页生产构建 | PASS | run `29232093193`静态生成52/52 |
+| 静态答案/密钥扫描 | PASS | run `29232093193`：281文件repo scan、23 JS bundle scan success |
+| Playwright桌面/移动 | PASS | run `29232093193` desktop/mobile 40/40，axe critical/serious=0断言包含在内 |
 | 专项分支普通push | PASS | `origin/codex/hematuria-production-goal` |
-| draft PR与GitHub Actions | PASS | PR #1保持Draft；当前HEAD `558fadd`的run `29206657625` completed/success |
-| Pages/Vercel SHA与live alias | PASS/PENDING | `558fadd` Vercel Preview success；PR Pages部署按设计跳过，正式live alias仍未验证 |
+| draft PR与GitHub Actions | PASS | PR #1保持Draft；UI集成HEAD `789243d`的run `29232093193` completed/success |
+| Pages/Vercel SHA与live alias | PASS/PENDING | `789243d` Vercel Preview success；PR Pages部署按设计跳过，正式live alias仍未验证 |
 | 生产health、10次session、中文5次、英文5次 | PENDING | 当前环境生产smoke为`fetch failed` |
 | 正式教师鉴权、RCT数据库、正式OSCE | BLOCKED/HUMAN | 需要安全后端、approved病例及具名医学签署 |
 
@@ -98,8 +98,8 @@
 | 强制标准 | 当前状态 | 当前证据 |
 |---|---|---|
 | UI提交不覆盖Production后续安全修复 | PASS | merge-base=`74c140f`，三提交逐项cherry-pick且关键安全文件hash不变 |
-| 1280桌面、360/390移动布局 | PASS/PENDING | UI专项截图审查通过；集成后Playwright待Linux CI |
-| Enter/Shift+Enter、滚动保持、单一状态提示 | PASS/PENDING | 代码路径及既有UI用例已审计；集成后远程回归待执行 |
-| 日志失败后的幂等手动同步 | PENDING | HEM-P1-025本地已补测试/修复；Playwright断言待Draft PR CI |
+| 1280桌面、360/390移动布局 | PASS | UI专项截图审查及run `29232093193` desktop/mobile通过 |
+| Enter/Shift+Enter、滚动保持、单一状态提示 | PASS | run `29232093193`集成后Playwright通过 |
+| 日志失败后的幂等手动同步 | PASS | HEM-P1-025；run `29232093193` desktop/mobile通过 |
 | TypeScript、ESLint、行为、构建、扫描 | PASS | 本地32/32、52/52、25 JS、281文件；退出码均0 |
-| 69 JSON幂等与desktop/mobile Playwright | PENDING | 本机运行环境阻塞且`data/**`零差异；必须以本次PR Linux CI为准 |
+| 69 JSON幂等与desktop/mobile Playwright | PASS | run `29232093193`：69 JSON与Playwright 40/40；本机环境限制已由Linux CI补证 |

@@ -266,8 +266,8 @@
 | Vercel等价构建 | `VERCEL=1 VERCEL_ENV=preview`、无公开API origin，直接执行Next build | 0 | 静态生成52/52页；`/cases/[id]` First Load JS 153 kB |
 | bundle隐藏信息 | `scan-static-bundle.ts` | 0 | 25个JS资源通过 |
 | 仓库敏感信息 | `scan-repository-secrets.mjs` | 0 | 281个tracked/candidate文件通过，未输出secret值 |
-| 69 JSON幂等 | 直接执行`test-conversion-idempotency.ts`并设置本地pnpm execpath | BLOCKED | 两次分别约5/7分钟无输出挂起后终止；`data/**`两次均零差异，待Linux CI复核 |
-| 集成后Playwright | 本机CI Chromium与Chrome通道定向尝试 | BLOCKED | 浏览器/服务器启动阶段180秒超时，未到断言；不得记为通过，待Draft PR CI |
+| 69 JSON幂等 | 本机直接执行；远程`pnpm run test:idempotency` | LOCAL BLOCKED / CI 0 | 本机两次分别约5/7分钟挂起且`data/**`零差异；run `29232093193`明确69/69通过 |
+| 集成后Playwright | 本机定向尝试；Draft PR Linux CI | LOCAL BLOCKED / CI 0 | 本机启动超时；run `29232093193` desktop/mobile 40/40，含手动日志同步回归 |
 
 - 新增失败回归`history log exhausted retries exposes one manual idempotent retry`：前三次503后出现单一手动重试入口；第四次须复用同一requestId并只保留一个AI回答。该断言尚待Linux CI执行。
 - 既有UI截图目视核对：1280桌面双栏、360/390移动问诊未见横向溢出；Enter发送、Shift+Enter换行、手动上翻保持、单一连接提示及缺失数据非正常语义均有代码路径。截图不是集成后自动化通过证据。
@@ -289,3 +289,12 @@
 - 根因路径：catch写回`pendingHistoryLogs.attempts` → dependency变化立即清理/重跑effect → 未等待既定500/1200ms timer即发下一请求；第三次失败写回又发第4次请求并成功，failed状态被verified覆盖。
 - 修复后要求：waiting期间dependency重跑不得发请求；`attempts>=3`稳定停机；人工按钮重置队首attempts并保留requestId。Playwright断言及5秒窗口保持不变。
 - 状态竞态修复后再次运行TypeScript、ESLint、training API、API recovery与AI recovery，五项均exit0；没有重复运行与本次变更无关的完整行为/构建门禁。
+
+### UI集成最终PR CI终态
+
+- 验收代码HEAD：`789243d9d201869ed3cd35b60fc18aff7583cc5e`；Actions run `29232093193`、build job `86758375055`，completed/success，用时3分33秒。
+- Playwright E2E 40/40（1.6分钟），覆盖desktop/mobile、新增日志耗尽手动重试、快速双击、刷新恢复、连接提示、滚动与输入；关键页axe断言继续要求critical/serious为0。
+- Conversion idempotency 69 JSON、generated data diff、schema、42例临床矛盾、42×6英文、32项行为、572事实合同、153/419队列、v1.4导入、360评分、TypeScript、ESLint及281文件repository secret scan全部success。
+- 静态构建52/52；bundle secret/answer scan通过23个JavaScript资源。CI使用PR merge ref生成短SHA属于GitHub checkout行为，验收head仍由run元数据明确为`789243d`。
+- Vercel Deployment `YStbn7Yhk3gQPaCdUbF7wWzgmvpT`与Preview Comments success；Pages artifact上传及deploy job `86758965570` skipped，未发布生产。
+- PR #1仍为Open/Draft，base=`main`、head=`codex/hematuria-production-goal`、mergeState=`CLEAN`。

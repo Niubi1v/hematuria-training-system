@@ -2,9 +2,9 @@
 
 ## 开放缺陷
 
-### HEM-P1-025：UI集成曾移除日志同步失败后的手动恢复入口
+### HEM-P1-025：UI集成曾移除日志同步失败后的手动恢复入口（已解除）
 
-- 级别：P1，训练日志与评分同步可恢复性；状态：本地已修复，待Draft PR Linux CI确认。
+- 级别：P1，训练日志与评分同步可恢复性；状态：已解除并经Draft PR Linux CI确认。
 - 发现证据：UI分支`a6630a3`将`logSyncStatus=failed`与pending共用“评分待同步”静态标签，删除了既有重试按钮；自动重试三次耗尽后用户无法恢复同步。
 - 安全影响：AI回答仍可显示，但签名日志可能永久停留失败，用户没有可理解的恢复操作；不得通过绕过签名直接计分。
 - 最小修复：失败时显示单一“评分同步已暂停/Scoring sync paused”状态和“重新同步/Retry sync”按钮；按钮只递增现有retry nonce，持久队列继续复用原`requestId`及服务端幂等规则。
@@ -13,6 +13,7 @@
 - CI后最小修复：history-log关闭通用层内部重试，仅由现有持久队列执行三次有界退避；其他训练动作仍保留通用重试。预计总调用从最多9次收敛为3次，手动操作为第4次，requestId与签名验证边界不变。
 - 第二轮证据：head `853d819`的run `29231718708`仍为38/40且同一按钮断言失败。进一步审查发现`attempts`写回`pendingHistoryLogs`会立即重新触发effect，绕过退避timer；第三次写回又触发第4次自动请求，成功后覆盖短暂的failed状态。
 - 第二次最小修复：退避期间增加单一waiting ref；`attempts>=3`时effect停止自动请求并稳定显示按钮；人工操作只重置队首项的attempts后触发同requestId重试。该修复针对新的状态竞态证据，不放宽断言。
+- 解除证据：head `789243d`的Actions run `29232093193` completed/success，Playwright desktop/mobile共40/40；69 JSON、完整行为、医学合同、TypeScript、ESLint、281文件secret、52页build和23个bundle资源扫描全部通过。Vercel Deployment及Preview Comments通过，Pages deploy跳过。
 - 数据治理：未修改`data/**`、评分算法、签名验证、医学事实、审批状态或`needs_revision`。
 
 ### HEM-P1-024：初始化失败时重复显示连接提示（已解除）
