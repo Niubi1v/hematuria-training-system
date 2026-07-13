@@ -164,3 +164,24 @@
 - 用户可见修复部分有效：只有一个主要连接警告，fallback为自然中文且不泄露病例摘要，输入清空后仍保持焦点，聊天记录未被重连清空；这些结果不得计作真实AI通过。
 - Preview变量名称中AI供应商配置存在，`TRAINING_STATE_SECRET`未见；Standard Deployment Protection开启且OPTIONS allowlist关闭。Runtime Logs无对应函数调用，直接health探针被浏览器客户端阻止，所以当前只能定位到Preview配置/保护边界，不能伪造失败API状态或唯一根因。
 - 需要人工操作：在Preview或分支专用Preview补齐`TRAINING_STATE_SECRET`（不得由Codex生成），核对实际API origin与允许源是否一致，并在任何配置变更后重新部署；若API为跨源，再评估OPTIONS allowlist或可信访问方案。随后重跑真实AI中英10/10、日志10/10、20轮稳定性与P95。
+
+## 2026-07-14 静态发布安全里程碑结论（执行中）
+
+- 起始Production Goal远程HEAD为`41b3830a9095c692b3fdbe65a3dbf95b7ece5a37`；审计报告提交`70fb5a38625fc235b09f803faa3da248b37597bf`已安全纳入本地分支。Draft PR #1仍为Open/Draft，未转Ready、未合并、未部署Production。
+- SRA六项P1的本地工程边界已实施：v3签名能力、权威attempt CAS/幂等消费、完整服务端阶段锁、签名session、Agent single-flight、旧API 410、严格CORS/请求限制和训练密钥职责分离。
+- Serverless安全边界是真实fail-closed：Preview未配置持久Upstash时相关API返回503，而不是回退到进程内Map并声称安全。外部适配器因无凭据尚未集成验证。
+- SheetJS high风险已通过官方0.20.3固定依赖和解析资源限制处置；high审计退出0，仍明确保留1项moderate。
+- 幂等性测试的假绿已消除，但真实暴露56个生成基线漂移。由于这些输出包含病例、双语、评分和审核派生数据，本轮没有自动重生成或提交；`DCI-P1-003`继续阻断全绿CI，需要权威基线/医学治理决定。
+- 本地通过：聚合行为链、TypeScript、ESLint、52页build、25 JS bundle、294文件secret、依赖high门禁；desktop/mobile Playwright最终40/40且33.8秒正常退出。首次34/40失败被保留为证据，修复的是安全夹具而非验收断言。
+- 医学边界保持：`data/**`零差异；未批准419条模拟事实、未解除42例`needs_revision`、未修改18条双语冲突事实、未改变360分算法。HEM-P0-001与HEM-P0-023继续需要具名专家。
+- 新候选尚未push和CI，不能复用旧HEAD绿灯。推送后预期Actions可能因真实生成基线漂移失败；必须记录真实日志，禁止放宽或跳过该门禁。
+- Preview人工阻塞变量名称：`UPSTASH_REDIS_REST_URL`、`UPSTASH_REDIS_REST_TOKEN`、`TRAINING_ATTEMPT_STORE_MODE=upstash`、独立强`TRAINING_STATE_SECRET`。需要Preview/分支专用Preview作用域并重新部署；不得生成、显示或提交值。
+- 回滚方式：对后续安全、供应链/CI和证据提交逐项执行普通`git revert`；不得reset、force push、覆盖医学数据或回滚他人提交。回滚权威attempt存储前必须保持PR Draft和正式路径关闭。
+
+## 2026-07-14 终审修订
+
+- 最终只读安全审查在原六项P1实现上又发现三项可重复P1，均已以失败回归固定并最小修复：init重放不再泄露最新bearer、关闭阶段不再允许证据回填、session语言/模式不再接受客户端覆盖。
+- 供应链终审发现幂等隔离worktree只取`HEAD`而未明确排除未提交候选；验证器现对任何脏工作树fail-closed，完成提交后才运行。56个基线漂移仍保留为真实失败，不自动写入医学/审核派生数据。
+- 本地提交：`47a7c58 security: enforce authoritative training attempts`；`e6cb5b2 security: harden workbook and CI gates`。两者均基于审计报告HEAD `70fb5a3`，可分别普通revert。
+- 终审专项、TypeScript、ESLint、敏感信息和受保护数据diff均通过；完整聚合、build、Playwright、bundle、已提交HEAD幂等检查及远程Node 22 CI将在证据提交后执行并按真实退出码登记。
+- PR #1继续保持Draft。Preview缺少持久attempt存储/独立签名配置的人工阻塞和HEM-P0-001/HEM-P0-023医学裁决阻塞均未解除。

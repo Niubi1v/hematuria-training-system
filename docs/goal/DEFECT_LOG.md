@@ -176,3 +176,35 @@
 - HEM-P2-007：README“三个API入口但列出四项”修正为五个前端主入口，并说明兼容路径。
 - HEM-P2-008：本地运行版本从Node 20修正为与CI一致的Node 22.14、pnpm 11.7.0。
 - HEM-P2-009：生产文档不再把health、10+5+5、Actions/Pages/live alias写成当前已通过。
+
+## 2026-07-14 静态发布审计处置矩阵
+
+### 本地工程修复完成、等待新HEAD远程CI/Preview
+
+- `SRA-P1-001`：签名快照回放与重复计分。以权威attempt状态、token CAS、请求摘要和服务端幂等记录修复；并发相同score只提交一次，旧token重放返回409。Preview持久适配器仍需外部配置后复验。
+- `SRA-P1-002`：服务端阶段绕过。所有临床Agent与score均由权威当前阶段授权，非法提前请求4xx且不返回未来结果；合法七阶段、刷新恢复和重新提交失效链已有测试。
+- `SRA-P1-003`：旧API安全边界。旧patient reply/profile路径改为严格CORS的410；请求体限制、错误收敛和有界内存键已补齐。
+- `SRA-P1-004`：Patient Agent无session。session能力绑定attempt/case/language/mode/有效期；缺失、篡改、跨病例/跨语言session均拒绝。
+- `SRA-P1-005`：训练签名复用LLM密钥。已取消fallback并拒绝弱值、示例值和相同值；Preview独立密钥仍需人工配置。
+- `SRA-P1-006`：Agent无服务端幂等。增加签名session范围内的claim/complete、请求摘要冲突和并发single-flight；Vercel无持久存储时fail-closed。
+- `DCI-P1-001`：`xlsx@0.18.5` high公告。已固定官方0.20.3并限制所有工作簿解析资源；`pnpm audit --prod --audit-level high`退出0，仍有1项moderate另行跟踪。
+- `DCI-P1-005`：CI安全门禁不足。工作流已加入production dependency high audit、安全行为聚合、Playwright退出和clean worktree，且权限/Action版本固定；等待新HEAD Actions确认。
+
+### 仍开放的P1
+
+- `DCI-P1-003`：旧幂等脚本假绿的执行逻辑已修复，但新只读验证真实发现56个生成输出与提交基线漂移并exit1。不得自动覆盖`data/**`或审核产物；需要确认权威生成输入/基线并完成医学治理审查后，才能更新黄金基线。CI预期在此项保持红灯，除非基线被合法解决。
+- `SRA-EXT-P1-001`：Preview权威存储/签名配置未验证。需仅在Preview或分支专用Preview配置`UPSTASH_REDIS_REST_URL`、`UPSTASH_REDIS_REST_TOKEN`、`TRAINING_ATTEMPT_STORE_MODE`和独立`TRAINING_STATE_SECRET`后重新部署；当前不得宣称真实serverless防重或AI会话通过。
+
+### P2状态
+
+- `SRA-P2-001`请求体/状态总量已增加上限；`SRA-P2-002`的Map有界问题部分修复，但进程内限流仍不是全局配额，后续应迁移到持久存储；`SRA-P2-003`继续由现有timer清理/Playwright覆盖。
+- `DCI-P2-004`工作流最小权限、主分支触发和Action SHA固定已完成；`DCI-P2-002`仍是1项moderate，未伪造成零漏洞。
+- `PRV-P2-001..004`未在本安全里程碑全面关闭；本次只扩大仓库secret扫描并保持服务端错误/日志非泄露。localStorage留存、第三方数据告知和TTS缓存键仍需后续隐私设计。
+
+### 2026-07-14 终审新增缺陷
+
+- `SRA-P1-006`（已修复，待CI）：相同init请求可从缓存路径取得`record.currentToken`，在无需现有bearer的情况下泄露最新训练token。修复为只重放原始init响应，移除权威记录中的明文current token；回归确认重放所得原始token在推进后返回409 `stale_attempt_token`。
+- `SRA-P1-007`（已修复，待CI）：服务端阶段检查仅拒绝未来阶段，允许关闭阶段后的history/order/mdt证据回填并影响最终评分。修复为非反馈动作必须精确匹配`currentStage`；三个晚到动作均409，拒绝前后权威状态深比较一致。
+- `SRA-P1-008`（已修复，待CI）：session初始化验证token后仍使用客户端language/mode签发capability。修复为校验权威state、token claims和请求三方一致，并只在capability中签规范化权威模式；跨语言/跨模式均409。
+- `DCI-P1-006`（已修复，待已提交HEAD验证）：隔离worktree固定从`HEAD`创建，却可能在调用者存在未提交候选时被误解为验证当前候选。脚本现对全仓脏状态fail-closed，并明确仅验证已提交HEAD。
+- `DCI-P1-003`（仍阻塞）：56个受控生成输出与提交黄金基线不一致。安全验证器不得自动更新包含病例、评分、双语和审核派生内容的基线；需权威输入确认及医学治理后另行处理。

@@ -199,3 +199,29 @@
 - Chrome及Codex应用内浏览器均可打开P001，但约5秒后两次`api_request_failed`并进入降级。手动重连未恢复；一次中文问诊约22.4秒返回自然中文fallback，输入焦点保持、聊天未丢失、单一主连接提示未堆叠，但评分停在pending。
 - 只读环境名称核验发现AI供应商变量已覆盖Production and Preview，但未看到`TRAINING_STATE_SECRET`；未读取或修改任何值。部署启用Standard Vercel Authentication且OPTIONS allowlist关闭，跨源预检风险待实际请求路径证据确认。
 - Runtime Logs在上述窗口无对应函数调用，直接health导航又被浏览器客户端阻止，因此尚不能给出失败API的HTTP状态或唯一根因。真实AI、日志10/10、首Token/P95仍为外部配置/保护层阻塞；未因此修改生产/Preview环境。
+
+## 2026-07-14 静态发布审计安全里程碑（本地候选）
+
+- `git fetch --prune`成功；远程Production Goal仍为`41b3830`，静态审计报告分支为`70fb5a3`。四份报告只含文档，已以fast-forward方式纳入本地Production Goal；没有引入未知代码或`data/**`变更。
+- 已复现旧token回放、并发重复评分、阶段提前枚举、无session Agent调用及旧API绕过。训练状态改为v3能力声明，权威attempt状态由服务端存储；每次变更执行原子CAS和幂等消费，旧token返回409，重复同一请求返回同一已存响应。
+- Vercel/serverless不再把进程内Map宣称为持久防重：没有Upstash REST存储时训练attempt/session/Agent路径安全失败503。Preview需要人工配置变量名称`UPSTASH_REDIS_REST_URL`、`UPSTASH_REDIS_REST_TOKEN`、`TRAINING_ATTEMPT_STORE_MODE=upstash`及独立强`TRAINING_STATE_SECRET`并重新部署；没有读取、生成或输出值。
+- Patient session改为签名能力并绑定attempt/case/language/mode/有效期；`agent-chat`强制session与幂等键，重复并发provider请求单飞。旧`patient-reply`和`session/complete-profile`生产路径收敛为严格CORS的410，不能再创建session或调用LLM。
+- 全服务端阶段锁覆盖history、查体/医嘱、诊断、会诊、治疗、围术期、复盘和score；第一阶段枚举全部医嘱目录、查体、MDT或未来feedback均返回4xx且不泄露结果。重新提交早期阶段会撤销其后提交并回到相应阶段。
+- `TRAINING_STATE_SECRET`不再回退到`LLM_API_KEY`；缺失、弱值、示例值或与provider key相同均安全失败。health仅输出布尔配置状态，不泄露值。
+- SheetJS从npm `xlsx@0.18.5`切换到官方固定`0.20.3`tarball；七个审核/转换读取入口增加32MB、32 sheet、每sheet 10万行/512列、总100万单元格限制。浏览器端不再解析不可信XLSX；生产依赖审计high门槛exit0，仅余1项moderate。
+- 幂等验证器改为隔离临时worktree两次生成并比较，默认不会覆盖当前黄金基线。它真实发现56个受控输出与提交基线不一致并exit1；当前工作树`data/**`保持零差异。该问题不得通过自动更新病例/审核数据解决，继续作为P1治理阻塞。
+- CI改为Node 22、最小权限、官方Action SHA固定、high级生产依赖审计、安全专项和最终工作树clean门禁；PR事件仍不执行Pages deploy。
+- 本地门禁：聚合行为测试exit0；TypeScript exit0；ESLint exit0；生产构建52/52；bundle 25 JS、仓库secret 294候选文件通过；生产依赖high审计exit0（1 moderate）；桌面/移动Playwright修正安全夹具后40/40并在33.8秒自行退出。
+- Playwright首次真实运行34/40，6个失败均来自旧夹具未先初始化训练状态或试图绕过新阶段锁；没有放宽断言。补充训练状态mock、幂等键与七阶段合法推进后专项6/6、全量40/40。
+- Draft PR #1在本轮push前仍为Open/Draft，远程HEAD `41b3830`的GitHub build、Vercel Deployment和Preview Comments为success，Pages deploy skipped。新安全候选尚未push/未获CI，不能把旧绿灯记到新代码。
+- HEM-P0-001、HEM-P0-023医学裁决继续阻塞；42例`needs_revision`、419条未批准事实、360分算法及双语冲突隔离均未改变。
+
+## 2026-07-14 静态发布终审增量
+
+- 两个独立只读终审均未发现新增P0。安全终审复现三项P1：重复初始化可取回最新bearer、阶段关闭后仍可回填评分证据、session语言/模式可由客户端覆盖权威attempt；供应链终审复现幂等脚本只验证`HEAD`但未拒绝脏候选的证据缺口。
+- 初始化幂等重放现只返回原始响应token，不再从权威存储泄露最新token；原始token在状态推进后保持stale。权威存储不再额外保存明文current token。
+- 除已提交阶段的显式`stage-feedback`重交外，history/exam/order/mdt/score只允许在其精确当前阶段执行；关闭阶段后的history/order/mdt回填均返回409且权威状态零变化。
+- session初始化将语言和规范化模式绑定到权威attempt；capability内部签署`public-practice`/`formal-attempt`，客户端旧显示值仍保持兼容。跨语言或跨模式初始化返回409，Agent校验使用相同规范化规则。
+- 幂等验证器现在先对全仓脏状态fail-closed，并明确只验证已提交HEAD；这样不会把未提交候选误报为已验证。56个生成基线漂移仍是独立真实阻塞，未修改`data/**`。
+- 新增/补强回归均exit0：`test-training-security.ts`、`test-training-api.ts`、`test-agent-api-security.ts`、`test-dynamic-patient-session.ts`、`test-ai-recovery.ts`、`test-llm-adapter.ts`；TypeScript、ESLint和294文件secret扫描exit0。
+- 已创建两个可回滚本地提交：`47a7c58`（权威训练状态/session/阶段/防重放）和`e6cb5b2`（SheetJS、工作簿限制、只读幂等/QC与CI）。尚未push；完整门禁与新HEAD CI仍待本检查点后执行。

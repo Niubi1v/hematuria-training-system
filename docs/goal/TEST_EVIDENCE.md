@@ -363,3 +363,46 @@
 
 - 浏览器直接打开`/api/health[/]`被客户端以`ERR_BLOCKED_BY_CLIENT`阻止，因此未获得可审计HTTP状态；没有绕过保护、读取Cookie/Authorization或使用bypass secret。
 - 该证据证明Preview用户可见发布阻断仍存在，也证明fallback语言、摘要防泄露、输入焦点和单提示修复有效；不能把fallback计作真实DeepSeek成功。
+
+## 静态发布审计安全候选门禁（2026-07-14，本地）
+
+| 门禁 | 精确命令/执行方式 | 退出码与结果 |
+|---|---|---|
+| 聚合行为/医学/安全 | `pnpm run test` | 0；包含training replay/stage、Agent session/idempotency、42例、572追踪、419约束、18项隔离、360评分和工作簿限制 |
+| TypeScript | `node node_modules/typescript/bin/tsc --noEmit` | 0 |
+| ESLint | `node scripts/run-lint.mjs` | 0，`--max-warnings 0` |
+| 生产构建 | `NEXT_PUBLIC_API_BASE_URL=https://hematuria-training-system.vercel.app pnpm run build` | 0；Next 15.5.19，52/52静态页，P001-P042完整 |
+| Bundle隐藏信息 | `pnpm run test:bundle` | 0；25个JavaScript资源 |
+| 仓库敏感信息 | `pnpm run test:secrets` | 0；294个tracked/candidate文件；未输出值 |
+| 公共API配置 | `pnpm run validate:api-config` | 0；显式HTTPS origin通过 |
+| 生产依赖high门禁 | `pnpm audit --prod --audit-level high` | 0；0 high，1 moderate |
+| 工作簿安全 | `pnpm run test:workbook-security`及聚合链 | 0；32MB/32 sheet/10万行/512列/100万单元格限制 |
+| 医学工作簿/队列/导入 | 聚合链中的`test-medical-review*`、`test-release-v14` | 0；42例、572项、153/419分离、419零批准 |
+| 生成幂等只读验证 | `pnpm run test:idempotency` | 1；隔离临时worktree真实发现56个提交基线漂移；当前`data/**`零改动。登记为阻塞，不隐藏失败 |
+| Playwright首次全量 | 直接调用锁定的`@playwright/test` CLI，desktop+mobile | 1；34/40，旧夹具未满足训练状态/幂等/阶段锁新合同 |
+| Playwright失败专项复验 | 同CLI `--grep 'session initialization|offline reconnect|P008 exact'` | 0；6/6，5.2秒 |
+| Playwright最终全量 | 同CLI `test`，复用直接启动的本地Next server | 0；40/40，33.8秒，runner正常自行退出 |
+| 数据与医学状态diff | `git status --short -- data CASE_DATA_QC_REPORT.md outputs` | 0且无输出；未修改病例、审核决定或裁决表 |
+| Diff空白检查 | `git diff --check` | 0；仅Git行尾提示，无空白错误 |
+
+补充事实：本机是Node 24.14而仓库声明Node 22.14；上述本地结果有engine warning。旧远程HEAD `41b3830`的Actions run `29238512030`已在Node 22完成40/40并正常退出，但它不能替代新安全候选的CI；新HEAD必须push后重新验证。
+
+Preview未执行真实Upstash/DeepSeek验收，因为当前没有也不得读取所需凭据。没有把memory adapter、fallback或mock结果记作真实serverless/AI通过。
+
+## 2026-07-14 终审P1专项证据
+
+| 检查 | 精确命令 | 结果 |
+|---|---|---|
+| 防重放、精确阶段锁、晚到证据、语言绑定 | bundled Node运行`node_modules/tsx/dist/cli.mjs scripts/test-training-security.ts` | exit 0；原始init token不泄露最新bearer，关闭阶段回填409且状态零变化 |
+| 训练API回归 | bundled Node运行`node_modules/tsx/dist/cli.mjs scripts/test-training-api.ts` | exit 0；签名状态、精确释放、formal门禁、模式锁通过 |
+| session/Agent安全 | bundled Node运行`node_modules/tsx/dist/cli.mjs scripts/test-agent-api-security.ts` | exit 0；21.1秒；跨语言/跨模式session拒绝，capability、并发幂等、CORS、限流和非泄露通过 |
+| 动态session | bundled Node运行`node_modules/tsx/dist/cli.mjs scripts/test-dynamic-patient-session.ts` | exit 0 |
+| AI恢复 | bundled Node运行`node_modules/tsx/dist/cli.mjs scripts/test-ai-recovery.ts` | exit 0 |
+| LLM适配安全 | bundled Node运行`node_modules/tsx/dist/cli.mjs scripts/test-llm-adapter.ts` | exit 0 |
+| TypeScript | `pnpm run typecheck` | exit 0；本地Node 24.14产生预期engine warning，新HEAD Node 22仍待CI |
+| ESLint | `pnpm run lint` | exit 0；同上 |
+| 敏感信息 | `pnpm run test:secrets` | exit 0；294个tracked/candidate文件，无值输出 |
+| 医学/生成数据diff | `git diff --name-only -- data CASE_DATA_QC_REPORT.md LANGUAGE_PURITY_REPORT.md PATIENT_PROFILE_COMPLETENESS_REPORT.md PHYSICAL_EXAM_QC_REPORT.md` | exit 0且无路径输出 |
+| diff空白 | `git diff --check` | exit 0；只有CRLF转换提示 |
+
+说明：`test:idempotency`已改为在调用者全仓干净时只验证已提交HEAD。因此必须在代码和证据提交完成、工作树干净后运行；真实56文件黄金基线漂移预期仍会exit 1，不能通过放宽门禁消除。
