@@ -185,3 +185,10 @@
 - 本地提交：`47a7c58 security: enforce authoritative training attempts`；`e6cb5b2 security: harden workbook and CI gates`。两者均基于审计报告HEAD `70fb5a3`，可分别普通revert。
 - 终审专项、TypeScript、ESLint、敏感信息和受保护数据diff均通过；完整聚合、build、Playwright、bundle、已提交HEAD幂等检查及远程Node 22 CI将在证据提交后执行并按真实退出码登记。
 - PR #1继续保持Draft。Preview缺少持久attempt存储/独立签名配置的人工阻塞和HEM-P0-001/HEM-P0-023医学裁决阻塞均未解除。
+
+### 完整门禁结论
+
+- 当前本地候选`ba35c28`：完整行为exit0；TypeScript/ESLint exit0；生产构建52/52；Playwright desktop/mobile 40/40且自行退出；bundle 25 JS、secret 294文件、API配置与dependency high门禁exit0。
+- 唯一强制工程红灯仍是`DCI-P1-003`：已提交HEAD的幂等门禁真实exit1并列出56个基线漂移。禁止自动重生成这些病例/评分/双语/审核派生数据；Draft PR不得因其余绿灯转Ready。
+- pnpm在受限沙箱的registry attestation EACCES导致的两次超时已与应用构建/Playwright分离：联网精确构建入口通过，显式服务Playwright通过。新HEAD仍需GitHub Node 22 CI确认。
+- 推荐后续长期QA起始点必须使用本轮最终证据提交并push后的新HEAD，而不是`41b3830`、`70fb5a3`或当前文档提交前SHA；具体SHA在最终push/CI后补记。

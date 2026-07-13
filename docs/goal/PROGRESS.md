@@ -225,3 +225,12 @@
 - 幂等验证器现在先对全仓脏状态fail-closed，并明确只验证已提交HEAD；这样不会把未提交候选误报为已验证。56个生成基线漂移仍是独立真实阻塞，未修改`data/**`。
 - 新增/补强回归均exit0：`test-training-security.ts`、`test-training-api.ts`、`test-agent-api-security.ts`、`test-dynamic-patient-session.ts`、`test-ai-recovery.ts`、`test-llm-adapter.ts`；TypeScript、ESLint和294文件secret扫描exit0。
 - 已创建两个可回滚本地提交：`47a7c58`（权威训练状态/session/阶段/防重放）和`e6cb5b2`（SheetJS、工作簿限制、只读幂等/QC与CI）。尚未push；完整门禁与新HEAD CI仍待本检查点后执行。
+
+### 已提交HEAD完整门禁
+
+- `pnpm run test:idempotency`在干净HEAD上7.7秒exit1，准确列出`CASE_DATA_QC_REPORT.md`与55个`data/*.json`（合计56个）黄金基线漂移；临时worktree自动清理，主工作树和`data/**`保持干净。
+- `pnpm run test`在30.7秒exit0，覆盖完整行为链、42例、572项、153/419严格分离、419零批准、18项双语隔离和360分评分。
+- 直接Next生产构建18.7秒exit0、静态页52/52。最初的pnpm包装命令和`CI=1` Playwright自动webServer因沙箱拒绝pnpm供应链attestation访问npm registry而等待重试，不是Next或测试open handle；保留超时证据。
+- 为复核CI精确入口，授予仅registry访问后运行`pnpm run build`：28.8秒exit0，pnpm供应链策略通过，随后Next 52/52构建通过；没有修改锁文件或tracked文件。
+- 显式启动并验证`GET /cases/P001/` HTTP 200后，Playwright desktop/mobile 40/40，42.3秒自行退出；包括axe无serious、双击发送、20轮无重复初始化、离线重连、日志重试、刷新恢复、状态提示与P008评分防伪。
+- 最终门禁：bundle 25个JS、secret 294个文件、API origin、production dependency high阈值均exit0；依赖审计仍有1项moderate。`git status`干净、受保护数据零diff。

@@ -208,3 +208,4 @@
 - `SRA-P1-008`（已修复，待CI）：session初始化验证token后仍使用客户端language/mode签发capability。修复为校验权威state、token claims和请求三方一致，并只在capability中签规范化权威模式；跨语言/跨模式均409。
 - `DCI-P1-006`（已修复，待已提交HEAD验证）：隔离worktree固定从`HEAD`创建，却可能在调用者存在未提交候选时被误解为验证当前候选。脚本现对全仓脏状态fail-closed，并明确仅验证已提交HEAD。
 - `DCI-P1-003`（仍阻塞）：56个受控生成输出与提交黄金基线不一致。安全验证器不得自动更新包含病例、评分、双语和审核派生内容的基线；需权威输入确认及医学治理后另行处理。
+- `ENV-P2-001`（本地工具环境，非应用代码）：pnpm 11.7脚本前供应链attestation校验在受限沙箱内访问registry收到EACCES并长时间重试，导致本地`pnpm run build`和Playwright自动webServer入口超时。联网权限下同一`pnpm run build` 28.8秒exit0；显式本地服务下Playwright 40/40且正常退出。新HEAD的GitHub Node 22/开放registry结果仍为最终CI依据。

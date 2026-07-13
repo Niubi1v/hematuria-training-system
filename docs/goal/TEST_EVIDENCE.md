@@ -406,3 +406,21 @@ Preview未执行真实Upstash/DeepSeek验收，因为当前没有也不得读取
 | diff空白 | `git diff --check` | exit 0；只有CRLF转换提示 |
 
 说明：`test:idempotency`已改为在调用者全仓干净时只验证已提交HEAD。因此必须在代码和证据提交完成、工作树干净后运行；真实56文件黄金基线漂移预期仍会exit 1，不能通过放宽门禁消除。
+
+## 2026-07-14 已提交HEAD完整门禁
+
+| 检查 | 命令/环境 | 退出码与结果 |
+|---|---|---|
+| 生成基线/二次幂等 | `pnpm run test:idempotency`，干净`ba35c28` | exit 1，7.7秒；56个受控输出相对提交基线漂移；临时worktree已清理，主树零diff |
+| 完整行为链 | `pnpm run test` | exit 0，30.7秒；全部32段脚本通过 |
+| 直接Next生产构建 | bundled Node执行`node_modules/next/dist/bin/next build`，`VERCEL=1` | exit 0，18.7秒；52/52静态页、2/2 export |
+| CI精确构建入口 | 联网供应链校验下`CI=1 VERCEL=1 pnpm run build` | exit 0，28.8秒；pnpm策略通过，52/52构建通过 |
+| Playwright自动webServer诊断 | `CI=1`直接Playwright CLI | exit 124，360.4秒；pnpm registry attestation在沙箱EACCES重试，未进入用例；不登记为测试失败通过 |
+| Playwright desktop/mobile | 先启动127.0.0.1本地Next并取得P001 HTTP 200，再直接Playwright CLI复用服务 | exit 0，42.3秒；40/40，runner自行退出 |
+| 静态bundle | `NEXT_PUBLIC_API_BASE_URL=https://hematuria-training-system.vercel.app pnpm run test:bundle` | exit 0；25个JS资产 |
+| 仓库敏感信息 | `pnpm run test:secrets` | exit 0；294文件，无值输出 |
+| API配置 | CI同值运行`pnpm run validate:api-config` | exit 0 |
+| 生产依赖审计 | `pnpm audit --prod --audit-level high` | exit 0；0 high，1 moderate明确保留 |
+| 最终工作树 | `git status --short`、受保护路径diff、`git diff --check` | clean；`data/**`/审核产物零diff；仅CRLF提示 |
+
+本机Node为24.14，仓库要求Node 22.14；因此本地结果均带engine warning。推送后的GitHub Actions Node 22是新候选的强制等价补证，不能复用旧HEAD绿灯。
