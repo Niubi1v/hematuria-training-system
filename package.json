@@ -50,6 +50,7 @@
     "test:release-v14": "tsx scripts/test-release-v14-import.ts",
     "test:adversarial": "tsx scripts/test-adversarial-scoring.ts",
     "test:e2e": "playwright test",
+    "test:exploratory": "playwright test -c playwright.exploratory.config.mjs",
     "test:bundle": "tsx scripts/scan-static-bundle.ts",
     "test:secrets": "node scripts/scan-repository-secrets.mjs",
     "validate:api-config": "node scripts/validate-public-api-config.mjs",
