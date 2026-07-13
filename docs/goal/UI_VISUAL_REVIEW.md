@@ -1,6 +1,6 @@
 # UI 自动视觉审查
 
-状态：长期执行中；被测 Production SHA `41b3830a9095c692b3fdbe65a3dbf95b7ece5a37`。
+状态：长期执行中；被测 Production SHA `96fcf80f5a825585be53715e65851fbc113a7ab0`。
 
 ## 固定视口与页面
 
@@ -41,3 +41,11 @@
 - HEM-P1-033：P004 提交“有血块吗？”后，公开 API 返回教师元语言；前端安全层将其替换为“请问具体一点”的泛化答复。四 viewport 4/4；390×844 代表截图显示提交后的泛化患者答复，页面无新增水平溢出。
 - 两个场景均保存四 viewport 的自动截图、trace 和失败录像。最终清洁复跑关闭自动语音，每份 console 仅 1 条正常连接状态 info、0 warning/error，关键 document/session/agent-chat/training-action 均 200；network 摘要没有 header、query、body 或签名。
 - 新问题属于语言/患者内容与收集状态，不改变此前首页、目录、七阶段布局和 axe 结论。360×800 的 HEM-P1-027 仍单独 OPEN，不能因本轮页面可操作而改写为通过。
+
+## 2026-07-14 第四轮新安全基线视觉复核
+
+- 在 Production `96fcf80` 上，HEM-P1-029 与 HEM-P1-033 再次于四固定 viewport 各 4/4 复现；代表截图已刷新，页面视觉现象与规则矩阵一致。
+- 新增 HEM-P1-034：默认中文会话加载成功后点击 English，四 viewport 均进入英文界面但英文 session 初始化返回 401 / `invalid_attempt_token`。失败截图、trace、录像、console/network 均自动保存；Git 仅保留一张代表帧。
+- HEM-P1-027 定向回归中，`390×844` 仍通过，`360×800` 当前开场底边 `661`、composer 顶边 `654`，重叠 7px。旧基线 19px/6 次证据不删除；新结果说明遮挡缩小但未消失，状态仍为 OPEN。
+- HEM-P2-028 在 `1440×900` 仍显示两条相同阶段提交时间线；新基线观测继续是 `2/2/2`，没有幂等修复证据。
+- 新 live trace 内浏览器只持有 QA 脱敏占位符；完整训练签名与 session capability 不进入页面、截图、trace、console 或 network 摘要。

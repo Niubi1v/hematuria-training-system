@@ -40,3 +40,10 @@
 - P004 血块与 P005/P006 时相回答含“未主动诉/需追问”等教师元语言。公开 API 直接返回，前端改成泛化澄清句却仍保留已匹配 slot，登记 HEM-P1-033。该结论只判断患者口吻/隐藏提示，不裁决血块或时相本身。
 - 18 条 HEM-P0-023 冲突的直接问法继续稳定返回 pending medical review；但 pain 过匹配使其他特异疼痛问题被连带隔离。QA 不比较冲突双方的医学极性，也不解除 quarantine。
 - 所有本轮规则/API/UI样本均为 `local-simulation` 或 rule fallback，`providerCalls=0`。因此真实 DeepSeek 的自然度、错误总结纠正、20 轮语义一致性和性能仍保持 Preview 外部阻塞；本轮失败也不能外推为真实 provider 文风结论。
+
+## 2026-07-14 Production `96fcf80` 复核
+
+- 42 例双语矩阵和 17 项公开 handler 烟测改用有效签名 attempt/session 后连续重跑，两次仍得到同一 7 个代表失败及 1,127 个矩阵失败实例；因此 HEM-P1-029–033 不是缺失训练状态造成的假阳性。
+- 有效英文 attempt/session 的开场在四 viewport 仍含 CJK；该语言纯度失败与中文→英文切换产生的 401（HEM-P1-034）分开测试，避免授权失败掩盖内容失败。
+- P004 教师元语言在有效 session capability 下仍能进入公开 API，四 viewport 复现；结论仍只判断患者口吻与隐藏提示，不裁决血块事实。
+- 新的 19 项能力安全矩阵全部通过，但它只证明访问边界、过期和幂等合同；`providerCalls=0`，不能用来通过真实 AI 自然度、错误总结纠正、20 轮语义一致性或医学正确性。

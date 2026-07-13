@@ -31,6 +31,7 @@
 - 最小提交证据：`screenshots/training-p001-zh-viewport-360x800.png`、`screenshots/mobile-opening-composer-no-overlap-390x844.png`、`traces/mobile-opening-composer-overlap-360x800.zip`。自动 full-page 失败截图、录像与 HTML 报告仅本机保留，详见 `artifacts/exploratory-qa/EVIDENCE_INDEX.md`。
 - 建议方向：为移动 chat scroller 增加与 sticky composer 高度一致的底部安全区，或在 360px 宽度降低 composer/标题占高；保留输入首屏可见与 44px 触控目标，并用 360/390 几何断言回归。
 - 医学专家裁决：否。
+- `96fcf80` 受影响回归：`360×800` 当前 `opening bottom=661`、`composer y=654`，仍遮挡 7px（1/1）；`390×844` 1/1 通过。旧基线的 19px、6/6 及代表截图继续保留，说明新基线缩小了遮挡但没有满足断言，状态不变。
 
 ## HEM-P2-028：阶段提交按钮快速双击产生两次独立反馈请求与重复时间线
 
@@ -47,6 +48,7 @@
 - 最小提交证据：`screenshots/stage-submit-double-click-1440x900-failure.png`（159,310 字节）与 `traces/stage-submit-double-click-1440x900.zip`（12,363 字节，关闭截图帧和源码嵌入）。失败视频、HTML、console/network JSON 和重复 test-results 仅本机保留。
 - 建议方向：增加阶段提交 in-flight 状态并在请求完成前禁用按钮；一次用户动作生成并复用稳定 request ID；状态层按 stage/request ID 去重提交时间线。回归应覆盖阶段 1–6、终末报告按钮、桌面/移动端、双击/Enter 和失败重试，且不得删除或放宽当前断言。
 - 医学专家裁决：否。
+- `96fcf80` 受影响回归：`1440×900` 1/1 仍为 `2 feedback requests / 2 unique request IDs / 2 submit events`，失败帧和关闭截图/源码嵌入的最小 trace 已刷新。
 
 ## HEM-P1-029：英文 Patient Session 开场白仍为中文
 
@@ -62,6 +64,7 @@
 - 证据：`screenshots/live-english-opening-language-1440x900-failure.png`（最小代表帧）；其余三 viewport 截图、四份 trace、console/network 与 HTML 报告本机保留；聚合矩阵见 `reports/patient-session-matrix-summary.json`。
 - 建议方向：按 `language` 构造并缓存开场白，英文使用 patient-facing English chief complaint；对 session cache 的 `caseId/language/mode` 继续保持隔离，并用 42 例双语初始化矩阵回归。
 - 医学专家裁决：否；仅判断输出语言，不裁决开场内容的医学真值。
+- `96fcf80` 受影响回归：为避免 HEM-P1-034 遮蔽本缺陷，浏览器先保存英文偏好再直接进入 P001；有效英文 attempt/session 均为 200，但开场仍含 CJK，四 viewport 4/4。中文中途切换英文的 401 单独登记 HEM-P1-034。
 
 ## HEM-P1-030：Patient Session 病史路由不完整且自然病史问法被安全边界误拦截
 
@@ -122,3 +125,20 @@
 - 证据：`screenshots/live-p004-clots-teacher-meta-390x844-failure.png`（代表帧）；四 viewport 截图/trace/console/network 本机保留；聚合 JSON 同上。
 - 建议方向：所有 canonical/structured deterministic 返回在 API 层统一执行 patient output 过滤；将“元语言清洗失败”和“事实未回答”明确返回，前端仅在安全答复实际展示后更新 collected/asked slots。
 - 医学专家裁决：否；只移除教师元语言和修复收集状态，不修改 P004/P005/P006 的医学事实。相关内容本身仍需既有医学审核。
+- `96fcf80` 受影响回归：公开训练状态和 session capability 均经真实签名校验后，P004 场景仍在四 viewport 4/4 失败；因此不是旧 stub 绕过鉴权造成的假阳性。
+
+## HEM-P1-034：中文尝试切换英文时复用旧训练状态导致 session 401
+
+- 级别/状态：P1，OPEN；用户按界面承诺开始独立英文尝试，但新的英文会话无法建立，双语主流程被阻断。
+- 页面/路径：训练工作台 `/cases/P001/` 与公开 `POST /api/session/init/`；病例 P001；中文切换英文；viewport `1440×900`、`1280×720`、`390×844`、`360×800`。
+- 操作步骤：全新上下文打开 P001 → 等待中文 `init-attempt` 与 session 均 200 → 点击 English → 捕获请求体为 `caseId=P001/language=en/mode=free` 的 session 初始化 → 检查状态、错误码和页面连接状态。
+- 预期：语言切换创建独立英文 attempt，先取得与新 attempt/language 绑定的训练状态，再以该状态初始化英文 session；HTTP 200。
+- 实际：页面已生成新的英文 attempt，但 auto session effect 在清空旧 `trainingStateTokenRef` 的 effect 之前调用 `ensureTrainingStateToken()`，把旧中文 attempt token 发给英文 session；服务端正确返回 HTTP 401 / `invalid_attempt_token`。这是客户端 effect 顺序竞态，不是服务端能力校验失败。
+- 复现：四固定 viewport 4/4；1440×900 另有两次定向复跑，均为同一 401/错误码。公开 handler 的独立跨语言负例正确返回 409，证明安全门禁本身按合同工作。
+- AI 来源：本地 rule / `providerCalls=0`；请求在 session 建立前失败，不涉及真实 DeepSeek 或医学回答。
+- 状态变化时间线：document 200 → 中文 `init-attempt` 200 → 中文 session 200 → 点击 English → 新 attempt/lang state render → 英文 session 401 `invalid_attempt_token` → `degraded/initializing/failed`；页面训练记录仍在本地。
+- HTTP/耗时：代表 network 为中文 training/session 200，随后英文 session 401；本地约 14ms。network 只记录 action、caseId、language、mode、状态与错误码，不含 attemptId、header、token、sessionId 或问答正文。
+- console/network：console 仅记录连接状态变化、401 资源错误及已脱敏 `api_request_failed`；Authorization/Cookie/签名均未保存。浏览器看到的训练状态和 session ID 是固定 `qa-redacted-*` 占位符，真实能力只存在于 adapter 内存。
+- 证据：`screenshots/live-language-switch-authorization-1440x900-failure.png`（Git 代表帧）；其余三 viewport 截图、四份 trace、失败录像、console/network、HTML/JUnit 仅本机保留。
+- 建议方向：语言/attempt 改变时在同一同步状态转换中清空 token/promise/queue 和旧 session，再允许 auto session effect 运行；或把 token 明确按 `attemptId` 键控而不是单一 ref。补充中文→英文、英文→中文、快速往返、刷新和并发 health/session 回归。
+- 医学专家裁决：否；仅为客户端授权状态和 effect 时序问题。

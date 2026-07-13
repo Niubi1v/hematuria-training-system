@@ -1,7 +1,7 @@
 # 探索式 QA 执行结果
 
-状态：长期执行中；当前 6 个开放 P1、1 个开放 P2，不得视为最终生产验收。
-被测 Production SHA：`41b3830a9095c692b3fdbe65a3dbf95b7ece5a37`。本轮 QA 起始 HEAD：`d16887e589faf247abfe96f83568b0346e6865ac`。
+状态：长期执行中；当前 7 个开放 P1、1 个开放 P2，不得视为最终生产验收。
+被测 Production SHA：`96fcf80f5a825585be53715e65851fbc113a7ab0`。新基线 merge 后 QA HEAD：`5d9902c60c6e6d6a30b65a715b64e9d5627fef94`。
 
 ## 基线核验
 
@@ -102,6 +102,32 @@
 - 每个 viewport 均保存失败截图、trace、失败录像、console 和 network；Git 只计划保留两个代表截图与两个不含完整回答的聚合 JSON，其余本机索引保留。
 
 本轮没有运行真实 DeepSeek、没有判定 1,554 条双语 patient slot 的医学正确性，也没有解除 18 条冲突 quarantine。HEM-P1-027/028 未收到源修复，继续保持 OPEN。
+
+## 2026-07-14 长期循环第 4 轮
+
+### 基线切换与代码边界
+
+- 第 4 轮开始先普通推送 QA `d739f914f9d36fa6d3b3eda585113237485355f9`，再执行 `git fetch --prune`。远程 Production 已从旧基线推进至 `96fcf80f5a825585be53715e65851fbc113a7ab0`，旧 `41b3830a` 为其祖先。
+- 新 Production 以无冲突 merge `5d9902c60c6e6d6a30b65a715b64e9d5627fef94` 纳入 QA 分支后才恢复测试；当前工作区作者修改仅为 `tests/exploratory/**`、QA 文档和最小证据，未修改业务功能或 `data/**`。
+- Production 新增签名训练状态、attempt/session 能力绑定、过期和幂等存储。既有 `test-agent-api-security`、`test-training-security`、`test-dynamic-patient-session`、`test-ai-recovery`、`test-tts-api` 全部 exit 0；预期 fallback 测试中的一次脱敏 warning 不代表真实 provider 通过。
+
+### 会话能力与既有缺陷回归
+
+| 范围 | 结果 |
+| --- | --- |
+| 公开能力安全矩阵 | PASS，19/19；缺失/篡改/跨病例/跨语言/跨模式/跨 attempt/过期均拒绝；幂等重复、冲突和并发 single-flight 符合合同 |
+| 外部 provider | `providerCalls=0`；固定 QA-only 进程内 secret，仅用于本地签名合同，不读取或更改 Preview 环境 |
+| 42×37 双语规则矩阵 | 两次均为 6,216 路由、6,216 重放、1,127 失败实例/127 组；与旧基线一致，HEM-P1-029–033 保持 OPEN |
+| 公开 handler 烟测 | 17 项、7 项既有失败，两次除时间戳外一致；比旧 13 项多出的 4 项是有效训练 attempt/session 建立，不是产品失败 |
+| HEM-P1-027 | 新基线 `360×800` 仍失败，当前 1/1 为 7px；`390×844` 1/1 通过。旧基线 19px、6/6 证据保留，不写成通过 |
+| HEM-P2-028 | 新基线 1/1 仍为 `2 requests / 2 unique IDs / 2 submit events` |
+
+### Headless Chrome 受影响回归
+
+- QA-only 本地 adapter 现在连接真实 `training-action`、`session/init` 与 `agent-chat`。真实签名只在服务进程内存中保存；浏览器响应、trace 和 network 使用固定 `qa-redacted-training-state`/`qa-redacted-session-*`，且 outbound fetch 与 AI 均关闭。
+- HEM-P1-029、HEM-P1-033 及新 HEM-P1-034 在 `1440×900`、`1280×720`、`390×844`、`360×800` 各 4/4 复现。前两项分别仍为英文开场含 CJK、P004 教师元语言；新缺陷为中文 attempt 切换英文后 `POST /api/session/init/` 返回 HTTP 401 / `invalid_attempt_token`。
+- 12 个场景全部按失败断言结束，HTML/JSON/JUnit、截图、trace、失败录像、console 和脱敏 network 均保存。network 仅新增 action/caseId/language/mode 和错误码等安全元数据，不保存 attemptId、sessionId、header、签名或问答正文。
+- 这些结果不包含真实 DeepSeek，不判定 151 条来源语义或 18 条双语冲突的医学真值；外部阻塞状态不变。
 
 ## 保持开放的外部阻塞
 
