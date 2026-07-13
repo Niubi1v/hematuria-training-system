@@ -198,3 +198,9 @@
 - 本地安全候选截至`cbe5f3d`含5个尚未远程化提交；远程仍为`41b3830`，PR #1仍Draft。fetch/push因`github.com:443`网络失败，未发生部分push或远程变更。
 - 旧HEAD检查全部完成但不能代表新候选。只有网络恢复、重新fetch核对、普通push、GitHub Node 22 CI与Vercel新Preview完成后，才能填写最终推荐QA SHA。
 - 网络恢复后的准确顺序：`git fetch --prune origin` → 核对远程仍为已知祖先 → `git status`/range diff/secret扫描 → 普通push当前分支 → `gh pr checks 1 --watch`。保持Draft，不合并、不部署Production。
+
+### 远程验证后的修订结论
+
+- 网络已恢复，`6fcd325`已普通push；Actions run `29287786411`、Vercel和Preview Comments全部success，Pages deploy skipped，PR仍Draft。
+- 先前报告的56文件本地红灯已证实为Windows全局autocrlf造成的临时checkout行尾假差异；Linux CI对75输出通过。跨平台修复`bb130c1`不更改任何数据，仅让隔离checkout保持提交对象LF；Windows随后75/75通过。
+- 因此`DCI-P1-003`不再是医学治理基线阻塞。`bb130c1`及本次证据提交仍需普通push并取得新一轮CI；真正剩余发布阻塞仍是HEM-P0-001/HEM-P0-023具名医学裁决，以及Preview持久attempt存储/独立签名变量和真实AI验收。

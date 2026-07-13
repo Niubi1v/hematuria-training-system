@@ -241,3 +241,11 @@
 - `git fetch --prune origin`重试两次均因`github.com:443`连接超时失败；GitHub API对同一ref的实时读取成功并确认SHA未变。
 - 两次普通push均未写入远程：首次连接被重置，第二次HTTP/1.1在21秒后连接超时。没有force push、main写入、PR状态变化或部署。
 - 当前PR检查仍属于旧HEAD `41b3830`：build success、Vercel success、Preview Comments success、Pages deploy skipped；这些旧绿灯不得登记为本地安全候选CI通过。
+
+### 远程CI与Windows幂等假红修正
+
+- 网络恢复后fetch成功并确认远程为已知祖先；`6fcd325`已普通push。Draft PR #1始终保持Draft，未合并、未部署Production。
+- 新head的Actions run `29287786411` completed/success：Node 22.14、生产依赖审计1 moderate/0 high、幂等75受控输出、完整行为、TypeScript、ESLint、secret、Playwright 40/40、52页build、25 JS bundle和最终clean gate均通过；Pages deploy skipped。Vercel Deployment与Preview Comments均success。
+- CI绿灯与本地56文件红灯的差异经`git ls-files --eol`定位为Windows系统`core.autocrlf=true`：提交对象`i/lf`被临时worktree检出为`w/crlf`，转换器写LF后产生纯行尾假漂移；不是56个医学/评分基线变化。
+- `scripts/test-conversion-idempotency.ts`现仅对隔离worktree的checkout设置`core.autocrlf=false/core.eol=lf`，直接比较提交LF字节与转换LF字节，不规范化JSON、不忽略语义差异。提交`bb130c1`后本地75受控输出、baseline与第二次生成均exit0（11.6秒），主工作树和`data/**`零改动。
+- `DCI-P1-003`据此从“阻塞”修正为“已修复，待`bb130c1`新CI确认”；旧证据保留但不再错误描述为真实医学基线漂移。

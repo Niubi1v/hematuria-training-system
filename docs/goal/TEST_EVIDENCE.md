@@ -430,3 +430,12 @@ Preview未执行真实Upstash/DeepSeek验收，因为当前没有也不得读取
 - `gh pr view 1`/GitHub API：PR #1 `OPEN`、`isDraft=true`、`mergeStateStatus=CLEAN`，base `main@5a3ad11`，remote head `41b3830`。
 - `gh pr checks 1`：旧HEAD build success（3m33s）、Vercel success、Preview Comments success、deploy skipped。
 - `git fetch --prune origin`两次exit1（`github.com:443`连接超时）；普通push两次exit1（connection reset/连接超时）。GitHub API实时ref仍为`41b3830`，所以没有未知远程提交证据，但本地新候选尚无任何CI/Preview结果。
+
+## 2026-07-14 远程CI与幂等跨平台补证
+
+- Actions run `29287786411` / build job `86944326588` / head `6fcd325`：completed/success，4分03秒；Node 22.14.0。
+- Conversion idempotency步骤实际运行15.6秒并输出：`Conversion baseline and second-run idempotency passed for 75 controlled outputs in an isolated worktree.`，非跳过。
+- Playwright 40/40（1.6分钟），生产静态页52/52，dependency audit为1 moderate/0 high，最终tracked-worktree cleanliness gate通过；Pages deploy skipped。
+- Vercel Deployment `7XY5CJxGAZZyEAh79RydKYUjgLzL` success，Preview Comments success。此部署成功不等于真实AI/Upstash变量验收通过。
+- Windows根因命令：`git config --show-origin --get core.autocrlf`返回系统级`true`；`git ls-files --eol data/cases.json CASE_DATA_QC_REPORT.md`显示`i/lf w/crlf`。
+- 修复提交`bb130c1`后，bundled Node直接执行`tsx scripts/test-conversion-idempotency.ts`：exit0，11.6秒，75个受控输出baseline与第二次生成均通过；临时worktree清理，受保护数据零diff。
