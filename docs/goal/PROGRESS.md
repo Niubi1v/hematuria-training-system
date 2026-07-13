@@ -155,3 +155,6 @@
 - 本地TypeScript、ESLint、32项完整行为链、专项连接/日志/Patient/临床Agent/360评分、Vercel等价52页构建、25个JS bundle扫描及281文件敏感信息扫描均exit0。
 - 69 JSON幂等命令在当前Windows运行环境连续两次无输出挂起（分别约5分钟和7分钟后终止），两次均未产生`data/**`差异；按同一根因两次无效规则停止本机重试，等待Draft PR Linux CI复核。
 - 集成后的Playwright在本机浏览器启动阶段超时，未到断言；新增手动同步用例及desktop/mobile完整结果必须以Draft PR Linux CI为准。UI专项既有1280、360、390截图仅作为布局审查证据，不能替代集成后浏览器CI。
+- 首轮远程run `29231277833`：69 JSON、generated diff、医学合同、完整行为、TypeScript、ESLint、secret scan及Playwright安装均通过；Playwright 38/40，只有新增手动同步用例desktop/mobile失败。Vercel Deployment与Preview Comments通过，Pages deploy跳过。
+- 失败日志证明history-log存在通用请求层与持久队列的双层重试；前三个503后第4次自动成功，未进入失败UI。已将history-log收敛为仅由持久队列三次有界重试，其他训练动作保持原恢复策略；等待相关回归及新一轮CI。
+- 修复后TypeScript、ESLint、training API签名/幂等、API recovery与AI recovery专项均exit0；原Playwright断言没有放宽，下一轮由Linux CI直接复跑。

@@ -271,3 +271,13 @@
 
 - 新增失败回归`history log exhausted retries exposes one manual idempotent retry`：前三次503后出现单一手动重试入口；第四次须复用同一requestId并只保留一个AI回答。该断言尚待Linux CI执行。
 - 既有UI截图目视核对：1280桌面双栏、360/390移动问诊未见横向溢出；Enter发送、Shift+Enter换行、手动上翻保持、单一连接提示及缺失数据非正常语义均有代码路径。截图不是集成后自动化通过证据。
+
+### UI集成首轮PR CI与双层重试修复
+
+- Draft PR head `2283f196a475e86eb5ef8fc999d667961d49b146`；Actions run `29231277833`，build job `86755845204`。
+- Conversion idempotency、generated diff、schema、临床矛盾、双语、完整行为、医学合同、review queue/import、对抗评分、TypeScript、ESLint、repository secret scan及Playwright安装全部success。
+- Playwright运行40项：38通过、2失败；首条失败为desktop新增手动同步用例在5秒内找不到`Retry sync`，mobile同因。后续build因fail-fast跳过；Pages deploy跳过。
+- Vercel Deployment `Fwkx6GW171rMYwxU54rxvrXy194u`与Preview Comments均success；这不覆盖Actions失败。
+- 代码审查根因：`requestTrainingAction`使用`fetchWithRecovery(... retries: 2)`，history持久队列又最多执行3轮；测试前三个503由第一轮内部3次调用吸收，队列下一轮第4次成功，所以按钮正确地没有出现。
+- 修复：history-log的通用层`retries=0`，仅保留持久队列三轮有界重试；其他训练动作仍为2次内部重试。原失败断言不放宽，仍要求3次自动失败后出现按钮、手动第4次成功、同一requestId且AI回答唯一。
+- 修复后本地：`tsc --noEmit`、`run-lint.mjs`、`test-training-api.ts`、`test-api-recovery.ts`、`test-ai-recovery.ts`依次exit0。日志中的403/404/503/timeout均为专项预期的脱敏fixture，不是未处理失败。

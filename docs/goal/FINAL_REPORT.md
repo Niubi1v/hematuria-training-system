@@ -124,3 +124,5 @@
 - UI截图审查覆盖1280桌面及360/390移动；最终axe、desktop/mobile、手动同步回归及Vercel Preview必须以本次集成提交的远程检查为准。
 - 医学边界未改变：HEM-P0-001、HEM-P0-023继续阻断Ready/合并/发布；42例`needs_revision`及419条未批准状态保持。
 - 建议回滚顺序：先普通revert手动同步修复/证据提交，再按`6cc1e2a`、`dec4e74`、`c1bdc4a`逆序revert；禁止reset或force push。
+- 首轮CI并非全绿：head `2283f19`的run `29231277833`在新增Playwright用例失败2项、其余38项通过；此前各工程/医学/幂等/类型/Lint/secret步骤通过，Vercel通过，Pages deploy跳过。
+- 失败根因是history-log双层重试使前三个503后仍自动成功，未进入手动恢复态。已把history-log收敛为持久队列唯一的三轮重试，并保持同一requestId、签名验证和其他训练动作恢复策略；最终状态以修复提交的新CI为准。

@@ -403,7 +403,7 @@ async function probeAiPatient({ caseId, sessionId, language, signal }: { caseId:
   }, { timeoutMs: 8000, retries: 1, signal, endpointName: "patient-probe" });
 }
 
-async function requestTrainingAction<T>(body: Record<string, unknown>, stateToken = "", idempotencyKey = ""): Promise<{ payload: T; stateToken: string }> {
+async function requestTrainingAction<T>(body: Record<string, unknown>, stateToken = "", idempotencyKey = "", retries = 2): Promise<{ payload: T; stateToken: string }> {
   const controller = new AbortController();
   const timeoutId = globalThis.setTimeout(() => controller.abort(), PATIENT_REPLY_TIMEOUT_MS);
   try {
@@ -414,7 +414,7 @@ async function requestTrainingAction<T>(body: Record<string, unknown>, stateToke
       signal: controller.signal,
       body: JSON.stringify(body),
       timeoutMs: PATIENT_REPLY_TIMEOUT_MS,
-      retries: 2
+      retries
     });
     return { payload: await response.json() as T, stateToken: response.headers.get("X-Training-State") || stateToken };
   } finally {
@@ -720,7 +720,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       const result = await requestTrainingAction<T>(
         { ...body, requestId, caseId: caseData.id, attemptId: attempt.attemptId, language: lang, mode: runtimeMode },
         token,
-        requestId
+        requestId,
+        body.action === "history-log" ? 0 : 2
       );
       trainingStateTokenRef.current = result.stateToken;
       try { sessionStorage.setItem(`hematuria-training-state-v1:${attempt.attemptId}`, result.stateToken); } catch { /* Memory fallback. */ }
