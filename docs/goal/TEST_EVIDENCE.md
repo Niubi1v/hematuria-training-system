@@ -462,3 +462,19 @@ Preview未执行真实Upstash/DeepSeek验收，因为当前没有也不得读取
 | 文档diff/敏感信息 | `git diff --check`、受保护路径diff、bundled Node直接执行`scripts/scan-repository-secrets.mjs` | exit0；294个tracked/candidate文件通过，`data/**`、审核产物和`outputs/**`零差异；pnpm包装入口因Node 24/无TTY依赖状态检查未进入脚本，不记作扫描失败或通过 |
 
 说明：本次没有代码变化，所以没有重复运行已在`10fe60d`远程CI通过的完整门禁。Vercel部署绿灯只证明构建/部署成功；当前浏览器和health证据证明受保护API链不可用，不能计作真实DeepSeek、Upstash、签名日志、10/10、20轮、P95或自然度通过。未读取Cookie、Authorization、localStorage、环境变量值或密钥。
+
+## 2026-07-14 PRV-P2-003 TTS缓存隔离
+
+| 检查 | 精确命令/环境 | 退出码与结果 |
+|---|---|---|
+| 旧实现失败基线 | bundled Node执行`node_modules/tsx/dist/cli.mjs scripts/test-tts-api.ts` | exit1；固定旧FNV碰撞的第二文本实际为`HIT`，精确失败为`'HIT' !== 'MISS'` |
+| 修复后TTS API专项 | 同上 | exit0；四音色、SHA-256 tuple、Origin/参数隔离、精确命中、1小时TTL、预热并发和100项淘汰通过 |
+| 前端选声与恢复 | `scripts/test-tts.ts`、`scripts/test-api-recovery.ts` | 均exit0；中英男女/年龄/对抗名称和有限恢复合同通过 |
+| TypeScript、ESLint | bundled Node执行`tsc --noEmit`、`scripts/run-lint.mjs` | 均exit0；本地Node 24仅有仓库engine边界，最终以Node 22 CI为准 |
+| 完整行为门禁 | `CI=true pnpm run test` | exit0，33.4秒；当前36段/42例/572/419/18隔离/360/安全合同通过 |
+| Vercel等价构建 | `CI=1 VERCEL=1 VERCEL_ENV=preview pnpm run build` | exit0，17.7秒；52/52静态页、2/2 export |
+| bundle与repository扫描 | `scripts/scan-static-bundle.ts`、`scripts/scan-repository-secrets.mjs` | exit0；25个JS资产、294个tracked/candidate文件，无敏感值输出 |
+| 已提交HEAD幂等 | bundled Node执行`scripts/test-conversion-idempotency.ts`，干净`91b2b23` | exit0，12秒；75个受控输出baseline及第二次生成通过，临时worktree清理 |
+| 受保护路径 | `git diff --name-only -- data ... outputs` | 无输出；未修改病例、审核产物、裁决表、`needs_revision`或360评分 |
+
+说明：测试provider返回每次不同的短音频Buffer，用来证明不同tuple不会复用音频；它不是Azure真实音色证据。Azure未配置状态保持SKIP/PENDING。首次TypeScript尝试因本地pnpm junction在沙箱内不可读而未进入有效模块解析；按锁文件恢复依赖并在可读取junction的环境重跑后exit0，没有修改package或lock。

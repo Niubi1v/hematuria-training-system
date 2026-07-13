@@ -264,3 +264,11 @@
 - 匿名`GET /api/health/`返回HTTP 200但类型为`text/html`，正文是Vercel Authentication/Deployment Protection页面而非应用health JSON。当前可审计根因边界是API链被保护层截获；不能据此判断DeepSeek、Upstash或训练签名handler内部状态。
 - 浏览器控制台读取通道两次超时，未取得可归因于应用的console/network事件；没有把浏览器工具自身网络告警记作产品缺陷，也没有伪造请求状态、首Token或P95。
 - 本轮仅追加验收证据，不改业务、医学数据、审批状态或环境变量；代码基线仍为`9d405fd`，`10fe60d`为其文档后代。所有安全可执行的静态发布P1已关闭；剩余是Preview权限/变量、生产只读证据和具名医学裁决。
+
+### PRV-P2-003 TTS缓存隔离（2026-07-14）
+
+- 从静态审计剩余P2中选择无需隐私保留期、第三方权限或医学裁决的TTS缓存碰撞。固定碰撞对在旧实现中真实复现：第二个不同文本返回`X-TTS-Cache: HIT`，测试exit1。
+- `api/tts.js`改用Node内置SHA-256索引规范化`origin/voice/rate/pitch/text` tuple；缓存项再次保存并严格比较tuple、音频Buffer和过期时间。默认1小时TTL、100项FIFO上限保持，旧Buffer格式缓存会被拒绝并删除。
+- 专项覆盖四音色、旧FNV碰撞、精确命中、Origin/语速/音调隔离、TTL、预热并发命中和容量淘汰。代码提交`91b2b23`可独立普通revert。
+- 本地证据：TTS/API恢复、TypeScript、ESLint通过；完整行为门禁33.4秒exit0；Vercel等价build 52/52、bundle 25 JS、secret 294文件通过；干净HEAD幂等75项12秒exit0。`data/**`、审核状态、360评分和环境变量零修改。
+- 本项仍待普通push后的GitHub Node 22、Playwright和Vercel新Preview确认；Azure未配置，真实四音色继续按目标标记SKIP/PENDING，不能用mock音频冒充。

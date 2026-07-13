@@ -219,3 +219,10 @@
 - 匿名health请求返回Vercel Authentication HTML而不是应用JSON，证实当前API链被Deployment Protection截获。真实DeepSeek、Upstash持久attempt、独立签名、日志10/10、20轮、首Token/P95与自然度均仍BLOCKED，不能由Vercel绿灯替代。
 - 当前没有剩余可在无权限条件下复现并修复的P0/P1代码缺陷。需人工处理的下一步：为该分支Preview核对保护访问方式及`UPSTASH_REDIS_REST_URL`、`UPSTASH_REDIS_REST_TOKEN`、`TRAINING_ATTEMPT_STORE_MODE=upstash`、独立强`TRAINING_STATE_SECRET`的作用域并重部署；随后运行真实AI验收。不得由Codex生成、读取或修改密钥值。
 - 医学阻塞保持不变：HEM-P0-001与HEM-P0-023需具名医学专家裁决；未批准419条事实，未解除42例`needs_revision`，未改变18条双语冲突或360分算法。推荐长期QA起始HEAD为证据提交`30b0d45`或其仅文档后代，行为代码基线为`9d405fd`。
+
+### TTS缓存安全增量（待远程CI）
+
+- `PRV-P2-003`旧32位FNV缓存碰撞已用固定文本对真实复现并修复；不同文本、Origin、音色、语速和音调不能再共用音频，缓存命中还需原tuple、Buffer和未过期同时成立。
+- 提交`91b2b23`仅修改`api/tts.js`与`scripts/test-tts-api.ts`；使用Node内置SHA-256，无新增依赖、密钥或环境变量，默认TTL一小时、容量100项。回滚为普通`git revert 91b2b23`。
+- 本地TTS专项、API恢复、TypeScript、ESLint、完整行为、52页build、25 JS bundle、294文件secret及75输出幂等均exit0。测试音频是确定性fixture，不是Azure真实服务通过。
+- 未改变医学数据、419审核决定、42例`needs_revision`、18条冲突隔离、Patient Agent语义、连接状态机或360分算法。远程Node 22 CI/Vercel完成前本项只记LOCAL PASS；PR继续Draft。
