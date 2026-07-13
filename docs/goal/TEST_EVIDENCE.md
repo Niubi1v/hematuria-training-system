@@ -478,3 +478,10 @@ Preview未执行真实Upstash/DeepSeek验收，因为当前没有也不得读取
 | 受保护路径 | `git diff --name-only -- data ... outputs` | 无输出；未修改病例、审核产物、裁决表、`needs_revision`或360评分 |
 
 说明：测试provider返回每次不同的短音频Buffer，用来证明不同tuple不会复用音频；它不是Azure真实音色证据。Azure未配置状态保持SKIP/PENDING。首次TypeScript尝试因本地pnpm junction在沙箱内不可读而未进入有效模块解析；按锁文件恢复依赖并在可读取junction的环境重跑后exit0，没有修改package或lock。
+
+### `96fcf80`远程门禁
+
+- Actions run `29291035332` / build job `86954440438`：completed/success，4分00秒；项目Node `v22.14.0`。
+- Unit and behavioral tests日志明确输出：`TTS API voice, SHA-256 tuple, origin/parameter isolation, TTL, concurrency, and bounded eviction contracts passed.`
+- Conversion idempotency为75个受控输出通过；repository secret为294文件通过；Playwright 40/40（1.5分钟）；build 52/52；CI bundle 23个JS；最终tracked-worktree clean gate通过。
+- Production dependency audit仍为1 moderate、0 high；没有伪造成零漏洞。Vercel Deployment和Preview Comments success，Pages deploy skipped，PR保持Draft。
