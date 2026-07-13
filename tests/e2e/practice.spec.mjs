@@ -124,7 +124,12 @@ test("English patient reply stays English and language switch creates a separate
     await route.fulfill({ status: 200, contentType: "application/json", headers: { "X-Training-State": `e2e-${body.attemptId}` }, body: JSON.stringify(payload) });
   });
   await page.goto("/cases/P001/");
+  const englishSessionReady = page.waitForResponse((response) => {
+    if (!response.url().includes("/api/session/init/")) return false;
+    return response.request().postDataJSON()?.language === "en" && response.ok();
+  });
   await page.getByRole("button", { name: "English" }).click();
+  await englishSessionReady;
   await page.getByPlaceholder("Enter an interview question").fill("Do you have pain or fever?");
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByText("I do not have pain or fever.").first()).toBeVisible();

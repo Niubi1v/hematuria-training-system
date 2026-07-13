@@ -177,3 +177,9 @@
 - production smoke现采集session、完整回答、真实provider、history-log、score耗时；当前非流式协议的首Token明确登记为unsupported，未用完整回答耗时冒充。
 - 本地专项与完整32项行为链通过，Vercel等价构建52/52、bundle 25 JS与repo secret 283候选文件通过，`data/**`零差异。TypeScript退出0；项目Lint因当前Codex仅提供Node 24.14而仓库要求Node 22、Rushstack补丁拒绝该运行时，本机退出1，待PR的Node 22 CI复核。
 - 未修改医学事实、419审核决定、42例`needs_revision`、360分算法、环境变量或密钥；PR继续保持Draft。
+
+## 2026-07-13 性能增量首轮CI
+
+- `d9155b8`已普通push；Vercel Deployment与Preview Comments通过，Actions run `29234298382`的TypeScript、Lint、完整行为、安全及医学门禁通过。
+- Actions唯一失败为Playwright mobile英文切换用例39/40：测试没有等待英文session初始化就发送。已增加对`language=en` session响应的确定性等待，未延长或放宽回答断言。
+- 本机定向Playwright因webServer启动条件超时未形成通过证据；新提交必须由Linux CI完整40/40确认。PR保持Draft，Pages deploy继续按设计跳过。

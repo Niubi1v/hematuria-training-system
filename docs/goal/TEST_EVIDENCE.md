@@ -322,3 +322,10 @@
 
 - `git diff -- data`为空；测试产生的三份时间戳报告已恢复为原追踪内容，没有提交无关生成物。
 - 真实Preview P95和首Token未验证：provider接口仍为`stream:false`，smoke明确报告首Tokenunsupported；真实性能需要Preview权限和变量后重新部署本提交再测。
+
+### 首轮远程结果与最小修复
+
+- Actions run `29234298382`：build失败，第一条真实错误位于Playwright E2E；39/40通过，mobile英文切换未在5秒内找到固定英文回答。Typecheck和Lint均success，故本机Node 24 Lint阻塞已由CI Node 22补证。
+- Vercel deployment `AGSc7mzfLkMWkHiWVerHGZHJ2TwD`与Preview Comments通过；Pages deploy skipped；PR保持Draft。
+- 本机原样定向`playwright ... --project=mobile-chromium --grep "English patient reply stays English" --repeat-each=3`在180秒后因本地webServer条件超时退出124，不能登记为业务失败或通过。
+- 测试最小修复：等待`/api/session/init/`请求体`language=en`且响应成功后再发送；原5秒回答断言、固定英文内容、语言隔离和移动端覆盖全部保留。`node --check tests/e2e/practice.spec.mjs`用于提交前语法门禁，新CI作为最终行为证据。

@@ -113,4 +113,6 @@
 | 首Token耗时 | BLOCKED | 当前provider调用为`stream:false`；明确报告unsupported，不以完整耗时冒充 |
 | Preview真实P95 | BLOCKED | 需要可登录Preview及真实AI/签名变量；当前无可审计样本 |
 | TypeScript、行为、构建、扫描 | LOCAL PASS | 32项、52/52、25 JS、283文件，均exit 0 |
-| ESLint | PENDING | 本机只有Node 24.14，仓库要求Node 22；等待PR Node 22 CI复核 |
+| ESLint | PASS | run `29234298382`的Node 22 Lint步骤success；本机Node 24不兼容不再是证据缺口 |
+
+- 首轮远程补证：run `29234298382`的TypeScript与ESLint均PASS；Playwright mobile英文切换竞态导致39/40，已最小修复测试等待点，状态保持PENDING直到新run确认。

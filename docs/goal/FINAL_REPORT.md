@@ -143,3 +143,8 @@
 - 本地32项行为链、TypeScript、52页Vercel等价构建、25 JS bundle扫描和283文件secret扫描通过；本机ESLint受Node 24与仓库Node 22约束不兼容阻塞，必须以新HEAD的GitHub Actions Node 22结果为准。
 - 该增量不改变360分算法、医学事实、HEM-P0-001/023隔离、419审核决定、`needs_revision`、环境变量或密钥。真实AI P95、首Token、日志10/10和自然度仍未通过，PR必须保持Draft。
 - 回滚方式：普通`git revert`本次性能遥测提交；不得reset、force push或借回滚修改医学数据。
+
+### 首轮CI状态
+
+- `d9155b8`的Vercel两项检查通过，Actions run `29234298382`因mobile英文切换测试竞态失败（39/40）；TypeScript、ESLint、行为、安全与医学门禁在失败前均通过。
+- 已仅修复测试同步点：等待英文session成功后再发送，不改变生产业务逻辑或验收断言。新CI未完成前不得把Actions写为通过。
