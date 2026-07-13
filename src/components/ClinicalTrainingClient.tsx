@@ -644,6 +644,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const patientSubmitLockRef = useRef(false);
   const historyLogSyncRef = useRef(false);
   const historyLogRetryTimerRef = useRef(0);
+  const historyLogRetryWaitingRef = useRef(false);
   const aiGenerationRef = useRef(0);
   const reconnectPromiseRef = useRef<Promise<boolean> | null>(null);
   const practiceDeployment = process.env.NEXT_PUBLIC_DEPLOYMENT_TIER !== "formal";
@@ -908,8 +909,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }, [attempt.attemptId]);
 
   useEffect(() => {
-    if (!attemptReady || !pendingHistoryLogs.length || historyLogSyncRef.current) return;
+    if (!attemptReady || !pendingHistoryLogs.length || historyLogSyncRef.current || historyLogRetryWaitingRef.current) return;
     const pending = pendingHistoryLogs[0];
+    if (pending.attempts >= 3) {
+      setLogSyncStatus("failed");
+      return;
+    }
     let cancelled = false;
     historyLogSyncRef.current = true;
     setLogSyncStatus("pending");
@@ -925,7 +930,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         const attempts = pending.attempts + 1;
         setPendingHistoryLogs((current) => current.map((item) => item.requestId === pending.requestId ? { ...item, attempts } : item));
         if (attempts < 3) {
-          historyLogRetryTimerRef.current = window.setTimeout(() => setLogRetryNonce((value) => value + 1), [500, 1200, 2500][attempts - 1]);
+          historyLogRetryWaitingRef.current = true;
+          historyLogRetryTimerRef.current = window.setTimeout(() => {
+            historyLogRetryWaitingRef.current = false;
+            setLogRetryNonce((value) => value + 1);
+          }, [500, 1200, 2500][attempts - 1]);
         } else {
           setLogSyncStatus("failed");
         }
@@ -1039,6 +1048,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     sessionInitAbortRef.current?.abort();
     autoSessionInitRef.current?.controller.abort();
     if (historyLogRetryTimerRef.current) window.clearTimeout(historyLogRetryTimerRef.current);
+    historyLogRetryWaitingRef.current = false;
     patientReplyAbortRef.current?.abort();
     aiGenerationRef.current += 1;
     cloudAudioRef.current?.pause();
@@ -1646,7 +1656,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
               : logSyncStatus === "failed"
                 ? (lang === "en" ? "Scoring sync paused" : "评分同步已暂停")
                 : (lang === "en" ? "Scoring sync pending" : "评分待同步")}</span>
-            {logSyncStatus === "failed" && <button type="button" onClick={() => { setLogSyncStatus("pending"); setLogRetryNonce((value) => value + 1); }} className="font-semibold underline underline-offset-2">{lang === "en" ? "Retry sync" : "重新同步"}</button>}
+            {logSyncStatus === "failed" && <button type="button" onClick={() => {
+              historyLogRetryWaitingRef.current = false;
+              setPendingHistoryLogs((current) => current.map((item, index) => index === 0 ? { ...item, attempts: 0 } : item));
+              setLogSyncStatus("pending");
+              setLogRetryNonce((value) => value + 1);
+            }} className="font-semibold underline underline-offset-2">{lang === "en" ? "Retry sync" : "重新同步"}</button>}
           </div>}
           {showReconnect && !connectionMessage && <button
             type="button"

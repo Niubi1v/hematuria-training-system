@@ -158,3 +158,5 @@
 - 首轮远程run `29231277833`：69 JSON、generated diff、医学合同、完整行为、TypeScript、ESLint、secret scan及Playwright安装均通过；Playwright 38/40，只有新增手动同步用例desktop/mobile失败。Vercel Deployment与Preview Comments通过，Pages deploy跳过。
 - 失败日志证明history-log存在通用请求层与持久队列的双层重试；前三个503后第4次自动成功，未进入失败UI。已将history-log收敛为仅由持久队列三次有界重试，其他训练动作保持原恢复策略；等待相关回归及新一轮CI。
 - 修复后TypeScript、ESLint、training API签名/幂等、API recovery与AI recovery专项均exit0；原Playwright断言没有放宽，下一轮由Linux CI直接复跑。
+- 第二轮run `29231718708`仍为Playwright 38/40且同一断言失败，Vercel通过。代码追踪确认pending attempts的state写回会立即重启effect并绕过退避，第三次失败后自动第4次成功覆盖failed提示。
+- 已为history-log退避加入单一waiting锁；三次失败后effect稳定停止，人工按钮重置队首attempt计数再以原requestId重试。原测试继续要求3次失败、按钮可见、第4次成功与回答唯一。

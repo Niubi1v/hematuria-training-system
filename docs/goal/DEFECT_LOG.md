@@ -11,6 +11,8 @@
 - 回归：新增Playwright场景，前三次history-log返回503、手动重试第四次成功；要求4次只有一个requestId、一个AI回答并最终显示评分已同步。TypeScript、ESLint及完整行为链本地通过；本机Playwright未完成启动，远程CI结果尚待确认。
 - 首轮远程证据：head `2283f19`的Actions run `29231277833`中前19个步骤通过；Playwright 38/40，新增用例desktop/mobile均因5秒内未出现按钮失败。真实根因是通用HTTP恢复层每轮重试3次，持久history队列又重试3轮，前三个503被单轮内部重试吸收后第4次自动成功，测试没有进入“耗尽”状态。
 - CI后最小修复：history-log关闭通用层内部重试，仅由现有持久队列执行三次有界退避；其他训练动作仍保留通用重试。预计总调用从最多9次收敛为3次，手动操作为第4次，requestId与签名验证边界不变。
+- 第二轮证据：head `853d819`的run `29231718708`仍为38/40且同一按钮断言失败。进一步审查发现`attempts`写回`pendingHistoryLogs`会立即重新触发effect，绕过退避timer；第三次写回又触发第4次自动请求，成功后覆盖短暂的failed状态。
+- 第二次最小修复：退避期间增加单一waiting ref；`attempts>=3`时effect停止自动请求并稳定显示按钮；人工操作只重置队首项的attempts后触发同requestId重试。该修复针对新的状态竞态证据，不放宽断言。
 - 数据治理：未修改`data/**`、评分算法、签名验证、医学事实、审批状态或`needs_revision`。
 
 ### HEM-P1-024：初始化失败时重复显示连接提示（已解除）

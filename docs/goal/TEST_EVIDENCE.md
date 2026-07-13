@@ -281,3 +281,11 @@
 - 代码审查根因：`requestTrainingAction`使用`fetchWithRecovery(... retries: 2)`，history持久队列又最多执行3轮；测试前三个503由第一轮内部3次调用吸收，队列下一轮第4次成功，所以按钮正确地没有出现。
 - 修复：history-log的通用层`retries=0`，仅保留持久队列三轮有界重试；其他训练动作仍为2次内部重试。原失败断言不放宽，仍要求3次自动失败后出现按钮、手动第4次成功、同一requestId且AI回答唯一。
 - 修复后本地：`tsc --noEmit`、`run-lint.mjs`、`test-training-api.ts`、`test-api-recovery.ts`、`test-ai-recovery.ts`依次exit0。日志中的403/404/503/timeout均为专项预期的脱敏fixture，不是未处理失败。
+
+### 第二轮CI与effect重入根因
+
+- head `853d8198b05af235360df4e38cc024f2d5f66a60`，Actions run `29231718708`；Vercel Deployment `8rypWN4jd3ySMVB9bz3YhAZ7UpUJ`及Preview Comments success。
+- Playwright仍为38/40，desktop/mobile同一`Retry sync`不可见；说明移除HTTP内层重试只解决重复调用层数，没有解决状态effect重入。
+- 根因路径：catch写回`pendingHistoryLogs.attempts` → dependency变化立即清理/重跑effect → 未等待既定500/1200ms timer即发下一请求；第三次失败写回又发第4次请求并成功，failed状态被verified覆盖。
+- 修复后要求：waiting期间dependency重跑不得发请求；`attempts>=3`稳定停机；人工按钮重置队首attempts并保留requestId。Playwright断言及5秒窗口保持不变。
+- 状态竞态修复后再次运行TypeScript、ESLint、training API、API recovery与AI recovery，五项均exit0；没有重复运行与本次变更无关的完整行为/构建门禁。
