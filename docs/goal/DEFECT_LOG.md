@@ -61,12 +61,12 @@
 - 最新复验：`a9ace13`对应Vercel Deployment已success，但in-app浏览器直达`/cases/P001/`仍在20秒内无法取得DOM；部署成功与应用登录态体验通过必须分开登记。
 - 2026-07-13 15:40复验：Chrome可枚举到标题为“血尿多智能体临床思维训练平台”的Preview P001标签及目标URL；两次接管后，第一次DOM读取超过30秒并重置连接，第二次连标题/URL最小探针在60秒内亦未完成。未读取Cookie、Authorization、localStorage或任何密钥；继续登记为外部访问阻塞，不得据此评价真实AI成功率或性能。
 
-### HEM-P1-021：真实首Token指标当前不可测
+### HEM-P1-021：真实首Token指标当前不可测（工程采集已解除）
 
-- 状态：设计限制，待验证；当前Patient Agent接口为非流式响应，只能测完整请求耗时。
-- 处置：若首Token仍为强制指标，需要另行设计不泄露内容的服务端计时或流式协议；不得用完整响应时间冒充首Token时间。
-- 2026-07-13工程增量：新增白名单化`Server-Timing`合同，覆盖session、应用总耗时、真实provider调用、history-log与score；客户端无法注入指标名，响应不包含问题、病例、签名、token或密钥。production smoke已能分项采集这些指标，并明确输出`patient-first-token=unsupported`。
-- 剩余阻塞：首Token仍需流式供应商协议；真实P95仍需可登录且具备真实AI/签名变量的Preview环境采样。本增量只消除“除首Token外缺少分段计时”的工程缺口，不把外部验收改为PASS。
+- 状态：工程采集已解除，真实Preview待验证。主Patient Agent与通用Agent的`chat_completions`现默认使用供应商SSE，在服务端聚合为原有JSON响应，并记录首个非空provider token耗时。
+- 安全边界：只累计`delta.content`；`reasoning_content`仅用于确定首Token时点，不保存、不返回、不写日志。客户端只见白名单`Server-Timing:firsttoken`毫秒数，非流式兼容路径不会伪造指标。
+- 2026-07-13初始工程增量先新增白名单化`Server-Timing`合同，覆盖session、应用总耗时、真实provider调用、history-log与score；当时非流式smoke明确输出`patient-first-token=unsupported`。当前SSE增量已将该输出替换为真实样本分布，且仍不包含问题、病例、签名、token或密钥。
+- 剩余阻塞：真实首Token/P95仍需可登录且具备真实AI/签名变量的Preview环境采样。本增量消除本地协议与采集缺口，但不把外部验收改为PASS。
 
 ### HEM-P1-026：移动端英文切换E2E未等待session就绪（已解除）
 

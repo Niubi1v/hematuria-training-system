@@ -1,10 +1,14 @@
 function getLLMProviderConfig() {
+  const endpointType = process.env.LLM_ENDPOINT_TYPE || "chat_completions";
   return {
     provider: process.env.LLM_PROVIDER || "deepseek",
     apiKey: process.env.LLM_API_KEY,
     baseUrl: process.env.LLM_API_BASE_URL || "https://api.deepseek.com",
     model: process.env.LLM_MODEL || "deepseek-v4-flash",
-    endpointType: process.env.LLM_ENDPOINT_TYPE || "chat_completions",
+    endpointType,
+    streaming: process.env.LLM_STREAMING_ENABLED === undefined
+      ? endpointType === "chat_completions"
+      : process.env.LLM_STREAMING_ENABLED === "true",
     temperature: Number(process.env.LLM_TEMPERATURE || 0.2),
     maxTokens: Number(process.env.LLM_MAX_TOKENS || 500),
     timeoutMs: Number(process.env.LLM_REQUEST_TIMEOUT_MS || 15000),
@@ -30,6 +34,65 @@ function readLLMText(payload) {
   return payload?.choices?.[0]?.message?.content || payload?.choices?.[0]?.text || payload?.output_text || payload?.content || "";
 }
 
+async function readStreamingLLM(response, startedAt) {
+  if (!response.body) throw new Error("LLM provider returned an empty streaming body");
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let text = "";
+  let firstTokenMs;
+
+  function consumeLine(line) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith(":")) return false;
+    if (!trimmed.startsWith("data:")) return false;
+    const data = trimmed.slice(5).trim();
+    if (data === "[DONE]") return true;
+    let payload;
+    try {
+      payload = JSON.parse(data);
+    } catch {
+      throw new Error("LLM provider returned a malformed streaming event");
+    }
+    const delta = payload?.choices?.[0]?.delta || {};
+    const generatedToken = String(delta.reasoning_content || delta.content || "");
+    if (generatedToken && firstTokenMs === undefined) firstTokenMs = Date.now() - startedAt;
+    if (typeof delta.content === "string") text += delta.content;
+    return false;
+  }
+
+  let doneEvent = false;
+  try {
+    while (!doneEvent) {
+      const { value, done } = await reader.read();
+      buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+      const lines = buffer.split(/\r?\n/);
+      buffer = lines.pop() || "";
+      for (const line of lines) {
+        if (consumeLine(line)) {
+          doneEvent = true;
+          break;
+        }
+      }
+      if (done) {
+        if (buffer) consumeLine(buffer);
+        break;
+      }
+    }
+  } finally {
+    if (doneEvent) await reader.cancel().catch(() => {});
+    reader.releaseLock();
+  }
+  return { text: text.trim(), firstTokenMs };
+}
+
+async function readLLMResponse(response, { streaming, startedAt }) {
+  const contentType = String(response.headers.get("content-type") || "").toLowerCase();
+  if (streaming && contentType.includes("text/event-stream")) return readStreamingLLM(response, startedAt);
+  const json = await response.json();
+  return { text: readLLMText(json).trim(), firstTokenMs: undefined };
+}
+
 const transientStatuses = new Set([408, 425, 429, 502, 503, 504]);
 
 function retryDelay(attempt, retryAfter = 0) {
@@ -53,7 +116,7 @@ async function callLLM({ systemPrompt, userPayload, temperature, maxTokens, maxR
     try {
       const response = await fetch(joinUrl(config.baseUrl, config.endpointType), {
         method: "POST",
-        headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json", "X-Request-Id": requestId },
+        headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json", Accept: config.streaming ? "text/event-stream" : "application/json", "X-Request-Id": requestId },
         body: JSON.stringify({
           model: config.model,
           ...deepSeekThinking(config),
@@ -63,7 +126,7 @@ async function callLLM({ systemPrompt, userPayload, temperature, maxTokens, maxR
             { role: "system", content: systemPrompt },
             { role: "user", content: JSON.stringify(userPayload) }
           ],
-          stream: false
+          stream: config.streaming
         }),
         signal: controller.signal
       });
@@ -77,10 +140,9 @@ async function callLLM({ systemPrompt, userPayload, temperature, maxTokens, maxR
         await new Promise((resolve) => setTimeout(resolve, retryDelay(attempt, retryAfter)));
         continue;
       }
-      const json = await response.json();
-      const text = readLLMText(json).trim();
+      const { text, firstTokenMs } = await readLLMResponse(response, { streaming: config.streaming, startedAt });
       if (!text) throw new Error("LLM provider returned empty content");
-      return { text, provider: config.provider, model: config.model, requestId, retryCount: attempt, durationMs: Date.now() - startedAt };
+      return { text, provider: config.provider, model: config.model, requestId, retryCount: attempt, durationMs: Date.now() - startedAt, firstTokenMs };
     } catch (error) {
       lastError = error;
       const timedOut = error?.name === "AbortError";
@@ -97,4 +159,4 @@ async function callLLM({ systemPrompt, userPayload, temperature, maxTokens, maxR
   throw lastError || new Error("LLM provider unavailable");
 }
 
-module.exports = { callLLM, getLLMProviderConfig };
+module.exports = { callLLM, getLLMProviderConfig, readLLMResponse };

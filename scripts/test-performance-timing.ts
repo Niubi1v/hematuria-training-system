@@ -14,6 +14,7 @@ const formatted = formatServerTiming({ app: 12.345, provider: 9.2, invalid: Numb
 assert.equal(formatted, "app;dur=12.3, provider;dur=9.2", "timing output must be stable, finite, non-negative and rounded");
 assert.deepEqual(parseServerTiming(formatted), { app: 12.3, provider: 9.2 });
 assert.deepEqual(parseServerTiming("session;dur=3, malformed, score;dur=1.25, secret;desc=hidden"), { session: 3, score: 1.25 });
+assert.deepEqual(parseServerTiming("firsttoken;dur=8.25, reasoning;dur=1"), { firsttoken: 8.25 });
 
 const headers: Record<string, string> = {};
 const header = setServerTiming({ setHeader(name, value) { headers[name.toLowerCase()] = value; } }, { history: 4, score: 2.26 });

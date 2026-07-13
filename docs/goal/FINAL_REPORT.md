@@ -149,3 +149,10 @@
 - `d9155b8`的Vercel两项检查通过，Actions run `29234298382`因mobile英文切换测试竞态失败（39/40）；TypeScript、ESLint、行为、安全与医学门禁在失败前均通过。
 - 已仅修复测试同步点：等待英文session成功后再发送，不改变生产业务逻辑或验收断言；在随后CI完成前没有把Actions提前写为通过。
 - 修复HEAD `f052d7e`的run `29235062395`最终success，Playwright恢复40/40；Vercel两项通过，Pages deploy跳过，PR仍为Open/Draft。HEM-P1-026已解除。
+
+## 首Token SSE工程增量（待远程与真实Preview复核）
+
+- 主Patient Agent与通用Agent的`chat_completions`已从固定非流式改为默认SSE，在不改变前端JSON合同的情况下采集真实provider首Token耗时；显式`LLM_STREAMING_ENABLED=false`保留兼容路径且不伪造指标。
+- 本地失败测试、SSE/非泄露专项、33项行为、TypeScript、52页构建及扫描均有exit码证据；医学数据、审批状态、360分算法和实际环境变量零修改。
+- 工程协议缺口已消除；真实Preview首Token/P95、10/10日志和自然度仍需要登录权限与正确变量作用域，不能写为通过。
+- 回滚：普通revert本次SSE增量提交即可恢复非流式provider请求；不得reset、force push或修改医学事实补偿回滚。

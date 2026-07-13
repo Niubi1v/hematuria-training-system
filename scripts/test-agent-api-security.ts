@@ -136,10 +136,16 @@ async function verifyProviderTimingNonDisclosure() {
   process.env.LLM_ENABLE_AI_PATIENT = "true";
   process.env.LLM_API_BASE_URL = "https://api.example.test";
   process.env.LLM_MODEL = "test-model";
-  globalThis.fetch = async () => new Response(
-    JSON.stringify({ choices: [{ message: { content: "OK" } }] }),
-    { status: 200, headers: { "Content-Type": "application/json" } }
-  );
+  globalThis.fetch = async () => {
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode('data: {"choices":[{"delta":{"content":"OK"}}]}\n\ndata: [DONE]\n\n'));
+        controller.close();
+      }
+    });
+    return new Response(stream, { status: 200, headers: { "Content-Type": "text/event-stream" } });
+  };
   try {
     const response = await call(agentHandler, {
       origin: "https://allowed.example",
@@ -147,8 +153,9 @@ async function verifyProviderTimingNonDisclosure() {
       body: { caseId: "P001", agentId: "standardized_patient", probe: true }
     });
     assert.equal(response.statusCode, 200);
-    assert.match(response.headers["server-timing"], /^app;dur=\d+\.\d, provider;dur=\d+\.\d$/);
+    assert.match(response.headers["server-timing"], /^app;dur=\d+\.\d, provider;dur=\d+\.\d, firsttoken;dur=\d+\.\d$/);
     assert.equal("providerDurationMs" in (response.payload as Record<string, unknown>), false, "internal timing must stay out of the JSON body");
+    assert.equal("providerFirstTokenMs" in (response.payload as Record<string, unknown>), false, "first-token timing must stay out of the JSON body");
   } finally {
     globalThis.fetch = originalFetch;
     delete process.env.LLM_ENABLE_AI_PATIENT;

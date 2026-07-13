@@ -22,6 +22,7 @@ LLM_API_KEY=<DeepSeek密钥>
 LLM_API_BASE_URL=https://api.deepseek.com
 LLM_MODEL=deepseek-v4-flash
 LLM_ENDPOINT_TYPE=chat_completions
+LLM_STREAMING_ENABLED=true
 LLM_ENABLE_AI_AGENTS=true
 LLM_ENABLE_AI_PATIENT=true
 LLM_REQUEST_TIMEOUT_MS=15000
@@ -47,6 +48,8 @@ AGENT_API_SERVER_TOKEN=<独立服务间令牌>
 TRAINING_API_ALLOWED_ORIGINS=https://niubi1v.github.io
 TTS_ALLOWED_ORIGINS=https://niubi1v.github.io
 ```
+
+`chat_completions`默认使用供应商SSE流并在服务端聚合为原有JSON响应，同时通过非敏感`Server-Timing`返回`firsttoken`耗时。仅当兼容供应商明确不支持SSE时才将`LLM_STREAMING_ENABLED=false`；非流式路径不会伪造首Token指标。DeepSeek的SSE合同以官方[`Create Chat Completion`](https://api-docs.deepseek.com/api/create-chat-completion)文档为准。
 
 密钥只能存在于 Vercel 服务端变量中，不得使用 `NEXT_PUBLIC_` 前缀，不得写入仓库、浏览器日志或截图。变量修改后必须重新部署 Vercel 项目。
 

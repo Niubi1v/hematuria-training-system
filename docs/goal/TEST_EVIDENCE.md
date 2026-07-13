@@ -330,3 +330,18 @@
 - 本机原样定向`playwright ... --project=mobile-chromium --grep "English patient reply stays English" --repeat-each=3`在180秒后因本地webServer条件超时退出124，不能登记为业务失败或通过。
 - 测试最小修复：等待`/api/session/init/`请求体`language=en`且响应成功后再发送；原5秒回答断言、固定英文内容、语言隔离和移动端覆盖全部保留。`node --check tests/e2e/practice.spec.mjs`用于提交前语法门禁，新CI作为最终行为证据。
 - 修复HEAD `f052d7e`：Actions run `29235062395` completed/success，build job `86767725364`用时3分31秒；Playwright 40/40，TypeScript、Lint、行为、医学治理、构建及扫描步骤均通过。Vercel deployment `AYbur4LpESzJVG2jtbP2JA54cBRr`与Preview Comments通过；Pages deploy job `86768374293` skipped。
+
+## 2026-07-13 首Token SSE工程证据
+
+| 检查 | 命令/范围 | 结果 |
+|---|---|---|
+| 失败基线 | `node_modules/.bin/tsx.cmd scripts/test-llm-streaming.ts`（实现前） | exit 1；SSE首个`data:`被JSON解析并报`Unexpected token 'd'` |
+| SSE合同 | 同命令（实现后） | exit 0；content聚合、reasoning不返回、首Token计时、显式非流式兼容通过 |
+| API非泄露 | `tsx scripts/test-agent-api-security.ts` | exit 0；`firsttoken`只在`Server-Timing`，JSON无内部计时字段 |
+| 相关回归 | `test-performance-timing`、`test-llm-adapter`、`test-ai-recovery`、TypeScript | exit 0 |
+| 完整行为链 | `package.json#scripts.test`顺序执行33项 | exit 0，10.3秒；42例、572/419与360分门禁保持通过 |
+| Vercel等价构建 | `VERCEL=1 VERCEL_ENV=preview next build` | exit 0，52/52 |
+| 扫描 | `scan-static-bundle.ts`、`scan-repository-secrets.mjs` | exit 0；25 JS、284候选文件，未输出秘密值 |
+
+- 官方协议依据：[DeepSeek Create Chat Completion](https://api-docs.deepseek.com/api/create-chat-completion)：`stream=true`使用data-only SSE增量并以`data: [DONE]`结束。
+- 尚未取得真实DeepSeek延迟样本；本地fixture只证明协议、计时与非泄露，不替代Preview P95/首Token验收。

@@ -1,5 +1,10 @@
 # 回滚计划
 
+## 首TokenSSE增量
+
+- 若兼容供应商在Preview明确不支持SSE，可先将服务端`LLM_STREAMING_ENABLED=false`作为可逆兼容开关并重新部署Preview；不得修改客户端或暴露密钥。
+- 若代码级回滚必要，对本次SSE增量提交执行普通`git revert`，恢复原非流式请求；禁止reset、force push、直接改main或借机改变医学审批状态。
+
 ## 原则
 
 - 回滚必须可审计、非破坏性并保留用户与其他Agent改动。

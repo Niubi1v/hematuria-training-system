@@ -11,6 +11,7 @@ const results = [];
 const sessionDurations = [];
 const patientDurations = [];
 const providerDurations = [];
+const firstTokenDurations = [];
 const historyDurations = [];
 const scoreDurations = [];
 const statusCounts = new Map();
@@ -77,7 +78,9 @@ for (const language of ["zh", "en"]) {
       else {
         realAiReplies += 1;
         if (reply.payload.generationSource === "live_ai" && timing.provider === undefined) throw new Error("missing live provider timing metadata");
+        if (reply.payload.generationSource === "live_ai" && timing.firsttoken === undefined) throw new Error("missing live first-token timing metadata");
         if (timing.provider !== undefined) providerDurations.push(timing.provider);
+        if (timing.firsttoken !== undefined) firstTokenDurations.push(timing.firsttoken);
       }
     });
   }
@@ -131,7 +134,7 @@ function metricSummary(values) {
 console.log(`METRIC\tsession-init\t${metricSummary(sessionDurations)}`);
 console.log(`METRIC\tpatient-reply\t${metricSummary(patientDurations)}`);
 console.log(`METRIC\tpatient-provider\t${metricSummary(providerDurations)}`);
-console.log("METRIC\tpatient-first-token\tunsupported (provider API is intentionally non-streaming)");
+console.log(`METRIC\tpatient-first-token\t${metricSummary(firstTokenDurations)}`);
 console.log(`METRIC\thistory-log\t${metricSummary(historyDurations)}`);
 console.log(`METRIC\tscore-submit\t${metricSummary(scoreDurations)}`);
 console.log(`METRIC\tpatient-source\treal-ai=${realAiReplies} fallback=${fallbackReplies} success-rate=${((realAiReplies + fallbackReplies) / 10 * 100).toFixed(0)}%`);

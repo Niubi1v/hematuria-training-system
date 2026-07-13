@@ -184,3 +184,10 @@
 - Actions唯一失败为Playwright mobile英文切换用例39/40：测试没有等待英文session初始化就发送。已增加对`language=en` session响应的确定性等待，未延长或放宽回答断言。
 - 本机定向Playwright因webServer启动条件超时未形成通过证据；新提交必须由Linux CI完整40/40确认。PR保持Draft，Pages deploy继续按设计跳过。
 - 修复HEAD `f052d7e`远程复核完成：Actions run `29235062395` build success（3分31秒，Playwright 40/40），Vercel Deployment与Preview Comments success，Pages deploy skipped；HEM-P1-026解除。
+
+## 2026-07-13 首Token SSE工程增量
+
+- 失败基线：`tsx scripts/test-llm-streaming.ts`在旧实现上exit1，首个`data:`触发`response.json()`解析错误，证明非流式实现不能产生真实首Token证据。
+- 依据DeepSeek官方`/chat/completions`合同实现SSE：默认仅对`chat_completions`启用，可用`LLM_STREAMING_ENABLED=false`显式兼容非SSE供应商；不修改任何实际环境变量。
+- 服务端聚合`delta.content`为原JSON回复；首个`reasoning_content`或`content`只记录时间，思维内容不保存、不返回。live_ai的smoke现在强制要求`provider`与`firsttoken`指标，cache/fallback不冒充真实provider样本。
+- 本地33项完整行为链exit0（10.3秒），专项SSE/API/恢复/计时与TypeScript exit0；Vercel等价52/52、25 JS bundle及284候选文件secret扫描exit0（合计16.4秒），`data/**`零修改。等待新HEAD的Node 22 Lint、Playwright 40/40及Vercel远程复核。

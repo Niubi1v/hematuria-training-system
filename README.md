@@ -95,6 +95,7 @@ LLM_API_KEY=your_secret_key
 LLM_API_BASE_URL=https://api.deepseek.com
 LLM_MODEL=deepseek-v4-flash
 LLM_ENDPOINT_TYPE=chat_completions
+LLM_STREAMING_ENABLED=true
 LLM_ENABLE_AI_AGENTS=true
 LLM_ENABLE_AI_PATIENT=true
 LLM_REQUEST_TIMEOUT_MS=15000

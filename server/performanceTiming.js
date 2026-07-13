@@ -1,4 +1,4 @@
-const ALLOWED_METRICS = new Set(["app", "provider", "session", "history", "score"]);
+const ALLOWED_METRICS = new Set(["app", "provider", "firsttoken", "session", "history", "score"]);
 const MAX_DURATION_MS = 10 * 60 * 1000;
 
 function safeDuration(value) {

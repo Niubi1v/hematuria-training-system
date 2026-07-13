@@ -2,6 +2,7 @@ const cases = require("../data/cases.json");
 const { generatePatientAnswer, probePatientProvider } = require("../server/patientSession.js");
 const { applyAgentCors, positiveInteger, setRateLimitHeaders, takeRateLimit } = require("../server/requestSecurity.js");
 const { setServerTiming } = require("../server/performanceTiming.js");
+const { readLLMResponse } = require("../server/llmClient.runtime.js");
 
 const blockedTeacherKeys = ["diagnosis", "imaging", "pathology", "treatment", "teacherOnlyData", "case_card", "scoring"];
 const agentIds = new Set([
@@ -31,12 +32,16 @@ function safetyBoundaryFallback(patient) {
 }
 
 function getProviderConfig() {
+  const endpointType = process.env.LLM_ENDPOINT_TYPE || "chat_completions";
   return {
     provider: process.env.LLM_PROVIDER || "custom",
     apiKey: process.env.LLM_API_KEY,
     baseUrl: process.env.LLM_API_BASE_URL,
     model: process.env.LLM_MODEL || "local-rule",
-    endpointType: process.env.LLM_ENDPOINT_TYPE || "chat_completions",
+    endpointType,
+    streaming: process.env.LLM_STREAMING_ENABLED === undefined
+      ? endpointType === "chat_completions"
+      : process.env.LLM_STREAMING_ENABLED === "true",
     temperature: Number(process.env.LLM_TEMPERATURE || 0.2),
     maxTokens: Number(process.env.LLM_MAX_TOKENS || 300),
     timeoutMs: Number(process.env.LLM_REQUEST_TIMEOUT_MS || 15000),
@@ -56,10 +61,6 @@ function joinUrl(baseUrl, endpointType) {
   return trimmed;
 }
 
-function readLLMText(payload) {
-  return payload?.choices?.[0]?.message?.content || payload?.choices?.[0]?.text || payload?.output_text || payload?.content || "";
-}
-
 async function callLLM({ systemPrompt, userPayload, maxTokens }) {
   const startedAt = Date.now();
   const config = getProviderConfig();
@@ -73,7 +74,7 @@ async function callLLM({ systemPrompt, userPayload, maxTokens }) {
   try {
     const response = await fetch(joinUrl(config.baseUrl, config.endpointType), {
       method: "POST",
-      headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json", Accept: config.streaming ? "text/event-stream" : "application/json" },
       body: JSON.stringify({
         model: config.model,
         ...deepSeekThinking(config),
@@ -82,7 +83,8 @@ async function callLLM({ systemPrompt, userPayload, maxTokens }) {
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: JSON.stringify(userPayload) }
-        ]
+        ],
+        stream: config.streaming
       }),
       signal: controller.signal
     });
@@ -90,10 +92,9 @@ async function callLLM({ systemPrompt, userPayload, maxTokens }) {
       const body = await response.text().catch(() => "");
       throw new Error(`LLM provider returned ${response.status}: ${body.slice(0, 200)}`);
     }
-    const json = await response.json();
-    const text = readLLMText(json).trim();
+    const { text, firstTokenMs } = await readLLMResponse(response, { streaming: config.streaming, startedAt });
     if (!text) throw new Error("Empty LLM response");
-    return { text, provider: config.provider, model: config.model, durationMs: Date.now() - startedAt };
+    return { text, provider: config.provider, model: config.model, durationMs: Date.now() - startedAt, firstTokenMs };
   } finally {
     clearTimeout(timeout);
   }
@@ -140,9 +141,10 @@ module.exports = async function handler(req, res) {
     if (agentId === "standardized_patient") {
       if (body.probe) {
         const probe = await probePatientProvider();
-        setServerTiming(res, { app: Date.now() - startedAt, provider: probe.providerDurationMs });
+        setServerTiming(res, { app: Date.now() - startedAt, provider: probe.providerDurationMs, firsttoken: probe.providerFirstTokenMs });
         const publicProbe = { ...probe };
         delete publicProbe.providerDurationMs;
+        delete publicProbe.providerFirstTokenMs;
         return res.status(200).json({ agentId, replyText: "", matchedSlotIds: [], matchedFacts: [], safetyFlags: [], answerSource: probe.isFallback ? "rule" : probe.provider, confidence: 1, ...publicProbe });
       }
       const patient = await generatePatientAnswer({
@@ -155,7 +157,7 @@ module.exports = async function handler(req, res) {
       const generationSource = patient.isFallback
         ? (safetyBoundaryFallback(patient) ? "safety_boundary" : "rule_fallback")
         : patient.cacheHit ? "ai_cache" : "live_ai";
-      setServerTiming(res, { app: Date.now() - startedAt, provider: patient.providerDurationMs });
+      setServerTiming(res, { app: Date.now() - startedAt, provider: patient.providerDurationMs, firsttoken: patient.providerFirstTokenMs });
       return res.status(200).json({
         agentId,
         replyText: patient.replyText,
@@ -210,7 +212,7 @@ module.exports = async function handler(req, res) {
         },
         maxTokens: Math.min(config.maxTokens || 300, 500)
       });
-      setServerTiming(res, { app: Date.now() - startedAt, provider: llm.durationMs });
+      setServerTiming(res, { app: Date.now() - startedAt, provider: llm.durationMs, firsttoken: llm.firstTokenMs });
       return res.status(200).json({
         agentId,
         replyText: llm.text,
