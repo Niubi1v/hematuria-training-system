@@ -41,6 +41,30 @@ test("case catalog switches public complaint language", async ({ page }) => {
   await expect(page.getByText(/Hematuria/i).first()).toBeVisible();
 });
 
+test("case catalog search has a recoverable empty state", async ({ page }) => {
+  await page.goto("/cases/");
+  await page.getByRole("textbox", { name: "搜索病例" }).fill("NO-SUCH-CASE");
+  await expect(page.getByRole("heading", { name: "没有匹配的病例" })).toBeVisible();
+  await expect(page.getByText("当前 0 / 42")).toBeVisible();
+  await page.getByRole("button", { name: "清除搜索与筛选" }).click();
+  await expect(page.getByRole("heading", { name: "训练病例 P001" })).toBeVisible();
+});
+
+test("mobile interview keeps multiline input visible without horizontal overflow", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/cases/P001/");
+  const input = page.getByRole("textbox", { name: "输入问诊问题" });
+  await input.fill("第一行");
+  await input.press("Shift+Enter");
+  await input.type("第二行");
+  await expect(input).toHaveValue("第一行\n第二行");
+  const box = await input.boundingBox();
+  expect(box).toBeTruthy();
+  expect(box.y + box.height).toBeLessThanOrEqual(844);
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+  expect(overflow).toBe(false);
+});
+
 test("primary practice pages have no serious accessibility violations", async ({ page }) => {
   for (const route of ["/", "/cases/", "/cases/P008/"]) {
     await page.goto(route);
@@ -211,9 +235,9 @@ test("AI reply renders before history log synchronization and uses one sync noti
   await page.getByPlaceholder("Enter an interview question").fill("When did you first notice it?");
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByLabel("Simulated patient conversation").getByText("I first noticed the red urine this morning.")).toBeVisible({ timeout: 700 });
-  await expect(page.getByText("This answer is saved. Scoring is synchronizing.")).toBeVisible();
+  await expect(page.getByText("Scoring sync pending")).toBeVisible();
   await expect(page.getByText("The question log could not be verified; it will not count toward scoring.")).toHaveCount(0);
-  await expect(page.getByText("Scoring is synchronized.")).toBeVisible();
+  await expect(page.getByText("Scoring synced")).toBeVisible();
 });
 
 test("history log transient failure retries one idempotent request without replacing the AI reply", async ({ page }) => {
@@ -237,8 +261,8 @@ test("history log transient failure retries one idempotent request without repla
   await page.getByPlaceholder("Enter an interview question").fill("When did it start?");
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByLabel("Simulated patient conversation").getByText("It started this morning.")).toBeVisible({ timeout: 700 });
-  await expect(page.getByText("This answer is saved. Scoring is synchronizing.")).toBeVisible();
-  await expect(page.getByText("Scoring is synchronized.")).toBeVisible();
+  await expect(page.getByText("Scoring sync pending")).toBeVisible();
+  await expect(page.getByText("Scoring synced")).toBeVisible();
   expect(historyCalls).toBe(2);
   expect(new Set(historyRequestIds).size).toBe(1);
   await expect(page.getByLabel("Simulated patient conversation").getByText("It started this morning.")).toHaveCount(1);
@@ -322,7 +346,7 @@ test("page refresh resumes the same pending history log request", async ({ page 
   await page.getByRole("button", { name: "English" }).click();
   await page.getByPlaceholder("Enter an interview question").fill("When did it begin?");
   await page.getByRole("button", { name: "Send" }).click();
-  await expect(page.getByText("This answer is saved. Scoring is synchronizing.")).toBeVisible();
+  await expect(page.getByText("Scoring sync pending")).toBeVisible();
   await expect.poll(() => page.evaluate(() => {
     const key = Object.keys(localStorage).find((item) => item.startsWith("hematuria-attempt-v3:P001:free:en:"));
     const saved = key ? JSON.parse(localStorage.getItem(key)) : null;
@@ -330,7 +354,7 @@ test("page refresh resumes the same pending history log request", async ({ page 
   })).toBe(1);
   await page.reload();
   await expect(page.getByLabel("Simulated patient conversation").getByText("It began this morning.", { exact: true })).toHaveCount(1);
-  await expect(page.getByText("Scoring is synchronized.")).toBeVisible();
+  await expect(page.getByText("Scoring synced")).toBeVisible();
   expect(historyCalls).toBeGreaterThanOrEqual(2);
   expect(new Set(historyRequestIds).size).toBe(1);
 });

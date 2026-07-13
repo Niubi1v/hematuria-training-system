@@ -50,6 +50,7 @@ export default function CaseCatalogClient({ cases }: { cases: PublicCase[] }) {
 
   useEffect(() => {
     localStorage.setItem("hematuria-language", lang);
+    document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
     window.dispatchEvent(new CustomEvent("hematuria-language-change", { detail: lang }));
   }, [lang]);
 

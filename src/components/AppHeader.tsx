@@ -19,6 +19,9 @@ export default function AppHeader() {
     window.addEventListener("hematuria-language-change", listener);
     return () => window.removeEventListener("hematuria-language-change", listener);
   }, []);
+  useEffect(() => {
+    document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
+  }, [lang]);
   return (
     <header className="sticky top-0 z-40 border-b border-clinic-line bg-white/95 backdrop-blur-sm">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-3 px-5 py-2 sm:flex-nowrap sm:py-3">
