@@ -83,10 +83,10 @@
 | 69 JSON幂等、生成数据无漂移 | PASS | run `29289645684`验证69 JSON、75个受控输出幂等及最终clean gate；`data/**`零差异 |
 | 52页生产构建 | PASS | run `29289645684`静态生成52/52 |
 | 静态答案/密钥扫描 | PASS | run `29289645684`：294文件repository scan、25个JS bundle scan success |
-| 当前文本、Office归档、二进制可见元数据与Git文本历史密钥扫描 | LOCAL PASS | `25ad0a9`：动态泄露fixture与真实295文件/112提交扫描通过，待PR CI；历史二进制/OCR仍按已知限制保留 |
+| 当前文本、Office归档、二进制可见元数据与Git文本历史密钥扫描 | LOCAL PASS / CI PENDING | `52c2432` / run `29292415307`执行动态fixture与295文件扫描，但checkout为浅历史；`d895e28`要求CI完整检出历史并对浅仓库fail-closed，待新run确认；历史二进制/OCR仍按已知限制保留 |
 | Playwright桌面/移动 | PASS | run `29289645684` desktop/mobile 40/40，runner正常退出；axe critical/serious=0断言包含在内 |
 | 专项分支普通push | PASS | `origin/codex/hematuria-production-goal` |
-| draft PR与GitHub Actions | PASS | PR #1保持Open/Draft/CLEAN；证据提交`30b0d45`的run `29289645684` completed/success |
+| draft PR与GitHub Actions | PASS（52c）/ PENDING（当前候选） | PR #1保持Draft；`52c2432`的run `29292415307` completed/success，当前`e94721e`/`d895e28`待push和新run |
 | Pages/Vercel SHA与live alias | PASS/PENDING | `30b0d45` Vercel Deployment与Preview Comments success；PR Pages部署按设计跳过，正式live alias仍未验证 |
 | 生产health、10次session、中文5次、英文5次 | PENDING | 当前环境生产smoke为`fetch failed` |
 | 正式教师鉴权、RCT数据库、正式OSCE | BLOCKED/HUMAN | 需要安全后端、approved病例及具名医学签署 |

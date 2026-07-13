@@ -499,3 +499,27 @@ Preview未执行真实Upstash/DeepSeek验收，因为当前没有也不得读取
 | CSS可达性搜索 | `rg`搜索PostCSS parse/stringify、`dangerouslySetInnerHTML`、动态style/CSS上传 | 无用户CSS解析或注入路径；textarea仅训练答案输入 |
 
 资源边界：单文件64MB、归档32MB、单entry 8MB、总展开64MB、2048 entries、历史patch 128MB；加密、ZIP64、未知压缩、超限和解析失败均fail closed为finding。当前扫描仍不能证明历史压缩二进制、图片像素OCR/隐写或组织级artifact/日志保留安全，故这些项目继续列为限制。
+
+### `52c2432`远程门禁
+
+- Actions run `29292415307` / build job `86958675834`：completed/success，3分39秒；Node `v22.14.0`、pnpm `11.7.0`。
+- Full chain：75个受控输出幂等、42例/572事实/419待审/18隔离/360评分、training replay/stage/session、Agent/CORS/限流、TypeScript、ESLint及295文件repository scanner全部success。
+- Playwright 40/40（1.3分钟）后约36ms进入下一step；build 52/52、bundle 23 JS、最终tracked-worktree clean gate成功。Vercel Deployment与Preview Comments success，Pages artifact/deploy skipped，PR保持Draft。
+- 依赖审计真实状态为1 moderate、0 high；没有伪造成零漏洞。
+
+## 2026-07-14 工作簿展开与CI证据真实性原子里程碑
+
+| 检查 | 精确命令/环境 | 退出码与结果 |
+|---|---|---|
+| 工作簿失败基线 | bundled Node/tsx执行`scripts/test-workbook-security.ts` | exit1；`maxExpandedBytes: 1`没有产生异常，证明旧helper在解析前没有ZIP展开边界 |
+| 工作簿修复专项 | 同命令 | exit0；文件、ZIP entry/总展开、sheet、row、column、aggregate-cell限制通过 |
+| 医学工作簿及导入 | `test-medical-review-workbook.ts`、`test-medical-review-import.ts`、`test-release-v14-import.ts` | 均exit0；8 sheets、42 cases、572 facts、153/419边界、0 licensed approvals、360合同保持 |
+| scanner浅仓库合同 | `node scripts/test-secret-scanner.mjs` | exit0；完整临时历史可检出已删除fixture，depth-1 clone产生`history-scan-shallow`且不冒充全历史通过 |
+| 真实仓库scanner | `node scripts/scan-repository-secrets.mjs` | exit0；295 tracked/candidate及可达文本历史，无值输出 |
+| workflow失败/通过合同 | `tsx scripts/test-product-audit.ts` | 修复前exit1（仅production audit）；修复后exit0，覆盖完整checkout、全依赖high、untracked clean、main-only deploy及并发隔离 |
+| 全依赖审计 | `pnpm audit --audit-level high` | exit0；1 moderate、0 high，Node24本地辅助证据，最终以新Node22 CI为准 |
+| TypeScript、ESLint、完整行为 | `tsc --noEmit`、`node scripts/run-lint.mjs`、`CI=true pnpm run test` | 全部exit0；完整行为31.6秒，含42/572/419/18/360及安全专项 |
+| 已提交HEAD幂等 | `tsx scripts/test-conversion-idempotency.ts`，clean `d895e28` | exit0；75个受控输出baseline及第二次生成一致 |
+| 受保护路径 | `git diff --name-only -- data outputs/medical-review docs/medical-review/hematuria_case_clinical_review.xlsx` | 无输出；医学数据、裁决表和工作簿内容零修改 |
+
+本地运行时为Node 24.14，仅作为辅助证据；新提交必须由Draft PR Node 22 CI确认。提交：`e94721e security: bound workbook archive expansion`、`d895e28 ci: enforce complete security evidence`。

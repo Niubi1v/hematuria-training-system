@@ -285,3 +285,11 @@
 - 新专项动态构造假值，覆盖文本、PNG、奇数偏移UTF-16、压缩XLSX、placeholder、已删除历史及不回显；真实仓库295候选文件、36个二进制/Office归档、112提交扫描exit0。
 - TypeScript、ESLint及包含新专项的37段完整行为门禁exit0（35.4秒）；已提交HEAD上的scanner专项、真实扫描和75项幂等均exit0。`data/**`、审核状态、医学语义和评分零修改。
 - `DCI-P2-002`同时完成可达性复核：唯一moderate是Next稳定版内部PostCSS；无用户CSS处理路径，官方稳定版尚未升级，因此不强制override，保留监控与1 moderate真实状态。
+
+#### 远程确认与当前原子里程碑
+
+- head `52c24325ddd28262458f5eff4f37fe2866d53305`的Actions run `29292415307` completed/success（3分39秒）：Node 22.14、pnpm 11.7、75个受控输出、完整行为、安全专项、295文件repository scan、Playwright 40/40、52/52构建、23个bundle资产和最终clean gate均通过；Vercel Deployment与Preview Comments通过，Pages deploy按PR规则跳过。
+- 独立复核确认静态审计九项P1在该HEAD无可复现残余；init重放、关闭阶段回填及session语言/模式绑定的本地专项亦再次exit0。PR继续Draft，Vercel绿灯不替代真实AI、Upstash、签名变量、P95或医学裁决。
+- 选择两个直接相关且无需外部权限的P2完成原子修复：`e94721e`在`XLSX.read`前限制ZIP条目、路径、加密/ZIP64、压缩方法、单项16MB及总展开64MB，并补齐row/column/cell测试；`d895e28`让浅Git历史扫描fail-closed、CI checkout完整历史、全依赖high审计、未跟踪文件clean gate、main-only Pages手工发布和按ref并发隔离。
+- 失败基线均真实保留：旧工作簿helper忽略`maxExpandedBytes`导致专项exit1；旧workflow静态合同在仅`--prod`审计处exit1。修复后相关专项、医学工作簿/导入、TypeScript、ESLint、完整行为、全依赖high审计、已提交HEAD 75项幂等及295文件全历史secret扫描均exit0。
+- `data/**`、医学审核工作簿内容、419条决定、42例`needs_revision`、18条双语冲突和360评分零修改。按用户指令，当前原子里程碑push/CI后不再启动新的静态P2，转入长期QA的HEM-P1-034。

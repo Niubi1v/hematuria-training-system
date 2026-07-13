@@ -235,3 +235,10 @@
 - 动态fixture、真实295文件/36二进制归档/112提交扫描、TypeScript、ESLint、37段完整行为和75项幂等均exit0。回滚为普通`git revert 25ad0a9`。
 - `PRV-P2-004`显著收敛但不伪造全覆盖：历史压缩二进制、图片像素OCR/隐写、GitHub组织级artifact/日志保留仍需独立工具/权限。
 - 唯一moderate仍是Next稳定版内部PostCSS；官方公告要求`>=8.5.10`，但稳定Next仍固定`8.4.31`，且本仓库无用户CSS输入/重串行化路径。本轮不使用未经Next稳定版验证的override，仅保留监控和真实1 moderate状态。
+
+#### 远程确认与后续原子安全里程碑
+
+- `52c24325ddd28262458f5eff4f37fe2866d53305`的Actions run `29292415307` completed/success：Node 22.14、75项幂等、完整行为与安全专项、295文件scanner、Playwright 40/40、52/52构建、23 JS bundle和最终clean gate通过；Vercel两项通过，Pages deploy skipped，PR继续Draft。
+- `e94721e`修复工作簿解析前ZIP展开边界；`d895e28`修复浅历史scanner证据、完整依赖high审计、未跟踪clean gate及main-only Pages手工发布。失败测试先于修复命中，相关专项、完整行为、TypeScript、ESLint、全依赖审计、75项幂等和secret扫描本地均exit0。
+- 两提交均可分别普通`git revert e94721e`、`git revert d895e28`。未修改业务页面、Patient Agent、连接状态机、医学事实、审批状态、环境变量或密钥。
+- 当前候选仍待普通push及Node 22 CI记录；完成后不再扩展新的静态P2，优先读取长期QA分支并修复HEM-P1-034。真实Preview AI/持久存储/密钥作用域及HEM-P0-001/023医学裁决仍未解除。
