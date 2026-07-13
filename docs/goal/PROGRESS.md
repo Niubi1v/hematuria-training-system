@@ -249,3 +249,10 @@
 - CI绿灯与本地56文件红灯的差异经`git ls-files --eol`定位为Windows系统`core.autocrlf=true`：提交对象`i/lf`被临时worktree检出为`w/crlf`，转换器写LF后产生纯行尾假漂移；不是56个医学/评分基线变化。
 - `scripts/test-conversion-idempotency.ts`现仅对隔离worktree的checkout设置`core.autocrlf=false/core.eol=lf`，直接比较提交LF字节与转换LF字节，不规范化JSON、不忽略语义差异。提交`bb130c1`后本地75受控输出、baseline与第二次生成均exit0（11.6秒），主工作树和`data/**`零改动。
 - `DCI-P1-003`据此从“阻塞”修正为“已修复，待`bb130c1`新CI确认”；旧证据保留但不再错误描述为真实医学基线漂移。
+
+### 跨平台幂等修复远程验收
+
+- `bb130c1`及证据提交组成head `9d405fd`并已普通push；Draft PR #1未转Ready、未合并。
+- Actions run `29288294002` / build job `86945910258` completed/success（4分03秒）：75输出baseline/二次幂等、294文件secret、Playwright 40/40、52页build及最终clean gate真实执行通过；production dependency audit仍为1 moderate/0 high。
+- Vercel Deployment `7kTocPAWKiyWiRHd1XEVmLFzmASk`与Preview Comments success；Pages deploy skipped。`DCI-P1-003`工程项正式关闭。
+- 仍未通过且不得由CI绿灯替代：Preview Upstash/独立签名变量作用域、真实DeepSeek 10/10与P95/自然度，以及HEM-P0-001/HEM-P0-023具名医学裁决。

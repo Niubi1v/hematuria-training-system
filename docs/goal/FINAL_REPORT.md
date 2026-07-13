@@ -204,3 +204,10 @@
 - 网络已恢复，`6fcd325`已普通push；Actions run `29287786411`、Vercel和Preview Comments全部success，Pages deploy skipped，PR仍Draft。
 - 先前报告的56文件本地红灯已证实为Windows全局autocrlf造成的临时checkout行尾假差异；Linux CI对75输出通过。跨平台修复`bb130c1`不更改任何数据，仅让隔离checkout保持提交对象LF；Windows随后75/75通过。
 - 因此`DCI-P1-003`不再是医学治理基线阻塞。`bb130c1`及本次证据提交仍需普通push并取得新一轮CI；真正剩余发布阻塞仍是HEM-P0-001/HEM-P0-023具名医学裁决，以及Preview持久attempt存储/独立签名变量和真实AI验收。
+
+### 最终工程发布检查点
+
+- 代码与完整证据head `9d405fd`已普通push；Actions run `29288294002`、Vercel Deployment和Preview Comments均success，Pages deploy skipped，PR #1保持Draft。
+- 本轮所有无需外部权限的静态发布P1工程项已修复并取得本地/远程可重复证据；`DCI-P1-003`跨平台关闭，未更改`data/**`或医学审核状态。
+- 推荐长期QA的代码起始HEAD：`9d405fd95c979099a58a90824616c9728360a8f4`。若随后仅追加本节状态文档，可使用其文档-only后代，但行为代码基线仍是`9d405fd`。
+- 剩余发布阻塞只应按治理边界处理：HEM-P0-001/HEM-P0-023具名专家裁决；Preview持久Upstash与独立`TRAINING_STATE_SECRET`由用户配置并重部署；真实DeepSeek中文/英文、日志10/10、20轮稳定、P95和自然度人工验收。不得将Vercel部署绿灯写成这些项目通过。

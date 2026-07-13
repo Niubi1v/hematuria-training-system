@@ -215,3 +215,4 @@
 
 - `EXT-BLOCK-003`（已解除）：443连通性恢复后fetch与普通push成功；未使用force或替代Git API写入。
 - `DCI-P1-003`（已修复，待最新CI）：Linux Node 22 CI对75输出通过，证明旧“56基线漂移”不是提交基线缺陷。Windows证据为`i/lf w/crlf`且全局`core.autocrlf=true`；隔离worktree改为按Git对象LF检出后，本地baseline及二次幂等75/75 exit0。比较仍是SHA-256精确字节比较，没有放宽断言或更新数据。
+- `DCI-P1-003`（远程确认关闭）：head `9d405fd`的Actions run `29288294002`再次执行75输出幂等并success；本地Windows与Linux Node 22 CI均通过，受保护数据零diff。
