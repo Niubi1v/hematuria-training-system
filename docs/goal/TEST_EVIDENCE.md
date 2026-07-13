@@ -424,3 +424,9 @@ Preview未执行真实Upstash/DeepSeek验收，因为当前没有也不得读取
 | 最终工作树 | `git status --short`、受保护路径diff、`git diff --check` | clean；`data/**`/审核产物零diff；仅CRLF提示 |
 
 本机Node为24.14，仓库要求Node 22.14；因此本地结果均带engine warning。推送后的GitHub Actions Node 22是新候选的强制等价补证，不能复用旧HEAD绿灯。
+
+### 远程检查（push阻塞时）
+
+- `gh pr view 1`/GitHub API：PR #1 `OPEN`、`isDraft=true`、`mergeStateStatus=CLEAN`，base `main@5a3ad11`，remote head `41b3830`。
+- `gh pr checks 1`：旧HEAD build success（3m33s）、Vercel success、Preview Comments success、deploy skipped。
+- `git fetch --prune origin`两次exit1（`github.com:443`连接超时）；普通push两次exit1（connection reset/连接超时）。GitHub API实时ref仍为`41b3830`，所以没有未知远程提交证据，但本地新候选尚无任何CI/Preview结果。
