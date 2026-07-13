@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 
+process.env.TRAINING_STATE_SECRET = "unit-test-training-state-secret-with-adequate-length";
+
 const cases = require("../data/cases.json") as Array<{ id: string; medicalReview?: { status?: string } }>;
 const slots = require("../data/patient_slots_bilingual.json") as Record<string, Record<string, {
   patientAnswerZh: string;

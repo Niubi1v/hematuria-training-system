@@ -2,6 +2,8 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import type { CaseData } from "../src/lib/types";
 
+process.env.TRAINING_STATE_SECRET = "unit-test-training-state-secret-with-adequate-length";
+
 const require = createRequire(import.meta.url);
 const { initSession, getSession } = require("../server/patientSession.js") as {
   initSession: (input: { caseId: string; language: string; mode: string; debug: boolean }) => Promise<any>;
@@ -30,8 +32,15 @@ async function main() {
   const hx30 = await initSession({ caseId: "HX-ADD-030", language: "zh", mode: "hx30-qc", debug: true });
   const hx30Profile = getSession(hx30.sessionId, "HX-ADD-030")?.completedPatientFacingProfile || {};
   assert(/45包年/.test(hx30Profile.smoking_history?.value || ""), "HX-ADD-030 must retain 45 pack-years");
-  const report = ["# 42病例患者可见资料完整性报告", "", `生成时间：${new Date().toISOString()}`, "", "| 病例 | 必填事实 | 吸烟史 | 用药史 |", "|---|---|---|---|", ...rows].join("\n");
-  fs.writeFileSync("PATIENT_PROFILE_COMPLETENESS_REPORT.md", `${report}\n`, "utf8");
+  const table = ["| 病例 | 必填事实 | 吸烟史 | 用药史 |", "|---|---|---|---|", ...rows].join("\n");
+  const reportPath = "PATIENT_PROFILE_COMPLETENESS_REPORT.md";
+  const existing = fs.readFileSync(reportPath, "utf8");
+  const existingTable = existing.slice(existing.indexOf("| 病例 |")).trim();
+  assert(existingTable === table, "patient-facing profile report table is stale; review differences before using UPDATE_PATIENT_PROFILE_REPORT=1");
+  if (process.env.UPDATE_PATIENT_PROFILE_REPORT === "1") {
+    const report = ["# 42病例患者可见资料完整性报告", "", `生成时间：${new Date().toISOString()}`, "", table].join("\n");
+    fs.writeFileSync(reportPath, `${report}\n`, "utf8");
+  }
   console.log("Patient-facing profile completeness passed for 42 cases.");
 }
 

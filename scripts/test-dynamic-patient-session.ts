@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import { createRequire } from "node:module";
 
+process.env.TRAINING_STATE_SECRET = "unit-test-training-state-secret-with-adequate-length";
+
 const require = createRequire(import.meta.url);
 const {
   initSession,

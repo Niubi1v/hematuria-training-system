@@ -4,6 +4,7 @@ import type { CollectedMap } from "../src/lib/types";
 
 const base: CachedPatientSession = {
   sessionId: "session-1",
+  attemptId: "attempt-1",
   caseId: "P001",
   language: "zh",
   mode: "free",
@@ -16,10 +17,11 @@ const base: CachedPatientSession = {
   profileSource: "local-simulation"
 };
 
-assert.equal(validCachedSession(base, { caseId: "P001", language: "zh", mode: "free", deploymentSha: "sha-new", apiVersion: "2.6.0", now: Date.parse("2026-07-11T10:10:00.000Z") }), true);
-assert.equal(validCachedSession(base, { caseId: "P001", language: "zh", mode: "free", deploymentSha: "sha-new", apiVersion: "2.6.0", now: Date.parse("2026-07-11T10:31:00.000Z") }), false, "expired session must be rebuilt");
-assert.equal(validCachedSession(base, { caseId: "P001", language: "zh", mode: "free", deploymentSha: "sha-other", apiVersion: "2.6.0", now: Date.parse("2026-07-11T10:10:00.000Z") }), false, "deployment change must invalidate session");
-assert.equal(validCachedSession(base, { caseId: "P001", language: "zh", mode: "free", deploymentSha: "sha-new", apiVersion: "2.5.0", now: Date.parse("2026-07-11T10:10:00.000Z") }), false, "API version change must invalidate session");
+assert.equal(validCachedSession(base, { attemptId: "attempt-1", caseId: "P001", language: "zh", mode: "free", deploymentSha: "sha-new", apiVersion: "2.6.0", now: Date.parse("2026-07-11T10:10:00.000Z") }), true);
+assert.equal(validCachedSession(base, { attemptId: "attempt-other", caseId: "P001", language: "zh", mode: "free", deploymentSha: "sha-new", apiVersion: "2.6.0", now: Date.parse("2026-07-11T10:10:00.000Z") }), false, "attempt change must invalidate session");
+assert.equal(validCachedSession(base, { attemptId: "attempt-1", caseId: "P001", language: "zh", mode: "free", deploymentSha: "sha-new", apiVersion: "2.6.0", now: Date.parse("2026-07-11T10:31:00.000Z") }), false, "expired session must be rebuilt");
+assert.equal(validCachedSession(base, { attemptId: "attempt-1", caseId: "P001", language: "zh", mode: "free", deploymentSha: "sha-other", apiVersion: "2.6.0", now: Date.parse("2026-07-11T10:10:00.000Z") }), false, "deployment change must invalidate session");
+assert.equal(validCachedSession(base, { attemptId: "attempt-1", caseId: "P001", language: "zh", mode: "free", deploymentSha: "sha-new", apiVersion: "2.5.0", now: Date.parse("2026-07-11T10:10:00.000Z") }), false, "API version change must invalidate session");
 
 for (const reason of ["llm_error", "provider_timeout", "provider_rate_limit", "provider_unavailable"]) assert.equal(isConnectionFailureFallback(reason), true, reason);
 for (const reason of ["diagnosis_boundary", "report_boundary", "compound_question_preserves_all_facts", "blocked_report_request"]) {

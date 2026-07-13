@@ -1,8 +1,10 @@
+const crypto = require("node:crypto");
 const cases = require("../data/cases.json");
 const { callLLM, getLLMProviderConfig } = require("./llmClient.runtime.js");
 const { BILINGUAL_CONFLICT_REASON, quarantineForMatchedSlots, uncertainConflictReply } = require("./bilingualConflictQuarantine.js");
 const { matchStructuredFacts } = require("./structuredFacts.js");
 const { matchCanonicalPatientFacts } = require("./canonicalFacts.js");
+const { createSessionCapability, verifySessionCapability } = require("./sessionCapability.js");
 
 const sessionCache = globalThis.__hematuriaSessionCache || new Map();
 const answerCache = globalThis.__hematuriaAnswerCache || new Map();
@@ -296,11 +298,7 @@ function buildTeacherOnlyData(caseData) {
   };
 }
 
-function makeSessionId(caseId, language, mode) {
-  return `sess_${caseId}_${language || "zh"}_${mode || "training"}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-}
-
-async function initSession({ caseId, mode = "training", language = "zh", debug = false, forceRefresh = false }) {
+async function initSession({ caseId, attemptId, mode = "training", capabilityMode = mode, language = "zh", debug = false, forceRefresh = false }) {
   const caseData = getCaseById(caseId);
   if (!caseData) throw new Error(`Unknown caseId: ${caseId}`);
   const rawPatientFacingProfile = buildRawPatientFacingProfile(caseData);
@@ -330,10 +328,11 @@ async function initSession({ caseId, mode = "training", language = "zh", debug =
     deploymentSha: DEPLOYMENT_SHA,
     apiVersion: API_VERSION
   };
-  const sessionId = makeSessionId(caseData.id, language, mode);
+  const sessionId = createSessionCapability({ attemptId: String(attemptId || crypto.randomUUID()), caseId: caseData.id, language, mode: capabilityMode, expiresAt });
   cacheSet(sessionCache, sessionId, profileRecord, SESSION_TTL_MS, SESSION_CACHE_MAX);
   return {
     sessionId,
+    attemptId: String(attemptId || ""),
     caseId: caseData.id,
     language,
     mode,
@@ -351,6 +350,11 @@ async function initSession({ caseId, mode = "training", language = "zh", debug =
 
 function getSession(sessionId, caseId, profile) {
   if (profile) return { completedPatientFacingProfile: profile, debug: { cacheHit: false } };
+  try {
+    verifySessionCapability(sessionId, { caseId });
+  } catch {
+    return null;
+  }
   return cacheGet(sessionCache, sessionId, SESSION_CACHE_MAX) || null;
 }
 

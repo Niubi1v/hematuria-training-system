@@ -1,8 +1,11 @@
 const cases = require("../data/cases.json");
 const { generatePatientAnswer, probePatientProvider } = require("../server/patientSession.js");
-const { applyAgentCors, positiveInteger, setRateLimitHeaders, takeRateLimit } = require("../server/requestSecurity.js");
+const { applyAgentCors, parseJsonBody, positiveInteger, setRateLimitHeaders, takeRateLimit } = require("../server/requestSecurity.js");
 const { setServerTiming } = require("../server/performanceTiming.js");
 const { readLLMResponse } = require("../server/llmClient.runtime.js");
+const { verifySessionCapability } = require("../server/sessionCapability.js");
+const { normalizeAttemptMode } = require("../server/trainingState.js");
+const { executeIdempotentAgentRequest } = require("../server/agentRequestStore.js");
 
 const blockedTeacherKeys = ["diagnosis", "imaging", "pathology", "treatment", "teacherOnlyData", "case_card", "scoring"];
 const agentIds = new Set([
@@ -117,48 +120,38 @@ function fallbackFor(agentId, language) {
   return "AI暂不可用。请先完成当前阶段作答，提交后系统会按规则生成反馈。";
 }
 
-module.exports = async function handler(req, res) {
-  const startedAt = Date.now();
-  const origin = applyAgentCors(req, res);
-  if (!origin.allowed) return res.status(403).json({ error: "origin_not_allowed" });
-  if (req.method === "OPTIONS") return res.status(204).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
-  const rate = takeRateLimit(req, {
-    store: requestWindows,
-    limit: positiveInteger(process.env.AGENT_CHAT_RATE_LIMIT_PER_MINUTE || process.env.AGENT_API_RATE_LIMIT_PER_MINUTE, 30, 10000),
-    windowMs: positiveInteger(process.env.AGENT_API_RATE_LIMIT_WINDOW_MS, 60_000)
-  });
-  setRateLimitHeaders(res, rate);
-  if (rate.limited) return res.status(429).json({ error: "rate_limited" });
+function requestHeader(req, name) {
+  const value = req.headers?.[name] ?? req.headers?.[name.toLowerCase()];
+  return Array.isArray(value) ? String(value[0] || "") : String(value || "");
+}
 
-  try {
-    const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
-    const agentId = agentIds.has(body.agentId) ? body.agentId : "standardized_patient";
-    const caseData = cases.find((item) => String(item.id).toLowerCase() === String(body.caseId).toLowerCase());
-    if (!caseData) return res.status(400).json({ error: "unknown_case" });
-    if (!body.probe && !String(body.studentInput || "").trim()) return res.status(400).json({ error: "studentInput is required" });
-
-    if (agentId === "standardized_patient") {
-      if (body.probe) {
-        const probe = await probePatientProvider();
-        setServerTiming(res, { app: Date.now() - startedAt, provider: probe.providerDurationMs, firsttoken: probe.providerFirstTokenMs });
-        const publicProbe = { ...probe };
-        delete publicProbe.providerDurationMs;
-        delete publicProbe.providerFirstTokenMs;
-        return res.status(200).json({ agentId, replyText: "", matchedSlotIds: [], matchedFacts: [], safetyFlags: [], answerSource: probe.isFallback ? "rule" : probe.provider, confidence: 1, ...publicProbe });
-      }
-      const patient = await generatePatientAnswer({
-        sessionId: body.sessionId,
-        caseId: body.caseId,
-        studentInput: body.studentInput,
-        conversationHistory: body.conversationHistory || [],
-        language: body.language || "zh"
-      });
-      const generationSource = patient.isFallback
-        ? (safetyBoundaryFallback(patient) ? "safety_boundary" : "rule_fallback")
-        : patient.cacheHit ? "ai_cache" : "live_ai";
-      setServerTiming(res, { app: Date.now() - startedAt, provider: patient.providerDurationMs, firsttoken: patient.providerFirstTokenMs });
-      return res.status(200).json({
+async function buildAgentResponse(body, agentId, caseData, startedAt) {
+  if (agentId === "standardized_patient") {
+    if (body.probe) {
+      const probe = await probePatientProvider();
+      const publicProbe = { ...probe };
+      delete publicProbe.providerDurationMs;
+      delete publicProbe.providerFirstTokenMs;
+      return {
+        statusCode: 200,
+        timings: { app: Date.now() - startedAt, provider: probe.providerDurationMs, firsttoken: probe.providerFirstTokenMs },
+        payload: { agentId, replyText: "", matchedSlotIds: [], matchedFacts: [], safetyFlags: [], answerSource: probe.isFallback ? "rule" : probe.provider, confidence: 1, ...publicProbe }
+      };
+    }
+    const patient = await generatePatientAnswer({
+      sessionId: body.sessionId,
+      caseId: body.caseId,
+      studentInput: body.studentInput,
+      conversationHistory: body.conversationHistory || [],
+      language: body.language || "zh"
+    });
+    const generationSource = patient.isFallback
+      ? (safetyBoundaryFallback(patient) ? "safety_boundary" : "rule_fallback")
+      : patient.cacheHit ? "ai_cache" : "live_ai";
+    return {
+      statusCode: 200,
+      timings: { app: Date.now() - startedAt, provider: patient.providerDurationMs, firsttoken: patient.providerFirstTokenMs },
+      payload: {
         agentId,
         replyText: patient.replyText,
         usedModel: patient.model,
@@ -176,69 +169,121 @@ module.exports = async function handler(req, res) {
         confidence: patient.confidence ?? (patient.isFallback ? 0.85 : 0.95),
         fallbackReason: patient.fallbackReason || (patient.isFallback ? "ai_unavailable_or_rule_mode" : ""),
         ...(body.debug ? { debug: { responseAccepted: Boolean(patient.filter?.ok), rewriteTriggered: Boolean(patient.rewriteTriggered), cacheHit: Boolean(patient.cacheHit), deploymentCommit: process.env.VERCEL_GIT_COMMIT_SHA || "local" } } : {})
-      });
-    }
+      }
+    };
+  }
 
-    const config = getProviderConfig();
-    if (!config.enabled || body.mode === "rule") {
-      setServerTiming(res, { app: Date.now() - startedAt });
-      return res.status(200).json({
+  const config = getProviderConfig();
+  if (!config.enabled || body.mode === "rule") {
+    return {
+      statusCode: 200,
+      timings: { app: Date.now() - startedAt },
+      payload: {
         agentId,
         replyText: fallbackFor(agentId, body.language),
         usedModel: config.model,
         provider: config.provider,
         visibleToStudent: true,
-        revealedDataKeys: Object.keys(body.unlockedData || {}),
+        revealedDataKeys: [],
         blockedDataKeys: blockedTeacherKeys,
         safetyFlags: ["llm_unavailable_fallback"],
         isFallback: true
-      });
-    }
+      }
+    };
+  }
 
-    try {
-      const llm = await callLLM({
-        systemPrompt: agentPrompt(agentId, body.language),
-        userPayload: {
-          caseId: caseData.id,
-          agentId,
-          stage: body.stage,
-          mode: body.mode,
-          language: body.language || "zh",
-          studentInput: body.studentInput,
-          conversationHistory: (body.conversationHistory || []).slice(-8),
-          unlockedData: body.unlockedData || {},
-          studentActions: body.studentActions || [],
-          askedQuestions: body.askedQuestions || []
-        },
-        maxTokens: Math.min(config.maxTokens || 300, 500)
-      });
-      setServerTiming(res, { app: Date.now() - startedAt, provider: llm.durationMs, firsttoken: llm.firstTokenMs });
-      return res.status(200).json({
+  try {
+    const llm = await callLLM({
+      systemPrompt: agentPrompt(agentId, body.language),
+      userPayload: {
+        caseId: caseData.id,
+        agentId,
+        stage: body.stage,
+        mode: body.mode,
+        language: body.language || "zh",
+        studentInput: body.studentInput,
+        conversationHistory: (body.conversationHistory || []).slice(-8),
+        unlockedData: {},
+        studentActions: body.studentActions || [],
+        askedQuestions: body.askedQuestions || []
+      },
+      maxTokens: Math.min(config.maxTokens || 300, 500)
+    });
+    return {
+      statusCode: 200,
+      timings: { app: Date.now() - startedAt, provider: llm.durationMs, firsttoken: llm.firstTokenMs },
+      payload: {
         agentId,
         replyText: llm.text,
         usedModel: llm.model,
         provider: llm.provider,
         visibleToStudent: true,
-        revealedDataKeys: Object.keys(body.unlockedData || {}),
+        revealedDataKeys: [],
         blockedDataKeys: blockedTeacherKeys,
         safetyFlags: [],
         isFallback: false
-      });
-    } catch {
-      setServerTiming(res, { app: Date.now() - startedAt });
-      return res.status(200).json({
+      }
+    };
+  } catch {
+    return {
+      statusCode: 200,
+      timings: { app: Date.now() - startedAt },
+      payload: {
         agentId,
         replyText: fallbackFor(agentId, body.language),
         usedModel: config.model,
         provider: config.provider,
         visibleToStudent: true,
-        revealedDataKeys: Object.keys(body.unlockedData || {}),
+        revealedDataKeys: [],
         blockedDataKeys: blockedTeacherKeys,
         safetyFlags: ["llm_error_fallback"],
         isFallback: true
-      });
-    }
-  } catch {
-    return res.status(500).json({ error: "agent_api_failed" });
+      }
+    };
+  }
+}
+
+module.exports = async function handler(req, res) {
+  const startedAt = Date.now();
+  const origin = applyAgentCors(req, res);
+  if (!origin.allowed) return res.status(403).json({ error: "origin_not_allowed" });
+  if (req.method === "OPTIONS") return res.status(204).end();
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  const rate = takeRateLimit(req, {
+    store: requestWindows,
+    limit: positiveInteger(process.env.AGENT_CHAT_RATE_LIMIT_PER_MINUTE || process.env.AGENT_API_RATE_LIMIT_PER_MINUTE, 30, 10000),
+    windowMs: positiveInteger(process.env.AGENT_API_RATE_LIMIT_WINDOW_MS, 60_000)
+  });
+  setRateLimitHeaders(res, rate);
+  if (rate.limited) return res.status(429).json({ error: "rate_limited" });
+
+  try {
+    const body = parseJsonBody(req, 64 * 1024);
+    const agentId = agentIds.has(body.agentId) ? body.agentId : "standardized_patient";
+    const caseData = cases.find((item) => String(item.id).toLowerCase() === String(body.caseId).toLowerCase());
+    if (!caseData) return res.status(400).json({ error: "unknown_case" });
+    if (!body.probe && !String(body.studentInput || "").trim()) return res.status(400).json({ error: "studentInput is required" });
+    if (!body.sessionId || !body.attemptId) return res.status(401).json({ error: "session_capability_required" });
+    verifySessionCapability(body.sessionId, {
+      attemptId: body.attemptId,
+      caseId: caseData.id,
+      language: body.language || "zh",
+      mode: normalizeAttemptMode(body.sessionMode || body.mode)
+    });
+
+    const idempotencyKey = requestHeader(req, "x-idempotency-key").slice(0, 200);
+    const stored = await executeIdempotentAgentRequest({ sessionId: body.sessionId, idempotencyKey, body }, () => buildAgentResponse(body, agentId, caseData, startedAt));
+    setServerTiming(res, stored.timings || { app: Date.now() - startedAt });
+    return res.status(stored.statusCode || 200).json(stored.payload);
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "agent_api_failed";
+    const status = /request_body_too_large/.test(code) ? 413
+      : /invalid_json_body/.test(code) ? 400
+        : /session_.*(?:mismatch|required)|invalid_session|expired_session/.test(code) ? 401
+      : /idempotency_key_required/.test(code) ? 400
+        : /idempotency_key_reused/.test(code) ? 409
+          : /agent_request_in_progress/.test(code) ? 425
+            : /secret|store_unavailable/.test(code) ? 503 : 500;
+    return res.status(status).json({ error: status === 500 ? "agent_api_failed" : code });
   }
 };

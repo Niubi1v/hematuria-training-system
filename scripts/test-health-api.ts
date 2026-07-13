@@ -30,6 +30,7 @@ async function main() {
   assert.equal(health.statusCode, 200);
   assert.equal(health.payload.patientServiceConfigured, true);
   assert.equal(health.payload.trainingStateConfigured, true);
+  assert.equal(health.payload.durableAttemptStoreConfigured, false, "local memory test store must not be advertised as durable");
   assert.equal(health.payload.cloudTtsConfigured, true);
   assert.equal(health.payload.apiVersion, "2.6.0");
   assert.ok(health.payload.deploymentSha);
@@ -43,9 +44,27 @@ async function main() {
   assert.equal(legacyFallbackOnly.payload.trainingStateConfigured, false, "LLM_API_KEY fallback must not be reported as an independent training-state secret");
   process.env.TRAINING_STATE_SECRET = dedicatedSecret;
 
+  process.env.TRAINING_STATE_SECRET = "replace_with_at_least_32_random_bytes";
+  const placeholder = await call("GET");
+  assert.equal(placeholder.payload.trainingStateConfigured, false, "documented placeholders must never be reported as configured");
+  process.env.TRAINING_STATE_SECRET = dedicatedSecret;
+
+  process.env.LLM_API_KEY = dedicatedSecret;
+  const reusedProviderKey = await call("GET");
+  assert.equal(reusedProviderKey.payload.trainingStateConfigured, false, "provider and training secrets must remain independent");
+  process.env.LLM_API_KEY = "test-placeholder";
+
+  process.env.VERCEL = "1";
+  delete process.env.UPSTASH_REDIS_REST_URL;
+  delete process.env.UPSTASH_REDIS_REST_TOKEN;
+  delete process.env.TRAINING_ATTEMPT_STORE_MODE;
+  const productionWithoutStore = await call("GET");
+  assert.equal(productionWithoutStore.payload.trainingStateConfigured, false, "serverless health must fail closed without a durable attempt store");
+  process.env.VERCEL = "";
+
   const options = await call("OPTIONS");
   assert.equal(options.statusCode, 204);
-  console.log("Health API independent training-state configuration, boolean-only output, and CORS contract passed.");
+  console.log("Health API secret-strength, durable-store, boolean-only output, and CORS contract passed.");
 }
 
 void main();

@@ -4,17 +4,21 @@ process.env.TRAINING_STATE_SECRET = "unit-test-training-state-secret-with-adequa
 const handler = require("../api/training-action.js");
 const { initSession } = require("../server/patientSession.js");
 const { verifyAttemptState } = require("../server/trainingState.js");
+const { digest, loadAttempt, resetMemoryAttemptStore } = require("../server/trainingAttemptStore.js");
 const serverCases = require("../data/cases.json") as Array<{
   id: string;
   medicalReview?: { status?: string; [key: string]: unknown };
   medicalReviewImport?: { formalUseAllowed?: boolean; [key: string]: unknown };
 }>;
 
+let requestCounter = 0;
+
 async function call(body: Record<string, unknown>, token = "", requestHeaders: Record<string, string> = {}) {
   let statusCode = 200;
   let payload: unknown;
   const headers: Record<string, string> = {};
-  const req = { method: "POST", body, headers: { ...(token ? { "x-training-state": token } : {}), ...requestHeaders }, socket: { remoteAddress: `test-${Math.random()}` } };
+  const requestBody = body.action && !body.requestId ? { ...body, requestId: `training-api-test-${++requestCounter}` } : body;
+  const req = { method: "POST", body: requestBody, headers: { ...(token ? { "x-training-state": token } : {}), ...requestHeaders }, socket: { remoteAddress: `test-${Math.random()}` } };
   const res = {
     setHeader(name: string, value: string) { headers[name.toLowerCase()] = value; },
     status(code: number) { statusCode = code; return this; },
@@ -25,7 +29,12 @@ async function call(body: Record<string, unknown>, token = "", requestHeaders: R
   return { statusCode, payload: payload as Record<string, unknown>, token: headers["x-training-state"] || token, headers };
 }
 
+async function submitStage(response: Awaited<ReturnType<typeof call>>, attemptId: string, stageKey: string) {
+  return call({ action: "stage-feedback", caseId: "P008", attemptId, mode: "free", language: "zh", stageKey, submission: {} }, response.token);
+}
+
 async function main() {
+  resetMemoryAttemptStore();
   const sameOrigin = await call({}, "", { origin: "https://goal-preview.example", host: "goal-preview.example", "x-forwarded-proto": "https" });
   assert.notEqual(sameOrigin.statusCode, 403, "training API must accept an exact same-origin Preview hostname");
   const crossOrigin = await call({}, "", { origin: "https://evil.example", host: "goal-preview.example", "x-forwarded-proto": "https" });
@@ -42,8 +51,12 @@ async function main() {
   const conflictHistory = await call({ action: "history-log", caseId: "P001", attemptId: conflictAttemptId, mode: "free", language: "en", question: "Do you have urinary urgency?", requestId: "conflict-history-test" }, conflictInit.token);
   assert.equal(conflictHistory.payload.reason, "medical_bilingual_conflict_pending_review");
   assert.deepEqual(conflictHistory.payload.quarantinedSlotIds, ["urinary_urgency"]);
-  const conflictState = verifyAttemptState(conflictHistory.token, { caseId: "P001", attemptId: conflictAttemptId });
-  assert.equal(conflictState.events.some((event: { slotId?: string }) => event.slotId === "urinary_urgency"), false, "quarantined bilingual facts must not enter signed scoring state");
+  verifyAttemptState(conflictHistory.token, { caseId: "P001", attemptId: conflictAttemptId });
+  const conflictStored = await loadAttempt({
+    caseId: "P001", attemptId: conflictAttemptId, token: conflictHistory.token,
+    requestId: "inspect-conflict-state", requestDigest: digest("inspect-conflict-state")
+  });
+  assert.equal(conflictStored.state.events.some((event: { slotId?: string }) => event.slotId === "urinary_urgency"), false, "quarantined bilingual facts must not enter authoritative scoring state");
 
   const originalToken = response.token;
   const historyBody = { action: "history-log", caseId: "P008", attemptId, mode: "free", language: "zh", question: "idempotent history question", requestId: "history-idempotency-test" };
@@ -55,6 +68,7 @@ async function main() {
   assert.match(firstHistory.headers["access-control-expose-headers"], /Server-Timing/);
   assert.equal(firstHistory.token, repeatedHistory.token, "repeating one history requestId from the same state must be idempotent");
   response = firstHistory;
+  response = await submitStage(response, attemptId, "history");
 
   response = await call({ action: "order", caseId: "P008", attemptId, input: "血常规", language: "zh" }, response.token);
   assert.deepEqual((response.payload.matchedOrders as Array<{ orderId: string }>).map((item) => item.orderId), ["LAB-BL-001"]);
@@ -70,6 +84,10 @@ async function main() {
   assert.equal((response.payload.results as Array<{ orderId: string }>).every((item) => item.orderId === "IMG-CT-002"), true);
   response = await call({ action: "order", caseId: "P008", attemptId, input: "TURBT病理", language: "zh" }, response.token);
   assert.doesNotMatch(JSON.stringify(response.payload), /乳果糖|肠道准备|前列腺体积/);
+
+  for (const stageKey of ["orders", "diagnosis", "consult", "treatment", "perioperative", "debrief"]) {
+    response = await submitStage(response, attemptId, stageKey);
+  }
 
   const forged = await call({ action: "score", caseId: "P008", attemptId, mode: "free", events: [{ type: "diagnosis_supported", actionId: "primary", metadata: { validated: true } }] }, response.token);
   assert.ok(Number(forged.payload.total) < 360, "forged client events must not create a perfect score");
@@ -109,6 +127,8 @@ async function main() {
 
   let approvedFormal = await call({ action: "init-attempt", caseId: "P008", attemptId: "formal-approved-test", mode: "osce", language: "zh" });
   assert.equal(approvedFormal.statusCode, 200);
+  approvedFormal = await call({ action: "stage-feedback", caseId: "P008", attemptId: "formal-approved-test", mode: "osce", stageKey: "history", submission: {} }, approvedFormal.token);
+  approvedFormal = await call({ action: "stage-feedback", caseId: "P008", attemptId: "formal-approved-test", mode: "osce", stageKey: "orders", submission: {} }, approvedFormal.token);
   approvedFormal = await call({ action: "stage-feedback", caseId: "P008", attemptId: "formal-approved-test", mode: "osce", stageKey: "diagnosis", submission: {
     diagnosis: "膀胱结石，前列腺增生", diagnosticEvidence: "终末血尿、排尿中断且改变体位后恢复", differentials: "前列腺癌；膀胱颈挛缩；尿道狭窄", confirmatoryTests: "尿常规、盆腔CT和膀胱镜"
   } }, approvedFormal.token);
@@ -122,12 +142,15 @@ async function main() {
   const practiceSecret = process.env.TRAINING_STATE_SECRET;
   delete process.env.TRAINING_STATE_SECRET;
   const legacyPractice = await call({ action: "init-attempt", caseId: "P008", attemptId: "practice-legacy-secret-test", mode: "free", language: "zh" });
-  assert.equal(legacyPractice.statusCode, 200, "practice tier retains the documented migration fallback to LLM_API_KEY");
-  assert.ok(legacyPractice.token);
+  assert.equal(legacyPractice.statusCode, 503, "practice tier must fail closed instead of reusing LLM_API_KEY");
+  assert.equal(legacyPractice.payload.error, "training_state_secret_missing");
+  assert.equal(legacyPractice.token, "");
   process.env.TRAINING_STATE_SECRET = practiceSecret;
 
   const revisionId = `revision-${Date.now()}`;
   let revision = await call({ action: "init-attempt", caseId: "P001", attemptId: revisionId, mode: "free", language: "zh" });
+  revision = await call({ action: "stage-feedback", caseId: "P001", attemptId: revisionId, mode: "free", language: "zh", stageKey: "history", submission: {} }, revision.token);
+  revision = await call({ action: "stage-feedback", caseId: "P001", attemptId: revisionId, mode: "free", language: "zh", stageKey: "orders", submission: {} }, revision.token);
   revision = await call({ action: "stage-feedback", caseId: "P001", attemptId: revisionId, stageKey: "diagnosis", submission: {
     diagnosis: "急性阑尾炎", diagnosticEvidence: "右下腹痛", differentials: "胃炎；胆囊炎；胰腺炎", confirmatoryTests: "腹部平片"
   } }, revision.token);

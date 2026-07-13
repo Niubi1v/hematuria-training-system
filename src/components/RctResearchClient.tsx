@@ -199,16 +199,10 @@ export default function RctResearchClient() {
 
   async function importData(file: File) {
     try {
-      let rows: RctRecord[];
-      if (file.name.toLowerCase().endsWith(".json")) {
-        const parsed = JSON.parse(await file.text()) as unknown;
-        if (!Array.isArray(parsed)) throw new Error("JSON根节点必须是记录数组。 ");
-        rows = parsed as RctRecord[];
-      } else {
-        const buffer = await file.arrayBuffer();
-        const workbook = XLSX.read(buffer, { type: "array" });
-        rows = XLSX.utils.sheet_to_json<RctRecord>(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
-      }
+      if (!file.name.toLowerCase().endsWith(".json")) throw new Error("安全边界内仅允许导入JSON；CSV/XLSX导入尚未开放。 ");
+      const parsed = JSON.parse(await file.text()) as unknown;
+      if (!Array.isArray(parsed)) throw new Error("JSON根节点必须是记录数组。 ");
+      const rows = parsed as RctRecord[];
       const duplicates = rows.map((item) => item.participantId).filter((id, index, ids) => id && ids.indexOf(id) !== index);
       if (duplicates.length) throw new Error(`导入文件包含重复participant_id：${[...new Set(duplicates)].join("、")}`);
       const problems = rows.flatMap((row) => validateRctRecord(row, rows.filter((item) => item !== row), row.participantId).map((message) => `${row.participantId}: ${message}`));
@@ -233,7 +227,7 @@ export default function RctResearchClient() {
           <button onClick={() => exportData("json")} className="inline-flex items-center gap-2 rounded-md border border-clinic-line bg-white px-3 py-2"><Download size={16} />JSON</button>
           <button onClick={() => exportData("csv")} className="inline-flex items-center gap-2 rounded-md border border-clinic-line bg-white px-3 py-2"><Download size={16} />CSV</button>
           <button onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-2 rounded-md border border-clinic-line bg-white px-3 py-2"><FileUp size={16} />导入</button>
-          <input ref={fileRef} hidden type="file" accept=".json,.csv,.xlsx" onChange={(event) => { const file = event.target.files?.[0]; if (file) void importData(file); event.target.value = ""; }} />
+          <input ref={fileRef} hidden type="file" accept=".json" onChange={(event) => { const file = event.target.files?.[0]; if (file) void importData(file); event.target.value = ""; }} />
         </div>
       </div>
 

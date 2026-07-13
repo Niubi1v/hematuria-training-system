@@ -138,13 +138,14 @@ export async function fetchWithRecovery(url: string, init: RecoveryOptions = {})
   throw lastError || new ApiRequestError("network", undefined, "", requestId);
 }
 
-export async function requestJson<T>(url: string, body?: unknown, options: { timeoutMs?: number; retries?: number; idempotencyKey?: string; method?: "GET" | "POST"; signal?: AbortSignal; requestId?: string; endpointName?: string } = {}): Promise<T> {
+export async function requestJson<T>(url: string, body?: unknown, options: { timeoutMs?: number; retries?: number; idempotencyKey?: string; method?: "GET" | "POST"; signal?: AbortSignal; requestId?: string; endpointName?: string; headers?: Record<string, string> } = {}): Promise<T> {
   const method = options.method || (body === undefined ? "GET" : "POST");
   const response = await fetchWithRecovery(url, {
     method,
     headers: {
       ...(body === undefined ? {} : { "Content-Type": "application/json" }),
-      ...(options.idempotencyKey ? { "X-Idempotency-Key": options.idempotencyKey } : {})
+      ...(options.idempotencyKey ? { "X-Idempotency-Key": options.idempotencyKey } : {}),
+      ...(options.headers || {})
     },
     body: body === undefined ? undefined : JSON.stringify(body),
     signal: options.signal,

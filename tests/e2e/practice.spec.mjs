@@ -10,13 +10,22 @@ async function trainingApi(body, token = "") {
   let statusCode = 200;
   let payload;
   const headers = {};
-  const req = { method: "POST", body, headers: token ? { "x-training-state": token } : {}, socket: { remoteAddress: `pw-${Math.random()}` } };
+  const requestBody = { ...body, requestId: body.requestId || `pw-${body.action}-${Date.now()}-${Math.random()}` };
+  const req = { method: "POST", body: requestBody, headers: token ? { "x-training-state": token } : {}, socket: { remoteAddress: `pw-${Math.random()}` } };
   const res = {
     setHeader(name, value) { headers[name.toLowerCase()] = value; }, status(code) { statusCode = code; return this; },
     json(value) { payload = value; return this; }, end() { return this; }
   };
   await trainingHandler(req, res);
   return { statusCode, payload, token: headers["x-training-state"] || token };
+}
+
+async function mockTrainingState(page) {
+  await page.route("**/api/training-action/**", async (route) => {
+    const body = route.request().postDataJSON();
+    const payload = body.action === "init-attempt" ? { attemptId: body.attemptId, practiceOnly: true } : { recorded: true, requestId: body.requestId };
+    await route.fulfill({ status: 200, contentType: "application/json", headers: { "X-Training-State": `e2e-${body.attemptId}` }, body: JSON.stringify(payload) });
+  });
 }
 
 test("public deployment exposes practice navigation without teacher answers", async ({ page }) => {
@@ -190,6 +199,7 @@ test("rule fallback keeps reconnection available and recovery replaces the reply
 });
 
 test("session initialization failure shows one specific connection notice", async ({ page }) => {
+  await mockTrainingState(page);
   await page.route("**/api/health/**", (route) => route.abort("failed"));
   await page.route("**/api/session/init/**", (route) => route.abort("failed"));
 
@@ -202,6 +212,7 @@ test("session initialization failure shows one specific connection notice", asyn
 test("offline reconnect sends no request and can recover after the online event", async ({ page, context }) => {
   let healthCalls = 0;
   let sessionCalls = 0;
+  await mockTrainingState(page);
   await page.route("**/api/health/**", (route) => { healthCalls += 1; return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" }) }); });
   await page.route("**/api/session/init/**", (route) => { sessionCalls += 1; return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: `session-${Date.now()}`, caseId: "P001", language: "zh", mode: "free", patientOpeningStatement: "医生您好。", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) }); });
   await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "", matchedSlotIds: [], matchedFacts: [], provider: "deepseek", isFallback: false }) }));
@@ -405,16 +416,21 @@ test("public teacher and RCT routes do not expose formal functions", async ({ pa
 test("P008 exact orders and server-validated scoring resist forged answers", async () => {
   const attemptId = `pw-p008-${Date.now()}-${Math.random()}`;
   let response = await trainingApi({ action: "init-attempt", caseId: "P008", attemptId, mode: "free", language: "zh" });
+  response = await trainingApi({ action: "stage-feedback", caseId: "P008", attemptId, stageKey: "history", submission: {} }, response.token);
   response = await trainingApi({ action: "order", caseId: "P008", attemptId, input: "血常规" }, response.token);
   expect(response.payload.results.every((item) => item.orderId === "LAB-BL-001")).toBe(true);
   expect(JSON.stringify(response.payload)).not.toMatch(/CTU|乳果糖|肠道准备/);
 
+  response = await trainingApi({ action: "stage-feedback", caseId: "P008", attemptId, stageKey: "orders", submission: {} }, response.token);
   response = await trainingApi({ action: "stage-feedback", caseId: "P008", attemptId, stageKey: "diagnosis", submission: {
     diagnosis: "急性阑尾炎", diagnosticEvidence: "右下腹压痛", differentials: "胃炎；胆囊炎；胰腺炎", confirmatoryTests: "腹部平片"
   } }, response.token);
   expect(response.payload.score).toBe(0);
   expect(response.payload.warnings.join(" ")).toMatch(/不符/);
 
+  for (const stageKey of ["consult", "treatment", "perioperative", "debrief"]) {
+    response = await trainingApi({ action: "stage-feedback", caseId: "P008", attemptId, stageKey, submission: {} }, response.token);
+  }
   const scored = await trainingApi({ action: "score", caseId: "P008", attemptId, events: [{ type: "treatment_action", actionId: "definitive", metadata: { validated: true } }] }, response.token);
   expect(scored.payload.total).toBeLessThan(100);
 });

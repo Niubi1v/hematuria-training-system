@@ -52,23 +52,28 @@ for (let index = 0; index < 10; index += 1) {
   const language = index < 5 ? "zh" : "en";
   await check(`session-init-${index + 1}-${language}`, async () => {
     const startedAt = performance.now();
-    const session = await jsonPost("/api/session/init/", { caseId: "P001", mode: "training", language, forceRefresh: true });
+    const attemptId = `smoke-session-${language}-${crypto.randomUUID()}`;
+    const initKey = `${attemptId}:training-init`;
+    const training = await jsonPost("/api/training-action/", { action: "init-attempt", caseId: "P001", attemptId, mode: "free", language, requestId: initKey }, { "X-Idempotency-Key": initKey });
+    const trainingToken = training.response.headers.get("x-training-state");
+    if (!trainingToken) throw new Error("missing training capability");
+    const session = await jsonPost("/api/session/init/", { caseId: "P001", attemptId, mode: "free", language, forceRefresh: true }, { "X-Training-State": trainingToken, "X-Idempotency-Key": `${attemptId}:session-init` });
     sessionDurations.push(performance.now() - startedAt);
     if (parseServerTiming(session.response.headers.get("server-timing") || "").session === undefined) throw new Error("missing session timing metadata");
     if (!session.payload.sessionId) throw new Error("missing sessionId");
-    sessions[language].push(session.payload.sessionId);
+    sessions[language].push({ sessionId: session.payload.sessionId, attemptId });
   });
 }
 
 for (const language of ["zh", "en"]) {
   for (let index = 0; index < 5; index += 1) {
     await check(`patient-${language}-${index + 1}`, async () => {
-      const sessionId = sessions[language][index];
-      if (!sessionId) throw new Error("session initialization failed");
-      const attemptId = `smoke-${language}-${crypto.randomUUID()}`;
+      const session = sessions[language][index];
+      if (!session) throw new Error("session initialization failed");
+      const { sessionId, attemptId } = session;
       const question = language === "en" ? "When did your urine turn red?" : "小便什么时候开始变红？";
       const startedAt = performance.now();
-      const reply = await jsonPost("/api/agent-chat/", { caseId: "P001", agentId: "standardized_patient", sessionId, stage: "history", mode: "training", language, studentInput: question, conversationHistory: [], askedSlotIds: [], askedQuestions: [] }, { "X-Idempotency-Key": `${attemptId}:patient` });
+      const reply = await jsonPost("/api/agent-chat/", { caseId: "P001", attemptId, agentId: "standardized_patient", sessionId, sessionMode: "free", stage: "history", mode: "training", language, studentInput: question, conversationHistory: [], askedSlotIds: [], askedQuestions: [] }, { "X-Idempotency-Key": `${attemptId}:patient` });
       patientDurations.push(performance.now() - startedAt);
       const timing = parseServerTiming(reply.response.headers.get("server-timing") || "");
       if (timing.app === undefined) throw new Error("missing patient application timing metadata");
@@ -88,7 +93,8 @@ for (const language of ["zh", "en"]) {
 
 await check("training-action", async () => {
   const attemptId = `smoke-training-${crypto.randomUUID()}`;
-  const initialized = await jsonPost("/api/training-action/", { action: "init-attempt", caseId: "P008", attemptId, mode: "free", language: "zh" });
+  const initKey = `${attemptId}:training-init`;
+  const initialized = await jsonPost("/api/training-action/", { action: "init-attempt", caseId: "P008", attemptId, mode: "free", language: "zh", requestId: initKey }, { "X-Idempotency-Key": initKey });
   const token = initialized.response.headers.get("x-training-state");
   if (!token) throw new Error("missing signed state token");
   const historyStartedAt = performance.now();
@@ -98,10 +104,17 @@ await check("training-action", async () => {
   }, { "X-Training-State": token, "X-Idempotency-Key": `${attemptId}-history` });
   const historyTiming = parseServerTiming(history.response.headers.get("server-timing") || "");
   historyDurations.push(historyTiming.history ?? performance.now() - historyStartedAt);
-  const updatedToken = history.response.headers.get("x-training-state");
+  let updatedToken = history.response.headers.get("x-training-state");
   if (!updatedToken) throw new Error("missing updated signed state token");
+  for (const [index, stageKey] of ["history", "orders", "diagnosis", "consult", "treatment", "perioperative", "debrief"].entries()) {
+    const requestId = `${attemptId}:stage:${index + 1}`;
+    const staged = await jsonPost("/api/training-action/", { action: "stage-feedback", caseId: "P008", attemptId, mode: "free", language: "zh", stageKey, submission: {}, requestId }, { "X-Training-State": updatedToken, "X-Idempotency-Key": requestId });
+    updatedToken = staged.response.headers.get("x-training-state");
+    if (!updatedToken) throw new Error(`missing stage ${index + 1} state token`);
+  }
   const scoreStartedAt = performance.now();
-  const scored = await jsonPost("/api/training-action/", { action: "score", caseId: "P008", attemptId, mode: "free", language: "zh" }, { "X-Training-State": updatedToken });
+  const scoreKey = `${attemptId}:score`;
+  const scored = await jsonPost("/api/training-action/", { action: "score", caseId: "P008", attemptId, mode: "free", language: "zh", requestId: scoreKey }, { "X-Training-State": updatedToken, "X-Idempotency-Key": scoreKey });
   const scoreTiming = parseServerTiming(scored.response.headers.get("server-timing") || "");
   scoreDurations.push(scoreTiming.score ?? performance.now() - scoreStartedAt);
   if (scored.payload.scoringVersion !== "360-event-v1") throw new Error("unexpected scoring version");
