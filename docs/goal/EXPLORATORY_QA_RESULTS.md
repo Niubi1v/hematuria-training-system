@@ -1,7 +1,7 @@
 # 探索式 QA 执行结果
 
 状态：长期执行中；当前 7 个开放 P1、1 个开放 P2，不得视为最终生产验收。
-被测 Production SHA：`96fcf80f5a825585be53715e65851fbc113a7ab0`。新基线 merge 后 QA HEAD：`5d9902c60c6e6d6a30b65a715b64e9d5627fef94`。
+被测 Production SHA：`52c24325ddd28262458f5eff4f37fe2866d53305`。最新基线 merge 后 QA HEAD：`1123859450c4f0117294e36b9711cb9ba65684b1`。
 
 ## 基线核验
 
@@ -128,6 +128,13 @@
 - HEM-P1-029、HEM-P1-033 及新 HEM-P1-034 在 `1440×900`、`1280×720`、`390×844`、`360×800` 各 4/4 复现。前两项分别仍为英文开场含 CJK、P004 教师元语言；新缺陷为中文 attempt 切换英文后 `POST /api/session/init/` 返回 HTTP 401 / `invalid_attempt_token`。
 - 12 个场景全部按失败断言结束，HTML/JSON/JUnit、截图、trace、失败录像、console 和脱敏 network 均保存。network 仅新增 action/caseId/language/mode 和错误码等安全元数据，不保存 attemptId、sessionId、header、签名或问答正文。
 - 这些结果不包含真实 DeepSeek，不判定 151 条来源语义或 18 条双语冲突的医学真值；外部阻塞状态不变。
+
+### 源分支再次推进后的门禁补充
+
+- 保存并普通推送 `96fcf80` QA 里程碑后，强制 fetch 确认 Production 最新为 `52c24325ddd28262458f5eff4f37fe2866d53305`，并无冲突 merge 为 QA `1123859450c4f0117294e36b9711cb9ba65684b1`。
+- `96fcf80..52c2432` 仅改动 secret scanner、scanner 合同、`package.json` 脚本和审计文档；`app/**`、`src/**`、`api/**`、`server/**`、`data/**` 均无差异，因此不重复生成四 viewport UI 证据。
+- 新 `test-secret-scanner.mjs` PASS，覆盖文本、二进制元数据、压缩 workbook、占位符、非泄露输出和已删除 Git 历史。新 repository scanner 在排除仅本机的大体积可重建 artifacts 后，对 320 个 tracked/candidate 文件、可达文本历史和有界归档元数据 PASS。
+- 直接把全部本地 artifacts 纳入新 scanner 时，只有 5 个“超出扫描上限”门禁（4 个 trace entry、1 个 trace archive），不是 secret 命中；独立只读解包终扫已覆盖 25 个 ZIP/2,045 个条目且真实签名/密钥/敏感 header 为 0。大证据不删除、不提交 Git。
 
 ## 保持开放的外部阻塞
 

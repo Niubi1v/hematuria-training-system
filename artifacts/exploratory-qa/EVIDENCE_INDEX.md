@@ -1,6 +1,6 @@
 # 探索式 QA 证据索引
 
-被测 Production SHA：`96fcf80f5a825585be53715e65851fbc113a7ab0`
+当前 Production SHA：`52c24325ddd28262458f5eff4f37fe2866d53305`；运行时证据基线：`96fcf80f5a825585be53715e65851fbc113a7ab0`（两者仅 scanner/package script/审计文档差异）
 QA 分支：`codex/hematuria-exploratory-qa`
 本机证据根目录：`<QA_WORKTREE>\artifacts\exploratory-qa\`
 
@@ -76,7 +76,8 @@ SHA-256：
 提交前状态：`PASS`（2026-07-14）。
 
 - 已提交和拟提交截图均经视觉复核，只含公开合成病例界面、fixture 文本和本地构建元数据；没有 Cookie、Authorization、签名、环境变量值、浏览器用户数据或直接身份信息。
-- `scripts/scan-repository-secrets.mjs` 最新对 510 个 tracked/candidate 文件通过；独立终扫覆盖证据根目录 205 个物理文件（含本索引）和 25 个 trace ZIP 的全部 2,045 个内部条目。私钥、Bearer/JWT、provider/API key、完整 attempt/session 签名、Authorization/Cookie/Set-Cookie 非空值、签名 query 和浏览器用户目录均为 0。
+- Production `52c2432` 的 `test-secret-scanner.mjs` 通过文本、二进制元数据、压缩 workbook、占位符、非泄露输出及已删除 Git 历史合同；增强后的 repository scanner 在排除仅本机的大体积可重建 artifacts 后，对 320 个 tracked/candidate 文件、可达文本历史和有界归档元数据通过。
+- 直接纳入全部本地 artifacts 时，新 scanner 仅报告 5 个扫描上限门禁（4 个 `archive-entry-too-large`、1 个 `archive-too-large-to-scan`），没有报告 secret 规则命中。独立终扫覆盖证据根目录 205 个物理文件（含本索引）和 25 个 trace ZIP 的全部 2,045 个内部条目；私钥、Bearer/JWT、provider/API key、完整 attempt/session 签名、Authorization/Cookie/Set-Cookie 非空值、签名 query 和浏览器用户目录均为 0。
 - 拟提交的 3 个聚合 JSON、2 个最小 trace 与本索引单独扫描 11 个 ZIP 内部条目，敏感值或本机私有路径命中为 0；6 张拟提交截图全部视觉复核，只含公开合成病例 UI、明确 fixture 文本和本地构建元数据。
 - 绝对用户路径只出现在不提交的 `reports/junit.xml`（36）、`local-dev-3010d.stdout.log`（16）、`local-dev-3010e.log`（34）和 `local-dev-3010f.log`（1），全部保持本机未跟踪。1,551 个邮箱样式全部是 Playwright `page@hash` 内部 ID；504 个身份证样式均无有效生日；8 个手机号样式嵌在哈希中，另 1 个来自 network 浮点耗时，均为误报。
 - `reports/results.json` 等其余本机报告也可能含 `<QA_WORKTREE>` 的实际绝对路径，因此整类报告保持不提交；本索引使用占位符，不暴露用户目录。

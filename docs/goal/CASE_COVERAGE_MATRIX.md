@@ -64,3 +64,4 @@
 - 新增安全合同为系统级 19/19：session/agent 对 case、language、mode、attempt 和 expiry 的绑定均通过，幂等重复/冲突/single-flight 通过；该结果不改变逐病例医学真值、自然语言或 `REAL_AI_BLOCKED` 列。
 - P001 新增四 viewport 中文→英文授权回归并 4/4 失败（HEM-P1-034）；P001 的英文开场纯度仍 4/4 失败。P004 教师元语言仍 4/4 失败。
 - HEM-P1-027 新基线移动回归为 `360×800` 失败、`390×844` 通过；HEM-P2-028 桌面双击回归仍失败。未重新把 P002–P042 标成完整 UI 七阶段通过。
+- 当前 Production `52c2432` 相对该运行时基线没有病例、UI、API、server 或 `data/**` 差异，只增强 secret scanner；上述逐病例覆盖和失败计数继续适用。

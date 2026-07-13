@@ -1,6 +1,6 @@
 # UI 自动视觉审查
 
-状态：长期执行中；被测 Production SHA `96fcf80f5a825585be53715e65851fbc113a7ab0`。
+状态：长期执行中；当前 Production SHA `52c24325ddd28262458f5eff4f37fe2866d53305`；运行时 UI 证据采集于代码等价的 `96fcf80f5a825585be53715e65851fbc113a7ab0`。
 
 ## 固定视口与页面
 
@@ -49,3 +49,4 @@
 - HEM-P1-027 定向回归中，`390×844` 仍通过，`360×800` 当前开场底边 `661`、composer 顶边 `654`，重叠 7px。旧基线 19px/6 次证据不删除；新结果说明遮挡缩小但未消失，状态仍为 OPEN。
 - HEM-P2-028 在 `1440×900` 仍显示两条相同阶段提交时间线；新基线观测继续是 `2/2/2`，没有幂等修复证据。
 - 新 live trace 内浏览器只持有 QA 脱敏占位符；完整训练签名与 session capability 不进入页面、截图、trace、console 或 network 摘要。
+- 后续 `52c2432` 只更新 secret scanner/审计文档，无 UI/API/data 运行时代码差异；因此保留上述四 viewport 结论，不重复生成相同截图和大 trace。

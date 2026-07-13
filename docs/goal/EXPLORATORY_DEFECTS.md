@@ -142,3 +142,5 @@
 - 证据：`screenshots/live-language-switch-authorization-1440x900-failure.png`（Git 代表帧）；其余三 viewport 截图、四份 trace、失败录像、console/network、HTML/JUnit 仅本机保留。
 - 建议方向：语言/attempt 改变时在同一同步状态转换中清空 token/promise/queue 和旧 session，再允许 auto session effect 运行；或把 token 明确按 `attemptId` 键控而不是单一 ref。补充中文→英文、英文→中文、快速往返、刷新和并发 health/session 回归。
 - 医学专家裁决：否；仅为客户端授权状态和 effect 时序问题。
+
+基线追赶说明：当前 Production `52c24325ddd28262458f5eff4f37fe2866d53305` 相对上述运行时证据基线 `96fcf80` 只修改 secret scanner、package script 和审计文档，没有任何已登记缺陷涉及的 UI/API/server/data 差异；故开放状态保持，未把代码等价当作重复复现次数。
