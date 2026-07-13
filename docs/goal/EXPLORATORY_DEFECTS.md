@@ -47,3 +47,78 @@
 - 最小提交证据：`screenshots/stage-submit-double-click-1440x900-failure.png`（159,310 字节）与 `traces/stage-submit-double-click-1440x900.zip`（12,363 字节，关闭截图帧和源码嵌入）。失败视频、HTML、console/network JSON 和重复 test-results 仅本机保留。
 - 建议方向：增加阶段提交 in-flight 状态并在请求完成前禁用按钮；一次用户动作生成并复用稳定 request ID；状态层按 stage/request ID 去重提交时间线。回归应覆盖阶段 1–6、终末报告按钮、桌面/移动端、双击/Enter 和失败重试，且不得删除或放宽当前断言。
 - 医学专家裁决：否。
+
+## HEM-P1-029：英文 Patient Session 开场白仍为中文
+
+- 级别/状态：P1，OPEN；42 例英文问诊从第一句即发生语言回落，破坏双语训练主流程。
+- 页面/路径：公开 `POST /api/session/init/` 与训练工作台 `/cases/P001/`；全 42 例；英文；viewport `1440×900`、`1280×720`、`390×844`、`360×800`。
+- 操作步骤：全新浏览器上下文打开病例 → 等待 health/session 初始化 → 点击 `English` → 等待请求体 `language=en` 的 session 响应 → 比较响应开场白与页面首条患者消息的语言。
+- 预期：英文 session 开场白不含 CJK，页面首条患者消息为英文。
+- 实际：session 响应和页面均显示中文患者开场白；页面其余标题、按钮与可见病例信息已经切为英文，语言错配清晰可见。
+- 复现：42 例规则链路矩阵在两次逐字同构结果中均为 42/42；公开 handler 烟测 2/2；四固定 viewport 浏览器 4/4，1440×900 另有重复复跑。
+- AI 来源：`local-simulation`/本地 rule；AI 开关在测试进程中关闭，`providerCalls=0`，不得记作真实 DeepSeek。
+- 状态变化时间线：document 200 → health 200 → 中文 session 200 → 点击 English → 英文 session 200 → `idle → initializing → degraded` → 中文开场覆盖英文本地占位。
+- HTTP/console/network：页面与静态资源 200；英文 `POST /api/session/init/` 200，代表性本地耗时约 15ms；console 仅 `ai_connection_transition` info，0 warning/error；network 不含 header/query/body。
+- 证据：`screenshots/live-english-opening-language-1440x900-failure.png`（最小代表帧）；其余三 viewport 截图、四份 trace、console/network 与 HTML 报告本机保留；聚合矩阵见 `reports/patient-session-matrix-summary.json`。
+- 建议方向：按 `language` 构造并缓存开场白，英文使用 patient-facing English chief complaint；对 session cache 的 `caseId/language/mode` 继续保持隔离，并用 42 例双语初始化矩阵回归。
+- 医学专家裁决：否；仅判断输出语言，不裁决开场内容的医学真值。
+
+## HEM-P1-030：Patient Session 病史路由不完整且自然病史问法被安全边界误拦截
+
+- 级别/状态：P1，OPEN；必问既往诊疗、肿瘤史、泌尿操作史及常见改写在全部病例范围出现不可达或错误边界响应。
+- 页面/路径：`server/patientSession.js` 生产规则链路及公开 `POST /api/agent-chat/`；42 例；中英文；N/A（API/契约）。
+- 操作步骤：每例初始化中英文 session → 对 37 canonical slot 各发送 2 条固定自然问法 → 要求单项问题仅命中预期逻辑 slot → 对同一请求立即重放 → 用公开 handler 对代表性 `prior_care`、中文肿瘤史和中文膀胱镜史复核。
+- 预期：37 个 slot 的主问法和固定改写均能到达相应病史事实；询问“既往肿瘤史/做过膀胱镜”不应被当成当前诊断或检查结果请求。
+- 实际：本缺陷族共 378/6,216 个路由探针不匹配：`prior_care` 168/168 走通用 fallback；中文肿瘤史 42 次被 `diagnosis_boundary` 拦截，英文 `previous cancer` 改写 42 次不可达；中文膀胱镜史 42 次被 `report_boundary` 拦截、中文“导过尿”改写 42 次不可达；英文 `unable to pass urine` 42 次未匹配 retention。84 个错误边界实例是路由失败的子集，不重复计为 462。
+- 复现：完整矩阵最终配置连续 2/2 得到相同 127 个失败分组和相同计数；公开 handler 代表性烟测连续 2/2，均为 HTTP 200 但 `matchedSlotIds=[]`。
+- AI 来源：本地 rule，无 provider 调用；fallback/mock 不记作真实 AI。
+- 状态变化时间线：session 初始化 → history 问题进入 diagnosis/report 边界或无 matcher → 固定安全/通用 fallback → API 200 → 该病史 slot 未收集。
+- HTTP/console/network：handler 层 13 项烟测均完成，四组病例/语言各用独立 session，`providerCalls=0`；公开响应未暴露 profile/teacherOnlyData，`revealedDataKeys=[]` 与 blockedDataKeys envelope 正常，问题仅在路由/边界。
+- 证据：`reports/patient-session-matrix-summary.json`、`reports/patient-api-adapter-smoke-summary.json`；复现脚本 `tests/exploratory/patient-session-matrix.mjs` 与 `patient-api-adapter-smoke.mjs`。
+- 建议方向：使 `server/canonicalFacts.js`/`structuredFacts.js` 与 37-slot 前端定义同源；先识别明确的“既往史/做过”上下文，再应用当前诊断/报告边界；补齐 `prior_care` 与常见中英文改写的精确回归。
+- 医学专家裁决：否；只判断路由可达性和边界分类，不判断病例是否实际存在相关病史。
+
+## HEM-P1-031：英文特异疼痛问法额外命中通用 pain 并扩大医学冲突隔离
+
+- 级别/状态：P1，OPEN；特异症状问题会额外披露通用疼痛事实，且在 5 个 pain 冲突病例中错误阻断本可回答的腰痛/放射痛问题。
+- 页面/路径：`server/canonicalFacts.js`/`patientSession.js` 与公开 `POST /api/agent-chat/`；42 例；以英文为主；N/A（API/契约）。
+- 操作步骤：逐例发送 flank pain、radiating pain 和 colicky pain 的固定原子问法及改写 → 将实际 `matchedSlotIds` 与唯一允许 slot 集合比较 → 对 HEM-P0-023 中 5 个 pain 冲突病例单独核对 quarantine 原因。
+- 预期：特异疼痛问法只命中特异 slot；冲突隔离只作用于实际被问到的冲突 fact。
+- 实际：本缺陷族共 252 个路由错配实例（英文 flank 84、英文 radiating 84、中文放射痛改写 42、英文 colicky pain 改写 42）。非冲突病例返回额外 `pain`；冲突病例因额外命中 `pain` 而把整个特异问题隔离。当前重复矩阵中直接 18 条冲突应产生 144 次 quarantine 日志，实际为 204，额外 60 次全部来自这些过匹配问法。
+- 复现：完整矩阵最终配置连续 2/2 计数一致；公开 handler 对 P002 英文 `flank pain` 连续 2/2 返回 `flank_pain + pain` 和 `compound_question_preserves_all_facts`。
+- AI 来源：本地 rule，`providerCalls=0`；未裁决 18 条冲突的医学内容。
+- 状态变化时间线：特异问句 → 多个正则同时命中 → 非冲突时 compound fallback，冲突时 pain quarantine → 原问题无法按最小披露作答。
+- HTTP/console/network：代表 handler 返回 HTTP 200；公开安全 envelope 正常；问题体现在 slot 集合和错误扩大的 quarantine。
+- 证据：同 HEM-P1-030 的两个聚合 JSON 和矩阵脚本；报告不保存完整回答。
+- 建议方向：按特异性/最长匹配确定 slot，命中 `flank_pain`、`radiating_pain`、`renal_colic` 后抑制通用 `pain`；quarantine 应只由最终允许 slot 集合触发。
+- 医学专家裁决：否；HEM-P0-023 仍保持 BLOCKED，本缺陷只修复匹配范围。
+
+## HEM-P1-032：非空已匹配事实被长度保护直接降级为通用“不清楚”
+
+- 级别/状态：P1，OPEN；规则路径在多个必问维度丢失已有 patient-facing 内容，学生得到通用未知回答但 slot 仍标记为已匹配。
+- 页面/路径：`server/patientSession.js`、公开 `POST /api/agent-chat/`；42 例；中英文；N/A（API/契约）。
+- 操作步骤：逐例逐 slot 提问 → 仅在来源双语字段非空且本身不是“不清楚/unknown”时检查结果 → 若路由精确命中但回复等于固定通用 unknown，则记录技术性传输丢失；不比较来源句子的医学正确性。
+- 预期：格式/长度保护应安全压缩已匹配事实，不能无条件抹成未知。
+- 实际：191 个唯一 `case × slot × language` 单元被压成通用 unknown，共 365 个固定改写探针实例；涉及英文 glomerular features 41 例、occupation exposure 40 例、triggers 40 例及另外 10 个 slot-language 组。公开 handler 中 P001 英文泡沫尿代表项稳定复现。
+- 复现：完整矩阵最终配置连续 2/2 计数和分组完全一致；公开 handler 代表项连续 2/2。
+- AI 来源：本地 rule；无 provider 调用，不评价真实 AI 的改写能力。
+- 状态变化时间线：事实精确命中 → `conciseDeterministicReply` 检测长度/摘要标记 → 返回固定 unknown → API 200，仍携带 matched slot/source。
+- HTTP/console/network：公开 handler 状态 200，安全 envelope 正常；失败判定只使用长度、固定 unknown 集合、slot/source 元数据和来源非空状态，报告不保存完整医学回答。
+- 证据：`reports/patient-session-matrix-summary.json`、`reports/patient-api-adapter-smoke-summary.json`。
+- 建议方向：对获准的当前 slot 做句级/字段级安全投影，保留否定、数字、单位和时间含义；无法安全压缩时明确标记需审核，不应在仍计入 slot coverage 的同时伪装成患者未知。
+- 医学专家裁决：不需要判断该工程缺陷；具体 191 条内容仍保留 `teacherReviewRequired`，医学真值不得由 QA 批准。
+
+## HEM-P1-033：确定性 canonical 回答绕过输出过滤并把教师提示送到公开 API
+
+- 级别/状态：P1，OPEN；患者接口暴露后台问诊提示，前端虽替换为泛化答复，却仍把该 slot 记为已收集，形成隐藏病史泄露与训练完整性问题。
+- 页面/路径：公开 `POST /api/agent-chat/`；浏览器 `/cases/P004/`；P004 血块、P005/P006 血尿时相；中文；四固定 viewport。
+- 操作步骤：本地 rule session 对 P004 问“有血块吗”，对 P005/P006 问血尿时相 → 检查 API 回复中教师元语言 → 在浏览器提交 P004 问题，观察前端安全替换、收集状态、console/network。
+- 预期：公开患者 API 不返回“未主动诉/需追问”等后台提示；若安全过滤拒绝回答，不应把未实际告知学生的 fact 计为已收集。
+- 实际：3 个唯一病例-slot 的 API 回复含教师元语言，2 条固定问法形成 6 个矩阵实例；P004 还顺带包含未问疼痛/时相。前端检测为 unsafe 后显示“请问具体一点”的通用答复，但保留 API 的 `matchedSlotIds=[clots]`，因此可见回答与计分/收集状态不一致。
+- 复现：直接链路连续 2/2；公开 handler P004 连续 2/2；浏览器四固定 viewport 4/4，且 1440×900 有额外重复复跑。
+- AI 来源：本地 deterministic rule，`providerCalls=0`；不涉及真实 DeepSeek。
+- 状态变化时间线：document/health/session 200 → 学生提交血块问题 → agent-chat 200 返回 canonical 文本 → 前端 `isUnsafePatientReply` 拒绝 → 显示通用澄清句 → timeline/history-log 仍记录 matched slot。
+- HTTP/console/network：P004 代表 `POST /api/agent-chat/` 200，约 10ms；两个 training-action fixture 200；清理语音设置后的 console 仅正常 `ai_connection_transition` info，0 warning/error；network 仅方法、path、状态和耗时。
+- 证据：`screenshots/live-p004-clots-teacher-meta-390x844-failure.png`（代表帧）；四 viewport 截图/trace/console/network 本机保留；聚合 JSON 同上。
+- 建议方向：所有 canonical/structured deterministic 返回在 API 层统一执行 patient output 过滤；将“元语言清洗失败”和“事实未回答”明确返回，前端仅在安全答复实际展示后更新 collected/asked slots。
+- 医学专家裁决：否；只移除教师元语言和修复收集状态，不修改 P004/P005/P006 的医学事实。相关内容本身仍需既有医学审核。

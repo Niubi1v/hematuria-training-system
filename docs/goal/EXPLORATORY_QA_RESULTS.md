@@ -1,7 +1,7 @@
 # 探索式 QA 执行结果
 
-状态：长期执行中；当前 1 个开放 P1、1 个开放 P2，不得视为最终生产验收。
-被测 Production SHA：`41b3830a9095c692b3fdbe65a3dbf95b7ece5a37`。本轮 QA 起始 HEAD：`40bb0aaf745243ba5a66028c8636f0c9f2084c95`。
+状态：长期执行中；当前 6 个开放 P1、1 个开放 P2，不得视为最终生产验收。
+被测 Production SHA：`41b3830a9095c692b3fdbe65a3dbf95b7ece5a37`。本轮 QA 起始 HEAD：`d16887e589faf247abfe96f83568b0346e6865ac`。
 
 ## 基线核验
 
@@ -67,6 +67,41 @@
 契约子集首次串行运行的前 8 项通过后，`test-product-audit.ts` 因 QA worktree 缺少本地 `xlsx` 依赖而未启动断言；建立指向同 SHA 已安装依赖的本地 junction 后单独重跑并通过。该过程只调整被 Git 忽略的 `node_modules`。
 
 本轮未重复 HEM-P1-027 的旧基线 6/6；源分支没有声明修复，缺陷保持 OPEN。真实 DeepSeek、医学真值、Preview 日志签名和真实首 Token/P95 均未由 fixture 结果改写。
+
+## 2026-07-14 长期循环第 3 轮
+
+### 基线门禁
+
+- 本轮起始 QA HEAD：`d16887e589faf247abfe96f83568b0346e6865ac`，分支 `codex/hematuria-exploratory-qa`，相对远程 QA 分支 `ahead 2 / behind 0`。
+- `git fetch --prune` 首次因共享 worktree Git 元数据写权限被 sandbox 拒绝；按门禁获准重跑后成功。远程 `origin/codex/hematuria-production-goal` 仍精确为 `41b3830a9095c692b3fdbe65a3dbf95b7ece5a37`，未出现新生产基线，允许继续测试。
+- 当前生产 worktree 的本地 `70fb5a3` 仍只增加审计文档；本轮动态 Next/API 服务从 QA 分支启动，业务实现相对 41b3830a 无变化。为离线启动补的 SWC/TypeScript/Tailwind junction 仅存在于被忽略的 `node_modules`；失败的 pnpm 自动下载留下 45,136 字节临时 store，核验绝对路径在 QA workspace 内后已删除。
+
+### 实际 Patient Session / API / UI 矩阵
+
+| 范围 | 数量 | 结果 |
+| --- | ---: | --- |
+| 源数据结构 | 42 例 × 37 slot × 2 语言 = 3,108 个非空文本单元 | 结构完整；全部仍 `teacherReviewRequired=true`，不记医学通过 |
+| session 初始化 | 84 | envelope/时间戳/私有字段隔离通过；英文开场 42/42 含 CJK，HEM-P1-029 |
+| 固定 A/B 路由问法 | 6,216 | 5,586 匹配预期、630 不匹配；失败分流至 HEM-P1-030/031 |
+| 同请求重复一致性 | 6,216 | 相同输入结果稳定；最终两轮除时间戳外聚合 JSON 完全一致 |
+| 诊断/报告边界 | 168 | 明确诊断/报告请求全部边界正确；自然“既往肿瘤/膀胱镜史”另被误拦截，HEM-P1-030 |
+| HEM-P0-023 隔离 | 18 条 × 双语 × 两问法 × 两次调用，直接应 144 次 | 直接冲突保持隔离；实际观察 204 次，额外 60 次来自 pain 过匹配，HEM-P1-031；不裁决医学真值 |
+| 非空事实运输 | 3,108 单元中的可达项 | 191 个唯一 case-slot-language 被压成通用 unknown，365 个问法实例，HEM-P1-032 |
+| 教师元语言 | 6,216 问法实例 | P004 clots、P005/P006 phase 共 3 个唯一单元、6 个实例泄露，HEM-P1-033 |
+| 外部 provider | 全矩阵与 handler 烟测 | `providerCalls=0`；明确为本地 rule，不冒充真实 AI |
+
+矩阵最终配置连续运行两次，均为 `1,127` 个失败实例、`127` 个失败分组；其中错误边界 84 是 route mismatch 的子集，报告保留两种分类用于诊断，不把它们重复写成 1,211 个独立失败。所有失败记录只含 caseId、slot、语言、长度、来源类型、flags 和计数，不保存完整医学回答。
+
+公开 handler 烟测共 13 项，P001/en、P001/zh、P002/en 与 P004/zh 均使用独立 session；连续 2/2 得到相同 7 个代表性失败：英文开场、prior care、中文肿瘤史、中文膀胱镜史、P004 教师元语言、英文 flank pain 过匹配和 P001 英文肾小球线索降级。所有响应均为本地 handler，安全 envelope 的 `revealedDataKeys=[]`、blockedDataKeys、无私有 profile/debug 和 Server-Timing 检查通过。
+
+### Headless Chrome 真实本地 API 证据
+
+- 使用 fail-closed QA-only HTTP adapter 只把 `api/health.js`、`session/init.js` 与 `agent-chat.js` 暴露到本机 3001；Next dev 在 3010，training-action 由浏览器内脱敏 stub 接管，TTS 关闭。adapter 在进程内显式关闭 AI、拒绝 outbound fetch，CORS 仅允许本地测试 origin；没有读取或输出密钥。
+- HEM-P1-029 与 HEM-P1-033 均在 `1440×900`、`1280×720`、`390×844`、`360×800` 复现 4/4。前者页面英文 UI 中首条患者消息为中文；后者 API 返回教师提示，前端显示泛化澄清句但保留 clots slot。
+- 代表网络：document/health/session/agent-chat/training-action 均 200；英文 session 约 15ms，P004 agent-chat 约 10ms。关闭自动语音后的最终四 viewport 复跑中每份 console 仅 1 条正常 info、0 warning/error；network 摘要不保存 header、query 或 body。
+- 每个 viewport 均保存失败截图、trace、失败录像、console 和 network；Git 只计划保留两个代表截图与两个不含完整回答的聚合 JSON，其余本机索引保留。
+
+本轮没有运行真实 DeepSeek、没有判定 1,554 条双语 patient slot 的医学正确性，也没有解除 18 条冲突 quarantine。HEM-P1-027/028 未收到源修复，继续保持 OPEN。
 
 ## 保持开放的外部阻塞
 

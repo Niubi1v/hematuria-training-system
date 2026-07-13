@@ -28,5 +28,15 @@
 - `test-bilingual-patient.ts` 对 42 例各 6 个英文 fixture 问法通过，覆盖语言保持、报告/诊断边界和冲突隔离；P001 浏览器 fixture 另验证英文会话初始化、英文答复显示及中英文 attempt 隔离。
 - `test-structured-history-matrix.ts` 对 42 例各 17 个中文结构化历史问题通过；这些问题偏向既往史、用药和暴露，不能替代 37 个 canonical slot 的逐问题 UI/API 最小披露矩阵。
 - `test-bilingual-conflict-quarantine.ts` 确认 18 条冲突事实保持隔离且没有改变审核状态；该结果只证明技术 quarantine，HEM-P0-023 仍需具名专家裁决。
-- 底层双语 slot 中部分中文 onset 文本明显长于英文，但生产入口存在 `conciseDeterministicReply` 压缩层。当前不据底层数据判定泄露；后续必须从实际 `server/patientSession.js`/API 链路做 42×双语最小披露测试，再对任何候选问题至少复现两次。
+- 底层双语 slot 中部分文本超过患者答复长度限制；第 3 轮已从实际 `server/patientSession.js`/API 链路验证压缩行为，结论见下节，不再用底层数据单独推断。
 - 所有本轮英文/中文答复仍为规则或 fixture。协议通过不等于自然度、纠错能力、长对话一致性或医学正确性通过。
+
+## 2026-07-14 实际规则链路双语审查
+
+- 覆盖 42 例、37 canonical slot、中英文各 2 条人工固定问法，合计 6,216 个路由探针，并逐条重放一次；另有 84 次 session 初始化、168 次明确诊断/报告边界和 13 项公开 handler 烟测。测试未自动生成同义句，避免把随机生成质量混入 matcher 结论。
+- 英文开场在 42/42 session 中仍为中文，公开页面四 viewport 均可见，登记 HEM-P1-029。这是语言纯度失败，不依赖医学真值。
+- 378 个问法实例因路由缺失、同义改写缺口或“既往史”被诊断/报告边界误拦截，登记 HEM-P1-030；另有 252 个疼痛问法过匹配，登记 HEM-P1-031。
+- 191 个唯一 case-slot-language 单元虽有非空、非 unknown 来源，但规则层返回通用“不清楚”，共 365 个问法实例，登记 HEM-P1-032。判断只比较是否丢失为 unknown，不比较来源事实正确性。
+- P004 血块与 P005/P006 时相回答含“未主动诉/需追问”等教师元语言。公开 API 直接返回，前端改成泛化澄清句却仍保留已匹配 slot，登记 HEM-P1-033。该结论只判断患者口吻/隐藏提示，不裁决血块或时相本身。
+- 18 条 HEM-P0-023 冲突的直接问法继续稳定返回 pending medical review；但 pain 过匹配使其他特异疼痛问题被连带隔离。QA 不比较冲突双方的医学极性，也不解除 quarantine。
+- 所有本轮规则/API/UI样本均为 `local-simulation` 或 rule fallback，`providerCalls=0`。因此真实 DeepSeek 的自然度、错误总结纠正、20 轮语义一致性和性能仍保持 Preview 外部阻塞；本轮失败也不能外推为真实 provider 文风结论。

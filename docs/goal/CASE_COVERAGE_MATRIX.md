@@ -4,10 +4,10 @@
 
 | 病例 | 页面壳 | 中文协议/UI | 英文协议/UI | 真实 AI | 七阶段/360 | 视觉证据 | 备注 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| P001 | SHELL | UI_FIXTURE+CONTRACT_17 | UI_FIXTURE+CONTRACT_6 | REAL_AI_BLOCKED | UI_FIXTURE+CONTRACT_360 | 4_VIEWPORTS | 中文 20 轮；七阶段在 1440/390 完成；英文 attempt 隔离 |
+| P001 | SHELL | UI_FIXTURE+CONTRACT_17 | UI_FIXTURE+CONTRACT_6 | REAL_AI_BLOCKED | UI_FIXTURE+CONTRACT_360 | 4_VIEWPORTS | 中文 20 轮；七阶段在 1440/390 完成；实际英文 session 开场 4 viewport 失败（HEM-P1-029） |
 | P002 | SHELL | CONTRACT_17 | CONTRACT_6 | REAL_AI_BLOCKED | CONTRACT_360 | PENDING |  |
 | P003 | SHELL | CONTRACT_17 | CONTRACT_6 | REAL_AI_BLOCKED | CONTRACT_360 | PENDING |  |
-| P004 | SHELL | CONTRACT_17 | CONTRACT_6 | REAL_AI_BLOCKED | CONTRACT_360 | PENDING |  |
+| P004 | SHELL | CONTRACT_17 | CONTRACT_6 | REAL_AI_BLOCKED | CONTRACT_360 | 4_VIEWPORTS | 实际 API/UI 血块问法教师元语言失败（HEM-P1-033） |
 | P005 | SHELL | CONTRACT_17 | CONTRACT_6 | REAL_AI_BLOCKED | CONTRACT_360 | PENDING |  |
 | P006 | SHELL | CONTRACT_17 | CONTRACT_6 | REAL_AI_BLOCKED | CONTRACT_360 | PENDING |  |
 | P007 | SHELL | CONTRACT_17 | CONTRACT_6 | REAL_AI_BLOCKED | CONTRACT_360 | PENDING |  |
@@ -47,6 +47,13 @@
 | P041 | SHELL | CONTRACT_17 | CONTRACT_6 | REAL_AI_BLOCKED | CONTRACT_360 | PENDING |  |
 | P042 | SHELL | CONTRACT_17 | CONTRACT_6 | REAL_AI_BLOCKED | CONTRACT_360 | 1440×900 | 首轮页面壳末端截图 |
 
-`CONTRACT_17`、`CONTRACT_6` 与 `CONTRACT_360` 是确定性协议/评分契约覆盖，不等于逐病例完整 UI 问诊、自然语言质量或医学真值通过。中文 37 个 canonical slot 的实际 `server/patientSession.js` 最小披露矩阵、P002–P042 完整 UI 旅程和更多逐例视觉证据仍为后续可自动化工作。
+## 全 42 例实际 Patient Session 横向矩阵
+
+- 第 3 轮对表中全部 42 例运行实际 `server/patientSession.js`：37 canonical slot × 中文/英文 × 2 条固定问法，共 6,216 个路由探针，并逐条重复一次；另完成 84 个 session 初始化和 168 个明确诊断/报告边界。
+- 结构层 42×37×2 = 3,108 个双语单元均非空，但全部仍 `teacherReviewRequired=true`，只记结构覆盖，不能记医学通过。
+- 结果为 `RULE_MATRIX_FAIL`：630 个路由错配（HEM-P1-030/031）、42 个英文开场语言失败（HEM-P1-029）、191 个唯一事实单元被压为 unknown（HEM-P1-032）、3 个唯一单元出现教师元语言（HEM-P1-033）。失败分布覆盖全表，不能把任一病例的实际 Patient Agent 列改写为完成通过。
+- 18 条 HEM-P0-023 直接冲突继续隔离；额外隔离来自 matcher 过匹配，已单独登记工程缺陷，不改变医学裁决状态。
+
+`CONTRACT_17`、`CONTRACT_6` 与 `CONTRACT_360` 是确定性协议/评分契约覆盖，不等于逐病例完整 UI 问诊、自然语言质量或医学真值通过。P002–P042 完整七阶段 UI 旅程和更多逐例视觉证据仍为后续可自动化工作。
 
 真实 AI 列在 Preview 权限与变量满足前统一为 `REAL_AI_BLOCKED`，不能由 fixture 改写为通过；18 条冲突 quarantine 通过也不能解除 HEM-P0-023。

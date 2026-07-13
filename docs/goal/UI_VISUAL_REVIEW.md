@@ -6,10 +6,10 @@
 
 | viewport | 首页 | 病例目录中/英 | P001 训练页 | 20 轮恢复后 | 状态 |
 | --- | --- | --- | --- | --- | --- |
-| 1440×900 | PASS | PASS | PASS | 不适用 | PASS |
-| 1280×720 | PASS | PASS | PASS | 不适用 | PASS |
-| 390×844 | PASS | PASS | PASS | PASS | PASS |
-| 360×800 | PASS | PASS | FAIL | 不适用 | HEM-P1-027 |
+| 1440×900 | PASS | PASS | PASS | 不适用 | 布局 PASS；HEM-P1-029/033 |
+| 1280×720 | PASS | PASS | PASS | 不适用 | 布局 PASS；HEM-P1-029/033 |
+| 390×844 | PASS | PASS | PASS | PASS | 布局 PASS；HEM-P1-029/033 |
+| 360×800 | PASS | PASS | FAIL | 不适用 | HEM-P1-027/029/033 |
 
 ## 判定项
 
@@ -33,3 +33,11 @@
 - HEM-P1-027 未收到源分支修复，不重复旧基线 6/6，也不把 360×800 训练页改写为通过。
 - 新发现 HEM-P2-028：`1440×900` 快速双击阶段提交后，右侧时间线出现两条内容相同的“提交阶段：30/50”；失败截图与关闭截图帧的 12,363 字节最小 trace 进入 Git，视频仅本机保留。
 - 新增通过截图和 a11y/七阶段 trace 均为可重建或重复证据，不进入 Git；详见证据索引。
+
+## 2026-07-14 第三轮真实本地 API 视觉复核
+
+- QA worktree 通过本地 Next 3010 + Vercel handler adapter 3001 连接真实 `session/init` 与 `agent-chat` 代码；AI 显式关闭，training-action 仅作脱敏状态 stub。不是 Preview 或真实 DeepSeek。
+- HEM-P1-029：P001 切换 English 后，标题、按钮、病例信息均为英文，但首条 standardized patient 消息保持中文。四 viewport 4/4，1440×900 另有重复复跑；截图直接显示同屏语言错配。
+- HEM-P1-033：P004 提交“有血块吗？”后，公开 API 返回教师元语言；前端安全层将其替换为“请问具体一点”的泛化答复。四 viewport 4/4；390×844 代表截图显示提交后的泛化患者答复，页面无新增水平溢出。
+- 两个场景均保存四 viewport 的自动截图、trace 和失败录像。最终清洁复跑关闭自动语音，每份 console 仅 1 条正常连接状态 info、0 warning/error，关键 document/session/agent-chat/training-action 均 200；network 摘要没有 header、query、body 或签名。
+- 新问题属于语言/患者内容与收集状态，不改变此前首页、目录、七阶段布局和 axe 结论。360×800 的 HEM-P1-027 仍单独 OPEN，不能因本轮页面可操作而改写为通过。
