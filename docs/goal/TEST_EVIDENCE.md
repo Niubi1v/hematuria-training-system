@@ -216,3 +216,17 @@
 - 严格规则只统计明确相反短句：中文`无痛性/无尿痛/无尿频/无尿急`与英文明确肯定`I have pain`、`hurts or burns`、`urinating more often`、`urgent need`。
 - 结果：18条，11例；pain 5、dysuria 3、urinary_frequency 1、urinary_urgency 9；source 4、derived 14；全部`teacherReviewRequired=true`。
 - 该结果是失败/阻断证据，不是通过；未运行写入型生成器，未修改`data/**`。
+
+## HEM-P1-024 连接提示收敛（2026-07-13）
+
+| 时间/条件 | 精确命令或入口 | 退出码/状态 | 结果 |
+|---|---|---:|---|
+| 约12:44，1280×720 | 真实浏览器打开本地`/cases/P001/`，等待初始化完成并读取DOM/console | 可重复 | 同时出现泛化health提示与具体session错误；document client/scroll width均1265，无横向溢出；2条脱敏`api_request_failed` |
+| 修复前测试准备 | 新增Playwright用例`session initialization failure shows one specific connection notice` | 未进入断言 | CI模式缺少`chromium_headless_shell-1228`；本机Chrome通道180秒未完成启动，均登记为测试环境限制 |
+| 修复后 | `node node_modules/typescript/bin/tsc --noEmit` | 0 | TypeScript通过 |
+| 修复后 | `node scripts/run-lint.mjs` | 0 | ESLint通过 |
+| 修复后 | `tsx scripts/test-ai-recovery.ts` | 0 | 状态、过期、部署失效、安全fallback与覆盖恢复通过 |
+| 修复后 | `tsx scripts/test-api-recovery.ts` | 0 | 重试、幂等、非重试错误与超时通过；仅输出脱敏测试错误元数据 |
+
+- 代码变化只抑制重复的泛化提示；更具体的会话错误和重连按钮保留。
+- 新Playwright断言尚未取得本地通过证据，必须以本次提交对应的Draft PR Linux CI结果为准。

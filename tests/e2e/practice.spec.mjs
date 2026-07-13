@@ -160,6 +160,24 @@ test("rule fallback keeps reconnection available and recovery replaces the reply
   expect(saved.timeline.filter((item) => item.type === "technical")).toHaveLength(1);
 });
 
+test("session initialization failure shows one specific connection notice", async ({ page }) => {
+  await page.route("**/api/health/**", (route) => route.fulfill({
+    status: 503,
+    contentType: "application/json",
+    body: JSON.stringify({ code: "health_unavailable" })
+  }));
+  await page.route("**/api/session/init/**", (route) => route.fulfill({
+    status: 503,
+    contentType: "application/json",
+    body: JSON.stringify({ code: "session_unavailable" })
+  }));
+
+  await page.goto("/cases/P001/");
+
+  await expect(page.getByText("网络连接失败，请检查网络后重试。")).toBeVisible();
+  await expect(page.getByText("暂时无法确认后端健康状态，仍可继续文字练习。")).toHaveCount(0);
+});
+
 test("offline reconnect sends no request and can recover after the online event", async ({ page, context }) => {
   let healthCalls = 0;
   let sessionCalls = 0;

@@ -1647,7 +1647,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             <p className="text-sm font-medium text-clinic-blue">{activeAgent.agentName[lang]}</p>
             <h2 className="mt-1 text-xl font-semibold">{activeAgent.mainWindowFunction[lang]}</h2>
             <p className="mt-2 text-sm text-clinic-muted">{t(lang, "noFeedbackBeforeSubmit")}</p>
-            {!reconnectNotice && (healthCheckFailed || serviceHealth?.patientServiceConfigured === false || serviceHealth?.trainingStateConfigured === false) && (
+            {!reconnectNotice && !sessionInitError && (healthCheckFailed || serviceHealth?.patientServiceConfigured === false || serviceHealth?.trainingStateConfigured === false) && (
               <p role="status" className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">
                 {healthCheckFailed
                   ? (lang === "en" ? "Backend health could not be confirmed. Text practice remains available." : "暂时无法确认后端健康状态，仍可继续文字练习。")

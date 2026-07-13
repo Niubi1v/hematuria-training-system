@@ -2,6 +2,15 @@
 
 ## 开放缺陷
 
+### HEM-P1-024：初始化失败时重复显示连接提示
+
+- 级别：P1，用户可见体验；状态：本地已修复，待Draft PR浏览器CI确认。
+- 复现：本地P001、1280×720、中文；health与session init均不可用时，页面同时显示“暂时无法确认后端健康状态，仍可继续文字练习。”和“网络连接失败，请检查网络后重试。”。
+- 证据：2026-07-13约12:44真实浏览器DOM同时存在两个`role=status`连接提示；页面无横向溢出，控制台记录两次脱敏`api_request_failed`。
+- 根因：泛化health提示仅受`reconnectNotice`抑制，没有在更具体的`sessionInitError`存在时让位。
+- 最小修复：`sessionInitError`存在时只显示问诊区的具体错误和重连操作，不再叠加泛化health提示；不改变连接状态机、API、医学数据或评分。
+- 回归：新增Playwright用例`session initialization failure shows one specific connection notice`。本机CI Chromium缺失且本机Chrome通道未在时限内完成启动，故断言待PR Linux CI执行；TypeScript、ESLint、AI recovery及API recovery均exit0。
+
 ### HEM-P0-023：双语患者槽位存在明确医学极性矛盾
 
 - 级别：P0，重大医学风险；阻断英文真实AI、fallback验收、PR Ready、合并与发布。

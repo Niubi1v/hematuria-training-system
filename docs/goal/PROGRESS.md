@@ -134,3 +134,11 @@
 - 两个小步提交`ff02d76`与`0d60a90`已普通push；Draft PR #1 head更新为`0d60a90`。Actions run `29206516554` completed/success，Vercel Preview success，Pages deploy按PR规则skipped；PR仍为Draft且未合并。
 - 证据提交后当前HEAD `558fadd`的run `29206657625`及Vercel再次success；据此关闭仅缺CI的HEM-P1-002/004/005/010/011/012工程项，生产权限部分继续保持PENDING/BLOCKED。
 - 按裁决人反馈扩充HEM-P0-023工作簿：主表新增病种与原始病历索引，并新增11例“原始病历”工作表；内容直接来自`data/cases.json.raw`，未修改病例或专家空白字段。
+
+## 2026-07-13 12:40—12:55 周末自主改进：连接提示收敛
+
+- 恢复检查确认分支`codex/hematuria-production-goal`、HEAD与远程专项分支均为`d9f6c4d`，工作树开始时干净；根目录`ACCEPTANCE_MATRIX.md`继续作为唯一矩阵，未创建重复的`docs/goal/ACCEPTANCE_MATRIX.md`。
+- 受保护Preview P001标签页约50秒内未返回DOM，继续归HEM-P1-020权限/可访问性阻塞；没有读取Cookie、Authorization或任何密钥。
+- 同一提交的本地P001在1280×720稳定复现两个连接提示叠加；初始化后页面宽度1265/1265，无横向溢出，控制台出现两次脱敏`api_request_failed`。
+- 新增失败场景Playwright断言，并以单条件修复让泛化health提示在`sessionInitError`存在时让位；没有修改业务数据、医学事实、审批或`needs_revision`。
+- TypeScript、ESLint、AI recovery、API recovery均exit0。本机CI Chromium未安装；本机Chrome Playwright进程未在180秒内完成，因此新增浏览器断言必须由Draft PR Linux CI确认，当前不得提前登记为远程通过。

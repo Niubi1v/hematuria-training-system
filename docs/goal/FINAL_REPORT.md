@@ -104,3 +104,10 @@
 - 回滚：对本增量提交执行普通revert可移除运行时隔离与测试；不得通过修改医学数据或审核状态替代回滚。裁决包仅为待填审核工件，不应导入生产。
 - 提交与CI：`ff02d76`（隔离/fallback/测试）、`0d60a90`（裁决包/证据）已普通push到`codex/hematuria-production-goal`；Draft PR #1的Actions run `29206516554`与Vercel均success，Pages deploy skipped。PR未转Ready、未合并、未触发正式生产部署。
 - 当前证据HEAD：`558fadd`；Actions run `29206657625` build success，Vercel Preview success，Pages deploy skipped。HEM-P1-002/004/005/010/011/012的工程CI缺口据此解除；其生产权限部分仍归HEM-P1-003/019。
+
+## 周末自主改进检查点（HEM-P1-024）
+
+- 在本地P001真实浏览器复现初始化失败时两条连接提示叠加；已增加浏览器回归并实施单条件UI收敛。
+- 专项TypeScript、ESLint、AI/API恢复测试通过；新增Playwright断言因本机浏览器运行条件未执行完成，等待Draft PR Linux CI，不提前宣称通过。
+- Preview登录态DOM仍不可访问，真实DeepSeek、日志10/10、P95与人工自然度继续受HEM-P1-019/020阻塞。
+- 本增量未修改`data/**`、医学审核状态、环境变量或密钥；回滚方式为普通revert本次专项提交。
