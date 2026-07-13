@@ -191,3 +191,4 @@
 - 依据DeepSeek官方`/chat/completions`合同实现SSE：默认仅对`chat_completions`启用，可用`LLM_STREAMING_ENABLED=false`显式兼容非SSE供应商；不修改任何实际环境变量。
 - 服务端聚合`delta.content`为原JSON回复；首个`reasoning_content`或`content`只记录时间，思维内容不保存、不返回。live_ai的smoke现在强制要求`provider`与`firsttoken`指标，cache/fallback不冒充真实provider样本。
 - 本地33项完整行为链exit0（10.3秒），专项SSE/API/恢复/计时与TypeScript exit0；Vercel等价52/52、25 JS bundle及284候选文件secret扫描exit0（合计16.4秒），`data/**`零修改。等待新HEAD的Node 22 Lint、Playwright 40/40及Vercel远程复核。
+- 远程复核完成：`d2c2eb0`对应run `29236606930` completed/success，build 3分35秒，Node 22 TypeScript/Lint、33项行为、Playwright 40/40、52页构建与扫描全部通过；Vercel Deployment及Preview Comments通过，Pages deploy跳过，PR保持Draft/CLEAN。

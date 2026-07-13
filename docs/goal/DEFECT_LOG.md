@@ -63,10 +63,11 @@
 
 ### HEM-P1-021：真实首Token指标当前不可测（工程采集已解除）
 
-- 状态：工程采集已解除，真实Preview待验证。主Patient Agent与通用Agent的`chat_completions`现默认使用供应商SSE，在服务端聚合为原有JSON响应，并记录首个非空provider token耗时。
+- 状态：工程采集已解除并经Draft PR CI确认，真实Preview待验证。主Patient Agent与通用Agent的`chat_completions`现默认使用供应商SSE，在服务端聚合为原有JSON响应，并记录首个非空provider token耗时。
 - 安全边界：只累计`delta.content`；`reasoning_content`仅用于确定首Token时点，不保存、不返回、不写日志。客户端只见白名单`Server-Timing:firsttoken`毫秒数，非流式兼容路径不会伪造指标。
 - 2026-07-13初始工程增量先新增白名单化`Server-Timing`合同，覆盖session、应用总耗时、真实provider调用、history-log与score；当时非流式smoke明确输出`patient-first-token=unsupported`。当前SSE增量已将该输出替换为真实样本分布，且仍不包含问题、病例、签名、token或密钥。
 - 剩余阻塞：真实首Token/P95仍需可登录且具备真实AI/签名变量的Preview环境采样。本增量消除本地协议与采集缺口，但不把外部验收改为PASS。
+- 远程证据：`d2c2eb0`的Actions run `29236606930` build success（3分35秒），Playwright 40/40；Vercel Deployment与Preview Comments success，Pages deploy skipped；PR保持Open/Draft/CLEAN。
 
 ### HEM-P1-026：移动端英文切换E2E未等待session就绪（已解除）
 

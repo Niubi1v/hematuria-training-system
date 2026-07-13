@@ -156,3 +156,4 @@
 - 本地失败测试、SSE/非泄露专项、33项行为、TypeScript、52页构建及扫描均有exit码证据；医学数据、审批状态、360分算法和实际环境变量零修改。
 - 工程协议缺口已消除；真实Preview首Token/P95、10/10日志和自然度仍需要登录权限与正确变量作用域，不能写为通过。
 - 回滚：普通revert本次SSE增量提交即可恢复非流式provider请求；不得reset、force push或修改医学事实补偿回滚。
+- 远程工程门禁：`d2c2eb0`的run `29236606930` completed/success（3分35秒），Playwright 40/40；Vercel Deployment与Preview Comments success，Pages deploy skipped，PR为Open/Draft/CLEAN。该绿灯不替代真实AI首Token/P95样本。

@@ -345,3 +345,4 @@
 
 - 官方协议依据：[DeepSeek Create Chat Completion](https://api-docs.deepseek.com/api/create-chat-completion)：`stream=true`使用data-only SSE增量并以`data: [DONE]`结束。
 - 尚未取得真实DeepSeek延迟样本；本地fixture只证明协议、计时与非泄露，不替代Preview P95/首Token验收。
+- 远程HEAD `d2c2eb0dac9ed3c1798dc75a94bcc5f386280f2b`：Actions run `29236606930` success，build job `86772620376`用时3分35秒；Unit/behavior、医学合同、Typecheck、Lint、secret scan、Playwright E2E、52页构建和bundle扫描全部success。Vercel deployment `3N7ghXGzvurKNbjeVrr35zUDG2Z8`与Preview Comments success；Pages deploy job `86773293377` skipped。
