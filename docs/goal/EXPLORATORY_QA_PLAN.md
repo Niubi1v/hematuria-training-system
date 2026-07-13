@@ -1,13 +1,14 @@
 # 探索式黑盒 QA 长期计划
 
-状态：执行中；当前基线 `41b3830a9095c692b3fdbe65a3dbf95b7ece5a37`。
+状态：执行中；当前被测 Production Goal 基线 `41b3830a9095c692b3fdbe65a3dbf95b7ece5a37`；QA 交付分支 `codex/hematuria-exploratory-qa`。
 边界：仅修改测试、只读审计工具、QA 文档与证据，不修改业务实现或医学数据。
 
 ## 启动门禁
 
-- 每轮先执行 `git fetch`、`git status --short --branch`、`git rev-parse HEAD`、`git worktree list --porcelain`。
-- HEAD 必须精确等于主 Goal 交接提交；不一致时停止验收结论和后续测试。
-- 当前 worktree 为 detached HEAD，目标分支 worktree 为 `codex/hematuria-production-goal`；两者均指向上述提交。
+- 每轮先执行 `git fetch --prune`、`git status --short --branch`、`git rev-parse HEAD`、`git worktree list --porcelain`，并读取 `origin/codex/hematuria-production-goal`。
+- 被测生产基线必须精确等于源分支最新 SHA；若源分支变化，先保存并推送当前 QA 交付，再安全合并新基线和做受影响回归，不得基于旧生产代码继续测试。
+- QA 分支 HEAD 会包含测试、报告和最小证据提交，因此不与生产 SHA 直接比较。门禁分别记录“被测 Production SHA”和“QA 交付 HEAD”，并确认从生产基线到 QA HEAD 没有业务功能或 `data/**` 差异。
+- 本轮启动时远程 Production SHA 仍为 `41b3830a9095c692b3fdbe65a3dbf95b7ece5a37`，QA 起始 HEAD 为 `40bb0aaf745243ba5a66028c8636f0c9f2084c95`。
 - 仓库内及父级未发现 `AGENTS.md`；执行边界以 `docs/goal/HEMATURIA_PRODUCTION_GOAL.md`、`EXECUTION_PLAN.md` 和本任务说明为准。
 
 ## 证据规范

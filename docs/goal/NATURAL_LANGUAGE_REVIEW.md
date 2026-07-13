@@ -1,6 +1,6 @@
 # 自然语言与双语审查
 
-状态：首轮准备完成，真实 AI 审查受 Preview 条件阻塞。
+状态：fixture 协议覆盖扩展中，真实 AI 自然语言审查受 Preview 条件阻塞。
 
 ## 审查维度
 
@@ -22,3 +22,11 @@
 - 已运行 20 个中文问法，包含起始/反复/颜色/肉眼镜下/时相/血块/疼痛/LUTS/急症/肾小球线索/既往史/用药过敏/暴露/家族史/女性来源/操作外伤，以及重复起始时间和故意错误总结。
 - 加上快速双击测试共保存 21 轮脱敏 transcript；患者答复为序号化固定 fixture，只用于 UI、日志幂等和恢复，不评价自然度或医学正确性。
 - 本轮未取得真实英文对话样本；病例目录英文视觉通过不等于英文 Patient Agent 通过。
+
+## 2026-07-14 fixture 协议审查
+
+- `test-bilingual-patient.ts` 对 42 例各 6 个英文 fixture 问法通过，覆盖语言保持、报告/诊断边界和冲突隔离；P001 浏览器 fixture 另验证英文会话初始化、英文答复显示及中英文 attempt 隔离。
+- `test-structured-history-matrix.ts` 对 42 例各 17 个中文结构化历史问题通过；这些问题偏向既往史、用药和暴露，不能替代 37 个 canonical slot 的逐问题 UI/API 最小披露矩阵。
+- `test-bilingual-conflict-quarantine.ts` 确认 18 条冲突事实保持隔离且没有改变审核状态；该结果只证明技术 quarantine，HEM-P0-023 仍需具名专家裁决。
+- 底层双语 slot 中部分中文 onset 文本明显长于英文，但生产入口存在 `conciseDeterministicReply` 压缩层。当前不据底层数据判定泄露；后续必须从实际 `server/patientSession.js`/API 链路做 42×双语最小披露测试，再对任何候选问题至少复现两次。
+- 所有本轮英文/中文答复仍为规则或 fixture。协议通过不等于自然度、纠错能力、长对话一致性或医学正确性通过。
