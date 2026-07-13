@@ -172,6 +172,20 @@ export function scanFileBuffer(buffer, file, findings = []) {
 }
 
 export function scanGitHistory(cwd, findings = []) {
+  try {
+    const shallow = execFileSync("git", ["rev-parse", "--is-shallow-repository"], {
+      cwd,
+      encoding: "utf8",
+      maxBuffer: 1024 * 1024
+    }).trim();
+    if (shallow !== "false") {
+      addFinding(findings, "git-history", 0, "history-scan-shallow");
+      return findings;
+    }
+  } catch {
+    addFinding(findings, "git-history", 0, "history-repository-state-unknown");
+    return findings;
+  }
   const excludes = historyBinaryExtensions.map((extension) => `:(exclude,glob)**/*.${extension}`);
   let patch;
   try {

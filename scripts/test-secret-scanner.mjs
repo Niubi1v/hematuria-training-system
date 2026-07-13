@@ -3,6 +3,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import * as XLSX from "xlsx";
 import { scanFileBuffer, scanGitHistory, scanText } from "./scan-repository-secrets.mjs";
 
@@ -36,6 +37,7 @@ const workbookFindings = scanFileBuffer(Buffer.from(workbookBuffer), "fixture.xl
 assert.ok(workbookFindings.some((finding) => finding.rule === "aws-access-key"), "compressed workbook text must be scanned");
 
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), "hematuria-secret-history-"));
+const shallowParent = fs.mkdtempSync(path.join(os.tmpdir(), "hematuria-secret-shallow-"));
 try {
   execFileSync("git", ["init", "-q"], { cwd: temp });
   execFileSync("git", ["config", "user.email", "test@example.invalid"], { cwd: temp });
@@ -49,8 +51,13 @@ try {
   const historyFindings = scanGitHistory(temp, []);
   assert.ok(historyFindings.some((finding) => finding.rule === "jwt" && finding.file.includes("historical.txt")), "deleted historical secrets must remain detectable");
   assert.equal(JSON.stringify(historyFindings).includes(jwt), false, "history findings must not contain secret values");
+  const shallow = path.join(shallowParent, "checkout");
+  execFileSync("git", ["clone", "-q", "--depth", "1", pathToFileURL(temp).href, shallow]);
+  const shallowFindings = scanGitHistory(shallow, []);
+  assert.ok(shallowFindings.some((finding) => finding.rule === "history-scan-shallow"), "shallow repositories must fail closed instead of claiming complete history coverage");
 } finally {
   fs.rmSync(temp, { recursive: true, force: true });
+  fs.rmSync(shallowParent, { recursive: true, force: true });
 }
 
-console.log("Secret scanner text, binary metadata, compressed workbook, placeholder, non-disclosure, and Git history contracts passed.");
+console.log("Secret scanner text, binary metadata, compressed workbook, placeholder, non-disclosure, full-history, and shallow-repository contracts passed.");

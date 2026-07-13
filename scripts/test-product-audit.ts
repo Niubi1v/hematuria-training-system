@@ -90,5 +90,11 @@ assert.match(nextConfig, /basePath/);
 assert.match(nextConfig, /trailingSlash:\s*true/);
 assert.match(workflow, /NEXT_PUBLIC_BASE_PATH/);
 assert.match(workflow, /upload-pages-artifact/);
+assert.match(workflow, /fetch-depth:\s*0/, "CI secret history scans require a complete checkout");
+assert.match(workflow, /pnpm audit --audit-level high/, "CI must audit all locked dependencies at high severity");
+assert.doesNotMatch(workflow, /pnpm audit --prod --audit-level high/, "CI must not hide high-severity development toolchain advisories");
+assert.match(workflow, /git status --porcelain --untracked-files=all/, "the final cleanliness gate must reject unexpected generated files");
+assert.match(workflow, /group:\s*\$\{\{ github\.workflow \}\}-\$\{\{ github\.event_name \}\}-\$\{\{ github\.ref \}\}/, "PR and main runs must not share one global Pages queue");
+assert.equal((workflow.match(/github\.ref == 'refs\/heads\/main'/g) || []).length >= 2, true, "artifact upload and deployment must both enforce main for manual runs");
 
 console.log("Product audit tests passed: cases, 360 scoring, order release, OSCE, storage, RCT, i18n and GitHub Pages config.");
