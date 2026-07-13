@@ -59,7 +59,7 @@
 |---|---|---|
 | 中/英、男/女、年龄与对抗名称选声正确 | PASS | `test:tts` |
 | 云TTS失败后同语言浏览器语音；无语音时文本不阻断 | PASS | `test:tts-api`与Playwright |
-| 云音频缓存不串文本/Origin/音色/语速/音调，且有TTL和容量上限 | LOCAL PASS | `91b2b23`：固定旧FNV碰撞先失败；SHA-256完整tuple、原tuple复核、1小时TTL、100项上限及并发命中专项通过，待PR CI |
+| 云音频缓存不串文本/Origin/音色/语速/音调，且有TTL和容量上限 | PASS | `96fcf80`：固定旧FNV碰撞先失败；run `29291035332` Node 22专项、Playwright和build全绿 |
 | Azure四音色真实返回`audio/mpeg` | PENDING | Azure未配置，按目标要求明确SKIP；不得冒充通过 |
 
 ## 医学治理
@@ -83,6 +83,7 @@
 | 69 JSON幂等、生成数据无漂移 | PASS | run `29289645684`验证69 JSON、75个受控输出幂等及最终clean gate；`data/**`零差异 |
 | 52页生产构建 | PASS | run `29289645684`静态生成52/52 |
 | 静态答案/密钥扫描 | PASS | run `29289645684`：294文件repository scan、25个JS bundle scan success |
+| 当前文本、Office归档、二进制可见元数据与Git文本历史密钥扫描 | LOCAL PASS | `25ad0a9`：动态泄露fixture与真实295文件/112提交扫描通过，待PR CI；历史二进制/OCR仍按已知限制保留 |
 | Playwright桌面/移动 | PASS | run `29289645684` desktop/mobile 40/40，runner正常退出；axe critical/serious=0断言包含在内 |
 | 专项分支普通push | PASS | `origin/codex/hematuria-production-goal` |
 | draft PR与GitHub Actions | PASS | PR #1保持Open/Draft/CLEAN；证据提交`30b0d45`的run `29289645684` completed/success |

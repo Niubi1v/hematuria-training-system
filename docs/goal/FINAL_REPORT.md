@@ -220,9 +220,18 @@
 - 当前没有剩余可在无权限条件下复现并修复的P0/P1代码缺陷。需人工处理的下一步：为该分支Preview核对保护访问方式及`UPSTASH_REDIS_REST_URL`、`UPSTASH_REDIS_REST_TOKEN`、`TRAINING_ATTEMPT_STORE_MODE=upstash`、独立强`TRAINING_STATE_SECRET`的作用域并重部署；随后运行真实AI验收。不得由Codex生成、读取或修改密钥值。
 - 医学阻塞保持不变：HEM-P0-001与HEM-P0-023需具名医学专家裁决；未批准419条事实，未解除42例`needs_revision`，未改变18条双语冲突或360分算法。推荐长期QA起始HEAD为证据提交`30b0d45`或其仅文档后代，行为代码基线为`9d405fd`。
 
-### TTS缓存安全增量（待远程CI）
+### TTS缓存安全增量（远程已确认）
 
 - `PRV-P2-003`旧32位FNV缓存碰撞已用固定文本对真实复现并修复；不同文本、Origin、音色、语速和音调不能再共用音频，缓存命中还需原tuple、Buffer和未过期同时成立。
 - 提交`91b2b23`仅修改`api/tts.js`与`scripts/test-tts-api.ts`；使用Node内置SHA-256，无新增依赖、密钥或环境变量，默认TTL一小时、容量100项。回滚为普通`git revert 91b2b23`。
 - 本地TTS专项、API恢复、TypeScript、ESLint、完整行为、52页build、25 JS bundle、294文件secret及75输出幂等均exit0。测试音频是确定性fixture，不是Azure真实服务通过。
-- 未改变医学数据、419审核决定、42例`needs_revision`、18条冲突隔离、Patient Agent语义、连接状态机或360分算法。远程Node 22 CI/Vercel完成前本项只记LOCAL PASS；PR继续Draft。
+- 未改变医学数据、419审核决定、42例`needs_revision`、18条冲突隔离、Patient Agent语义、连接状态机或360分算法。
+- head `96fcf80`的Actions run `29291035332` completed/success（4分00秒），Node 22实际执行新TTS专项；75项幂等、294文件secret、Playwright 40/40、52页build、bundle和最终clean gate均通过。Vercel两项通过，Pages deploy跳过，PR继续Draft。
+- 推荐长期QA的新行为起始HEAD更新为`96fcf80f5a825585be53715e65851fbc113a7ab0`；若随后仅追加本节远程证据，可使用其文档-only后代。
+
+### Secret Scanner覆盖增量（待远程CI）
+
+- `25ad0a9`将当前文本扫描扩展到Office ZIP/gzip文本、二进制可见ASCII/双对齐UTF-16元数据和可达Git文本历史，新增JWT、Authorization/Cookie及常见云凭据规则；日志不包含命中值。
+- 动态fixture、真实295文件/36二进制归档/112提交扫描、TypeScript、ESLint、37段完整行为和75项幂等均exit0。回滚为普通`git revert 25ad0a9`。
+- `PRV-P2-004`显著收敛但不伪造全覆盖：历史压缩二进制、图片像素OCR/隐写、GitHub组织级artifact/日志保留仍需独立工具/权限。
+- 唯一moderate仍是Next稳定版内部PostCSS；官方公告要求`>=8.5.10`，但稳定Next仍固定`8.4.31`，且本仓库无用户CSS输入/重串行化路径。本轮不使用未经Next稳定版验证的override，仅保留监控和真实1 moderate状态。

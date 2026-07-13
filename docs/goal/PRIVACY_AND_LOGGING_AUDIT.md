@@ -78,4 +78,12 @@
 - DeepSeek/Azure 的实际日志、数据保留、区域和训练用途设置。
 - Vercel Runtime Logs、Analytics、日志 drain、保留期和访问角色。
 - GitHub artifact/Actions 日志的组织级保留和访问策略。
+
+## 2026-07-14 后续处置
+
+- `PRV-P2-003`已由`91b2b23`修复并由run `29291035332`远程确认：TTS缓存使用SHA-256完整tuple、原tuple复核、1小时TTL、100项上限和Origin隔离。
+- `PRV-P2-004`在`25ad0a9`显著收敛：当前文本、Office ZIP文本条目、gzip、二进制可见ASCII/双对齐UTF-16元数据及可达Git文本历史进入同一非泄露扫描；JWT、Authorization/Cookie及常见云凭据规则已加入。
+- 扫描器使用64MB文件、32MB归档、8MB单entry、64MB总展开、2048 entries和128MB历史patch上限；超限、加密、ZIP64、未知压缩或解析失败均产生finding而非静默跳过。
+- 动态fixture覆盖文本、PNG元数据、奇数偏移UTF-16、压缩XLSX、placeholder、值不回显及“提交后删除仍在历史中”场景。当前真实扫描为295文件、36个二进制/Office归档和112个提交，无命中。
+- 仍未覆盖历史版本中的压缩二进制内容、图片像素OCR/隐写、组织级Actions artifact/日志保留和第三方供应商控制台；这些边界继续保留，不写成“全部二进制已脱敏”。
 - 生产环境变量实际值、作用域和轮换状态。

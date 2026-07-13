@@ -199,9 +199,10 @@
 ### P2状态
 
 - `SRA-P2-001`请求体/状态总量已增加上限；`SRA-P2-002`的Map有界问题部分修复，但进程内限流仍不是全局配额，后续应迁移到持久存储；`SRA-P2-003`继续由现有timer清理/Playwright覆盖。
-- `DCI-P2-004`工作流最小权限、主分支触发和Action SHA固定已完成；`DCI-P2-002`仍是1项moderate，未伪造成零漏洞。
-- `PRV-P2-001/002/004`仍需后续隐私/扫描设计：localStorage保留期需隐私负责人决定，第三方数据告知需法务/供应商控制台证据，二进制/历史secret扫描仍未全面覆盖。
-- `PRV-P2-003`（本地已修复，待PR CI）：旧TTS缓存只用32位FNV键，固定文本`tts-pbfuso-17pa`与`tts-jzkt95-23ce`在相同参数下均为`fc93de32`，第二请求真实命中第一音频。修复为Origin+voice+rate+pitch+text规范化tuple的SHA-256键，缓存项再次保存并核对原tuple，增加1小时TTL、100项上限及旧格式拒绝；碰撞、Origin/参数隔离、过期、并发预热命中和淘汰测试均通过。
+- `DCI-P2-004`工作流最小权限、主分支触发和Action SHA固定已完成；`DCI-P2-002`仍是1项moderate，未伪造成零漏洞。registry确认`next -> postcss@8.4.31`命中`GHSA-qx2v-qp2m-jg93`（修复`>=8.5.10`）；官方Next稳定版仍精确固定旧版，仓库搜索无用户CSS解析/重串行化/动态style注入路径，故保留为不可达P2并等待稳定版，不使用未经支持的override制造audit假绿。
+- `PRV-P2-001/002`仍需后续隐私设计：localStorage保留期需隐私负责人决定，第三方数据告知需法务/供应商控制台证据。
+- `PRV-P2-003`（已修复并经PR CI确认）：旧TTS缓存只用32位FNV键，固定文本`tts-pbfuso-17pa`与`tts-jzkt95-23ce`在相同参数下均为`fc93de32`，第二请求真实命中第一音频。修复为Origin+voice+rate+pitch+text规范化tuple的SHA-256键，缓存项再次保存并核对原tuple，增加1小时TTL、100项上限及旧格式拒绝；head `96fcf80`的run `29291035332`在Node 22实际执行专项并全绿，Vercel两项通过。
+- `PRV-P2-004`（本地显著收敛，待PR CI）：scanner新增JWT、Authorization/Cookie、AWS/Google/Azure/Slack及通用敏感赋值规则；以资源上限扫描当前Office ZIP文本条目、gzip和二进制ASCII/双对齐UTF-16元数据，并扫描可达Git文本历史。动态fixture验证已删除历史与压缩XLSX能失败且finding不含值；真实295文件/36个二进制归档/112提交扫描通过。仍不宣称覆盖历史二进制压缩内容、图片像素OCR或组织级artifact/log保留。
 
 ### 2026-07-14 终审新增缺陷
 

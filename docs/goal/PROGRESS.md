@@ -271,4 +271,17 @@
 - `api/tts.js`改用Node内置SHA-256索引规范化`origin/voice/rate/pitch/text` tuple；缓存项再次保存并严格比较tuple、音频Buffer和过期时间。默认1小时TTL、100项FIFO上限保持，旧Buffer格式缓存会被拒绝并删除。
 - 专项覆盖四音色、旧FNV碰撞、精确命中、Origin/语速/音调隔离、TTL、预热并发命中和容量淘汰。代码提交`91b2b23`可独立普通revert。
 - 本地证据：TTS/API恢复、TypeScript、ESLint通过；完整行为门禁33.4秒exit0；Vercel等价build 52/52、bundle 25 JS、secret 294文件通过；干净HEAD幂等75项12秒exit0。`data/**`、审核状态、360评分和环境变量零修改。
-- 本项仍待普通push后的GitHub Node 22、Playwright和Vercel新Preview确认；Azure未配置，真实四音色继续按目标标记SKIP/PENDING，不能用mock音频冒充。
+- 推送前状态：本项当时仍待GitHub Node 22、Playwright和Vercel新Preview确认；Azure未配置，真实四音色继续按目标标记SKIP/PENDING，不能用mock音频冒充。
+
+#### 远程验收
+
+- head `96fcf80`的Actions run `29291035332` completed/success（4分00秒）：Node 22.14实际输出TTS SHA-256 tuple/Origin/参数/TTL/并发/淘汰专项通过，75项幂等、294文件secret、Playwright 40/40、静态页52/52、23个CI bundle资产和最终clean gate均通过。
+- Vercel Deployment与Preview Comments success，Pages deploy skipped；PR #1保持Open/Draft，未转Ready、未合并、未部署Production。`PRV-P2-003`工程项关闭；Azure真实音色仍为未配置SKIP/PENDING。
+
+### PRV-P2-004 Secret Scanner覆盖扩展（2026-07-14）
+
+- 旧scanner只读取当前文本并静默跳过xlsx/zip/PDF/图片/音频，也不检查Git历史；静态审计据此把“全仓脱敏”判定为证据不足。
+- `25ad0a9`把scanner重构为可测试的非泄露引擎：新增JWT、Authorization/Cookie及常见云凭据规则；受限扫描Office ZIP/gzip文本、二进制ASCII/双对齐UTF-16可见元数据和可达Git文本历史。所有finding只含规则、路径/提交和行号，不含命中值。
+- 新专项动态构造假值，覆盖文本、PNG、奇数偏移UTF-16、压缩XLSX、placeholder、已删除历史及不回显；真实仓库295候选文件、36个二进制/Office归档、112提交扫描exit0。
+- TypeScript、ESLint及包含新专项的37段完整行为门禁exit0（35.4秒）；已提交HEAD上的scanner专项、真实扫描和75项幂等均exit0。`data/**`、审核状态、医学语义和评分零修改。
+- `DCI-P2-002`同时完成可达性复核：唯一moderate是Next稳定版内部PostCSS；无用户CSS处理路径，官方稳定版尚未升级，因此不强制override，保留监控与1 moderate真实状态。
