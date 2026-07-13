@@ -136,7 +136,7 @@ GitHub Pages 设置保持 `Settings -> Pages -> Source: GitHub Actions`。`trail
 
 ## 正式考核与研究
 
-公开站不打包教师答案；`/teacher` 和 `/rct` 只显示安全边界说明。练习attempt使用服务端HMAC签名状态，不再依赖serverless全局Map。正式attempt会校验签名中的mode、caseId和状态，并同时要求病例为 `reviewed/approved`、`medicalReviewImport.formalUseAllowed=true` 且使用独立 `TRAINING_STATE_SECRET`；当前42例仍全部保持禁用。正式 OSCE/RCT 下一阶段仍需要：
+公开站不打包教师答案；`/teacher` 和 `/rct` 只显示安全边界说明。所有练习与正式attempt均只接受至少32字节、且不得与`LLM_API_KEY`相同的独立`TRAINING_STATE_SECRET`；缺失或弱值时服务端安全失败，不再使用provider key兜底。签名状态包含版本、签发/过期时间、nonce、病例、attempt、mode与当前阶段。正式attempt还要求病例为 `reviewed/approved`、`medicalReviewImport.formalUseAllowed=true`；当前42例仍全部保持禁用。跨serverless防重放仍必须配置权威attempt存储，不能由签名token或进程内Map替代。正式 OSCE/RCT 下一阶段仍需要：
 
 - 教师/学生身份验证与角色权限
 - 服务端病例事实、阶段释放和评分API

@@ -1,3 +1,5 @@
+const { createHash } = require("node:crypto");
+
 const allowedVoices = new Set([
   "zh-CN-XiaoxiaoNeural",
   "zh-CN-YunxiNeural",
@@ -7,6 +9,7 @@ const allowedVoices = new Set([
 
 const requestWindows = globalThis.__hematuriaTtsRequestWindows || new Map();
 const audioCache = globalThis.__hematuriaTtsAudioCache || new Map();
+const AUDIO_CACHE_TTL_MS = 3_600_000;
 globalThis.__hematuriaTtsRequestWindows = requestWindows;
 globalThis.__hematuriaTtsAudioCache = audioCache;
 
@@ -33,11 +36,12 @@ function rateLimited(req) {
   return recent.length > Number(process.env.TTS_RATE_LIMIT_PER_MINUTE || 30);
 }
 
-function cacheKey(text, voiceName, rate, pitch) {
-  let hash = 2166136261;
-  const input = `${voiceName}|${rate}|${pitch}|${text}`;
-  for (let index = 0; index < input.length; index += 1) hash = Math.imul(hash ^ input.charCodeAt(index), 16777619);
-  return (hash >>> 0).toString(16);
+function cacheTuple(origin, text, voiceName, rate, pitch) {
+  return JSON.stringify([origin || "server", voiceName, rate, pitch, text]);
+}
+
+function cacheKey(tuple) {
+  return createHash("sha256").update(tuple, "utf8").digest("hex");
 }
 
 module.exports = async function handler(req, res) {
@@ -63,14 +67,16 @@ module.exports = async function handler(req, res) {
   const region = process.env.AZURE_SPEECH_REGION;
   if (!speechKey || !region) return res.status(503).json({ code: "cloud_tts_unavailable", message: "Cloud TTS is not configured" });
 
-  const key = cacheKey(text, voiceName, rate, pitch);
+  const tuple = cacheTuple(origin, text, voiceName, rate, pitch);
+  const key = cacheKey(tuple);
   const cached = audioCache.get(key);
-  if (cached) {
+  if (cached?.tuple === tuple && cached.expiresAt > Date.now() && Buffer.isBuffer(cached.audio)) {
     res.setHeader("Content-Type", "audio/mpeg");
     res.setHeader("Cache-Control", "private, max-age=3600");
     res.setHeader("X-TTS-Cache", "HIT");
-    return res.status(200).send(cached);
+    return res.status(200).send(cached.audio);
   }
+  if (cached) audioCache.delete(key);
 
   const locale = voiceName.startsWith("en-US") ? "en-US" : "zh-CN";
   const ratePercent = Math.round((rate - 1) * 100);
@@ -93,7 +99,7 @@ module.exports = async function handler(req, res) {
     if (!response.ok) return res.status(502).json({ code: "cloud_tts_failed", message: `Cloud TTS returned ${response.status}` });
     const audio = Buffer.from(await response.arrayBuffer());
     if (audioCache.size >= 100) audioCache.delete(audioCache.keys().next().value);
-    audioCache.set(key, audio);
+    audioCache.set(key, { tuple, audio, expiresAt: Date.now() + AUDIO_CACHE_TTL_MS });
     res.setHeader("Content-Type", "audio/mpeg");
     res.setHeader("Cache-Control", "private, max-age=3600");
     res.setHeader("X-TTS-Cache", "MISS");

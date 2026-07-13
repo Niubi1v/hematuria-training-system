@@ -9,12 +9,15 @@ const procedures = require("../data/order_catalog_procedures.json");
 const perioperative = require("../data/order_catalog_perioperative.json");
 const mdtTriggers = require("../data/mdt_triggers.json");
 const { matchHistoryQuestion, normalize, validateStage } = require("../server/clinicalAssessment.js");
-const { appendEvents, createAttemptState, signAttemptState, verifyAttemptState } = require("../server/trainingState.js");
+const { advanceAttemptToken, appendEvents, createAttemptState, normalizeAttemptMode, signAttemptState, verifyAttemptState } = require("../server/trainingState.js");
+const { commitAttempt, digest, loadAttempt, registerAttempt } = require("../server/trainingAttemptStore.js");
 const { BILINGUAL_CONFLICT_REASON, filterQuarantinedEvents } = require("../server/bilingualConflictQuarantine.js");
 const { setServerTiming } = require("../server/performanceTiming.js");
+const { parseJsonBody } = require("../server/requestSecurity.js");
 
 const catalog = [...labs, ...imaging, ...procedures, ...perioperative];
 const allowedActions = new Set(["init-attempt", "history-log", "exam", "order", "mdt", "stage-feedback", "score"]);
+const stageNumbers = { history: 1, orders: 2, diagnosis: 3, consult: 4, treatment: 5, perioperative: 6, debrief: 7 };
 const requests = globalThis.__hematuriaTrainingRate || new Map();
 globalThis.__hematuriaTrainingRate = requests;
 
@@ -50,6 +53,7 @@ function rateLimited(req) {
   const key = String(req.headers?.["x-forwarded-for"] || req.socket?.remoteAddress || "unknown").split(",")[0];
   const now = Date.now();
   const recent = (requests.get(key) || []).filter((at) => at > now - 60_000);
+  if (!requests.has(key) && requests.size >= 5000) requests.delete(requests.keys().next().value);
   recent.push(now);
   requests.set(key, recent);
   return recent.length > Number(process.env.TRAINING_API_RATE_LIMIT_PER_MINUTE || 90);
@@ -59,18 +63,62 @@ function findCase(caseId) {
   return cases.find((item) => String(item.id).toLowerCase() === String(caseId).toLowerCase());
 }
 
-function requestedAttemptMode(mode) {
-  return ["osce", "rct", "formal-attempt"].includes(String(mode)) ? "formal-attempt" : "public-practice";
-}
-
 function assertFormalAllowed(caseData) {
   if (process.env.TRAINING_DEPLOYMENT_TIER !== "formal") throw new Error("formal_attempts_disabled");
   if (!["reviewed", "approved"].includes(caseData.medicalReview?.status)) throw new Error("case_not_clinically_approved");
   if (caseData.medicalReviewImport?.formalUseAllowed !== true) throw new Error("case_formal_use_not_allowed");
 }
 
-function writeState(res, state) {
-  res.setHeader("X-Training-State", signAttemptState(state));
+function requestHeader(req, name) {
+  const value = req.headers?.[name] ?? req.headers?.[name.toLowerCase()];
+  return Array.isArray(value) ? String(value[0] || "") : String(value || "");
+}
+
+function stableJson(value) {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableJson(value[key])}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function requestIdentity(req, body) {
+  const requestId = String(body.requestId || requestHeader(req, "x-idempotency-key") || "").replace(/[^a-zA-Z0-9:_-]/g, "").slice(0, 160);
+  return { requestId, requestDigest: digest(stableJson(body)) };
+}
+
+function sendStored(res, stored) {
+  if (stored.token) res.setHeader("X-Training-State", stored.token);
+  return res.status(stored.statusCode || 200).json(stored.payload);
+}
+
+async function commitResponse(res, { state, previousToken, requestId, requestDigest, payload, statusCode = 200 }) {
+  advanceAttemptToken(state);
+  const nextToken = signAttemptState(state);
+  const stored = await commitAttempt({ state, previousToken, nextToken, requestId, requestDigest, payload, statusCode });
+  return sendStored(res, stored);
+}
+
+function requiredStage(action, body) {
+  if (action === "history-log") return 1;
+  if (action === "exam" || action === "order") return 2;
+  if (action === "mdt") return 4;
+  if (action === "stage-feedback") return stageNumbers[body.stageKey] || 0;
+  if (action === "score") return 8;
+  return 0;
+}
+
+function assertStageUnlocked(state, action, body) {
+  const required = requiredStage(action, body);
+  if (!required) throw new Error(action === "stage-feedback" ? "invalid_stage" : "stage_not_unlocked");
+  const current = Number(state.currentStage || 1);
+  const isResubmission = action === "stage-feedback" && Boolean(state.submissions?.[body.stageKey]);
+  const allowed = action === "stage-feedback"
+    ? required === current || (required < current && isResubmission)
+    : required === current;
+  if (!allowed) {
+    throw new Error("stage_not_unlocked");
+  }
 }
 
 function splitOrders(text) {
@@ -223,32 +271,44 @@ function stageFeedback(caseData, stageKey, validation, state, language) {
 module.exports = async function handler(req, res) {
   const startedAt = Date.now();
   const originAccepted = setCors(req, res);
-  if (req.method === "OPTIONS") return res.status(204).end();
   if (!originAccepted) return res.status(403).json({ error: "origin_not_allowed" });
+  if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") return res.status(405).json({ error: "method_not_allowed" });
   if (rateLimited(req)) return res.status(429).json({ error: "rate_limited" });
   try {
-    const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
+    const body = parseJsonBody(req, 96 * 1024);
     if (!allowedActions.has(body.action)) return res.status(400).json({ error: "invalid_action" });
     const caseData = findCase(body.caseId);
     if (!caseData) return res.status(404).json({ error: "unknown_case" });
     const language = body.language === "en" ? "en" : "zh";
+    const { requestId, requestDigest } = requestIdentity(req, body);
 
     if (body.action === "init-attempt") {
-      const mode = requestedAttemptMode(body.mode);
+      const mode = normalizeAttemptMode(body.mode);
       if (mode === "formal-attempt") assertFormalAllowed(caseData);
       const state = createAttemptState({ attemptId: body.attemptId, caseId: caseData.id, mode, language });
-      writeState(res, state);
-      return res.status(200).json({ attemptId: state.attemptId, caseId: state.caseId, mode: state.mode, practiceOnly: state.practiceOnly });
+      const token = signAttemptState(state);
+      const payload = { attemptId: state.attemptId, caseId: state.caseId, mode: state.mode, practiceOnly: state.practiceOnly };
+      const stored = await registerAttempt({ state, token, requestId, requestDigest, payload });
+      return sendStored(res, stored);
     }
 
-    const state = verifyAttemptState(req.headers?.["x-training-state"], { caseId: caseData.id, attemptId: String(body.attemptId || "") });
-    if (body.mode && requestedAttemptMode(body.mode) !== state.mode) return res.status(409).json({ error: "attempt_mode_mismatch" });
+    const previousToken = requestHeader(req, "x-training-state");
+    const claims = verifyAttemptState(previousToken, { caseId: caseData.id, attemptId: String(body.attemptId || "") });
+    const loaded = await loadAttempt({ caseId: caseData.id, attemptId: String(body.attemptId || ""), token: previousToken, requestId, requestDigest });
+    if (loaded.duplicate) return sendStored(res, loaded);
+    const state = loaded.state;
+    if (state.mode !== claims.mode || state.language !== claims.language || Number(state.tokenSequence || 0) !== Number(claims.tokenSequence || 0)) {
+      throw new Error("attempt_state_mismatch");
+    }
+    if (body.mode && normalizeAttemptMode(body.mode) !== state.mode) return res.status(409).json({ error: "attempt_mode_mismatch" });
+    if (language !== state.language) return res.status(409).json({ error: "attempt_language_mismatch" });
     if (state.mode === "formal-attempt") assertFormalAllowed(caseData);
+    if (body.action === "stage-feedback" && !stageNumbers[body.stageKey]) return res.status(400).json({ error: "invalid_stage" });
+    assertStageUnlocked(state, body.action, body);
     const at = new Date().toISOString();
 
     if (body.action === "history-log") {
-      const requestId = String(body.requestId || req.headers?.["x-idempotency-key"] || "").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 120);
       const matchedEvents = matchHistoryQuestion(caseData.id, body.question, at, state.sequence + 1)
         .map((event, index) => ({ ...event, eventId: requestId ? `${requestId}-${index}` : event.eventId }));
       const quarantine = filterQuarantinedEvents(caseData.id, matchedEvents);
@@ -256,15 +316,16 @@ module.exports = async function handler(req, res) {
         console.warn("training_fact_quarantined", { caseId: caseData.id, slotIds: quarantine.quarantinedSlotIds, reason: BILINGUAL_CONFLICT_REASON });
       }
       appendEvents(state, quarantine.events);
-      writeState(res, state);
       setServerTiming(res, { history: Date.now() - startedAt });
-      return res.status(200).json({ recorded: true, requestId, quarantinedSlotIds: quarantine.quarantinedSlotIds, reason: quarantine.reason });
+      return commitResponse(res, {
+        state, previousToken, requestId, requestDigest,
+        payload: { recorded: true, requestId, quarantinedSlotIds: quarantine.quarantinedSlotIds, reason: quarantine.reason }
+      });
     }
     if (body.action === "exam") {
       const result = handleExam(caseData.id, body.input, language);
       if (result.examId) appendEvents(state, [{ eventId: `srv-${state.sequence + 1}-exam-${result.examId}`, type: "physical_exam_performed", actionId: result.examId, stageNo: 2, at, text: result.input, metadata: { validated: true } }]);
-      writeState(res, state);
-      return res.status(200).json(result);
+      return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: result });
     }
     if (body.action === "order") {
       const result = handleOrder(caseData.id, body.input, state.orders, language);
@@ -273,8 +334,7 @@ module.exports = async function handler(req, res) {
       const orderEvents = result.matchedOrders.map((order) => ({ eventId: `srv-${state.sequence + 1}-order-${order.orderId}`, type: "order_placed", actionId: order.orderId, stageNo: 2, at, text: order.displayName, metadata: { validated: true, duplicate: result.duplicateOrderIds.includes(order.orderId) } }));
       const resultEvents = result.results.map((item) => ({ eventId: `srv-${state.sequence + 1}-result-${item.resultId}`, type: "result_returned", actionId: item.orderId, stageNo: 2, at, text: item.impression || item.result, metadata: { validated: true } }));
       appendEvents(state, [...orderEvents, ...resultEvents]);
-      writeState(res, state);
-      return res.status(200).json(result);
+      return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: result });
     }
     if (body.action === "mdt") {
       const result = handleMdt(caseData, body.departments, body.purpose, language);
@@ -282,34 +342,39 @@ module.exports = async function handler(req, res) {
       if (result.accepted.length) events.push({ eventId: `srv-${state.sequence + 1}-mdt-department`, type: "consult_requested", actionId: "department", stageNo: 4, at, text: result.accepted.join("；"), metadata: { validated: true } });
       if (result.focused) ["trigger", "question", "evidence"].forEach((actionId) => events.push({ eventId: `srv-${state.sequence + 1}-mdt-${actionId}`, type: "consult_requested", actionId, stageNo: 4, at, text: body.purpose, metadata: { validated: true } }));
       appendEvents(state, events);
-      writeState(res, state);
-      return res.status(200).json(result.opinions);
+      return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: result.opinions });
     }
     if (body.action === "stage-feedback") {
-      const stageNumbers = { history: 1, orders: 2, diagnosis: 3, consult: 4, treatment: 5, perioperative: 6, debrief: 7 };
       const submittedStage = stageNumbers[body.stageKey];
-      if (!submittedStage) return res.status(400).json({ error: "invalid_stage" });
       if (state.submissions[body.stageKey]) {
         state.events = state.events.filter((event) => event.stageNo < submittedStage || (submittedStage <= 2 && ["slot_answered", "physical_exam_performed", "order_placed", "result_returned"].includes(event.type)));
         Object.keys(state.submissions).forEach((key) => { if (stageNumbers[key] >= submittedStage) delete state.submissions[key]; });
+        state.completedStages = (state.completedStages || []).filter((stage) => stage < submittedStage);
+        state.currentStage = submittedStage;
       }
       const validation = validateStage(caseData, body.stageKey, body.submission || {});
       appendEvents(state, validation.events);
       state.submissions[body.stageKey] = { submittedAt: at, warnings: validation.warnings };
-      writeState(res, state);
-      return res.status(200).json(stageFeedback(caseData, body.stageKey, validation, state, language));
+      state.completedStages = [...new Set([...(state.completedStages || []), submittedStage])].sort((a, b) => a - b);
+      state.currentStage = submittedStage + 1;
+      return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: stageFeedback(caseData, body.stageKey, validation, state, language) });
     }
     if (body.action === "score") {
       const report = score(caseData.id, state.events, language);
       state.status = "completed";
       state.completedAt = at;
-      writeState(res, state);
       setServerTiming(res, { score: Date.now() - startedAt });
-      return res.status(200).json(report);
+      return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: report });
     }
   } catch (error) {
     const code = error instanceof Error ? error.message : "training_action_failed";
-    const status = /formal|approved/.test(code) ? 403 : /token|mismatch|completed/.test(code) ? 401 : /secret/.test(code) ? 503 : 500;
+    const status = /request_body_too_large/.test(code) ? 413
+      : /invalid_json_body/.test(code) ? 400
+        : /formal|approved/.test(code) ? 403
+      : /idempotency_key_required|invalid_request_digest/.test(code) ? 400
+        : /stage|mode|language|stale|already_exists|idempotency_key_reused/.test(code) ? 409
+          : /token|mismatch|completed|not_found/.test(code) ? 401
+            : /secret|store_unavailable/.test(code) ? 503 : 500;
     return res.status(status).json({ error: code });
   }
 };

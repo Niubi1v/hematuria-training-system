@@ -63,6 +63,7 @@
 - 最新复验：`a9ace13`对应Vercel Deployment已success，但in-app浏览器直达`/cases/P001/`仍在20秒内无法取得DOM；部署成功与应用登录态体验通过必须分开登记。
 - 2026-07-13 15:40复验：Chrome可枚举到标题为“血尿多智能体临床思维训练平台”的Preview P001标签及目标URL；两次接管后，第一次DOM读取超过30秒并重置连接，第二次连标题/URL最小探针在60秒内亦未完成。未读取Cookie、Authorization、localStorage或任何密钥；继续登记为外部访问阻塞，不得据此评价真实AI成功率或性能。
 - 2026-07-13 16:58—17:06复验取得页面DOM：Chrome和Codex应用内浏览器均在P001首次加载后约5秒产生两次`api_request_failed`并进入降级模式。Chrome手动重连最终仍回到网络失败；一次“您好，哪里不舒服？”约22.4秒返回自然中文`rule_fallback`并显示“评分待同步”，输入焦点保持且未泄露病例摘要。部署资源确认7个API函数均存在，但部署过滤后的Runtime Logs无对应函数调用；浏览器直接打开health路径被客户端阻止，故请求路径/状态仍不可审计。HEM-P1-020从“页面不可达”收窄为“受保护API链路不可审计/不可用”，不解除发布阻断。
+- 2026-07-14 06:12—06:18复验当前`10fe60d` Preview：P001静态页面和应用标题可加载，但DOM初始化后显示`回答来源：降级模式`及唯一的“网络连接失败，请检查网络后重试。”提示/“重新连接AI”按钮；聊天记录与输入框保留。匿名`GET /api/health/`约2.4秒返回HTTP 200、`text/html`和Vercel Authentication页面，而非应用health JSON，证明API请求未到达health handler。控制台读取通道两次超时，故没有伪造API错误码或DeepSeek日志；阻塞仍需Preview访问/保护策略与变量作用域人工处理。
 
 ### HEM-P1-021：真实首Token指标当前不可测（工程采集已解除）
 
@@ -176,3 +177,44 @@
 - HEM-P2-007：README“三个API入口但列出四项”修正为五个前端主入口，并说明兼容路径。
 - HEM-P2-008：本地运行版本从Node 20修正为与CI一致的Node 22.14、pnpm 11.7.0。
 - HEM-P2-009：生产文档不再把health、10+5+5、Actions/Pages/live alias写成当前已通过。
+
+## 2026-07-14 静态发布审计处置矩阵
+
+### 本地工程修复完成、等待新HEAD远程CI/Preview
+
+- `SRA-P1-001`：签名快照回放与重复计分。以权威attempt状态、token CAS、请求摘要和服务端幂等记录修复；并发相同score只提交一次，旧token重放返回409。Preview持久适配器仍需外部配置后复验。
+- `SRA-P1-002`：服务端阶段绕过。所有临床Agent与score均由权威当前阶段授权，非法提前请求4xx且不返回未来结果；合法七阶段、刷新恢复和重新提交失效链已有测试。
+- `SRA-P1-003`：旧API安全边界。旧patient reply/profile路径改为严格CORS的410；请求体限制、错误收敛和有界内存键已补齐。
+- `SRA-P1-004`：Patient Agent无session。session能力绑定attempt/case/language/mode/有效期；缺失、篡改、跨病例/跨语言session均拒绝。
+- `SRA-P1-005`：训练签名复用LLM密钥。已取消fallback并拒绝弱值、示例值和相同值；Preview独立密钥仍需人工配置。
+- `SRA-P1-006`：Agent无服务端幂等。增加签名session范围内的claim/complete、请求摘要冲突和并发single-flight；Vercel无持久存储时fail-closed。
+- `DCI-P1-001`：`xlsx@0.18.5` high公告。已固定官方0.20.3并限制所有工作簿解析资源；`pnpm audit --prod --audit-level high`退出0，仍有1项moderate另行跟踪。
+- `DCI-P1-005`：CI安全门禁不足。工作流已加入production dependency high audit、安全行为聚合、Playwright退出和clean worktree，且权限/Action版本固定；等待新HEAD Actions确认。
+
+### 仍开放的P1
+
+- `DCI-P1-003`：旧幂等脚本假绿的执行逻辑已修复，但新只读验证真实发现56个生成输出与提交基线漂移并exit1。不得自动覆盖`data/**`或审核产物；需要确认权威生成输入/基线并完成医学治理审查后，才能更新黄金基线。CI预期在此项保持红灯，除非基线被合法解决。
+- `SRA-EXT-P1-001`：Preview权威存储/签名配置未验证。需仅在Preview或分支专用Preview配置`UPSTASH_REDIS_REST_URL`、`UPSTASH_REDIS_REST_TOKEN`、`TRAINING_ATTEMPT_STORE_MODE`和独立`TRAINING_STATE_SECRET`后重新部署；当前不得宣称真实serverless防重或AI会话通过。
+
+### P2状态
+
+- `SRA-P2-001`请求体/状态总量已增加上限；`SRA-P2-002`的Map有界问题部分修复，但进程内限流仍不是全局配额，后续应迁移到持久存储；`SRA-P2-003`继续由现有timer清理/Playwright覆盖。
+- `DCI-P2-004`工作流最小权限、主分支触发和Action SHA固定已完成；`DCI-P2-002`仍是1项moderate，未伪造成零漏洞。
+- `PRV-P2-001/002/004`仍需后续隐私/扫描设计：localStorage保留期需隐私负责人决定，第三方数据告知需法务/供应商控制台证据，二进制/历史secret扫描仍未全面覆盖。
+- `PRV-P2-003`（本地已修复，待PR CI）：旧TTS缓存只用32位FNV键，固定文本`tts-pbfuso-17pa`与`tts-jzkt95-23ce`在相同参数下均为`fc93de32`，第二请求真实命中第一音频。修复为Origin+voice+rate+pitch+text规范化tuple的SHA-256键，缓存项再次保存并核对原tuple，增加1小时TTL、100项上限及旧格式拒绝；碰撞、Origin/参数隔离、过期、并发预热命中和淘汰测试均通过。
+
+### 2026-07-14 终审新增缺陷
+
+- `SRA-P1-006`（已修复，待CI）：相同init请求可从缓存路径取得`record.currentToken`，在无需现有bearer的情况下泄露最新训练token。修复为只重放原始init响应，移除权威记录中的明文current token；回归确认重放所得原始token在推进后返回409 `stale_attempt_token`。
+- `SRA-P1-007`（已修复，待CI）：服务端阶段检查仅拒绝未来阶段，允许关闭阶段后的history/order/mdt证据回填并影响最终评分。修复为非反馈动作必须精确匹配`currentStage`；三个晚到动作均409，拒绝前后权威状态深比较一致。
+- `SRA-P1-008`（已修复，待CI）：session初始化验证token后仍使用客户端language/mode签发capability。修复为校验权威state、token claims和请求三方一致，并只在capability中签规范化权威模式；跨语言/跨模式均409。
+- `DCI-P1-006`（已修复，待已提交HEAD验证）：隔离worktree固定从`HEAD`创建，却可能在调用者存在未提交候选时被误解为验证当前候选。脚本现对全仓脏状态fail-closed，并明确仅验证已提交HEAD。
+- `DCI-P1-003`（仍阻塞）：56个受控生成输出与提交黄金基线不一致。安全验证器不得自动更新包含病例、评分、双语和审核派生内容的基线；需权威输入确认及医学治理后另行处理。
+- `ENV-P2-001`（本地工具环境，非应用代码）：pnpm 11.7脚本前供应链attestation校验在受限沙箱内访问registry收到EACCES并长时间重试，导致本地`pnpm run build`和Playwright自动webServer入口超时。联网权限下同一`pnpm run build` 28.8秒exit0；显式本地服务下Playwright 40/40且正常退出。新HEAD的GitHub Node 22/开放registry结果仍为最终CI依据。
+- `EXT-BLOCK-003`（外部网络阻塞）：`gh api`可读取远程ref/PR，但git smart-HTTP到`github.com:443`连续失败；fetch两次超时，普通push一次connection reset、一次超时，均未写入远程。阻塞新HEAD CI/Vercel Preview；本地提交完整保留，网络恢复后必须重新fetch、比对远程SHA、扫描并普通push。
+
+### 2026-07-14 状态修正
+
+- `EXT-BLOCK-003`（已解除）：443连通性恢复后fetch与普通push成功；未使用force或替代Git API写入。
+- `DCI-P1-003`（已修复，待最新CI）：Linux Node 22 CI对75输出通过，证明旧“56基线漂移”不是提交基线缺陷。Windows证据为`i/lf w/crlf`且全局`core.autocrlf=true`；隔离worktree改为按Git对象LF检出后，本地baseline及二次幂等75/75 exit0。比较仍是SHA-256精确字节比较，没有放宽断言或更新数据。
+- `DCI-P1-003`（远程确认关闭）：head `9d405fd`的Actions run `29288294002`再次执行75输出幂等并success；本地Windows与Linux Node 22 CI均通过，受保护数据零diff。

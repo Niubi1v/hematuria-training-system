@@ -34,6 +34,7 @@ export function recordConnectionTransition(
 
 export type CachedPatientSession = {
   sessionId: string;
+  attemptId: string;
   caseId: string;
   language: "zh" | "en";
   mode: string;
@@ -67,6 +68,7 @@ export function isSafetyFallback(reason = "") {
 }
 
 export function validCachedSession(session: CachedPatientSession | null, expected: {
+  attemptId: string;
   caseId: string;
   language: "zh" | "en";
   mode: string;
@@ -74,7 +76,7 @@ export function validCachedSession(session: CachedPatientSession | null, expecte
   apiVersion?: string;
   now?: number;
 }): session is CachedPatientSession {
-  if (!session?.sessionId || session.caseId !== expected.caseId || session.language !== expected.language || session.mode !== expected.mode) return false;
+  if (!session?.sessionId || session.attemptId !== expected.attemptId || session.caseId !== expected.caseId || session.language !== expected.language || session.mode !== expected.mode) return false;
   const now = expected.now ?? Date.now();
   if (!Number.isFinite(Date.parse(session.sessionExpiresAt)) || Date.parse(session.sessionExpiresAt) <= now) return false;
   if (expected.deploymentSha && session.deploymentSha && session.deploymentSha !== expected.deploymentSha) return false;

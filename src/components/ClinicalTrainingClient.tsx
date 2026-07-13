@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -351,33 +351,36 @@ function stageAnswerText(stageNo: AgentStageNo, answers: FullProcessAnswers, mes
   return answers.debriefReflection;
 }
 
-function aiSessionCacheKey(caseId: string, language: LanguageCode, mode: TrainingMode) {
-  return `hematuria-ai-patient-session-${caseId}-${language}-${mode}`;
+function aiSessionCacheKey(attemptId: string, caseId: string, language: LanguageCode, mode: TrainingMode) {
+  return `hematuria-ai-patient-session-${attemptId}-${caseId}-${language}-${mode}`;
 }
 
-async function requestSessionInit({ caseId, runtimeMode, language, debug, attemptId, forceRefresh = false, signal }: {
+async function requestSessionInit({ caseId, runtimeMode, language, debug, attemptId, trainingStateToken, forceRefresh = false, signal }: {
   caseId: string;
   runtimeMode: TrainingMode;
   language: LanguageCode;
   debug: boolean;
   attemptId: string;
+  trainingStateToken: string;
   forceRefresh?: boolean;
   signal?: AbortSignal;
 }) {
-  return requestJson<SessionInitResponse>(publicApiConfig.sessionInit, { caseId, mode: runtimeMode, language, debug, forceRefresh }, {
+  return requestJson<SessionInitResponse>(publicApiConfig.sessionInit, { caseId, attemptId, mode: runtimeMode, language, debug, forceRefresh }, {
     timeoutMs: PATIENT_REPLY_TIMEOUT_MS, retries: 2, signal,
     idempotencyKey: `${attemptId}:session-init:${forceRefresh ? Date.now() : "default"}`,
-    endpointName: "session-init"
+    endpointName: "session-init",
+    headers: { "X-Training-State": trainingStateToken }
   });
 }
 
-async function requestAiPatientReply({ sessionId, caseId, question, messages, askedSlots, aiMode, language, attemptId, signal, recoveryCycle = "default" }: {
+async function requestAiPatientReply({ sessionId, caseId, question, messages, askedSlots, aiMode, runtimeMode, language, attemptId, signal, recoveryCycle = "default" }: {
   sessionId?: string;
   caseId: string;
   question: string;
   messages: ChatMessage[];
   askedSlots: string[];
   aiMode: AiMode;
+  runtimeMode: TrainingMode;
   language: LanguageCode;
   attemptId: string;
   signal?: AbortSignal;
@@ -387,6 +390,8 @@ async function requestAiPatientReply({ sessionId, caseId, question, messages, as
         caseId,
         agentId: "standardized_patient",
         sessionId,
+        attemptId,
+        sessionMode: runtimeMode,
         stage: "history",
         mode: aiMode === "rule" ? "rule" : aiMode === "debug" ? "debug" : "training",
         language,
@@ -397,10 +402,10 @@ async function requestAiPatientReply({ sessionId, caseId, question, messages, as
       }, { timeoutMs: PATIENT_REPLY_TIMEOUT_MS, retries: 2, signal, endpointName: "patient-reply", idempotencyKey: createIdempotencyKey(attemptId, "patient", recoveryCycle, question.trim().toLowerCase()) });
 }
 
-async function probeAiPatient({ caseId, sessionId, language, signal }: { caseId: string; sessionId: string; language: LanguageCode; signal?: AbortSignal }) {
+async function probeAiPatient({ caseId, sessionId, attemptId, mode, language, signal }: { caseId: string; sessionId: string; attemptId: string; mode: TrainingMode; language: LanguageCode; signal?: AbortSignal }) {
   return requestJson<PatientReplyApiResponse>(publicApiConfig.patientAgent, {
-    caseId, sessionId, language, agentId: "standardized_patient", probe: true
-  }, { timeoutMs: 8000, retries: 1, signal, endpointName: "patient-probe" });
+    caseId, sessionId, attemptId, mode, language, agentId: "standardized_patient", probe: true
+  }, { timeoutMs: 8000, retries: 1, signal, endpointName: "patient-probe", idempotencyKey: createIdempotencyKey(attemptId, "patient-probe") });
 }
 
 async function requestTrainingAction<T>(body: Record<string, unknown>, stateToken = "", idempotencyKey = "", retries = 2): Promise<{ payload: T; stateToken: string }> {
@@ -691,11 +696,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     items: consultCatalog.filter((item) => item.group === group)
   })).filter((group) => group.items.length > 0), []);
 
-  async function ensureTrainingStateToken() {
+  const ensureTrainingStateToken = useCallback(async () => {
     if (trainingStateTokenRef.current) return trainingStateTokenRef.current;
     if (trainingInitPromiseRef.current) return trainingInitPromiseRef.current;
     trainingInitPromiseRef.current = (async () => {
-      const storageKey = `hematuria-training-state-v1:${attempt.attemptId}`;
+      const storageKey = `hematuria-training-state-v3:${attempt.attemptId}`;
       try {
         const saved = sessionStorage.getItem(storageKey);
         if (saved) {
@@ -703,16 +708,17 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           return saved;
         }
       } catch { /* The signed state can continue in memory. */ }
+      const initRequestId = createIdempotencyKey(attempt.attemptId, "training-init", caseData.id, runtimeMode, lang);
       const initialized = await requestTrainingAction<{ attemptId: string }>({
         action: "init-attempt", caseId: caseData.id, attemptId: attempt.attemptId,
-        language: lang, mode: runtimeMode
-      });
+        language: lang, mode: runtimeMode, requestId: initRequestId
+      }, "", initRequestId, 0);
       trainingStateTokenRef.current = initialized.stateToken;
       try { sessionStorage.setItem(storageKey, initialized.stateToken); } catch { /* Memory fallback. */ }
       return initialized.stateToken;
     })().finally(() => { trainingInitPromiseRef.current = null; });
     return trainingInitPromiseRef.current;
-  }
+  }, [attempt.attemptId, caseData.id, lang, runtimeMode]);
 
   async function trainingAction<T>(body: Record<string, unknown>): Promise<T> {
     const run = trainingActionQueueRef.current.then(async () => {
@@ -725,7 +731,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         body.action === "history-log" ? 0 : 2
       );
       trainingStateTokenRef.current = result.stateToken;
-      try { sessionStorage.setItem(`hematuria-training-state-v1:${attempt.attemptId}`, result.stateToken); } catch { /* Memory fallback. */ }
+      try { sessionStorage.setItem(`hematuria-training-state-v3:${attempt.attemptId}`, result.stateToken); } catch { /* Memory fallback. */ }
       return result.payload;
     });
     trainingActionQueueRef.current = run.then(() => undefined, () => undefined);
@@ -834,10 +840,10 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     if (aiMode === "rule" || !healthResolved) return;
     let cancelled = false;
     const generation = ++aiGenerationRef.current;
-    const cacheKey = aiSessionCacheKey(caseData.id, lang, runtimeMode);
+    const cacheKey = aiSessionCacheKey(attempt.attemptId, caseData.id, lang, runtimeMode);
     const cached = readJsonStorage<SessionInitResponse | null>(cacheKey, null).value;
     const expectedDeploymentSha = serviceHealth?.deploymentSha || serviceHealth?.gitSha;
-    if (validCachedSession(cached, { caseId: caseData.id, language: lang, mode: runtimeMode, deploymentSha: expectedDeploymentSha && expectedDeploymentSha !== "unknown" ? expectedDeploymentSha : undefined, apiVersion: EXPECTED_API_VERSION })) {
+    if (validCachedSession(cached, { attemptId: attempt.attemptId, caseId: caseData.id, language: lang, mode: runtimeMode, deploymentSha: expectedDeploymentSha && expectedDeploymentSha !== "unknown" ? expectedDeploymentSha : undefined, apiVersion: EXPECTED_API_VERSION })) {
       setAiSessionId(cached.sessionId);
       setAiStatus(cached.aiStatus === "degraded" ? "degraded" : "unknown");
       setMessages((current) => {
@@ -860,14 +866,15 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       request = {
         key: requestKey,
         controller,
-        promise: requestSessionInit({
+        promise: ensureTrainingStateToken().then((trainingStateToken) => requestSessionInit({
           caseId: caseData.id,
           runtimeMode,
           language: lang,
           debug: aiMode === "debug",
           attemptId: attempt.attemptId,
+          trainingStateToken,
           signal: controller.signal
-        })
+        }))
       };
       autoSessionInitRef.current = request;
       request.promise.finally(() => {
@@ -895,7 +902,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     return () => {
       cancelled = true;
     };
-  }, [aiMode, attempt.attemptId, caseData, healthResolved, lang, runtimeMode, serviceHealth?.apiVersion, serviceHealth?.deploymentSha, serviceHealth?.gitSha]);
+  }, [aiMode, attempt.attemptId, caseData, ensureTrainingStateToken, healthResolved, lang, runtimeMode, serviceHealth?.apiVersion, serviceHealth?.deploymentSha, serviceHealth?.gitSha]);
 
   useEffect(() => {
     try { localStorage.setItem("hematuria-language", lang); } catch { setStorageWarning("语言偏好无法保存。 "); }
@@ -1238,6 +1245,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         messages,
         askedSlots,
         aiMode,
+        runtimeMode,
         language: lang,
         attemptId: attempt.attemptId,
         signal: controller.signal
@@ -1335,11 +1343,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         setHealthCheckFailed(false);
         if (health.apiVersion !== EXPECTED_API_VERSION) throw new ApiRequestError("backend-outdated", 409, "version_mismatch");
         if (!health.patientServiceConfigured) throw new ApiRequestError("not-configured", 503, "provider_not_configured");
-        const cacheKey = aiSessionCacheKey(caseData.id, lang, runtimeMode);
+        const cacheKey = aiSessionCacheKey(attempt.attemptId, caseData.id, lang, runtimeMode);
         try { localStorage.removeItem(cacheKey); } catch { /* New session still works in memory. */ }
+        const trainingStateToken = await ensureTrainingStateToken();
         const session = await requestSessionInit({
           caseId: caseData.id, runtimeMode, language: lang, debug: aiMode === "debug", attemptId: attempt.attemptId,
-          forceRefresh: true, signal: controller.signal
+          trainingStateToken, forceRefresh: true, signal: controller.signal
         });
         if (generation !== aiGenerationRef.current) return false;
         setAiSessionId(session.sessionId);
@@ -1348,7 +1357,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         if (pending) {
           const aiResult = await requestAiPatientReply({
             sessionId: session.sessionId, caseId: caseData.id, question: pending.question, messages, askedSlots,
-            aiMode: "deepseek", language: lang, attemptId: attempt.attemptId, signal: controller.signal, recoveryCycle: `reconnect-${session.sessionId}`
+            aiMode: "deepseek", runtimeMode, language: lang, attemptId: attempt.attemptId, signal: controller.signal, recoveryCycle: `reconnect-${session.sessionId}`
           });
           if (generation !== aiGenerationRef.current) return false;
           if (!applyRecoveredReply(aiResult, pending, lang === "en" ? "AI reconnection restored patient reply" : "重新连接后回答成功")) {
@@ -1357,7 +1366,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             return false;
           }
         } else {
-          const probe = await probeAiPatient({ caseId: caseData.id, sessionId: session.sessionId, language: lang, signal: controller.signal });
+          const probe = await probeAiPatient({ caseId: caseData.id, sessionId: session.sessionId, attemptId: attempt.attemptId, mode: runtimeMode, language: lang, signal: controller.signal });
           if (generation !== aiGenerationRef.current) return false;
           if (probe.isFallback) {
             setAiStatus("degraded");

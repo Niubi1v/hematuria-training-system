@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import * as XLSX from "xlsx";
+import { readWorkbookFile } from "./lib/safe-workbook";
 import type {
   CaseCardItem,
   CaseData,
@@ -431,7 +432,7 @@ function makeOsceRubric(): OsceRubricItem[] {
 }
 
 function main() {
-  const workbook = XLSX.readFile(input);
+  const workbook = readWorkbookFile(input);
   const totalSheet = pickSheet(workbook, ["总表_V2病例库", "总表_导师模板补全"]);
   const qaSheet = pickSheet(workbook, ["问诊槽位答案_逐项", "血尿问诊_逐项答案"]);
   const cardSheet = pickSheet(workbook, ["病例卡_导师模板长表"]);

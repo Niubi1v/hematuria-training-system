@@ -363,3 +363,118 @@
 
 - 浏览器直接打开`/api/health[/]`被客户端以`ERR_BLOCKED_BY_CLIENT`阻止，因此未获得可审计HTTP状态；没有绕过保护、读取Cookie/Authorization或使用bypass secret。
 - 该证据证明Preview用户可见发布阻断仍存在，也证明fallback语言、摘要防泄露、输入焦点和单提示修复有效；不能把fallback计作真实DeepSeek成功。
+
+## 静态发布审计安全候选门禁（2026-07-14，本地）
+
+| 门禁 | 精确命令/执行方式 | 退出码与结果 |
+|---|---|---|
+| 聚合行为/医学/安全 | `pnpm run test` | 0；包含training replay/stage、Agent session/idempotency、42例、572追踪、419约束、18项隔离、360评分和工作簿限制 |
+| TypeScript | `node node_modules/typescript/bin/tsc --noEmit` | 0 |
+| ESLint | `node scripts/run-lint.mjs` | 0，`--max-warnings 0` |
+| 生产构建 | `NEXT_PUBLIC_API_BASE_URL=https://hematuria-training-system.vercel.app pnpm run build` | 0；Next 15.5.19，52/52静态页，P001-P042完整 |
+| Bundle隐藏信息 | `pnpm run test:bundle` | 0；25个JavaScript资源 |
+| 仓库敏感信息 | `pnpm run test:secrets` | 0；294个tracked/candidate文件；未输出值 |
+| 公共API配置 | `pnpm run validate:api-config` | 0；显式HTTPS origin通过 |
+| 生产依赖high门禁 | `pnpm audit --prod --audit-level high` | 0；0 high，1 moderate |
+| 工作簿安全 | `pnpm run test:workbook-security`及聚合链 | 0；32MB/32 sheet/10万行/512列/100万单元格限制 |
+| 医学工作簿/队列/导入 | 聚合链中的`test-medical-review*`、`test-release-v14` | 0；42例、572项、153/419分离、419零批准 |
+| 生成幂等只读验证 | `pnpm run test:idempotency` | 1；隔离临时worktree真实发现56个提交基线漂移；当前`data/**`零改动。登记为阻塞，不隐藏失败 |
+| Playwright首次全量 | 直接调用锁定的`@playwright/test` CLI，desktop+mobile | 1；34/40，旧夹具未满足训练状态/幂等/阶段锁新合同 |
+| Playwright失败专项复验 | 同CLI `--grep 'session initialization|offline reconnect|P008 exact'` | 0；6/6，5.2秒 |
+| Playwright最终全量 | 同CLI `test`，复用直接启动的本地Next server | 0；40/40，33.8秒，runner正常自行退出 |
+| 数据与医学状态diff | `git status --short -- data CASE_DATA_QC_REPORT.md outputs` | 0且无输出；未修改病例、审核决定或裁决表 |
+| Diff空白检查 | `git diff --check` | 0；仅Git行尾提示，无空白错误 |
+
+补充事实：本机是Node 24.14而仓库声明Node 22.14；上述本地结果有engine warning。旧远程HEAD `41b3830`的Actions run `29238512030`已在Node 22完成40/40并正常退出，但它不能替代新安全候选的CI；新HEAD必须push后重新验证。
+
+Preview未执行真实Upstash/DeepSeek验收，因为当前没有也不得读取所需凭据。没有把memory adapter、fallback或mock结果记作真实serverless/AI通过。
+
+## 2026-07-14 终审P1专项证据
+
+| 检查 | 精确命令 | 结果 |
+|---|---|---|
+| 防重放、精确阶段锁、晚到证据、语言绑定 | bundled Node运行`node_modules/tsx/dist/cli.mjs scripts/test-training-security.ts` | exit 0；原始init token不泄露最新bearer，关闭阶段回填409且状态零变化 |
+| 训练API回归 | bundled Node运行`node_modules/tsx/dist/cli.mjs scripts/test-training-api.ts` | exit 0；签名状态、精确释放、formal门禁、模式锁通过 |
+| session/Agent安全 | bundled Node运行`node_modules/tsx/dist/cli.mjs scripts/test-agent-api-security.ts` | exit 0；21.1秒；跨语言/跨模式session拒绝，capability、并发幂等、CORS、限流和非泄露通过 |
+| 动态session | bundled Node运行`node_modules/tsx/dist/cli.mjs scripts/test-dynamic-patient-session.ts` | exit 0 |
+| AI恢复 | bundled Node运行`node_modules/tsx/dist/cli.mjs scripts/test-ai-recovery.ts` | exit 0 |
+| LLM适配安全 | bundled Node运行`node_modules/tsx/dist/cli.mjs scripts/test-llm-adapter.ts` | exit 0 |
+| TypeScript | `pnpm run typecheck` | exit 0；本地Node 24.14产生预期engine warning，新HEAD Node 22仍待CI |
+| ESLint | `pnpm run lint` | exit 0；同上 |
+| 敏感信息 | `pnpm run test:secrets` | exit 0；294个tracked/candidate文件，无值输出 |
+| 医学/生成数据diff | `git diff --name-only -- data CASE_DATA_QC_REPORT.md LANGUAGE_PURITY_REPORT.md PATIENT_PROFILE_COMPLETENESS_REPORT.md PHYSICAL_EXAM_QC_REPORT.md` | exit 0且无路径输出 |
+| diff空白 | `git diff --check` | exit 0；只有CRLF转换提示 |
+
+说明：`test:idempotency`已改为在调用者全仓干净时只验证已提交HEAD。因此必须在代码和证据提交完成、工作树干净后运行；真实56文件黄金基线漂移预期仍会exit 1，不能通过放宽门禁消除。
+
+## 2026-07-14 已提交HEAD完整门禁
+
+| 检查 | 命令/环境 | 退出码与结果 |
+|---|---|---|
+| 生成基线/二次幂等 | `pnpm run test:idempotency`，干净`ba35c28` | exit 1，7.7秒；56个受控输出相对提交基线漂移；临时worktree已清理，主树零diff |
+| 完整行为链 | `pnpm run test` | exit 0，30.7秒；全部32段脚本通过 |
+| 直接Next生产构建 | bundled Node执行`node_modules/next/dist/bin/next build`，`VERCEL=1` | exit 0，18.7秒；52/52静态页、2/2 export |
+| CI精确构建入口 | 联网供应链校验下`CI=1 VERCEL=1 pnpm run build` | exit 0，28.8秒；pnpm策略通过，52/52构建通过 |
+| Playwright自动webServer诊断 | `CI=1`直接Playwright CLI | exit 124，360.4秒；pnpm registry attestation在沙箱EACCES重试，未进入用例；不登记为测试失败通过 |
+| Playwright desktop/mobile | 先启动127.0.0.1本地Next并取得P001 HTTP 200，再直接Playwright CLI复用服务 | exit 0，42.3秒；40/40，runner自行退出 |
+| 静态bundle | `NEXT_PUBLIC_API_BASE_URL=https://hematuria-training-system.vercel.app pnpm run test:bundle` | exit 0；25个JS资产 |
+| 仓库敏感信息 | `pnpm run test:secrets` | exit 0；294文件，无值输出 |
+| API配置 | CI同值运行`pnpm run validate:api-config` | exit 0 |
+| 生产依赖审计 | `pnpm audit --prod --audit-level high` | exit 0；0 high，1 moderate明确保留 |
+| 最终工作树 | `git status --short`、受保护路径diff、`git diff --check` | clean；`data/**`/审核产物零diff；仅CRLF提示 |
+
+本机Node为24.14，仓库要求Node 22.14；因此本地结果均带engine warning。推送后的GitHub Actions Node 22是新候选的强制等价补证，不能复用旧HEAD绿灯。
+
+### 远程检查（push阻塞时）
+
+- `gh pr view 1`/GitHub API：PR #1 `OPEN`、`isDraft=true`、`mergeStateStatus=CLEAN`，base `main@5a3ad11`，remote head `41b3830`。
+- `gh pr checks 1`：旧HEAD build success（3m33s）、Vercel success、Preview Comments success、deploy skipped。
+- `git fetch --prune origin`两次exit1（`github.com:443`连接超时）；普通push两次exit1（connection reset/连接超时）。GitHub API实时ref仍为`41b3830`，所以没有未知远程提交证据，但本地新候选尚无任何CI/Preview结果。
+
+## 2026-07-14 远程CI与幂等跨平台补证
+
+- Actions run `29287786411` / build job `86944326588` / head `6fcd325`：completed/success，4分03秒；Node 22.14.0。
+- Conversion idempotency步骤实际运行15.6秒并输出：`Conversion baseline and second-run idempotency passed for 75 controlled outputs in an isolated worktree.`，非跳过。
+- Playwright 40/40（1.6分钟），生产静态页52/52，dependency audit为1 moderate/0 high，最终tracked-worktree cleanliness gate通过；Pages deploy skipped。
+- Vercel Deployment `7XY5CJxGAZZyEAh79RydKYUjgLzL` success，Preview Comments success。此部署成功不等于真实AI/Upstash变量验收通过。
+- Windows根因命令：`git config --show-origin --get core.autocrlf`返回系统级`true`；`git ls-files --eol data/cases.json CASE_DATA_QC_REPORT.md`显示`i/lf w/crlf`。
+- 修复提交`bb130c1`后，bundled Node直接执行`tsx scripts/test-conversion-idempotency.ts`：exit0，11.6秒，75个受控输出baseline与第二次生成均通过；临时worktree清理，受保护数据零diff。
+
+### `9d405fd`远程门禁
+
+- Actions run `29288294002` / job `86945910258`：completed/success，4分03秒；Conversion idempotency日志明确为75受控输出通过。
+- Repository secret scan：294文件通过；Playwright：40/40（1.6分钟）；build：52/52；final cleanliness gate：success；依赖审计：1 moderate/0 high。
+- Vercel Deployment `7kTocPAWKiyWiRHd1XEVmLFzmASk` success；Vercel Preview Comments success；Pages deploy skipped。
+- PR #1在检查完成后仍`OPEN`、`isDraft=true`。这些是工程门禁证据，不是Preview真实AI、持久存储、签名变量或医学专家验收。
+
+## 2026-07-14 当前HEAD与Preview只读复验
+
+| 检查 | 精确命令/路径 | 退出码与结果 |
+|---|---|---|
+| 当前分支与PR | `git status --short --branch`、`git rev-parse HEAD`、`gh pr view 1 --json ...` | 证据提交/远程/PR head均为`30b0d455d276a24ddb77ebfb77c06219e1871e45`；PR Open/Draft/CLEAN |
+| 当前CI | `gh pr checks 1 --watch --interval 10` | run `29289645684` build SUCCESS（4分09秒）；Vercel SUCCESS；Preview Comments SUCCESS；Pages deploy SKIPPED |
+| 浏览器实测部署解析 | GitHub Deployments API，SHA=`10fe60d...` | deployment `5432035094` success；应用URL为`https://hematuria-training-system-dsafq1pj5-niubi1vs-projects.vercel.app` |
+| 文档证据部署解析 | GitHub Deployments API，SHA=`30b0d45...` | deployment `5432222665` success；应用URL为`https://hematuria-training-system-l0upihrnu-niubi1vs-projects.vercel.app` |
+| P001浏览器DOM | Codex in-app Browser打开`/cases/P001/`并读取DOM | 页面标题正常；初始化后为`回答来源：降级模式`，仅一个网络失败status和一个“重新连接AI”按钮；聊天记录及输入框保留 |
+| Preview health | `Invoke-WebRequest -Method Get https://hematuria-training-system-dsafq1pj5-niubi1vs-projects.vercel.app/api/health/` | shell exit0；请求约2.4秒；HTTP 200、`text/html`、Vercel Authentication页面，不是应用health JSON |
+| 控制台探针 | Browser `tab.dev.logs`两次最小读取 | BLOCKED：控制通道超时并重置；未取得应用console错误，不以工具自身网络告警替代产品证据 |
+| Git fetch | `git fetch --prune origin` | 首次exit1：Git smart-HTTP连接`github.com:443`超时；推送前重试exit0，远程/PR head仍与本地`10fe60d`一致，无未知远程提交 |
+| 文档diff/敏感信息 | `git diff --check`、受保护路径diff、bundled Node直接执行`scripts/scan-repository-secrets.mjs` | exit0；294个tracked/candidate文件通过，`data/**`、审核产物和`outputs/**`零差异；pnpm包装入口因Node 24/无TTY依赖状态检查未进入脚本，不记作扫描失败或通过 |
+
+说明：本次没有代码变化，所以没有重复运行已在`10fe60d`远程CI通过的完整门禁。Vercel部署绿灯只证明构建/部署成功；当前浏览器和health证据证明受保护API链不可用，不能计作真实DeepSeek、Upstash、签名日志、10/10、20轮、P95或自然度通过。未读取Cookie、Authorization、localStorage、环境变量值或密钥。
+
+## 2026-07-14 PRV-P2-003 TTS缓存隔离
+
+| 检查 | 精确命令/环境 | 退出码与结果 |
+|---|---|---|
+| 旧实现失败基线 | bundled Node执行`node_modules/tsx/dist/cli.mjs scripts/test-tts-api.ts` | exit1；固定旧FNV碰撞的第二文本实际为`HIT`，精确失败为`'HIT' !== 'MISS'` |
+| 修复后TTS API专项 | 同上 | exit0；四音色、SHA-256 tuple、Origin/参数隔离、精确命中、1小时TTL、预热并发和100项淘汰通过 |
+| 前端选声与恢复 | `scripts/test-tts.ts`、`scripts/test-api-recovery.ts` | 均exit0；中英男女/年龄/对抗名称和有限恢复合同通过 |
+| TypeScript、ESLint | bundled Node执行`tsc --noEmit`、`scripts/run-lint.mjs` | 均exit0；本地Node 24仅有仓库engine边界，最终以Node 22 CI为准 |
+| 完整行为门禁 | `CI=true pnpm run test` | exit0，33.4秒；当前36段/42例/572/419/18隔离/360/安全合同通过 |
+| Vercel等价构建 | `CI=1 VERCEL=1 VERCEL_ENV=preview pnpm run build` | exit0，17.7秒；52/52静态页、2/2 export |
+| bundle与repository扫描 | `scripts/scan-static-bundle.ts`、`scripts/scan-repository-secrets.mjs` | exit0；25个JS资产、294个tracked/candidate文件，无敏感值输出 |
+| 已提交HEAD幂等 | bundled Node执行`scripts/test-conversion-idempotency.ts`，干净`91b2b23` | exit0，12秒；75个受控输出baseline及第二次生成通过，临时worktree清理 |
+| 受保护路径 | `git diff --name-only -- data ... outputs` | 无输出；未修改病例、审核产物、裁决表、`needs_revision`或360评分 |
+
+说明：测试provider返回每次不同的短音频Buffer，用来证明不同tuple不会复用音频；它不是Azure真实音色证据。Azure未配置状态保持SKIP/PENDING。首次TypeScript尝试因本地pnpm junction在沙箱内不可读而未进入有效模块解析；按锁文件恢复依赖并在可读取junction的环境重跑后exit0，没有修改package或lock。

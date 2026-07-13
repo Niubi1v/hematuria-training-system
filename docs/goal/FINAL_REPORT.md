@@ -164,3 +164,65 @@
 - 用户可见修复部分有效：只有一个主要连接警告，fallback为自然中文且不泄露病例摘要，输入清空后仍保持焦点，聊天记录未被重连清空；这些结果不得计作真实AI通过。
 - Preview变量名称中AI供应商配置存在，`TRAINING_STATE_SECRET`未见；Standard Deployment Protection开启且OPTIONS allowlist关闭。Runtime Logs无对应函数调用，直接health探针被浏览器客户端阻止，所以当前只能定位到Preview配置/保护边界，不能伪造失败API状态或唯一根因。
 - 需要人工操作：在Preview或分支专用Preview补齐`TRAINING_STATE_SECRET`（不得由Codex生成），核对实际API origin与允许源是否一致，并在任何配置变更后重新部署；若API为跨源，再评估OPTIONS allowlist或可信访问方案。随后重跑真实AI中英10/10、日志10/10、20轮稳定性与P95。
+
+## 2026-07-14 静态发布安全里程碑结论（执行中）
+
+- 起始Production Goal远程HEAD为`41b3830a9095c692b3fdbe65a3dbf95b7ece5a37`；审计报告提交`70fb5a38625fc235b09f803faa3da248b37597bf`已安全纳入本地分支。Draft PR #1仍为Open/Draft，未转Ready、未合并、未部署Production。
+- SRA六项P1的本地工程边界已实施：v3签名能力、权威attempt CAS/幂等消费、完整服务端阶段锁、签名session、Agent single-flight、旧API 410、严格CORS/请求限制和训练密钥职责分离。
+- Serverless安全边界是真实fail-closed：Preview未配置持久Upstash时相关API返回503，而不是回退到进程内Map并声称安全。外部适配器因无凭据尚未集成验证。
+- SheetJS high风险已通过官方0.20.3固定依赖和解析资源限制处置；high审计退出0，仍明确保留1项moderate。
+- 幂等性测试的假绿已消除，但真实暴露56个生成基线漂移。由于这些输出包含病例、双语、评分和审核派生数据，本轮没有自动重生成或提交；`DCI-P1-003`继续阻断全绿CI，需要权威基线/医学治理决定。
+- 本地通过：聚合行为链、TypeScript、ESLint、52页build、25 JS bundle、294文件secret、依赖high门禁；desktop/mobile Playwright最终40/40且33.8秒正常退出。首次34/40失败被保留为证据，修复的是安全夹具而非验收断言。
+- 医学边界保持：`data/**`零差异；未批准419条模拟事实、未解除42例`needs_revision`、未修改18条双语冲突事实、未改变360分算法。HEM-P0-001与HEM-P0-023继续需要具名专家。
+- 新候选尚未push和CI，不能复用旧HEAD绿灯。推送后预期Actions可能因真实生成基线漂移失败；必须记录真实日志，禁止放宽或跳过该门禁。
+- Preview人工阻塞变量名称：`UPSTASH_REDIS_REST_URL`、`UPSTASH_REDIS_REST_TOKEN`、`TRAINING_ATTEMPT_STORE_MODE=upstash`、独立强`TRAINING_STATE_SECRET`。需要Preview/分支专用Preview作用域并重新部署；不得生成、显示或提交值。
+- 回滚方式：对后续安全、供应链/CI和证据提交逐项执行普通`git revert`；不得reset、force push、覆盖医学数据或回滚他人提交。回滚权威attempt存储前必须保持PR Draft和正式路径关闭。
+
+## 2026-07-14 终审修订
+
+- 最终只读安全审查在原六项P1实现上又发现三项可重复P1，均已以失败回归固定并最小修复：init重放不再泄露最新bearer、关闭阶段不再允许证据回填、session语言/模式不再接受客户端覆盖。
+- 供应链终审发现幂等隔离worktree只取`HEAD`而未明确排除未提交候选；验证器现对任何脏工作树fail-closed，完成提交后才运行。56个基线漂移仍保留为真实失败，不自动写入医学/审核派生数据。
+- 本地提交：`47a7c58 security: enforce authoritative training attempts`；`e6cb5b2 security: harden workbook and CI gates`。两者均基于审计报告HEAD `70fb5a3`，可分别普通revert。
+- 终审专项、TypeScript、ESLint、敏感信息和受保护数据diff均通过；完整聚合、build、Playwright、bundle、已提交HEAD幂等检查及远程Node 22 CI将在证据提交后执行并按真实退出码登记。
+- PR #1继续保持Draft。Preview缺少持久attempt存储/独立签名配置的人工阻塞和HEM-P0-001/HEM-P0-023医学裁决阻塞均未解除。
+
+### 完整门禁结论
+
+- 当前本地候选`ba35c28`：完整行为exit0；TypeScript/ESLint exit0；生产构建52/52；Playwright desktop/mobile 40/40且自行退出；bundle 25 JS、secret 294文件、API配置与dependency high门禁exit0。
+- 唯一强制工程红灯仍是`DCI-P1-003`：已提交HEAD的幂等门禁真实exit1并列出56个基线漂移。禁止自动重生成这些病例/评分/双语/审核派生数据；Draft PR不得因其余绿灯转Ready。
+- pnpm在受限沙箱的registry attestation EACCES导致的两次超时已与应用构建/Playwright分离：联网精确构建入口通过，显式服务Playwright通过。新HEAD仍需GitHub Node 22 CI确认。
+- 推荐后续长期QA起始点必须使用本轮最终证据提交并push后的新HEAD，而不是`41b3830`、`70fb5a3`或当前文档提交前SHA；具体SHA在最终push/CI后补记。
+
+### 当前交接状态（Git网络阻塞）
+
+- 本地安全候选截至`cbe5f3d`含5个尚未远程化提交；远程仍为`41b3830`，PR #1仍Draft。fetch/push因`github.com:443`网络失败，未发生部分push或远程变更。
+- 旧HEAD检查全部完成但不能代表新候选。只有网络恢复、重新fetch核对、普通push、GitHub Node 22 CI与Vercel新Preview完成后，才能填写最终推荐QA SHA。
+- 网络恢复后的准确顺序：`git fetch --prune origin` → 核对远程仍为已知祖先 → `git status`/range diff/secret扫描 → 普通push当前分支 → `gh pr checks 1 --watch`。保持Draft，不合并、不部署Production。
+
+### 远程验证后的修订结论
+
+- 网络已恢复，`6fcd325`已普通push；Actions run `29287786411`、Vercel和Preview Comments全部success，Pages deploy skipped，PR仍Draft。
+- 先前报告的56文件本地红灯已证实为Windows全局autocrlf造成的临时checkout行尾假差异；Linux CI对75输出通过。跨平台修复`bb130c1`不更改任何数据，仅让隔离checkout保持提交对象LF；Windows随后75/75通过。
+- 因此`DCI-P1-003`不再是医学治理基线阻塞。`bb130c1`及本次证据提交仍需普通push并取得新一轮CI；真正剩余发布阻塞仍是HEM-P0-001/HEM-P0-023具名医学裁决，以及Preview持久attempt存储/独立签名变量和真实AI验收。
+
+### 最终工程发布检查点
+
+- 代码与完整证据head `9d405fd`已普通push；Actions run `29288294002`、Vercel Deployment和Preview Comments均success，Pages deploy skipped，PR #1保持Draft。
+- 本轮所有无需外部权限的静态发布P1工程项已修复并取得本地/远程可重复证据；`DCI-P1-003`跨平台关闭，未更改`data/**`或医学审核状态。
+- 推荐长期QA的代码起始HEAD：`9d405fd95c979099a58a90824616c9728360a8f4`。若随后仅追加本节状态文档，可使用其文档-only后代，但行为代码基线仍是`9d405fd`。
+- 剩余发布阻塞只应按治理边界处理：HEM-P0-001/HEM-P0-023具名专家裁决；Preview持久Upstash与独立`TRAINING_STATE_SECRET`由用户配置并重部署；真实DeepSeek中文/英文、日志10/10、20轮稳定、P95和自然度人工验收。不得将Vercel部署绿灯写成这些项目通过。
+
+### 当前交接检查点（2026-07-14 06:18）
+
+- Preview证据提交、远程和Draft PR head均为`30b0d455d276a24ddb77ebfb77c06219e1871e45`；PR #1为Open/Draft/CLEAN。Actions run `29289645684` build success，Vercel Deployment及Preview Comments success，Pages deploy skipped。
+- `10fe60d` Preview的P001静态页面可加载，但初始化后进入降级模式。UI保持单一网络错误提示、重新连接按钮、现有聊天记录和输入框，说明此前提示收敛修复仍在；它不满足真实AI发布验收。
+- 匿名health请求返回Vercel Authentication HTML而不是应用JSON，证实当前API链被Deployment Protection截获。真实DeepSeek、Upstash持久attempt、独立签名、日志10/10、20轮、首Token/P95与自然度均仍BLOCKED，不能由Vercel绿灯替代。
+- 当前没有剩余可在无权限条件下复现并修复的P0/P1代码缺陷。需人工处理的下一步：为该分支Preview核对保护访问方式及`UPSTASH_REDIS_REST_URL`、`UPSTASH_REDIS_REST_TOKEN`、`TRAINING_ATTEMPT_STORE_MODE=upstash`、独立强`TRAINING_STATE_SECRET`的作用域并重部署；随后运行真实AI验收。不得由Codex生成、读取或修改密钥值。
+- 医学阻塞保持不变：HEM-P0-001与HEM-P0-023需具名医学专家裁决；未批准419条事实，未解除42例`needs_revision`，未改变18条双语冲突或360分算法。推荐长期QA起始HEAD为证据提交`30b0d45`或其仅文档后代，行为代码基线为`9d405fd`。
+
+### TTS缓存安全增量（待远程CI）
+
+- `PRV-P2-003`旧32位FNV缓存碰撞已用固定文本对真实复现并修复；不同文本、Origin、音色、语速和音调不能再共用音频，缓存命中还需原tuple、Buffer和未过期同时成立。
+- 提交`91b2b23`仅修改`api/tts.js`与`scripts/test-tts-api.ts`；使用Node内置SHA-256，无新增依赖、密钥或环境变量，默认TTL一小时、容量100项。回滚为普通`git revert 91b2b23`。
+- 本地TTS专项、API恢复、TypeScript、ESLint、完整行为、52页build、25 JS bundle、294文件secret及75输出幂等均exit0。测试音频是确定性fixture，不是Azure真实服务通过。
+- 未改变医学数据、419审核决定、42例`needs_revision`、18条冲突隔离、Patient Agent语义、连接状态机或360分算法。远程Node 22 CI/Vercel完成前本项只记LOCAL PASS；PR继续Draft。

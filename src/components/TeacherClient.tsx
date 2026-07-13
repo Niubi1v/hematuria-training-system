@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { publicApiConfig } from "@/src/lib/apiConfig";
 import { Download, FileSpreadsheet, Plus, Save, Trash2 } from "lucide-react";
-import * as XLSX from "xlsx";
 import { allCases } from "@/src/lib/cases";
 import scoringTemplate from "@/data/scoring_template.json";
 import orderPackages from "@/data/order_packages.json";
@@ -66,8 +65,8 @@ function toCsv(rows: Array<Record<string, unknown>>) {
 }
 
 export default function TeacherClient() {
-  const [preview, setPreview] = useState<WorkbookPreview[]>([]);
-  const [warnings, setWarnings] = useState<string[]>(["未上传新 Excel 时，页面显示当前已转换的内置病例库。"]);
+  const [preview] = useState<WorkbookPreview[]>([]);
+  const [warnings] = useState<string[]>(["浏览器端Excel导入已停用；页面仅显示当前已转换的内置病例库。"]);
   const [selectedCaseId, setSelectedCaseId] = useState(allCases[0]?.id ?? "");
   const [caseDraftText, setCaseDraftText] = useState("");
   const [newCaseText, setNewCaseText] = useState("{\n  \"id\": \"HM-NEW-001\",\n  \"title\": \"新建教学病例\",\n  \"age\": \"\",\n  \"sex\": \"\",\n  \"chiefComplaint\": \"\"\n}");
@@ -122,23 +121,6 @@ export default function TeacherClient() {
   useEffect(() => {
     setStudentLogs(safeJson<Array<Record<string, unknown>>>(localStorage.getItem("hematuria-full-process-results"), []));
   }, []);
-
-  async function handleUpload(file: File) {
-    const buffer = await file.arrayBuffer();
-    const workbook = XLSX.read(buffer, { type: "array" });
-    const privacyWords = ["姓名", "住院号", "门诊号", "登记号", "电话", "身份证", "地址", "手机", "检查日期"];
-    const nextWarnings: string[] = [];
-    const sheets = workbook.SheetNames.map((sheetName) => {
-      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(workbook.Sheets[sheetName], { defval: "" });
-      const headers = Object.keys(rows[0] ?? {});
-      headers.forEach((header) => {
-        if (privacyWords.some((word) => header.includes(word))) nextWarnings.push(`${sheetName} 中发现疑似隐私字段：${header}`);
-      });
-      return { sheetName, rowCount: rows.length, headers, firstRow: rows[0] ?? {} };
-    });
-    setPreview(sheets);
-    setWarnings(nextWarnings.length ? nextWarnings : ["未发现姓名、住院号、门诊号、电话、身份证、地址等常见隐私字段。"]);
-  }
 
   function exportResults(format: "json" | "csv") {
     const results = safeJson<Array<Record<string, unknown>>>(localStorage.getItem("hematuria-full-process-results"), []);
@@ -221,18 +203,15 @@ export default function TeacherClient() {
       <div className="mt-6 grid gap-5 lg:grid-cols-[360px_1fr]">
         <aside className="space-y-5">
           <section className="rounded-lg border border-clinic-line bg-white p-5">
-            <h2 className="flex items-center gap-2 font-semibold"><FileSpreadsheet size={18} /> 上传或替换 Excel</h2>
+            <h2 className="flex items-center gap-2 font-semibold"><FileSpreadsheet size={18} /> Excel 导入已停用</h2>
             <input
               className="mt-4 w-full rounded-md border border-clinic-line p-2 text-sm"
               type="file"
-              accept=".xlsx,.xls"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) void handleUpload(file);
-              }}
+              disabled
+              aria-label="Excel导入已停用"
             />
             <div className="mt-4 rounded-md bg-clinic-paper p-3 text-sm leading-6 text-clinic-muted">
-              上传仅在浏览器本地解析，不会传输到网络。要永久替换病例库，请把 Excel 放到 work/source/v2_only_cases.xlsx 后运行 npm run convert:excel。
+              在完成身份验证、资源限制和隐私审计前，浏览器端工作簿解析保持停用。受控导入只能通过仓库内医学审核流程执行。
             </div>
           </section>
 

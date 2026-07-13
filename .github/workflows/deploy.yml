@@ -4,13 +4,11 @@ on:
   pull_request:
     branches: ["main"]
   push:
-    branches: ["main", "master"]
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -21,21 +19,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
         with:
           version: 11.7.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: 22.14
           cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Production dependency audit
+        run: pnpm audit --prod --audit-level high
 
       - name: Conversion idempotency
         run: pnpm run test:idempotency
@@ -80,6 +81,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Playwright E2E
+        timeout-minutes: 5
         run: pnpm run test:e2e
 
       - name: Prepare build metadata
@@ -108,9 +110,14 @@ jobs:
           NEXT_PUBLIC_API_BASE_URL: https://hematuria-training-system.vercel.app
         run: pnpm run test:bundle
 
+      - name: Final tracked-worktree cleanliness gate
+        run: |
+          git diff --exit-code
+          test -z "$(git status --porcelain --untracked-files=no)"
+
       - name: Upload Pages artifact
         if: github.event_name != 'pull_request'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
           path: ./out
 
@@ -121,7 +128,11 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

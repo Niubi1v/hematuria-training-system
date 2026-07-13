@@ -3,6 +3,9 @@ function allowedOrigins() {
     .split(",").map((value) => value.trim()).filter(Boolean);
 }
 
+const { signingSecretConfigured } = require("../server/trainingState.js");
+const { durableAttemptStoreConfigured } = require("../server/trainingAttemptStore.js");
+
 module.exports = function handler(req, res) {
   const origin = String(req.headers?.origin || "");
   const allowed = allowedOrigins();
@@ -19,10 +22,8 @@ module.exports = function handler(req, res) {
     deploymentSha: process.env.VERCEL_GIT_COMMIT_SHA || process.env.NEXT_PUBLIC_GIT_SHA || "unknown",
     buildTime: process.env.NEXT_PUBLIC_BUILD_TIME || "unknown",
     patientServiceConfigured: Boolean(process.env.LLM_API_KEY && process.env.LLM_API_BASE_URL && process.env.LLM_MODEL),
-    // Report only the dedicated signing credential. Practice may temporarily
-    // retain the legacy LLM-key fallback, but it is not a production-ready
-    // training-state configuration and must never be advertised as one.
-    trainingStateConfigured: Boolean(process.env.TRAINING_STATE_SECRET),
+    trainingStateConfigured: signingSecretConfigured() && (!process.env.VERCEL || durableAttemptStoreConfigured()),
+    durableAttemptStoreConfigured: durableAttemptStoreConfigured(),
     cloudTtsConfigured: Boolean(process.env.AZURE_SPEECH_KEY && process.env.AZURE_SPEECH_REGION),
     allowedOriginConfigured: allowed.length > 0,
     apiVersion: "2.6.0"

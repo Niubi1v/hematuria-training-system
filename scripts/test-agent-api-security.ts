@@ -4,14 +4,22 @@ process.env.AGENT_API_ALLOWED_ORIGINS = "https://allowed.example, https://second
 process.env.AGENT_CHAT_RATE_LIMIT_PER_MINUTE = "2";
 process.env.SESSION_INIT_RATE_LIMIT_PER_MINUTE = "2";
 process.env.AGENT_API_RATE_LIMIT_WINDOW_MS = "60000";
-process.env.LLM_API_KEY = "unit-test-secret-must-not-appear";
+process.env.LLM_API_KEY = "unit-test-provider-secret-must-not-appear";
+process.env.TRAINING_STATE_SECRET = "unit-test-training-state-secret-with-adequate-length";
+process.env.TRAINING_API_ALLOWED_ORIGINS = "https://allowed.example";
 
 delete (globalThis as Record<string, unknown>).__hematuriaAgentChatRequestWindows;
 delete (globalThis as Record<string, unknown>).__hematuriaSessionInitRequestWindows;
 delete (globalThis as Record<string, unknown>).__hematuriaSessionInitIdempotency;
+delete (globalThis as Record<string, unknown>).__hematuriaAgentRequestStore;
 
 const agentHandler = require("../api/agent-chat.js");
 const sessionHandler = require("../api/session/init.js");
+const trainingHandler = require("../api/training-action.js");
+const legacyPatientHandler = require("../api/patient-reply.js");
+const legacyProfileHandler = require("../api/session/complete-profile.js");
+const { resetMemoryAttemptStore } = require("../server/trainingAttemptStore.js");
+const { resetMemoryAgentRequestStore } = require("../server/agentRequestStore.js");
 
 type ApiHandler = (req: unknown, res: unknown) => unknown;
 type CallOptions = {
@@ -49,6 +57,32 @@ async function call(handler: ApiHandler, options: CallOptions = {}) {
   };
   await handler(req, res);
   return { statusCode, payload, headers: responseHeaders, ended };
+}
+
+type AuthorizedSession = { attemptId: string; sessionId: string; caseId: string; language: "zh" | "en"; mode: string };
+
+async function createAuthorizedSession(label: string, caseId = "P001", language: "zh" | "en" = "zh", mode = "free"): Promise<AuthorizedSession> {
+  const attemptId = `security-${label}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  const initRequestId = `${attemptId}:training-init`;
+  const training = await call(trainingHandler, {
+    origin: "https://allowed.example",
+    ip: `${label}-training`,
+    headers: { "x-idempotency-key": initRequestId },
+    body: { action: "init-attempt", caseId, attemptId, mode, language, requestId: initRequestId }
+  });
+  assert.equal(training.statusCode, 200, `training state setup failed for ${label}: ${JSON.stringify(training.payload)}`);
+  const session = await call(sessionHandler, {
+    origin: "https://allowed.example",
+    ip: `${label}-session`,
+    headers: { "x-idempotency-key": `${attemptId}:session-init`, "x-training-state": training.headers["x-training-state"] },
+    body: { caseId, attemptId, mode, language }
+  });
+  assert.equal(session.statusCode, 200, `session setup failed for ${label}: ${JSON.stringify(session.payload)}`);
+  return { attemptId, sessionId: String((session.payload as { sessionId: string }).sessionId), caseId, language, mode };
+}
+
+function authorizedBody(session: AuthorizedSession, body: Record<string, unknown>) {
+  return { caseId: session.caseId, attemptId: session.attemptId, sessionId: session.sessionId, language: session.language, mode: session.mode, ...body };
 }
 
 async function verifyOriginAndCors(handler: ApiHandler, label: string) {
@@ -108,7 +142,7 @@ async function verifyRateLimit(handler: ApiHandler, label: string) {
   assert.doesNotMatch(JSON.stringify(limited.payload), /private-patient-content|unit-test-secret/);
 }
 
-async function verifyProviderFailureNonDisclosure() {
+async function verifyProviderFailureNonDisclosure(session: AuthorizedSession) {
   const originalFetch = globalThis.fetch;
   process.env.LLM_ENABLE_AI_PATIENT = "true";
   process.env.LLM_API_BASE_URL = "https://api.example.test";
@@ -118,7 +152,8 @@ async function verifyProviderFailureNonDisclosure() {
     const response = await call(agentHandler, {
       origin: "https://allowed.example",
       ip: "provider-failure",
-      body: { caseId: "P001", agentId: "standardized_patient", studentInput: "你吸烟吗？", language: "zh", debug: true }
+      headers: { "x-idempotency-key": "provider-failure-request" },
+      body: authorizedBody(session, { agentId: "standardized_patient", sessionMode: session.mode, studentInput: "你吸烟吗？", debug: true })
     });
     assert.equal(response.statusCode, 200, "provider failure should use the safe rule fallback");
     assert.doesNotMatch(JSON.stringify(response.payload), /private-patient-content|unit-test-secret/);
@@ -131,7 +166,7 @@ async function verifyProviderFailureNonDisclosure() {
   }
 }
 
-async function verifyProviderTimingNonDisclosure() {
+async function verifyProviderTimingNonDisclosure(session: AuthorizedSession) {
   const originalFetch = globalThis.fetch;
   process.env.LLM_ENABLE_AI_PATIENT = "true";
   process.env.LLM_API_BASE_URL = "https://api.example.test";
@@ -150,7 +185,8 @@ async function verifyProviderTimingNonDisclosure() {
     const response = await call(agentHandler, {
       origin: "https://allowed.example",
       ip: "provider-timing",
-      body: { caseId: "P001", agentId: "standardized_patient", probe: true }
+      headers: { "x-idempotency-key": "provider-timing-request" },
+      body: authorizedBody(session, { agentId: "standardized_patient", probe: true })
     });
     assert.equal(response.statusCode, 200);
     assert.match(response.headers["server-timing"], /^app;dur=\d+\.\d, provider;dur=\d+\.\d, firsttoken;dur=\d+\.\d$/);
@@ -165,12 +201,20 @@ async function verifyProviderTimingNonDisclosure() {
 }
 
 async function verifySessionIdempotency() {
-  const headers = { "x-idempotency-key": "attempt-1:session-init:default" };
+  const attemptId = `session-idempotency-${Date.now()}`;
+  const trainingRequestId = `${attemptId}:training-init`;
+  const training = await call(trainingHandler, {
+    origin: "https://allowed.example", ip: "session-idempotency-training",
+    headers: { "x-idempotency-key": trainingRequestId },
+    body: { action: "init-attempt", caseId: "P001", attemptId, mode: "free", language: "zh", requestId: trainingRequestId }
+  });
+  assert.equal(training.statusCode, 200);
+  const headers = { "x-idempotency-key": "attempt-1:session-init:default", "x-training-state": training.headers["x-training-state"] };
   const options = {
     origin: "https://allowed.example",
     ip: "session-idempotency",
     headers,
-    body: { caseId: "P001", mode: "free", language: "zh" }
+    body: { caseId: "P001", attemptId, mode: "free", language: "zh" }
   };
   const [first, second] = await Promise.all([call(sessionHandler, options), call(sessionHandler, options)]);
   assert.equal(first.statusCode, 200);
@@ -179,11 +223,39 @@ async function verifySessionIdempotency() {
   assert.match(first.headers["server-timing"], /^session;dur=\d+\.\d$/);
 }
 
-async function verifyGenerationSourceClassification() {
+async function verifySessionClaimBinding() {
+  const attemptId = `session-claim-binding-${Date.now()}`;
+  const trainingRequestId = `${attemptId}:training-init`;
+  const training = await call(trainingHandler, {
+    origin: "https://allowed.example", ip: "session-binding-training",
+    headers: { "x-idempotency-key": trainingRequestId },
+    body: { action: "init-attempt", caseId: "P001", attemptId, mode: "free", language: "zh", requestId: trainingRequestId }
+  });
+  assert.equal(training.statusCode, 200);
+  const token = training.headers["x-training-state"];
+  const wrongLanguage = await call(sessionHandler, {
+    origin: "https://allowed.example", ip: "session-binding-language",
+    headers: { "x-idempotency-key": `${attemptId}:wrong-language`, "x-training-state": token },
+    body: { caseId: "P001", attemptId, mode: "free", language: "en" }
+  });
+  assert.equal(wrongLanguage.statusCode, 409, "session language must be derived from the authoritative attempt");
+  assert.deepEqual(wrongLanguage.payload, { error: "attempt_language_mismatch" });
+
+  const wrongMode = await call(sessionHandler, {
+    origin: "https://allowed.example", ip: "session-binding-mode",
+    headers: { "x-idempotency-key": `${attemptId}:wrong-mode`, "x-training-state": token },
+    body: { caseId: "P001", attemptId, mode: "osce", language: "zh" }
+  });
+  assert.equal(wrongMode.statusCode, 409, "session mode must be derived from the authoritative attempt");
+  assert.deepEqual(wrongMode.payload, { error: "attempt_mode_mismatch" });
+}
+
+async function verifyGenerationSourceClassification(session: AuthorizedSession) {
   const compound = await call(agentHandler, {
     origin: "https://allowed.example",
     ip: "generation-source-compound",
-    body: { caseId: "P001", agentId: "standardized_patient", studentInput: "有血块吗？有发热吗？", language: "zh" }
+    headers: { "x-idempotency-key": "generation-source-compound" },
+    body: authorizedBody(session, { agentId: "standardized_patient", sessionMode: session.mode, studentInput: "有血块吗？有发热吗？" })
   });
   assert.equal(compound.statusCode, 200);
   assert.equal((compound.payload as { fallbackReason: string }).fallbackReason, "compound_question_preserves_all_facts");
@@ -191,17 +263,118 @@ async function verifyGenerationSourceClassification() {
   assert.match(compound.headers["server-timing"], /^app;dur=\d+\.\d$/);
 }
 
+async function verifySessionCapabilityBoundary(session: AuthorizedSession) {
+  const missing = await call(agentHandler, {
+    origin: "https://allowed.example", ip: "session-missing",
+    body: { caseId: session.caseId, attemptId: session.attemptId, agentId: "standardized_patient", studentInput: "你吸烟吗？", language: session.language, mode: session.mode }
+  });
+  assert.equal(missing.statusCode, 401);
+  assert.deepEqual(missing.payload, { error: "session_capability_required" });
+
+  const forged = await call(agentHandler, {
+    origin: "https://allowed.example", ip: "session-forged",
+    body: authorizedBody({ ...session, sessionId: `${session.sessionId}tampered` }, { agentId: "standardized_patient", studentInput: "你吸烟吗？" })
+  });
+  assert.equal(forged.statusCode, 401, "tampered capabilities must be rejected");
+
+  const crossLanguage = await call(agentHandler, {
+    origin: "https://allowed.example", ip: "session-cross-language",
+    body: { ...authorizedBody(session, { agentId: "standardized_patient", studentInput: "Do you smoke?" }), language: "en" }
+  });
+  assert.equal(crossLanguage.statusCode, 401, "a Chinese capability must not authorize an English session");
+  assert.equal((crossLanguage.payload as { error: string }).error, "session_language_mismatch");
+}
+
+async function verifyAgentIdempotency(session: AuthorizedSession) {
+  const originalFetch = globalThis.fetch;
+  process.env.LLM_ENABLE_AI_PATIENT = "true";
+  process.env.LLM_API_BASE_URL = "https://api.example.test";
+  process.env.LLM_MODEL = "test-model";
+  let providerCalls = 0;
+  globalThis.fetch = async () => {
+    providerCalls += 1;
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode('data: {"choices":[{"delta":{"content":"OK"}}]}\n\ndata: [DONE]\n\n'));
+        controller.close();
+      }
+    });
+    return new Response(stream, { status: 200, headers: { "Content-Type": "text/event-stream" } });
+  };
+  try {
+    const body = authorizedBody(session, { agentId: "standardized_patient", probe: true });
+    const options = { origin: "https://allowed.example", headers: { "x-idempotency-key": "agent-concurrent-probe" }, body };
+    const [first, second] = await Promise.all([
+      call(agentHandler, { ...options, ip: "agent-idem-1" }),
+      call(agentHandler, { ...options, ip: "agent-idem-2" })
+    ]);
+    assert.equal(first.statusCode, 200);
+    assert.equal(second.statusCode, 200);
+    assert.equal(providerCalls, 1, "concurrent identical agent requests must call the provider once");
+    assert.deepEqual(first.payload, second.payload);
+
+    const conflict = await call(agentHandler, {
+      origin: "https://allowed.example", ip: "agent-idem-conflict",
+      headers: { "x-idempotency-key": "agent-concurrent-probe" },
+      body: { ...body, debug: true }
+    });
+    assert.equal(conflict.statusCode, 409, "one idempotency key cannot authorize a different payload");
+  } finally {
+    globalThis.fetch = originalFetch;
+    delete process.env.LLM_ENABLE_AI_PATIENT;
+    delete process.env.LLM_API_BASE_URL;
+    delete process.env.LLM_MODEL;
+  }
+}
+
+async function verifyRetiredRoutes() {
+  for (const [label, handler] of [["patient-reply", legacyPatientHandler], ["complete-profile", legacyProfileHandler]] as const) {
+    const denied = await call(handler, { origin: "https://evil.example", body: { caseId: "P001" } });
+    assert.equal(denied.statusCode, 403, `${label} must reject an untrusted Origin`);
+    const retired = await call(handler, { origin: "https://allowed.example", body: { caseId: "P001" } });
+    assert.equal(retired.statusCode, 410, `${label} must remain retired`);
+    assert.equal((retired.payload as { error: string }).error, "endpoint_retired");
+    assert.notEqual(retired.headers["access-control-allow-origin"], "*");
+  }
+}
+
+async function verifyBodyLimits() {
+  const oversizedAgent = await call(agentHandler, {
+    origin: "https://allowed.example", ip: "oversized-agent",
+    body: JSON.stringify({ caseId: "P001", studentInput: "x".repeat(70 * 1024) })
+  });
+  assert.equal(oversizedAgent.statusCode, 413);
+  assert.deepEqual(oversizedAgent.payload, { error: "request_body_too_large" });
+
+  const oversizedSession = await call(sessionHandler, {
+    origin: "https://allowed.example", ip: "oversized-session",
+    body: JSON.stringify({ caseId: "P001", padding: "x".repeat(20 * 1024) })
+  });
+  assert.equal(oversizedSession.statusCode, 413);
+  assert.deepEqual(oversizedSession.payload, { error: "request_body_too_large" });
+}
+
 async function main() {
+  resetMemoryAttemptStore();
+  resetMemoryAgentRequestStore();
   await verifyOriginAndCors(agentHandler, "agent-chat");
   await verifyOriginAndCors(sessionHandler, "session-init");
   await verifyOptionalServerToken(sessionHandler);
   await verifySessionIdempotency();
-  await verifyGenerationSourceClassification();
-  await verifyProviderTimingNonDisclosure();
-  await verifyProviderFailureNonDisclosure();
+  await verifySessionClaimBinding();
+  const session = await createAuthorizedSession("shared-agent");
+  await verifySessionCapabilityBoundary(session);
+  await verifyGenerationSourceClassification(session);
+  await verifyProviderTimingNonDisclosure(session);
+  await verifyProviderFailureNonDisclosure(session);
+  await verifyAgentIdempotency(session);
+  await verifyRetiredRoutes();
+  await verifyBodyLimits();
   await verifyRateLimit(agentHandler, "agent-chat");
   await verifyRateLimit(sessionHandler, "session-init");
-  console.log("Agent chat/session Origin, CORS, trusted direct-call, bounded rate-limit, and non-disclosure tests passed.");
+  console.log("Agent/session capabilities, idempotency, retired routes, CORS, rate-limit, and non-disclosure tests passed.");
 }
 
 void main();

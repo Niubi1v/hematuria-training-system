@@ -2,6 +2,8 @@ import fs from "node:fs";
 import { handlePatientReplyRequest } from "@/src/server/patientReplyService";
 import { filterPatientReply } from "@/src/server/responseFilter";
 
+process.env.TRAINING_STATE_SECRET = "unit-test-training-state-secret-with-adequate-length";
+
 function assert(condition: unknown, message: string) {
   if (!condition) throw new Error(message);
 }
@@ -57,8 +59,7 @@ async function main() {
     "server/llmClient.runtime.js",
     "server/llmClient.ts",
     "src/server/llmClient.ts",
-    "api/agent-chat.js",
-    "api/patient-reply.js"
+    "api/agent-chat.js"
   ];
   for (const file of deepSeekClients) {
     const source = fs.readFileSync(file, "utf8");
@@ -66,6 +67,8 @@ async function main() {
     assert(source.includes("thinking:"), `${file} must send the DeepSeek thinking option`);
     assert(source.includes('"disabled"'), `${file} must default patient-facing calls to disabled thinking`);
   }
+  const retiredPatientApi = fs.readFileSync("api/patient-reply.js", "utf8");
+  assert(retiredPatientApi.includes("endpoint_retired") && !retiredPatientApi.includes("LLM_API_KEY"), "legacy patient API must not retain an LLM execution path");
 
   const dynamicSessionSource = fs.readFileSync("server/patientSession.js", "utf8");
   assert(

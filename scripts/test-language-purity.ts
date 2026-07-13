@@ -15,5 +15,12 @@ const issues = Object.entries(zh).flatMap(([key, value]) => unwanted(value).map(
 for (const agent of agents) for (const value of [agent.leftNavLabel.zh, agent.agentName.zh, agent.competency.zh]) issues.push(...unwanted(value));
 for (const literal of [">Standardized Patient Agent<", ">Investigation Agent", ">Guardrails<", "能力画像 / Competency Profile", "7-Agent"]) if (component.includes(literal)) issues.push(`component:${literal}`);
 if (issues.length) throw new Error(`Chinese UI language purity failed: ${issues.join(", ")}`);
-fs.writeFileSync("LANGUAGE_PURITY_REPORT.md", `# 中英文界面语言扫描报告\n\n生成时间：${new Date().toISOString()}\n\n中文词典禁用英文词：0\n中文阶段名称禁用英文词：0\n核心工作台硬编码残留：0\n\n医学缩写按白名单保留。\n`, "utf8");
+const reportPath = "LANGUAGE_PURITY_REPORT.md";
+const reportBody = "中文词典禁用英文词：0\n中文阶段名称禁用英文词：0\n核心工作台硬编码残留：0\n\n医学缩写按白名单保留。";
+const existing = fs.readFileSync(reportPath, "utf8").replace(/\r\n/g, "\n");
+const existingBody = existing.replace(/^# 中英文界面语言扫描报告\n\n生成时间：[^\n]+\n\n/, "").trim();
+if (existingBody !== reportBody) throw new Error("language purity report is stale; review differences before using UPDATE_LANGUAGE_PURITY_REPORT=1");
+if (process.env.UPDATE_LANGUAGE_PURITY_REPORT === "1") {
+  fs.writeFileSync(reportPath, `# 中英文界面语言扫描报告\n\n生成时间：${new Date().toISOString()}\n\n${reportBody}\n`, "utf8");
+}
 console.log("Chinese UI language purity checks passed.");

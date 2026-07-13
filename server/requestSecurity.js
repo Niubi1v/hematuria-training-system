@@ -49,7 +49,7 @@ function applyAgentCors(req, res) {
   if (origin && allowed) res.setHeader("Access-Control-Allow-Origin", origin);
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Request-Id, X-Idempotency-Key");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Request-Id, X-Idempotency-Key, X-Training-State");
   res.setHeader("Access-Control-Expose-Headers", "Server-Timing");
   res.setHeader("Access-Control-Max-Age", "600");
   res.setHeader("Cache-Control", "no-store");
@@ -98,4 +98,14 @@ function setRateLimitHeaders(res, result) {
   if (result.limited) res.setHeader("Retry-After", String(result.retryAfterSeconds));
 }
 
-module.exports = { applyAgentCors, positiveInteger, setRateLimitHeaders, takeRateLimit };
+function parseJsonBody(req, maxBytes = 64 * 1024) {
+  const raw = typeof req.body === "string" ? req.body : JSON.stringify(req.body || {});
+  if (Buffer.byteLength(raw, "utf8") > maxBytes) throw new Error("request_body_too_large");
+  try {
+    return typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
+  } catch {
+    throw new Error("invalid_json_body");
+  }
+}
+
+module.exports = { applyAgentCors, parseJsonBody, positiveInteger, setRateLimitHeaders, takeRateLimit };
