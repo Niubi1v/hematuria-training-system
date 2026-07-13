@@ -329,3 +329,4 @@
 - Vercel deployment `AGSc7mzfLkMWkHiWVerHGZHJ2TwD`与Preview Comments通过；Pages deploy skipped；PR保持Draft。
 - 本机原样定向`playwright ... --project=mobile-chromium --grep "English patient reply stays English" --repeat-each=3`在180秒后因本地webServer条件超时退出124，不能登记为业务失败或通过。
 - 测试最小修复：等待`/api/session/init/`请求体`language=en`且响应成功后再发送；原5秒回答断言、固定英文内容、语言隔离和移动端覆盖全部保留。`node --check tests/e2e/practice.spec.mjs`用于提交前语法门禁，新CI作为最终行为证据。
+- 修复HEAD `f052d7e`：Actions run `29235062395` completed/success，build job `86767725364`用时3分31秒；Playwright 40/40，TypeScript、Lint、行为、医学治理、构建及扫描步骤均通过。Vercel deployment `AYbur4LpESzJVG2jtbP2JA54cBRr`与Preview Comments通过；Pages deploy job `86768374293` skipped。

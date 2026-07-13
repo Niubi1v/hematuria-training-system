@@ -68,12 +68,13 @@
 - 2026-07-13工程增量：新增白名单化`Server-Timing`合同，覆盖session、应用总耗时、真实provider调用、history-log与score；客户端无法注入指标名，响应不包含问题、病例、签名、token或密钥。production smoke已能分项采集这些指标，并明确输出`patient-first-token=unsupported`。
 - 剩余阻塞：首Token仍需流式供应商协议；真实P95仍需可登录且具备真实AI/签名变量的Preview环境采样。本增量只消除“除首Token外缺少分段计时”的工程缺口，不把外部验收改为PASS。
 
-### HEM-P1-026：移动端英文切换E2E未等待session就绪
+### HEM-P1-026：移动端英文切换E2E未等待session就绪（已解除）
 
-- 级别：P1 CI阻断；状态：已最小修复，待新CI确认。
+- 级别：P1 CI阻断；状态：已解除。修复HEAD `f052d7e`的Actions run `29235062395` completed/success，Playwright 40/40。
 - 证据：`d9155b8`的Actions run `29234298382`中TypeScript、Lint、行为与安全门禁均通过；Playwright 39/40，唯一失败为mobile英文切换后立即发送，5秒内未出现`I do not have pain or fever.`。
 - 根因：测试点击English后未等待请求体`language=en`的session init响应即发送，移动端并行运行暴露初始化竞态。
 - 修复：发送前等待英文session响应成功；未延长断言、未改变预期文本、未跳过移动端或放宽业务行为。Vercel Deployment与Preview Comments在该失败HEAD均通过。
+- 远程复核：build 3分31秒通过，Vercel Deployment与Preview Comments通过，Pages deploy按PR规则跳过；PR保持Draft。
 
 ### HEM-P0-001：151条source记录的辅助来源标记冲突
 

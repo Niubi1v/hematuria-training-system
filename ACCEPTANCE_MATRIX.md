@@ -104,7 +104,7 @@
 | TypeScript、ESLint、行为、构建、扫描 | PASS | 本地32/32、52/52、25 JS、281文件；退出码均0 |
 | 69 JSON幂等与desktop/mobile Playwright | PASS | run `29232093193`：69 JSON与Playwright 40/40；本机环境限制已由Linux CI补证 |
 
-## 性能遥测增量（待新HEAD远程确认）
+## 性能遥测增量（工程门禁已远程确认）
 
 | 强制标准 | 当前状态 | 当前证据 |
 |---|---|---|
@@ -115,4 +115,5 @@
 | TypeScript、行为、构建、扫描 | LOCAL PASS | 32项、52/52、25 JS、283文件，均exit 0 |
 | ESLint | PASS | run `29234298382`的Node 22 Lint步骤success；本机Node 24不兼容不再是证据缺口 |
 
-- 首轮远程补证：run `29234298382`的TypeScript与ESLint均PASS；Playwright mobile英文切换竞态导致39/40，已最小修复测试等待点，状态保持PENDING直到新run确认。
+- 首轮远程补证：run `29234298382`的TypeScript与ESLint均PASS；Playwright mobile英文切换竞态导致39/40，当时保持PENDING直到下一轮确认。
+- 最终远程补证：修复HEAD `f052d7e`的run `29235062395` build PASS、Playwright 40/40；Vercel Deployment与Preview Comments PASS。真实Preview P95与首Token仍按上表保持BLOCKED。

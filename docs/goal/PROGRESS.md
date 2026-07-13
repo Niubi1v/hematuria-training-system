@@ -183,3 +183,4 @@
 - `d9155b8`已普通push；Vercel Deployment与Preview Comments通过，Actions run `29234298382`的TypeScript、Lint、完整行为、安全及医学门禁通过。
 - Actions唯一失败为Playwright mobile英文切换用例39/40：测试没有等待英文session初始化就发送。已增加对`language=en` session响应的确定性等待，未延长或放宽回答断言。
 - 本机定向Playwright因webServer启动条件超时未形成通过证据；新提交必须由Linux CI完整40/40确认。PR保持Draft，Pages deploy继续按设计跳过。
+- 修复HEAD `f052d7e`远程复核完成：Actions run `29235062395` build success（3分31秒，Playwright 40/40），Vercel Deployment与Preview Comments success，Pages deploy skipped；HEM-P1-026解除。
