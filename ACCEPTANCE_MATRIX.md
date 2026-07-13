@@ -20,7 +20,7 @@
 | 离线恢复 | 记录保留，恢复在线后可继续 | PASS | Playwright desktop/mobile 22/22 |
 | CORS与限流 | 仅允许配置Origin；公开Agent/session有界限流 | PASS | `test:health`、`test:agent-api-security` |
 | 正式模式防绕过 | 客户端改mode不能解锁；独立签名secret；病例必须formalUseAllowed | PASS | `test:training-api` |
-| PR CI | PR运行完整质量门禁且不部署Pages | PASS | 当前HEAD `10fe60d`：run `29288682045` build全绿；Pages deploy按PR规则跳过 |
+| PR CI | PR运行完整质量门禁且不部署Pages | PASS | 证据提交`30b0d45`：run `29289645684` build全绿；Pages deploy按PR规则跳过 |
 
 ## Patient Agent与双语
 
@@ -78,14 +78,14 @@
 
 | 强制标准 | 当前状态 | 当前证据 |
 |---|---|---|
-| TypeScript、ESLint、完整行为链 | PASS | 当前HEAD `10fe60d`：run `29288682045` Unit/behavior、Typecheck、Lint均success |
-| 69 JSON幂等、生成数据无漂移 | PASS | run `29288682045`验证69 JSON、75个受控输出幂等及最终clean gate；`data/**`零差异 |
-| 52页生产构建 | PASS | run `29288682045`静态生成52/52 |
-| 静态答案/密钥扫描 | PASS | run `29288682045`：294文件repository scan、25个JS bundle scan success |
-| Playwright桌面/移动 | PASS | run `29288682045` desktop/mobile 40/40，runner正常退出；axe critical/serious=0断言包含在内 |
+| TypeScript、ESLint、完整行为链 | PASS | 证据提交`30b0d45`：run `29289645684` Unit/behavior、Typecheck、Lint均success |
+| 69 JSON幂等、生成数据无漂移 | PASS | run `29289645684`验证69 JSON、75个受控输出幂等及最终clean gate；`data/**`零差异 |
+| 52页生产构建 | PASS | run `29289645684`静态生成52/52 |
+| 静态答案/密钥扫描 | PASS | run `29289645684`：294文件repository scan、25个JS bundle scan success |
+| Playwright桌面/移动 | PASS | run `29289645684` desktop/mobile 40/40，runner正常退出；axe critical/serious=0断言包含在内 |
 | 专项分支普通push | PASS | `origin/codex/hematuria-production-goal` |
-| draft PR与GitHub Actions | PASS | PR #1保持Open/Draft/CLEAN；当前HEAD `10fe60d`的run `29288682045` completed/success |
-| Pages/Vercel SHA与live alias | PASS/PENDING | `10fe60d` Vercel Deployment与Preview Comments success；PR Pages部署按设计跳过，正式live alias仍未验证 |
+| draft PR与GitHub Actions | PASS | PR #1保持Open/Draft/CLEAN；证据提交`30b0d45`的run `29289645684` completed/success |
+| Pages/Vercel SHA与live alias | PASS/PENDING | `30b0d45` Vercel Deployment与Preview Comments success；PR Pages部署按设计跳过，正式live alias仍未验证 |
 | 生产health、10次session、中文5次、英文5次 | PENDING | 当前环境生产smoke为`fetch failed` |
 | 正式教师鉴权、RCT数据库、正式OSCE | BLOCKED/HUMAN | 需要安全后端、approved病例及具名医学签署 |
 
