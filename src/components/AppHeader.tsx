@@ -20,13 +20,13 @@ export default function AppHeader() {
     return () => window.removeEventListener("hematuria-language-change", listener);
   }, []);
   return (
-    <header className="border-b border-clinic-line bg-white">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-3">
-        <Link href="/" className="text-base font-semibold text-clinic-ink sm:text-lg">{lang === "en" ? "Hematuria Clinical Reasoning" : "血尿临床思维训练"}</Link>
-        <nav aria-label={lang === "en" ? "Main navigation" : "主导航"} className="flex max-w-full gap-1 overflow-x-auto text-sm text-clinic-muted">
+    <header className="sticky top-0 z-40 border-b border-clinic-line bg-white/95 backdrop-blur-sm">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-3 px-5 py-2 sm:flex-nowrap sm:py-3">
+        <Link href="/" className="shrink-0 text-sm font-semibold tracking-tight text-clinic-ink sm:text-lg">{lang === "en" ? "Hematuria Clinical Reasoning" : "血尿临床思维训练"}</Link>
+        <nav aria-label={lang === "en" ? "Main navigation" : "主导航"} className="flex w-full gap-1 overflow-x-auto pt-1 text-sm text-clinic-muted sm:w-auto sm:pt-0">
           {links.map((item) => {
             const active = item.exact ? pathname === "/" : pathname.startsWith(item.href);
-            return <Link aria-current={active ? "page" : undefined} key={item.href} href={item.href} className={`shrink-0 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-clinic-blue ${active ? "bg-clinic-paper font-medium text-clinic-blue" : "hover:text-clinic-blue"}`}>{lang === "en" ? item.en : item.zh}</Link>;
+            return <Link aria-current={active ? "page" : undefined} key={item.href} href={item.href} className={`min-h-10 shrink-0 rounded-lg px-3 py-2 font-medium focus:outline-none focus:ring-2 focus:ring-clinic-blue ${active ? "bg-clinic-paper text-clinic-blue" : "hover:bg-clinic-paper hover:text-clinic-blue"}`}>{lang === "en" ? item.en : item.zh}</Link>;
           })}
         </nav>
       </div>
