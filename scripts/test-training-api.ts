@@ -22,7 +22,7 @@ async function call(body: Record<string, unknown>, token = "", requestHeaders: R
     end() { return this; }
   };
   await handler(req, res);
-  return { statusCode, payload: payload as Record<string, unknown>, token: headers["x-training-state"] || token };
+  return { statusCode, payload: payload as Record<string, unknown>, token: headers["x-training-state"] || token, headers };
 }
 
 async function main() {
@@ -51,6 +51,8 @@ async function main() {
   const repeatedHistory = await call(historyBody, originalToken);
   assert.equal(firstHistory.statusCode, 200);
   assert.equal(repeatedHistory.statusCode, 200);
+  assert.match(firstHistory.headers["server-timing"], /^history;dur=\d+\.\d$/);
+  assert.match(firstHistory.headers["access-control-expose-headers"], /Server-Timing/);
   assert.equal(firstHistory.token, repeatedHistory.token, "repeating one history requestId from the same state must be idempotent");
   response = firstHistory;
 
@@ -73,6 +75,7 @@ async function main() {
   assert.ok(Number(forged.payload.total) < 360, "forged client events must not create a perfect score");
   assert.equal(forged.payload.scoringVersion, "360-event-v1", "score reports must use the repository-wide public scoring identifier");
   assert.equal(forged.payload.reportVersion, 3, "reportVersion tracks implementation evolution independently of scoringVersion");
+  assert.match(forged.headers["server-timing"], /^score;dur=\d+\.\d$/);
 
   const changedMode = await call({ action: "score", caseId: "P008", attemptId, mode: "osce" }, response.token);
   assert.equal(changedMode.statusCode, 409, "client must not change a practice attempt into formal mode");

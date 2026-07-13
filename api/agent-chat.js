@@ -1,6 +1,7 @@
 const cases = require("../data/cases.json");
 const { generatePatientAnswer, probePatientProvider } = require("../server/patientSession.js");
 const { applyAgentCors, positiveInteger, setRateLimitHeaders, takeRateLimit } = require("../server/requestSecurity.js");
+const { setServerTiming } = require("../server/performanceTiming.js");
 
 const blockedTeacherKeys = ["diagnosis", "imaging", "pathology", "treatment", "teacherOnlyData", "case_card", "scoring"];
 const agentIds = new Set([
@@ -60,6 +61,7 @@ function readLLMText(payload) {
 }
 
 async function callLLM({ systemPrompt, userPayload, maxTokens }) {
+  const startedAt = Date.now();
   const config = getProviderConfig();
   if (!config.enabled) throw new Error("LLM agent mode is disabled");
   if (!config.apiKey) throw new Error("Missing LLM_API_KEY");
@@ -91,7 +93,7 @@ async function callLLM({ systemPrompt, userPayload, maxTokens }) {
     const json = await response.json();
     const text = readLLMText(json).trim();
     if (!text) throw new Error("Empty LLM response");
-    return { text, provider: config.provider, model: config.model };
+    return { text, provider: config.provider, model: config.model, durationMs: Date.now() - startedAt };
   } finally {
     clearTimeout(timeout);
   }
@@ -115,6 +117,7 @@ function fallbackFor(agentId, language) {
 }
 
 module.exports = async function handler(req, res) {
+  const startedAt = Date.now();
   const origin = applyAgentCors(req, res);
   if (!origin.allowed) return res.status(403).json({ error: "origin_not_allowed" });
   if (req.method === "OPTIONS") return res.status(204).end();
@@ -137,7 +140,10 @@ module.exports = async function handler(req, res) {
     if (agentId === "standardized_patient") {
       if (body.probe) {
         const probe = await probePatientProvider();
-        return res.status(200).json({ agentId, replyText: "", matchedSlotIds: [], matchedFacts: [], safetyFlags: [], answerSource: probe.isFallback ? "rule" : probe.provider, confidence: 1, ...probe });
+        setServerTiming(res, { app: Date.now() - startedAt, provider: probe.providerDurationMs });
+        const publicProbe = { ...probe };
+        delete publicProbe.providerDurationMs;
+        return res.status(200).json({ agentId, replyText: "", matchedSlotIds: [], matchedFacts: [], safetyFlags: [], answerSource: probe.isFallback ? "rule" : probe.provider, confidence: 1, ...publicProbe });
       }
       const patient = await generatePatientAnswer({
         sessionId: body.sessionId,
@@ -149,6 +155,7 @@ module.exports = async function handler(req, res) {
       const generationSource = patient.isFallback
         ? (safetyBoundaryFallback(patient) ? "safety_boundary" : "rule_fallback")
         : patient.cacheHit ? "ai_cache" : "live_ai";
+      setServerTiming(res, { app: Date.now() - startedAt, provider: patient.providerDurationMs });
       return res.status(200).json({
         agentId,
         replyText: patient.replyText,
@@ -172,6 +179,7 @@ module.exports = async function handler(req, res) {
 
     const config = getProviderConfig();
     if (!config.enabled || body.mode === "rule") {
+      setServerTiming(res, { app: Date.now() - startedAt });
       return res.status(200).json({
         agentId,
         replyText: fallbackFor(agentId, body.language),
@@ -202,6 +210,7 @@ module.exports = async function handler(req, res) {
         },
         maxTokens: Math.min(config.maxTokens || 300, 500)
       });
+      setServerTiming(res, { app: Date.now() - startedAt, provider: llm.durationMs });
       return res.status(200).json({
         agentId,
         replyText: llm.text,
@@ -214,6 +223,7 @@ module.exports = async function handler(req, res) {
         isFallback: false
       });
     } catch {
+      setServerTiming(res, { app: Date.now() - startedAt });
       return res.status(200).json({
         agentId,
         replyText: fallbackFor(agentId, body.language),

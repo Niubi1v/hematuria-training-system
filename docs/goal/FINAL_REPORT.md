@@ -136,3 +136,10 @@
 - HEM-P1-015与HEM-P1-016的文档状态已按当前事实关闭；它们不再是工程阻塞。ROLLBACK_PLAN已从“尚未push”更新为当前Draft PR和普通revert方案。
 - Preview浏览器探针连续两次无法取得可交互状态，因此HEM-P1-020仍为外部权限/连接阻塞。没有把Vercel部署绿灯冒充真实DeepSeek、签名日志、性能或自然度通过。
 - 当前剩余强制阻塞均需要外部状态变化：HEM-P0-001与HEM-P0-023需具名医学裁决；HEM-P1-019/020需Preview变量/访问权限；生产health、10+5+5及live alias需生产只读访问。未因这些阻塞修改医学数据、环境变量或生产系统。
+
+## 性能遥测工程增量（待远程CI与Preview复核）
+
+- 新增非敏感`Server-Timing`白名单合同并接入session、Patient Agent/provider、history-log和score；production smoke可输出各阶段样本分布，且明确标记非流式首Token不可测。
+- 本地32项行为链、TypeScript、52页Vercel等价构建、25 JS bundle扫描和283文件secret扫描通过；本机ESLint受Node 24与仓库Node 22约束不兼容阻塞，必须以新HEAD的GitHub Actions Node 22结果为准。
+- 该增量不改变360分算法、医学事实、HEM-P0-001/023隔离、419审核决定、`needs_revision`、环境变量或密钥。真实AI P95、首Token、日志10/10和自然度仍未通过，PR必须保持Draft。
+- 回滚方式：普通`git revert`本次性能遥测提交；不得reset、force push或借回滚修改医学数据。

@@ -50,6 +50,7 @@ function applyAgentCors(req, res) {
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Request-Id, X-Idempotency-Key");
+  res.setHeader("Access-Control-Expose-Headers", "Server-Timing");
   res.setHeader("Access-Control-Max-Age", "600");
   res.setHeader("Cache-Control", "no-store");
   return { allowed, origin, direct: !origin };

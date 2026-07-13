@@ -1,5 +1,6 @@
 const { initSession } = require("../../server/patientSession.js");
 const { applyAgentCors, positiveInteger, setRateLimitHeaders, takeRateLimit } = require("../../server/requestSecurity.js");
+const { setServerTiming } = require("../../server/performanceTiming.js");
 
 const requestWindows = globalThis.__hematuriaSessionInitRequestWindows || new Map();
 globalThis.__hematuriaSessionInitRequestWindows = requestWindows;
@@ -20,6 +21,7 @@ function pruneIdempotency(now) {
 }
 
 module.exports = async function handler(req, res) {
+  const startedAt = Date.now();
   const origin = applyAgentCors(req, res);
   if (!origin.allowed) return res.status(403).json({ error: "origin_not_allowed" });
   if (req.method === "OPTIONS") return res.status(204).end();
@@ -60,6 +62,7 @@ module.exports = async function handler(req, res) {
       promise.catch(() => { if (scope && idempotentSessions.get(scope) === entry) idempotentSessions.delete(scope); });
     }
     const result = await entry.promise;
+    setServerTiming(res, { session: Date.now() - startedAt });
     return res.status(200).json(result);
   } catch {
     return res.status(500).json({ error: "session_init_failed" });

@@ -68,6 +68,7 @@ async function verifyOriginAndCors(handler: ApiHandler, label: string) {
   assert.equal(preflight.headers["access-control-allow-origin"], "https://allowed.example");
   assert.match(preflight.headers["access-control-allow-methods"], /POST/);
   assert.match(preflight.headers["access-control-allow-headers"], /Content-Type/);
+  assert.match(preflight.headers["access-control-expose-headers"], /Server-Timing/);
 
   const previewOrigin = `https://${label}.preview.example`;
   const sameOriginPreflight = await call(handler, { method: "OPTIONS", origin: previewOrigin, host: `${label}.preview.example` });
@@ -130,6 +131,32 @@ async function verifyProviderFailureNonDisclosure() {
   }
 }
 
+async function verifyProviderTimingNonDisclosure() {
+  const originalFetch = globalThis.fetch;
+  process.env.LLM_ENABLE_AI_PATIENT = "true";
+  process.env.LLM_API_BASE_URL = "https://api.example.test";
+  process.env.LLM_MODEL = "test-model";
+  globalThis.fetch = async () => new Response(
+    JSON.stringify({ choices: [{ message: { content: "OK" } }] }),
+    { status: 200, headers: { "Content-Type": "application/json" } }
+  );
+  try {
+    const response = await call(agentHandler, {
+      origin: "https://allowed.example",
+      ip: "provider-timing",
+      body: { caseId: "P001", agentId: "standardized_patient", probe: true }
+    });
+    assert.equal(response.statusCode, 200);
+    assert.match(response.headers["server-timing"], /^app;dur=\d+\.\d, provider;dur=\d+\.\d$/);
+    assert.equal("providerDurationMs" in (response.payload as Record<string, unknown>), false, "internal timing must stay out of the JSON body");
+  } finally {
+    globalThis.fetch = originalFetch;
+    delete process.env.LLM_ENABLE_AI_PATIENT;
+    delete process.env.LLM_API_BASE_URL;
+    delete process.env.LLM_MODEL;
+  }
+}
+
 async function verifySessionIdempotency() {
   const headers = { "x-idempotency-key": "attempt-1:session-init:default" };
   const options = {
@@ -142,6 +169,7 @@ async function verifySessionIdempotency() {
   assert.equal(first.statusCode, 200);
   assert.equal(second.statusCode, 200);
   assert.equal((first.payload as { sessionId: string }).sessionId, (second.payload as { sessionId: string }).sessionId, "same session init idempotency key must return one session");
+  assert.match(first.headers["server-timing"], /^session;dur=\d+\.\d$/);
 }
 
 async function verifyGenerationSourceClassification() {
@@ -153,6 +181,7 @@ async function verifyGenerationSourceClassification() {
   assert.equal(compound.statusCode, 200);
   assert.equal((compound.payload as { fallbackReason: string }).fallbackReason, "compound_question_preserves_all_facts");
   assert.equal((compound.payload as { generationSource: string }).generationSource, "safety_boundary", "fact-preserving compound fallback must not be reported as a provider/rule failure");
+  assert.match(compound.headers["server-timing"], /^app;dur=\d+\.\d$/);
 }
 
 async function main() {
@@ -161,6 +190,7 @@ async function main() {
   await verifyOptionalServerToken(sessionHandler);
   await verifySessionIdempotency();
   await verifyGenerationSourceClassification();
+  await verifyProviderTimingNonDisclosure();
   await verifyProviderFailureNonDisclosure();
   await verifyRateLimit(agentHandler, "agent-chat");
   await verifyRateLimit(sessionHandler, "session-init");

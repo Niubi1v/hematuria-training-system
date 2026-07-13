@@ -371,7 +371,7 @@ async function probePatientProvider() {
       temperature: 0,
       maxTokens: 8
     });
-    return { isFallback: false, provider: result.provider, model: result.model, fallbackReason: "" };
+    return { isFallback: false, provider: result.provider, model: result.model, fallbackReason: "", providerDurationMs: result.durationMs };
   } catch (error) {
     return { isFallback: true, provider: config.provider, model: config.model, fallbackReason: providerFallbackReason(error) };
   }
@@ -541,7 +541,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   const normalized = normalize(studentInput);
   const answerKey = `${sessionId || caseId}:${language}:${normalized}`;
   const cached = cacheGet(answerCache, answerKey, ANSWER_CACHE_MAX);
-  if (cached) return { ...cached, cacheHit: true };
+  if (cached) return { ...cached, cacheHit: true, providerDurationMs: undefined };
 
   if (!config.enabled) return { ...fallback, provider: config.provider, model: config.model, isFallback: true, filter: { ok: true, hits: [] } };
 
@@ -566,7 +566,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     let filter = filterPatientOutput(firstText);
     const firstLanguageOk = language !== "en" || !/[\u3400-\u9fff]/.test(firstText);
     if (filter.ok && firstLanguageOk && preservesAllowedAnswer(firstText, payload.currentAllowedAnswer)) {
-      const result = { replyText: firstText, provider: first.provider, model: first.model, isFallback: false, filter, rewriteTriggered: false, safetyFlags: [], matchedSlotIds: canonical?.matchedSlotIds || structured?.matchedSlotIds || [], matchedFacts: canonical?.matchedFacts || structured?.matchedFacts || [], answerSource: canonical?.answerSource || structured?.answerSource || "ai", confidence: canonical?.confidence || structured?.confidence || 0.9, fallbackReason: "", allowedAnswer: payload.currentAllowedAnswer };
+      const result = { replyText: firstText, provider: first.provider, model: first.model, isFallback: false, filter, rewriteTriggered: false, safetyFlags: [], matchedSlotIds: canonical?.matchedSlotIds || structured?.matchedSlotIds || [], matchedFacts: canonical?.matchedFacts || structured?.matchedFacts || [], answerSource: canonical?.answerSource || structured?.answerSource || "ai", confidence: canonical?.confidence || structured?.confidence || 0.9, fallbackReason: "", allowedAnswer: payload.currentAllowedAnswer, providerDurationMs: first.durationMs };
       cacheSet(answerCache, answerKey, result, ANSWER_TTL_MS, ANSWER_CACHE_MAX);
       return result;
     }
@@ -583,7 +583,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     const retryFilter = filterPatientOutput(retryText);
     const retryLanguageOk = language !== "en" || !/[\u3400-\u9fff]/.test(retryText);
     if (retryFilter.ok && retryLanguageOk && preservesAllowedAnswer(retryText, payload.currentAllowedAnswer)) {
-      const result = { replyText: retryText, provider: retry.provider, model: retry.model, isFallback: false, filter: retryFilter, rewriteTriggered: true, safetyFlags: [], matchedSlotIds: canonical?.matchedSlotIds || structured?.matchedSlotIds || [], matchedFacts: canonical?.matchedFacts || structured?.matchedFacts || [], answerSource: canonical?.answerSource || structured?.answerSource || "ai", confidence: canonical?.confidence || structured?.confidence || 0.9, fallbackReason: "", allowedAnswer: payload.currentAllowedAnswer };
+      const result = { replyText: retryText, provider: retry.provider, model: retry.model, isFallback: false, filter: retryFilter, rewriteTriggered: true, safetyFlags: [], matchedSlotIds: canonical?.matchedSlotIds || structured?.matchedSlotIds || [], matchedFacts: canonical?.matchedFacts || structured?.matchedFacts || [], answerSource: canonical?.answerSource || structured?.answerSource || "ai", confidence: canonical?.confidence || structured?.confidence || 0.9, fallbackReason: "", allowedAnswer: payload.currentAllowedAnswer, providerDurationMs: Number(first.durationMs || 0) + Number(retry.durationMs || 0) };
       cacheSet(answerCache, answerKey, result, ANSWER_TTL_MS, ANSWER_CACHE_MAX);
       return result;
     }

@@ -11,6 +11,7 @@ const mdtTriggers = require("../data/mdt_triggers.json");
 const { matchHistoryQuestion, normalize, validateStage } = require("../server/clinicalAssessment.js");
 const { appendEvents, createAttemptState, signAttemptState, verifyAttemptState } = require("../server/trainingState.js");
 const { BILINGUAL_CONFLICT_REASON, filterQuarantinedEvents } = require("../server/bilingualConflictQuarantine.js");
+const { setServerTiming } = require("../server/performanceTiming.js");
 
 const catalog = [...labs, ...imaging, ...procedures, ...perioperative];
 const allowedActions = new Set(["init-attempt", "history-log", "exam", "order", "mdt", "stage-feedback", "score"]);
@@ -38,7 +39,7 @@ function setCors(req, res) {
   const origin = String(req.headers?.origin || "");
   const accepted = !origin || allowedOrigins().includes(origin) || sameOriginRequest(req, origin);
   if (origin && accepted) res.setHeader("Access-Control-Allow-Origin", origin);
-  res.setHeader("Access-Control-Expose-Headers", "X-Training-State");
+  res.setHeader("Access-Control-Expose-Headers", "X-Training-State, Server-Timing");
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Training-State, X-Request-Id, X-Idempotency-Key");
@@ -220,6 +221,7 @@ function stageFeedback(caseData, stageKey, validation, state, language) {
 }
 
 module.exports = async function handler(req, res) {
+  const startedAt = Date.now();
   const originAccepted = setCors(req, res);
   if (req.method === "OPTIONS") return res.status(204).end();
   if (!originAccepted) return res.status(403).json({ error: "origin_not_allowed" });
@@ -255,6 +257,7 @@ module.exports = async function handler(req, res) {
       }
       appendEvents(state, quarantine.events);
       writeState(res, state);
+      setServerTiming(res, { history: Date.now() - startedAt });
       return res.status(200).json({ recorded: true, requestId, quarantinedSlotIds: quarantine.quarantinedSlotIds, reason: quarantine.reason });
     }
     if (body.action === "exam") {
@@ -301,6 +304,7 @@ module.exports = async function handler(req, res) {
       state.status = "completed";
       state.completedAt = at;
       writeState(res, state);
+      setServerTiming(res, { score: Date.now() - startedAt });
       return res.status(200).json(report);
     }
   } catch (error) {

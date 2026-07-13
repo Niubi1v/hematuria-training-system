@@ -93,7 +93,7 @@
 
 工程本地专项回归、当前SHA PR Actions与Vercel Preview均已通过，但强制验收尚未完成：`HEM-P0-001`及`HEM-P0-023`需要医学裁决；受保护Preview真实AI/日志/自然度/P95、生产10+5+5、正式live alias仍缺证据；Azure按未配置状态为SKIP。任何这些项目不得被登记为PASS或据此宣称生产验收完成。
 
-## UI集成增量（待远程确认）
+## UI集成增量（远程已确认）
 
 | 强制标准 | 当前状态 | 当前证据 |
 |---|---|---|
@@ -103,3 +103,14 @@
 | 日志失败后的幂等手动同步 | PASS | HEM-P1-025；run `29232093193` desktop/mobile通过 |
 | TypeScript、ESLint、行为、构建、扫描 | PASS | 本地32/32、52/52、25 JS、281文件；退出码均0 |
 | 69 JSON幂等与desktop/mobile Playwright | PASS | run `29232093193`：69 JSON与Playwright 40/40；本机环境限制已由Linux CI补证 |
+
+## 性能遥测增量（待新HEAD远程确认）
+
+| 强制标准 | 当前状态 | 当前证据 |
+|---|---|---|
+| session/provider/history/score分段计时 | LOCAL PASS | 白名单`Server-Timing`合同与API集成测试通过；响应不含内容、签名、token或密钥 |
+| 完整回答耗时 | LOCAL PASS | production smoke已采集端到端与服务端app/provider指标 |
+| 首Token耗时 | BLOCKED | 当前provider调用为`stream:false`；明确报告unsupported，不以完整耗时冒充 |
+| Preview真实P95 | BLOCKED | 需要可登录Preview及真实AI/签名变量；当前无可审计样本 |
+| TypeScript、行为、构建、扫描 | LOCAL PASS | 32项、52/52、25 JS、283文件，均exit 0 |
+| ESLint | PENDING | 本机只有Node 24.14，仓库要求Node 22；等待PR Node 22 CI复核 |

@@ -305,3 +305,20 @@
 - Vercel Deployment `2s4FgH59i7vamSncXKw8SJn7cKGz`与Preview Comments success；PR保持Open/Draft/CLEAN，本地/远程head一致。
 - 15:40浏览器只读复核：Chrome开放标签中能识别目标Preview P001 URL及应用标题；第一次接管后DOM snapshot超过30秒超时，第二次重新连接后标题/URL探针在60秒内亦超时。没有取得console/network/API响应，因此不能生成请求时间线或真实AI性能结论。
 - 浏览器会话随后正常释放；未读取或输出Cookie、Authorization、localStorage、签名或密钥。该结果是HEM-P1-020的重复阻塞证据，不是Preview应用失败或成功证明。
+
+## 2026-07-13 性能遥测增量
+
+| 检查 | 精确命令/范围 | 结果 |
+|---|---|---|
+| 失败测试基线 | `node node_modules/tsx/dist/cli.mjs scripts/test-performance-timing.ts` | exit 1；`Cannot find module '../server/performanceTiming.js'` |
+| 遥测合同 | 同上（实现后） | exit 0；固定白名单、有限非负数、稳定一位小数、敏感标签拒绝 |
+| API集成专项 | `tsx scripts/test-agent-api-security.ts`、`tsx scripts/test-training-api.ts`、`tsx scripts/test-ai-recovery.ts` | exit 0；session/app/history/score响应头、CORS、签名、隔离与恢复通过 |
+| TypeScript | `node_modules/.bin/tsc.cmd --noEmit` | exit 0 |
+| 完整行为链 | 读取`package.json#scripts.test`并依次调用本地`tsx.cmd`（32项） | exit 0，10.8秒；含42例中英文、572事实、419约束、360评分及安全合同 |
+| Vercel等价构建 | `VERCEL=1 VERCEL_ENV=preview node_modules/.bin/next.cmd build` | exit 0，52/52页面，构建/扫描合计17.8秒 |
+| bundle扫描 | `tsx scripts/scan-static-bundle.ts` | exit 0，25个JavaScript资源 |
+| 敏感信息扫描 | `node scripts/scan-repository-secrets.mjs` | exit 0，283个tracked/candidate文件；未输出秘密值 |
+| ESLint | `node_modules/.bin/eslint.cmd ...受影响文件...` | exit 1；本机Node 24.14不满足仓库`>=22.14 <23`，`@rushstack/eslint-patch`拒绝运行；不是Lint断言结果，待PR Node 22 CI补证 |
+
+- `git diff -- data`为空；测试产生的三份时间戳报告已恢复为原追踪内容，没有提交无关生成物。
+- 真实Preview P95和首Token未验证：provider接口仍为`stream:false`，smoke明确报告首Tokenunsupported；真实性能需要Preview权限和变量后重新部署本提交再测。

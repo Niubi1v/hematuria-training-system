@@ -65,6 +65,8 @@
 
 - 状态：设计限制，待验证；当前Patient Agent接口为非流式响应，只能测完整请求耗时。
 - 处置：若首Token仍为强制指标，需要另行设计不泄露内容的服务端计时或流式协议；不得用完整响应时间冒充首Token时间。
+- 2026-07-13工程增量：新增白名单化`Server-Timing`合同，覆盖session、应用总耗时、真实provider调用、history-log与score；客户端无法注入指标名，响应不包含问题、病例、签名、token或密钥。production smoke已能分项采集这些指标，并明确输出`patient-first-token=unsupported`。
+- 剩余阻塞：首Token仍需流式供应商协议；真实P95仍需可登录且具备真实AI/签名变量的Preview环境采样。本增量只消除“除首Token外缺少分段计时”的工程缺口，不把外部验收改为PASS。
 
 ### HEM-P0-001：151条source记录的辅助来源标记冲突
 

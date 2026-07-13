@@ -169,3 +169,11 @@
 - 修正DEFECT_LOG中的陈旧状态：HEM-P1-015已有`gh auth status`、Draft PR及多轮CI证据，HEM-P1-016已有最终完整行为/类型/Lint CI证据，二者均改为已解除；没有改变历史失败记录。
 - Chrome可枚举目标Preview P001标签，但两次接管后的DOM/最小标题探针分别在30秒和60秒超时；未读取任何会话凭据或存储。HEM-P1-020继续作为外部权限/连接阻塞，真实DeepSeek、日志10/10、首Token/P95与自然度仍不可验证。
 - 更新ROLLBACK_PLAN以反映专项分支已push、PR为Draft及UI七项提交的普通revert逆序；未执行revert、reset、force push、main写入或生产操作。
+
+## 2026-07-13 性能遥测最小增量
+
+- 先建立失败基线：`node node_modules/tsx/dist/cli.mjs scripts/test-performance-timing.ts`因缺少`server/performanceTiming.js`退出1；随后实现固定指标白名单与稳定解析/格式化合同。
+- session init、Patient Agent、provider、history-log及score现通过`Server-Timing`暴露非敏感毫秒数；缓存回答不复用旧provider耗时，API JSON不新增内部计时字段。
+- production smoke现采集session、完整回答、真实provider、history-log、score耗时；当前非流式协议的首Token明确登记为unsupported，未用完整回答耗时冒充。
+- 本地专项与完整32项行为链通过，Vercel等价构建52/52、bundle 25 JS与repo secret 283候选文件通过，`data/**`零差异。TypeScript退出0；项目Lint因当前Codex仅提供Node 24.14而仓库要求Node 22、Rushstack补丁拒绝该运行时，本机退出1，待PR的Node 22 CI复核。
+- 未修改医学事实、419审核决定、42例`needs_revision`、360分算法、环境变量或密钥；PR继续保持Draft。

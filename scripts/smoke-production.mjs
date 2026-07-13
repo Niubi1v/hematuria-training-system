@@ -1,4 +1,8 @@
 import crypto from "node:crypto";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+const { parseServerTiming } = require("../server/performanceTiming.js");
 
 const base = String(process.env.PRODUCTION_API_BASE_URL || "https://hematuria-training-system.vercel.app").replace(/\/+$/, "");
 const origin = "https://niubi1v.github.io";
@@ -6,6 +10,9 @@ const requireCloudTts = process.env.SMOKE_REQUIRE_TTS !== "false";
 const results = [];
 const sessionDurations = [];
 const patientDurations = [];
+const providerDurations = [];
+const historyDurations = [];
+const scoreDurations = [];
 const statusCounts = new Map();
 let realAiReplies = 0;
 let fallbackReplies = 0;
@@ -46,6 +53,7 @@ for (let index = 0; index < 10; index += 1) {
     const startedAt = performance.now();
     const session = await jsonPost("/api/session/init/", { caseId: "P001", mode: "training", language, forceRefresh: true });
     sessionDurations.push(performance.now() - startedAt);
+    if (parseServerTiming(session.response.headers.get("server-timing") || "").session === undefined) throw new Error("missing session timing metadata");
     if (!session.payload.sessionId) throw new Error("missing sessionId");
     sessions[language].push(session.payload.sessionId);
   });
@@ -61,10 +69,16 @@ for (const language of ["zh", "en"]) {
       const startedAt = performance.now();
       const reply = await jsonPost("/api/agent-chat/", { caseId: "P001", agentId: "standardized_patient", sessionId, stage: "history", mode: "training", language, studentInput: question, conversationHistory: [], askedSlotIds: [], askedQuestions: [] }, { "X-Idempotency-Key": `${attemptId}:patient` });
       patientDurations.push(performance.now() - startedAt);
+      const timing = parseServerTiming(reply.response.headers.get("server-timing") || "");
+      if (timing.app === undefined) throw new Error("missing patient application timing metadata");
       if (!String(reply.payload.replyText || "").trim()) throw new Error("empty patient reply");
       if (language === "en" && /[\u3400-\u9fff]/.test(reply.payload.replyText)) throw new Error("English reply contains Chinese text");
       if (reply.payload.isFallback) fallbackReplies += 1;
-      else realAiReplies += 1;
+      else {
+        realAiReplies += 1;
+        if (reply.payload.generationSource === "live_ai" && timing.provider === undefined) throw new Error("missing live provider timing metadata");
+        if (timing.provider !== undefined) providerDurations.push(timing.provider);
+      }
     });
   }
 }
@@ -74,6 +88,20 @@ await check("training-action", async () => {
   const initialized = await jsonPost("/api/training-action/", { action: "init-attempt", caseId: "P008", attemptId, mode: "free", language: "zh" });
   const token = initialized.response.headers.get("x-training-state");
   if (!token) throw new Error("missing signed state token");
+  const historyStartedAt = performance.now();
+  const history = await jsonPost("/api/training-action/", {
+    action: "history-log", caseId: "P008", attemptId, mode: "free", language: "zh",
+    question: "血尿什么时候开始？", requestId: `${attemptId}-history`
+  }, { "X-Training-State": token, "X-Idempotency-Key": `${attemptId}-history` });
+  const historyTiming = parseServerTiming(history.response.headers.get("server-timing") || "");
+  historyDurations.push(historyTiming.history ?? performance.now() - historyStartedAt);
+  const updatedToken = history.response.headers.get("x-training-state");
+  if (!updatedToken) throw new Error("missing updated signed state token");
+  const scoreStartedAt = performance.now();
+  const scored = await jsonPost("/api/training-action/", { action: "score", caseId: "P008", attemptId, mode: "free", language: "zh" }, { "X-Training-State": updatedToken });
+  const scoreTiming = parseServerTiming(scored.response.headers.get("server-timing") || "");
+  scoreDurations.push(scoreTiming.score ?? performance.now() - scoreStartedAt);
+  if (scored.payload.scoringVersion !== "360-event-v1") throw new Error("unexpected scoring version");
 });
 
 for (const [name, voiceName, text] of (requireCloudTts ? [
@@ -102,6 +130,10 @@ function metricSummary(values) {
 }
 console.log(`METRIC\tsession-init\t${metricSummary(sessionDurations)}`);
 console.log(`METRIC\tpatient-reply\t${metricSummary(patientDurations)}`);
+console.log(`METRIC\tpatient-provider\t${metricSummary(providerDurations)}`);
+console.log("METRIC\tpatient-first-token\tunsupported (provider API is intentionally non-streaming)");
+console.log(`METRIC\thistory-log\t${metricSummary(historyDurations)}`);
+console.log(`METRIC\tscore-submit\t${metricSummary(scoreDurations)}`);
 console.log(`METRIC\tpatient-source\treal-ai=${realAiReplies} fallback=${fallbackReplies} success-rate=${((realAiReplies + fallbackReplies) / 10 * 100).toFixed(0)}%`);
 console.log(`METRIC\tupstream-status\t429=${statusCounts.get(429) || 0} 502=${statusCounts.get(502) || 0} 503=${statusCounts.get(503) || 0} 504=${statusCounts.get(504) || 0}`);
 if (results.some((row) => row.status === "FAIL")) process.exit(1);

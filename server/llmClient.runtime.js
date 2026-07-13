@@ -80,7 +80,7 @@ async function callLLM({ systemPrompt, userPayload, temperature, maxTokens, maxR
       const json = await response.json();
       const text = readLLMText(json).trim();
       if (!text) throw new Error("LLM provider returned empty content");
-      return { text, provider: config.provider, model: config.model, requestId, retryCount: attempt };
+      return { text, provider: config.provider, model: config.model, requestId, retryCount: attempt, durationMs: Date.now() - startedAt };
     } catch (error) {
       lastError = error;
       const timedOut = error?.name === "AbortError";
