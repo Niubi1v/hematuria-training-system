@@ -9,9 +9,11 @@
 
 ## 当前阶段回滚
 
-当前专项分支尚未push、未部署。若本阶段文档不获接受，最安全处置是停止合并并保留worktree供审计；由主线程用审阅后的反向补丁撤销明确文件，不能影响原仓库未跟踪交接材料。
+当前专项分支`codex/hematuria-production-goal`已普通push，Draft PR #1保持Open/Draft，尚未合并main或执行正式生产部署。若本阶段变更不获接受，最安全处置是保持PR为Draft并在专项分支创建普通revert提交；不得删除worktree、改写历史或影响main及其他工作树。
 
 本轮工程变更包含formal gate、签名secret/health、请求安全、participant key、评分版本、Playwright readiness及CI门禁，必须作为同一受审变更集处理。不能只回滚测试或CI而保留失去门禁的生产实现，也不能只回滚生产实现而保留误导性的通过断言。
+
+UI集成增量的可审计逆序为：证据提交`cdfa51f`、日志重试竞态`789243d`、双层重试`853d819`、手动幂等恢复`2283f19`、工作区UI`6cc1e2a`、视觉Token/目录`dec4e74`、UI审计`c1bdc4a`。回滚时逐项普通revert并在每一步检查依赖关系；此清单是顺序说明，不授权自动执行生产回滚。
 
 ## 提交后、部署前
 

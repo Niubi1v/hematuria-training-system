@@ -162,3 +162,10 @@
 - 已为history-log退避加入单一waiting锁；三次失败后effect稳定停止，人工按钮重置队首attempt计数再以原requestId重试。原测试继续要求3次失败、按钮可见、第4次成功与回答唯一。
 - 第三轮head `789243d`的Actions run `29232093193` completed/success：Playwright 40/40；69 JSON、generated diff、42例/572/419医学合同、32项行为、360评分、TypeScript、ESLint、281文件secret、52页build及23 JS bundle均通过。Vercel Deployment `YStbn7Yhk3gQPaCdUbF7wWzgmvpT`与Preview Comments通过；Pages artifact/deploy按PR规则跳过。
 - Draft PR #1保持open/draft，base=`main`、head=`codex/hematuria-production-goal`、mergeState=`CLEAN`；未转Ready、未合并、未部署Production。
+
+## 2026-07-13 15:40 继续完成审计
+
+- 最终UI证据提交`cdfa51f`的Actions run `29232460170`、Vercel Deployment与Preview Comments全部success；Pages deploy skipped，PR保持Open/Draft/CLEAN，本地与远程专项分支0/0。
+- 修正DEFECT_LOG中的陈旧状态：HEM-P1-015已有`gh auth status`、Draft PR及多轮CI证据，HEM-P1-016已有最终完整行为/类型/Lint CI证据，二者均改为已解除；没有改变历史失败记录。
+- Chrome可枚举目标Preview P001标签，但两次接管后的DOM/最小标题探针分别在30秒和60秒超时；未读取任何会话凭据或存储。HEM-P1-020继续作为外部权限/连接阻塞，真实DeepSeek、日志10/10、首Token/P95与自然度仍不可验证。
+- 更新ROLLBACK_PLAN以反映专项分支已push、PR为Draft及UI七项提交的普通revert逆序；未执行revert、reset、force push、main写入或生产操作。

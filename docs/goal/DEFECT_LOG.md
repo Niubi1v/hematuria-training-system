@@ -59,6 +59,7 @@
 - 影响：无法从当前环境采集用户登录态的控制台、API错误码、DeepSeek耗时、首Token、日志签名耗时和真实回答样本。
 - 处置：由具备Preview访问权限的会话复跑Playwright/network trace；不得提交或输出bypass token、Cookie或Authorization。
 - 最新复验：`a9ace13`对应Vercel Deployment已success，但in-app浏览器直达`/cases/P001/`仍在20秒内无法取得DOM；部署成功与应用登录态体验通过必须分开登记。
+- 2026-07-13 15:40复验：Chrome可枚举到标题为“血尿多智能体临床思维训练平台”的Preview P001标签及目标URL；两次接管后，第一次DOM读取超过30秒并重置连接，第二次连标题/URL最小探针在60秒内亦未完成。未读取Cookie、Authorization、localStorage或任何密钥；继续登记为外部访问阻塞，不得据此评价真实AI成功率或性能。
 
 ### HEM-P1-021：真实首Token指标当前不可测
 
@@ -131,20 +132,20 @@
 - 安全影响：远程分支、PR和CI均尚未产生；本地提交与工作树完整，未发现未知远程提交或冲突。
 - 解除证据：重新执行`git fetch --prune`及全部push前门禁后，`dbc819e`已普通push到专项分支；未使用force push或直接写main。
 
-### HEM-P1-015：draft PR创建缺少必需的GitHub CLI
+### HEM-P1-015：draft PR创建缺少必需的GitHub CLI（已解除）
 
-- 状态：阻塞PR/CI，不阻塞本地工程；需要安装并认证`gh`。
+- 状态：已解除；GitHub CLI已安装并认证，Draft PR与CI可正常读取和更新。
 - 证据：专项分支已成功普通push，但`gh --version`返回命令不存在；发布技能要求先通过`gh --version`与`gh auth status`。
-- 安全影响：PR未创建，PR触发的Actions未运行；不得用直接push main或部署规避。
-- 解除条件：用户安装`gh`并完成`gh auth login`，随后创建指向`main`的draft PR并记录CI。
+- 解除证据：`gh auth status`显示活动账号具备repo/workflow作用域；Draft PR #1保持Open/Draft，最终审计head `cdfa51f`的run `29232460170` completed/success。未直接写main、未转Ready、未合并。
 
-### HEM-P1-016：完整行为门禁遗漏LLM与统一Agent入口（已修复）
+### HEM-P1-016：完整行为门禁遗漏LLM与统一Agent入口（已解除）
 
-- 状态：本地已修复，待PR CI确认。
+- 状态：已解除并经PR CI确认。
 - 发现证据：21:21直接运行`test:llm`和`test:agent`失败；现有`package.json scripts.test`没有执行这两个已声明入口。
 - 根因：两个测试仍断言旧DeepSeek profile envelope和前端硬编码端点；生产实现已使用本地权威profile及集中API配置，导致测试契约漂移，同时聚合门禁没有暴露漂移。
 - 修复：按当前安全架构更新断言，并将两个入口加入完整行为链。
 - 复验：21:25更新后的完整30项行为链exit0；TypeScript与ESLint exit0。不得据此替代PR CI或生产冒烟。
+- 远程解除证据：最终审计head `cdfa51f`的run `29232460170`中Unit and behavioral tests、Typecheck与Lint均success；当前聚合链为32项并继续包含LLM adapter与Agent Chat入口。
 
 ### HEM-P1-017：Vercel Preview缺少公开API origin导致预渲染失败（已修复并经CI确认）
 

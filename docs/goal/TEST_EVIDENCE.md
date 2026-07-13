@@ -298,3 +298,10 @@
 - 静态构建52/52；bundle secret/answer scan通过23个JavaScript资源。CI使用PR merge ref生成短SHA属于GitHub checkout行为，验收head仍由run元数据明确为`789243d`。
 - Vercel Deployment `YStbn7Yhk3gQPaCdUbF7wWzgmvpT`与Preview Comments success；Pages artifact上传及deploy job `86758965570` skipped，未发布生产。
 - PR #1仍为Open/Draft，base=`main`、head=`codex/hematuria-production-goal`、mergeState=`CLEAN`。
+
+## 最终证据提交与Preview访问复核（2026-07-13）
+
+- 最终文档HEAD `cdfa51f7bdd573ce1dcec2bf03962835bd18dcd4`：Actions run `29232460170` completed/success，build job `86759503016`用时3分44秒；全部质量步骤success，Pages deploy job `86760136061` skipped。
+- Vercel Deployment `2s4FgH59i7vamSncXKw8SJn7cKGz`与Preview Comments success；PR保持Open/Draft/CLEAN，本地/远程head一致。
+- 15:40浏览器只读复核：Chrome开放标签中能识别目标Preview P001 URL及应用标题；第一次接管后DOM snapshot超过30秒超时，第二次重新连接后标题/URL探针在60秒内亦超时。没有取得console/network/API响应，因此不能生成请求时间线或真实AI性能结论。
+- 浏览器会话随后正常释放；未读取或输出Cookie、Authorization、localStorage、签名或密钥。该结果是HEM-P1-020的重复阻塞证据，不是Preview应用失败或成功证明。

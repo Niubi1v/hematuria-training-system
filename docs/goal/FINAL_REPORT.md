@@ -129,3 +129,10 @@
 - 第二轮run `29231718708`仍为38/40；新的代码级证据表明attempts状态写回会重入effect并绕过退避，第三次失败后自动第4次成功。已加入等待锁与三次耗尽停止条件；人工重试显式重置队首计数但继续复用requestId。最终状态仍待下一轮CI，不得提前写为通过。
 - UI集成代码验收HEAD `789243d`的run `29232093193`最终success：Playwright 40/40、69 JSON、32项行为、医学合同、360评分、TypeScript、ESLint、281文件secret、52页build与23 JS bundle均通过；Vercel Deployment及Preview Comments通过，Pages deploy跳过。
 - PR #1保持Open/Draft、mergeState=CLEAN，未转Ready、未合并、未写main、未正式部署。工程UI集成门禁已解除，但HEM-P0-001、HEM-P0-023、受保护Preview真实AI/性能/签名变量验收仍阻断发布完成声明。
+
+## 2026-07-13继续完成审计结论
+
+- 当前专项分支与远程在`cdfa51f`一致，工作树审计开始时干净；最终head的Actions/Vercel均通过，PR仍为Draft。
+- HEM-P1-015与HEM-P1-016的文档状态已按当前事实关闭；它们不再是工程阻塞。ROLLBACK_PLAN已从“尚未push”更新为当前Draft PR和普通revert方案。
+- Preview浏览器探针连续两次无法取得可交互状态，因此HEM-P1-020仍为外部权限/连接阻塞。没有把Vercel部署绿灯冒充真实DeepSeek、签名日志、性能或自然度通过。
+- 当前剩余强制阻塞均需要外部状态变化：HEM-P0-001与HEM-P0-023需具名医学裁决；HEM-P1-019/020需Preview变量/访问权限；生产health、10+5+5及live alias需生产只读访问。未因这些阻塞修改医学数据、环境变量或生产系统。
