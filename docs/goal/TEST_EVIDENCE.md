@@ -321,7 +321,7 @@
 | ESLint | `node_modules/.bin/eslint.cmd ...受影响文件...` | exit 1；本机Node 24.14不满足仓库`>=22.14 <23`，`@rushstack/eslint-patch`拒绝运行；不是Lint断言结果，待PR Node 22 CI补证 |
 
 - `git diff -- data`为空；测试产生的三份时间戳报告已恢复为原追踪内容，没有提交无关生成物。
-- 真实Preview P95和首Token未验证：provider接口仍为`stream:false`，smoke明确报告首Tokenunsupported；真实性能需要Preview权限和变量后重新部署本提交再测。
+- 该性能遥测里程碑当时仍为`stream:false`并明确报告首Token unsupported；后续SSE增量已解除工程采集缺口，但真实Preview性能仍需权限/变量后复测。
 
 ### 首轮远程结果与最小修复
 
@@ -346,3 +346,20 @@
 - 官方协议依据：[DeepSeek Create Chat Completion](https://api-docs.deepseek.com/api/create-chat-completion)：`stream=true`使用data-only SSE增量并以`data: [DONE]`结束。
 - 尚未取得真实DeepSeek延迟样本；本地fixture只证明协议、计时与非泄露，不替代Preview P95/首Token验收。
 - 远程HEAD `d2c2eb0dac9ed3c1798dc75a94bcc5f386280f2b`：Actions run `29236606930` success，build job `86772620376`用时3分35秒；Unit/behavior、医学合同、Typecheck、Lint、secret scan、Playwright E2E、52页构建和bundle扫描全部success。Vercel deployment `3N7ghXGzvurKNbjeVrr35zUDG2Z8`与Preview Comments success；Pages deploy job `86773293377` skipped。
+
+## HEAD 98e35b1 Preview黑盒证据（2026-07-13 16:58—17:06 CST）
+
+| 检查 | 环境/路径 | 结果 |
+|---|---|---|
+| 部署归属 | Vercel `93ejmrajShA85o5fv1cSVq462jNv` | Ready；source=`98e35b1`；Preview；分支域名为当前目标URL |
+| 函数资源 | Deployment Resources | 7个Node.js 22函数存在：agent-chat、health、patient-reply、session/complete-profile、session/init、training-action、tts |
+| Chrome首次加载 | P001 | 两次`api_request_failed`相隔4.9秒，随后“网络连接失败”/降级模式 |
+| Codex应用内浏览器首次加载 | P001 | 独立复现，两次警告相隔5.1秒，随后同样降级 |
+| 手动重连 | Chrome P001 | 点击与观察约21秒后仍回到网络失败；没有清空聊天 |
+| 中文fallback | “您好，哪里不舒服？” | 总观察约22.4秒；自然中文澄清回答、无病例摘要泄露；输入清空且保持焦点；来源仍为降级，评分显示待同步 |
+| 运行日志 | 当前deployment过滤 | 测试窗口无函数调用日志；不能据此断言函数成功或失败 |
+| Preview变量（仅名称） | Vercel Preview设置 | AI供应商相关10个名称存在并覆盖Production and Preview；未看到`TRAINING_STATE_SECRET`；未展开/读取值 |
+| 部署保护 | Project Settings | Standard Vercel Authentication开启；OPTIONS allowlist关闭；仅登记跨源预检风险，尚无实际请求URL/状态证据 |
+
+- 浏览器直接打开`/api/health[/]`被客户端以`ERR_BLOCKED_BY_CLIENT`阻止，因此未获得可审计HTTP状态；没有绕过保护、读取Cookie/Authorization或使用bypass secret。
+- 该证据证明Preview用户可见发布阻断仍存在，也证明fallback语言、摘要防泄露、输入焦点和单提示修复有效；不能把fallback计作真实DeepSeek成功。

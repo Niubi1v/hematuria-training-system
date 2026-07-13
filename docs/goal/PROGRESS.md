@@ -174,7 +174,7 @@
 
 - 先建立失败基线：`node node_modules/tsx/dist/cli.mjs scripts/test-performance-timing.ts`因缺少`server/performanceTiming.js`退出1；随后实现固定指标白名单与稳定解析/格式化合同。
 - session init、Patient Agent、provider、history-log及score现通过`Server-Timing`暴露非敏感毫秒数；缓存回答不复用旧provider耗时，API JSON不新增内部计时字段。
-- production smoke现采集session、完整回答、真实provider、history-log、score耗时；当前非流式协议的首Token明确登记为unsupported，未用完整回答耗时冒充。
+- 此性能遥测里程碑的production smoke采集session、完整回答、真实provider、history-log、score耗时；当时非流式协议的首Token明确登记为unsupported，后续SSE增量已补齐采集，且从未用完整回答耗时冒充首Token。
 - 本地专项与完整32项行为链通过，Vercel等价构建52/52、bundle 25 JS与repo secret 283候选文件通过，`data/**`零差异。TypeScript退出0；项目Lint因当前Codex仅提供Node 24.14而仓库要求Node 22、Rushstack补丁拒绝该运行时，本机退出1，待PR的Node 22 CI复核。
 - 未修改医学事实、419审核决定、42例`needs_revision`、360分算法、环境变量或密钥；PR继续保持Draft。
 
@@ -192,3 +192,10 @@
 - 服务端聚合`delta.content`为原JSON回复；首个`reasoning_content`或`content`只记录时间，思维内容不保存、不返回。live_ai的smoke现在强制要求`provider`与`firsttoken`指标，cache/fallback不冒充真实provider样本。
 - 本地33项完整行为链exit0（10.3秒），专项SSE/API/恢复/计时与TypeScript exit0；Vercel等价52/52、25 JS bundle及284候选文件secret扫描exit0（合计16.4秒），`data/**`零修改。等待新HEAD的Node 22 Lint、Playwright 40/40及Vercel远程复核。
 - 远程复核完成：`d2c2eb0`对应run `29236606930` completed/success，build 3分35秒，Node 22 TypeScript/Lint、33项行为、Playwright 40/40、52页构建与扫描全部通过；Vercel Deployment及Preview Comments通过，Pages deploy跳过，PR保持Draft/CLEAN。
+
+## 2026-07-13 16:58—17:06 最新Preview黑盒复核
+
+- 最终证据HEAD `98e35b1`对应Vercel deployment `93ejmrajShA85o5fv1cSVq462jNv`为Ready，分支域名仍指向该部署；资源页确认`agent-chat`、`health`、`session/init`、`training-action`、`tts`等7个Node 22函数存在。
+- Chrome及Codex应用内浏览器均可打开P001，但约5秒后两次`api_request_failed`并进入降级。手动重连未恢复；一次中文问诊约22.4秒返回自然中文fallback，输入焦点保持、聊天未丢失、单一主连接提示未堆叠，但评分停在pending。
+- 只读环境名称核验发现AI供应商变量已覆盖Production and Preview，但未看到`TRAINING_STATE_SECRET`；未读取或修改任何值。部署启用Standard Vercel Authentication且OPTIONS allowlist关闭，跨源预检风险待实际请求路径证据确认。
+- Runtime Logs在上述窗口无对应函数调用，直接health导航又被浏览器客户端阻止，因此尚不能给出失败API的HTTP状态或唯一根因。真实AI、日志10/10、首Token/P95仍为外部配置/保护层阻塞；未因此修改生产/Preview环境。

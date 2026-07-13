@@ -111,7 +111,7 @@
 | session/provider/history/score分段计时 | LOCAL PASS | 白名单`Server-Timing`合同与API集成测试通过；响应不含内容、签名、token或密钥 |
 | 完整回答耗时 | LOCAL PASS | production smoke已采集端到端与服务端app/provider指标 |
 | 首Token耗时 | LOCAL PASS | DeepSeek兼容SSE聚合、首个非空token计时、非流式显式兼容及非泄露API合同通过；真实Preview样本仍归下一行BLOCKED |
-| Preview真实P95 | BLOCKED | 需要可登录Preview及真实AI/签名变量；当前无可审计样本 |
+| Preview真实P95 | BLOCKED | `98e35b1`页面可达但Chrome/IAB均约5秒后降级；未见Preview `TRAINING_STATE_SECRET`，函数调用日志为空，真实AI/签名/P95仍无可审计样本 |
 | TypeScript、行为、构建、扫描 | LOCAL PASS | 当前33项、52/52、25 JS、284文件，均exit 0 |
 | ESLint | PASS | run `29234298382`的Node 22 Lint步骤success；本机Node 24不兼容不再是证据缺口 |
 

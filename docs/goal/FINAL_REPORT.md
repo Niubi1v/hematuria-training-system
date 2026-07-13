@@ -157,3 +157,10 @@
 - 工程协议缺口已消除；真实Preview首Token/P95、10/10日志和自然度仍需要登录权限与正确变量作用域，不能写为通过。
 - 回滚：普通revert本次SSE增量提交即可恢复非流式provider请求；不得reset、force push或修改医学事实补偿回滚。
 - 远程工程门禁：`d2c2eb0`的run `29236606930` completed/success（3分35秒），Playwright 40/40；Vercel Deployment与Preview Comments success，Pages deploy skipped，PR为Open/Draft/CLEAN。该绿灯不替代真实AI首Token/P95样本。
+
+## 2026-07-13 最新Preview结论
+
+- `98e35b1`的Vercel部署Ready且7个API函数均已产出，但Chrome和Codex应用内浏览器都稳定复现P001约5秒后降级；手动重连不恢复，中文问诊约22.4秒才返回fallback并留下评分pending。PR仍不具备发布条件。
+- 用户可见修复部分有效：只有一个主要连接警告，fallback为自然中文且不泄露病例摘要，输入清空后仍保持焦点，聊天记录未被重连清空；这些结果不得计作真实AI通过。
+- Preview变量名称中AI供应商配置存在，`TRAINING_STATE_SECRET`未见；Standard Deployment Protection开启且OPTIONS allowlist关闭。Runtime Logs无对应函数调用，直接health探针被浏览器客户端阻止，所以当前只能定位到Preview配置/保护边界，不能伪造失败API状态或唯一根因。
+- 需要人工操作：在Preview或分支专用Preview补齐`TRAINING_STATE_SECRET`（不得由Codex生成），核对实际API origin与允许源是否一致，并在任何配置变更后重新部署；若API为跨源，再评估OPTIONS allowlist或可信访问方案。随后重跑真实AI中英10/10、日志10/10、20轮稳定性与P95。

@@ -52,6 +52,8 @@
 - 状态：阻断真实AI/签名远程验收，不阻断本地工程。
 - 必须仅核对名称、不得读取或输出值：`LLM_ENABLE_AI_PATIENT`或`LLM_ENABLE_AI_AGENTS`、`LLM_API_KEY`、`LLM_API_BASE_URL`、`LLM_MODEL`、`TRAINING_STATE_SECRET`；按部署需要核对`AGENT_API_ALLOWED_ORIGINS`、`TRAINING_API_ALLOWED_ORIGINS`及相关限流变量。
 - 要求：变量须处于Vercel Preview或该专项分支Preview作用域，变更后重新部署；任何密钥不得使用`NEXT_PUBLIC_`前缀。
+- 2026-07-13 17:05只读核验（仅名称/作用域）：Preview清单存在`LLM_PROVIDER`、`LLM_API_KEY`、`LLM_API_BASE_URL`、`LLM_MODEL`、`LLM_ENDPOINT_TYPE`、`LLM_TEMPERATURE`、`LLM_MAX_TOKENS`、`LLM_REQUEST_TIMEOUT_MS`、`LLM_ENABLE_AI_PATIENT`、`PATIENT_AGENT_ALLOWED_ORIGIN`，均标记Production and Preview；未看到`TRAINING_STATE_SECRET`。没有展开、读取或修改任何值。
+- 同一部署使用Standard Vercel Authentication，OPTIONS allowlist未启用。若客户端实际跨源调用API，该保护配置会拦截不携带登录凭据的预检；当前未取得实际失败请求URL/HTTP状态，故该项只登记为待验证风险，不冒充唯一根因。
 
 ### HEM-P1-020：当前执行环境无法访问受保护Preview应用
 
@@ -60,6 +62,7 @@
 - 处置：由具备Preview访问权限的会话复跑Playwright/network trace；不得提交或输出bypass token、Cookie或Authorization。
 - 最新复验：`a9ace13`对应Vercel Deployment已success，但in-app浏览器直达`/cases/P001/`仍在20秒内无法取得DOM；部署成功与应用登录态体验通过必须分开登记。
 - 2026-07-13 15:40复验：Chrome可枚举到标题为“血尿多智能体临床思维训练平台”的Preview P001标签及目标URL；两次接管后，第一次DOM读取超过30秒并重置连接，第二次连标题/URL最小探针在60秒内亦未完成。未读取Cookie、Authorization、localStorage或任何密钥；继续登记为外部访问阻塞，不得据此评价真实AI成功率或性能。
+- 2026-07-13 16:58—17:06复验取得页面DOM：Chrome和Codex应用内浏览器均在P001首次加载后约5秒产生两次`api_request_failed`并进入降级模式。Chrome手动重连最终仍回到网络失败；一次“您好，哪里不舒服？”约22.4秒返回自然中文`rule_fallback`并显示“评分待同步”，输入焦点保持且未泄露病例摘要。部署资源确认7个API函数均存在，但部署过滤后的Runtime Logs无对应函数调用；浏览器直接打开health路径被客户端阻止，故请求路径/状态仍不可审计。HEM-P1-020从“页面不可达”收窄为“受保护API链路不可审计/不可用”，不解除发布阻断。
 
 ### HEM-P1-021：真实首Token指标当前不可测（工程采集已解除）
 
