@@ -256,3 +256,11 @@
 - Actions run `29288294002` / build job `86945910258` completed/success（4分03秒）：75输出baseline/二次幂等、294文件secret、Playwright 40/40、52页build及最终clean gate真实执行通过；production dependency audit仍为1 moderate/0 high。
 - Vercel Deployment `7kTocPAWKiyWiRHd1XEVmLFzmASk`与Preview Comments success；Pages deploy skipped。`DCI-P1-003`工程项正式关闭。
 - 仍未通过且不得由CI绿灯替代：Preview Upstash/独立签名变量作用域、真实DeepSeek 10/10与P95/自然度，以及HEM-P0-001/HEM-P0-023具名医学裁决。
+
+### 当前HEAD与Preview增量复验（2026-07-14 06:12—06:18）
+
+- 本地与远程专项分支均为`10fe60d1074bbd27516af83a43cb71123fe7cc99`，Draft PR #1为Open/Draft/CLEAN；GitHub Actions run `29288682045` build success（4分06秒），Vercel Deployment和Preview Comments success，Pages deploy skipped。
+- 当前部署应用URL为`https://hematuria-training-system-dsafq1pj5-niubi1vs-projects.vercel.app`。P001静态页面可加载，但初始化后稳定显示`回答来源：降级模式`和单一网络失败提示；输入区、聊天记录与重新连接按钮保留，未复现重复提示堆叠。
+- 匿名`GET /api/health/`返回HTTP 200但类型为`text/html`，正文是Vercel Authentication/Deployment Protection页面而非应用health JSON。当前可审计根因边界是API链被保护层截获；不能据此判断DeepSeek、Upstash或训练签名handler内部状态。
+- 浏览器控制台读取通道两次超时，未取得可归因于应用的console/network事件；没有把浏览器工具自身网络告警记作产品缺陷，也没有伪造请求状态、首Token或P95。
+- 本轮仅追加验收证据，不改业务、医学数据、审批状态或环境变量；代码基线仍为`9d405fd`，`10fe60d`为其文档后代。所有安全可执行的静态发布P1已关闭；剩余是Preview权限/变量、生产只读证据和具名医学裁决。

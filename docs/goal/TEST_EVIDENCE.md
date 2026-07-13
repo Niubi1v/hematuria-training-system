@@ -446,3 +446,18 @@ Preview未执行真实Upstash/DeepSeek验收，因为当前没有也不得读取
 - Repository secret scan：294文件通过；Playwright：40/40（1.6分钟）；build：52/52；final cleanliness gate：success；依赖审计：1 moderate/0 high。
 - Vercel Deployment `7kTocPAWKiyWiRHd1XEVmLFzmASk` success；Vercel Preview Comments success；Pages deploy skipped。
 - PR #1在检查完成后仍`OPEN`、`isDraft=true`。这些是工程门禁证据，不是Preview真实AI、持久存储、签名变量或医学专家验收。
+
+## 2026-07-14 当前HEAD与Preview只读复验
+
+| 检查 | 精确命令/路径 | 退出码与结果 |
+|---|---|---|
+| 当前分支与PR | `git status --short --branch`、`git rev-parse HEAD`、`gh pr view 1 --json ...` | 本地/远程/PR head均为`10fe60d1074bbd27516af83a43cb71123fe7cc99`；PR Open/Draft/CLEAN |
+| 当前CI | `gh pr view 1 --json statusCheckRollup` | run `29288682045` build SUCCESS（4分06秒）；Vercel SUCCESS；Preview Comments SUCCESS；Pages deploy SKIPPED |
+| 部署解析 | GitHub Deployments API，SHA=`10fe60d...` | deployment `5432035094` success；应用URL为`https://hematuria-training-system-dsafq1pj5-niubi1vs-projects.vercel.app` |
+| P001浏览器DOM | Codex in-app Browser打开`/cases/P001/`并读取DOM | 页面标题正常；初始化后为`回答来源：降级模式`，仅一个网络失败status和一个“重新连接AI”按钮；聊天记录及输入框保留 |
+| Preview health | `Invoke-WebRequest -Method Get https://hematuria-training-system-dsafq1pj5-niubi1vs-projects.vercel.app/api/health/` | shell exit0；请求约2.4秒；HTTP 200、`text/html`、Vercel Authentication页面，不是应用health JSON |
+| 控制台探针 | Browser `tab.dev.logs`两次最小读取 | BLOCKED：控制通道超时并重置；未取得应用console错误，不以工具自身网络告警替代产品证据 |
+| Git fetch | `git fetch --prune origin` | 首次exit1：Git smart-HTTP连接`github.com:443`超时；推送前重试exit0，远程/PR head仍与本地`10fe60d`一致，无未知远程提交 |
+| 文档diff/敏感信息 | `git diff --check`、受保护路径diff、bundled Node直接执行`scripts/scan-repository-secrets.mjs` | exit0；294个tracked/candidate文件通过，`data/**`、审核产物和`outputs/**`零差异；pnpm包装入口因Node 24/无TTY依赖状态检查未进入脚本，不记作扫描失败或通过 |
+
+说明：本次没有代码变化，所以没有重复运行已在`10fe60d`远程CI通过的完整门禁。Vercel部署绿灯只证明构建/部署成功；当前浏览器和health证据证明受保护API链不可用，不能计作真实DeepSeek、Upstash、签名日志、10/10、20轮、P95或自然度通过。未读取Cookie、Authorization、localStorage、环境变量值或密钥。

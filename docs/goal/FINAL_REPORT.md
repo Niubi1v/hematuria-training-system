@@ -211,3 +211,11 @@
 - 本轮所有无需外部权限的静态发布P1工程项已修复并取得本地/远程可重复证据；`DCI-P1-003`跨平台关闭，未更改`data/**`或医学审核状态。
 - 推荐长期QA的代码起始HEAD：`9d405fd95c979099a58a90824616c9728360a8f4`。若随后仅追加本节状态文档，可使用其文档-only后代，但行为代码基线仍是`9d405fd`。
 - 剩余发布阻塞只应按治理边界处理：HEM-P0-001/HEM-P0-023具名专家裁决；Preview持久Upstash与独立`TRAINING_STATE_SECRET`由用户配置并重部署；真实DeepSeek中文/英文、日志10/10、20轮稳定、P95和自然度人工验收。不得将Vercel部署绿灯写成这些项目通过。
+
+### 当前交接检查点（2026-07-14 06:18）
+
+- 当前本地、远程和Draft PR head均为`10fe60d1074bbd27516af83a43cb71123fe7cc99`；PR #1为Open/Draft/CLEAN。Actions run `29288682045` build success，Vercel Deployment及Preview Comments success，Pages deploy skipped。
+- `10fe60d` Preview的P001静态页面可加载，但初始化后进入降级模式。UI保持单一网络错误提示、重新连接按钮、现有聊天记录和输入框，说明此前提示收敛修复仍在；它不满足真实AI发布验收。
+- 匿名health请求返回Vercel Authentication HTML而不是应用JSON，证实当前API链被Deployment Protection截获。真实DeepSeek、Upstash持久attempt、独立签名、日志10/10、20轮、首Token/P95与自然度均仍BLOCKED，不能由Vercel绿灯替代。
+- 当前没有剩余可在无权限条件下复现并修复的P0/P1代码缺陷。需人工处理的下一步：为该分支Preview核对保护访问方式及`UPSTASH_REDIS_REST_URL`、`UPSTASH_REDIS_REST_TOKEN`、`TRAINING_ATTEMPT_STORE_MODE=upstash`、独立强`TRAINING_STATE_SECRET`的作用域并重部署；随后运行真实AI验收。不得由Codex生成、读取或修改密钥值。
+- 医学阻塞保持不变：HEM-P0-001与HEM-P0-023需具名医学专家裁决；未批准419条事实，未解除42例`needs_revision`，未改变18条双语冲突或360分算法。推荐长期QA起始HEAD为当前文档后代`10fe60d`，行为代码基线为`9d405fd`；本次证据更新提交后应使用其新HEAD。
