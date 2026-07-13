@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import * as XLSX from "xlsx";
+import { readWorkbookFile } from "./lib/safe-workbook";
 
 const input = process.argv[2] ?? "work/source/hematuria_diagnostics_scoring_rules.xlsx";
 const outDir = process.argv[3] ?? "data";
@@ -106,7 +107,7 @@ const guardrails = [
   }
 ];
 
-const workbook = XLSX.readFile(input);
+const workbook = readWorkbookFile(input);
 const knowledgeRows = rows(workbook.Sheets["知识摘要"]);
 const slotRows = rows(workbook.Sheets["问诊槽位"]);
 const rubricRows = rows(workbook.Sheets["100分评分Rubric"]);

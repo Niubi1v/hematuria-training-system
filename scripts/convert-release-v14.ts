@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import * as XLSX from "xlsx";
 import type { CaseData, OrderCatalogItem } from "../src/lib/types";
+import { readWorkbookFile } from "./lib/safe-workbook";
 
 type Row = Record<string, unknown>;
 type ReviewClass = "必须" | "条件性" | "可选" | "不常规推荐" | "禁忌或不适用" | "待专家确认";
@@ -55,7 +56,7 @@ function makeOrderMatcher(catalog: OrderCatalogItem[]) {
 }
 
 const workbookPath = findWorkbook();
-const workbook = XLSX.readFile(workbookPath, { cellFormula: true });
+const workbook = readWorkbookFile(workbookPath, { cellFormula: true });
 for (const name of requiredSheets) assert(workbook.SheetNames.includes(name), `Required sheet missing: ${name}`);
 
 const mainRows = rows(workbook, "42例临床问诊病例");
