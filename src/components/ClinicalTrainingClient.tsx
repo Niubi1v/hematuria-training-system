@@ -4,7 +4,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Activity,
+  AlertTriangle,
   CheckCircle2,
+  CircleAlert,
+  CircleCheck,
   ClipboardList,
   FileText,
   FlaskConical,
@@ -425,17 +428,35 @@ function formatReportLines(text: string) {
 
 function ReportCard({ item, lang }: { item: OrderResultLog["results"][number]; lang: LanguageCode }) {
   const lines = formatReportLines(item.result);
+  const rawStatus = item.status || item.abnormalLevel || "";
+  const statusKey = rawStatus.toLowerCase();
+  const needsReview = /待审核|需审核|needs.review|review/.test(statusKey);
+  const abnormal = /异常|阳性|升高|降低|abnormal|positive|high|low|critical/.test(statusKey);
+  const normal = /正常|阴性|normal|negative/.test(statusKey);
+  const statusLabel = rawStatus || t(lang, "simulatedReport");
+  const statusClass = needsReview ? "ui-status-warning" : abnormal ? "ui-status-danger" : normal ? "ui-status-success" : "ui-status-info";
   return (
-    <article className="mt-3 rounded-md border border-clinic-line bg-white p-4 text-sm leading-6">
+    <article data-testid="report-card" data-status={needsReview ? "needs-review" : abnormal ? "abnormal" : normal ? "normal" : "reported"} className="mt-3 rounded-xl border border-clinic-line bg-white p-4 text-sm leading-6 shadow-soft">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="font-medium text-clinic-blue">{item.orderCategory}</p>
-        <span className="rounded-full bg-clinic-paper px-2 py-1 text-xs text-clinic-muted">{item.abnormalLevel || t(lang, "simulatedReport")}</span>
+        <p className="font-semibold text-clinic-blue">{item.orderCategory}</p>
+        <span className={`ui-status ${statusClass}`}>
+          {needsReview ? <AlertTriangle size={14} aria-hidden="true" /> : abnormal ? <CircleAlert size={14} aria-hidden="true" /> : normal ? <CircleCheck size={14} aria-hidden="true" /> : <FileText size={14} aria-hidden="true" />}
+          {statusLabel}
+        </span>
       </div>
+      {(item.value || item.unit || item.referenceRange) && (
+        <dl className="mt-3 grid gap-2 rounded-lg bg-clinic-paper p-3 sm:grid-cols-3">
+          <div><dt className="text-xs text-clinic-muted">{lang === "en" ? "Value" : "结果"}</dt><dd className="mt-0.5 font-semibold text-clinic-ink">{item.value || "—"}</dd></div>
+          <div><dt className="text-xs text-clinic-muted">{lang === "en" ? "Unit" : "单位"}</dt><dd className="mt-0.5 text-clinic-ink">{item.unit || "—"}</dd></div>
+          <div><dt className="text-xs text-clinic-muted">{lang === "en" ? "Reference range" : "参考范围"}</dt><dd className="mt-0.5 text-clinic-ink">{item.referenceRange || "—"}</dd></div>
+        </dl>
+      )}
       <div className="mt-3 grid gap-2">
         {(lines.length ? lines : [item.result]).map((line) => (
-          <p key={line} className="rounded-md bg-clinic-paper px-3 py-2">{line}</p>
+          <p key={line} className="rounded-lg bg-clinic-paper px-3 py-2">{line}</p>
         ))}
       </div>
+      {item.impression && <p className="mt-3 border-l-2 border-clinic-blue pl-3"><span className="font-semibold">{lang === "en" ? "Impression" : "印象"}：</span>{item.impression}</p>}
       {item.teachingExplanation && <p className="mt-3 text-xs leading-5 text-clinic-muted">{t(lang, "releaseRule")}：{item.teachingExplanation}</p>}
     </article>
   );
@@ -453,12 +474,12 @@ function FeedbackBox({ evaluation, lang }: { evaluation: StageEvaluation; lang: 
       </div>
       <p className="mt-3 text-sm leading-6">{evaluation.comment}</p>
       <div className="mt-3 grid gap-3 md:grid-cols-2">
-        <div className="rounded-md bg-white p-3 text-sm">
-          <p className="font-medium">{t(lang, "hitItems")}</p>
+        <div className="rounded-lg bg-white p-3 text-sm">
+          <p className="inline-flex items-center gap-2 font-semibold text-emerald-800"><CircleCheck size={16} aria-hidden="true" />{t(lang, "hitItems")}</p>
           <p className="mt-2 text-clinic-muted">{evaluation.hits.join("；") || t(lang, "none")}</p>
         </div>
-        <div className="rounded-md bg-white p-3 text-sm">
-          <p className="font-medium">{t(lang, "missingRiskItems")}</p>
+        <div className="rounded-lg bg-white p-3 text-sm">
+          <p className="inline-flex items-center gap-2 font-semibold text-amber-900"><AlertTriangle size={16} aria-hidden="true" />{t(lang, "missingRiskItems")}</p>
           <p className="mt-2 text-clinic-muted">{[...evaluation.misses, ...evaluation.warnings].join("；") || t(lang, "none")}</p>
         </div>
       </div>
@@ -471,8 +492,10 @@ function FeedbackBox({ evaluation, lang }: { evaluation: StageEvaluation; lang: 
 }
 
 function FinalReport({ report, lang }: { report: Evaluator360Report; lang: LanguageCode }) {
+  const strengths = report.items.filter((item) => item.max > 0 && item.score / item.max >= 0.8).map((item) => item.label);
+  const priorities = report.items.filter((item) => item.criticalErrors.length || item.misses.length || item.improvements.length).map((item) => item.label);
   return (
-    <section className="rounded-lg border border-clinic-line bg-white p-5">
+    <section data-testid="final-report" className="rounded-xl border border-clinic-line bg-white p-5 print:border-0 print:p-0">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h3 className="text-lg font-semibold text-clinic-blue">{t(lang, "competencyProfile")}</h3>
@@ -484,20 +507,31 @@ function FinalReport({ report, lang }: { report: Evaluator360Report; lang: Langu
         </div>
       </div>
       {report.redFlags.length > 0 && (
-        <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+        <div role="alert" className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-900">
+          <p className="mb-1 inline-flex items-center gap-2 font-semibold"><CircleAlert size={16} aria-hidden="true" />{lang === "en" ? "Safety-critical omissions" : "危险遗漏与安全提醒"}</p>
           {report.redFlags.map((warning) => <p key={warning}>{warning}</p>)}
         </div>
       )}
       <div className="mt-5 grid gap-3 md:grid-cols-2">
+        <section className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-4">
+          <h4 className="inline-flex items-center gap-2 font-semibold text-emerald-900"><CircleCheck size={17} aria-hidden="true" />{lang === "en" ? "Relative strengths" : "相对强项"}</h4>
+          <p className="mt-2 text-sm leading-6 text-emerald-950">{strengths.join(lang === "en" ? ", " : "、") || (lang === "en" ? "No domain has reached the strong-performance threshold yet." : "目前尚无分项达到强项阈值。")}</p>
+        </section>
+        <section className="rounded-lg border border-amber-200 bg-amber-50/60 p-4">
+          <h4 className="inline-flex items-center gap-2 font-semibold text-amber-950"><AlertTriangle size={17} aria-hidden="true" />{lang === "en" ? "Priority improvements" : "优先改进"}</h4>
+          <p className="mt-2 text-sm leading-6 text-amber-950">{priorities.slice(0, 4).join(lang === "en" ? ", " : "、") || (lang === "en" ? "Maintain the current approach." : "保持当前操作方法。")}</p>
+        </section>
+      </div>
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
         {report.items.map((item) => {
           const pct = Math.round((item.score / item.max) * 100);
           return (
-            <div key={item.label} className="rounded-md border border-clinic-line p-4">
+            <div key={item.label} className="break-inside-avoid rounded-lg border border-clinic-line p-4">
               <div className="flex items-center justify-between gap-3">
                 <p className="font-medium">{item.label}</p>
                 <span className="text-sm text-clinic-blue">{item.score}/{item.max}</span>
               </div>
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-clinic-paper">
+              <div role="progressbar" aria-label={`${item.label} ${item.score}/${item.max}`} aria-valuemin={0} aria-valuemax={item.max} aria-valuenow={item.score} className="mt-3 h-2 overflow-hidden rounded-full bg-clinic-paper">
                 <div className="h-full rounded-full bg-clinic-teal" style={{ width: `${pct}%` }} />
               </div>
               <p className="mt-2 text-sm text-clinic-muted">{item.comment}</p>
@@ -506,7 +540,7 @@ function FinalReport({ report, lang }: { report: Evaluator360Report; lang: Langu
                 <p><span className="font-medium text-clinic-ink">{t(lang, "needsMore")}：</span>{item.misses.slice(0, 5).join("；") || t(lang, "noMissing")}</p>
                 {item.sequenceIssues.length > 0 && <p><span className="font-medium text-amber-800">{t(lang, "sequenceIssues")}：</span>{item.sequenceIssues.join("；")}</p>}
                 {item.overuse.length > 0 && <p><span className="font-medium text-amber-800">{t(lang, "overuse")}：</span>{item.overuse.join("；")}</p>}
-                {item.criticalErrors.length > 0 && <p><span className="font-medium text-rose-700">{t(lang, "criticalErrors")}：</span>{item.criticalErrors.join("；")}</p>}
+                {item.criticalErrors.length > 0 && <p className="rounded-md bg-rose-50 px-2 py-1 text-rose-900"><span className="font-semibold">{t(lang, "criticalErrors")}：</span>{item.criticalErrors.join("；")}</p>}
                 <p><span className="font-medium text-clinic-ink">{t(lang, "nextAdvice")}：</span>{item.improvements.join("；") || (lang === "en" ? "Maintain the current approach and improve communication efficiency." : "保持当前操作并进一步提高表达效率。")}</p>
               </div>
             </div>
@@ -592,6 +626,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [logRetryNonce, setLogRetryNonce] = useState(0);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
+  const chatPinnedToBottomRef = useRef(true);
+  const [chatHasNewMessage, setChatHasNewMessage] = useState(false);
   const cloudAudioRef = useRef<HTMLAudioElement | null>(null);
   const cloudAudioUrlRef = useRef("");
   const ttsAbortRef = useRef<AbortController | null>(null);
@@ -861,6 +897,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
 
   useEffect(() => {
     try { localStorage.setItem("hematuria-language", lang); } catch { setStorageWarning("语言偏好无法保存。 "); }
+    document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
   }, [lang]);
 
   useEffect(() => {
@@ -961,8 +998,24 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   useEffect(() => {
     if (activeStageNo !== 1) return;
     const panel = chatScrollRef.current;
-    if (panel) panel.scrollTo({ top: panel.scrollHeight, behavior: "smooth" });
+    if (!panel) return;
+    if (chatPinnedToBottomRef.current) {
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      panel.scrollTo({ top: panel.scrollHeight, behavior: reduceMotion ? "auto" : "smooth" });
+      setChatHasNewMessage(false);
+    } else if (messages.length > 1) {
+      setChatHasNewMessage(true);
+    }
   }, [activeStageNo, messages.length, patientReplyLoading]);
+
+  useEffect(() => {
+    if (!speechSettingsOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSpeechSettingsOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [speechSettingsOpen]);
 
   useEffect(() => {
     if (!speechOutputSupported) return;
@@ -1515,6 +1568,23 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     orders: unique([...answers.selectedOrders, ...orderLogs.flatMap((log) => log.matchedOrders.map((item) => item.displayName))]).length,
     reports: orderLogs.reduce((sum, log) => sum + log.results.length, 0)
   };
+  const healthNotice = healthCheckFailed
+    ? (lang === "en" ? "Service status could not be confirmed. Text practice remains available." : "暂时无法确认服务状态，仍可继续文字练习。")
+    : (serviceHealth?.patientServiceConfigured === false || serviceHealth?.trainingStateConfigured === false)
+      ? (lang === "en" ? "Some online functions are unavailable. Text practice remains available." : "部分在线功能暂不可用，仍可继续文字练习。")
+      : "";
+  const connectionMessage = reconnectNotice || sessionInitError || (sessionInitLoading ? t(lang, "aiPreparing") : "") || healthNotice;
+  const connectionIsBusy = sessionInitLoading || aiStatus === "reconnecting";
+  const showReconnect = aiMode !== "rule" && (["degraded", "offline", "error", "reconnecting"].includes(aiStatus) || /reconnect|重新连接/i.test(reconnectNotice));
+
+  function scrollChatToBottom() {
+    const panel = chatScrollRef.current;
+    if (!panel) return;
+    chatPinnedToBottomRef.current = true;
+    setChatHasNewMessage(false);
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    panel.scrollTo({ top: panel.scrollHeight, behavior: reduceMotion ? "auto" : "smooth" });
+  }
 
   if (!caseData || !display) {
     return (
@@ -1529,28 +1599,31 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }
 
   return (
-    <main className="mx-auto max-w-[1500px] px-5 py-6">
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium text-clinic-blue">{caseData.displayCaseId || caseData.id}</p>
-          <h1 className="mt-1 text-2xl font-semibold">{t(lang, "appTitle")}</h1>
-          <p className="mt-1 text-sm text-clinic-muted">{t(lang, "appSubtitle")}</p>
+    <main className="mx-auto max-w-[1500px] px-4 py-4 sm:px-5 sm:py-5">
+      <div className="mb-3 grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-clinic-blue">
+            <span>{caseData.displayCaseId || caseData.id}</span>
+            <span className={`ui-status ${isOsce ? "ui-status-danger" : "ui-status-success"}`}>
+              {isOsce ? `${t(lang, "osceMode")} ${formatDuration(osceTimeLeft)}` : t(lang, "freeTraining")}
+            </span>
+          </div>
+          <h1 className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">{t(lang, "appTitle")}</h1>
+          <p className="mt-1 hidden text-sm text-clinic-muted md:block">{t(lang, "appSubtitle")}</p>
+          <p className="mt-1 line-clamp-2 text-sm text-clinic-muted lg:hidden">{display.age || "-"} / {display.sex || "-"} · {display.chiefComplaint}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className={`rounded-full px-3 py-1 text-sm ${isOsce ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}>
-            {isOsce ? `${t(lang, "osceMode")} ${formatDuration(osceTimeLeft)}` : t(lang, "freeTraining")}
-          </span>
-          <div className="inline-flex rounded-md border border-clinic-line bg-white p-1">
-            <button type="button" onClick={() => setLanguage("zh")} className={`rounded px-3 py-1 text-sm ${lang === "zh" ? "bg-clinic-blue text-white" : "text-clinic-muted"}`}>{t(lang, "zh")}</button>
-            <button type="button" onClick={() => setLanguage("en")} className={`rounded px-3 py-1 text-sm ${lang === "en" ? "bg-clinic-blue text-white" : "text-clinic-muted"}`}>{t(lang, "en")}</button>
+        <div className="flex flex-wrap items-center gap-2 xl:justify-end">
+          <div className="ui-segmented">
+            <button type="button" onClick={() => setLanguage("zh")} className={`ui-segment ${lang === "zh" ? "ui-segment-active" : ""}`}>{t(lang, "zh")}</button>
+            <button type="button" onClick={() => setLanguage("en")} className={`ui-segment ${lang === "en" ? "ui-segment-active" : ""}`}>{t(lang, "en")}</button>
           </div>
           {isDevelopment && (
-            <div className="inline-flex rounded-md border border-clinic-line bg-white p-1">
-              <button type="button" onClick={() => setAiMode("deepseek")} className={`rounded px-3 py-1 text-sm ${aiMode === "deepseek" ? "bg-clinic-blue text-white" : "text-clinic-muted"}`}>AI</button>
-              <button type="button" onClick={() => setAiMode("rule")} className={`rounded px-3 py-1 text-sm ${aiMode === "rule" ? "bg-clinic-blue text-white" : "text-clinic-muted"}`}>{lang === "en" ? "Rules" : "规则库"}</button>
+            <div className="ui-segmented">
+              <button type="button" onClick={() => setAiMode("deepseek")} className={`ui-segment ${aiMode === "deepseek" ? "ui-segment-active" : ""}`}>AI</button>
+              <button type="button" onClick={() => setAiMode("rule")} className={`ui-segment ${aiMode === "rule" ? "ui-segment-active" : ""}`}>{lang === "en" ? "Rules" : "规则库"}</button>
             </div>
           )}
-          <span aria-live="polite" className={`rounded-full px-3 py-1 text-xs ${aiStatus === "connected" ? "bg-emerald-50 text-emerald-700" : aiStatus === "checking" || aiStatus === "unknown" || aiStatus === "reconnecting" ? "bg-slate-50 text-slate-600" : "bg-amber-50 text-amber-700"}`}>
+          <span aria-live="polite" className={`ui-status ${aiStatus === "connected" ? "ui-status-success" : aiStatus === "checking" || aiStatus === "unknown" || aiStatus === "reconnecting" ? "bg-slate-100 text-slate-700" : "ui-status-warning"}`}>
             {t(lang, "responseSource")}：
             {aiStatus === "connected"
               ? t(lang, "aiConnected")
@@ -1566,20 +1639,23 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                     ? t(lang, "ruleFallback")
                     : t(lang, "degradedMode")}
           </span>
-          <button
+          {logSyncStatus !== "idle" && <span aria-live="polite" className={`ui-status ${logSyncStatus === "failed" ? "ui-status-warning" : "ui-status-info"}`}>
+            {logSyncStatus === "verified" ? (lang === "en" ? "Scoring synced" : "评分已同步") : (lang === "en" ? "Scoring sync pending" : "评分待同步")}
+          </span>}
+          {showReconnect && !connectionMessage && <button
             type="button"
             onClick={() => void reconnectAiPatient()}
             disabled={aiStatus === "reconnecting"}
-            className={`rounded-md border border-clinic-line bg-white px-3 py-2 text-sm font-medium hover:border-clinic-blue disabled:cursor-wait disabled:opacity-60 ${aiStatus === "connected" ? "text-clinic-muted" : "text-clinic-blue"}`}
+            className="ui-button-secondary"
           >
             {aiStatus === "reconnecting"
               ? (lang === "en" ? "Reconnecting..." : "正在连接……")
               : aiStatus === "connected"
                 ? (lang === "en" ? "Check connection" : "检测连接")
                 : (lang === "en" ? "Reconnect AI" : "重新连接AI")}
-          </button>
-          <button type="button" onClick={restartTraining} className="inline-flex items-center gap-2 rounded-md border border-clinic-line bg-white px-3 py-2 text-sm hover:border-clinic-blue"><RotateCcw size={15} />{lang === "en" ? "Restart" : "重新开始"}</button>
-          <Link onClick={(event) => { if (!confirmExit()) event.preventDefault(); }} href="/cases" className="rounded-md border border-clinic-line bg-white px-4 py-2 text-sm hover:border-clinic-blue">{t(lang, "backToCases")}</Link>
+          </button>}
+          <button type="button" aria-label={lang === "en" ? "Restart training" : "重新开始训练"} title={lang === "en" ? "Restart" : "重新开始"} onClick={restartTraining} className="ui-button-secondary px-3"><RotateCcw size={16} /><span className="hidden sm:inline">{lang === "en" ? "Restart" : "重新开始"}</span></button>
+          <Link aria-label={t(lang, "backToCases")} title={t(lang, "backToCases")} onClick={(event) => { if (!confirmExit()) event.preventDefault(); }} href="/cases" className="ui-button-secondary px-3"><ClipboardList size={16} /><span className="hidden sm:inline">{t(lang, "backToCases")}</span></Link>
         </div>
       </div>
       {storageWarning && (
@@ -1588,21 +1664,18 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           <button type="button" onClick={() => setStorageWarning("")} className="font-medium underline">{t(lang, "dismiss")}</button>
         </div>
       )}
-      {reconnectNotice && <div role="status" aria-live="polite" className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{reconnectNotice}</div>}
-      {logSyncStatus !== "idle" && (
-        <div role="status" aria-live="polite" className="mb-4 flex items-center justify-between gap-3 rounded-md border border-sky-200 bg-sky-50 px-4 py-2 text-sm text-sky-900">
-          <span>{logSyncStatus === "verified"
-            ? (lang === "en" ? "Scoring is synchronized." : "评分已同步。")
-            : (lang === "en" ? "This answer is saved. Scoring is synchronizing." : "本次回答已保存，评分正在同步。")}</span>
-          {logSyncStatus === "failed" && <button type="button" onClick={() => { setLogSyncStatus("pending"); setLogRetryNonce((value) => value + 1); }} className="font-medium underline">{lang === "en" ? "Retry sync" : "重新同步"}</button>}
-        </div>
-      )}
+      <div className="mb-3 min-h-9" aria-live="polite">
+        {connectionMessage && <div role="status" className={`flex min-h-9 flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm ${connectionIsBusy ? "border-sky-200 bg-sky-50 text-sky-900" : "border-amber-200 bg-amber-50 text-amber-950"}`}>
+          <span>{connectionMessage}</span>
+          {showReconnect && aiStatus !== "reconnecting" && <button type="button" onClick={() => void reconnectAiPatient()} className="font-semibold underline underline-offset-2">{lang === "en" ? "Reconnect AI" : "重新连接AI"}</button>}
+        </div>}
+      </div>
 
       <button type="button" aria-expanded={mobileNavOpen} onClick={() => setMobileNavOpen((value) => !value)} className="mb-3 inline-flex w-full items-center justify-between rounded-md border border-clinic-line bg-white px-4 py-3 font-medium lg:hidden">
         <span className="inline-flex items-center gap-2"><Menu size={18} />{t(lang, "mobileNavigation")}</span>
         <span>{activeStageNo}/7</span>
       </button>
-      <div className="grid gap-5 lg:grid-cols-[300px_1fr_300px]">
+      <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)] min-[1380px]:grid-cols-[260px_minmax(0,1fr)_260px]">
         <aside className={`${mobileNavOpen ? "block" : "hidden"} space-y-3 lg:block`}>
           <section className="rounded-lg border border-clinic-line bg-white p-4">
             <div className="mb-3 flex items-center gap-2 text-sm font-medium text-clinic-blue"><Languages size={16} /> {t(lang, "stageNavigation")}</div>
@@ -1642,18 +1715,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           </section>
         </aside>
 
-        <section className="rounded-lg border border-clinic-line bg-white p-5 shadow-soft">
-          <div className="mb-5 border-b border-clinic-line pb-4">
+        <section className="rounded-xl border border-clinic-line bg-white p-4 shadow-soft sm:p-5">
+          <div className="mb-3 border-b border-clinic-line pb-3">
             <p className="text-sm font-medium text-clinic-blue">{activeAgent.agentName[lang]}</p>
-            <h2 className="mt-1 text-xl font-semibold">{activeAgent.mainWindowFunction[lang]}</h2>
-            <p className="mt-2 text-sm text-clinic-muted">{t(lang, "noFeedbackBeforeSubmit")}</p>
-            {!reconnectNotice && !sessionInitError && (healthCheckFailed || serviceHealth?.patientServiceConfigured === false || serviceHealth?.trainingStateConfigured === false) && (
-              <p role="status" className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                {healthCheckFailed
-                  ? (lang === "en" ? "Backend health could not be confirmed. Text practice remains available." : "暂时无法确认后端健康状态，仍可继续文字练习。")
-                  : (lang === "en" ? "Some backend services are not configured. Unavailable functions will show a specific message." : "部分后端服务尚未配置，不可用功能将显示具体原因。")}
-              </p>
-            )}
+            <h2 className="mt-1 text-lg font-semibold sm:text-xl">{activeAgent.mainWindowFunction[lang]}</h2>
+            <p className="mt-1 hidden text-sm text-clinic-muted sm:block">{t(lang, "noFeedbackBeforeSubmit")}</p>
           </div>
 
           <fieldset disabled={osceLocked && activeStageNo !== 7} className="min-w-0 border-0 p-0 disabled:opacity-75">
@@ -1711,27 +1777,57 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                   {lang === "en" ? "Start interview and enable audio" : "开始问诊并启用语音"}
                 </button>
               )}
-              {!reconnectNotice && (sessionInitLoading || sessionInitError) && (
-                <div role="status" className={`mt-3 flex flex-wrap items-center justify-between gap-3 rounded-md px-3 py-2 text-sm ${sessionInitError ? "bg-amber-50 text-amber-800" : "bg-clinic-paper text-clinic-muted"}`}>
-                  <span>{sessionInitLoading ? t(lang, "aiPreparing") : sessionInitError}</span>
-                  {sessionInitError && <button type="button" onClick={() => void reconnectAiPatient()} disabled={aiStatus === "reconnecting"} className="font-medium underline disabled:opacity-50">{aiStatus === "reconnecting" ? (lang === "en" ? "Reconnecting..." : "正在连接……") : (lang === "en" ? "Reconnect AI" : "重新连接AI")}</button>}
-                </div>
-              )}
-              <div ref={chatScrollRef} role="log" aria-label={lang === "en" ? "Simulated patient conversation" : "模拟问诊对话"} aria-live="polite" className="mt-4 h-[390px] space-y-4 overflow-y-auto rounded-md border border-clinic-line bg-clinic-paper p-4">
+              <div className="relative">
+              <div
+                ref={chatScrollRef}
+                role="log"
+                aria-label={lang === "en" ? "Simulated patient conversation" : "模拟问诊对话"}
+                aria-live="polite"
+                onScroll={(event) => {
+                  const panel = event.currentTarget;
+                  const nearBottom = panel.scrollHeight - panel.scrollTop - panel.clientHeight < 72;
+                  chatPinnedToBottomRef.current = nearBottom;
+                  if (nearBottom) setChatHasNewMessage(false);
+                }}
+                className="mt-3 h-[220px] space-y-3 overflow-y-auto rounded-lg border border-clinic-line bg-clinic-paper p-3 pb-32 sm:h-[320px] sm:p-4 sm:pb-36 lg:h-[390px]"
+              >
                 {messages.map((message, index) => (
                   <div key={`${message.role}-${index}`} className={`flex ${message.role === "student" ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[78%] whitespace-pre-line rounded-lg px-4 py-3 text-sm leading-6 ${message.role === "student" ? "bg-clinic-blue text-white" : "bg-white text-clinic-ink"}`}>{message.text}</div>
+                    <div className={`max-w-[88%] whitespace-pre-line rounded-xl px-3 py-2.5 text-sm leading-6 sm:max-w-[78%] sm:px-4 sm:py-3 ${message.role === "student" ? "bg-clinic-blue text-white" : "border border-clinic-line bg-white text-clinic-ink"}`}>
+                      <span className={`mb-1 block text-[11px] font-semibold leading-4 ${message.role === "student" ? "text-white/80" : "text-clinic-muted"}`}>{message.role === "student" ? (lang === "en" ? "You · clinician" : "你 · 医生") : (lang === "en" ? "Standardized patient" : "标准化患者")}</span>
+                      <span className="block">{message.text}</span>
+                    </div>
                   </div>
                 ))}
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <input value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void submitQuestion(); }} className="min-w-[220px] flex-1 rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" placeholder={t(lang, "inputQuestion")} />
-                <button type="button" onClick={startVoiceInput} disabled={!speechInputSupported || listening} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-4 py-2 font-medium hover:border-clinic-blue disabled:opacity-50">
-                  {listening ? <MicOff size={16} /> : <Mic size={16} />} {t(lang, "voiceAsk")}
+              {chatHasNewMessage && <button type="button" onClick={scrollChatToBottom} className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-clinic-line bg-white px-3 py-1.5 text-xs font-semibold text-clinic-blue shadow-soft">{lang === "en" ? "New message · go to latest" : "有新消息 · 回到底部"}</button>}
+              </div>
+              <div className="sticky bottom-2 z-30 mt-3 rounded-xl border border-clinic-line bg-white/95 p-2 shadow-raised backdrop-blur-sm">
+                <textarea
+                  value={question}
+                  rows={2}
+                  onChange={(event) => setQuestion(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      event.preventDefault();
+                      void submitQuestion();
+                    }
+                  }}
+                  className="ui-input block min-h-[68px] w-full resize-none"
+                  placeholder={t(lang, "inputQuestion")}
+                  aria-label={t(lang, "inputQuestion")}
+                />
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <p className="hidden text-xs text-clinic-muted sm:block">{lang === "en" ? "Enter to send · Shift+Enter for a new line" : "Enter 发送 · Shift+Enter 换行"}</p>
+                  <div className="ml-auto flex items-center gap-2">
+                <button type="button" aria-label={t(lang, "voiceAsk")} title={t(lang, "voiceAsk")} onClick={startVoiceInput} disabled={!speechInputSupported || listening} className="ui-button-secondary px-3">
+                  {listening ? <MicOff size={17} /> : <Mic size={17} />} <span className="hidden sm:inline">{t(lang, "voiceAsk")}</span>
                 </button>
-                <button onClick={() => void submitQuestion()} disabled={patientReplyLoading || sessionInitLoading} className="inline-flex items-center gap-2 rounded-md bg-clinic-teal px-4 py-2 font-medium text-white hover:bg-clinic-blue disabled:cursor-not-allowed disabled:opacity-60">
+                <button onClick={() => void submitQuestion()} disabled={patientReplyLoading || sessionInitLoading || !question.trim()} className="ui-button-primary min-w-[88px]">
                   <Send size={16} /> {patientReplyLoading ? t(lang, "generating") : t(lang, "send")}
                 </button>
+                  </div>
+                </div>
               </div>
               <label className="mt-5 block">
                 <span className="font-medium">{t(lang, "historySummary")}</span>
@@ -1746,11 +1842,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 <h3 className="text-lg font-semibold">{t(lang, "investigationExam")}</h3>
                 <div className="mt-4 space-y-4">
                   {physicalGroups.map((group) => (
-                    <section key={group.category} className="rounded-md border border-clinic-line p-4">
-                      <h4 className="font-medium text-clinic-blue">{group.category}</h4>
+                    <section key={group.category} className="rounded-xl border border-clinic-line p-4">
+                      <h4 className="font-semibold text-clinic-blue">{group.category}</h4>
                       <div className="mt-3 flex flex-wrap gap-2">
                         {group.items.map((item) => (
-                          <button key={item.examId} type="button" onClick={() => submitExam(item.displayName)} className="rounded-md border border-clinic-line px-3 py-2 text-sm hover:border-clinic-blue">
+                          <button key={item.examId} type="button" onClick={() => submitExam(item.displayName)} className="ui-button-secondary">
                             {item.displayName}
                           </button>
                         ))}
@@ -1759,12 +1855,15 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                   ))}
                 </div>
                 <div className="mt-4 flex gap-2">
-                  <input value={examInput} onChange={(event) => setExamInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") submitExam(); }} className="flex-1 rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" placeholder={t(lang, "examPlaceholder")} />
-                  <button onClick={() => submitExam()} className="rounded-md bg-clinic-blue px-4 py-2 font-medium text-white">{t(lang, "queryExam")}</button>
+                  <input value={examInput} onChange={(event) => setExamInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") submitExam(); }} className="ui-input min-w-0 flex-1" placeholder={t(lang, "examPlaceholder")} />
+                  <button onClick={() => submitExam()} className="ui-button-primary">{t(lang, "queryExam")}</button>
                 </div>
                 <div className="mt-4 space-y-3">
                   {examLogs.map((log) => (
-                    <div key={`${log.at}-${log.input}`} className="rounded-md bg-clinic-paper p-3 text-sm leading-6"><span className="font-medium text-clinic-blue">{log.input}：</span>{log.result}</div>
+                    <article key={`${log.at}-${log.input}`} className="rounded-lg border border-clinic-line bg-clinic-paper p-3 text-sm leading-6">
+                      <div className="mb-1 flex flex-wrap items-center justify-between gap-2"><span className="font-semibold text-clinic-blue">{log.input}</span><span className="ui-status-info"><FileText size={14} aria-hidden="true" />{lang === "en" ? "Returned" : "已返回"}</span></div>
+                      <p>{log.result}</p>
+                    </article>
                   ))}
                 </div>
               </section>
@@ -1773,19 +1872,19 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 <h3 className="text-lg font-semibold">{t(lang, "investigationOrders")}</h3>
                 <div className="mt-4 flex flex-wrap gap-2 border-b border-clinic-line pb-3">
                   {orderPrimaryTabs.map((tab) => (
-                    <button key={tab} type="button" onClick={() => setActiveOrderTab(tab)} className={`rounded-md px-4 py-2 text-sm font-medium ${activeOrderTab === tab ? "bg-clinic-blue text-white" : "border border-clinic-line bg-white text-clinic-muted hover:border-clinic-blue"}`}>
+                    <button key={tab} type="button" onClick={() => setActiveOrderTab(tab)} className={`ui-button ${activeOrderTab === tab ? "bg-clinic-blue text-white" : "border border-clinic-line bg-white text-clinic-muted hover:border-clinic-blue"}`}>
                       {tab === "检验" ? t(lang, "labs") : tab === "检查" ? t(lang, "imaging") : tab === "病理/操作" ? t(lang, "procedures") : t(lang, "perioperativeOrders")}
                     </button>
                   ))}
                 </div>
-                <input value={orderSearch} onChange={(event) => setOrderSearch(event.target.value)} className="mt-4 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" placeholder={t(lang, "orderSearch")} />
+                <input value={orderSearch} onChange={(event) => setOrderSearch(event.target.value)} className="ui-input mt-4 w-full" placeholder={t(lang, "orderSearch")} />
                 <div className="mt-4 space-y-5">
                   {orderGroups.map((group) => (
-                    <section key={group.category} className="rounded-md border border-clinic-line p-4">
-                      <h4 className="font-medium text-clinic-blue">{group.category}</h4>
+                    <section key={group.category} className="rounded-xl border border-clinic-line p-4">
+                      <h4 className="font-semibold text-clinic-blue">{group.category}</h4>
                       <div className="mt-3 grid gap-2 md:grid-cols-2">
                         {group.items.map((item) => (
-                          <label key={item.orderId} className="flex min-h-[72px] items-start justify-between gap-3 rounded-md border border-clinic-line px-3 py-2 text-sm">
+                          <label key={item.orderId} className="flex min-h-[72px] items-start justify-between gap-3 rounded-lg border border-clinic-line px-3 py-2 text-sm transition-colors hover:border-clinic-blue">
                             <span className="flex items-start gap-2">
                               <input className="mt-1" type="checkbox" checked={answers.selectedOrders.includes(item.displayName)} onChange={() => toggleOrder(item.displayName)} />
                               <span>
@@ -1802,9 +1901,9 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 </div>
                 <label className="mt-4 block"><span className="font-medium">{t(lang, "otherOrders")}</span><textarea value={answers.customOrders} onChange={(event) => updateAnswer("customOrders", event.target.value)} rows={4} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" /></label>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <input value={orderInput} onChange={(event) => setOrderInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") submitOrder(); }} className="min-w-[240px] flex-1 rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" placeholder={t(lang, "orderPlaceholder")} />
-                  <button onClick={() => submitOrder()} className="rounded-md bg-clinic-blue px-4 py-2 font-medium text-white">{t(lang, "orderAndReturn")}</button>
-                  <button onClick={submitSelectedOrders} className="rounded-md border border-clinic-line px-4 py-2 font-medium hover:border-clinic-blue">{t(lang, "selectedOrderResults")}</button>
+                  <input value={orderInput} onChange={(event) => setOrderInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") submitOrder(); }} className="ui-input min-w-[220px] flex-1" placeholder={t(lang, "orderPlaceholder")} />
+                  <button onClick={() => submitOrder()} className="ui-button-primary">{t(lang, "orderAndReturn")}</button>
+                  <button onClick={submitSelectedOrders} className="ui-button-secondary">{t(lang, "selectedOrderResults")}</button>
                 </div>
                 <div className="mt-4 space-y-3">
                   {orderLogs.map((log) => (
@@ -1976,7 +2075,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           {showStageFeedback && activeEvaluation && <FeedbackBox evaluation={activeEvaluation} lang={lang} />}
         </section>
 
-        <aside className="space-y-4">
+        <aside className="hidden space-y-4 min-[1380px]:block">
           <section className="rounded-lg border border-clinic-line bg-white p-5">
             <h2 className="font-semibold">{t(lang, "trainingState")}</h2>
             <div className="mt-3 space-y-2 text-sm text-clinic-muted">
