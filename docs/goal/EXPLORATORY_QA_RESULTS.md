@@ -38,7 +38,7 @@
 | 脱敏问答 | 21 轮，全部 `source=fixture`；无密钥/直接标识符 |
 | 敏感明文扫描 | PASS；QA JSON/XML/HTML 未发现 Authorization、Cookie、Bearer、`sk-*` 或完整训练签名 |
 
-首轮整理后本机保留 56 个自动生成证据文件、32,273,305 字节，另有证据索引。Git 最小证据集为两张 HEM-P1-027 对照截图和一个关闭源码嵌入的定向失败 trace，共 163,606 字节；其余 HTML、重复截图、通过 trace、视频、报告与 transcript 均不提交，详见 `artifacts/exploratory-qa/EVIDENCE_INDEX.md`。
+首轮整理后本机保留 55 个自动生成证据文件、32,261,789 字节，另有证据索引。Git 最小证据集为两张 HEM-P1-027 对照截图和一个关闭源码嵌入的定向失败 trace，共 163,606 字节；其余 HTML、重复截图、通过 trace、视频、报告与 transcript 均不提交，详见 `artifacts/exploratory-qa/EVIDENCE_INDEX.md`。
 
 环境说明：当前独立 worktree 没有完整依赖链接，动态 Next dev 未在 120 秒就绪。首轮只读复用同 HEAD 主 Goal worktree 的静态 `out` 启动服务；因此页面/UI/路由结论有效，API/真实 AI 结论仍保持阻塞。Playwright bundled Chromium 未安装，按仓库既有本地策略改用 headless Chrome channel；另安装了 Playwright 专用 ffmpeg 以保存失败录像。
 
