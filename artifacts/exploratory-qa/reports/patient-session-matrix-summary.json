@@ -1,0 +1,3440 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-13T20:25:21.998Z",
+  "mode": "local-rule-no-provider",
+  "medicalTruthAdjudicated": false,
+  "medicalBlocksPreserved": [
+    "HEM-P0-001",
+    "HEM-P0-023"
+  ],
+  "matrix": {
+    "cases": 42,
+    "canonicalSlots": 37,
+    "languages": 2,
+    "variantsPerSlotPerLanguage": 2,
+    "sourceCellsChecked": 3108,
+    "sessionChecks": 84,
+    "routeChecks": 6216,
+    "repeatChecks": 6216,
+    "boundaryChecks": 168,
+    "providerCalls": 0,
+    "expectedDirectQuarantineEvents": 144,
+    "quarantineEventsObserved": 204
+  },
+  "result": {
+    "passed": false,
+    "failureInstances": 1127,
+    "failureGroups": 127
+  },
+  "failureGroups": [
+    {
+      "kind": "english_opening_contains_cjk",
+      "language": "en",
+      "metrics": {
+        "characters": 23,
+        "lines": 1,
+        "maxLineCharacters": 23,
+        "bulletShaped": false
+      },
+      "expectedSlotIds": [],
+      "actualSlotIds": [],
+      "safetyFlags": [],
+      "caseIds": [
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P008",
+        "P010",
+        "P012"
+      ],
+      "count": 7
+    },
+    {
+      "kind": "english_opening_contains_cjk",
+      "language": "en",
+      "metrics": {
+        "characters": 22,
+        "lines": 1,
+        "maxLineCharacters": 22,
+        "bulletShaped": false
+      },
+      "expectedSlotIds": [],
+      "actualSlotIds": [],
+      "safetyFlags": [],
+      "caseIds": [
+        "P005",
+        "P006",
+        "P007",
+        "P009",
+        "P011"
+      ],
+      "count": 5
+    },
+    {
+      "kind": "english_opening_contains_cjk",
+      "language": "en",
+      "metrics": {
+        "characters": 19,
+        "lines": 1,
+        "maxLineCharacters": 19,
+        "bulletShaped": false
+      },
+      "expectedSlotIds": [],
+      "actualSlotIds": [],
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-003",
+        "HX-ADD-011",
+        "HX-ADD-013",
+        "HX-ADD-026",
+        "HX-ADD-030"
+      ],
+      "count": 6
+    },
+    {
+      "kind": "english_opening_contains_cjk",
+      "language": "en",
+      "metrics": {
+        "characters": 18,
+        "lines": 1,
+        "maxLineCharacters": 18,
+        "bulletShaped": false
+      },
+      "expectedSlotIds": [],
+      "actualSlotIds": [],
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-002",
+        "HX-ADD-004",
+        "HX-ADD-005",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-012",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029"
+      ],
+      "count": 24
+    },
+    {
+      "kind": "history_question_false_boundary",
+      "slotId": "tumor_history",
+      "language": "zh",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "PAST_MALIGNANCY"
+      ],
+      "actualSlotIds": [],
+      "safetyFlags": [
+        "blocked_diagnosis_request"
+      ],
+      "fallbackReason": "diagnosis_boundary",
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-002",
+        "HX-ADD-003",
+        "HX-ADD-004",
+        "HX-ADD-005",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-026",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029",
+        "HX-ADD-030",
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 42
+    },
+    {
+      "kind": "history_question_false_boundary",
+      "slotId": "urinary_procedure_history",
+      "language": "zh",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "PAST_URINARY_PROCEDURE"
+      ],
+      "actualSlotIds": [],
+      "safetyFlags": [
+        "blocked_report_request"
+      ],
+      "fallbackReason": "report_boundary",
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-002",
+        "HX-ADD-003",
+        "HX-ADD-004",
+        "HX-ADD-005",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-026",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029",
+        "HX-ADD-030",
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 42
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "antiplatelet",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "MED_ANTIPLATELET"
+      ],
+      "actualSlotIds": [
+        "MED_ANTIPLATELET"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 102,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-024"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "antiplatelet",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "MED_ANTIPLATELET"
+      ],
+      "actualSlotIds": [
+        "MED_ANTIPLATELET"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 102,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-024"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "antiplatelet",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "MED_ANTIPLATELET"
+      ],
+      "actualSlotIds": [
+        "MED_ANTIPLATELET"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 105,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-027"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "antiplatelet",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "MED_ANTIPLATELET"
+      ],
+      "actualSlotIds": [
+        "MED_ANTIPLATELET"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 105,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-027"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "chief_complaint",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "chief_complaint"
+      ],
+      "actualSlotIds": [
+        "chief_complaint"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 93,
+      "safetyFlags": [],
+      "caseIds": [
+        "P005"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "chief_complaint",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "chief_complaint"
+      ],
+      "actualSlotIds": [
+        "chief_complaint"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 93,
+      "safetyFlags": [],
+      "caseIds": [
+        "P005"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "chief_complaint",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "chief_complaint"
+      ],
+      "actualSlotIds": [
+        "chief_complaint"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 88,
+      "safetyFlags": [],
+      "caseIds": [
+        "P007"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "chief_complaint",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "chief_complaint"
+      ],
+      "actualSlotIds": [
+        "chief_complaint"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 88,
+      "safetyFlags": [],
+      "caseIds": [
+        "P007"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "chief_complaint",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "chief_complaint"
+      ],
+      "actualSlotIds": [
+        "chief_complaint"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 102,
+      "safetyFlags": [],
+      "caseIds": [
+        "P010"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "chief_complaint",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "chief_complaint"
+      ],
+      "actualSlotIds": [
+        "chief_complaint"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 102,
+      "safetyFlags": [],
+      "caseIds": [
+        "P010"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "chief_complaint",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "chief_complaint"
+      ],
+      "actualSlotIds": [
+        "chief_complaint"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 92,
+      "safetyFlags": [],
+      "caseIds": [
+        "P012"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "chief_complaint",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "chief_complaint"
+      ],
+      "actualSlotIds": [
+        "chief_complaint"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 92,
+      "safetyFlags": [],
+      "caseIds": [
+        "P012"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "family_history",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "actualSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 139,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-001"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "family_history",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "actualSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 139,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-001"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "family_history",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "actualSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 145,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-003"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "family_history",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "actualSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 145,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-003"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "family_history",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "actualSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 137,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-004"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "family_history",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "actualSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 137,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-004"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "family_history",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "actualSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 117,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-005",
+        "HX-ADD-015"
+      ],
+      "count": 2
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "family_history",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "actualSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 117,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-005",
+        "HX-ADD-015"
+      ],
+      "count": 2
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "family_history",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "actualSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "answerSource": "source",
+      "sourceCharacters": 118,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-018"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "family_history",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "actualSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "answerSource": "source",
+      "sourceCharacters": 118,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-018"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "family_history",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "actualSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 114,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-019"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "family_history",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "actualSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 114,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-019"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "family_history",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "actualSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 100,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-020"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "family_history",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "actualSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 100,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-020"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "family_history",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "actualSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 170,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-021"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "family_history",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "actualSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 170,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-021"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "family_history",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "actualSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 138,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-030"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "family_history",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "actualSlotIds": [
+        "FAMILY_HISTORY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 138,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-030"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "glomerular_features",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "glomerular_features"
+      ],
+      "actualSlotIds": [
+        "glomerular_features"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 83,
+      "safetyFlags": [],
+      "caseIds": [
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010"
+      ],
+      "count": 10
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "glomerular_features",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "glomerular_features"
+      ],
+      "actualSlotIds": [
+        "glomerular_features"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 83,
+      "safetyFlags": [],
+      "caseIds": [
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010"
+      ],
+      "count": 10
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "glomerular_features",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "glomerular_features"
+      ],
+      "actualSlotIds": [
+        "glomerular_features"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 89,
+      "safetyFlags": [],
+      "caseIds": [
+        "P012"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "glomerular_features",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "glomerular_features"
+      ],
+      "actualSlotIds": [
+        "glomerular_features"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 89,
+      "safetyFlags": [],
+      "caseIds": [
+        "P012"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "glomerular_features",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "glomerular_features"
+      ],
+      "actualSlotIds": [
+        "glomerular_features"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 81,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-002",
+        "HX-ADD-003",
+        "HX-ADD-004",
+        "HX-ADD-005",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-026",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029",
+        "HX-ADD-030"
+      ],
+      "count": 30
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "glomerular_features",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "glomerular_features"
+      ],
+      "actualSlotIds": [
+        "glomerular_features"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 81,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-002",
+        "HX-ADD-003",
+        "HX-ADD-004",
+        "HX-ADD-005",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-026",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029",
+        "HX-ADD-030"
+      ],
+      "count": 30
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "gynecologic_contamination",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "GYNE_MENSTRUAL"
+      ],
+      "actualSlotIds": [
+        "GYNE_MENSTRUAL"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 123,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-002"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "gynecologic_contamination",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "GYNE_MENSTRUAL"
+      ],
+      "actualSlotIds": [
+        "GYNE_MENSTRUAL"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 149,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-006"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "gynecologic_contamination",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "GYNE_MENSTRUAL"
+      ],
+      "actualSlotIds": [
+        "GYNE_MENSTRUAL"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 108,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-009"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "gynecologic_contamination",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "GYNE_MENSTRUAL"
+      ],
+      "actualSlotIds": [
+        "GYNE_MENSTRUAL"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 117,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-014"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "gynecologic_contamination",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "GYNE_MENSTRUAL"
+      ],
+      "actualSlotIds": [
+        "GYNE_MENSTRUAL"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 169,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-023"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "gynecologic_contamination",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "GYNE_PREGNANCY"
+      ],
+      "actualSlotIds": [
+        "GYNE_PREGNANCY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 169,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-023"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "gynecologic_contamination",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "GYNE_MENSTRUAL"
+      ],
+      "actualSlotIds": [
+        "GYNE_MENSTRUAL"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 85,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-025"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "gynecologic_contamination",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "GYNE_PREGNANCY"
+      ],
+      "actualSlotIds": [
+        "GYNE_PREGNANCY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 85,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-025"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "gynecologic_contamination",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "GYNE_MENSTRUAL"
+      ],
+      "actualSlotIds": [
+        "GYNE_MENSTRUAL"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 125,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-029"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "hematuria_onset",
+      "language": "zh",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "hematuria_onset"
+      ],
+      "actualSlotIds": [
+        "hematuria_onset"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 185,
+      "safetyFlags": [],
+      "caseIds": [
+        "P009"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "hematuria_onset",
+      "language": "zh",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "hematuria_onset"
+      ],
+      "actualSlotIds": [
+        "hematuria_onset"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 185,
+      "safetyFlags": [],
+      "caseIds": [
+        "P009"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "hematuria_onset",
+      "language": "zh",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "hematuria_onset"
+      ],
+      "actualSlotIds": [
+        "hematuria_onset"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 250,
+      "safetyFlags": [],
+      "caseIds": [
+        "P012"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "hematuria_onset",
+      "language": "zh",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "hematuria_onset"
+      ],
+      "actualSlotIds": [
+        "hematuria_onset"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 250,
+      "safetyFlags": [],
+      "caseIds": [
+        "P012"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "hematuria_onset",
+      "language": "zh",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "hematuria_onset"
+      ],
+      "actualSlotIds": [
+        "hematuria_onset"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 141,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-002"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "hematuria_onset",
+      "language": "zh",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "hematuria_onset"
+      ],
+      "actualSlotIds": [
+        "hematuria_onset"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 141,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-002"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "hematuria_onset",
+      "language": "zh",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "hematuria_onset"
+      ],
+      "actualSlotIds": [
+        "hematuria_onset"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 136,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-003"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "hematuria_onset",
+      "language": "zh",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "hematuria_onset"
+      ],
+      "actualSlotIds": [
+        "hematuria_onset"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 136,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-003"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "hematuria_onset",
+      "language": "zh",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "hematuria_onset"
+      ],
+      "actualSlotIds": [
+        "hematuria_onset"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 109,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-011",
+        "HX-ADD-022"
+      ],
+      "count": 2
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "hematuria_onset",
+      "language": "zh",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "hematuria_onset"
+      ],
+      "actualSlotIds": [
+        "hematuria_onset"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 109,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-011",
+        "HX-ADD-022"
+      ],
+      "count": 2
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "hematuria_onset",
+      "language": "zh",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "hematuria_onset"
+      ],
+      "actualSlotIds": [
+        "hematuria_onset"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 114,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-013",
+        "HX-ADD-027"
+      ],
+      "count": 2
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "hematuria_onset",
+      "language": "zh",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "hematuria_onset"
+      ],
+      "actualSlotIds": [
+        "hematuria_onset"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 114,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-013",
+        "HX-ADD-027"
+      ],
+      "count": 2
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "hematuria_onset",
+      "language": "zh",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "hematuria_onset"
+      ],
+      "actualSlotIds": [
+        "hematuria_onset"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 116,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-018",
+        "HX-ADD-024"
+      ],
+      "count": 2
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "hematuria_onset",
+      "language": "zh",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "hematuria_onset"
+      ],
+      "actualSlotIds": [
+        "hematuria_onset"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 116,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-018",
+        "HX-ADD-024"
+      ],
+      "count": 2
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "hematuria_onset",
+      "language": "zh",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "hematuria_onset"
+      ],
+      "actualSlotIds": [
+        "hematuria_onset"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 100,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-025"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "hematuria_onset",
+      "language": "zh",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "hematuria_onset"
+      ],
+      "actualSlotIds": [
+        "hematuria_onset"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 100,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-025"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "hematuria_onset",
+      "language": "zh",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "hematuria_onset"
+      ],
+      "actualSlotIds": [
+        "hematuria_onset"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 120,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-026"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "hematuria_onset",
+      "language": "zh",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "hematuria_onset"
+      ],
+      "actualSlotIds": [
+        "hematuria_onset"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 120,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-026"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "hematuria_onset",
+      "language": "zh",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "hematuria_onset"
+      ],
+      "actualSlotIds": [
+        "hematuria_onset"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 121,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-030"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "hematuria_onset",
+      "language": "zh",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "hematuria_onset"
+      ],
+      "actualSlotIds": [
+        "hematuria_onset"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 121,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-030"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "medications",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "MED_ALL"
+      ],
+      "actualSlotIds": [
+        "MED_ALL"
+      ],
+      "answerSource": "source",
+      "sourceCharacters": 39,
+      "safetyFlags": [],
+      "caseIds": [
+        "P004"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "medications",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "MED_ALL"
+      ],
+      "actualSlotIds": [
+        "MED_ALL"
+      ],
+      "answerSource": "source",
+      "sourceCharacters": 39,
+      "safetyFlags": [],
+      "caseIds": [
+        "P004"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "medications",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "MED_ALL"
+      ],
+      "actualSlotIds": [
+        "MED_ALL"
+      ],
+      "answerSource": "source",
+      "sourceCharacters": 86,
+      "safetyFlags": [],
+      "caseIds": [
+        "P005"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "medications",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "MED_ALL"
+      ],
+      "actualSlotIds": [
+        "MED_ALL"
+      ],
+      "answerSource": "source",
+      "sourceCharacters": 86,
+      "safetyFlags": [],
+      "caseIds": [
+        "P005"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "occupation_exposure",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "LIFE_EXPOSURE"
+      ],
+      "actualSlotIds": [
+        "LIFE_EXPOSURE"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 106,
+      "safetyFlags": [],
+      "caseIds": [
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 12
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "occupation_exposure",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "LIFE_EXPOSURE"
+      ],
+      "actualSlotIds": [
+        "LIFE_EXPOSURE"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 106,
+      "safetyFlags": [],
+      "caseIds": [
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 12
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "occupation_exposure",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "LIFE_EXPOSURE"
+      ],
+      "actualSlotIds": [
+        "LIFE_EXPOSURE"
+      ],
+      "answerSource": "source",
+      "sourceCharacters": 84,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-002",
+        "HX-ADD-004",
+        "HX-ADD-005",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-026",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029"
+      ],
+      "count": 27
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "occupation_exposure",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "LIFE_EXPOSURE"
+      ],
+      "actualSlotIds": [
+        "LIFE_EXPOSURE"
+      ],
+      "answerSource": "source",
+      "sourceCharacters": 84,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-002",
+        "HX-ADD-004",
+        "HX-ADD-005",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-026",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029"
+      ],
+      "count": 27
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "occupation_exposure",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "LIFE_EXPOSURE"
+      ],
+      "actualSlotIds": [
+        "LIFE_EXPOSURE"
+      ],
+      "answerSource": "source",
+      "sourceCharacters": 82,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-030"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "occupation_exposure",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "LIFE_EXPOSURE"
+      ],
+      "actualSlotIds": [
+        "LIFE_EXPOSURE"
+      ],
+      "answerSource": "source",
+      "sourceCharacters": 82,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-030"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "smoking",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "LIFE_SMOKING"
+      ],
+      "actualSlotIds": [
+        "LIFE_SMOKING"
+      ],
+      "answerSource": "source",
+      "sourceCharacters": 103,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-001"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "smoking",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "LIFE_SMOKING"
+      ],
+      "actualSlotIds": [
+        "LIFE_SMOKING"
+      ],
+      "answerSource": "source",
+      "sourceCharacters": 103,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-001"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "surgery_history",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "PAST_SURGERY"
+      ],
+      "actualSlotIds": [
+        "PAST_SURGERY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 139,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-011",
+        "HX-ADD-012"
+      ],
+      "count": 2
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "surgery_history",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "PAST_SURGERY"
+      ],
+      "actualSlotIds": [
+        "PAST_SURGERY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 139,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-011",
+        "HX-ADD-012"
+      ],
+      "count": 2
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "surgery_history",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "PAST_SURGERY"
+      ],
+      "actualSlotIds": [
+        "PAST_SURGERY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 134,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-015"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "surgery_history",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "PAST_SURGERY"
+      ],
+      "actualSlotIds": [
+        "PAST_SURGERY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 134,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-015"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "surgery_history",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "PAST_SURGERY"
+      ],
+      "actualSlotIds": [
+        "PAST_SURGERY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 140,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-017"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "surgery_history",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "PAST_SURGERY"
+      ],
+      "actualSlotIds": [
+        "PAST_SURGERY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 140,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-017"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "triggers",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "triggers"
+      ],
+      "actualSlotIds": [
+        "triggers"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 88,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-002",
+        "HX-ADD-003",
+        "HX-ADD-004",
+        "HX-ADD-005",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029",
+        "HX-ADD-030",
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 40
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "triggers",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "triggers"
+      ],
+      "actualSlotIds": [
+        "triggers"
+      ],
+      "answerSource": "case_bilingual_slot",
+      "sourceCharacters": 88,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-002",
+        "HX-ADD-003",
+        "HX-ADD-004",
+        "HX-ADD-005",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029",
+        "HX-ADD-030",
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 40
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "tumor_history",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "PAST_MALIGNANCY"
+      ],
+      "actualSlotIds": [
+        "PAST_MALIGNANCY"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 99,
+      "safetyFlags": [],
+      "caseIds": [
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 12
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "urinary_procedure_history",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "PAST_URINARY_PROCEDURE"
+      ],
+      "actualSlotIds": [
+        "PAST_URINARY_PROCEDURE"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 93,
+      "safetyFlags": [],
+      "caseIds": [
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 11
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "urinary_procedure_history",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "PAST_URINARY_PROCEDURE"
+      ],
+      "actualSlotIds": [
+        "PAST_URINARY_PROCEDURE"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 93,
+      "safetyFlags": [],
+      "caseIds": [
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 11
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "urinary_procedure_history",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "PAST_URINARY_PROCEDURE"
+      ],
+      "actualSlotIds": [
+        "PAST_URINARY_PROCEDURE"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 108,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-008",
+        "HX-ADD-013"
+      ],
+      "count": 2
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "urinary_procedure_history",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "PAST_URINARY_PROCEDURE"
+      ],
+      "actualSlotIds": [
+        "PAST_URINARY_PROCEDURE"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 108,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-008",
+        "HX-ADD-013"
+      ],
+      "count": 2
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "urinary_procedure_history",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "PAST_URINARY_PROCEDURE"
+      ],
+      "actualSlotIds": [
+        "PAST_URINARY_PROCEDURE"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 131,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-010"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "urinary_procedure_history",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "PAST_URINARY_PROCEDURE"
+      ],
+      "actualSlotIds": [
+        "PAST_URINARY_PROCEDURE"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 131,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-010"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "urinary_procedure_history",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "PAST_URINARY_PROCEDURE"
+      ],
+      "actualSlotIds": [
+        "PAST_URINARY_PROCEDURE"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 99,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-018"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "matched_fact_suppressed_to_unknown",
+      "slotId": "urinary_procedure_history",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "PAST_URINARY_PROCEDURE"
+      ],
+      "actualSlotIds": [
+        "PAST_URINARY_PROCEDURE"
+      ],
+      "answerSource": "author_added_for_simulation",
+      "sourceCharacters": 99,
+      "safetyFlags": [],
+      "caseIds": [
+        "HX-ADD-018"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "route_mismatch",
+      "slotId": "flank_pain",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "flank_pain"
+      ],
+      "actualSlotIds": [],
+      "safetyFlags": [
+        "medical_bilingual_conflict_pending_review"
+      ],
+      "fallbackReason": "medical_bilingual_conflict_pending_review",
+      "answerSource": "pending_medical_review",
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-005",
+        "P001",
+        "P003",
+        "P004"
+      ],
+      "count": 5
+    },
+    {
+      "kind": "route_mismatch",
+      "slotId": "flank_pain",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "flank_pain"
+      ],
+      "actualSlotIds": [],
+      "safetyFlags": [
+        "medical_bilingual_conflict_pending_review"
+      ],
+      "fallbackReason": "medical_bilingual_conflict_pending_review",
+      "answerSource": "pending_medical_review",
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-005",
+        "P001",
+        "P003",
+        "P004"
+      ],
+      "count": 5
+    },
+    {
+      "kind": "route_mismatch",
+      "slotId": "flank_pain",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "flank_pain"
+      ],
+      "actualSlotIds": [
+        "flank_pain",
+        "pain"
+      ],
+      "safetyFlags": [],
+      "fallbackReason": "compound_question_preserves_all_facts",
+      "answerSource": "case_bilingual_slot",
+      "caseIds": [
+        "HX-ADD-002",
+        "HX-ADD-003",
+        "HX-ADD-004",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-026",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029",
+        "HX-ADD-030",
+        "P002",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 37
+    },
+    {
+      "kind": "route_mismatch",
+      "slotId": "flank_pain",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "flank_pain"
+      ],
+      "actualSlotIds": [
+        "flank_pain",
+        "pain"
+      ],
+      "safetyFlags": [],
+      "fallbackReason": "compound_question_preserves_all_facts",
+      "answerSource": "case_bilingual_slot",
+      "caseIds": [
+        "HX-ADD-002",
+        "HX-ADD-003",
+        "HX-ADD-004",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-026",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029",
+        "HX-ADD-030",
+        "P002",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 37
+    },
+    {
+      "kind": "route_mismatch",
+      "slotId": "prior_care",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "prior_care"
+      ],
+      "actualSlotIds": [],
+      "safetyFlags": [
+        "llm_error_fallback"
+      ],
+      "fallbackReason": "",
+      "answerSource": "",
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-002",
+        "HX-ADD-003",
+        "HX-ADD-004",
+        "HX-ADD-005",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-026",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029",
+        "HX-ADD-030",
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 42
+    },
+    {
+      "kind": "route_mismatch",
+      "slotId": "prior_care",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "prior_care"
+      ],
+      "actualSlotIds": [],
+      "safetyFlags": [
+        "llm_error_fallback"
+      ],
+      "fallbackReason": "",
+      "answerSource": "",
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-002",
+        "HX-ADD-003",
+        "HX-ADD-004",
+        "HX-ADD-005",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-026",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029",
+        "HX-ADD-030",
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 42
+    },
+    {
+      "kind": "route_mismatch",
+      "slotId": "prior_care",
+      "language": "zh",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "prior_care"
+      ],
+      "actualSlotIds": [],
+      "safetyFlags": [
+        "llm_error_fallback"
+      ],
+      "fallbackReason": "",
+      "answerSource": "",
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-002",
+        "HX-ADD-003",
+        "HX-ADD-004",
+        "HX-ADD-005",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-026",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029",
+        "HX-ADD-030",
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 42
+    },
+    {
+      "kind": "route_mismatch",
+      "slotId": "prior_care",
+      "language": "zh",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "prior_care"
+      ],
+      "actualSlotIds": [],
+      "safetyFlags": [
+        "llm_error_fallback"
+      ],
+      "fallbackReason": "",
+      "answerSource": "",
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-002",
+        "HX-ADD-003",
+        "HX-ADD-004",
+        "HX-ADD-005",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-026",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029",
+        "HX-ADD-030",
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 42
+    },
+    {
+      "kind": "route_mismatch",
+      "slotId": "radiating_pain",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "radiating_pain"
+      ],
+      "actualSlotIds": [],
+      "safetyFlags": [
+        "medical_bilingual_conflict_pending_review"
+      ],
+      "fallbackReason": "medical_bilingual_conflict_pending_review",
+      "answerSource": "pending_medical_review",
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-005",
+        "P001",
+        "P003",
+        "P004"
+      ],
+      "count": 5
+    },
+    {
+      "kind": "route_mismatch",
+      "slotId": "radiating_pain",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "radiating_pain"
+      ],
+      "actualSlotIds": [],
+      "safetyFlags": [
+        "medical_bilingual_conflict_pending_review"
+      ],
+      "fallbackReason": "medical_bilingual_conflict_pending_review",
+      "answerSource": "pending_medical_review",
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-005",
+        "P001",
+        "P003",
+        "P004"
+      ],
+      "count": 5
+    },
+    {
+      "kind": "route_mismatch",
+      "slotId": "radiating_pain",
+      "language": "en",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "radiating_pain"
+      ],
+      "actualSlotIds": [
+        "pain",
+        "radiating_pain"
+      ],
+      "safetyFlags": [],
+      "fallbackReason": "compound_question_preserves_all_facts",
+      "answerSource": "case_bilingual_slot",
+      "caseIds": [
+        "HX-ADD-002",
+        "HX-ADD-003",
+        "HX-ADD-004",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-026",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029",
+        "HX-ADD-030",
+        "P002",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 37
+    },
+    {
+      "kind": "route_mismatch",
+      "slotId": "radiating_pain",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "radiating_pain"
+      ],
+      "actualSlotIds": [
+        "pain",
+        "radiating_pain"
+      ],
+      "safetyFlags": [],
+      "fallbackReason": "compound_question_preserves_all_facts",
+      "answerSource": "case_bilingual_slot",
+      "caseIds": [
+        "HX-ADD-002",
+        "HX-ADD-003",
+        "HX-ADD-004",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-026",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029",
+        "HX-ADD-030",
+        "P002",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 37
+    },
+    {
+      "kind": "route_mismatch",
+      "slotId": "radiating_pain",
+      "language": "zh",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "radiating_pain"
+      ],
+      "actualSlotIds": [],
+      "safetyFlags": [
+        "medical_bilingual_conflict_pending_review"
+      ],
+      "fallbackReason": "medical_bilingual_conflict_pending_review",
+      "answerSource": "pending_medical_review",
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-005",
+        "P001",
+        "P003",
+        "P004"
+      ],
+      "count": 5
+    },
+    {
+      "kind": "route_mismatch",
+      "slotId": "radiating_pain",
+      "language": "zh",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "radiating_pain"
+      ],
+      "actualSlotIds": [
+        "pain",
+        "radiating_pain"
+      ],
+      "safetyFlags": [],
+      "fallbackReason": "compound_question_preserves_all_facts",
+      "answerSource": "case_bilingual_slot",
+      "caseIds": [
+        "HX-ADD-002",
+        "HX-ADD-003",
+        "HX-ADD-004",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-026",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029",
+        "HX-ADD-030",
+        "P002",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 37
+    },
+    {
+      "kind": "route_mismatch",
+      "slotId": "renal_colic",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "renal_colic"
+      ],
+      "actualSlotIds": [],
+      "safetyFlags": [
+        "medical_bilingual_conflict_pending_review"
+      ],
+      "fallbackReason": "medical_bilingual_conflict_pending_review",
+      "answerSource": "pending_medical_review",
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-005",
+        "P001",
+        "P003",
+        "P004"
+      ],
+      "count": 5
+    },
+    {
+      "kind": "route_mismatch",
+      "slotId": "renal_colic",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "renal_colic"
+      ],
+      "actualSlotIds": [
+        "pain",
+        "renal_colic"
+      ],
+      "safetyFlags": [],
+      "fallbackReason": "compound_question_preserves_all_facts",
+      "answerSource": "case_bilingual_slot",
+      "caseIds": [
+        "HX-ADD-002",
+        "HX-ADD-003",
+        "HX-ADD-004",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-026",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029",
+        "HX-ADD-030",
+        "P002",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 37
+    },
+    {
+      "kind": "route_mismatch",
+      "slotId": "retention",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "retention"
+      ],
+      "actualSlotIds": [],
+      "safetyFlags": [
+        "llm_error_fallback"
+      ],
+      "fallbackReason": "",
+      "answerSource": "",
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-002",
+        "HX-ADD-003",
+        "HX-ADD-004",
+        "HX-ADD-005",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-026",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029",
+        "HX-ADD-030",
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 42
+    },
+    {
+      "kind": "route_mismatch",
+      "slotId": "tumor_history",
+      "language": "en",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "PAST_MALIGNANCY"
+      ],
+      "actualSlotIds": [],
+      "safetyFlags": [
+        "llm_error_fallback"
+      ],
+      "fallbackReason": "",
+      "answerSource": "",
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-002",
+        "HX-ADD-003",
+        "HX-ADD-004",
+        "HX-ADD-005",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-026",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029",
+        "HX-ADD-030",
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 42
+    },
+    {
+      "kind": "route_mismatch",
+      "slotId": "tumor_history",
+      "language": "zh",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "PAST_MALIGNANCY"
+      ],
+      "actualSlotIds": [],
+      "safetyFlags": [
+        "blocked_diagnosis_request"
+      ],
+      "fallbackReason": "diagnosis_boundary",
+      "answerSource": "rule",
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-002",
+        "HX-ADD-003",
+        "HX-ADD-004",
+        "HX-ADD-005",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-026",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029",
+        "HX-ADD-030",
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 42
+    },
+    {
+      "kind": "route_mismatch",
+      "slotId": "urinary_procedure_history",
+      "language": "zh",
+      "variantIndex": 0,
+      "expectedSlotIds": [
+        "PAST_URINARY_PROCEDURE"
+      ],
+      "actualSlotIds": [],
+      "safetyFlags": [
+        "blocked_report_request"
+      ],
+      "fallbackReason": "report_boundary",
+      "answerSource": "rule",
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-002",
+        "HX-ADD-003",
+        "HX-ADD-004",
+        "HX-ADD-005",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-026",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029",
+        "HX-ADD-030",
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 42
+    },
+    {
+      "kind": "route_mismatch",
+      "slotId": "urinary_procedure_history",
+      "language": "zh",
+      "variantIndex": 1,
+      "expectedSlotIds": [
+        "PAST_URINARY_PROCEDURE"
+      ],
+      "actualSlotIds": [],
+      "safetyFlags": [
+        "llm_error_fallback"
+      ],
+      "fallbackReason": "",
+      "answerSource": "",
+      "caseIds": [
+        "HX-ADD-001",
+        "HX-ADD-002",
+        "HX-ADD-003",
+        "HX-ADD-004",
+        "HX-ADD-005",
+        "HX-ADD-006",
+        "HX-ADD-007",
+        "HX-ADD-008",
+        "HX-ADD-009",
+        "HX-ADD-010",
+        "HX-ADD-011",
+        "HX-ADD-012",
+        "HX-ADD-013",
+        "HX-ADD-014",
+        "HX-ADD-015",
+        "HX-ADD-016",
+        "HX-ADD-017",
+        "HX-ADD-018",
+        "HX-ADD-019",
+        "HX-ADD-020",
+        "HX-ADD-021",
+        "HX-ADD-022",
+        "HX-ADD-023",
+        "HX-ADD-024",
+        "HX-ADD-025",
+        "HX-ADD-026",
+        "HX-ADD-027",
+        "HX-ADD-028",
+        "HX-ADD-029",
+        "HX-ADD-030",
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ],
+      "count": 42
+    },
+    {
+      "kind": "teacher_meta_leak",
+      "slotId": "clots",
+      "language": "zh",
+      "variantIndex": 0,
+      "metrics": {
+        "characters": 20,
+        "lines": 1,
+        "maxLineCharacters": 20,
+        "bulletShaped": false
+      },
+      "expectedSlotIds": [],
+      "actualSlotIds": [],
+      "safetyFlags": [],
+      "caseIds": [
+        "P004"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "teacher_meta_leak",
+      "slotId": "clots",
+      "language": "zh",
+      "variantIndex": 1,
+      "metrics": {
+        "characters": 20,
+        "lines": 1,
+        "maxLineCharacters": 20,
+        "bulletShaped": false
+      },
+      "expectedSlotIds": [],
+      "actualSlotIds": [],
+      "safetyFlags": [],
+      "caseIds": [
+        "P004"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "teacher_meta_leak",
+      "slotId": "hematuria_phase",
+      "language": "zh",
+      "variantIndex": 0,
+      "metrics": {
+        "characters": 32,
+        "lines": 1,
+        "maxLineCharacters": 32,
+        "bulletShaped": false
+      },
+      "expectedSlotIds": [],
+      "actualSlotIds": [],
+      "safetyFlags": [],
+      "caseIds": [
+        "P005"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "teacher_meta_leak",
+      "slotId": "hematuria_phase",
+      "language": "zh",
+      "variantIndex": 1,
+      "metrics": {
+        "characters": 32,
+        "lines": 1,
+        "maxLineCharacters": 32,
+        "bulletShaped": false
+      },
+      "expectedSlotIds": [],
+      "actualSlotIds": [],
+      "safetyFlags": [],
+      "caseIds": [
+        "P005"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "teacher_meta_leak",
+      "slotId": "hematuria_phase",
+      "language": "zh",
+      "variantIndex": 0,
+      "metrics": {
+        "characters": 30,
+        "lines": 1,
+        "maxLineCharacters": 30,
+        "bulletShaped": false
+      },
+      "expectedSlotIds": [],
+      "actualSlotIds": [],
+      "safetyFlags": [],
+      "caseIds": [
+        "P006"
+      ],
+      "count": 1
+    },
+    {
+      "kind": "teacher_meta_leak",
+      "slotId": "hematuria_phase",
+      "language": "zh",
+      "variantIndex": 1,
+      "metrics": {
+        "characters": 30,
+        "lines": 1,
+        "maxLineCharacters": 30,
+        "bulletShaped": false
+      },
+      "expectedSlotIds": [],
+      "actualSlotIds": [],
+      "safetyFlags": [],
+      "caseIds": [
+        "P006"
+      ],
+      "count": 1
+    }
+  ]
+}
