@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import path from "node:path";
 import * as XLSX from "xlsx";
+import { readWorkbookFile } from "./lib/safe-workbook";
 
 const workbookPath = path.resolve("docs/medical-review/hematuria_case_clinical_review.xlsx");
 const expectedSheets = [
@@ -18,7 +19,7 @@ function rows(sheet: XLSX.WorkSheet) {
   return XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { range: 2, defval: "" });
 }
 
-const workbook = XLSX.readFile(workbookPath, { cellFormula: true });
+const workbook = readWorkbookFile(workbookPath, { cellFormula: true });
 assert.deepEqual(workbook.SheetNames, expectedSheets);
 
 const cases = rows(workbook.Sheets["病例总表"]);
