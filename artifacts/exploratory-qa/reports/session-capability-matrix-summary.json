@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-13T23:18:55.958Z",
+  "mode": "public-handler-local-security-no-provider",
+  "medicalTruthAdjudicated": false,
+  "sensitiveValuesRecorded": false,
+  "checks": 19,
+  "providerCalls": 0,
+  "result": {
+    "passed": true,
+    "failures": 0
+  },
+  "checksSummary": [
+    {
+      "id": "attempt_init_valid",
+      "passed": true,
+      "statusCode": 200,
+      "errorCode": ""
+    },
+    {
+      "id": "session_init_valid",
+      "passed": true,
+      "statusCode": 200,
+      "errorCode": ""
+    },
+    {
+      "id": "session_init_idempotent",
+      "passed": true,
+      "statusCode": 200,
+      "errorCode": ""
+    },
+    {
+      "id": "session_missing_training_state",
+      "passed": true,
+      "statusCode": 401,
+      "errorCode": "invalid_attempt_token"
+    },
+    {
+      "id": "session_cross_language",
+      "passed": true,
+      "statusCode": 409,
+      "errorCode": "attempt_language_mismatch"
+    },
+    {
+      "id": "session_cross_mode",
+      "passed": true,
+      "statusCode": 409,
+      "errorCode": "attempt_mode_mismatch"
+    },
+    {
+      "id": "session_cross_case",
+      "passed": true,
+      "statusCode": 401,
+      "errorCode": "attempt_case_mismatch"
+    },
+    {
+      "id": "agent_missing_capability",
+      "passed": true,
+      "statusCode": 401,
+      "errorCode": "session_capability_required"
+    },
+    {
+      "id": "agent_tampered_capability",
+      "passed": true,
+      "statusCode": 401,
+      "errorCode": "invalid_session_capability"
+    },
+    {
+      "id": "agent_cross_case",
+      "passed": true,
+      "statusCode": 401,
+      "errorCode": "session_case_mismatch"
+    },
+    {
+      "id": "agent_cross_language",
+      "passed": true,
+      "statusCode": 401,
+      "errorCode": "session_language_mismatch"
+    },
+    {
+      "id": "agent_cross_mode",
+      "passed": true,
+      "statusCode": 401,
+      "errorCode": "session_mode_mismatch"
+    },
+    {
+      "id": "agent_cross_attempt",
+      "passed": true,
+      "statusCode": 401,
+      "errorCode": "session_attempt_mismatch"
+    },
+    {
+      "id": "agent_missing_idempotency",
+      "passed": true,
+      "statusCode": 400,
+      "errorCode": "idempotency_key_required"
+    },
+    {
+      "id": "agent_idempotent_repeat",
+      "passed": true,
+      "statusCode": 200,
+      "errorCode": ""
+    },
+    {
+      "id": "agent_idempotency_conflict",
+      "passed": true,
+      "statusCode": 409,
+      "errorCode": "idempotency_key_reused"
+    },
+    {
+      "id": "agent_concurrent_single_flight",
+      "passed": true,
+      "statusCode": 200,
+      "errorCode": ""
+    },
+    {
+      "id": "agent_expired_capability",
+      "passed": true,
+      "statusCode": 401,
+      "errorCode": "expired_session_capability"
+    },
+    {
+      "id": "agent_public_envelope",
+      "passed": true,
+      "statusCode": 200,
+      "errorCode": ""
+    }
+  ],
+  "failures": []
+}

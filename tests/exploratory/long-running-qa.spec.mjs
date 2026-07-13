@@ -462,6 +462,8 @@ test("mobile composer does not cover the opening patient statement", async ({ br
     const input = page.getByRole("textbox", { name: "输入问诊问题" });
     await expect(opening).toBeVisible();
     await expect(input).toBeVisible();
+    await page.context().tracing.stop();
+    await page.context().tracing.start({ screenshots: false, snapshots: true, sources: false });
     const openingBox = await opening.boundingBox();
     const composerBox = await input.locator("xpath=..").boundingBox();
     expect(openingBox).toBeTruthy();

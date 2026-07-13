@@ -1,10 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
+import { randomBytes } from "node:crypto";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const initHandler = require("../../api/session/init.js");
 const chatHandler = require("../../api/agent-chat.js");
+const trainingHandler = require("../../api/training-action.js");
+const { resetMemoryAttemptStore } = require("../../server/trainingAttemptStore.js");
+const { resetMemoryAgentRequestStore } = require("../../server/agentRequestStore.js");
 
 const DEFAULT_REPORT = "artifacts/exploratory-qa/reports/patient-api-adapter-smoke.json";
 const BLOCKED_KEYS = ["diagnosis", "imaging", "pathology", "treatment", "teacherOnlyData", "case_card", "scoring"];
@@ -35,7 +39,7 @@ function replyMetrics(replyText) {
   };
 }
 
-async function invoke(handler, body, requestId) {
+async function invoke(handler, body, requestId, extraHeaders = {}) {
   let statusCode = 200;
   let payload;
   const headers = {};
@@ -47,7 +51,8 @@ async function invoke(handler, body, requestId) {
       host: "qa.local",
       "x-forwarded-proto": "http",
       "x-request-id": `qa-${requestId}`,
-      "x-idempotency-key": `qa-${requestId}`
+      "x-idempotency-key": `qa-${requestId}`,
+      ...extraHeaders
     },
     socket: { remoteAddress: `qa-api-${requestId}` }
   };
@@ -94,12 +99,20 @@ async function main() {
   const reportPath = path.resolve(cliValue("report", DEFAULT_REPORT));
   const previousEnv = {
     agents: process.env.LLM_ENABLE_AI_AGENTS,
-    patient: process.env.LLM_ENABLE_AI_PATIENT
+    patient: process.env.LLM_ENABLE_AI_PATIENT,
+    trainingSecret: process.env.TRAINING_STATE_SECRET,
+    deploymentTier: process.env.TRAINING_DEPLOYMENT_TIER,
+    attemptStore: process.env.TRAINING_ATTEMPT_STORE_MODE
   };
   const originalFetch = globalThis.fetch;
   let providerCalls = 0;
   process.env.LLM_ENABLE_AI_AGENTS = "false";
   process.env.LLM_ENABLE_AI_PATIENT = "false";
+  process.env.TRAINING_STATE_SECRET = randomBytes(48).toString("base64url");
+  process.env.TRAINING_DEPLOYMENT_TIER = "practice";
+  process.env.TRAINING_ATTEMPT_STORE_MODE = "memory";
+  resetMemoryAttemptStore();
+  resetMemoryAgentRequestStore();
   globalThis.fetch = async () => {
     providerCalls += 1;
     throw new Error("QA adapter smoke forbids provider calls");
@@ -116,7 +129,24 @@ async function main() {
       { caseId: "P004", language: "zh" }
     ]) {
       const probeId = `init-${language}-${caseId.toLowerCase()}`;
-      const result = await invoke(initHandler, { caseId, mode: "training", language }, probeId);
+      const attemptId = `qa-smoke-${caseId.toLowerCase()}-${language}`;
+      const trainingRequestId = `${probeId}-attempt`;
+      const training = await invoke(trainingHandler, {
+        action: "init-attempt",
+        caseId,
+        attemptId,
+        mode: "free",
+        language,
+        requestId: trainingRequestId
+      }, trainingRequestId);
+      checks += 1;
+      const trainingState = String(training.headers["x-training-state"] || "");
+      if (training.statusCode !== 200 || !trainingState) {
+        addFailure(failures, { kind: "attempt_init", probeId: trainingRequestId, statusCode: training.statusCode });
+      }
+      const result = await invoke(initHandler, { caseId, attemptId, mode: "free", language }, probeId, {
+        "x-training-state": trainingState
+      });
       checks += 1;
       if (result.statusCode !== 200 || !result.payload.sessionId) {
         addFailure(failures, { kind: "session_init", probeId, statusCode: result.statusCode });
@@ -127,26 +157,27 @@ async function main() {
       if (caseId === "P001" && language === "en" && CJK.test(String(result.payload.patientOpeningStatement || ""))) {
         addFailure(failures, { kind: "english_opening_contains_cjk", probeId, metrics: replyMetrics(result.payload.patientOpeningStatement) });
       }
-      sessions.set(`${caseId}/${language}`, result.payload.sessionId);
+      sessions.set(`${caseId}/${language}`, { attemptId, mode: "free", sessionId: result.payload.sessionId });
     }
 
     const probes = [
-      { id: "onset-en", caseId: "P001", sessionId: sessions.get("P001/en"), language: "en", question: "When did it start?", expected: ["hematuria_onset"] },
-      { id: "prior-care-en", caseId: "P001", sessionId: sessions.get("P001/en"), language: "en", question: "Have you seen a doctor before?", expected: ["prior_care"] },
-      { id: "tumor-history-zh", caseId: "P001", sessionId: sessions.get("P001/zh"), language: "zh", question: "以前有肿瘤史吗？", expected: ["PAST_MALIGNANCY"] },
-      { id: "cystoscopy-history-zh", caseId: "P001", sessionId: sessions.get("P001/zh"), language: "zh", question: "以前做过膀胱镜吗？", expected: ["PAST_URINARY_PROCEDURE"] },
-      { id: "clots-meta-zh", caseId: "P004", sessionId: sessions.get("P004/zh"), language: "zh", question: "有血块吗？", expected: ["clots"], noTeacherMeta: true },
-      { id: "flank-pain-en", caseId: "P002", sessionId: sessions.get("P002/en"), language: "en", question: "Do you have flank pain?", expected: ["flank_pain"] },
-      { id: "glomerular-en", caseId: "P001", sessionId: sessions.get("P001/en"), language: "en", question: "Do you have foamy urine?", expected: ["glomerular_features"], noGenericUnknown: true }
+      { id: "onset-en", caseId: "P001", session: sessions.get("P001/en"), language: "en", question: "When did it start?", expected: ["hematuria_onset"] },
+      { id: "prior-care-en", caseId: "P001", session: sessions.get("P001/en"), language: "en", question: "Have you seen a doctor before?", expected: ["prior_care"] },
+      { id: "tumor-history-zh", caseId: "P001", session: sessions.get("P001/zh"), language: "zh", question: "以前有肿瘤史吗？", expected: ["PAST_MALIGNANCY"] },
+      { id: "cystoscopy-history-zh", caseId: "P001", session: sessions.get("P001/zh"), language: "zh", question: "以前做过膀胱镜吗？", expected: ["PAST_URINARY_PROCEDURE"] },
+      { id: "clots-meta-zh", caseId: "P004", session: sessions.get("P004/zh"), language: "zh", question: "有血块吗？", expected: ["clots"], noTeacherMeta: true },
+      { id: "flank-pain-en", caseId: "P002", session: sessions.get("P002/en"), language: "en", question: "Do you have flank pain?", expected: ["flank_pain"] },
+      { id: "glomerular-en", caseId: "P001", session: sessions.get("P001/en"), language: "en", question: "Do you have foamy urine?", expected: ["glomerular_features"], noGenericUnknown: true }
     ];
 
     for (const [index, probe] of probes.entries()) {
       const result = await invoke(chatHandler, {
-        sessionId: probe.sessionId,
+        sessionId: probe.session.sessionId,
+        attemptId: probe.session.attemptId,
         caseId: probe.caseId,
         agentId: "standardized_patient",
         stage: "history",
-        mode: "training",
+        mode: probe.session.mode,
         language: probe.language,
         studentInput: probe.question,
         conversationHistory: []
@@ -181,11 +212,12 @@ async function main() {
       { id: "report-en", question: "What did the CT and pathology report show?", flag: "blocked_report_request", reason: "report_boundary" }
     ].entries()) {
       const result = await invoke(chatHandler, {
-        sessionId: sessions.get("P001/en"),
+        sessionId: sessions.get("P001/en").sessionId,
+        attemptId: sessions.get("P001/en").attemptId,
         caseId: "P001",
         agentId: "standardized_patient",
         stage: "history",
-        mode: "training",
+        mode: sessions.get("P001/en").mode,
         language: "en",
         studentInput: boundary.question,
         conversationHistory: []
@@ -214,6 +246,12 @@ async function main() {
     else process.env.LLM_ENABLE_AI_AGENTS = previousEnv.agents;
     if (previousEnv.patient === undefined) delete process.env.LLM_ENABLE_AI_PATIENT;
     else process.env.LLM_ENABLE_AI_PATIENT = previousEnv.patient;
+    if (previousEnv.trainingSecret === undefined) delete process.env.TRAINING_STATE_SECRET;
+    else process.env.TRAINING_STATE_SECRET = previousEnv.trainingSecret;
+    if (previousEnv.deploymentTier === undefined) delete process.env.TRAINING_DEPLOYMENT_TIER;
+    else process.env.TRAINING_DEPLOYMENT_TIER = previousEnv.deploymentTier;
+    if (previousEnv.attemptStore === undefined) delete process.env.TRAINING_ATTEMPT_STORE_MODE;
+    else process.env.TRAINING_ATTEMPT_STORE_MODE = previousEnv.attemptStore;
   }
 
   if (providerCalls !== 0) addFailure(failures, { kind: "unexpected_provider_call", probeId: "provider", providerCalls });

@@ -1,8 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
+import { randomBytes } from "node:crypto";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
+process.env.TRAINING_STATE_SECRET = randomBytes(48).toString("base64url");
+process.env.TRAINING_DEPLOYMENT_TIER = "practice";
 const cases = require("../../data/cases.json");
 const bilingualSlots = require("../../data/patient_slots_bilingual.json");
 const {

@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-13T20:54:33.794Z",
+  "generatedAt": "2026-07-13T22:54:37.079Z",
   "mode": "api-handler-local-rule-no-provider",
   "medicalTruthAdjudicated": false,
-  "checks": 13,
+  "checks": 17,
   "providerCalls": 0,
   "result": {
     "passed": false,

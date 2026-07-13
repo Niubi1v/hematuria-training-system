@@ -36,6 +36,7 @@ async function withLiveEvidence(page, testInfo, scenario, run) {
   await Promise.all(Object.values(dirs).map((dir) => mkdir(dir, { recursive: true })));
   const consoleEvents = [];
   const networkEvents = [];
+  const responseTasks = [];
   const requestStart = new Map();
 
   page.on("console", (message) => consoleEvents.push({
@@ -52,14 +53,35 @@ async function withLiveEvidence(page, testInfo, scenario, run) {
     failure: redact(request.failure()?.errorText || "unknown")
   }));
   page.on("response", (response) => {
+    const task = (async () => {
     const request = response.request();
-    networkEvents.push({
+    const event = {
       method: request.method(),
       path: new URL(response.url()).pathname,
       status: response.status(),
       durationMs: Date.now() - (requestStart.get(request) || Date.now()),
       resourceType: request.resourceType()
-    });
+    };
+    if (event.path.startsWith("/api/") && request.method() === "POST") {
+      try {
+        const body = request.postDataJSON();
+        event.request = {
+          ...(body?.action ? { action: String(body.action).slice(0, 40) } : {}),
+          ...(body?.caseId ? { caseId: String(body.caseId).slice(0, 16) } : {}),
+          ...(body?.language ? { language: String(body.language).slice(0, 8) } : {}),
+          ...(body?.mode ? { mode: String(body.mode).slice(0, 24) } : {})
+        };
+      } catch { /* No request payload is retained. */ }
+    }
+    if (response.status() >= 400 && event.path.startsWith("/api/")) {
+      try {
+        const payload = await response.json();
+        if (payload?.error) event.error = String(payload.error).slice(0, 100);
+      } catch { /* Non-JSON errors are represented by status only. */ }
+    }
+    networkEvents.push(event);
+    })();
+    responseTasks.push(task);
   });
 
   await page.context().tracing.start({ screenshots: true, snapshots: true, sources: false });
@@ -77,6 +99,7 @@ async function withLiveEvidence(page, testInfo, scenario, run) {
     throw error;
   } finally {
     await page.context().tracing.stop({ path: path.join(dirs.traces, `${slug}.zip`) }).catch(() => {});
+    await Promise.allSettled(responseTasks);
     await writeFile(path.join(dirs.reports, `${slug}-console.json`), `${JSON.stringify(consoleEvents, null, 2)}\n`, "utf8");
     await writeFile(path.join(dirs.reports, `${slug}-network.json`), `${JSON.stringify(networkEvents, null, 2)}\n`, "utf8");
   }
@@ -95,44 +118,46 @@ test.afterEach(async ({ page }, testInfo) => {
   await video.saveAs(target).catch(() => {});
 });
 
-async function installLocalTrainingStub(page) {
-  await page.route("http://127.0.0.1:3001/api/training-action/**", (route) => {
-    const body = route.request().postDataJSON();
-    const payload = body?.action === "init-attempt"
-      ? { attemptId: body.attemptId, practiceOnly: true }
-      : { recorded: true, requestId: body?.requestId || "qa-local" };
-    return route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      headers: { "X-Training-State": "qa-redacted-state" },
-      body: JSON.stringify(payload)
-    });
-  });
-}
-
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
+  await page.goto("/");
+  await page.evaluate(() => {
     localStorage.clear();
     sessionStorage.clear();
     localStorage.setItem("hematuria-speech-preferences", JSON.stringify({ enabled: false, provider: "auto", manualOverrides: {}, rate: 1, pitch: 1 }));
   });
-  await installLocalTrainingStub(page);
 });
 
 test("live English session opening stays in English", async ({ page }, testInfo) => {
   await withLiveEvidence(page, testInfo, "live-english-opening-language", async ({ screenshot }) => {
+    await page.evaluate(() => localStorage.setItem("hematuria-language", "en"));
+    const responsePromise = page.waitForResponse((response) => response.url().includes("/api/session/init/")
+      && response.request().method() === "POST");
     await page.goto("/cases/P001/");
-    const responsePromise = page.waitForResponse((response) => {
-      if (!response.url().includes("/api/session/init/") || response.request().method() !== "POST") return false;
-      return response.request().postDataJSON()?.language === "en";
-    });
-    await page.getByRole("button", { name: "English" }).click();
     const response = await responsePromise;
-    expect(response.status()).toBe(200);
     const payload = await response.json();
+    expect(response.status(), `session init error=${String(payload?.error || "none")}`).toBe(200);
+    expect(payload.language, "the persisted English preference must initialize an English session").toBe("en");
     await expect(page.getByText(payload.patientOpeningStatement, { exact: true })).toBeVisible();
     await screenshot();
     expect(CJK.test(String(payload.patientOpeningStatement || "")), "English session opening must not contain Chinese characters").toBe(false);
+  });
+});
+
+test("switching from Chinese to English starts an authorized attempt", async ({ page }, testInfo) => {
+  await withLiveEvidence(page, testInfo, "live-language-switch-authorization", async ({ screenshot }) => {
+    const initialResponse = page.waitForResponse((response) => response.url().includes("/api/session/init/")
+      && response.request().method() === "POST"
+      && response.request().postDataJSON()?.language === "zh");
+    await page.goto("/cases/P001/");
+    await initialResponse;
+    const responsePromise = page.waitForResponse((response) => response.url().includes("/api/session/init/")
+      && response.request().method() === "POST"
+      && response.request().postDataJSON()?.language === "en");
+    await page.getByRole("button", { name: "English" }).click();
+    const response = await responsePromise;
+    const payload = await response.json();
+    if (response.status() !== 200) await screenshot();
+    expect(response.status(), `session init error=${String(payload?.error || "none")}`).toBe(200);
   });
 });
 
