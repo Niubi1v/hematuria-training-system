@@ -142,3 +142,5 @@
 - 同一提交的本地P001在1280×720稳定复现两个连接提示叠加；初始化后页面宽度1265/1265，无横向溢出，控制台出现两次脱敏`api_request_failed`。
 - 新增失败场景Playwright断言，并以单条件修复让泛化health提示在`sessionInitError`存在时让位；没有修改业务数据、医学事实、审批或`needs_revision`。
 - TypeScript、ESLint、AI recovery、API recovery均exit0。本机CI Chromium未安装；本机Chrome Playwright进程未在180秒内完成，因此新增浏览器断言必须由Draft PR Linux CI确认，当前不得提前登记为远程通过。
+- 提交`bde01a0`普通push后，Vercel Deployment与Preview Comments通过；Actions run `29225138570`在Playwright阶段失败，32项通过、2项失败，Pages deploy跳过。
+- 首条真实失败不是产品末端exit code，而是测试fixture语义不一致：HTTP 503不能满足“网络连接失败”精确文案。已把health/session fixture改为`route.abort("failed")`真实网络中断，保留精确文案及“泛化提示为0”断言，待下一轮CI。

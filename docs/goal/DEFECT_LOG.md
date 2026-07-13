@@ -9,7 +9,7 @@
 - 证据：2026-07-13约12:44真实浏览器DOM同时存在两个`role=status`连接提示；页面无横向溢出，控制台记录两次脱敏`api_request_failed`。
 - 根因：泛化health提示仅受`reconnectNotice`抑制，没有在更具体的`sessionInitError`存在时让位。
 - 最小修复：`sessionInitError`存在时只显示问诊区的具体错误和重连操作，不再叠加泛化health提示；不改变连接状态机、API、医学数据或评分。
-- 回归：新增Playwright用例`session initialization failure shows one specific connection notice`。本机CI Chromium缺失且本机Chrome通道未在时限内完成启动，故断言待PR Linux CI执行；TypeScript、ESLint、AI recovery及API recovery均exit0。
+- 回归：新增Playwright用例`session initialization failure shows one specific connection notice`。首次PR CI run `29225138570`执行到断言，但fixture使用HTTP 503却要求网络错误文案，桌面/移动2项失败、其余32项通过；已将fixture修正为真实请求中断并保留精确文案断言，待下一轮CI。TypeScript、ESLint、AI recovery及API recovery均exit0。
 
 ### HEM-P0-023：双语患者槽位存在明确医学极性矛盾
 

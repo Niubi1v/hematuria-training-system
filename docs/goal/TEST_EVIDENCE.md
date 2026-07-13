@@ -230,3 +230,14 @@
 
 - 代码变化只抑制重复的泛化提示；更具体的会话错误和重连按钮保留。
 - 新Playwright断言尚未取得本地通过证据，必须以本次提交对应的Draft PR Linux CI结果为准。
+
+### 首次PR CI结果与测试fixture修正
+
+| 证据 | 结果 |
+|---|---|
+| Draft PR run `29225138570` / head `bde01a0` | Unit、医学合同、评分、TypeScript、Lint、secret scan及Playwright安装均通过；Playwright 32通过、2失败；后续build步骤因fail-fast跳过；Pages deploy skipped |
+| 首条失败 | `getByText('网络连接失败，请检查网络后重试。')`在桌面/移动均不存在；fixture实际返回HTTP 503 `session_unavailable`，并非网络中断 |
+| 修正 | health和session init均改为`route.abort("failed")`，继续要求精确网络错误文案可见且泛化health提示计数为0；未放宽断言 |
+| 外部检查 | Vercel Deployment `BjDGR3xF5W2zp9ihRn5zvcrZdn3m` success；Vercel Preview Comments success |
+
+- 修正后的Playwright结果仍待新提交的CI，不得把首次失败写成通过。

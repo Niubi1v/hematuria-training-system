@@ -161,16 +161,8 @@ test("rule fallback keeps reconnection available and recovery replaces the reply
 });
 
 test("session initialization failure shows one specific connection notice", async ({ page }) => {
-  await page.route("**/api/health/**", (route) => route.fulfill({
-    status: 503,
-    contentType: "application/json",
-    body: JSON.stringify({ code: "health_unavailable" })
-  }));
-  await page.route("**/api/session/init/**", (route) => route.fulfill({
-    status: 503,
-    contentType: "application/json",
-    body: JSON.stringify({ code: "session_unavailable" })
-  }));
+  await page.route("**/api/health/**", (route) => route.abort("failed"));
+  await page.route("**/api/session/init/**", (route) => route.abort("failed"));
 
   await page.goto("/cases/P001/");
 
