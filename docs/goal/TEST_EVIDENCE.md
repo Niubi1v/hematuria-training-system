@@ -241,3 +241,12 @@
 | 外部检查 | Vercel Deployment `BjDGR3xF5W2zp9ihRn5zvcrZdn3m` success；Vercel Preview Comments success |
 
 - 修正后的Playwright结果仍待新提交的CI，不得把首次失败写成通过。
+
+### 修正后PR CI终态
+
+- head：`25206455fb1391d31bef9064c34d84a042f72234`。
+- GitHub Actions run：`29225349342`，completed/success；build job `86738186827`。
+- 全部工程步骤通过：69 JSON与generated diff、schema/临床矛盾/双语、完整行为、医学审核合同、对抗评分、TypeScript、ESLint、repository secret scan、Playwright E2E、API origin、52页静态构建及bundle scan。
+- Vercel deployment `2ibBiZGa47BCsj8A1sLAsqQNFGHp` success；Vercel Preview Comments success。
+- PR事件的Pages artifact上传与deploy job `86738432785`均skipped；未正式部署生产。
+- PR #1仍为Open/Draft，base=`main`、head=`codex/hematuria-production-goal`、mergeState=`CLEAN`。

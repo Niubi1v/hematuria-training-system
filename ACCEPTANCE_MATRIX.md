@@ -16,7 +16,7 @@
 | 最小化会话 | 不返回完整patient profile或teacher data | PASS | `test:session`、`test:llm` |
 | 重连与部署失效 | 单次forceRefresh；保留attempt；不重复evidence；SHA变化丢弃旧session | PASS | `test:ai-recovery`、Playwright 22/22 |
 | 超时与错误恢复 | AbortController；404/429/502/503/504有限重试或明确降级 | PASS | `test:api-recovery`、`test:ai-recovery` |
-| 初始化失败提示收敛 | 同时最多一个主要连接提示；保留明确重连操作 | PENDING | HEM-P1-024本地复现并最小修复；run `29225138570`暴露fixture语义错误，修正后待新CI |
+| 初始化失败提示收敛 | 同时最多一个主要连接提示；保留明确重连操作 | PASS | HEM-P1-024；run `29225349342`的desktop/mobile Playwright与完整build success |
 | 离线恢复 | 记录保留，恢复在线后可继续 | PASS | Playwright desktop/mobile 22/22 |
 | CORS与限流 | 仅允许配置Origin；公开Agent/session有界限流 | PASS | `test:health`、`test:agent-api-security` |
 | 正式模式防绕过 | 客户端改mode不能解锁；独立签名secret；病例必须formalUseAllowed | PASS | `test:training-api` |

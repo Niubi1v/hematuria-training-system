@@ -144,3 +144,4 @@
 - TypeScript、ESLint、AI recovery、API recovery均exit0。本机CI Chromium未安装；本机Chrome Playwright进程未在180秒内完成，因此新增浏览器断言必须由Draft PR Linux CI确认，当前不得提前登记为远程通过。
 - 提交`bde01a0`普通push后，Vercel Deployment与Preview Comments通过；Actions run `29225138570`在Playwright阶段失败，32项通过、2项失败，Pages deploy跳过。
 - 首条真实失败不是产品末端exit code，而是测试fixture语义不一致：HTTP 503不能满足“网络连接失败”精确文案。已把health/session fixture改为`route.abort("failed")`真实网络中断，保留精确文案及“泛化提示为0”断言，待下一轮CI。
+- 修正提交`2520645`已普通push；Actions run `29225349342` completed/success，Playwright、52页构建、类型、Lint、行为、医学合同与安全扫描全部通过；Vercel Deployment及Preview Comments通过，Pages artifact/deploy跳过。PR保持open/draft且mergeState=CLEAN。

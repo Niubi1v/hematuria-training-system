@@ -112,3 +112,4 @@
 - Preview登录态DOM仍不可访问，真实DeepSeek、日志10/10、P95与人工自然度继续受HEM-P1-019/020阻塞。
 - 本增量未修改`data/**`、医学审核状态、环境变量或密钥；回滚方式为普通revert本次专项提交。
 - `bde01a0`对应Vercel通过，但Actions run `29225138570`因新增测试fixture语义错误而失败：HTTP 503未产生所断言的网络错误文案，Playwright 32/34。fixture已改为真实请求中断且断言未放宽；当前仍等待下一轮CI，PR保持Draft。
+- 修正提交`2520645`远程门禁完成：Actions run `29225349342`全绿，Vercel Deployment与Preview Comments通过，Pages deploy跳过；HEM-P1-024工程项解除。该结果不解除Preview真实AI、性能、密钥作用域或医学人工阻塞。
