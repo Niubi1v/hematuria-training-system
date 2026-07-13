@@ -228,3 +228,10 @@
 - 未改变医学数据、419审核决定、42例`needs_revision`、18条冲突隔离、Patient Agent语义、连接状态机或360分算法。
 - head `96fcf80`的Actions run `29291035332` completed/success（4分00秒），Node 22实际执行新TTS专项；75项幂等、294文件secret、Playwright 40/40、52页build、bundle和最终clean gate均通过。Vercel两项通过，Pages deploy跳过，PR继续Draft。
 - 推荐长期QA的新行为起始HEAD更新为`96fcf80f5a825585be53715e65851fbc113a7ab0`；若随后仅追加本节远程证据，可使用其文档-only后代。
+
+### Secret Scanner覆盖增量（待远程CI）
+
+- `25ad0a9`将当前文本扫描扩展到Office ZIP/gzip文本、二进制可见ASCII/双对齐UTF-16元数据和可达Git文本历史，新增JWT、Authorization/Cookie及常见云凭据规则；日志不包含命中值。
+- 动态fixture、真实295文件/36二进制归档/112提交扫描、TypeScript、ESLint、37段完整行为和75项幂等均exit0。回滚为普通`git revert 25ad0a9`。
+- `PRV-P2-004`显著收敛但不伪造全覆盖：历史压缩二进制、图片像素OCR/隐写、GitHub组织级artifact/日志保留仍需独立工具/权限。
+- 唯一moderate仍是Next稳定版内部PostCSS；官方公告要求`>=8.5.10`，但稳定Next仍固定`8.4.31`，且本仓库无用户CSS输入/重串行化路径。本轮不使用未经Next稳定版验证的override，仅保留监控和真实1 moderate状态。

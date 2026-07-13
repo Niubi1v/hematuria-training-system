@@ -485,3 +485,17 @@ Preview未执行真实Upstash/DeepSeek验收，因为当前没有也不得读取
 - Unit and behavioral tests日志明确输出：`TTS API voice, SHA-256 tuple, origin/parameter isolation, TTL, concurrency, and bounded eviction contracts passed.`
 - Conversion idempotency为75个受控输出通过；repository secret为294文件通过；Playwright 40/40（1.5分钟）；build 52/52；CI bundle 23个JS；最终tracked-worktree clean gate通过。
 - Production dependency audit仍为1 moderate、0 high；没有伪造成零漏洞。Vercel Deployment和Preview Comments success，Pages deploy skipped，PR保持Draft。
+
+## 2026-07-14 PRV-P2-004 Secret Scanner扩展
+
+| 检查 | 精确命令/环境 | 退出码与结果 |
+|---|---|---|
+| Scanner失败fixture | bundled Node执行`scripts/test-secret-scanner.mjs` | exit0；动态文本、PNG ASCII、奇数偏移UTF-16、压缩XLSX、placeholder、值不回显和已删除Git历史合同通过 |
+| 真实仓库扩展扫描 | bundled Node执行`scripts/scan-repository-secrets.mjs` | exit0；295个tracked/candidate文件、当前36个二进制/Office归档和112提交可达文本历史，无值输出 |
+| TypeScript、ESLint | bundled Node执行`tsc --noEmit`、`scripts/run-lint.mjs` | 均exit0 |
+| 完整行为门禁 | `CI=true pnpm run test` | exit0，35.4秒；当前37段、42例、572/419/18隔离、360及安全合同通过 |
+| 已提交HEAD复验 | `25ad0a9`上依次运行scanner专项、真实扫描、`scripts/test-conversion-idempotency.ts` | 均exit0；75受控输出baseline/二次幂等通过 |
+| PostCSS moderate | `pnpm audit --prod --audit-level moderate --json` | exit1；仅`next -> postcss@8.4.31`命中`GHSA-qx2v-qp2m-jg93`，1 moderate/0 high/0 critical |
+| CSS可达性搜索 | `rg`搜索PostCSS parse/stringify、`dangerouslySetInnerHTML`、动态style/CSS上传 | 无用户CSS解析或注入路径；textarea仅训练答案输入 |
+
+资源边界：单文件64MB、归档32MB、单entry 8MB、总展开64MB、2048 entries、历史patch 128MB；加密、ZIP64、未知压缩、超限和解析失败均fail closed为finding。当前扫描仍不能证明历史压缩二进制、图片像素OCR/隐写或组织级artifact/日志保留安全，故这些项目继续列为限制。
