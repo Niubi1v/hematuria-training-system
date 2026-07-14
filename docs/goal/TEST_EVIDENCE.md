@@ -586,3 +586,24 @@ Preview未执行真实Upstash/DeepSeek验收，因为当前没有也不得读取
 | 最终清理 | 逐行撤回本轮027候选；`git diff --quiet`、`git diff --cached --quiet` | 均exit0；无027代码/测试残留 |
 
 P008在带`VERCEL=1`的同进程Playwright中两次缺少`results`，根因是本地无Upstash时serverless路径按设计fail-closed；此前不继承该构建环境的完整practice 42/42中同一P008合同通过。该现象不作为027修复失败，也不写成评分算法回归。
+
+## HEM-P1-035 Preview可见病例ID路由（2026-07-14）
+
+| 检查 | 精确命令/环境 | 退出码与结果 |
+|---|---|---|
+| 前置远程门禁 | `gh run view 29299085374 --json ...`、`gh pr checks 1` | run completed/success；build success、Vercel success、Preview Comments success、Pages deploy skipped；head=`536996601cff7f9db034bcba37b013acae4c25bc`、PR Draft |
+| 部署归属 | 已登录Vercel Deployment Overview | Ready deployment=`Cam5bt2qVLcLwPYC36HuzKWwtPXY`；source=`5369966`；branch alias与不可变部署域名均记录，未读取Cookie或token |
+| 匿名保护差异 | 系统Chrome Playwright直达分支别名P001 | HTTP 200后最终URL为Vercel登录页；属于Standard Vercel Authentication，不是病例页200或404 |
+| 已登录P001 | 应用内浏览器直达分支别名`/cases/P001/` | 应用标题、P001工作区和输入框可见；进入degraded；console仅记录脱敏`api_request_failed`，未取得失败HTTP码 |
+| 资源清单基线 | Vercel Deployment Resources按`/cases/P0`及`/cases/HX-ADD-*`前缀筛选 | 实际42个runtime HTML全部存在；`/cases/P013`筛选为空，证明旧部署未生成display ID别名 |
+| 失败测试 | `node node_modules/@playwright/test/cli.js test --grep "visible display case IDs" --project desktop-chromium` | exit1；P013卡片期望`/cases/P013/index.html`，实际`/cases/HX-ADD-001/index.html` |
+| 修复专项 | 同一grep，desktop+mobile | exit0，2/2；卡片、P013直达和固定随机抽取均使用display ID |
+| 完整浏览器回归 | `node node_modules/@playwright/test/cli.js test`，显式本地Next服务 | exit0，44/44，49.6秒；含语言切换、033安全覆盖、重连、日志幂等、双击、20轮、刷新、axe与评分防伪 |
+| TypeScript / ESLint | `tsc --noEmit`；`node scripts/run-lint.mjs`，可访问pnpm junction | 均exit0 |
+| Vercel等价build | `VERCEL=1`且未设置`NEXT_PUBLIC_API_BASE_URL`，`next build` | exit0，82/82；72个病例route ID均有`out/cases/<id>/index.html` |
+| 静态/敏感扫描 | `scan-static-bundle.ts`；`scan-repository-secrets.mjs` | exit0；25个JS资产、295个当前/候选文件加可达历史与有界归档；未打印秘密值 |
+| 医学与核心安全边界 | `git diff -- data server api`并审查完整diff | `data/**`、Agent/session/signature、419审核、42例`needs_revision`、18冲突和360评分零修改 |
+
+Preview变量只核对名称/作用域：LLM相关变量覆盖Preview；`TRAINING_STATE_SECRET`、`TRAINING_API_ALLOWED_ORIGINS`、`AGENT_API_ALLOWED_ORIGIN`和deployment tier仅Production。该证据不能替代配置后真实AI、日志10/10、20轮、首Token/P95和自然度验收。
+
+本地代码提交：`79d1083`。文档提交与普通push完成前，没有新HEAD的GitHub Node 22或Vercel Preview结论。

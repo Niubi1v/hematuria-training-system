@@ -233,3 +233,9 @@
 - `HEM-P1-029`（工程修复完成，待独立QA复测）：英文session旧路径稳定返回中文开场，42例失败合同在P001首例exit1。根因是profile构建未接收`language`且问候硬编码中文；`24054cf`只本地化安全简化主诉和开场，不使用完整病例摘要。42例英文开场、42×6英文行为及训练安全合同通过；run `29297252637` completed/success，Vercel两项success，PR仍Draft。医学数据、审核状态和评分算法零修改。
 - `HEM-P1-033`（本地工程修复完成，待push/CI与独立QA）：P004/P005/P006 deterministic canonical绕过公开输出过滤；前端替换可见文本却仍收集隐藏slot。`36061ad`增加服务端fail-closed及客户端安全展示/覆盖原子性，桌面失败基线从`clots`已收集修复为零覆盖，desktop/mobile 2/2、完整practice 42/42及相关合同通过。医学真值未改。当前仅因`github.com:443`连接超时尚未push，不能标记远程关闭。
 - `HEM-P1-027`（OPEN；两轮最小修复无效后暂停）：360×800中文仍可重复为`opening bottom=661 / composer y=654`。移动间距压缩未覆盖英文，移动normal-flow又使390×844既有输入可见性门禁回归到`879–888 > 844`；实验已全部撤回且工作树无残留。需要把chat/composer改成受visual viewport约束的移动workspace或等价经过设计的结构方案，不能继续叠加像素补丁。
+
+### 2026-07-14 Preview差异增量
+
+- `HEM-P1-033`（工程与远程CI关闭，待独立QA）：`36061ad`、`9b1ffba`与`5369966`已普通push；Actions run `29299085374` completed/success，Vercel两项success，PR仍Draft。旧条目中的Git网络阻塞已经解除。
+- `HEM-P1-035`（本地修复完成，待push/CI/Preview复测）：可见病例编号P013–P042映射到内部`HX-ADD-001–030`，但静态参数、目录链接和随机入口使用内部ID。目录点击可工作，却导致按可见ID复制、直达或刷新稳定404。失败测试记录P013卡片href为`/cases/HX-ADD-001/index.html`；`79d1083`增加display ID别名且不改变runtime case ID。专项desktop/mobile 2/2、完整Playwright44/44和82页build通过。
+- `HEM-P1-020`（仍BLOCKED，配置证据更新）：当前Preview部署与分支SHA一致，P001静态页可加载且health runtime请求为200；但训练签名和Agent/training origin变量只覆盖Production，Preview页面仍degraded。需用户将`TRAINING_STATE_SECRET`、`TRAINING_API_ALLOWED_ORIGINS`、`AGENT_API_ALLOWED_ORIGIN`及相应deployment tier配置到Preview/分支Preview并重新部署；持久attempt store变量也须按既有安全方案配置。未读取或修改任何值，真实DeepSeek、日志10/10、20轮和P95仍未通过。

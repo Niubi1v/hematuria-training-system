@@ -267,3 +267,11 @@
 - QA的7px残余在当前Production再次精确复现；新增双语矩阵证明英文移动头部换行使page-level bottom sticky覆盖更大，单纯压缩8px或选择390px阈值均不是可靠修复。
 - 移动normal-flow方案虽使四视口双语几何8/8通过，却破坏既有390×844聚焦输入可见性；第二次焦点滚动补丁仍失败。按两轮无效规则已全部撤回，当前提交树不含027实验，未牺牲触控目标、删除测试或留下部分修复。
 - HEM-P1-027继续为发布阻塞OPEN。建议下一轮从独立移动workspace（chat flex scroller + composer非覆盖层）和`visualViewport`/虚拟键盘合同重新设计，测试须同时覆盖开场、末条消息、输入焦点、手动上翻、新消息入口、safe-area及无异常空白。
+
+### Preview 404与配置差异检查点
+
+- 集成前远程/本地HEAD均为`536996601cff7f9db034bcba37b013acae4c25bc`；对应Actions run `29299085374`、Vercel Ready部署`Cam5bt2qVLcLwPYC36HuzKWwtPXY`均success，PR #1仍Open/Draft。
+- 404可重复根因不是当前部署随机漏文件：公开显示P013–P042，内部runtime却为`HX-ADD-001–030`；旧静态路由只生成runtime ID。候选同时保留旧runtime路径并增加display ID别名，目录和随机入口改用display ID，故用户可复制、直达和刷新可见编号而不改变内部会话case ID。
+- 本地候选门禁：失败测试先命中；修复后专项desktop/mobile 2/2、完整Playwright44/44、TypeScript、ESLint、82页production build、42例/72路由库存、25 JS bundle和295文件secret扫描通过。代码提交为`79d1083`，尚未push，不能登记新CI或Preview通过；回滚方式为普通`git revert 79d1083`。
+- Preview真实AI仍未验收：LLM变量名称覆盖Preview，但训练签名、训练/Agent origin及deployment tier只覆盖Production；P001静态页可加载而会话进入degraded。需要用户只在Preview或分支专用Preview补齐这些已有变量并重新部署，且按既有要求配置持久attempt store。不得由Codex读取/生成值，也不得用fallback、mock或Vercel绿灯冒充真实AI成功。
+- 发布阻塞仍包括HEM-P1-027移动遮挡、HEM-P1-020 Preview配置/真实AI/日志/性能，以及HEM-P0-001/HEM-P0-023具名医学裁决。未批准医学事实、未解除`needs_revision`、未修改生产环境或部署Production。

@@ -329,3 +329,11 @@
 - 两轮边界修复均未同时满足现有门禁：压缩移动composer 8px只修复360中文；移动端改正常文档流可让8个视口/语言几何断言通过，却使既有390×844多行输入底边从视口内回归到`879–888 > 844`。聚焦scrollIntoView补丁仍未恢复门禁。
 - 按无人值守“两轮无效即换项”规则，本轮没有继续大改布局。所有027实验代码和测试均用逐行补丁撤回；`git diff --quiet`与cached diff均为0，033安全提交保持完整。HEM-P1-027继续OPEN，建议独立设计固定高度的移动问诊workspace/visualViewport策略后再做，不以隐藏断言或牺牲44px触控目标制造通过。
 - 同一构建命令后P008直接handler失败已定位为测试进程继承`VERCEL=1`、无Upstash时按设计503；无该环境污染的此前完整practice 42/42中P008通过，不登记为评分回归。
+
+### Preview 404与配置差异专项（2026-07-14 09:39—10:30 CST）
+
+- `536996601cff7f9db034bcba37b013acae4c25bc`已普通push；Actions run `29299085374`从`2026-07-14T01:39:06Z`至`01:43:21Z` completed/success。Node 22的完整行为、TypeScript、ESLint、repository scanner、Playwright、52页build、bundle和clean gate通过；Vercel与Preview Comments success，Pages deploy skipped，PR #1保持Draft。
+- Vercel Ready部署`Cam5bt2qVLcLwPYC36HuzKWwtPXY`明确绑定上述SHA，分支别名为`hematuria-training-system-git-codex-he-a06e54-niubi1vs-projects.vercel.app`，不可变部署域名为`hematuria-training-system-jo9v2suvu-niubi1vs-projects.vercel.app`。已登录浏览器可加载分支别名P001；匿名系统Chrome被Standard Vercel Authentication重定向到登录页，该保护行为不记作病例404。
+- 部署资源清单显示42例真实runtime ID为`P001–P012`加`HX-ADD-001–030`；用户可见编号为`P001–P042`。旧构建只生成runtime路径，故`/cases/P013/`没有静态产物，而目录卡片P013实际链接`/cases/HX-ADD-001/index.html`。新增浏览器失败测试稳定收到该旧href；这解释了复制、直达或按可见编号刷新P013–P042时的404，不是随机丢失静态文件。
+- 最小候选为可见编号生成兼容静态别名，目录与随机入口统一使用display ID，客户端收到的`caseData.id`仍为原runtime ID。没有修改病例数据、Patient Agent语义、session/token、日志签名、医学审核或360评分。修复后desktop/mobile专项2/2、完整Playwright 44/44、TypeScript、ESLint、Vercel同源构建82/82、72个病例route ID库存、25 JS bundle及295文件secret扫描均exit0；原子代码提交为`79d1083`，尚待普通push和新CI/Preview确认。
+- Preview环境变量只读取名称和作用域、从未读取值：LLM供应商变量覆盖Production与Preview；`TRAINING_STATE_SECRET`、`TRAINING_API_ALLOWED_ORIGINS`、`AGENT_API_ALLOWED_ORIGIN`、`TRAINING_DEPLOYMENT_TIER`与`NEXT_PUBLIC_DEPLOYMENT_TIER`目前只覆盖Production。部署runtime log可见`GET /api/health/`为200，但已登录P001仍进入degraded；结合签名模块缺少`TRAINING_STATE_SECRET`时fail-closed，这些作用域缺口与会话/日志失败高度一致，但在取得失败请求状态/错误码前仍不写成唯一根因。需要用户在Preview或分支专用Preview配置并重新部署，Codex不读取、生成或修改值。
