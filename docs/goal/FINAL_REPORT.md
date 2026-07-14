@@ -365,3 +365,11 @@
 - 本地完整行为、受影响专项、TypeScript、ESLint与敏感信息扫描均通过；医学数据、审核状态、HEM-P0-001/023、161来源阻塞和360评分未改变。
 - GitHub CLI认证和API可用，远端仍为`4aa96d5ff20a1f4e637529d6ede46720b428c5ef`；Git smart-HTTP三次fetch均因443连接失败。按push前安全门禁，尚未push六个提交，也没有把旧HEAD的Node22/Preview绿灯归到新候选。
 - 下一步固定为：网络恢复后`git fetch --prune origin`，确认远端领先0，普通push当前专项分支；保持PR #1 Draft，等待Actions Node22完整Playwright和Vercel检查。不Ready、不合并main、不部署Production。
+
+### 2026-07-14 HEM-P1-043-R2 第一阶段提交恢复交接
+
+- 已在本地真实handler复现用户可见失败：有效签名浏览器token对应的服务端attempt记录丢失时，`stage-feedback`返回401 `attempt_not_found`，旧客户端显示“阶段提交失败，请重试。”并停留第一阶段。
+- 修复仅在首阶段精确错误上重新走合法attempt初始化并以同一幂等requestId重试一次；安全拒绝不放宽。重建后的history证据由服务端从受限学生问句经现有matcher、HEM-P0-023隔离及去重重新产生，客户端不能提交score或可信slot。
+- 修复前失败测试已证明；修复后desktop/mobile专项2/2、受影响矩阵8/8、完整Playwright 54/54，完整行为、训练API/安全、类型、lint、82页构建、bundle与secret扫描全部exit0。`data/**`零差异，医学事实、419审核、18条冲突、`needs_revision`与360评分未变。
+- Preview仍受Vercel认证层阻塞，没有登录态应用POST证据，故不能宣称线上已验证。远端Draft PR #1 head仍为`4aa96d5`，旧Actions/Vercel结果不属于本地候选。
+- 代码/测试提交为`610eacf`。本轮遵守此前安全收尾要求：不恢复stash、不启动新P1/P2、不push包含既有七个本地提交的新代码、不Ready、不合并main、不部署Production。代码和文档形成可单独`git revert`的本地原子提交后暂停，等待明确的push/长期QA复测安排。

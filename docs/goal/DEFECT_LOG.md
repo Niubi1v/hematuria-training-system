@@ -339,3 +339,13 @@
 - **证据**：2026-07-14 18:20—18:22 CST，`gh auth status`成功且GitHub API读取远程HEAD=`4aa96d5ff20a1f4e637529d6ede46720b428c5ef`；三次`git fetch --prune origin`（默认两次、命令级HTTP/1.1一次）均约21秒后因`github.com:443`连接失败退出128。
 - **影响**：本地HEAD `25ef0cb`的六个提交尚未push，不能产生该HEAD的Actions、Node22 Playwright或Vercel证据。
 - **处置**：保留干净工作树；网络恢复后重新fetch并确认远端领先0，再普通push。禁止force、API update-ref、main写入、PR Ready/merge或Production部署。
+
+### HEM-P1-043-R2 有效浏览器token对应的服务端attempt记录丢失
+
+- **严重度/状态**：P1；本地工程修复与完整门禁通过，待登录态Preview/长期QA复测及后续明确授权的push。
+- **失败基线**：在真实训练handler中初始化P001、完成一轮已验证history log，然后仅清空服务端attempt store；点击“提交本阶段”得到401 `attempt_not_found`，UI显示“阶段提交失败，请重试。”，无法进入第二阶段。
+- **根因**：签名token可在其有效期内存活，但Preview无状态实例重启、共享store记录过期或丢失会让服务端找不到对应attempt。客户端把该可安全恢复的精确状态与所有安全拒绝统一处理为永久失败。
+- **修复**：仅对`history`阶段的精确`attempt_not_found`重新执行正常`init-attempt`并以原幂等requestId重试一次；恢复时由服务端从受限学生问句重新运行既有matcher、冲突隔离和去重，不能信任客户端slot/score。
+- **安全边界**：`expired_attempt_token`、签名、case/language/mode/session/stage错误均不自动恢复；HEM-P0-023冲突提交回归不命中评分。未关闭attempt/token/stage校验，也未在前端伪造成功。
+- **证据**：修复前失败测试命中401与原提示；修复后desktop/mobile恢复、stage2推进及刷新保持通过，完整Playwright 54/54，完整行为/类型/lint/build/bundle/secret门禁通过，`data/**`零差异。
+- **提交/外部边界**：代码/测试提交为`610eacf`。未取得登录态Preview实际POST，不能断言用户线上故障已关闭；需在新候选进入Draft PR后复测实际status/error code和脱敏关联ID。当前没有push，也不复用远端`4aa96d5`的旧CI。

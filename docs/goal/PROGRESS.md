@@ -463,3 +463,12 @@
 - 选择性读取QA分支的`patient-session-matrix.mjs`并以UTF-8、禁用provider的本地rule模式复核：42例×37槽位×中英双语×2改写，`routeChecks=6216`、`repeatChecks=6216`、`failureInstances=0`、`failureGroups=0`；144/144直接医学冲突隔离事件命中，`providerCalls=0`。首次错误启动产生的3192项`llm_error_fallback`已证明是PowerShell参数/编码失真，不登记为产品失败。
 - `gh auth status`与GitHub API成功，API确认远端专项分支仍为已知`4aa96d5ff20a1f4e637529d6ede46720b428c5ef`；但三次正式`git fetch --prune`（含一次性HTTP/1.1）均在约21秒因`github.com:443`不可达失败。
 - 因push前fetch强制门禁未通过，没有绕过为API改ref或直接push。六个本地提交尚未进入远端，新HEAD没有Node22 CI/Vercel结论；网络恢复后必须重新fetch，确认远端领先0，再普通push并观察Draft PR #1。
+
+### HEM-P1-043-R2 第一阶段丢失attempt记录恢复（2026-07-14 22:45 CST，本地候选）
+
+- 在当前本地Production HEAD `7898120001eeb15ac8c3ee2caca0b7dcfd9ea48b`稳定复现与用户文案一致的失败：浏览器保留有效签名训练token、服务端attempt记录丢失后，首次`stage-feedback`返回401 `attempt_not_found`，页面显示“阶段提交失败，请重试。”且不能进入第二阶段。
+- 最小修复只允许`history`首阶段在精确收到`attempt_not_found`时清除旧浏览器token、通过原`init-attempt`安全初始化同一attempt，再用同一幂等requestId重试一次。过期、签名无效、跨病例、跨语言、跨模式及stage不匹配仍按原规则拒绝。
+- 为避免服务端记录丢失后评分证据消失，客户端仅提交本次真实学生问句；服务端用现有`matchHistoryQuestion`与HEM-P0-023隔离规则重新匹配、去重后写入事件。客户端不能声明slot或分数；18条双语冲突仍不计分。
+- 失败测试在修复前命中401和通用错误；修复后desktop/mobile恢复2/2、相关双语/刷新/双击/缺store矩阵8/8、完整Playwright 54/54。训练API、安全、attempt、恢复、stage flow、双语冲突、完整行为、类型、lint、82页构建、25 JS bundle及303文件secret扫描均exit0。
+- Vercel Preview仍受Standard Authentication保护，未取得登录态应用POST，故不把本地修复写成Preview已通过；PR远端仍是`4aa96d5`，旧CI不归属于本地候选。未修改`data/**`、医学事实、419审核、18条裁决、`needs_revision`、360评分或环境变量。
+- 代码/测试已保存为可回滚本地原子提交`610eacf`。按上一检查点“完成安全收尾后暂停、不要再普通push新代码”的边界，不自动发布包含既有七个未推送提交的分支；等待用户明确恢复push门禁或长期QA复测安排。
