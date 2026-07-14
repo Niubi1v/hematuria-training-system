@@ -241,4 +241,5 @@
 - `52c24325ddd28262458f5eff4f37fe2866d53305`的Actions run `29292415307` completed/success：Node 22.14、75项幂等、完整行为与安全专项、295文件scanner、Playwright 40/40、52/52构建、23 JS bundle和最终clean gate通过；Vercel两项通过，Pages deploy skipped，PR继续Draft。
 - `e94721e`修复工作簿解析前ZIP展开边界；`d895e28`修复浅历史scanner证据、完整依赖high审计、未跟踪clean gate及main-only Pages手工发布。失败测试先于修复命中，相关专项、完整行为、TypeScript、ESLint、全依赖审计、75项幂等和secret扫描本地均exit0。
 - 两提交均可分别普通`git revert e94721e`、`git revert d895e28`。未修改业务页面、Patient Agent、连接状态机、医学事实、审批状态、环境变量或密钥。
-- 当前候选仍待普通push及Node 22 CI记录；完成后不再扩展新的静态P2，优先读取长期QA分支并修复HEM-P1-034。真实Preview AI/持久存储/密钥作用域及HEM-P0-001/023医学裁决仍未解除。
+- `04c2a0b0bd61f32d7621651223d10ed0d780ba55`已普通快进push；Actions run `29294906265` / build job `86966184595` completed/success，Vercel Deployment与Preview Comments success，Pages deploy按PR策略skipped。PR #1保持Open/Draft，工作树干净。
+- 当前原子P2工程项已完成，不再扩展新的静态P2。已fetch长期QA分支并确认HEAD `4e3b3b1d107d34e2027229b835e2cbd21ddc61d4`、merge-base `52c24325ddd28262458f5eff4f37fe2866d53305`；下一优先级为HEM-P1-034。真实Preview AI/持久存储/密钥作用域及HEM-P0-001/023医学裁决仍未解除。

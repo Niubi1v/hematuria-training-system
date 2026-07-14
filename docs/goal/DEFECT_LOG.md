@@ -222,7 +222,7 @@
 
 ### 2026-07-14 当前原子P2处置
 
-- `PRV-P2-004`（远程确认并进一步收敛）：head `52c2432`的run `29292415307`已执行新scanner并success；发现workflow默认浅克隆使“历史扫描”只覆盖浅历史。`d895e28`加入`fetch-depth: 0`及`history-scan-shallow` fail-closed回归，待当前候选CI确认。仍不宣称覆盖历史压缩二进制、图片像素OCR/隐写或组织级artifact/log保留。
-- `DCI-P2-007`（本地已修复，待当前候选CI）：`safe-workbook`此前在`XLSX.read`后才检查形状，不能阻止ZIP展开资源消耗；失败fixture证明`maxExpandedBytes`被忽略。`e94721e`增加解析前ZIP中央目录和受限解压检查，补齐条目/总展开、row/column/cell测试，并让医学审核工作簿合同走统一helper。
-- `DCI-P2-008`（本地已修复，待当前候选CI）：workflow只审production依赖、忽略未跟踪生成文件、手工运行可从非main进入Pages步骤、PR/main共享队列。`d895e28`增加全依赖high门禁、全未跟踪clean gate、main-only artifact/deploy及按workflow/event/ref并发隔离；本地静态合同和全依赖audit exit0，仅1 moderate。
+- `PRV-P2-004`（工程闭环）：head `04c2a0b`的run `29294906265`以完整checkout执行scanner专项和仓库扫描并success；浅仓库fixture按`history-scan-shallow` fail-closed。仍不宣称覆盖历史压缩二进制、图片像素OCR/隐写或组织级artifact/log保留。
+- `DCI-P2-007`（工程闭环）：`safe-workbook`此前在`XLSX.read`后才检查形状，失败fixture证明`maxExpandedBytes`被忽略。`e94721e`增加解析前ZIP中央目录和受限解压检查；本地专项及`04c2a0b`的Node 22完整行为/医学工作簿合同均success。
+- `DCI-P2-008`（工程闭环）：`d895e28`增加全依赖high门禁、全未跟踪clean gate、main-only artifact/deploy及按workflow/event/ref并发隔离；run `29294906265`的Full dependency audit、最终clean gate和PR分支deploy skipped行为均符合合同。依赖真实状态仍为1 moderate、0 high。
 - 其余静态P2按用户指令暂缓，不在本轮继续扩展；下一优先级为QA复现的HEM-P1-034。

@@ -523,3 +523,11 @@ Preview未执行真实Upstash/DeepSeek验收，因为当前没有也不得读取
 | 受保护路径 | `git diff --name-only -- data outputs/medical-review docs/medical-review/hematuria_case_clinical_review.xlsx` | 无输出；医学数据、裁决表和工作簿内容零修改 |
 
 本地运行时为Node 24.14，仅作为辅助证据；新提交必须由Draft PR Node 22 CI确认。提交：`e94721e security: bound workbook archive expansion`、`d895e28 ci: enforce complete security evidence`。
+
+### `04c2a0b`远程门禁
+
+- 普通push结果：`52c2432..04c2a0b`快进到`origin/codex/hematuria-production-goal`；随后本地/远程HEAD一致，工作树干净。
+- GitHub Actions run `29294906265` / build job `86966184595`：completed/success。Node 22链路中的Full dependency audit、Conversion idempotency、生成基线、Schema/矛盾/双语、完整行为、医学工作簿/队列/导入、360对抗评分、TypeScript、ESLint、完整历史repository scanner、Playwright E2E、52页静态构建、bundle扫描和最终tracked-worktree clean gate全部success。
+- `deploy` check为completed/skipped，符合PR分支不上传/部署GitHub Pages的策略；没有部署Production。
+- GitHub commit checks：`build=success`、`Vercel Preview Comments=success`、`deploy=skipped`；combined status中`Vercel=success`。PR #1仍Open/Draft，HEAD `04c2a0b`。
+- 该远程结果关闭工作簿ZIP展开和CI/scanner证据真实性工程项，但不替代真实Preview AI、日志签名、持久限流、首Token/P95或医学专家验收。

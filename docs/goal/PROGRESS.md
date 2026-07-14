@@ -293,3 +293,10 @@
 - 选择两个直接相关且无需外部权限的P2完成原子修复：`e94721e`在`XLSX.read`前限制ZIP条目、路径、加密/ZIP64、压缩方法、单项16MB及总展开64MB，并补齐row/column/cell测试；`d895e28`让浅Git历史扫描fail-closed、CI checkout完整历史、全依赖high审计、未跟踪文件clean gate、main-only Pages手工发布和按ref并发隔离。
 - 失败基线均真实保留：旧工作簿helper忽略`maxExpandedBytes`导致专项exit1；旧workflow静态合同在仅`--prod`审计处exit1。修复后相关专项、医学工作簿/导入、TypeScript、ESLint、完整行为、全依赖high审计、已提交HEAD 75项幂等及295文件全历史secret扫描均exit0。
 - `data/**`、医学审核工作簿内容、419条决定、42例`needs_revision`、18条双语冲突和360评分零修改。按用户指令，当前原子里程碑push/CI后不再启动新的静态P2，转入长期QA的HEM-P1-034。
+
+#### 远程验收与QA切换
+
+- 三个原子提交已普通快进push：`e94721e`、`d895e28`、证据提交`04c2a0b`；远程专项分支与本地HEAD均为`04c2a0b0bd61f32d7621651223d10ed0d780ba55`，工作树干净，未force、未写main。
+- GitHub Actions run `29294906265` / build job `86966184595` completed/success：Node 22依赖安装与全依赖high审计、75项幂等、医学/行为/评分合同、TypeScript、ESLint、完整历史repository scanner、Playwright、52页构建、bundle扫描和最终clean gate全部success。Pages artifact/deploy在PR分支按策略skipped。
+- Vercel Deployment与Vercel Preview Comments均success；PR #1仍Open/Draft，HEAD精确为`04c2a0b`。这些结果只确认工程候选，不宣称真实DeepSeek、Preview日志签名、P95或医学裁决通过。
+- 已正式fetch QA分支并确认HEAD `4e3b3b1d107d34e2027229b835e2cbd21ddc61d4`、merge-base `52c24325ddd28262458f5eff4f37fe2866d53305`；仅选择性审查测试/报告，不整体merge。其余静态P2暂停，下一项为HEM-P1-034。
