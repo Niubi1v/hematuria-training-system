@@ -198,6 +198,13 @@ async function main() {
   assert.equal(englishEarlyImaging.statusCode, 409, "English flow must enforce the same stage boundary");
   assert.deepEqual(englishEarlyImaging.payload, { error: "stage_not_unlocked" });
 
+  const crossCaseAction = await call({
+    action: "history-log", caseId: "P008", attemptId: "security-stage-en", mode: "free",
+    language: "en", question: "Do you smoke?", requestId: "cross-case-action"
+  }, englishAttempt.token);
+  assert.equal(crossCaseAction.statusCode, 401, "a token must not cross case boundaries");
+  assert.deepEqual(crossCaseAction.payload, { error: "attempt_case_mismatch" });
+
   let replayAttempt = await init("security-replay");
   for (const [index, stageKey] of ["history", "orders", "diagnosis", "consult", "treatment", "perioperative", "debrief"].entries()) {
     replayAttempt = await call({
@@ -230,7 +237,14 @@ async function main() {
 
   const expiredState = createAttemptState({ attemptId: "expired", caseId: "P008", mode: "public-practice", language: "zh" });
   expiredState.expiresAt = Date.now() - 1;
-  assert.throws(() => verifyAttemptState(signAttemptState(expiredState)), /expired_attempt_token/);
+  const expiredToken = signAttemptState(expiredState);
+  assert.throws(() => verifyAttemptState(expiredToken), /expired_attempt_token/);
+  const expiredAction = await call({
+    action: "history-log", caseId: "P008", attemptId: "expired", mode: "free",
+    language: "zh", question: "什么时候开始？", requestId: "expired-action"
+  }, expiredToken);
+  assert.equal(expiredAction.statusCode, 401, "expired tokens must be rejected by the API handler");
+  assert.deepEqual(expiredAction.payload, { error: "expired_attempt_token" });
 
   console.log("Training secret separation, server-authoritative stage authorization, atomic replay rejection, and expiry gates passed.");
 }

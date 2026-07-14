@@ -132,10 +132,31 @@ type ServiceHealth = {
   deploymentSha?: string;
   patientServiceConfigured: boolean;
   trainingStateConfigured: boolean;
+  durableAttemptStoreConfigured?: boolean;
   cloudTtsConfigured: boolean;
   allowedOriginConfigured: boolean;
   apiVersion: string;
 };
+
+function stageSubmissionFailureMessage(error: unknown, language: LanguageCode) {
+  const code = error instanceof ApiRequestError ? error.code : "";
+  if (/training_attempt_store_unavailable|training_state_secret_(?:missing|weak|placeholder|reused)/.test(code)) {
+    return language === "en"
+      ? "The training record service is not configured, so this stage cannot be submitted. Ask an administrator to configure the Preview attempt store and retry."
+      : "训练记录服务未配置，当前无法提交阶段。请管理员完成 Preview 持久存储配置后重试。";
+  }
+  if (/expired_attempt_token/.test(code)) {
+    return language === "en"
+      ? "This training attempt has expired. Start a new attempt before submitting."
+      : "本次训练凭据已过期，请重新开始训练后再提交。";
+  }
+  if (/stale_attempt_token|attempt_(?:state|language|mode|case|id)_mismatch/.test(code)) {
+    return language === "en"
+      ? "The training state changed. Refresh the page to restore the latest valid stage, then retry."
+      : "训练状态已变化，请刷新页面恢复最新有效阶段后重试。";
+  }
+  return language === "en" ? "Stage submission failed. Please retry." : "阶段提交失败，请重试。";
+}
 type PendingFailedQuestion = {
   question: string;
   patientMessageIndex: number;
@@ -626,6 +647,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [reconnectNotice, setReconnectNotice] = useState("");
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error">("saved");
   const [storageWarning, setStorageWarning] = useState("");
+  const [stageSubmitting, setStageSubmitting] = useState(false);
   const [pendingHistoryLogs, setPendingHistoryLogs] = useState<PendingHistoryLog[]>([]);
   const [logSyncStatus, setLogSyncStatus] = useState<"idle" | "pending" | "verified" | "failed">("idle");
   const [logRetryNonce, setLogRetryNonce] = useState(0);
@@ -659,6 +681,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const autoSessionInitRef = useRef<{ key: string; promise: Promise<SessionInitResponse>; controller: AbortController } | null>(null);
   const patientReplyAbortRef = useRef<AbortController | null>(null);
   const patientSubmitLockRef = useRef(false);
+  const stageSubmitLockRef = useRef(false);
   const historyLogSyncRef = useRef(false);
   const historyLogRetryTimerRef = useRef(0);
   const historyLogRetryWaitingRef = useRef(false);
@@ -1567,7 +1590,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }
 
   async function submitStage() {
-    if (osceLocked) return;
+    if (osceLocked || stageSubmitLockRef.current) return;
     if (activeStageNo === 4 && answers.consultNeeded === "需要会诊" && (answers.consultDepartments.length === 0 || answers.consultPurpose.trim().length < 6 || answers.consultQuestions.trim().length < 6 || answers.consultSummary.trim().length < 6)) {
       alert(t(lang, "purposeRequired"));
       return;
@@ -1583,6 +1606,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       stageAnswerText(activeStageNo, answers, messages, examLogs, orderLogs, mdtOpinions),
       activeStageNo === 1 ? askedSlots.join("；") : ""
     ].filter(Boolean).join("；");
+    stageSubmitLockRef.current = true;
+    setStageSubmitting(true);
     try {
       const evaluation = await trainingAction<StageEvaluation>({ action: "stage-feedback", stageKey: stageScoreKey(activeStageNo), submission: { ...answers, answerText } });
       setSubmitted((current) => Object.fromEntries(
@@ -1590,8 +1615,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       ) as Partial<Record<AgentStageNo, StageEvaluation>>);
       setFinalReport(null);
       addTimeline("submit", lang === "en" ? "Stage submitted" : "提交阶段", `${agents.find((item) => item.stageNo === activeStageNo)?.agentName[lang] ?? activeStageNo}：${evaluation.score}/${evaluation.max}`, activeStageNo);
-    } catch {
-      setStorageWarning(lang === "en" ? "Stage submission failed. Please retry." : "阶段提交失败，请重试。" );
+    } catch (error) {
+      setStorageWarning(stageSubmissionFailureMessage(error, lang));
+    } finally {
+      stageSubmitLockRef.current = false;
+      setStageSubmitting(false);
     }
   }
 
@@ -2173,8 +2201,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 <CheckCircle2 size={16} /> {t(lang, "finishTraining")}
               </button>
             ) : (
-              <button disabled={osceLocked} onClick={submitStage} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white hover:bg-clinic-teal disabled:cursor-not-allowed disabled:opacity-50">
-                <CheckCircle2 size={16} /> {activeEvaluation ? (lang === "en" ? "Resubmit this stage" : "修改后重新提交") : t(lang, "submitStage")}
+              <button disabled={osceLocked || stageSubmitting} onClick={submitStage} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white hover:bg-clinic-teal disabled:cursor-not-allowed disabled:opacity-50">
+                <CheckCircle2 size={16} /> {stageSubmitting ? (lang === "en" ? "Submitting..." : "正在提交……") : activeEvaluation ? (lang === "en" ? "Resubmit this stage" : "修改后重新提交") : t(lang, "submitStage")}
               </button>
             )}
             {activeEvaluation && activeStageNo !== 7 && (

@@ -58,6 +58,30 @@ async function main() {
   });
   assert.equal(conflictStored.state.events.some((event: { slotId?: string }) => event.slotId === "urinary_urgency"), false, "quarantined bilingual facts must not enter authoritative scoring state");
 
+  for (const language of ["zh", "en"] as const) {
+    const bilingualAttemptId = `p001-seven-stage-${language}-${Date.now()}`;
+    let bilingual = await call({
+      action: "init-attempt", caseId: "P001", attemptId: bilingualAttemptId,
+      mode: "free", language, requestId: `${bilingualAttemptId}-init`
+    });
+    assert.equal(bilingual.statusCode, 200, `P001 ${language} attempt must initialize`);
+    for (const [index, stageKey] of ["history", "orders", "diagnosis", "consult", "treatment", "perioperative", "debrief"].entries()) {
+      bilingual = await call({
+        action: "stage-feedback", caseId: "P001", attemptId: bilingualAttemptId,
+        mode: "free", language, stageKey, submission: {}, requestId: `${bilingualAttemptId}-stage-${index + 1}`
+      }, bilingual.token);
+      assert.equal(bilingual.statusCode, 200, `P001 ${language} stage ${index + 1} must submit`);
+    }
+    const completedStages = verifyAttemptState(bilingual.token, { caseId: "P001", attemptId: bilingualAttemptId });
+    assert.equal(completedStages.currentStage, 8, `P001 ${language} must advance to scoring after seven stages`);
+    const bilingualScore = await call({
+      action: "score", caseId: "P001", attemptId: bilingualAttemptId,
+      mode: "free", language, requestId: `${bilingualAttemptId}-score`
+    }, bilingual.token);
+    assert.equal(bilingualScore.statusCode, 200, `P001 ${language} score must complete`);
+    assert.equal(bilingualScore.payload.max, 360);
+  }
+
   const originalToken = response.token;
   const historyBody = { action: "history-log", caseId: "P008", attemptId, mode: "free", language: "zh", question: "idempotent history question", requestId: "history-idempotency-test" };
   const firstHistory = await call(historyBody, originalToken);

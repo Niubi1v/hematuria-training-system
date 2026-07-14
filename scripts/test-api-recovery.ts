@@ -47,6 +47,19 @@ async function main() {
     calls = 0;
     globalThis.fetch = async () => {
       calls += 1;
+      return new Response(JSON.stringify({ error: "training_attempt_store_unavailable" }), { status: 503 });
+    };
+    await assert.rejects(
+      fetchWithRecovery("https://api.example.test/api/training-action/", { retries: 2 }),
+      (error: unknown) => error instanceof ApiRequestError
+        && error.kind === "not-configured"
+        && error.code === "training_attempt_store_unavailable"
+    );
+    assert.equal(calls, 1, "a missing authoritative attempt store is permanent configuration failure and must not retry");
+
+    calls = 0;
+    globalThis.fetch = async () => {
+      calls += 1;
       return new Response(JSON.stringify({ code: "route_missing" }), { status: 404 });
     };
     await assert.rejects(

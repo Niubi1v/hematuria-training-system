@@ -5,6 +5,7 @@ import { createRequire } from "node:module";
 process.env.TRAINING_STATE_SECRET = "playwright-training-state-secret-with-adequate-length";
 const require = createRequire(import.meta.url);
 const trainingHandler = require("../../api/training-action.js");
+const { resetMemoryAttemptStore } = require("../../server/trainingAttemptStore.js");
 
 async function trainingApi(body, token = "") {
   let statusCode = 200;
@@ -17,7 +18,65 @@ async function trainingApi(body, token = "") {
     json(value) { payload = value; return this; }, end() { return this; }
   };
   await trainingHandler(req, res);
-  return { statusCode, payload, token: headers["x-training-state"] || token };
+  return { statusCode, payload, token: headers["x-training-state"] || token, headers };
+}
+
+async function routeTrainingApiThroughHandler(page, observations = []) {
+  resetMemoryAttemptStore();
+  await page.route("**/api/health/**", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({
+      status: "ok", patientServiceConfigured: true, trainingStateConfigured: true,
+      durableAttemptStoreConfigured: true, cloudTtsConfigured: false,
+      allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha",
+      deploymentSha: "e2e-sha", apiVersion: "2.6.0"
+    })
+  }));
+  await page.route("**/api/session/init/**", async (route) => {
+    const body = route.request().postDataJSON();
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        sessionId: `stage-session-${body.attemptId}`, caseId: body.caseId,
+        language: body.language, mode: body.runtimeMode || "free",
+        patientOpeningStatement: body.language === "en" ? "Hello doctor. My urine has looked red." : "医生您好，我发现尿液发红。",
+        sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(),
+        deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available",
+        profileSource: "local-simulation", cacheHit: false
+      })
+    });
+  });
+  await page.route("**/api/training-action/**", async (route) => {
+    const request = route.request();
+    const body = request.postDataJSON();
+    const result = await trainingApi(body, request.headers()["x-training-state"] || "");
+    observations.push({
+      action: body.action,
+      stageKey: body.stageKey || "",
+      language: body.language,
+      attemptId: body.attemptId,
+      status: result.statusCode,
+      error: result.payload?.error || "",
+      tokenPresent: Boolean(request.headers()["x-training-state"])
+    });
+    const responseHeaders = { "Access-Control-Expose-Headers": "X-Training-State" };
+    if (result.headers["x-training-state"]) responseHeaders["X-Training-State"] = result.headers["x-training-state"];
+    await route.fulfill({
+      status: result.statusCode,
+      contentType: "application/json",
+      headers: responseHeaders,
+      body: JSON.stringify(result.payload)
+    });
+  });
+}
+
+async function submitFirstStage(page, language) {
+  const label = language === "en" ? "Submit stage" : "提交本阶段";
+  const nextLabel = language === "en" ? "Next Agent" : "进入下一阶段";
+  await page.getByRole("button", { name: label, exact: true }).click();
+  await expect(page.getByRole("button", { name: nextLabel, exact: true })).toBeVisible();
 }
 
 async function mockTrainingState(page) {
@@ -48,6 +107,65 @@ test("case catalog switches public complaint language", async ({ page }) => {
   await page.getByRole("button", { name: "English" }).click();
   await expect(page.getByRole("heading", { name: "Case selection" })).toBeVisible();
   await expect(page.getByText(/Hematuria/i).first()).toBeVisible();
+});
+
+test("P001 stage one submission advances across language switches and refresh", async ({ page }) => {
+  const observations = [];
+  await routeTrainingApiThroughHandler(page, observations);
+  await page.goto("/cases/P001/");
+
+  await submitFirstStage(page, "zh");
+  expect(observations.filter((item) => item.action === "stage-feedback" && item.language === "zh")).toEqual([
+    expect.objectContaining({ stageKey: "history", status: 200, tokenPresent: true })
+  ]);
+
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "English" }).click();
+  await submitFirstStage(page, "en");
+  expect(observations.filter((item) => item.action === "stage-feedback" && item.language === "en")).toEqual([
+    expect.objectContaining({ stageKey: "history", status: 200, tokenPresent: true })
+  ]);
+
+  await page.getByRole("button", { name: "Next Agent", exact: true }).click();
+  await expect(page.getByText("Investigation Agent", { exact: true }).first()).toBeVisible();
+  await page.reload();
+  await expect(page.getByText("Investigation Agent", { exact: true }).first()).toBeVisible();
+
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "中文" }).click();
+  await submitFirstStage(page, "zh");
+  expect(observations.filter((item) => item.action === "stage-feedback" && item.language === "zh")).toHaveLength(2);
+});
+
+test("rapid stage submission is accepted only once", async ({ page }) => {
+  const observations = [];
+  await routeTrainingApiThroughHandler(page, observations);
+  await page.goto("/cases/P001/");
+  await page.getByRole("button", { name: "提交本阶段", exact: true }).dblclick();
+  await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
+  await expect.poll(() => observations.filter((item) => item.action === "stage-feedback").length).toBe(1);
+});
+
+test("missing Preview attempt store reports a configuration blocker", async ({ page }) => {
+  await page.route("**/api/health/**", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({
+      status: "ok", patientServiceConfigured: true, trainingStateConfigured: false,
+      durableAttemptStoreConfigured: false, cloudTtsConfigured: false,
+      allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha",
+      deploymentSha: "e2e-sha", apiVersion: "2.6.0"
+    })
+  }));
+  await page.route("**/api/training-action/**", (route) => route.fulfill({
+    status: 503,
+    contentType: "application/json",
+    body: JSON.stringify({ error: "training_attempt_store_unavailable" })
+  }));
+  await page.goto("/cases/P001/");
+  await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "训练记录服务" })).toContainText("训练记录服务未配置，当前无法提交阶段");
+  await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toHaveCount(0);
 });
 
 test("visible display case IDs have stable direct routes", async ({ page }) => {
