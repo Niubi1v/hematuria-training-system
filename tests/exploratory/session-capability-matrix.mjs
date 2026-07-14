@@ -35,6 +35,8 @@ async function invoke(handler, {
   let payload = {};
   const responseHeaders = {};
   const requestHeaders = {
+    "content-type": "application/json",
+    accept: "application/json",
     host: "qa.local",
     "x-forwarded-proto": "http",
     "x-request-id": `qa-${id}`,

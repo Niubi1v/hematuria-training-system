@@ -347,6 +347,104 @@ test("all 42 case shells render seven stages without pre-submit answer leakage",
   }, { videoOnFailure: true });
 });
 
+test("local P001-P042 catalog, direct URL, refresh, and bilingual display routes stay valid", async ({ browser }, testInfo) => {
+  test.skip(testInfo.project.name !== "qa-1440x900", "Single-project route matrix avoids duplicate evidence.");
+  testInfo.setTimeout(300_000);
+  await withEvidence(browser, testInfo, "local-p001-p042-display-route-matrix", async ({ page }) => {
+    await page.route("**/api/health/**", (route) => route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, deploymentTier: "practice", apiVersion: "qa-fixture" })
+    }));
+    await page.route("**/api/training-action/**", (route) => {
+      const body = route.request().postDataJSON();
+      const payload = body?.action === "init-attempt" ? { attemptId: body.attemptId, practiceOnly: true } : { recorded: true, requestId: body?.requestId };
+      return route.fulfill({ status: 200, contentType: "application/json", headers: { "Access-Control-Expose-Headers": "X-Training-State", "X-Training-State": `qa-route-${body.attemptId}` }, body: JSON.stringify(payload) });
+    });
+    await page.route("**/api/session/init/**", (route) => {
+      const body = route.request().postDataJSON();
+      const english = body.language === "en";
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          sessionId: `qa-route-${body.caseId}-${body.language}`,
+          caseId: body.caseId,
+          language: body.language,
+          mode: body.mode,
+          patientOpeningStatement: english ? "Hello doctor. I noticed blood in my urine." : "医生您好，我发现尿液发红。",
+          sessionCreatedAt: "2026-07-14T00:00:00.000Z",
+          sessionExpiresAt: "2026-07-14T01:00:00.000Z",
+          deploymentSha: "fixture-only",
+          apiVersion: "qa-fixture",
+          aiStatus: "available",
+          profileSource: "local-simulation",
+          cacheHit: false
+        })
+      });
+    });
+    await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "", matchedSlotIds: [], matchedFacts: [], provider: "fixture", generationSource: "fixture", isFallback: false }) }));
+
+    const results = [];
+    const issues = [];
+    const visibleWithin = async (locator) => {
+      try {
+        await locator.waitFor({ state: "visible", timeout: 5_000 });
+        return true;
+      } catch {
+        return false;
+      }
+    };
+    page.on("dialog", (dialog) => dialog.accept());
+    const displayIds = CASE_ROUTES.map(({ displayCaseId }) => displayCaseId);
+    expect(displayIds).toEqual(Array.from({ length: 42 }, (_, index) => `P${String(index + 1).padStart(3, "0")}`));
+    for (const displayCaseId of displayIds) {
+      const catalogResponse = await page.goto("/cases/");
+      expect(catalogResponse?.status(), `${displayCaseId} catalog`).toBeLessThan(400);
+      await page.getByRole("button", { name: "中文" }).click();
+      const link = page.locator(`a[href$="/cases/${displayCaseId}/index.html"]`);
+      await expect(link).toHaveCount(1);
+      const navigation = page.waitForNavigation({ waitUntil: "domcontentloaded" });
+      await link.click();
+      const clickResponse = await navigation;
+      const clickStatus = clickResponse?.status() || 0;
+      if (clickStatus >= 400) issues.push({ caseId: displayCaseId, check: "catalog_click", status: clickStatus });
+
+      const directResponse = await page.goto(`/cases/${displayCaseId}/`, { waitUntil: "domcontentloaded" });
+      const directStatus = directResponse?.status() || 0;
+      if (directStatus >= 400) issues.push({ caseId: displayCaseId, check: "direct_url", status: directStatus });
+      const zhVisible = directStatus < 400 &&
+        await visibleWithin(page.getByText(displayCaseId, { exact: true }).first()) &&
+        await visibleWithin(page.getByRole("heading", { name: "血尿7阶段临床思维训练工作台" })) &&
+        await visibleWithin(page.getByRole("textbox", { name: "输入问诊问题" }));
+      if (!zhVisible) issues.push({ caseId: displayCaseId, check: "zh_heading", status: directStatus });
+      await page.evaluate(() => localStorage.setItem("hematuria-language", "en"));
+      const englishResponse = await page.reload({ waitUntil: "domcontentloaded" });
+      const englishStatus = englishResponse?.status() || 0;
+      if (englishStatus >= 400) issues.push({ caseId: displayCaseId, check: "english_route", status: englishStatus });
+      const enVisible = englishStatus < 400 &&
+        await visibleWithin(page.getByText(displayCaseId, { exact: true }).first()) &&
+        await visibleWithin(page.getByRole("heading", { name: "Hematuria 7-Agent Clinical Reasoning Workspace" })) &&
+        await visibleWithin(page.getByRole("textbox", { name: "Enter an interview question" }));
+      if (!enVisible) issues.push({ caseId: displayCaseId, check: "en_heading", status: englishStatus });
+
+      await page.evaluate(() => localStorage.setItem("hematuria-language", "zh"));
+      const refreshResponse = await page.reload({ waitUntil: "domcontentloaded" });
+      const refreshStatus = refreshResponse?.status() || 0;
+      if (refreshStatus >= 400) issues.push({ caseId: displayCaseId, check: "refresh", status: refreshStatus });
+      const refreshVisible = refreshStatus < 400 &&
+        await visibleWithin(page.getByText(displayCaseId, { exact: true }).first()) &&
+        await visibleWithin(page.getByRole("heading", { name: "血尿7阶段临床思维训练工作台" })) &&
+        await visibleWithin(page.getByRole("textbox", { name: "输入问诊问题" }));
+      if (!refreshVisible) issues.push({ caseId: displayCaseId, check: "refresh_heading", status: refreshStatus });
+      results.push({ caseId: displayCaseId, catalogClickStatus: clickStatus, refreshStatus, directStatus, englishStatus, languages: { zh: zhVisible, en: enVisible }, valid: clickStatus < 400 && directStatus < 400 && englishStatus < 400 && refreshStatus < 400 && zhVisible && enVisible && refreshVisible });
+    }
+    await writeFile(path.join(DIRS.reports, "local-p001-p042-route-matrix.json"), `${JSON.stringify({ environment: "local-next-dev", productionSha: "ff1a932785d891749ae8e73130bde8857062e194", source: "deterministic_fixture_not_real_ai", cases: results, issues }, null, 2)}\n`, "utf8");
+    await saveShot(page, testInfo, "local-route-matrix-p042-zh", false);
+    expect(issues, JSON.stringify(issues)).toEqual([]);
+  }, { videoOnFailure: true });
+});
+
 test("fixture completes all seven stages and renders a 360-point report after refresh recovery", async ({ browser }, testInfo) => {
   test.skip(!["qa-1440x900", "qa-390x844"].includes(testInfo.project.name), "Representative desktop and mobile workflow only.");
   await withEvidence(browser, testInfo, "fixture-seven-stage-workflow", async ({ page }) => {

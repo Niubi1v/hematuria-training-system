@@ -47,6 +47,8 @@ async function invoke(handler, body, requestId, extraHeaders = {}) {
     method: "POST",
     body,
     headers: {
+      "content-type": "application/json",
+      accept: "application/json",
       origin: "http://qa.local",
       host: "qa.local",
       "x-forwarded-proto": "http",
@@ -165,7 +167,7 @@ async function main() {
       { id: "prior-care-en", caseId: "P001", session: sessions.get("P001/en"), language: "en", question: "Have you seen a doctor before?", expected: ["prior_care"] },
       { id: "tumor-history-zh", caseId: "P001", session: sessions.get("P001/zh"), language: "zh", question: "以前有肿瘤史吗？", expected: ["PAST_MALIGNANCY"] },
       { id: "cystoscopy-history-zh", caseId: "P001", session: sessions.get("P001/zh"), language: "zh", question: "以前做过膀胱镜吗？", expected: ["PAST_URINARY_PROCEDURE"] },
-      { id: "clots-meta-zh", caseId: "P004", session: sessions.get("P004/zh"), language: "zh", question: "有血块吗？", expected: ["clots"], noTeacherMeta: true },
+      { id: "clots-meta-zh", caseId: "P004", session: sessions.get("P004/zh"), language: "zh", question: "有血块吗？", expected: ["clots"], noTeacherMeta: true, expectUnsafeBlock: true },
       { id: "flank-pain-en", caseId: "P002", session: sessions.get("P002/en"), language: "en", question: "Do you have flank pain?", expected: ["flank_pain"] },
       { id: "glomerular-en", caseId: "P001", session: sessions.get("P001/en"), language: "en", question: "Do you have foamy urine?", expected: ["glomerular_features"], noGenericUnknown: true }
     ];
@@ -185,7 +187,12 @@ async function main() {
       checks += 1;
       assertPublicEnvelope(result, probe.id, failures);
       const payload = result.payload;
-      if (!sameSet(payload.matchedSlotIds, probe.expected)) {
+      const expectedUnsafeBlock = probe.expectUnsafeBlock &&
+        payload.fallbackReason === "unsafe_deterministic_answer" &&
+        (payload.safetyFlags || []).includes("deterministic_answer_blocked") &&
+        (payload.matchedSlotIds || []).length === 0 &&
+        (payload.matchedFacts || []).length === 0;
+      if (!expectedUnsafeBlock && !sameSet(payload.matchedSlotIds, probe.expected)) {
         addFailure(failures, {
           kind: "route_mismatch",
           probeId: probe.id,

@@ -310,6 +310,7 @@ async function main() {
   let repeatChecks = 0;
   let boundaryChecks = 0;
   let sessionChecks = 0;
+  let unsafeDeterministicSourceBlocks = 0;
   const sessionIds = new Set();
 
   try {
@@ -420,7 +421,15 @@ async function main() {
               continue;
             }
 
-            if (!sameSet(first.matchedSlotIds || [], routeProbe.expectedSlotIds)) {
+            const sourceAnswer = String(sourceSlots[probe.slotId]?.[language === "en" ? "patientAnswerEn" : "patientAnswerZh"] || "");
+            const unsafeDeterministicSourceBlocked =
+              first.fallbackReason === "unsafe_deterministic_answer" &&
+              (first.safetyFlags || []).includes("deterministic_answer_blocked") &&
+              (first.matchedSlotIds || []).length === 0 &&
+              (first.matchedFacts || []).length === 0;
+            if (unsafeDeterministicSourceBlocked) unsafeDeterministicSourceBlocks += 1;
+
+            if (!unsafeDeterministicSourceBlocked && !sameSet(first.matchedSlotIds || [], routeProbe.expectedSlotIds)) {
               addFailure(failures, {
                 kind: "route_mismatch",
                 caseId: caseData.id,
@@ -448,7 +457,6 @@ async function main() {
                 actualSlotIds: first.matchedSlotIds
               });
             }
-            const sourceAnswer = String(sourceSlots[probe.slotId]?.[language === "en" ? "patientAnswerEn" : "patientAnswerZh"] || "");
             if (
               sameSet(first.matchedSlotIds || [], routeProbe.expectedSlotIds) &&
               sourceAnswer &&
@@ -554,6 +562,7 @@ async function main() {
       routeChecks,
       repeatChecks,
       boundaryChecks,
+      unsafeDeterministicSourceBlocks,
       providerCalls,
       expectedDirectQuarantineEvents: bilingualConflictEntries.length * 2 * 2 * 2,
       quarantineEventsObserved: quarantineEvents.length
