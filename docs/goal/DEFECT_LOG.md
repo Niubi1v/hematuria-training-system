@@ -322,3 +322,12 @@
 - **修复**：最终slot集合按意图抑制词面附带的通用pain；明确一般疼痛或`any other pain`仍保留general/compound语义。
 - **证据**：42×6 matcher合同、5个冲突病例隔离范围及P001真正general pain隔离通过；相关Patient/session/quarantine、类型、lint通过。
 - **医学边界**：不翻转或裁决5个pain冲突，HEM-P0-023保持阻塞；只修正问法实际触发的slot范围。
+
+### HEM-P1-032 非空已匹配事实被长度保护降级为通用unknown
+
+- **状态**：本地工程候选完成，待提交/Node22 CI/长期QA矩阵。
+- **失败基线**：P001英文foamy urine路由正确但公开reply为`I'm not sure about that right now.`；QA报告191个唯一case-slot-language、365探针实例。
+- **根因**：`conciseDeterministicReply`使用总长80的前置阈值，比外层“每行80、总长180”更严，导致81–106字符的安全单slot事实被无条件抹除。
+- **修复**：对无禁词的当前slot原文做无损换行；标准化后必须与原文相同。不能安全投影的内容进入既有`unsafe_deterministic_answer`并清空slot，不把安全失败计为已询问。
+- **证据**：42×3=126个代表安全长回复语义逐字保持且单行≤80；P004/P005/P006不安全来源、18条冲突和历史/疼痛边界回归通过；完整行为、类型、lint通过。
+- **医学边界**：不修改原始双语值、审核状态或医学极性，不裁决161来源问题。

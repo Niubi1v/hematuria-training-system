@@ -449,3 +449,10 @@
 - 最小修复在canonical matcher最终集合中应用特异性：命中flank/renal-colic/radiating时抑制词面附带的通用`pain`；若问题明确包含`any other pain`、其他痛或一般痛意图，则保留合法compound集合。
 - 42例×6问法合同通过；5个pain冲突病例×4特异问法均不再因通用pain扩大quarantine，而P001真正`any pain`仍以`medical_bilingual_conflict_pending_review`隔离。
 - Patient、dynamic session、18冲突隔离、TypeScript和ESLint通过。未修改18条冲突表、数据、审核状态或医学真值；当前尚未提交/push，HEM-P1-032继续OPEN。
+
+### HEM-P1-032 非空事实被长度保护压成unknown（2026-07-14，本地候选）
+
+- 失败合同在P001英文泡沫尿稳定得到generic unknown；根因是确定性路径先用“总长≤80”判断，而外层安全合同本来允许总长≤180、每行≤80。安全英文slot常见81–106字符，因此已有内容被技术性抹除但slot仍匹配。
+- 最小修复不摘要、不截断、不生成医学语义：无禁词且总长在安全界内时只按空格/标点换行，标准化空白后与获准单slot原文完全相同；含禁词、项目符号或超过总安全界限的非onset来源交给外层显式安全阻断并清空slot，不再伪装为已收集unknown。
+- 42例×glomerular/triggers/occupation共126个公开回复逐字语义保持、每行≤80且无generic unknown。P004/P005/P006不安全来源仍`unsafe_deterministic_answer`，18条冲突隔离不变。
+- 三个Patient路由P1里程碑最终完整`pnpm test`34.3秒exit0；相关历史/疼痛/session/Agent/冲突、TypeScript和ESLint也通过。当前032尚未提交/push；030/031已有本地原子提交，GitHub 443暂时不稳定。
