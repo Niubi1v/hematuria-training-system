@@ -219,3 +219,45 @@
 - `EXT-BLOCK-003`（已解除）：443连通性恢复后fetch与普通push成功；未使用force或替代Git API写入。
 - `DCI-P1-003`（已修复，待最新CI）：Linux Node 22 CI对75输出通过，证明旧“56基线漂移”不是提交基线缺陷。Windows证据为`i/lf w/crlf`且全局`core.autocrlf=true`；隔离worktree改为按Git对象LF检出后，本地baseline及二次幂等75/75 exit0。比较仍是SHA-256精确字节比较，没有放宽断言或更新数据。
 - `DCI-P1-003`（远程确认关闭）：head `9d405fd`的Actions run `29288294002`再次执行75输出幂等并success；本地Windows与Linux Node 22 CI均通过，受保护数据零diff。
+
+### 2026-07-14 当前原子P2处置
+
+- `PRV-P2-004`（工程闭环）：head `04c2a0b`的run `29294906265`以完整checkout执行scanner专项和仓库扫描并success；浅仓库fixture按`history-scan-shallow` fail-closed。仍不宣称覆盖历史压缩二进制、图片像素OCR/隐写或组织级artifact/log保留。
+- `DCI-P2-007`（工程闭环）：`safe-workbook`此前在`XLSX.read`后才检查形状，失败fixture证明`maxExpandedBytes`被忽略。`e94721e`增加解析前ZIP中央目录和受限解压检查；本地专项及`04c2a0b`的Node 22完整行为/医学工作簿合同均success。
+- `DCI-P2-008`（工程闭环）：`d895e28`增加全依赖high门禁、全未跟踪clean gate、main-only artifact/deploy及按workflow/event/ref并发隔离；run `29294906265`的Full dependency audit、最终clean gate和PR分支deploy skipped行为均符合合同。依赖真实状态仍为1 moderate、0 high。
+- 其余静态P2按用户指令暂缓，不在本轮继续扩展；下一优先级为QA复现的HEM-P1-034。
+
+### 长期QA开放P1处置
+
+- `HEM-P1-034`（工程修复完成，待独立QA复测）：旧实现等待中文session成功后切换英文会把中文attempt token发送给英文session，真实失败测试记录`headerPresent=true`、`attemptMatches=false`、`languageMatches=false`并得到401 `invalid_attempt_token`。`d8c30be`把token/promise按attempt键控，并同步取消/清理旧session能力。desktop/mobile双向切换、刷新、快速反向切换2/2及完整Playwright40/40通过；run `29296603010` completed/success，Vercel两项success。服务端跨语言/跨attempt拒绝合同保持不变。
+- `HEM-P1-029`（工程修复完成，待独立QA复测）：英文session旧路径稳定返回中文开场，42例失败合同在P001首例exit1。根因是profile构建未接收`language`且问候硬编码中文；`24054cf`只本地化安全简化主诉和开场，不使用完整病例摘要。42例英文开场、42×6英文行为及训练安全合同通过；run `29297252637` completed/success，Vercel两项success，PR仍Draft。医学数据、审核状态和评分算法零修改。
+- `HEM-P1-033`（本地工程修复完成，待push/CI与独立QA）：P004/P005/P006 deterministic canonical绕过公开输出过滤；前端替换可见文本却仍收集隐藏slot。`36061ad`增加服务端fail-closed及客户端安全展示/覆盖原子性，桌面失败基线从`clots`已收集修复为零覆盖，desktop/mobile 2/2、完整practice 42/42及相关合同通过。医学真值未改。当前仅因`github.com:443`连接超时尚未push，不能标记远程关闭。
+- `HEM-P1-027`（OPEN；两轮最小修复无效后暂停）：360×800中文仍可重复为`opening bottom=661 / composer y=654`。移动间距压缩未覆盖英文，移动normal-flow又使390×844既有输入可见性门禁回归到`879–888 > 844`；实验已全部撤回且工作树无残留。需要把chat/composer改成受visual viewport约束的移动workspace或等价经过设计的结构方案，不能继续叠加像素补丁。
+
+### 2026-07-14 Preview差异增量
+
+- `HEM-P1-033`（工程与远程CI关闭，待独立QA）：`36061ad`、`9b1ffba`与`5369966`已普通push；Actions run `29299085374` completed/success，Vercel两项success，PR仍Draft。旧条目中的Git网络阻塞已经解除。
+- `HEM-P1-035`（工程关闭）：可见病例编号P013–P042映射到内部`HX-ADD-001–030`，旧静态参数、目录链接和随机入口使用内部ID，导致按可见ID复制、直达或刷新稳定404。失败测试记录P013卡片href为`/cases/HX-ADD-001/index.html`；`79d1083`增加display ID别名且不改变runtime case ID。run `29301467610` completed/success，Vercel部署`CwbEAU3RcmH9PGpZCQuSnt9J7ag3` Ready；分支Preview P013初次直达和刷新均无404。回滚为普通`git revert 79d1083`。
+- `HEM-P1-020`（仍BLOCKED，配置证据更新）：当前Preview部署与分支SHA一致，P001静态页可加载且health runtime请求为200；但训练签名和Agent/training origin变量只覆盖Production，Preview页面仍degraded。需用户将`TRAINING_STATE_SECRET`、`TRAINING_API_ALLOWED_ORIGINS`、`AGENT_API_ALLOWED_ORIGIN`及相应deployment tier配置到Preview/分支Preview并重新部署；持久attempt store变量也须按既有安全方案配置。未读取或修改任何值，真实DeepSeek、日志10/10、20轮和P95仍未通过。
+
+### 2026-07-14 AI防滥用专项
+
+- `HEM-P1-036`（本地工程修复，待push/CI）：Patient session可把公开`agent-chat`的`agentId`改成诊断/检查等其他LLM角色，旧失败合同返回200。现固定Patient-only角色与history阶段，客户端模型/Prompt/密钥/base URL/隐藏上下文和非白名单字段在provider前拒绝；专项断言拒绝路径`providerCalls=0`。
+- `HEM-P1-037`（本地工程修复，待push/CI与Preview配置验收）：失败基线第三个session请求仍200；现有Upstash/内存准入原子覆盖session/attempt/IP小时/IP日/项目日请求与token/probe预算，超限providerCalls不变。真实跨实例仍受HEM-P1-020持久store配置阻塞。
+- `HEM-P1-038`（本地工程部分修复，待push/CI）：冷并发旧基线`providerCalls=2`，短text+20 KiB padding可调用Azure。现有16 KiB JSON/字段合同及同tuple single-flight，专项通过；session capability和跨实例持久配额拆为HEM-P1-041。
+- `HEM-P1-039`（本地工程修复，待push/CI）：同session不同幂等键可同时进入provider，失败基线`providerCalls=2`。新增Upstash/内存session租约后第二项429且零provider调用，首项结束后可恢复；相同键幂等不变。
+- `HEM-P1-040`（本地工程修复，待push/CI与Preview配置验收）：失败基线4个连续503逻辑请求实际调用provider 4次。现有持久/内存熔断在阈值2测试中降为2次，冷却后并发恢复仅1个探测，成功闭合；模拟Upstash命令不含provider URL/model明文。真实Preview错误率、P50/P95与外部告警投递仍受HEM-P1-020配置/权限阻塞。
+- `HEM-P1-041`（本地工程修复，待push/CI）：TTS旧路径无session也200。现绑定Patient session的attempt/case/language/mode，能力拒绝providerCalls=0，cache按session摘要隔离；桌面/移动降级2/2。跨实例预算拆为HEM-P1-042。
+- `HEM-P1-042`（本地工程修复，待push/CI与Preview配置验收）：失败基线中同session换IP/文本的第二次请求仍200并调用Azure stub。现于provider前原子执行session日、IP小时/日、项目日请求/字符预算及跨实例tuple租约；五类超限、quota/in-progress和serverless缺store均保持provider计数。Redis命令仅含6个哈希键，不保存音频、原始session/IP/text。真实Preview跨实例仍受HEM-P1-020配置阻塞。
+
+### 2026-07-14 AI防滥用远程状态修正
+
+- `HEM-P1-036`—`HEM-P1-042`的已完成本地工程提交已普通push至`87cb4f5`；此前“待push/CI”的网络阻塞解除。Actions run `29305846597` build success，Vercel两项success，PR仍Draft。
+- `HEM-P1-040`工程P1关闭；配置后Preview真实Redis跨实例/Lua TTL与provider错误率验证仍由`HEM-P1-020`阻塞，外部告警投递和真实性能样本仍待权限/配置，不得因CI绿灯关闭这些验收项。
+
+### 2026-07-14 HEM-P1-027 状态修正
+
+- `HEM-P1-027`（本地工程修复，待push/CI与独立QA）：原QA断言已纳入主Playwright并先稳定失败7px。根因不是composer高度本身，而是移动端页面级sticky能越过尚在视口下方的聊天容器；英文换行证明固定像素补丁无效。
+- 当前候选采用移动normal-flow + 聚焦/输入/visualViewport几何校正，桌面sticky使用实际测量高度的显式spacer。四视口双语、既有输入可见性、20轮手动上翻/新消息、完整46项浏览器及构建/扫描均通过。未降低44px触控目标、未隐藏开场、未删除或放宽旧断言。
+- 首轮远程CI run `29309491866`为45/46；唯一失败是QA新增断言将上翻语义过度限定为`scrollTop=0`，实际40px仍远离底部且没有强制回底。已改为产品阈值合同（距底部>72px），新消息前后均验证；CI同并发本地6/6，待下一轮远程确认。
+- `HEM-P1-027`（工程关闭；独立真机QA待复测）：测试合同修正提交`4fed076`普通push后，Actions run `29309939497` completed/success，Node22 Playwright、完整行为、类型、lint、82页build、bundle/scanner与clean gate全部通过；Vercel两项success，Pages deploy skipped。没有放宽会话、几何、新消息或末条可见性语义。真实360/390设备软键盘与safe-area仍是独立QA项，不因自动化绿灯伪报完成。

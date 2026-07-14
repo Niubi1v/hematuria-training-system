@@ -24,7 +24,7 @@ async function mockTrainingState(page) {
   await page.route("**/api/training-action/**", async (route) => {
     const body = route.request().postDataJSON();
     const payload = body.action === "init-attempt" ? { attemptId: body.attemptId, practiceOnly: true } : { recorded: true, requestId: body.requestId };
-    await route.fulfill({ status: 200, contentType: "application/json", headers: { "X-Training-State": `e2e-${body.attemptId}` }, body: JSON.stringify(payload) });
+    await route.fulfill({ status: 200, contentType: "application/json", headers: { "Access-Control-Expose-Headers": "X-Training-State", "X-Training-State": `e2e-${body.attemptId}` }, body: JSON.stringify(payload) });
   });
 }
 
@@ -50,6 +50,20 @@ test("case catalog switches public complaint language", async ({ page }) => {
   await expect(page.getByText(/Hematuria/i).first()).toBeVisible();
 });
 
+test("visible display case IDs have stable direct routes", async ({ page }) => {
+  await page.goto("/cases/");
+  await page.getByRole("button", { name: "English" }).click();
+  const p013Card = page.getByRole("link", { name: /Training case P013/ });
+  await expect(p013Card).toHaveAttribute("href", "/cases/P013/index.html");
+
+  await page.goto("/cases/P013/");
+  await expect(page.getByText("P013", { exact: true }).first()).toBeVisible();
+
+  await page.addInitScript(() => { Math.random = () => 12.1 / 42; });
+  await page.goto("/random/");
+  await expect(page).toHaveURL(/\/cases\/P013\/index\.html\?mode=random$/);
+});
+
 test("case catalog search has a recoverable empty state", async ({ page }) => {
   await page.goto("/cases/");
   await page.getByRole("textbox", { name: "搜索病例" }).fill("NO-SUCH-CASE");
@@ -72,6 +86,81 @@ test("mobile interview keeps multiline input visible without horizontal overflow
   expect(box.y + box.height).toBeLessThanOrEqual(844);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
   expect(overflow).toBe(false);
+});
+
+test("interview composer reserves its measured space across viewports and languages", async ({ page }, testInfo) => {
+  testInfo.setTimeout(90_000);
+  const chineseOpening = "医生您好，我是因为小便颜色变红3月余来看病的。";
+  const englishOpening = "Hello doctor. I came in because my urine has looked red for more than three months.";
+  await page.route("**/api/health/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" }) }));
+  await page.route("**/api/session/init/**", (route) => {
+    const body = route.request().postDataJSON();
+    const opening = body.language === "en" ? englishOpening : chineseOpening;
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: `layout-${body.language}`, caseId: "P001", language: body.language, mode: "free", patientOpeningStatement: opening, sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) });
+  });
+  await mockTrainingState(page);
+
+  const viewports = testInfo.project.name === "mobile-chromium"
+    ? [{ width: 360, height: 800 }, { width: 390, height: 844 }]
+    : [{ width: 1280, height: 720 }, { width: 1440, height: 900 }];
+  for (const viewport of viewports) {
+    for (const language of ["zh", "en"]) {
+      await page.setViewportSize(viewport);
+      await page.goto("/cases/P001/");
+      await page.getByRole("button", { name: language === "en" ? "English" : "中文" }).click();
+      const conversation = page.getByRole("log", { name: language === "en" ? "Simulated patient conversation" : "模拟问诊对话" });
+      const opening = conversation.getByText(language === "en" ? englishOpening : chineseOpening, { exact: true });
+      const input = page.getByRole("textbox", { name: language === "en" ? "Enter an interview question" : "输入问诊问题" });
+      const composer = page.getByTestId("chat-composer");
+      const spacer = page.getByTestId("chat-composer-spacer");
+      await expect(opening).toBeVisible();
+      await expect(input).toBeVisible();
+      if (viewport.width < 640) await input.focus();
+      await expect.poll(async () => {
+        const box = await composer.boundingBox();
+        return box ? Math.ceil(box.y + box.height) : Number.POSITIVE_INFINITY;
+      }).toBeLessThanOrEqual(viewport.height);
+      const [openingBox, composerBox, layout] = await Promise.all([
+        opening.boundingBox(),
+        composer.boundingBox(),
+        page.evaluate(() => {
+          const composerElement = document.querySelector('[data-testid="chat-composer"]');
+          return {
+            spacerHeight: Number.parseFloat(getComputedStyle(document.querySelector('[data-testid="chat-composer-spacer"]')).height),
+            spacerDisplay: getComputedStyle(document.querySelector('[data-testid="chat-composer-spacer"]')).display,
+            composerHeight: composerElement?.getBoundingClientRect().height ?? 0,
+            overflow: document.documentElement.scrollWidth > window.innerWidth,
+            className: composerElement?.className ?? ""
+          };
+        })
+      ]);
+      expect(openingBox).toBeTruthy();
+      expect(composerBox).toBeTruthy();
+      expect(composerBox.y, `${viewport.width}x${viewport.height}/${language}`).toBeGreaterThanOrEqual(openingBox.y + openingBox.height);
+      expect(Math.ceil(composerBox.y + composerBox.height)).toBeLessThanOrEqual(viewport.height);
+      await expect(spacer).toHaveAttribute("style", /safe-area-inset-bottom/);
+      if (viewport.width < 640) {
+        expect(layout.spacerDisplay).toBe("none");
+      } else {
+        expect(layout.spacerHeight).toBeGreaterThanOrEqual(layout.composerHeight);
+      }
+      expect(layout.className).toContain("safe-area-inset-bottom");
+      expect(layout.overflow).toBe(false);
+    }
+  }
+
+  if (testInfo.project.name === "mobile-chromium") {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/cases/P001/");
+    await page.getByRole("button", { name: "中文" }).click();
+    const input = page.getByRole("textbox", { name: "输入问诊问题" });
+    await input.focus();
+    await page.setViewportSize({ width: 390, height: 640 });
+    await expect.poll(async () => {
+      const box = await input.boundingBox();
+      return box ? Math.ceil(box.y + box.height) : Number.POSITIVE_INFINITY;
+    }).toBeLessThanOrEqual(640);
+  }
 });
 
 test("primary practice pages have no serious accessibility violations", async ({ page }) => {
@@ -124,27 +213,109 @@ test("cloud TTS failure visibly falls back to the matched browser voice", async 
   await expect(page.getByTestId("voice-profile")).toHaveAttribute("data-speech-state", "fallback-browser");
 });
 
-test("English patient reply stays English and language switch creates a separate attempt", async ({ page }) => {
-  await page.route("**/api/session/init/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: "e2e-session", caseId: "P001", language: "en", mode: "free", patientOpeningStatement: "Hello doctor. My urine has been red.", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) }));
+test("HEM-P1-034 language switches bind each session to its own attempt token", async ({ page }) => {
+  const trainingStates = new Map();
+  const attemptInitCalls = [];
+  const sessionObservations = [];
+  let delayEnglishSession = false;
+  await page.route("**/api/session/init/**", async (route) => {
+    const body = route.request().postDataJSON();
+    const trainingState = route.request().headers()["x-training-state"];
+    const issued = trainingStates.get(trainingState);
+    sessionObservations.push({
+      language: body.language,
+      headerPresent: Boolean(trainingState),
+      attemptMatches: issued?.attemptId === body.attemptId,
+      languageMatches: issued?.language === body.language
+    });
+    if (trainingState !== `e2e-${body.attemptId}`) {
+      return route.fulfill({ status: 401, contentType: "application/json", body: JSON.stringify({ error: "invalid_attempt_token" }) });
+    }
+    if (delayEnglishSession && body.language === "en") await new Promise((resolve) => setTimeout(resolve, 200));
+    const english = body.language === "en";
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: `e2e-session-${body.attemptId}`, caseId: "P001", language: body.language, mode: "free", patientOpeningStatement: english ? "Hello doctor. My urine has been red." : "医生您好，我发现尿液发红。", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) });
+  });
   await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "- I do not have pain or fever.", matchedSlotIds: ["pain", "fever_chills"], isFallback: false }) }));
   await page.route("**/api/training-action/**", async (route) => {
     const body = route.request().postDataJSON();
     const payload = body.action === "init-attempt" ? { attemptId: body.attemptId, practiceOnly: true } : { recorded: true };
-    await route.fulfill({ status: 200, contentType: "application/json", headers: { "X-Training-State": `e2e-${body.attemptId}` }, body: JSON.stringify(payload) });
+    if (body.action === "init-attempt") {
+      attemptInitCalls.push(body.attemptId);
+      trainingStates.set(`e2e-${body.attemptId}`, { attemptId: body.attemptId, language: body.language });
+    }
+    await route.fulfill({ status: 200, contentType: "application/json", headers: { "Access-Control-Expose-Headers": "X-Training-State", "X-Training-State": `e2e-${body.attemptId}` }, body: JSON.stringify(payload) });
+  });
+  const chineseSessionReady = page.waitForResponse((response) => {
+    if (!response.url().includes("/api/session/init/")) return false;
+    return response.request().postDataJSON()?.language === "zh";
   });
   await page.goto("/cases/P001/");
+  expect((await chineseSessionReady).status()).toBe(200);
   const englishSessionReady = page.waitForResponse((response) => {
     if (!response.url().includes("/api/session/init/")) return false;
-    return response.request().postDataJSON()?.language === "en" && response.ok();
+    return response.request().postDataJSON()?.language === "en";
   });
   await page.getByRole("button", { name: "English" }).click();
-  await englishSessionReady;
+  const englishSession = await englishSessionReady;
+  expect(englishSession.status(), JSON.stringify(sessionObservations)).toBe(200);
   await page.getByPlaceholder("Enter an interview question").fill("Do you have pain or fever?");
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByText("I do not have pain or fever.").first()).toBeVisible();
   await expect(page.getByText("这个我不太清楚")).toHaveCount(0);
   const englishPointer = await page.evaluate(() => Object.keys(localStorage).find((key) => key.includes("attempt-pointer-v3:P001:free:en")));
   expect(englishPointer).toBeTruthy();
+
+  await page.reload();
+  await expect(page.getByPlaceholder("Enter an interview question")).toBeVisible();
+  page.on("dialog", (dialog) => dialog.accept());
+  const chineseSessionAfterRefresh = page.waitForResponse((response) => {
+    if (!response.url().includes("/api/session/init/")) return false;
+    return response.request().postDataJSON()?.language === "zh";
+  });
+  await page.getByRole("button", { name: "中文" }).click();
+  expect((await chineseSessionAfterRefresh).status(), JSON.stringify(sessionObservations)).toBe(200);
+  expect(sessionObservations.at(-1)).toMatchObject({ language: "zh", headerPresent: true, attemptMatches: true, languageMatches: true });
+  await expect(page.getByPlaceholder("输入问诊问题")).toBeVisible();
+
+  delayEnglishSession = true;
+  const delayedEnglishRequest = page.waitForRequest((request) => request.url().includes("/api/session/init/")
+    && request.postDataJSON()?.language === "en");
+  await page.getByRole("button", { name: "English" }).click();
+  await delayedEnglishRequest;
+  const finalChineseSession = page.waitForResponse((response) => response.url().includes("/api/session/init/")
+    && response.request().postDataJSON()?.language === "zh");
+  await page.getByRole("button", { name: "中文" }).click();
+  expect((await finalChineseSession).status(), JSON.stringify(sessionObservations)).toBe(200);
+  await page.waitForTimeout(250);
+  await expect(page.getByPlaceholder("输入问诊问题")).toBeVisible();
+  expect(sessionObservations.at(-1)).toMatchObject({ language: "zh", headerPresent: true, attemptMatches: true, languageMatches: true });
+  expect(sessionObservations.every((item) => item.headerPresent && item.attemptMatches && item.languageMatches)).toBe(true);
+  expect(Math.max(...Array.from(new Set(attemptInitCalls)).map((attemptId) => attemptInitCalls.filter((item) => item === attemptId).length))).toBe(1);
+});
+
+test("HEM-P1-033 unsafe patient metadata cannot collect a hidden fact", async ({ page }) => {
+  await mockTrainingState(page);
+  await page.route("**/api/health/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" }) }));
+  await page.route("**/api/session/init/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: "session-p004", caseId: "P004", language: "zh", mode: "free", patientOpeningStatement: "医生您好，我发现尿液发红。", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) }));
+  await page.route("**/api/agent-chat/**", (route) => {
+    const request = route.request().postDataJSON();
+    const payload = request.probe
+      ? { replyText: "", matchedSlotIds: [], matchedFacts: [], provider: "deepseek", isFallback: false }
+      : { replyText: "未主动诉血块，需追问；以无痛全程血尿为主", matchedSlotIds: ["clots"], matchedFacts: ["clots=teacher-only"], provider: "rule", isFallback: true, fallbackReason: "unsafe_deterministic_answer" };
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(payload) });
+  });
+
+  await page.goto("/cases/P004/");
+  await page.getByPlaceholder("输入问诊问题").fill("有血块吗？");
+  await page.getByRole("button", { name: "发送" }).click();
+  await expect(page.getByRole("log", { name: "模拟问诊对话" }).getByText("医生，您能问得再具体一点吗？我不太明白您的意思。")).toBeVisible();
+  await expect(page.getByText(/未主动诉|需追问/)).toHaveCount(0);
+
+  await expect.poll(async () => page.evaluate(() => {
+    const key = Object.keys(localStorage).find((item) => item.startsWith("hematuria-attempt-v3:P004:free:zh:"));
+    const saved = key ? JSON.parse(localStorage.getItem(key)) : null;
+    return saved ? { askedSlots: saved.askedSlots, colorClots: saved.collected?.colorClots } : null;
+  })).toEqual({ askedSlots: [], colorClots: false });
 });
 
 test("rule fallback keeps reconnection available and recovery replaces the reply without duplicate evidence", async ({ page }) => {
@@ -362,11 +533,30 @@ test("twenty interview turns do not reinitialize the active language session", a
   await expect.poll(() => sessionCalls).toBe(2);
   const initializedLanguageSessions = sessionCalls;
   const input = page.getByPlaceholder("Enter an interview question");
-  for (let turn = 1; turn <= 20; turn += 1) {
+  for (let turn = 1; turn <= 19; turn += 1) {
     await input.fill(`Question ${turn}?`);
     await page.getByRole("button", { name: "Send" }).click();
     await expect(page.getByLabel("Simulated patient conversation").getByText(`Patient answer ${turn}.`, { exact: true })).toBeVisible();
   }
+  const conversation = page.getByLabel("Simulated patient conversation");
+  await conversation.evaluate((element) => element.scrollTo({ top: 0, behavior: "auto" }));
+  await expect.poll(() => conversation.evaluate((element) => element.scrollHeight - element.scrollTop - element.clientHeight)).toBeGreaterThan(72);
+  await input.fill("Question 20?");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(conversation.getByText("Patient answer 20.", { exact: true })).toHaveCount(1);
+  const latestButton = page.getByRole("button", { name: "New message · go to latest" });
+  await expect(latestButton).toBeVisible();
+  expect(await conversation.evaluate((element) => element.scrollHeight - element.scrollTop - element.clientHeight)).toBeGreaterThan(72);
+  await latestButton.click();
+  await expect(conversation.getByText("Patient answer 20.", { exact: true })).toBeVisible();
+  await expect.poll(() => conversation.evaluate((element) => Math.ceil(element.scrollHeight - element.scrollTop - element.clientHeight))).toBeLessThanOrEqual(1);
+  const [answerBox, composerBox] = await Promise.all([
+    conversation.getByText("Patient answer 20.", { exact: true }).boundingBox(),
+    page.getByTestId("chat-composer").boundingBox()
+  ]);
+  expect(answerBox).toBeTruthy();
+  expect(composerBox).toBeTruthy();
+  expect(answerBox.y + answerBox.height).toBeLessThanOrEqual(composerBox.y);
   expect(sessionCalls).toBe(initializedLanguageSessions);
   expect(patientCalls).toBe(20);
   await expect(page.getByLabel("Simulated patient conversation").getByText("Patient answer 20.", { exact: true })).toHaveCount(1);

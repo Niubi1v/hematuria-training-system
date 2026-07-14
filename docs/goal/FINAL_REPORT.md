@@ -235,3 +235,78 @@
 - 动态fixture、真实295文件/36二进制归档/112提交扫描、TypeScript、ESLint、37段完整行为和75项幂等均exit0。回滚为普通`git revert 25ad0a9`。
 - `PRV-P2-004`显著收敛但不伪造全覆盖：历史压缩二进制、图片像素OCR/隐写、GitHub组织级artifact/日志保留仍需独立工具/权限。
 - 唯一moderate仍是Next稳定版内部PostCSS；官方公告要求`>=8.5.10`，但稳定Next仍固定`8.4.31`，且本仓库无用户CSS输入/重串行化路径。本轮不使用未经Next稳定版验证的override，仅保留监控和真实1 moderate状态。
+
+#### 远程确认与后续原子安全里程碑
+
+- `52c24325ddd28262458f5eff4f37fe2866d53305`的Actions run `29292415307` completed/success：Node 22.14、75项幂等、完整行为与安全专项、295文件scanner、Playwright 40/40、52/52构建、23 JS bundle和最终clean gate通过；Vercel两项通过，Pages deploy skipped，PR继续Draft。
+- `e94721e`修复工作簿解析前ZIP展开边界；`d895e28`修复浅历史scanner证据、完整依赖high审计、未跟踪clean gate及main-only Pages手工发布。失败测试先于修复命中，相关专项、完整行为、TypeScript、ESLint、全依赖审计、75项幂等和secret扫描本地均exit0。
+- 两提交均可分别普通`git revert e94721e`、`git revert d895e28`。未修改业务页面、Patient Agent、连接状态机、医学事实、审批状态、环境变量或密钥。
+- `04c2a0b0bd61f32d7621651223d10ed0d780ba55`已普通快进push；Actions run `29294906265` / build job `86966184595` completed/success，Vercel Deployment与Preview Comments success，Pages deploy按PR策略skipped。PR #1保持Open/Draft，工作树干净。
+- 当前原子P2工程项已完成，不再扩展新的静态P2。已fetch长期QA分支并确认HEAD `4e3b3b1d107d34e2027229b835e2cbd21ddc61d4`、merge-base `52c24325ddd28262458f5eff4f37fe2866d53305`；下一优先级为HEM-P1-034。真实Preview AI/持久存储/密钥作用域及HEM-P0-001/023医学裁决仍未解除。
+
+### HEM-P1-034
+
+- `d8c30be`修复语言切换时单一token/promise ref复用旧attempt能力的竞态；能力仍严格绑定case/language/mode/attempt，服务端校验未放宽。回滚为普通`git revert d8c30be`。
+- 失败基线为中文session 200后英文session 401 `invalid_attempt_token`，且脱敏观察明确指向旧attempt/旧language；修复后desktop/mobile双向切换、刷新、快速反向切换2/2，完整practice 40/40及安全合同通过。
+- Actions run `29296603010` completed/success，Vercel两项success，Pages deploy skipped，PR继续Draft。长期QA推荐从`d8c30beea1e2fa8085bd42d1a78b64354bc61be8`复测HEM-P1-034；HEM-P1-029、HEM-P1-033与HEM-P1-027仍开放。
+
+### HEM-P1-029
+
+- `24054cf`修复英文session仍生成中文开场的问题：`language`现在进入profile构建，英文仅由中文公开简化主诉生成自然问候，不引入完整病例摘要、诊断、评分点或隐藏病史。回滚为普通`git revert 24054cf`。
+- 失败基线在P001稳定命中中文CJK；修复后42/42英文开场通过，42×6英文Patient Agent、中文主诉、语言纯度、训练API/恢复/安全、TypeScript及secret门禁通过。医学数据、419审核、42例`needs_revision`、18条隔离和360分算法零修改。
+- Actions run `29297252637` completed/success，Vercel两项success，Pages deploy skipped，PR继续Draft。长期QA应从`24054cfe836cd977ee82a20ad544b701ae46e335`或其文档后代独立复测HEM-P1-029；HEM-P1-033与HEM-P1-027仍开放，真实DeepSeek/Preview变量/医学裁决阻塞不变。
+
+### HEM-P1-033
+
+- `36061ad`修复canonical教师元语言绕过过滤及“可见回答被替换、隐藏slot仍收集”的不一致：服务端不安全deterministic fact fail-closed，客户端只为实际安全展示的回答更新覆盖。没有清洗后猜测P004/P005/P006医学真值；回滚为普通`git revert 36061ad`。
+- 直接失败基线和浏览器失败基线均保留；修复后P004/P005/P006、desktop/mobile、完整practice 42/42、Patient/Agent/LLM/隔离、TypeScript、52页build、bundle和secret扫描通过。医学数据、审核状态、18条冲突与360评分零修改。
+- 当前代码提交仅在本地：正式fetch/push因GitHub smart-HTTP连接超时受阻，API实时远程SHA仍为已知`0b066dc`。PR继续Draft且未变化；不得把本地门禁写成PR CI通过。网络恢复后重新fetch、普通push、等待Node22/Vercel，再给长期QA新的准确HEAD。
+
+### HEM-P1-027
+
+- QA的7px残余在当前Production再次精确复现；新增双语矩阵证明英文移动头部换行使page-level bottom sticky覆盖更大，单纯压缩8px或选择390px阈值均不是可靠修复。
+- 移动normal-flow方案虽使四视口双语几何8/8通过，却破坏既有390×844聚焦输入可见性；第二次焦点滚动补丁仍失败。按两轮无效规则已全部撤回，当前提交树不含027实验，未牺牲触控目标、删除测试或留下部分修复。
+- HEM-P1-027继续为发布阻塞OPEN。建议下一轮从独立移动workspace（chat flex scroller + composer非覆盖层）和`visualViewport`/虚拟键盘合同重新设计，测试须同时覆盖开场、末条消息、输入焦点、手动上翻、新消息入口、safe-area及无异常空白。
+
+### Preview 404与配置差异检查点
+
+- 集成前远程/本地HEAD均为`536996601cff7f9db034bcba37b013acae4c25bc`；对应Actions run `29299085374`、Vercel Ready部署`Cam5bt2qVLcLwPYC36HuzKWwtPXY`均success，PR #1仍Open/Draft。
+- 404可重复根因不是当前部署随机漏文件：公开显示P013–P042，内部runtime却为`HX-ADD-001–030`；旧静态路由只生成runtime ID。候选同时保留旧runtime路径并增加display ID别名，目录和随机入口改用display ID，故用户可复制、直达和刷新可见编号而不改变内部会话case ID。
+- 本地门禁：失败测试先命中；修复后专项desktop/mobile 2/2、完整Playwright44/44、TypeScript、ESLint、82页production build、42例/72路由库存、25 JS bundle和295文件secret扫描通过。代码提交`79d1083`与证据提交`00531d5`均已普通push；回滚为普通`git revert 79d1083`。
+- Preview真实AI仍未验收：LLM变量名称覆盖Preview，但训练签名、训练/Agent origin及deployment tier只覆盖Production；P001静态页可加载而会话进入degraded。需要用户只在Preview或分支专用Preview补齐这些已有变量并重新部署，且按既有要求配置持久attempt store。不得由Codex读取/生成值，也不得用fallback、mock或Vercel绿灯冒充真实AI成功。
+- 发布阻塞仍包括HEM-P1-027移动遮挡、HEM-P1-020 Preview配置/真实AI/日志/性能，以及HEM-P0-001/HEM-P0-023具名医学裁决。未批准医学事实、未解除`needs_revision`、未修改生产环境或部署Production。
+- HEM-P1-035远程关闭：Actions run `29301467610`在Node22通过44/44 Playwright和82/82 build；Vercel Ready部署`CwbEAU3RcmH9PGpZCQuSnt9J7ag3`绑定`00531d5`。分支Preview P013直达与刷新均显示唯一P013、工作区和输入框，无Next 404标记。PR继续Draft，Pages deploy skipped。
+
+### AI防滥用检查点
+
+- HEM-P1-036失败基线证明有效Patient session能把公开端点越权切换到`diagnostic_reasoning`。本地候选把端点固定为Patient/history并加入严格请求合同；非法角色、客户端model/Prompt/密钥/base URL/隐藏上下文、超长问题和非JSON拒绝均有`providerCalls=0`证据。
+- 合法Patient/会话/LLM/双语冲突、TypeScript、ESLint和secret扫描通过，受保护医学路径未改。当前候选尚未普通push，不能写成PR/Preview通过；网络恢复后先fetch核对远程`00531d5`，再普通push并等待CI。
+- 防滥用仍有发布前P1：TTS能力/body/single-flight（HEM-P1-038）和provider错误率自动熔断/告警（HEM-P1-040）。HEM-P1-037多维Agent预算已在本地与模拟持久命令合同完成，但真实Preview跨实例仍受HEM-P1-020配置阻塞。真实AI、首Token、P50/P95和10/10双语不以fixture或fallback替代。
+- HEM-P1-039本地候选已封闭同session不同幂等键的并发绕过：第二项429且不调用provider，原请求完成后恢复；生产使用现有Upstash原子租约，异常claim清理和30秒TTL防永久锁。该租约本身不等同于完整成本预算，后续HEM-P1-037见下一项。
+- HEM-P1-037本地候选随后增加9键原子准入：session/attempt请求、输入字符、IP小时/日、项目日请求/token、probe和并发。八类超限测试均保持provider计数，模拟持久命令不含原始session/IP；远程push/CI及配置后Preview跨实例验收仍未完成。
+- HEM-P1-038本地候选把TTS冷并发2次Azure调用合并为1，并增加16 KiB JSON/字段/方法/Origin/参数拒绝门禁；TTS API和voice回归通过。当时未覆盖的session capability随后由HEM-P1-041补齐；进程内single-flight仍不等于全局防滥用。
+- HEM-P1-041本地候选随后要求并验证Patient session tuple，缓存按session摘要隔离；能力失败不调用Azure，桌面/移动浏览器降级2/2。跨实例持久TTS预算仍为HEM-P1-042；真实Azure没有配置，未伪报成功。
+- HEM-P1-042本地候选现把TTS成本边界扩展为持久session/IP/项目预算和跨实例tuple租约：五类超限及quota/in-progress均不调用Azure，6键Upstash命令无原始session/IP/text且不存音频；生产缺store时fail-closed。TTS、API恢复、TypeScript、ESLint和297文件secret门禁通过。真实Azure与配置后Preview跨实例仍未验证，不能写成发布通过。
+- HEM-P1-040本地候选把跨请求连续503的provider调用由4降到2，冷却后仅一个恢复探测，成功再闭合；健康状态没有额外成功写入，摘要键不含provider URL/model明文。9项受影响回归通过。官方文档确认现用`deepseek-v4-flash`仍有效，未在无真实双语/自然度/P95证据时换模。外部告警投递、真实Preview熔断和P50/P95仍阻塞。
+- 独立安全复核在提交前发现400可毒化全局熔断的P1并已纠正：显式分类确保请求级4xx不计数，500有限重试，损坏2xx响应计入；探测租约覆盖最坏调用窗口，半开和live health probe均不重试，live probe timeout为5秒。新增红队合同通过后才允许提交。
+- 修正后复核结论为本项无残余P0/P1；模拟Upstash命令仍不能替代配置后真实Redis跨实例/Lua TTL验收，该P2与真实P50/P95一并保持外部阻塞。
+- HEM-P1-040最终本地门禁另含TypeScript、ESLint、82/82生产静态页、25 JS bundle和298文件敏感信息扫描；均exit0。构建运行时是bundled Node24且有engine warning，因此正式Node22结论仍必须来自push后的PR CI。
+- 本地提交`d1fe177`及其之前6个提交尚未到远程：GitHub API确认PR #1仍Open/Draft且远程HEAD为`00531d5`，普通push因`github.com:443`连接失败。没有force、API改ref、Ready、merge或Production部署；网络恢复后必须重新fetch核对再普通push。
+
+### 2026-07-14 AI防滥用里程碑远程交接
+
+- 当前已推送代码HEAD：`87cb4f57d2fd548b5e68be7bb1d1dff75238fdad`；提交`87cb4f5`为provider失败熔断器，连同此前7个Agent/TTS安全提交从`00531d5`普通push至当前专项分支。工作树在提交和push时均干净。
+- Draft PR #1仍Open/Draft。Actions run `29305846597` completed/success，build耗时4分06秒；Vercel deployment `51WtprQAFvjLBqhAXV2kJFduV9mB`和Preview Comments success；Pages deploy skipped。未转Ready、未合并、未部署Production。
+- HEM-P1-036—042的本地工程门禁和Node22远程回归已通过；推荐长期QA从`87cb4f57d2fd548b5e68be7bb1d1dff75238fdad`或本证据文档提交的后代复测防滥用、恢复与延迟行为。
+- 剩余阻塞：HEM-P1-020需人工在Preview作用域核对既有持久store、签名和origin配置并重部署，随后验证真实DeepSeek/Azure、跨实例限额/熔断、日志10/10、双语10/10、20轮和P50/P95；HEM-P1-027已进入本地结构修复但仍待push后CI与独立QA；HEM-P0-001/023需具名医学专家裁决。CI/Vercel绿灯不得替代这些结论。
+
+### 2026-07-14 HEM-P1-027 本地工程交接
+
+- 旧状态“OPEN/两轮像素修复无效”已由结构候选推进为“本地工程修复，待远程CI与独立QA”。失败测试先复现360×800中文7px覆盖；没有删除旧证据或把截图审查替代自动断言。
+- 移动端不再使用页面级sticky：composer处于聊天后的正常文档流，聚焦、输入和视觉视口变化按实际超出像素恢复可见；桌面sticky按`ResizeObserver`实测高度保留显式scroll spacer和safe-area。中英文切换的单条开场使用同步chat定位，不覆盖用户手动上翻后的多轮记录。
+- 本地证据：四视口双语2/2、既有多行输入2/2、20轮滚动2/2、完整Playwright46/46、TypeScript、ESLint、82/82 build、25 JS bundle及298文件scanner全部exit0。无`data/**`、医学审核、`needs_revision`、18条隔离或360评分修改。
+- 当前候选尚未提交/push，不能登记为远程关闭。推送后必须等待Node22 Actions与Vercel Preview，并把新的准确HEAD交给长期QA在真实360/390设备复测软键盘与safe-area。
+- 代码提交`f37309f`已普通push；Vercel deployment `FcCWHyxh2mTCCavtvwGLd7gJTgT2`及Preview Comments success。首轮Actions run `29309491866`仅在测试的精确`scrollTop=0`断言失败（45/46，实际40px仍处于上翻区），不是页面重新回底。
+- QA合同已改为直接验证距底部阈值、新消息入口及恢复后末条几何；本地按CI 2-worker重复6/6。当前需提交该测试/证据修正并等待下一轮Node22 CI，PR继续Draft。
+- 最终测试合同提交`4fed0764e9894b34da1d3f7620df00468ff4f9bb`已普通push。Actions run `29309939497` / build job `87011370852` completed/success（4分24秒），Node22完整行为、TypeScript、ESLint、repository scanner、Playwright、82页build、bundle及clean gate全部通过；Vercel deployment `DTHT4KnLh6Eyz8NnkecexSqLFeE3`与Preview Comments success，Pages deploy skipped，PR仍为Draft。
+- HEM-P1-027工程门禁关闭；推荐长期QA准确从`4fed0764e9894b34da1d3f7620df00468ff4f9bb`或本证据提交后代，在真实360/390设备复测软键盘、safe-area、开场白、手动上翻、新消息入口和末条可见性。剩余发布阻塞仍为HEM-P1-020外部Preview持久配置/真实AI与性能，以及HEM-P0-001/023具名医学裁决；没有修改医学事实、审核状态或生产环境。

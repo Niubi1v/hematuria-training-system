@@ -83,10 +83,10 @@
 | 69 JSON幂等、生成数据无漂移 | PASS | run `29289645684`验证69 JSON、75个受控输出幂等及最终clean gate；`data/**`零差异 |
 | 52页生产构建 | PASS | run `29289645684`静态生成52/52 |
 | 静态答案/密钥扫描 | PASS | run `29289645684`：294文件repository scan、25个JS bundle scan success |
-| 当前文本、Office归档、二进制可见元数据与Git文本历史密钥扫描 | LOCAL PASS | `25ad0a9`：动态泄露fixture与真实295文件/112提交扫描通过，待PR CI；历史二进制/OCR仍按已知限制保留 |
-| Playwright桌面/移动 | PASS | run `29289645684` desktop/mobile 40/40，runner正常退出；axe critical/serious=0断言包含在内 |
+| 当前文本、Office归档、二进制可见元数据与Git文本历史密钥扫描 | PASS | `04c2a0b` / run `29294906265`以`fetch-depth: 0`执行scanner专项和仓库扫描并success；浅仓库fixture fail-closed；历史压缩二进制/OCR仍按已知限制保留 |
+| Playwright桌面/移动 | PASS | HEM-P1-027结构修复后本地desktop/mobile 46/46（69.3秒），含axe critical/serious=0；HEAD `4fed076`的Actions run `29309939497`中Node22 Playwright、构建与扫描全部success |
 | 专项分支普通push | PASS | `origin/codex/hematuria-production-goal` |
-| draft PR与GitHub Actions | PASS | PR #1保持Open/Draft/CLEAN；证据提交`30b0d45`的run `29289645684` completed/success |
+| draft PR与GitHub Actions | PASS（当前工程候选） | PR #1保持Draft；HEAD `4fed076`的run `29309939497` completed/success，Vercel deployment `DTHT4KnLh6Eyz8NnkecexSqLFeE3`与Preview Comments success，Pages deploy按PR策略skipped；不代表真实AI或生产发布通过 |
 | Pages/Vercel SHA与live alias | PASS/PENDING | `30b0d45` Vercel Deployment与Preview Comments success；PR Pages部署按设计跳过，正式live alias仍未验证 |
 | 生产health、10次session、中文5次、英文5次 | PENDING | 当前环境生产smoke为`fetch failed` |
 | 正式教师鉴权、RCT数据库、正式OSCE | BLOCKED/HUMAN | 需要安全后端、approved病例及具名医学签署 |
@@ -100,7 +100,7 @@
 | 强制标准 | 当前状态 | 当前证据 |
 |---|---|---|
 | UI提交不覆盖Production后续安全修复 | PASS | merge-base=`74c140f`，三提交逐项cherry-pick且关键安全文件hash不变 |
-| 1280桌面、360/390移动布局 | PASS | UI专项截图审查及run `29232093193` desktop/mobile通过 |
+| 1280桌面、360/390移动布局 | PASS / INDEPENDENT QA PENDING | HEM-P1-027失败基线为360×800中文遮挡7px；结构修复后四视口中英文矩阵、既有多行输入及20轮滚动通过，HEAD `4fed076`的run `29309939497`远程Node22门禁success；真实360/390设备软键盘与safe-area仍待长期QA独立复测 |
 | Enter/Shift+Enter、滚动保持、单一状态提示 | PASS | run `29232093193`集成后Playwright通过 |
 | 日志失败后的幂等手动同步 | PASS | HEM-P1-025；run `29232093193` desktop/mobile通过 |
 | TypeScript、ESLint、行为、构建、扫描 | PASS | 本地32/32、52/52、25 JS、281文件；退出码均0 |

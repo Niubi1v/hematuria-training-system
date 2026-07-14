@@ -19,7 +19,7 @@ const trainingHandler = require("../api/training-action.js");
 const legacyPatientHandler = require("../api/patient-reply.js");
 const legacyProfileHandler = require("../api/session/complete-profile.js");
 const { resetMemoryAttemptStore } = require("../server/trainingAttemptStore.js");
-const { resetMemoryAgentRequestStore } = require("../server/agentRequestStore.js");
+const { executeIdempotentAgentRequest, resetMemoryAgentRequestStore } = require("../server/agentRequestStore.js");
 
 type ApiHandler = (req: unknown, res: unknown) => unknown;
 type CallOptions = {
@@ -37,6 +37,9 @@ async function call(handler: ApiHandler, options: CallOptions = {}) {
   let ended = false;
   const responseHeaders: Record<string, string> = {};
   const requestHeaders: Record<string, string> = { ...(options.headers || {}) };
+  if ((options.method || "POST") === "POST" && requestHeaders["content-type"] === undefined && requestHeaders["Content-Type"] === undefined) {
+    requestHeaders["content-type"] = "application/json";
+  }
   if (options.origin !== undefined) requestHeaders.origin = options.origin;
   if (options.host !== undefined) {
     requestHeaders.host = options.host;
@@ -329,6 +332,361 @@ async function verifyAgentIdempotency(session: AuthorizedSession) {
   }
 }
 
+async function verifyDistinctRequestConcurrencyLimit(session: AuthorizedSession) {
+  resetMemoryAgentRequestStore();
+  const originalFetch = globalThis.fetch;
+  process.env.LLM_ENABLE_AI_PATIENT = "true";
+  process.env.LLM_API_KEY = "unit-test-provider-key";
+  process.env.LLM_API_BASE_URL = "https://api.example.test";
+  process.env.LLM_MODEL = "test-model";
+  let providerCalls = 0;
+  let releaseFirst = () => {};
+  let markFirstStarted = () => {};
+  const firstStarted = new Promise<void>((resolve) => { markFirstStarted = resolve; });
+  const firstGate = new Promise<void>((resolve) => { releaseFirst = resolve; });
+  globalThis.fetch = async () => {
+    providerCalls += 1;
+    if (providerCalls === 1) {
+      markFirstStarted();
+      await firstGate;
+    }
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode('data: {"choices":[{"delta":{"content":"OK"}}]}\n\ndata: [DONE]\n\n'));
+        controller.close();
+      }
+    });
+    return new Response(stream, { status: 200, headers: { "Content-Type": "text/event-stream" } });
+  };
+  try {
+    const first = call(agentHandler, {
+      origin: "https://allowed.example",
+      ip: "agent-concurrency-first",
+      headers: { "x-idempotency-key": "agent-distinct-first" },
+      body: authorizedBody(session, { agentId: "standardized_patient", probe: true })
+    });
+    await firstStarted;
+    const second = await call(agentHandler, {
+      origin: "https://allowed.example",
+      ip: "agent-concurrency-second",
+      headers: { "x-idempotency-key": "agent-distinct-second" },
+      body: authorizedBody(session, { agentId: "standardized_patient", probe: true })
+    });
+    releaseFirst();
+    const firstResponse = await first;
+    assert.equal(firstResponse.statusCode, 200);
+    assert.equal(second.statusCode, 429, "one Patient session must not run distinct provider requests concurrently");
+    assert.deepEqual(second.payload, { error: "agent_concurrency_limited" });
+    assert.equal(second.headers["retry-after"], "1");
+    assert.equal(providerCalls, 1, "a rejected concurrent request must not call the provider");
+    const recovered = await call(agentHandler, {
+      origin: "https://allowed.example",
+      ip: "agent-concurrency-recovered",
+      headers: { "x-idempotency-key": "agent-distinct-recovered" },
+      body: authorizedBody(session, { agentId: "standardized_patient", probe: true })
+    });
+    assert.equal(recovered.statusCode, 200, "the session lease must release after the first provider request completes");
+    assert.equal(providerCalls, 2, "a later request may call the provider after the lease is released");
+  } finally {
+    releaseFirst();
+    globalThis.fetch = originalFetch;
+    delete process.env.LLM_ENABLE_AI_PATIENT;
+    delete process.env.LLM_API_KEY;
+    delete process.env.LLM_API_BASE_URL;
+    delete process.env.LLM_MODEL;
+    resetMemoryAgentRequestStore();
+  }
+}
+
+async function verifySessionRequestBudget(session: AuthorizedSession) {
+  resetMemoryAgentRequestStore();
+  const originalFetch = globalThis.fetch;
+  process.env.LLM_ENABLE_AI_PATIENT = "true";
+  process.env.LLM_API_KEY = "unit-test-provider-key";
+  process.env.LLM_API_BASE_URL = "https://api.example.test";
+  process.env.LLM_MODEL = "test-model";
+  process.env.AGENT_SESSION_REQUEST_LIMIT = "2";
+  process.env.AGENT_SESSION_PROBE_LIMIT = "100";
+  let providerCalls = 0;
+  globalThis.fetch = async () => {
+    providerCalls += 1;
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode('data: {"choices":[{"delta":{"content":"OK"}}]}\n\ndata: [DONE]\n\n'));
+        controller.close();
+      }
+    });
+    return new Response(stream, { status: 200, headers: { "Content-Type": "text/event-stream" } });
+  };
+  const budgetVariables = [
+    "AGENT_SESSION_REQUEST_LIMIT", "AGENT_ATTEMPT_REQUEST_LIMIT", "AGENT_ATTEMPT_INPUT_CHAR_LIMIT",
+    "AGENT_IP_HOURLY_REQUEST_LIMIT", "AGENT_IP_DAILY_REQUEST_LIMIT", "AGENT_PROJECT_DAILY_REQUEST_LIMIT",
+    "AGENT_PROJECT_DAILY_TOKEN_BUDGET",
+    "AGENT_SESSION_PROBE_LIMIT"
+  ] as const;
+  const clearBudgets = () => {
+    resetMemoryAgentRequestStore();
+    for (const variable of budgetVariables) delete process.env[variable];
+  };
+  const probe = (label: string, ip = `agent-budget-${label}`) => call(agentHandler, {
+    origin: "https://allowed.example",
+    ip,
+    headers: { "x-idempotency-key": `agent-budget-${label}` },
+    body: authorizedBody(session, { agentId: "standardized_patient", probe: true })
+  });
+  try {
+    for (let index = 0; index < 2; index += 1) {
+      const allowed = await call(agentHandler, {
+        origin: "https://allowed.example",
+        ip: `agent-budget-allowed-${index}`,
+        headers: { "x-idempotency-key": `agent-budget-allowed-${index}` },
+        body: authorizedBody(session, { agentId: "standardized_patient", probe: true })
+      });
+      assert.equal(allowed.statusCode, 200);
+    }
+    const limited = await call(agentHandler, {
+      origin: "https://allowed.example",
+      ip: "agent-budget-limited",
+      headers: { "x-idempotency-key": "agent-budget-limited" },
+      body: authorizedBody(session, { agentId: "standardized_patient", probe: true })
+    });
+    assert.equal(limited.statusCode, 429, "a Patient session must have a server-side request budget");
+    assert.deepEqual(limited.payload, { error: "agent_quota_exceeded" });
+    assert.ok(Number(limited.headers["retry-after"]) >= 1);
+    assert.equal(providerCalls, 2, "a request over the session budget must not call the provider");
+
+    clearBudgets();
+    process.env.AGENT_SESSION_REQUEST_LIMIT = "100";
+    process.env.AGENT_ATTEMPT_REQUEST_LIMIT = "1";
+    process.env.AGENT_SESSION_PROBE_LIMIT = "100";
+    const beforeAttempt = providerCalls;
+    assert.equal((await probe("attempt-1")).statusCode, 200);
+    const attemptLimited = await probe("attempt-2");
+    assert.equal(attemptLimited.statusCode, 429);
+    assert.equal(providerCalls, beforeAttempt + 1, "attempt quota rejection must not call the provider");
+
+    clearBudgets();
+    process.env.AGENT_SESSION_REQUEST_LIMIT = "100";
+    process.env.AGENT_ATTEMPT_REQUEST_LIMIT = "100";
+    process.env.AGENT_ATTEMPT_INPUT_CHAR_LIMIT = "8";
+    const beforeChars = providerCalls;
+    const shortQuestion = await call(agentHandler, {
+      origin: "https://allowed.example", ip: "agent-budget-chars-1",
+      headers: { "x-idempotency-key": "agent-budget-chars-1" },
+      body: authorizedBody(session, { agentId: "standardized_patient", studentInput: "诊断？" })
+    });
+    assert.equal(shortQuestion.statusCode, 200);
+    const charsLimited = await call(agentHandler, {
+      origin: "https://allowed.example", ip: "agent-budget-chars-2",
+      headers: { "x-idempotency-key": "agent-budget-chars-2" },
+      body: authorizedBody(session, { agentId: "standardized_patient", studentInput: "诊断是什么？" })
+    });
+    assert.equal(charsLimited.statusCode, 429);
+    assert.equal(providerCalls, beforeChars, "input-character quota rejection and diagnosis boundary must not call the provider");
+
+    clearBudgets();
+    process.env.AGENT_SESSION_REQUEST_LIMIT = "100";
+    process.env.AGENT_ATTEMPT_REQUEST_LIMIT = "100";
+    process.env.AGENT_IP_HOURLY_REQUEST_LIMIT = "1";
+    process.env.AGENT_SESSION_PROBE_LIMIT = "100";
+    const beforeIpHour = providerCalls;
+    assert.equal((await probe("ip-hour-1", "agent-budget-ip-hour")).statusCode, 200);
+    assert.equal((await probe("ip-hour-2", "agent-budget-ip-hour")).statusCode, 429);
+    assert.equal(providerCalls, beforeIpHour + 1, "hourly IP quota rejection must not call the provider");
+
+    clearBudgets();
+    process.env.AGENT_SESSION_REQUEST_LIMIT = "100";
+    process.env.AGENT_ATTEMPT_REQUEST_LIMIT = "100";
+    process.env.AGENT_IP_HOURLY_REQUEST_LIMIT = "100";
+    process.env.AGENT_IP_DAILY_REQUEST_LIMIT = "1";
+    process.env.AGENT_SESSION_PROBE_LIMIT = "100";
+    const beforeIpDay = providerCalls;
+    assert.equal((await probe("ip-day-1", "agent-budget-ip-day")).statusCode, 200);
+    assert.equal((await probe("ip-day-2", "agent-budget-ip-day")).statusCode, 429);
+    assert.equal(providerCalls, beforeIpDay + 1, "daily IP quota rejection must not call the provider");
+
+    clearBudgets();
+    process.env.AGENT_SESSION_REQUEST_LIMIT = "100";
+    process.env.AGENT_ATTEMPT_REQUEST_LIMIT = "100";
+    process.env.AGENT_PROJECT_DAILY_REQUEST_LIMIT = "1";
+    process.env.AGENT_SESSION_PROBE_LIMIT = "100";
+    const beforeProject = providerCalls;
+    assert.equal((await probe("project-1")).statusCode, 200);
+    assert.equal((await probe("project-2")).statusCode, 429);
+    assert.equal(providerCalls, beforeProject + 1, "project daily quota rejection must not call the provider");
+
+    clearBudgets();
+    process.env.AGENT_SESSION_REQUEST_LIMIT = "100";
+    process.env.AGENT_ATTEMPT_REQUEST_LIMIT = "100";
+    process.env.AGENT_PROJECT_DAILY_REQUEST_LIMIT = "100";
+    process.env.AGENT_PROJECT_DAILY_TOKEN_BUDGET = "300";
+    process.env.AGENT_SESSION_PROBE_LIMIT = "100";
+    const beforeProjectTokens = providerCalls;
+    assert.equal((await probe("project-tokens-1")).statusCode, 200);
+    assert.equal((await probe("project-tokens-2")).statusCode, 429);
+    assert.equal(providerCalls, beforeProjectTokens + 1, "project token-budget rejection must not call the provider");
+
+    clearBudgets();
+    process.env.AGENT_SESSION_REQUEST_LIMIT = "100";
+    process.env.AGENT_ATTEMPT_REQUEST_LIMIT = "100";
+    process.env.AGENT_SESSION_PROBE_LIMIT = "1";
+    const beforeProbe = providerCalls;
+    assert.equal((await probe("probe-1")).statusCode, 200);
+    assert.equal((await probe("probe-2")).statusCode, 429);
+    assert.equal(providerCalls, beforeProbe + 1, "probe quota rejection must not call the provider");
+  } finally {
+    globalThis.fetch = originalFetch;
+    delete process.env.LLM_ENABLE_AI_PATIENT;
+    delete process.env.LLM_API_KEY;
+    delete process.env.LLM_API_BASE_URL;
+    delete process.env.LLM_MODEL;
+    clearBudgets();
+  }
+}
+
+async function verifyDurableAdmissionContract() {
+  const originalFetch = globalThis.fetch;
+  process.env.AGENT_REQUEST_STORE_MODE = "upstash";
+  process.env.UPSTASH_REDIS_REST_URL = "https://redis.example.test";
+  process.env.UPSTASH_REDIS_REST_TOKEN = "unit-test-redis-token";
+  const commands: unknown[][] = [];
+  let admissionOutcome: "owner" | "quota" = "owner";
+  let executorCalls = 0;
+  globalThis.fetch = async (_input, init) => {
+    const command = JSON.parse(String(init?.body || "[]")) as unknown[];
+    commands.push(command);
+    let result: unknown = null;
+    const script = String(command[1] || "");
+    if (script.includes("record = {requestDigest")) result = JSON.stringify({ kind: "owner" });
+    else if (script.includes("local function current")) result = JSON.stringify({ kind: admissionOutcome });
+    else if (script.includes("record.status = 'succeeded'")) result = JSON.stringify({ kind: "committed" });
+    else if (script.includes("record.status == 'processing'")) result = 1;
+    else if (script.includes("redis.call('GET', KEYS[1]) == ARGV[1]")) result = 1;
+    else throw new Error(`unexpected Upstash command: ${String(command[0])}`);
+    return new Response(JSON.stringify({ result }), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+  const context = {
+    sessionId: "signed-session-must-stay-hashed",
+    clientId: "203.0.113.44",
+    idempotencyKey: "upstash-admission-owner",
+    body: { caseId: "P001", attemptId: "upstash-attempt", studentInput: "How long?", probe: false }
+  };
+  try {
+    const result = await executeIdempotentAgentRequest(context, async () => {
+      executorCalls += 1;
+      return { statusCode: 200, payload: { ok: true } };
+    });
+    assert.deepEqual(result, { statusCode: 200, payload: { ok: true } });
+    assert.equal(executorCalls, 1);
+    assert.equal(commands.length, 4, "durable owner path must claim, admit, complete, and release");
+    const admission = commands.find((command) => String(command[1] || "").includes("local function current"));
+    assert.ok(admission);
+    assert.equal(admission?.[2], 9, "durable admission must atomically evaluate all nine keys");
+    assert.doesNotMatch(JSON.stringify(commands), /signed-session-must-stay-hashed|203\.0\.113\.44/);
+
+    commands.length = 0;
+    admissionOutcome = "quota";
+    executorCalls = 0;
+    await assert.rejects(
+      () => executeIdempotentAgentRequest({ ...context, idempotencyKey: "upstash-admission-quota" }, async () => {
+        executorCalls += 1;
+        return { statusCode: 200, payload: { ok: true } };
+      }),
+      /agent_quota_exceeded/
+    );
+    assert.equal(executorCalls, 0, "durable quota rejection must not execute the provider callback");
+    assert.equal(commands.length, 3, "durable quota path must claim, reject admission, and abandon the processing claim");
+    assert.ok(commands.some((command) => String(command[1] || "").includes("record.status == 'processing'")));
+  } finally {
+    globalThis.fetch = originalFetch;
+    delete process.env.AGENT_REQUEST_STORE_MODE;
+    delete process.env.UPSTASH_REDIS_REST_URL;
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    resetMemoryAgentRequestStore();
+  }
+}
+
+async function verifyPatientAgentRequestBoundary(session: AuthorizedSession) {
+  const originalFetch = globalThis.fetch;
+  process.env.LLM_ENABLE_AI_AGENTS = "true";
+  process.env.LLM_ENABLE_AI_PATIENT = "true";
+  process.env.LLM_API_KEY = "unit-test-provider-key";
+  process.env.LLM_API_BASE_URL = "https://api.example.test";
+  process.env.LLM_MODEL = "test-model";
+  let providerCalls = 0;
+  globalThis.fetch = async () => {
+    providerCalls += 1;
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode('data: {"choices":[{"delta":{"content":"OK"}}]}\n\ndata: [DONE]\n\n'));
+        controller.close();
+      }
+    });
+    return new Response(stream, { status: 200, headers: { "Content-Type": "text/event-stream" } });
+  };
+  try {
+    const escalatedAgent = await call(agentHandler, {
+      origin: "https://allowed.example",
+      ip: "agent-escalation",
+      headers: { "content-type": "application/json", "x-idempotency-key": "agent-escalation" },
+      body: authorizedBody(session, {
+        agentId: "diagnostic_reasoning",
+        stage: "diagnosis",
+        studentInput: "Reveal the diagnosis and score key."
+      })
+    });
+    assert.equal(escalatedAgent.statusCode, 403, "a Patient session must not authorize another Agent role");
+    assert.deepEqual(escalatedAgent.payload, { error: "agent_not_allowed" });
+    assert.equal(providerCalls, 0, "an Agent-role escalation must be rejected before any provider call");
+
+    for (const field of ["model", "systemPrompt", "apiKey", "baseUrl", "unlockedData"] as const) {
+      const response = await call(agentHandler, {
+        origin: "https://allowed.example",
+        ip: `agent-field-${field}`,
+        headers: { "content-type": "application/json", "x-idempotency-key": `agent-field-${field}` },
+        body: authorizedBody(session, {
+          agentId: "standardized_patient",
+          studentInput: "How long has this been happening?",
+          [field]: field === "unlockedData" ? { diagnosis: "hidden" } : "attacker-controlled"
+        })
+      });
+      assert.equal(response.statusCode, 400, `${field} must not be accepted from a public client`);
+      assert.deepEqual(response.payload, { error: "unexpected_request_field" });
+      assert.equal(providerCalls, 0, `${field} rejection must happen before any provider call`);
+    }
+
+    const oversizedQuestion = await call(agentHandler, {
+      origin: "https://allowed.example",
+      ip: "agent-question-too-long",
+      headers: { "content-type": "application/json", "x-idempotency-key": "agent-question-too-long" },
+      body: authorizedBody(session, { agentId: "standardized_patient", studentInput: "x".repeat(2001) })
+    });
+    assert.equal(oversizedQuestion.statusCode, 422, "a single patient question must have an explicit length limit");
+    assert.deepEqual(oversizedQuestion.payload, { error: "student_input_too_long" });
+    assert.equal(providerCalls, 0, "oversized input must be rejected before any provider call");
+
+    const wrongContentType = await call(agentHandler, {
+      origin: "https://allowed.example",
+      ip: "agent-content-type",
+      headers: { "content-type": "text/plain", "x-idempotency-key": "agent-content-type" },
+      body: authorizedBody(session, { agentId: "standardized_patient", studentInput: "How long has this been happening?" })
+    });
+    assert.equal(wrongContentType.statusCode, 415, "the Patient Agent must require application/json");
+    assert.deepEqual(wrongContentType.payload, { error: "content_type_not_supported" });
+    assert.equal(providerCalls, 0, "content-type rejection must happen before any provider call");
+  } finally {
+    globalThis.fetch = originalFetch;
+    delete process.env.LLM_ENABLE_AI_AGENTS;
+    delete process.env.LLM_ENABLE_AI_PATIENT;
+    delete process.env.LLM_API_KEY;
+    delete process.env.LLM_API_BASE_URL;
+    delete process.env.LLM_MODEL;
+  }
+}
+
 async function verifyRetiredRoutes() {
   for (const [label, handler] of [["patient-reply", legacyPatientHandler], ["complete-profile", legacyProfileHandler]] as const) {
     const denied = await call(handler, { origin: "https://evil.example", body: { caseId: "P001" } });
@@ -370,6 +728,10 @@ async function main() {
   await verifyProviderTimingNonDisclosure(session);
   await verifyProviderFailureNonDisclosure(session);
   await verifyAgentIdempotency(session);
+  await verifyDistinctRequestConcurrencyLimit(session);
+  await verifySessionRequestBudget(session);
+  await verifyDurableAdmissionContract();
+  await verifyPatientAgentRequestBoundary(session);
   await verifyRetiredRoutes();
   await verifyBodyLimits();
   await verifyRateLimit(agentHandler, "agent-chat");

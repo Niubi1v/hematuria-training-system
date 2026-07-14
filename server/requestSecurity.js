@@ -108,4 +108,4 @@ function parseJsonBody(req, maxBytes = 64 * 1024) {
   }
 }
 
-module.exports = { applyAgentCors, parseJsonBody, positiveInteger, setRateLimitHeaders, takeRateLimit };
+module.exports = { applyAgentCors, clientKey, parseJsonBody, positiveInteger, setRateLimitHeaders, takeRateLimit };

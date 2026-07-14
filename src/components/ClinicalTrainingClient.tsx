@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -631,8 +631,20 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [logRetryNonce, setLogRetryNonce] = useState(0);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
+  const chatComposerRef = useRef<HTMLDivElement | null>(null);
   const chatPinnedToBottomRef = useRef(true);
   const [chatHasNewMessage, setChatHasNewMessage] = useState(false);
+  const [chatComposerReserve, setChatComposerReserve] = useState(148);
+  const ensureMobileComposerVisible = useCallback(() => {
+    if (window.innerWidth >= 640) return;
+    const composer = chatComposerRef.current;
+    if (!composer) return;
+    const rect = composer.getBoundingClientRect();
+    const viewportTop = window.visualViewport?.offsetTop ?? 0;
+    const viewportBottom = viewportTop + (window.visualViewport?.height ?? window.innerHeight);
+    if (rect.bottom > viewportBottom - 8) window.scrollBy(0, rect.bottom - viewportBottom + 8);
+    else if (rect.top < viewportTop + 8) window.scrollBy(0, rect.top - viewportTop - 8);
+  }, []);
   const cloudAudioRef = useRef<HTMLAudioElement | null>(null);
   const cloudAudioUrlRef = useRef("");
   const ttsAbortRef = useRef<AbortController | null>(null);
@@ -640,8 +652,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const ttsFallbackNotifiedRef = useRef(false);
   const timeoutHandledRef = useRef(false);
   const allowNavigationRef = useRef(false);
-  const trainingStateTokenRef = useRef("");
-  const trainingInitPromiseRef = useRef<Promise<string> | null>(null);
+  const trainingStateTokenRef = useRef<{ attemptId: string; token: string } | null>(null);
+  const trainingInitPromiseRef = useRef<{ attemptId: string; promise: Promise<string> } | null>(null);
   const trainingActionQueueRef = useRef<Promise<void>>(Promise.resolve());
   const sessionInitAbortRef = useRef<AbortController | null>(null);
   const autoSessionInitRef = useRef<{ key: string; promise: Promise<SessionInitResponse>; controller: AbortController } | null>(null);
@@ -697,14 +709,15 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   })).filter((group) => group.items.length > 0), []);
 
   const ensureTrainingStateToken = useCallback(async () => {
-    if (trainingStateTokenRef.current) return trainingStateTokenRef.current;
-    if (trainingInitPromiseRef.current) return trainingInitPromiseRef.current;
-    trainingInitPromiseRef.current = (async () => {
+    const attemptId = attempt.attemptId;
+    if (trainingStateTokenRef.current?.attemptId === attemptId) return trainingStateTokenRef.current.token;
+    if (trainingInitPromiseRef.current?.attemptId === attemptId) return trainingInitPromiseRef.current.promise;
+    const promise = (async () => {
       const storageKey = `hematuria-training-state-v3:${attempt.attemptId}`;
       try {
         const saved = sessionStorage.getItem(storageKey);
         if (saved) {
-          trainingStateTokenRef.current = saved;
+          trainingStateTokenRef.current = { attemptId, token: saved };
           return saved;
         }
       } catch { /* The signed state can continue in memory. */ }
@@ -713,11 +726,16 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         action: "init-attempt", caseId: caseData.id, attemptId: attempt.attemptId,
         language: lang, mode: runtimeMode, requestId: initRequestId
       }, "", initRequestId, 0);
-      trainingStateTokenRef.current = initialized.stateToken;
+      trainingStateTokenRef.current = { attemptId, token: initialized.stateToken };
       try { sessionStorage.setItem(storageKey, initialized.stateToken); } catch { /* Memory fallback. */ }
       return initialized.stateToken;
-    })().finally(() => { trainingInitPromiseRef.current = null; });
-    return trainingInitPromiseRef.current;
+    })();
+    const pending = { attemptId, promise };
+    trainingInitPromiseRef.current = pending;
+    promise.finally(() => {
+      if (trainingInitPromiseRef.current === pending) trainingInitPromiseRef.current = null;
+    }).catch(() => undefined);
+    return promise;
   }, [attempt.attemptId, caseData.id, lang, runtimeMode]);
 
   async function trainingAction<T>(body: Record<string, unknown>): Promise<T> {
@@ -730,7 +748,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         requestId,
         body.action === "history-log" ? 0 : 2
       );
-      trainingStateTokenRef.current = result.stateToken;
+      trainingStateTokenRef.current = { attemptId: attempt.attemptId, token: result.stateToken };
       try { sessionStorage.setItem(`hematuria-training-state-v3:${attempt.attemptId}`, result.stateToken); } catch { /* Memory fallback. */ }
       return result.payload;
     });
@@ -910,8 +928,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }, [lang]);
 
   useEffect(() => {
-    trainingStateTokenRef.current = "";
-    trainingInitPromiseRef.current = null;
+    if (trainingStateTokenRef.current?.attemptId !== attempt.attemptId) trainingStateTokenRef.current = null;
+    if (trainingInitPromiseRef.current?.attemptId !== attempt.attemptId) trainingInitPromiseRef.current = null;
     trainingActionQueueRef.current = Promise.resolve();
   }, [attempt.attemptId]);
 
@@ -1012,18 +1030,59 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     return () => window.removeEventListener("beforeunload", warnBeforeExit);
   }, [finalReport, timeline.length]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (activeStageNo !== 1) return;
     const panel = chatScrollRef.current;
     if (!panel) return;
+    const openingOnly = messages.length === 1 && messages[0]?.role === "patient";
+    if (openingOnly) chatPinnedToBottomRef.current = true;
     if (chatPinnedToBottomRef.current) {
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      panel.scrollTo({ top: panel.scrollHeight, behavior: reduceMotion ? "auto" : "smooth" });
+      panel.scrollTo({ top: panel.scrollHeight, behavior: reduceMotion || openingOnly ? "auto" : "smooth" });
       setChatHasNewMessage(false);
     } else if (messages.length > 1) {
       setChatHasNewMessage(true);
     }
-  }, [activeStageNo, messages.length, patientReplyLoading]);
+  }, [activeStageNo, chatComposerReserve, ensureMobileComposerVisible, messages, patientReplyLoading]);
+
+  useEffect(() => {
+    if (activeStageNo !== 1) return;
+    const composer = chatComposerRef.current;
+    if (!composer) return;
+    const updateReserve = () => {
+      const next = Math.ceil(composer.getBoundingClientRect().height);
+      setChatComposerReserve((current) => current === next ? current : next);
+    };
+    updateReserve();
+    const observer = new ResizeObserver(updateReserve);
+    observer.observe(composer);
+    return () => observer.disconnect();
+  }, [activeStageNo, lang]);
+
+  useEffect(() => {
+    if (activeStageNo !== 1 || messages.length !== 1 || messages[0]?.role !== "patient") return;
+    let secondFrame = 0;
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(ensureMobileComposerVisible);
+    });
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      if (secondFrame) window.cancelAnimationFrame(secondFrame);
+    };
+  }, [activeStageNo, chatComposerReserve, ensureMobileComposerVisible, lang, messages]);
+
+  useEffect(() => {
+    const handleViewportResize = () => {
+      if (!chatComposerRef.current?.contains(document.activeElement)) return;
+      window.requestAnimationFrame(ensureMobileComposerVisible);
+    };
+    window.visualViewport?.addEventListener("resize", handleViewportResize);
+    window.addEventListener("resize", handleViewportResize);
+    return () => {
+      window.visualViewport?.removeEventListener("resize", handleViewportResize);
+      window.removeEventListener("resize", handleViewportResize);
+    };
+  }, [ensureMobileComposerVisible]);
 
   useEffect(() => {
     if (!speechSettingsOpen) return;
@@ -1071,9 +1130,14 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     if (timeline.length > 0 && !window.confirm(next === "en" ? "Switching language starts a separate attempt. Continue?" : "切换语言将开始独立训练记录，是否继续？")) return;
     const attemptMode: AttemptMode = runtimeMode === "osce" ? "osce" : runtimeMode === "rct" ? "rct" : "free";
     const nextAttempt = createAttempt(caseData.id, attemptMode, next);
+    autoSessionInitRef.current?.controller.abort();
+    autoSessionInitRef.current = null;
     sessionInitAbortRef.current?.abort();
     patientReplyAbortRef.current?.abort();
     aiGenerationRef.current += 1;
+    trainingStateTokenRef.current = null;
+    trainingInitPromiseRef.current = null;
+    trainingActionQueueRef.current = Promise.resolve();
     setAttempt(nextAttempt);
     writeJsonStorage(attemptPointerKey(caseData.id, attemptMode, next), nextAttempt);
     setLang(next);
@@ -1183,7 +1247,17 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           method: "POST",
           headers: { "Content-Type": "application/json" },
           signal: controller.signal,
-          body: JSON.stringify({ text: clean, voiceName: AZURE_VOICE_BY_PROFILE[voicePreferenceKey({ ...voiceProfile, locale })], rate: speechRate, pitch: speechPitch }),
+          body: JSON.stringify({
+            text: clean,
+            voiceName: AZURE_VOICE_BY_PROFILE[voicePreferenceKey({ ...voiceProfile, locale })],
+            rate: speechRate,
+            pitch: speechPitch,
+            sessionId: aiSessionId,
+            attemptId: attempt.attemptId,
+            caseId: caseData.id,
+            language: lang,
+            mode: runtimeMode
+          }),
           timeoutMs: 10_000,
           retries: 2
         });
@@ -1253,8 +1327,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       if (generation !== aiGenerationRef.current) return;
       const safeAiReply = aiResult.replyText && !isUnsafePatientReply(text, aiResult.replyText, lang);
       answerText = safeAiReply ? aiResult.replyText : ruleSafeFallback;
-      matchedSlots = aiResult.matchedSlotIds || [];
-      matchedFacts = aiResult.matchedFacts || [];
+      matchedSlots = safeAiReply ? aiResult.matchedSlotIds || [] : [];
+      matchedFacts = safeAiReply ? aiResult.matchedFacts || [] : [];
       matchedKeys = unique(matchedSlots.map((slot) => canonicalToCollected[slot]).filter(Boolean)) as KeyPointId[];
       if (safeAiReply && !aiResult.isFallback) {
         setAiStatus("connected");
@@ -1819,8 +1893,9 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                   chatPinnedToBottomRef.current = nearBottom;
                   if (nearBottom) setChatHasNewMessage(false);
                 }}
-                className="mt-3 h-[220px] space-y-3 overflow-y-auto rounded-lg border border-clinic-line bg-clinic-paper p-3 pb-32 sm:h-[320px] sm:p-4 sm:pb-36 lg:h-[390px]"
+                className="mt-3 h-[220px] overflow-y-auto rounded-lg border border-clinic-line bg-clinic-paper p-3 sm:h-[320px] sm:p-4 lg:h-[390px]"
               >
+                <div className="space-y-3">
                 {messages.map((message, index) => (
                   <div key={`${message.role}-${index}`} className={`flex ${message.role === "student" ? "justify-end" : "justify-start"}`}>
                     <div className={`max-w-[88%] whitespace-pre-line rounded-xl px-3 py-2.5 text-sm leading-6 sm:max-w-[78%] sm:px-4 sm:py-3 ${message.role === "student" ? "bg-clinic-blue text-white" : "border border-clinic-line bg-white text-clinic-ink"}`}>
@@ -1829,14 +1904,25 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                     </div>
                   </div>
                 ))}
+                <div
+                  aria-hidden="true"
+                  data-testid="chat-composer-spacer"
+                  style={{ height: `calc(${chatComposerReserve}px + env(safe-area-inset-bottom, 0px))` }}
+                  className="pointer-events-none hidden sm:block"
+                />
+                </div>
               </div>
               {chatHasNewMessage && <button type="button" onClick={scrollChatToBottom} className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-clinic-line bg-white px-3 py-1.5 text-xs font-semibold text-clinic-blue shadow-soft">{lang === "en" ? "New message · go to latest" : "有新消息 · 回到底部"}</button>}
               </div>
-              <div className="sticky bottom-2 z-30 mt-3 rounded-xl border border-clinic-line bg-white/95 p-2 shadow-raised backdrop-blur-sm">
+              <div ref={chatComposerRef} data-testid="chat-composer" data-reserve={chatComposerReserve} className="relative z-30 mt-3 scroll-mb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] rounded-xl border border-clinic-line bg-white/95 p-2 shadow-raised backdrop-blur-sm sm:sticky sm:bottom-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
                 <textarea
                   value={question}
                   rows={2}
-                  onChange={(event) => setQuestion(event.target.value)}
+                  onFocus={ensureMobileComposerVisible}
+                  onChange={(event) => {
+                    setQuestion(event.target.value);
+                    window.requestAnimationFrame(ensureMobileComposerVisible);
+                  }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" && !event.shiftKey) {
                       event.preventDefault();
