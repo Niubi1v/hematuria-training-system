@@ -322,3 +322,10 @@
 - `36061ad`在provider调用和公开返回前统一过滤deterministic/fallback；不安全回答只返回对应语言的自然不确定表达，清空matched facts/slots，并以`unsafe_deterministic_answer`记录非敏感原因。客户端同时只为实际通过安全检查并展示的回答更新覆盖；安全边界fallback不再误判为AI断连。
 - 修复后P004/P005/P006专项、desktop/mobile 2/2和完整practice 42/42通过；Patient/Agent/LLM、18冲突隔离、TypeScript、52/52生产构建、25 JS bundle及295文件repository scan均exit0。`data/**`、419决定、42例`needs_revision`、18冲突原值和360评分零修改。
 - 当前GitHub API实时确认远程仍为`0b066dc`，但`github.com:443` smart-HTTP多次连接重置/超时；本地提交`36061ad`暂未push，远程CI不得登记为通过。网络恢复后必须重新fetch、普通push并补Node22/PR/Vercel证据。
+
+### HEM-P1-027 移动composer遮挡复核（2026-07-14）
+
+- 当前Production静态构建独立复现QA基线：360×800/中文开场底边`661`、composer顶边`654`，稳定遮挡7px；390×844/中文通过。扩展双语矩阵还发现360×800/英文开场底边`809`对composer`662`、390×844/英文`757`对`706`，说明按中文像素压缩不能覆盖英文换行高度。
+- 两轮边界修复均未同时满足现有门禁：压缩移动composer 8px只修复360中文；移动端改正常文档流可让8个视口/语言几何断言通过，却使既有390×844多行输入底边从视口内回归到`879–888 > 844`。聚焦scrollIntoView补丁仍未恢复门禁。
+- 按无人值守“两轮无效即换项”规则，本轮没有继续大改布局。所有027实验代码和测试均用逐行补丁撤回；`git diff --quiet`与cached diff均为0，033安全提交保持完整。HEM-P1-027继续OPEN，建议独立设计固定高度的移动问诊workspace/visualViewport策略后再做，不以隐藏断言或牺牲44px触控目标制造通过。
+- 同一构建命令后P008直接handler失败已定位为测试进程继承`VERCEL=1`、无Upstash时按设计503；无该环境污染的此前完整practice 42/42中P008通过，不登记为评分回归。

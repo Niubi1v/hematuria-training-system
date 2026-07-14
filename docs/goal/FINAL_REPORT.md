@@ -261,3 +261,9 @@
 - `36061ad`修复canonical教师元语言绕过过滤及“可见回答被替换、隐藏slot仍收集”的不一致：服务端不安全deterministic fact fail-closed，客户端只为实际安全展示的回答更新覆盖。没有清洗后猜测P004/P005/P006医学真值；回滚为普通`git revert 36061ad`。
 - 直接失败基线和浏览器失败基线均保留；修复后P004/P005/P006、desktop/mobile、完整practice 42/42、Patient/Agent/LLM/隔离、TypeScript、52页build、bundle和secret扫描通过。医学数据、审核状态、18条冲突与360评分零修改。
 - 当前代码提交仅在本地：正式fetch/push因GitHub smart-HTTP连接超时受阻，API实时远程SHA仍为已知`0b066dc`。PR继续Draft且未变化；不得把本地门禁写成PR CI通过。网络恢复后重新fetch、普通push、等待Node22/Vercel，再给长期QA新的准确HEAD。
+
+### HEM-P1-027
+
+- QA的7px残余在当前Production再次精确复现；新增双语矩阵证明英文移动头部换行使page-level bottom sticky覆盖更大，单纯压缩8px或选择390px阈值均不是可靠修复。
+- 移动normal-flow方案虽使四视口双语几何8/8通过，却破坏既有390×844聚焦输入可见性；第二次焦点滚动补丁仍失败。按两轮无效规则已全部撤回，当前提交树不含027实验，未牺牲触控目标、删除测试或留下部分修复。
+- HEM-P1-027继续为发布阻塞OPEN。建议下一轮从独立移动workspace（chat flex scroller + composer非覆盖层）和`visualViewport`/虚拟键盘合同重新设计，测试须同时覆盖开场、末条消息、输入焦点、手动上翻、新消息入口、safe-area及无异常空白。

@@ -573,3 +573,16 @@ Preview未执行真实Upstash/DeepSeek验收，因为当前没有也不得读取
 | 受保护路径 | `git diff --name-only -- data outputs/medical-review docs/medical-review/...` | 无输出；没有医学数据、审批或评分改动 |
 
 本地原子提交：`36061ad`。GitHub API读取远程仍为已知`0b066dc`，但正式fetch/push因`github.com:443`连接重置/超时尚未完成；因此本节没有远程Node22、Vercel或PR新HEAD通过结论。
+
+## HEM-P1-027 移动开场/composer几何复核
+
+| 检查 | 精确命令/环境 | 退出码与结果 |
+|---|---|---|
+| 当前失败基线 | 静态`out`+Playwright，360×800/中文，QA同一bounding-box断言 | exit1；expected opening bottom `661`，received composer y `654`，遮挡7px |
+| 双语扩展 | 360×800、390×844、1280×720、1440×900，各中文/英文 | 初始矩阵在360中文即失败；间距实验后360英文`809/662`失败；宽度阈值实验后390英文`757/706`失败 |
+| normal-flow实验 | 移动端取消page-level sticky，桌面保持sticky | 几何8/8通过；但既有`mobile interview keeps multiline input visible`两项目均失败，输入底边`879–888 > 844` |
+| 聚焦滚动实验 | 移动textarea focus时scrollIntoView | 既有输入可见性仍2/2失败；未删除或放宽断言 |
+| 构建 | 每次候选均用Vercel等价`next build` | 52/52通过，说明失败是运行时几何而非编译问题 |
+| 最终清理 | 逐行撤回本轮027候选；`git diff --quiet`、`git diff --cached --quiet` | 均exit0；无027代码/测试残留 |
+
+P008在带`VERCEL=1`的同进程Playwright中两次缺少`results`，根因是本地无Upstash时serverless路径按设计fail-closed；此前不继承该构建环境的完整practice 42/42中同一P008合同通过。该现象不作为027修复失败，也不写成评分算法回归。
