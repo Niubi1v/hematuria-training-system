@@ -34,12 +34,21 @@ async function routeTrainingApiThroughHandler(page, observations = [], options =
     })
   }));
   await page.route("**/api/session/init/**", async (route) => {
+    const startedAt = Date.now();
     const body = route.request().postDataJSON();
+    if (options.sessionInitDelayMs) await new Promise((resolve) => setTimeout(resolve, options.sessionInitDelayMs));
+    const sessionStatus = options.sessionInitFailureCode ? 503 : 200;
     observations.push({
       action: "session-init", caseId: body.caseId, language: body.language,
-      attemptId: body.attemptId, status: 200,
+      attemptId: body.attemptId, status: sessionStatus,
+      error: options.sessionInitFailureCode || "",
+      startedAt, endedAt: Date.now(), durationMs: Date.now() - startedAt,
       tokenPresent: Boolean(route.request().headers()["x-training-state"])
     });
+    if (options.sessionInitFailureCode) {
+      await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: options.sessionInitFailureCode }) });
+      return;
+    }
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -53,9 +62,26 @@ async function routeTrainingApiThroughHandler(page, observations = [], options =
       })
     });
   });
+  let initAttemptCount = 0;
   await page.route("**/api/training-action/**", async (route) => {
+    const startedAt = Date.now();
     const request = route.request();
     const body = request.postDataJSON();
+    if (body.action === "init-attempt") {
+      initAttemptCount += 1;
+      if (options.initAttemptDelayMs) await new Promise((resolve) => setTimeout(resolve, options.initAttemptDelayMs));
+      if (initAttemptCount <= (options.initAttemptFailures || 0)) {
+        const status = options.initAttemptFailureStatus || 502;
+        const error = options.initAttemptFailureCode || "network_error";
+        observations.push({
+          action: body.action, language: body.language, attemptId: body.attemptId,
+          requestId: body.requestId, status, error, tokenPresent: false,
+          startedAt, endedAt: Date.now(), durationMs: Date.now() - startedAt
+        });
+        await route.fulfill({ status, contentType: "application/json", body: JSON.stringify({ error }) });
+        return;
+      }
+    }
     if (body.action === "stage-feedback" && options.stageFeedbackDelayMs) {
       await new Promise((resolve) => setTimeout(resolve, options.stageFeedbackDelayMs));
     }
@@ -70,6 +96,7 @@ async function routeTrainingApiThroughHandler(page, observations = [], options =
       error: result.payload?.error || "",
       score: result.payload?.score,
       hits: result.payload?.hits || [],
+      startedAt, endedAt: Date.now(), durationMs: Date.now() - startedAt,
       tokenPresent: Boolean(request.headers()["x-training-state"])
     });
     const responseHeaders = { "Access-Control-Expose-Headers": "X-Training-State" };
@@ -180,6 +207,115 @@ test("rapid stage submission is accepted only once", async ({ page }) => {
   })).toBe(1);
 });
 
+test("stage submission waits for the training attempt while the AI patient is preparing", async ({ page }) => {
+  const observations = [];
+  await routeTrainingApiThroughHandler(page, observations, { initAttemptDelayMs: 800, sessionInitDelayMs: 1800 });
+  await page.goto("/cases/P001/");
+
+  const initializing = page.getByRole("button", { name: "正在初始化训练会话……", exact: true });
+  await expect(initializing).toBeDisabled();
+  await expect(page.getByText("正在初始化训练会话", { exact: false })).toBeVisible();
+  expect(observations.filter((item) => item.action === "stage-feedback")).toHaveLength(0);
+
+  const submit = page.getByRole("button", { name: "提交本阶段", exact: true });
+  await expect(submit).toBeEnabled();
+  await expect(page.getByText("人工智能患者正在准备中……", { exact: false })).toBeVisible();
+  await submit.click();
+  await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
+  expect(observations.filter((item) => item.action === "init-attempt")).toHaveLength(1);
+  expect(observations.filter((item) => item.action === "stage-feedback")).toEqual([
+    expect.objectContaining({ status: 200, tokenPresent: true })
+  ]);
+});
+
+test("failed training attempt initialization never sends stage feedback and retries explicitly", async ({ page }) => {
+  const observations = [];
+  await routeTrainingApiThroughHandler(page, observations, { initAttemptDelayMs: 300, initAttemptFailures: 1, initAttemptFailureStatus: 502, initAttemptFailureCode: "network_error" });
+  await page.goto("/cases/P001/");
+
+  const retry = page.getByRole("button", { name: "重新初始化训练会话", exact: true });
+  await expect(retry).toBeVisible();
+  await expect(page.getByRole("alert").filter({ hasText: "网络连接失败" })).toBeVisible();
+  expect(observations.filter((item) => item.action === "init-attempt")).toEqual([
+    expect.objectContaining({ status: 502, error: "network_error", tokenPresent: false })
+  ]);
+  expect(observations.filter((item) => item.action === "stage-feedback")).toHaveLength(0);
+
+  await retry.evaluate((button) => { button.click(); button.click(); });
+  const submit = page.getByRole("button", { name: "提交本阶段", exact: true });
+  await expect(submit).toBeEnabled();
+  expect(observations.filter((item) => item.action === "init-attempt")).toHaveLength(2);
+  await submit.click();
+  await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
+  expect(observations.filter((item) => item.action === "stage-feedback")).toHaveLength(1);
+});
+
+test("AI session failure does not invalidate a ready training attempt", async ({ page }) => {
+  const observations = [];
+  await routeTrainingApiThroughHandler(page, observations, { sessionInitFailureCode: "provider_unavailable" });
+  await page.goto("/cases/P001/");
+
+  const submit = page.getByRole("button", { name: "提交本阶段", exact: true });
+  await expect(submit).toBeEnabled();
+  await expect.poll(() => observations.filter((item) => item.action === "session-init").length).toBeGreaterThan(0);
+  expect(observations.filter((item) => item.action === "init-attempt")).toHaveLength(1);
+  await submit.click();
+  await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
+  expect(observations.filter((item) => item.action === "stage-feedback")).toEqual([
+    expect.objectContaining({ status: 200, tokenPresent: true })
+  ]);
+  await expect(page.getByRole("alert").filter({ hasText: "阶段提交失败" })).toHaveCount(0);
+});
+
+test("one fallback patient round submits through the same ready training attempt", async ({ page }) => {
+  const observations = [];
+  await routeTrainingApiThroughHandler(page, observations);
+  await page.route("**/api/agent-chat/**", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({
+      replyText: "医生，您能问得再具体一点吗？我不太明白您的意思。",
+      matchedSlotIds: [], matchedFacts: [], provider: "rules",
+      generationSource: "fallback", isFallback: true, fallbackReason: "provider_unavailable"
+    })
+  }));
+  await page.goto("/cases/P001/");
+  await expect(page.getByRole("button", { name: "提交本阶段", exact: true })).toBeEnabled();
+
+  await page.getByRole("textbox", { name: "输入问诊问题" }).fill("我想问一个不明确的问题");
+  await page.getByRole("button", { name: "发送", exact: true }).click();
+  await expect(page.getByRole("log", { name: "模拟问诊对话" }).getByText("医生，您能问得再具体一点吗？我不太明白您的意思。")).toBeVisible();
+  await expect.poll(() => observations.filter((item) => item.action === "history-log" && item.status === 200).length).toBe(1);
+
+  await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
+  await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
+  expect(observations.filter((item) => item.action === "init-attempt")).toHaveLength(1);
+  expect(observations.filter((item) => item.action === "stage-feedback")).toHaveLength(1);
+});
+
+test("restart removes the prior browser token and initializes exactly one new attempt", async ({ page }) => {
+  const observations = [];
+  await routeTrainingApiThroughHandler(page, observations);
+  await page.goto("/cases/P001/");
+  await expect(page.getByRole("button", { name: "提交本阶段", exact: true })).toBeEnabled();
+  const firstInit = observations.find((item) => item.action === "init-attempt");
+  expect(firstInit?.attemptId).toBeTruthy();
+  expect(await page.evaluate(() => Object.keys(sessionStorage).filter((key) => key.startsWith("hematuria-training-state-v3:")))).toEqual([
+    `hematuria-training-state-v3:${firstInit.attemptId}`
+  ]);
+
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "重新开始训练", exact: true }).click();
+  await expect.poll(() => observations.filter((item) => item.action === "init-attempt").length).toBe(2);
+  await expect(page.getByRole("button", { name: "提交本阶段", exact: true })).toBeEnabled();
+  const initAttempts = observations.filter((item) => item.action === "init-attempt");
+  expect(initAttempts[1].attemptId).not.toBe(firstInit.attemptId);
+  expect(await page.evaluate(() => Object.keys(sessionStorage).filter((key) => key.startsWith("hematuria-training-state-v3:")))).toEqual([
+    `hematuria-training-state-v3:${initAttempts[1].attemptId}`
+  ]);
+  expect(observations.filter((item) => item.action === "stage-feedback")).toHaveLength(0);
+});
+
 test("stage one safely recovers when the signed browser token outlives the server attempt", async ({ page }) => {
   const observations = [];
   await routeTrainingApiThroughHandler(page, observations);
@@ -217,6 +353,7 @@ test("stage one safely recovers when the signed browser token outlives the serve
 });
 
 test("missing Preview attempt store reports a configuration blocker", async ({ page }) => {
+  const actions = [];
   await page.route("**/api/health/**", (route) => route.fulfill({
     status: 200,
     contentType: "application/json",
@@ -227,14 +364,19 @@ test("missing Preview attempt store reports a configuration blocker", async ({ p
       deploymentSha: "e2e-sha", apiVersion: "2.6.0"
     })
   }));
-  await page.route("**/api/training-action/**", (route) => route.fulfill({
-    status: 503,
-    contentType: "application/json",
-    body: JSON.stringify({ error: "training_attempt_store_unavailable" })
-  }));
+  await page.route("**/api/training-action/**", (route) => {
+    actions.push(route.request().postDataJSON().action);
+    return route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "training_attempt_store_unavailable" })
+    });
+  });
   await page.goto("/cases/P001/");
-  await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
   await expect(page.getByRole("alert").filter({ hasText: "训练记录服务" })).toContainText("训练记录服务未配置，当前无法提交阶段");
+  await expect(page.getByRole("button", { name: "重新初始化训练会话", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "训练会话尚未就绪", exact: true })).toBeDisabled();
+  expect(actions).toEqual(["init-attempt"]);
   await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toHaveCount(0);
 });
 
@@ -275,6 +417,7 @@ test("case catalog search has a recoverable empty state", async ({ page }) => {
 });
 
 test("mobile interview keeps multiline input visible without horizontal overflow", async ({ page }) => {
+  await routeTrainingApiThroughHandler(page, []);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/cases/P001/");
   const input = page.getByRole("textbox", { name: "输入问诊问题" });
@@ -282,9 +425,10 @@ test("mobile interview keeps multiline input visible without horizontal overflow
   await input.press("Shift+Enter");
   await input.type("第二行");
   await expect(input).toHaveValue("第一行\n第二行");
-  const box = await input.boundingBox();
-  expect(box).toBeTruthy();
-  expect(box.y + box.height).toBeLessThanOrEqual(844);
+  await expect.poll(async () => {
+    const box = await input.boundingBox();
+    return box ? Math.ceil(box.y + box.height) : Number.POSITIVE_INFINITY;
+  }).toBeLessThanOrEqual(844);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
   expect(overflow).toBe(false);
 });

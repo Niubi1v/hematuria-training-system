@@ -138,19 +138,48 @@ type ServiceHealth = {
   apiVersion: string;
 };
 
-function stageSubmissionFailureMessage(error: unknown, language: LanguageCode) {
+type TrainingFailureReason = "session_initializing" | "attempt_not_found" | "token_expired" | "stage_mismatch" | "network_error" | "configuration_error" | "state_mismatch" | "request_error";
+
+function trainingFailureReason(error: unknown): TrainingFailureReason {
   const code = error instanceof ApiRequestError ? error.code : "";
-  if (/training_attempt_store_unavailable|training_state_secret_(?:missing|weak|placeholder|reused)/.test(code)) {
+  const kind = error instanceof ApiRequestError ? error.kind : "request";
+  if (/attempt_not_found/.test(code)) return "attempt_not_found";
+  if (/expired_attempt_token/.test(code)) return "token_expired";
+  if (/invalid_stage|stage_not_unlocked/.test(code)) return "stage_mismatch";
+  if (/training_attempt_store_unavailable|training_state_secret_(?:missing|weak|placeholder|reused)/.test(code)) return "configuration_error";
+  if (/stale_attempt_token|attempt_(?:state|language|mode|case|id)_mismatch/.test(code)) return "state_mismatch";
+  if (/network_error/.test(code) || ["network", "offline", "timeout"].includes(kind)) return "network_error";
+  return "request_error";
+}
+
+function stageSubmissionFailureMessage(error: unknown, language: LanguageCode) {
+  const reason = trainingFailureReason(error);
+  if (reason === "configuration_error") {
     return language === "en"
       ? "The training record service is not configured, so this stage cannot be submitted. Ask an administrator to configure the Preview attempt store and retry."
       : "训练记录服务未配置，当前无法提交阶段。请管理员完成 Preview 持久存储配置后重试。";
   }
-  if (/expired_attempt_token/.test(code)) {
+  if (reason === "attempt_not_found") {
+    return language === "en"
+      ? "The training session record is no longer available. Reinitialize the training session before submitting."
+      : "训练会话记录已失效，请重新初始化训练会话后再提交。";
+  }
+  if (reason === "token_expired") {
     return language === "en"
       ? "This training attempt has expired. Start a new attempt before submitting."
       : "本次训练凭据已过期，请重新开始训练后再提交。";
   }
-  if (/stale_attempt_token|attempt_(?:state|language|mode|case|id)_mismatch/.test(code)) {
+  if (reason === "stage_mismatch") {
+    return language === "en"
+      ? "The submitted stage does not match the server stage. Refresh to restore the current stage."
+      : "提交阶段与服务端当前阶段不一致，请刷新页面恢复后重试。";
+  }
+  if (reason === "network_error") {
+    return language === "en"
+      ? "Network connection failed while initializing the training session. Check the network and retry initialization."
+      : "初始化训练会话时网络连接失败，请检查网络后重新初始化。";
+  }
+  if (reason === "state_mismatch") {
     return language === "en"
       ? "The training state changed. Refresh the page to restore the latest valid stage, then retry."
       : "训练状态已变化，请刷新页面恢复最新有效阶段后重试。";
@@ -648,6 +677,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error">("saved");
   const [storageWarning, setStorageWarning] = useState("");
   const [stageSubmitting, setStageSubmitting] = useState(false);
+  const [trainingAttemptStatus, setTrainingAttemptStatus] = useState<"initializing" | "ready" | "failed">("initializing");
+  const [trainingAttemptError, setTrainingAttemptError] = useState("");
   const [pendingHistoryLogs, setPendingHistoryLogs] = useState<PendingHistoryLog[]>([]);
   const [logSyncStatus, setLogSyncStatus] = useState<"idle" | "pending" | "verified" | "failed">("idle");
   const [logRetryNonce, setLogRetryNonce] = useState(0);
@@ -676,6 +707,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const allowNavigationRef = useRef(false);
   const trainingStateTokenRef = useRef<{ attemptId: string; token: string } | null>(null);
   const trainingInitPromiseRef = useRef<{ attemptId: string; promise: Promise<string> } | null>(null);
+  const trainingInitFailureRef = useRef<{ attemptId: string; error: unknown } | null>(null);
   const trainingActionQueueRef = useRef<Promise<void>>(Promise.resolve());
   const sessionInitAbortRef = useRef<AbortController | null>(null);
   const autoSessionInitRef = useRef<{ key: string; promise: Promise<SessionInitResponse>; controller: AbortController } | null>(null);
@@ -731,16 +763,26 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     items: consultCatalog.filter((item) => item.group === group)
   })).filter((group) => group.items.length > 0), []);
 
-  const ensureTrainingStateToken = useCallback(async () => {
+  const ensureTrainingStateToken = useCallback(async (forceRetry = false) => {
     const attemptId = attempt.attemptId;
-    if (trainingStateTokenRef.current?.attemptId === attemptId) return trainingStateTokenRef.current.token;
+    if (trainingStateTokenRef.current?.attemptId === attemptId) {
+      setTrainingAttemptStatus("ready");
+      setTrainingAttemptError("");
+      return trainingStateTokenRef.current.token;
+    }
     if (trainingInitPromiseRef.current?.attemptId === attemptId) return trainingInitPromiseRef.current.promise;
+    if (!forceRetry && trainingInitFailureRef.current?.attemptId === attemptId) throw trainingInitFailureRef.current.error;
+    if (forceRetry && trainingInitFailureRef.current?.attemptId === attemptId) trainingInitFailureRef.current = null;
+    setTrainingAttemptStatus("initializing");
+    setTrainingAttemptError("");
     const promise = (async () => {
       const storageKey = `hematuria-training-state-v3:${attempt.attemptId}`;
       try {
         const saved = sessionStorage.getItem(storageKey);
         if (saved) {
           trainingStateTokenRef.current = { attemptId, token: saved };
+          trainingInitFailureRef.current = null;
+          setTrainingAttemptStatus("ready");
           return saved;
         }
       } catch { /* The signed state can continue in memory. */ }
@@ -750,9 +792,18 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         language: lang, mode: runtimeMode, requestId: initRequestId
       }, "", initRequestId, 0);
       trainingStateTokenRef.current = { attemptId, token: initialized.stateToken };
+      trainingInitFailureRef.current = null;
+      setTrainingAttemptStatus("ready");
       try { sessionStorage.setItem(storageKey, initialized.stateToken); } catch { /* Memory fallback. */ }
       return initialized.stateToken;
-    })();
+    })().catch((error) => {
+      const reason = trainingFailureReason(error);
+      console.warn("training_attempt_initialization_failed", { reason });
+      trainingInitFailureRef.current = { attemptId, error };
+      setTrainingAttemptStatus("failed");
+      setTrainingAttemptError(stageSubmissionFailureMessage(error, lang));
+      throw error;
+    });
     const pending = { attemptId, promise };
     trainingInitPromiseRef.current = pending;
     promise.finally(() => {
@@ -760,6 +811,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     }).catch(() => undefined);
     return promise;
   }, [attempt.attemptId, caseData.id, lang, runtimeMode]);
+
+  useEffect(() => {
+    if (!attemptReady) return;
+    void ensureTrainingStateToken().catch(() => undefined);
+  }, [attemptReady, ensureTrainingStateToken]);
 
   async function trainingAction<T>(body: Record<string, unknown>): Promise<T> {
     const run = trainingActionQueueRef.current.then(async () => {
@@ -777,8 +833,10 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         if (!recoverableMissingAttempt) throw error;
         trainingStateTokenRef.current = null;
         trainingInitPromiseRef.current = null;
+        setTrainingAttemptStatus("initializing");
+        setTrainingAttemptError("");
         try { sessionStorage.removeItem(`hematuria-training-state-v3:${attempt.attemptId}`); } catch { /* Recovery can continue in memory. */ }
-        token = await ensureTrainingStateToken();
+        token = await ensureTrainingStateToken(true);
         result = await requestTrainingAction<T>(requestBody, token, requestId, 0);
       }
       trainingStateTokenRef.current = { attemptId: attempt.attemptId, token: result.stateToken };
@@ -963,6 +1021,9 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   useEffect(() => {
     if (trainingStateTokenRef.current?.attemptId !== attempt.attemptId) trainingStateTokenRef.current = null;
     if (trainingInitPromiseRef.current?.attemptId !== attempt.attemptId) trainingInitPromiseRef.current = null;
+    if (trainingInitFailureRef.current?.attemptId !== attempt.attemptId) trainingInitFailureRef.current = null;
+    setTrainingAttemptStatus("initializing");
+    setTrainingAttemptError("");
     trainingActionQueueRef.current = Promise.resolve();
   }, [attempt.attemptId]);
 
@@ -1600,7 +1661,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }
 
   async function submitStage() {
-    if (osceLocked || stageSubmitLockRef.current) return;
+    if (osceLocked || stageSubmitLockRef.current || trainingAttemptStatus !== "ready") return;
     if (activeStageNo === 4 && answers.consultNeeded === "需要会诊" && (answers.consultDepartments.length === 0 || answers.consultPurpose.trim().length < 6 || answers.consultQuestions.trim().length < 6 || answers.consultSummary.trim().length < 6)) {
       alert(t(lang, "purposeRequired"));
       return;
@@ -1694,6 +1755,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     try {
       localStorage.removeItem(attemptStorageKey(attempt));
       localStorage.removeItem(attemptPointerKey(attempt.caseId, attempt.mode, attempt.language));
+      sessionStorage.removeItem(`hematuria-training-state-v3:${attempt.attemptId}`);
     } catch { /* Reload still resets the in-memory attempt. */ }
     window.location.reload();
   }
@@ -1812,6 +1874,14 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         <div role="alert" className="mb-4 flex items-start justify-between gap-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <span>{storageWarning}</span>
           <button type="button" onClick={() => setStorageWarning("")} className="font-medium underline">{t(lang, "dismiss")}</button>
+        </div>
+      )}
+      {trainingAttemptStatus === "failed" && trainingAttemptError && (
+        <div role="alert" className="mb-4 flex items-start justify-between gap-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <span>{trainingAttemptError}</span>
+          <button type="button" onClick={() => void ensureTrainingStateToken(true).catch(() => undefined)} className="font-medium underline">
+            {lang === "en" ? "Reinitialize training session" : "重新初始化训练会话"}
+          </button>
         </div>
       )}
       <div className="mb-3 min-h-9" aria-live="polite">
@@ -2219,8 +2289,16 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 <CheckCircle2 size={16} /> {t(lang, "finishTraining")}
               </button>
             ) : (
-              <button disabled={osceLocked || stageSubmitting} onClick={submitStage} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white hover:bg-clinic-teal disabled:cursor-not-allowed disabled:opacity-50">
-                <CheckCircle2 size={16} /> {stageSubmitting ? (lang === "en" ? "Submitting..." : "正在提交……") : activeEvaluation ? (lang === "en" ? "Resubmit this stage" : "修改后重新提交") : t(lang, "submitStage")}
+              <button disabled={osceLocked || stageSubmitting || trainingAttemptStatus !== "ready"} onClick={submitStage} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white hover:bg-clinic-teal disabled:cursor-not-allowed disabled:opacity-50">
+                <CheckCircle2 size={16} /> {trainingAttemptStatus === "initializing"
+                  ? (lang === "en" ? "Initializing training session..." : "正在初始化训练会话……")
+                  : trainingAttemptStatus === "failed"
+                    ? (lang === "en" ? "Training session unavailable" : "训练会话尚未就绪")
+                    : stageSubmitting
+                      ? (lang === "en" ? "Submitting..." : "正在提交……")
+                      : activeEvaluation
+                        ? (lang === "en" ? "Resubmit this stage" : "修改后重新提交")
+                        : t(lang, "submitStage")}
               </button>
             )}
             {activeEvaluation && activeStageNo !== 7 && (
