@@ -763,14 +763,24 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
 
   async function trainingAction<T>(body: Record<string, unknown>): Promise<T> {
     const run = trainingActionQueueRef.current.then(async () => {
-      const token = await ensureTrainingStateToken();
       const requestId = String(body.requestId || createRequestId(String(body.action || "training")));
-      const result = await requestTrainingAction<T>(
-        { ...body, requestId, caseId: caseData.id, attemptId: attempt.attemptId, language: lang, mode: runtimeMode },
-        token,
-        requestId,
-        body.action === "history-log" ? 0 : 2
-      );
+      const requestBody = { ...body, requestId, caseId: caseData.id, attemptId: attempt.attemptId, language: lang, mode: runtimeMode };
+      let token = await ensureTrainingStateToken();
+      let result: { payload: T; stateToken: string };
+      try {
+        result = await requestTrainingAction<T>(requestBody, token, requestId, body.action === "history-log" ? 0 : 2);
+      } catch (error) {
+        const recoverableMissingAttempt = error instanceof ApiRequestError
+          && error.code === "attempt_not_found"
+          && body.action === "stage-feedback"
+          && body.stageKey === "history";
+        if (!recoverableMissingAttempt) throw error;
+        trainingStateTokenRef.current = null;
+        trainingInitPromiseRef.current = null;
+        try { sessionStorage.removeItem(`hematuria-training-state-v3:${attempt.attemptId}`); } catch { /* Recovery can continue in memory. */ }
+        token = await ensureTrainingStateToken();
+        result = await requestTrainingAction<T>(requestBody, token, requestId, 0);
+      }
       trainingStateTokenRef.current = { attemptId: attempt.attemptId, token: result.stateToken };
       try { sessionStorage.setItem(`hematuria-training-state-v3:${attempt.attemptId}`, result.stateToken); } catch { /* Memory fallback. */ }
       return result.payload;
@@ -1609,7 +1619,15 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     stageSubmitLockRef.current = true;
     setStageSubmitting(true);
     try {
-      const evaluation = await trainingAction<StageEvaluation>({ action: "stage-feedback", stageKey: stageScoreKey(activeStageNo), submission: { ...answers, answerText } });
+      const evaluation = await trainingAction<StageEvaluation>({
+        action: "stage-feedback",
+        stageKey: stageScoreKey(activeStageNo),
+        submission: {
+          ...answers,
+          answerText,
+          ...(activeStageNo === 1 ? { askedQuestions: messages.filter((message) => message.role === "student").map((message) => message.text) } : {})
+        }
+      });
       setSubmitted((current) => Object.fromEntries(
         Object.entries({ ...current, [activeStageNo]: evaluation }).filter(([stage]) => Number(stage) <= activeStageNo)
       ) as Partial<Record<AgentStageNo, StageEvaluation>>);

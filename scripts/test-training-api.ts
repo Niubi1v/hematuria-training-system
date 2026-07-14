@@ -57,6 +57,22 @@ async function main() {
     requestId: "inspect-conflict-state", requestDigest: digest("inspect-conflict-state")
   });
   assert.equal(conflictStored.state.events.some((event: { slotId?: string }) => event.slotId === "urinary_urgency"), false, "quarantined bilingual facts must not enter authoritative scoring state");
+  const conflictSubmission = await call({
+    action: "stage-feedback", caseId: "P001", attemptId: conflictAttemptId, mode: "free", language: "en",
+    stageKey: "history", submission: { askedQuestions: ["Do you have urinary urgency?"] }, requestId: "conflict-history-submit-test"
+  }, conflictHistory.token);
+  assert.equal(conflictSubmission.statusCode, 200);
+  assert.equal((conflictSubmission.payload.hits as string[]).some((item) => /urgency|尿急/i.test(item)), false, "stage submission recovery must not score quarantined bilingual facts");
+
+  const recoveryAttemptId = `history-recovery-${Date.now()}`;
+  const recoveryInit = await call({ action: "init-attempt", caseId: "P001", attemptId: recoveryAttemptId, mode: "free", language: "zh" });
+  const recoveredHistory = await call({
+    action: "stage-feedback", caseId: "P001", attemptId: recoveryAttemptId, mode: "free", language: "zh",
+    stageKey: "history", submission: { askedQuestions: ["您吸烟吗？"] }, requestId: "history-recovery-submit-test"
+  }, recoveryInit.token);
+  assert.equal(recoveredHistory.statusCode, 200);
+  assert.ok(Number(recoveredHistory.payload.score) > 0, "server-validated submitted questions must restore history evidence after a lost attempt record");
+  assert.match((recoveredHistory.payload.hits as string[]).join(" "), /吸烟/);
 
   for (const language of ["zh", "en"] as const) {
     const bilingualAttemptId = `p001-seven-stage-${language}-${Date.now()}`;

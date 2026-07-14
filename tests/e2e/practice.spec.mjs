@@ -68,6 +68,8 @@ async function routeTrainingApiThroughHandler(page, observations = [], options =
       requestId: body.requestId,
       status: result.statusCode,
       error: result.payload?.error || "",
+      score: result.payload?.score,
+      hits: result.payload?.hits || [],
       tokenPresent: Boolean(request.headers()["x-training-state"])
     });
     const responseHeaders = { "Access-Control-Expose-Headers": "X-Training-State" };
@@ -176,6 +178,42 @@ test("rapid stage submission is accepted only once", async ({ page }) => {
     const saved = key ? JSON.parse(localStorage.getItem(key) || "null") : null;
     return saved?.timeline?.filter((item) => item.type === "submit").length ?? 0;
   })).toBe(1);
+});
+
+test("stage one safely recovers when the signed browser token outlives the server attempt", async ({ page }) => {
+  const observations = [];
+  await routeTrainingApiThroughHandler(page, observations);
+  await page.route("**/api/agent-chat/**", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ replyText: "我吸烟，大约每天一包。", matchedSlotIds: ["smoking"], matchedFacts: ["smoking=current"], provider: "deepseek", generationSource: "live_ai", isFallback: false })
+  }));
+  await page.goto("/cases/P001/");
+  await expect.poll(() => observations.filter((item) => item.action === "init-attempt").length).toBe(1);
+
+  await page.getByRole("textbox", { name: "输入问诊问题" }).fill("您吸烟吗？");
+  await page.getByRole("button", { name: "发送", exact: true }).click();
+  await expect(page.getByRole("log", { name: "模拟问诊对话" }).getByText("我吸烟，大约每天一包。")).toBeVisible();
+  await expect.poll(() => observations.filter((item) => item.action === "history-log" && item.status === 200).length).toBe(1);
+
+  // Model a Preview store reset/expiry while the browser still has its valid signed token.
+  resetMemoryAttemptStore();
+  await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
+
+  await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
+  const feedback = observations.filter((item) => item.action === "stage-feedback");
+  expect(feedback).toEqual([
+    expect.objectContaining({ status: 401, error: "attempt_not_found", tokenPresent: true }),
+    expect.objectContaining({ status: 200, stageKey: "history", tokenPresent: true, score: expect.any(Number) })
+  ]);
+  expect(feedback[1].score).toBeGreaterThan(0);
+  expect(feedback[1].hits.join(" ")).toContain("吸烟");
+  expect(observations.filter((item) => item.action === "init-attempt")).toHaveLength(2);
+  await expect(page.getByRole("alert").filter({ hasText: "阶段提交失败" })).toHaveCount(0);
+  await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
+  await expect(page.getByText("检查决策智能体", { exact: true }).first()).toBeVisible();
+  await page.reload();
+  await expect(page.getByText("检查决策智能体", { exact: true }).first()).toBeVisible();
 });
 
 test("missing Preview attempt store reports a configuration blocker", async ({ page }) => {
