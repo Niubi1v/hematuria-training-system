@@ -84,7 +84,7 @@
 | 52页生产构建 | PASS | run `29289645684`静态生成52/52 |
 | 静态答案/密钥扫描 | PASS | run `29289645684`：294文件repository scan、25个JS bundle scan success |
 | 当前文本、Office归档、二进制可见元数据与Git文本历史密钥扫描 | PASS | `04c2a0b` / run `29294906265`以`fetch-depth: 0`执行scanner专项和仓库扫描并success；浅仓库fixture fail-closed；历史压缩二进制/OCR仍按已知限制保留 |
-| Playwright桌面/移动 | PASS | run `29289645684` desktop/mobile 40/40，runner正常退出；axe critical/serious=0断言包含在内 |
+| Playwright桌面/移动 | LOCAL PASS / CI PENDING | HEM-P1-027结构修复后本地desktop/mobile 46/46（69.3秒），含axe critical/serious=0；最新远程Node22仍待push后CI |
 | 专项分支普通push | PASS | `origin/codex/hematuria-production-goal` |
 | draft PR与GitHub Actions | PASS（当前工程候选） | PR #1保持Draft；HEAD `04c2a0b`的run `29294906265` completed/success，Vercel Deployment与Preview Comments success，Pages deploy按PR策略skipped；不代表真实AI或生产发布通过 |
 | Pages/Vercel SHA与live alias | PASS/PENDING | `30b0d45` Vercel Deployment与Preview Comments success；PR Pages部署按设计跳过，正式live alias仍未验证 |
@@ -100,7 +100,7 @@
 | 强制标准 | 当前状态 | 当前证据 |
 |---|---|---|
 | UI提交不覆盖Production后续安全修复 | PASS | merge-base=`74c140f`，三提交逐项cherry-pick且关键安全文件hash不变 |
-| 1280桌面、360/390移动布局 | PASS | UI专项截图审查及run `29232093193` desktop/mobile通过 |
+| 1280桌面、360/390移动布局 | LOCAL PASS / CI PENDING | HEM-P1-027失败基线为360×800中文遮挡7px；结构修复后360×800、390×844、1280×720、1440×900中英文矩阵2/2通过，既有多行输入2/2及20轮滚动2/2通过；待远程CI/独立QA |
 | Enter/Shift+Enter、滚动保持、单一状态提示 | PASS | run `29232093193`集成后Playwright通过 |
 | 日志失败后的幂等手动同步 | PASS | HEM-P1-025；run `29232093193` desktop/mobile通过 |
 | TypeScript、ESLint、行为、构建、扫描 | PASS | 本地32/32、52/52、25 JS、281文件；退出码均0 |

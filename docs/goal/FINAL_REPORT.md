@@ -298,4 +298,11 @@
 - 当前已推送代码HEAD：`87cb4f57d2fd548b5e68be7bb1d1dff75238fdad`；提交`87cb4f5`为provider失败熔断器，连同此前7个Agent/TTS安全提交从`00531d5`普通push至当前专项分支。工作树在提交和push时均干净。
 - Draft PR #1仍Open/Draft。Actions run `29305846597` completed/success，build耗时4分06秒；Vercel deployment `51WtprQAFvjLBqhAXV2kJFduV9mB`和Preview Comments success；Pages deploy skipped。未转Ready、未合并、未部署Production。
 - HEM-P1-036—042的本地工程门禁和Node22远程回归已通过；推荐长期QA从`87cb4f57d2fd548b5e68be7bb1d1dff75238fdad`或本证据文档提交的后代复测防滥用、恢复与延迟行为。
-- 剩余阻塞不变：HEM-P1-020需人工在Preview作用域核对既有持久store、签名和origin配置并重部署，随后验证真实DeepSeek/Azure、跨实例限额/熔断、日志10/10、双语10/10、20轮和P50/P95；HEM-P1-027移动遮挡仍OPEN；HEM-P0-001/023需具名医学专家裁决。CI/Vercel绿灯不得替代这些结论。
+- 剩余阻塞：HEM-P1-020需人工在Preview作用域核对既有持久store、签名和origin配置并重部署，随后验证真实DeepSeek/Azure、跨实例限额/熔断、日志10/10、双语10/10、20轮和P50/P95；HEM-P1-027已进入本地结构修复但仍待push后CI与独立QA；HEM-P0-001/023需具名医学专家裁决。CI/Vercel绿灯不得替代这些结论。
+
+### 2026-07-14 HEM-P1-027 本地工程交接
+
+- 旧状态“OPEN/两轮像素修复无效”已由结构候选推进为“本地工程修复，待远程CI与独立QA”。失败测试先复现360×800中文7px覆盖；没有删除旧证据或把截图审查替代自动断言。
+- 移动端不再使用页面级sticky：composer处于聊天后的正常文档流，聚焦、输入和视觉视口变化按实际超出像素恢复可见；桌面sticky按`ResizeObserver`实测高度保留显式scroll spacer和safe-area。中英文切换的单条开场使用同步chat定位，不覆盖用户手动上翻后的多轮记录。
+- 本地证据：四视口双语2/2、既有多行输入2/2、20轮滚动2/2、完整Playwright46/46、TypeScript、ESLint、82/82 build、25 JS bundle及298文件scanner全部exit0。无`data/**`、医学审核、`needs_revision`、18条隔离或360评分修改。
+- 当前候选尚未提交/push，不能登记为远程关闭。推送后必须等待Node22 Actions与Vercel Preview，并把新的准确HEAD交给长期QA在真实360/390设备复测软键盘与safe-area。

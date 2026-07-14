@@ -254,3 +254,8 @@
 
 - `HEM-P1-036`—`HEM-P1-042`的已完成本地工程提交已普通push至`87cb4f5`；此前“待push/CI”的网络阻塞解除。Actions run `29305846597` build success，Vercel两项success，PR仍Draft。
 - `HEM-P1-040`工程P1关闭；配置后Preview真实Redis跨实例/Lua TTL与provider错误率验证仍由`HEM-P1-020`阻塞，外部告警投递和真实性能样本仍待权限/配置，不得因CI绿灯关闭这些验收项。
+
+### 2026-07-14 HEM-P1-027 状态修正
+
+- `HEM-P1-027`（本地工程修复，待push/CI与独立QA）：原QA断言已纳入主Playwright并先稳定失败7px。根因不是composer高度本身，而是移动端页面级sticky能越过尚在视口下方的聊天容器；英文换行证明固定像素补丁无效。
+- 当前候选采用移动normal-flow + 聚焦/输入/visualViewport几何校正，桌面sticky使用实际测量高度的显式spacer。四视口双语、既有输入可见性、20轮手动上翻/新消息、完整46项浏览器及构建/扫描均通过。未降低44px触控目标、未隐藏开场、未删除或放宽旧断言。

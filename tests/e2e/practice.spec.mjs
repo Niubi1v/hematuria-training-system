@@ -88,6 +88,81 @@ test("mobile interview keeps multiline input visible without horizontal overflow
   expect(overflow).toBe(false);
 });
 
+test("interview composer reserves its measured space across viewports and languages", async ({ page }, testInfo) => {
+  testInfo.setTimeout(90_000);
+  const chineseOpening = "医生您好，我是因为小便颜色变红3月余来看病的。";
+  const englishOpening = "Hello doctor. I came in because my urine has looked red for more than three months.";
+  await page.route("**/api/health/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" }) }));
+  await page.route("**/api/session/init/**", (route) => {
+    const body = route.request().postDataJSON();
+    const opening = body.language === "en" ? englishOpening : chineseOpening;
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: `layout-${body.language}`, caseId: "P001", language: body.language, mode: "free", patientOpeningStatement: opening, sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) });
+  });
+  await mockTrainingState(page);
+
+  const viewports = testInfo.project.name === "mobile-chromium"
+    ? [{ width: 360, height: 800 }, { width: 390, height: 844 }]
+    : [{ width: 1280, height: 720 }, { width: 1440, height: 900 }];
+  for (const viewport of viewports) {
+    for (const language of ["zh", "en"]) {
+      await page.setViewportSize(viewport);
+      await page.goto("/cases/P001/");
+      await page.getByRole("button", { name: language === "en" ? "English" : "中文" }).click();
+      const conversation = page.getByRole("log", { name: language === "en" ? "Simulated patient conversation" : "模拟问诊对话" });
+      const opening = conversation.getByText(language === "en" ? englishOpening : chineseOpening, { exact: true });
+      const input = page.getByRole("textbox", { name: language === "en" ? "Enter an interview question" : "输入问诊问题" });
+      const composer = page.getByTestId("chat-composer");
+      const spacer = page.getByTestId("chat-composer-spacer");
+      await expect(opening).toBeVisible();
+      await expect(input).toBeVisible();
+      if (viewport.width < 640) await input.focus();
+      await expect.poll(async () => {
+        const box = await composer.boundingBox();
+        return box ? Math.ceil(box.y + box.height) : Number.POSITIVE_INFINITY;
+      }).toBeLessThanOrEqual(viewport.height);
+      const [openingBox, composerBox, layout] = await Promise.all([
+        opening.boundingBox(),
+        composer.boundingBox(),
+        page.evaluate(() => {
+          const composerElement = document.querySelector('[data-testid="chat-composer"]');
+          return {
+            spacerHeight: Number.parseFloat(getComputedStyle(document.querySelector('[data-testid="chat-composer-spacer"]')).height),
+            spacerDisplay: getComputedStyle(document.querySelector('[data-testid="chat-composer-spacer"]')).display,
+            composerHeight: composerElement?.getBoundingClientRect().height ?? 0,
+            overflow: document.documentElement.scrollWidth > window.innerWidth,
+            className: composerElement?.className ?? ""
+          };
+        })
+      ]);
+      expect(openingBox).toBeTruthy();
+      expect(composerBox).toBeTruthy();
+      expect(composerBox.y, `${viewport.width}x${viewport.height}/${language}`).toBeGreaterThanOrEqual(openingBox.y + openingBox.height);
+      expect(Math.ceil(composerBox.y + composerBox.height)).toBeLessThanOrEqual(viewport.height);
+      await expect(spacer).toHaveAttribute("style", /safe-area-inset-bottom/);
+      if (viewport.width < 640) {
+        expect(layout.spacerDisplay).toBe("none");
+      } else {
+        expect(layout.spacerHeight).toBeGreaterThanOrEqual(layout.composerHeight);
+      }
+      expect(layout.className).toContain("safe-area-inset-bottom");
+      expect(layout.overflow).toBe(false);
+    }
+  }
+
+  if (testInfo.project.name === "mobile-chromium") {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/cases/P001/");
+    await page.getByRole("button", { name: "中文" }).click();
+    const input = page.getByRole("textbox", { name: "输入问诊问题" });
+    await input.focus();
+    await page.setViewportSize({ width: 390, height: 640 });
+    await expect.poll(async () => {
+      const box = await input.boundingBox();
+      return box ? Math.ceil(box.y + box.height) : Number.POSITIVE_INFINITY;
+    }).toBeLessThanOrEqual(640);
+  }
+});
+
 test("primary practice pages have no serious accessibility violations", async ({ page }) => {
   for (const route of ["/", "/cases/", "/cases/P008/"]) {
     await page.goto(route);
@@ -458,11 +533,30 @@ test("twenty interview turns do not reinitialize the active language session", a
   await expect.poll(() => sessionCalls).toBe(2);
   const initializedLanguageSessions = sessionCalls;
   const input = page.getByPlaceholder("Enter an interview question");
-  for (let turn = 1; turn <= 20; turn += 1) {
+  for (let turn = 1; turn <= 19; turn += 1) {
     await input.fill(`Question ${turn}?`);
     await page.getByRole("button", { name: "Send" }).click();
     await expect(page.getByLabel("Simulated patient conversation").getByText(`Patient answer ${turn}.`, { exact: true })).toBeVisible();
   }
+  const conversation = page.getByLabel("Simulated patient conversation");
+  await conversation.evaluate((element) => element.scrollTo({ top: 0, behavior: "auto" }));
+  await expect.poll(() => conversation.evaluate((element) => element.scrollTop)).toBe(0);
+  await input.fill("Question 20?");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(conversation.getByText("Patient answer 20.", { exact: true })).toHaveCount(1);
+  const latestButton = page.getByRole("button", { name: "New message · go to latest" });
+  await expect(latestButton).toBeVisible();
+  expect(await conversation.evaluate((element) => element.scrollTop)).toBe(0);
+  await latestButton.click();
+  await expect(conversation.getByText("Patient answer 20.", { exact: true })).toBeVisible();
+  await expect.poll(() => conversation.evaluate((element) => Math.ceil(element.scrollHeight - element.scrollTop - element.clientHeight))).toBeLessThanOrEqual(1);
+  const [answerBox, composerBox] = await Promise.all([
+    conversation.getByText("Patient answer 20.", { exact: true }).boundingBox(),
+    page.getByTestId("chat-composer").boundingBox()
+  ]);
+  expect(answerBox).toBeTruthy();
+  expect(composerBox).toBeTruthy();
+  expect(answerBox.y + answerBox.height).toBeLessThanOrEqual(composerBox.y);
   expect(sessionCalls).toBe(initializedLanguageSessions);
   expect(patientCalls).toBe(20);
   await expect(page.getByLabel("Simulated patient conversation").getByText("Patient answer 20.", { exact: true })).toHaveCount(1);

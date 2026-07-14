@@ -395,3 +395,10 @@
 - 443连通性恢复后，重新`fetch --prune`确认远程专项分支仍为`00531d5`；本地仅领先8、落后0，工作树干净且无未知远程提交。8个本地小步提交已普通push，分支/PR head更新为`87cb4f57d2fd548b5e68be7bb1d1dff75238fdad`。
 - Draft PR #1保持Open/Draft。Actions run `29305846597`的`build`在Node 22完成并success（4分06秒）；Vercel deployment `51WtprQAFvjLBqhAXV2kJFduV9mB`及Preview Comments均success，Pages正式`deploy`按PR规则skipped。
 - 远程绿灯证明代码门禁与Preview构建通过，不等于Preview已配置持久Upstash、签名/origin、真实DeepSeek/Azure，也不等于跨实例熔断、日志10/10、双语真实AI 10/10或P50/P95验收通过。PR继续Draft。
+
+### HEM-P1-027 移动问诊workspace结构修复（2026-07-14）
+
+- 主分支失败测试复现长期QA同一几何：360×800中文`opening bottom=661 / composer y=654`，exit1；确认原因为页面级`sticky bottom`可在聊天容器尚未进入视口时被拉到其上方，英文头部换行会进一步放大覆盖，固定padding或压缩触控区不能解决。
+- 最小结构修复在小于640px时让composer回归正常文档流；用户聚焦/输入及`visualViewport`变化时，只按实际超出像素滚动根页面。640px以上保留sticky，并用`ResizeObserver`测得的composer高度加显式内容spacer与safe-area合同，避免Chromium忽略overflow末尾padding。
+- 新矩阵覆盖360×800、390×844、1280×720、1440×900中英文、safe-area标记、无横向溢出及640px模拟视觉视口；2/2、17.6秒exit0。既有390多行输入2/2、10.9秒；20轮后手动上翻、新消息入口、末条消息完整滚动2/2、12.6秒。
+- 本里程碑唯一完整Playwright为46/46、69.3秒exit0，含会话/重连/fallback/日志/快速双击/刷新/TTS/临床数据/评分与axe。TypeScript、ESLint、82/82构建、25 JS bundle及298文件scanner均exit0；`data/**`、医学事实、审核状态和360评分零修改。当前待小步提交、普通push、Node22 CI与独立QA复测。

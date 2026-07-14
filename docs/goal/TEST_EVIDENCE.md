@@ -712,3 +712,18 @@ Preview变量只核对名称/作用域：LLM相关变量覆盖Preview；`TRAININ
 | PR治理 | PR #1 head `87cb4f5` | Open/Draft；未Ready、未合并 |
 
 远程门禁没有读取或修改环境变量值，也没有执行真实DeepSeek/Azure调用。持久store、签名/origin、跨实例429/425/熔断、日志10/10、真实双语AI 10/10、20轮与P50/P95继续登记为外部配置后待验证。
+
+## HEM-P1-027 移动composer结构修复（2026-07-14）
+
+| 检查 | 精确场景/命令 | 退出码与结果 |
+|---|---|---|
+| 失败基线 | Playwright mobile，360×800，P001中文，比较开场与composer边界 | exit1，8.8秒；expected composer y≥661，received 654，真实遮挡7px |
+| 双语根因扩展 | 360×800英文及动态reserve实验 | 旧page-level sticky在聊天容器顶部仍低于composer时覆盖；仅padding/空spacer不能修正容器整体下移，证明需移动normal-flow |
+| 四视口双语矩阵 | `playwright test --grep "composer reserves"`，desktop/mobile；360×800、390×844、1280×720、1440×900；zh/en | exit0，2/2，17.6秒；开场不覆盖、聚焦后输入在视口、safe-area合同、无横向溢出；640px视觉视口收缩通过 |
+| 既有移动输入门禁 | `playwright test --grep "mobile interview keeps multiline"` | exit0，2/2，10.9秒；Enter/Shift+Enter两行输入底边≤844，无横向溢出 |
+| 20轮与滚动合同 | `playwright test --grep "twenty interview turns"` | exit0，2/2，12.6秒；session不重建，手动上翻保持，新消息入口出现，回到底部后末条回答不被composer覆盖且无异常尾部 |
+| 完整浏览器门禁 | `playwright test --reporter=line` | exit0，46/46，69.3秒；desktop/mobile、axe、会话/重连/fallback/日志/双击/刷新/TTS/临床数据/评分全部通过 |
+| TypeScript / ESLint | `pnpm run typecheck`；`pnpm run lint` | exit0，2.6秒 / 4.2秒；本地bundled Node24有仓库Node22 engine warning，待CI补证 |
+| production build / bundle / scanner | `NEXT_PUBLIC_API_BASE_URL=https://hematuria-training-system.vercel.app pnpm run build`；`scan-static-bundle.ts`；`scan-repository-secrets.mjs` | exit0，82/82静态页；25 JS；298 tracked/candidate文件，无秘密值输出 |
+
+Playwright的640px高度变化是`visualViewport`合同仿真，不冒充真实手机软键盘系统级测试；独立QA仍应在真实360/390设备复测键盘升降、safe-area和手动滚动。
