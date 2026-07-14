@@ -382,3 +382,10 @@
 - 本地工程证据：初始化矩阵14/14、restart 2/2、配置/单飞6/6；完整行为、类型、lint、82页build、25 JS bundle和303文件scanner通过。生产静态完整浏览器63/64，唯一rAF几何同步项在保持844px阈值后focused 2/2；干净Node22完整64项待PR CI。
 - `data/**`、医学事实、419审核、18条冲突、`needs_revision`及360评分未改。新候选尚未部署到可登录Preview；需要push后记录准确SHA、Actions、Vercel deployment及真实P001立即提交网络时间线。PR必须继续Draft，不Ready、不合并main、不部署Production。
 - 代码/测试原子提交为`c069abf`；回滚使用普通`git revert c069abf`，不得reset或重写既有提交。
+
+### 2026-07-15 HEM-P1-043-R3 远程验收交接
+
+- 候选已普通push，远程HEAD=`6b41d334106a988a1cbc85b89792f6271be3b597`，包含初始化竞态修复`c069abf`。Draft PR #1保持Draft，未Ready、未合并main、未部署Production。
+- Actions run `29348368936` / job `87137895749`在Node `22.14.0` completed/success；完整Playwright 64/64，其余类型、lint、行为、scanner、82页build、bundle与clean gate全部通过。Pages deploy按PR规则skipped。
+- Vercel Deployment与Preview Comments通过，部署记录`F9pbrhZo1sEQBsxSrQ4jXhJwHZHC`。仍需长期QA在有Preview访问权限的真实浏览器复测：P001打开后立即提交、preparing期间提交、初始化首次失败后显式恢复、0轮/1轮/fallback、刷新和快速双击，并记录脱敏HTTP状态/error code；CI绿灯不替代该交互证据。
+- 回滚代码使用普通`git revert c069abf`；首轮证据提交可独立revert。不得reset、force push、关闭安全校验或修改医学审核状态。

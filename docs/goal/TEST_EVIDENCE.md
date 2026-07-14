@@ -910,3 +910,17 @@ Preview别名受Vercel Standard Authentication拦截，匿名请求未到应用h
 in-app Browser连接两次在运行时初始化失败，无法取得登录态Preview console/network；没有用匿名保护页或本地fixture冒充线上证据。临时Playwright trace在提取脱敏状态/耗时后已删除。
 
 代码/测试原子提交：`c069abf`。
+
+### HEM-P1-043-R3 远程CI与Preview门禁（2026-07-15 CST）
+
+| 检查 | 远程证据 | 结果 |
+|---|---|---|
+| Production Goal远程HEAD | `6b41d334106a988a1cbc85b89792f6271be3b597` | PASS；包含`c069abf` |
+| GitHub Actions | run `29348368936`，build job `87137895749` | PASS，5分06秒，head SHA精确匹配`6b41d33` |
+| Node / Playwright | Actions日志：Node `v22.14.0`；`Running 64 tests using 2 workers` | PASS，`64 passed (2.4m)` |
+| 其余CI步骤 | behavior、typecheck、lint、repository secret scan、82页静态build、bundle scan、clean gate | 全部PASS；Pages artifact/deploy按PR事件规则skipped |
+| Vercel | deployment `F9pbrhZo1sEQBsxSrQ4jXhJwHZHC`；Deployment / Preview Comments checks | PASS / PASS |
+| PR状态 | Draft PR #1 | Open/Draft；未Ready、未合并 |
+| 登录态Preview交互 | P001打开后立即提交并采集应用POST | BLOCKED；in-app Browser运行时初始化失败，未伪造网络证据 |
+
+CI详情：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/29348368936`。Vercel部署记录：`https://vercel.com/niubi1vs-projects/hematuria-training-system/F9pbrhZo1sEQBsxSrQ4jXhJwHZHC`。

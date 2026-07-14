@@ -360,3 +360,5 @@
 - **缓存安全**：重新开始删除旧attempt的浏览器签名token；刷新继续恢复当前attempt。测试只断言token存在性和storage key，不输出值；临时trace已删除。
 - **证据**：初始化专项、0/1轮、AI preparing/degraded、fallback、刷新、restart、双击、丢失attempt和缺store均有desktop/mobile覆盖；完整行为/类型/lint/build/bundle/secret通过，`data/**`零差异。
 - **提交**：代码/测试原子提交`c069abf`；待证据提交、普通push和Node22 CI。
+- **远程门禁**：已普通push至远程HEAD `6b41d334106a988a1cbc85b89792f6271be3b597`。Actions run `29348368936`在Node 22.14.0完整Playwright 64/64及全部工程门禁通过；Vercel Deployment与Preview Comments通过，PR #1保持Draft。
+- **剩余状态**：工程修复与CI门禁关闭；登录态Preview的P001立即提交网络时间线仍待长期QA复测，故不把CI/Vercel构建绿灯冒充用户交互已验证。

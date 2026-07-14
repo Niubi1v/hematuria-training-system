@@ -481,3 +481,10 @@
 - desktop/mobile初始化竞态矩阵14/14、restart 2/2、永久配置/单飞6/6通过；生产构建82/82。生产静态Playwright完整运行63/64，唯一失败为既有多行输入测试在既定rAF滚动执行前读取几何；保持844px阈值并改为等待下一帧后focused desktop/mobile 2/2。完整行为、类型、lint、25 JS bundle与303文件secret扫描均exit0；Node22干净64项仍待push后CI。
 - `data/**`、42例、572事实、419审核、18条冲突、`needs_revision`与360评分零修改。现有Preview是否命中新竞态需新提交部署后按真实网络时间线复测；不把本地结果冒充Preview通过。
 - 代码/测试已保存为原子提交`c069abf`；证据文档独立提交后再执行fetch/普通push门禁。
+
+### HEM-P1-043-R3 远程门禁（2026-07-15 CST）
+
+- 修复与本地证据已普通push至`codex/hematuria-production-goal`，远程HEAD为`6b41d334106a988a1cbc85b89792f6271be3b597`；代码提交`c069abf`，首轮证据提交`6b41d33`。push前fetch确认远端领先0，未force push、未写main。
+- Draft PR #1保持Open/Draft。GitHub Actions run `29348368936` / build job `87137895749` completed/success：Node `22.14.0`，完整Playwright `64/64`，类型、lint、行为、scanner、82页build、bundle及最终clean gate均通过；Pages deploy按PR规则skipped。
+- Vercel Deployment与Preview Comments均success；部署记录为`F9pbrhZo1sEQBsxSrQ4jXhJwHZHC`。该绿灯确认候选可构建，不替代登录态P001立即提交的真实网络复测；in-app Browser运行时故障仍使该黑盒步骤待人工/长期QA执行。
+- 未修改生产环境、医学事实、419审核、18条冲突、`needs_revision`或360评分；PR未转Ready、未合并、未部署Production。
