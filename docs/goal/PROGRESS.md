@@ -416,3 +416,4 @@
 - 当前执行环境无法取得登录态Vercel Preview的console/network；既有只读作用域证据显示Preview缺少训练签名/持久attempt store配置，服务端在Vercel缺共享store时明确503 fail-closed，因此这是用户实测“无法提交”的高可信外部根因，但在获得当前失败请求HTTP/error code前仍标记为待直接确认。未读取、生成或修改任何变量值。
 - 代码与测试已形成仅本地原子提交`3cb22cd`；尚未push，PR #1继续Draft。下一步为证据提交、普通push、Node22 CI/Vercel观察，再给长期QA准确HEAD。
 - 本地最终HEAD现为`972405a`（代码/测试`3cb22cd`、首轮证据`c4c2f25`、浏览器补证`972405a`），工作树干净。一次成功fetch确认远程`ff1a932`且落后0/领先3；随后普通push连接重置，重试fetch又因`github.com:443`不可达失败。`api.github.com:443`可达且PR API确认远程未部分更新、仍Open/Draft；未使用API改ref、force或不验host的SSH替代。
+- 完整Playwright desktop/mobile在本地Node24运行器下到242秒超时并以EPIPE结束，未返回可审计总计，不能登记为通过；超时后3000端口无残留listener。新增第一阶段专项仍为明确6/6 exit0，完整浏览器门禁待Git网络恢复后由CI规定的Node22执行。

@@ -319,3 +319,4 @@
 - 当前Preview直接请求证据仍受登录态/浏览器控制阻塞。根据既有变量作用域和服务端fail-closed实现，Preview缺持久attempt store/训练签名是高可信阻塞；仍需用户只配置既有变量值并重新部署后抓取实际HTTP/error code。Codex未读取、生成、修改或输出任何值。
 - 代码与测试已形成本地提交`3cb22cd`，首轮证据提交为`c4c2f25`；尚未push，PR #1仍Draft。三次fetch因GitHub 443超时/重置失败，GitHub API确认远程head仍`ff1a932`，但未以API查询替代fetch门禁。网络恢复后必须先成功fetch，再普通push并补充Actions、Vercel及长期QA准确步骤。
 - 浏览器补证提交后本地HEAD为`972405a`，工作树干净。一次成功fetch确认0落后/3领先，随后普通push因Git连接重置失败；`github.com:443`不可达而API端点可达，PR API确认远程仍`ff1a932`且Draft。没有force、main写入、API改ref、Ready、merge或Production部署；网络恢复后从该HEAD重新fetch/push。
+- 完整本地Playwright因Node24运行器242秒超时/EPIPE没有有效总计，未伪报通过；新增核心流程专项desktop/mobile 6/6有效。超时后server已清理，Node22完整Playwright必须由新head CI补证。
