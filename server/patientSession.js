@@ -94,6 +94,9 @@ const reportWords = ["ct", "ctu", "彩超", "超声", "b超", "膀胱镜", "病�
 const diagnosisWords = ["什么病", "诊断", "是不是癌", "癌症", "肿瘤", "严重吗", "能治好吗", "预后"];
 const reportWordsEn = ["ct result", "ct scan result", "ultrasound result", "cystoscopy result", "pathology result", "urinalysis result", "lab result", "test result", "report"];
 const diagnosisWordsEn = ["what disease", "diagnosis", "is it cancer", "do i have cancer", "what is wrong with me", "prognosis"];
+const historyBoundarySlotIds = new Set(["PAST_MALIGNANCY", "PAST_URINARY_PROCEDURE"]);
+const explicitHistoryContext = /以前|既往|病史|做过|导过|得过|曾经|previous|history|before|have you had|did you ever/i;
+const boundaryDetailIntent = /检查结果|报告|显示|提示|发现|诊断|什么病|严重吗|能治|预后|test result|report|show|finding|diagnosis|what disease|prognosis/i;
 
 function getCaseById(caseId) {
   return cases.find((item) => String(item.id).toLowerCase() === String(caseId).toLowerCase());
@@ -541,20 +544,25 @@ function preservesAllowedAnswer(reply, allowedAnswer) {
 async function generatePatientAnswer({ sessionId, caseId, studentInput, conversationHistory = [], language = "zh", completedPatientFacingProfile }) {
   const session = getSession(sessionId, caseId, completedPatientFacingProfile);
   const caseData = getCaseById(caseId);
-  if (hasAny(studentInput, language === "en" ? diagnosisWordsEn : diagnosisWords)) {
+  const structured = matchStructuredFacts(caseData, studentInput, language);
+  const canonical = structured ? null : matchCanonicalPatientFacts(caseId, studentInput, language);
+  const matched = canonical || structured;
+  const matchedSlotIds = matched?.matchedSlotIds || [];
+  const isExplicitHistoryQuestion = explicitHistoryContext.test(String(studentInput || ""))
+    && !boundaryDetailIntent.test(String(studentInput || ""))
+    && matchedSlotIds.length > 0
+    && matchedSlotIds.every((slotId) => historyBoundarySlotIds.has(slotId));
+  if (!isExplicitHistoryQuestion && hasAny(studentInput, language === "en" ? diagnosisWordsEn : diagnosisWords)) {
     return { replyText: language === "en" ? "I do not know the diagnosis. The doctor will need to decide." : "这个我不清楚，需要医生判断。", provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, safetyFlags: ["blocked_diagnosis_request"], matchedSlotIds: [], matchedFacts: [], answerSource: "rule", confidence: 1, fallbackReason: "diagnosis_boundary" };
   }
-  if (hasAny(studentInput, language === "en" ? reportWordsEn : reportWords)) {
+  if (!isExplicitHistoryQuestion && hasAny(studentInput, language === "en" ? reportWordsEn : reportWords)) {
     return { replyText: language === "en" ? "I cannot explain the exact results. Please check the formal report." : "我说不清楚，得看检查报告。", provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, safetyFlags: ["blocked_report_request"], matchedSlotIds: [], matchedFacts: [], answerSource: "rule", confidence: 1, fallbackReason: "report_boundary" };
   }
   // Vercel的会话初始化与问答可能落到不同Serverless实例；每问均从当前病例重建安全档案，
   // 不依赖另一个实例的内存缓存，也不信任客户端传回的数据完整性。
   const authoritativeProfile = caseData ? localCompleteProfile(buildRawPatientFacingProfile(caseData)) : null;
   const runtimeProfile = authoritativeProfile || session?.completedPatientFacingProfile || completedPatientFacingProfile;
-  const structured = matchStructuredFacts(caseData, studentInput, language);
-  const canonical = structured ? null : matchCanonicalPatientFacts(caseId, studentInput, language);
   const genericFallback = safeFallbackForQuestion(studentInput, runtimeProfile, language);
-  const matched = canonical || structured;
   const quarantine = quarantineForMatchedSlots(caseId, matched?.matchedSlotIds || []);
   if (quarantine.conflictingSlotIds.length) {
     console.warn("patient_fact_quarantined", { caseId, slotIds: quarantine.conflictingSlotIds, reason: BILINGUAL_CONFLICT_REASON });
