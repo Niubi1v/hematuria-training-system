@@ -15,7 +15,7 @@ export default function RandomTrainingClient() {
     }
     const selected = publicCases[Math.floor(Math.random() * publicCases.length)];
     setMessage("已抽取病例，正在进入七阶段训练...");
-    window.location.replace(`${basePath}/cases/${selected.id}/index.html?mode=random`);
+    window.location.replace(`${basePath}/cases/${selected.displayCaseId || selected.id}/index.html?mode=random`);
   }, []);
 
   return (

@@ -50,6 +50,20 @@ test("case catalog switches public complaint language", async ({ page }) => {
   await expect(page.getByText(/Hematuria/i).first()).toBeVisible();
 });
 
+test("visible display case IDs have stable direct routes", async ({ page }) => {
+  await page.goto("/cases/");
+  await page.getByRole("button", { name: "English" }).click();
+  const p013Card = page.getByRole("link", { name: /Training case P013/ });
+  await expect(p013Card).toHaveAttribute("href", "/cases/P013/index.html");
+
+  await page.goto("/cases/P013/");
+  await expect(page.getByText("P013", { exact: true }).first()).toBeVisible();
+
+  await page.addInitScript(() => { Math.random = () => 12.1 / 42; });
+  await page.goto("/random/");
+  await expect(page).toHaveURL(/\/cases\/P013\/index\.html\?mode=random$/);
+});
+
 test("case catalog search has a recoverable empty state", async ({ page }) => {
   await page.goto("/cases/");
   await page.getByRole("textbox", { name: "搜索病例" }).fill("NO-SUCH-CASE");

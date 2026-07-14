@@ -122,7 +122,7 @@ export default function CaseCatalogClient({ cases }: { cases: PublicCase[] }) {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {filtered.map((item) => (
-          <a key={item.id} href={caseHref(item.id)} className="ui-card group p-5 transition-colors hover:border-clinic-blue focus-visible:border-clinic-blue">
+          <a key={item.id} href={caseHref(item.displayCaseId || item.id)} className="ui-card group p-5 transition-colors hover:border-clinic-blue focus-visible:border-clinic-blue">
             <div className="flex items-start justify-between gap-3">
               <span className="text-sm font-semibold text-clinic-blue">{item.displayCaseId || item.id}</span>
               <span className="ui-status bg-clinic-paper text-clinic-muted">{item.difficultyLabel || (lang === "en" ? "Unrated" : "未分级")}</span>
