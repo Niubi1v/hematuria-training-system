@@ -21,7 +21,7 @@ async function trainingApi(body, token = "") {
   return { statusCode, payload, token: headers["x-training-state"] || token, headers };
 }
 
-async function routeTrainingApiThroughHandler(page, observations = []) {
+async function routeTrainingApiThroughHandler(page, observations = [], options = {}) {
   resetMemoryAttemptStore();
   await page.route("**/api/health/**", (route) => route.fulfill({
     status: 200,
@@ -35,6 +35,11 @@ async function routeTrainingApiThroughHandler(page, observations = []) {
   }));
   await page.route("**/api/session/init/**", async (route) => {
     const body = route.request().postDataJSON();
+    observations.push({
+      action: "session-init", caseId: body.caseId, language: body.language,
+      attemptId: body.attemptId, status: 200,
+      tokenPresent: Boolean(route.request().headers()["x-training-state"])
+    });
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -51,12 +56,16 @@ async function routeTrainingApiThroughHandler(page, observations = []) {
   await page.route("**/api/training-action/**", async (route) => {
     const request = route.request();
     const body = request.postDataJSON();
+    if (body.action === "stage-feedback" && options.stageFeedbackDelayMs) {
+      await new Promise((resolve) => setTimeout(resolve, options.stageFeedbackDelayMs));
+    }
     const result = await trainingApi(body, request.headers()["x-training-state"] || "");
     observations.push({
       action: body.action,
       stageKey: body.stageKey || "",
       language: body.language,
       attemptId: body.attemptId,
+      requestId: body.requestId,
       status: result.statusCode,
       error: result.payload?.error || "",
       tokenPresent: Boolean(request.headers()["x-training-state"])
@@ -118,6 +127,12 @@ test("P001 stage one submission advances across language switches and refresh", 
   expect(observations.filter((item) => item.action === "stage-feedback" && item.language === "zh")).toEqual([
     expect.objectContaining({ stageKey: "history", status: 200, tokenPresent: true })
   ]);
+  expect(observations.filter((item) => item.action === "session-init" && item.language === "zh")).toEqual([
+    expect.objectContaining({ caseId: "P001", status: 200, tokenPresent: true })
+  ]);
+  const firstZhStage = observations.find((item) => item.action === "stage-feedback" && item.language === "zh");
+  const firstZhSession = observations.find((item) => item.action === "session-init" && item.language === "zh");
+  expect(firstZhSession?.attemptId).toBe(firstZhStage?.attemptId);
 
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "English" }).click();
@@ -125,6 +140,13 @@ test("P001 stage one submission advances across language switches and refresh", 
   expect(observations.filter((item) => item.action === "stage-feedback" && item.language === "en")).toEqual([
     expect.objectContaining({ stageKey: "history", status: 200, tokenPresent: true })
   ]);
+  expect(observations.filter((item) => item.action === "session-init" && item.language === "en")).toEqual([
+    expect.objectContaining({ caseId: "P001", status: 200, tokenPresent: true })
+  ]);
+  const englishStage = observations.find((item) => item.action === "stage-feedback" && item.language === "en");
+  const englishSession = observations.find((item) => item.action === "session-init" && item.language === "en");
+  expect(englishSession?.attemptId).toBe(englishStage?.attemptId);
+  expect(englishSession?.attemptId).not.toBe(firstZhSession?.attemptId);
 
   await page.getByRole("button", { name: "Next Agent", exact: true }).click();
   await expect(page.getByText("Investigation Agent", { exact: true }).first()).toBeVisible();
@@ -139,11 +161,21 @@ test("P001 stage one submission advances across language switches and refresh", 
 
 test("rapid stage submission is accepted only once", async ({ page }) => {
   const observations = [];
-  await routeTrainingApiThroughHandler(page, observations);
+  await routeTrainingApiThroughHandler(page, observations, { stageFeedbackDelayMs: 150 });
   await page.goto("/cases/P001/");
-  await page.getByRole("button", { name: "提交本阶段", exact: true }).dblclick();
+  await page.getByRole("button", { name: "提交本阶段", exact: true }).evaluate((button) => {
+    button.click();
+    button.click();
+  });
   await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
   await expect.poll(() => observations.filter((item) => item.action === "stage-feedback").length).toBe(1);
+  const feedback = observations.filter((item) => item.action === "stage-feedback");
+  expect(new Set(feedback.map((item) => item.requestId)).size).toBe(1);
+  await expect.poll(() => page.evaluate(() => {
+    const key = Object.keys(localStorage).find((item) => item.startsWith("hematuria-attempt-v3:P001:free:zh:"));
+    const saved = key ? JSON.parse(localStorage.getItem(key) || "null") : null;
+    return saved?.timeline?.filter((item) => item.type === "submit").length ?? 0;
+  })).toBe(1);
 });
 
 test("missing Preview attempt store reports a configuration blocker", async ({ page }) => {
@@ -168,18 +200,31 @@ test("missing Preview attempt store reports a configuration blocker", async ({ p
   await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toHaveCount(0);
 });
 
-test("visible display case IDs have stable direct routes", async ({ page }) => {
-  await page.goto("/cases/");
+test("catalog case links use portable directory routes for all display IDs", async ({ page }) => {
+  const routeBasePath = (process.env.PLAYWRIGHT_ROUTE_BASE_PATH || "").replace(/\/$/, "");
+  await page.goto(`${routeBasePath}/cases/`);
+  const displayIds = Array.from({ length: 42 }, (_, index) => `P${String(index + 1).padStart(3, "0")}`);
+  const expected = displayIds.map((caseId) => `${routeBasePath}/cases/${caseId}/`);
+  const chineseHrefs = await page.locator('a[href*="/cases/P"]').evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+  expect(chineseHrefs).toEqual(expected);
+  for (const href of expected) {
+    const direct = await page.request.get(href);
+    expect(direct.status(), `direct ${href}`).toBe(200);
+    const refresh = await page.request.get(href);
+    expect(refresh.status(), `refresh ${href}`).toBe(200);
+  }
   await page.getByRole("button", { name: "English" }).click();
-  const p013Card = page.getByRole("link", { name: /Training case P013/ });
-  await expect(p013Card).toHaveAttribute("href", "/cases/P013/index.html");
-
-  await page.goto("/cases/P013/");
-  await expect(page.getByText("P013", { exact: true }).first()).toBeVisible();
+  const englishHrefs = await page.locator('a[href*="/cases/P"]').evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+  expect(englishHrefs).toEqual(expected);
+  const invalid = await page.request.get(`${routeBasePath}/cases/P999/`);
+  expect(invalid.status()).toBe(404);
 
   await page.addInitScript(() => { Math.random = () => 12.1 / 42; });
-  await page.goto("/random/");
-  await expect(page).toHaveURL(/\/cases\/P013\/index\.html\?mode=random$/);
+  await page.goto(`${routeBasePath}/random/`);
+  await expect.poll(() => {
+    const current = new URL(page.url());
+    return `${current.pathname}${current.search}`;
+  }).toBe(`${routeBasePath}/cases/P013/?mode=random`);
 });
 
 test("case catalog search has a recoverable empty state", async ({ page }) => {

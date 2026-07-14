@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import publicCases from "@/data/cases_public.json";
-
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+import { publicCaseHref } from "@/src/lib/publicRoutes";
 
 export default function RandomTrainingClient() {
   const [message, setMessage] = useState("正在随机抽取练习病例...");
@@ -15,7 +14,7 @@ export default function RandomTrainingClient() {
     }
     const selected = publicCases[Math.floor(Math.random() * publicCases.length)];
     setMessage("已抽取病例，正在进入七阶段训练...");
-    window.location.replace(`${basePath}/cases/${selected.displayCaseId || selected.id}/index.html?mode=random`);
+    window.location.replace(publicCaseHref(selected.displayCaseId || selected.id, { mode: "random" }));
   }, []);
 
   return (
