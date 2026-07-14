@@ -442,3 +442,10 @@
 - 下一P1 HEM-P1-030失败合同先收到中文`prior_care`空slot；QA准确基线为378/6216路由失败。根因为canonical缺prior-care及英文retention改写、structured缺中英常见历史表达，并且诊断/报告边界早于可证明的既往史路由。
 - 最小候选仅对白名单`PAST_MALIGNANCY`/`PAST_URINARY_PROCEDURE`且明确历史语境放行；含“结果/报告/诊断”等细节意图仍走安全边界。42例×7自然问法与4个边界通过；P001三个不安全来源仍`unsafe_deterministic_answer`且空slot，不削弱HEM-P1-033或161个来源阻塞。
 - 相关Patient/session/Agent/API/18冲突隔离回归通过；完整`pnpm test`在只读依赖junction权限下33.2秒exit0。首次普通沙箱运行只因已安装`xlsx` junction不可读而失败，权限核对后`xlsx 0.20.3`正常解析；TypeScript、ESLint通过。当前候选尚未提交/push，HEM-P1-031/032继续OPEN。
+
+### HEM-P1-031 疼痛特异性路由（2026-07-14，本地候选）
+
+- QA基线为252个路由错配，并把5个`pain`冲突病例的直接隔离144次扩大到204次；最小失败合同稳定复现英文`flank pain`实际`[flank_pain,pain]`。
+- 最小修复在canonical matcher最终集合中应用特异性：命中flank/renal-colic/radiating时抑制词面附带的通用`pain`；若问题明确包含`any other pain`、其他痛或一般痛意图，则保留合法compound集合。
+- 42例×6问法合同通过；5个pain冲突病例×4特异问法均不再因通用pain扩大quarantine，而P001真正`any pain`仍以`medical_bilingual_conflict_pending_review`隔离。
+- Patient、dynamic session、18冲突隔离、TypeScript和ESLint通过。未修改18条冲突表、数据、审核状态或医学真值；当前尚未提交/push，HEM-P1-032继续OPEN。

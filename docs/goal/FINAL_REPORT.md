@@ -346,3 +346,9 @@
 - HEM-P1-030本地候选补足prior-care、retention、previous cancer和“导过尿”路由，并把过宽诊断/报告边界改为可证明的历史语境例外。例外严格限白名单slot且拒绝结果/诊断细节意图，不关闭安全校验。
 - 42例×7自然问法、4安全边界、相关Patient/session/API/18冲突隔离、完整行为、TypeScript和ESLint通过。三个不安全来源仍被阻断并保持空slot，未把来源问题写成医学通过。
 - 当前候选尚未提交或push；代码提交形成后回滚应为普通`git revert <HEM-P1-030-commit>`。推送后必须补Node22 CI、Vercel和长期QA 6216矩阵准确HEAD。HEM-P1-031/032、Preview真实AI/配置、HEM-P0-001/023与161来源裁决仍未解除。
+
+### 2026-07-14 HEM-P1-031本地交接
+
+- HEM-P1-031确认为matcher集合的工程过匹配：英语特异疼痛中的`pain`同时触发general slot，扩大5个医学冲突病例的隔离范围。
+- 候选按问句意图做最小消歧；42×6、5病例特异隔离和真正general pain隔离均通过，合法compound问法仍保留两个slot。
+- Patient/session/18冲突、TypeScript和ESLint通过；没有修改数据、医学冲突、审批或评分。尚未提交/push，CI与长期QA 6216矩阵待补；HEM-P1-032仍开放。

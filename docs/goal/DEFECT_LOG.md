@@ -313,3 +313,12 @@
 - **红队证据**：纯“以前做过膀胱镜/既往肿瘤史”到达历史matcher；“以前做过膀胱镜，检查结果是什么”“以前的肿瘤诊断是什么”仍分别`report_boundary`/`diagnosis_boundary`且空slot。
 - **医学边界**：三个P001来源因教师元语言/诊断词继续`unsafe_deterministic_answer`，不展示、不收集；18条冲突、419审核、42例`needs_revision`、161来源阻塞和医学真值零修改。
 - **待办**：普通push后由Node22 CI复核，再让长期QA重跑6216路由矩阵；HEM-P1-031/032不由本项顺带关闭。
+
+### HEM-P1-031 英文特异疼痛额外命中通用pain并扩大隔离
+
+- **状态**：本地工程候选完成，待提交/CI/长期QA矩阵。
+- **失败基线**：`Do you have flank pain?`实际命中`flank_pain + pain`；QA报告252个错配、额外60次quarantine。
+- **根因**：通用英语`\bpain\b`与flank/radiating/colicky matcher并行累计，没有特异性消歧。
+- **修复**：最终slot集合按意图抑制词面附带的通用pain；明确一般疼痛或`any other pain`仍保留general/compound语义。
+- **证据**：42×6 matcher合同、5个冲突病例隔离范围及P001真正general pain隔离通过；相关Patient/session/quarantine、类型、lint通过。
+- **医学边界**：不翻转或裁决5个pain冲突，HEM-P0-023保持阻塞；只修正问法实际触发的slot范围。
