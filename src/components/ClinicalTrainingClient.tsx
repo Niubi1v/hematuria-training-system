@@ -1264,8 +1264,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       if (generation !== aiGenerationRef.current) return;
       const safeAiReply = aiResult.replyText && !isUnsafePatientReply(text, aiResult.replyText, lang);
       answerText = safeAiReply ? aiResult.replyText : ruleSafeFallback;
-      matchedSlots = aiResult.matchedSlotIds || [];
-      matchedFacts = aiResult.matchedFacts || [];
+      matchedSlots = safeAiReply ? aiResult.matchedSlotIds || [] : [];
+      matchedFacts = safeAiReply ? aiResult.matchedFacts || [] : [];
       matchedKeys = unique(matchedSlots.map((slot) => canonicalToCollected[slot]).filter(Boolean)) as KeyPointId[];
       if (safeAiReply && !aiResult.isFallback) {
         setAiStatus("connected");

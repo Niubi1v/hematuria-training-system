@@ -204,6 +204,31 @@ test("HEM-P1-034 language switches bind each session to its own attempt token", 
   expect(Math.max(...Array.from(new Set(attemptInitCalls)).map((attemptId) => attemptInitCalls.filter((item) => item === attemptId).length))).toBe(1);
 });
 
+test("HEM-P1-033 unsafe patient metadata cannot collect a hidden fact", async ({ page }) => {
+  await mockTrainingState(page);
+  await page.route("**/api/health/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" }) }));
+  await page.route("**/api/session/init/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: "session-p004", caseId: "P004", language: "zh", mode: "free", patientOpeningStatement: "医生您好，我发现尿液发红。", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) }));
+  await page.route("**/api/agent-chat/**", (route) => {
+    const request = route.request().postDataJSON();
+    const payload = request.probe
+      ? { replyText: "", matchedSlotIds: [], matchedFacts: [], provider: "deepseek", isFallback: false }
+      : { replyText: "未主动诉血块，需追问；以无痛全程血尿为主", matchedSlotIds: ["clots"], matchedFacts: ["clots=teacher-only"], provider: "rule", isFallback: true, fallbackReason: "unsafe_deterministic_answer" };
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(payload) });
+  });
+
+  await page.goto("/cases/P004/");
+  await page.getByPlaceholder("输入问诊问题").fill("有血块吗？");
+  await page.getByRole("button", { name: "发送" }).click();
+  await expect(page.getByRole("log", { name: "模拟问诊对话" }).getByText("医生，您能问得再具体一点吗？我不太明白您的意思。")).toBeVisible();
+  await expect(page.getByText(/未主动诉|需追问/)).toHaveCount(0);
+
+  await expect.poll(async () => page.evaluate(() => {
+    const key = Object.keys(localStorage).find((item) => item.startsWith("hematuria-attempt-v3:P004:free:zh:"));
+    const saved = key ? JSON.parse(localStorage.getItem(key)) : null;
+    return saved ? { askedSlots: saved.askedSlots, colorClots: saved.collected?.colorClots } : null;
+  })).toEqual({ askedSlots: [], colorClots: false });
+});
+
 test("rule fallback keeps reconnection available and recovery replaces the reply without duplicate evidence", async ({ page }) => {
   let sessionCalls = 0;
   let historyLogCalls = 0;

@@ -576,7 +576,28 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     : structured
       ? { ...structured, provider: "rule", model: "local-rule", isFallback: true }
       : genericFallback, language);
-  if (fallback.safetyFlags[0]?.startsWith("blocked_")) return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] } };
+  if (fallback.safetyFlags?.[0]?.startsWith("blocked_")) return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] } };
+  const deterministicFilter = filterPatientOutput(fallback.replyText);
+  if (!deterministicFilter.ok) {
+    console.warn("patient_deterministic_answer_blocked", {
+      caseId,
+      slotIds: fallback.matchedSlotIds || [],
+      reason: "unsafe_deterministic_answer"
+    });
+    return {
+      replyText: language === "en" ? "I'm not sure about that right now." : "这项情况我现在不太清楚。",
+      provider: "rule",
+      model: "local-rule",
+      isFallback: true,
+      filter: { ...deterministicFilter, hits: [] },
+      safetyFlags: [...(fallback.safetyFlags || []), "deterministic_answer_blocked"],
+      matchedSlotIds: [],
+      matchedFacts: [],
+      answerSource: "safety",
+      confidence: 0,
+      fallbackReason: "unsafe_deterministic_answer"
+    };
+  }
   if ((fallback.matchedSlotIds || []).length > 1) return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, fallbackReason: "compound_question_preserves_all_facts" };
   if (!runtimeProfile) return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] } };
 

@@ -97,6 +97,26 @@ async function main() {
   });
   assertNotContains(color.replyText, ["CT", "占位", "诊断", "肿瘤", "癌栓"], "color");
 
+  const teacherMetaCases = [
+    { caseId: "P004", question: "有血块吗？" },
+    { caseId: "P005", question: "血尿是全程的吗？" },
+    { caseId: "P006", question: "血尿是全程的吗？" }
+  ];
+  for (const testCase of teacherMetaCases) {
+    const caseSession = await initSession({ caseId: testCase.caseId, mode: "training", language: "zh" });
+    const answer = await generatePatientAnswer({
+      sessionId: caseSession.sessionId,
+      caseId: testCase.caseId,
+      studentInput: testCase.question,
+      conversationHistory: [],
+      language: "zh"
+    });
+    const publicFilter = filterPatientOutput(answer.replyText);
+    assert(publicFilter.ok, `${testCase.caseId} deterministic answer must pass the patient-facing output filter: ${JSON.stringify(publicFilter)}`);
+    assertNotContains(answer.replyText, ["未主动诉", "需追问", "评分点", "教师提示"], `${testCase.caseId} deterministic answer`);
+    assert((answer.matchedSlotIds || []).length === 0, `${testCase.caseId} blocked deterministic fact must not be marked as collected`);
+  }
+
   const ct = await generatePatientAnswer({
     sessionId: session.sessionId,
     caseId: "P001",
