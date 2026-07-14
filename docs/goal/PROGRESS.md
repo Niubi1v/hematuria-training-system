@@ -350,4 +350,11 @@
 
 - 失败基线用同一合法session并发两个不同幂等键的`probe`：旧实现两项均200，`providerCalls=2`。这不属于相同请求幂等失效，而是缺少session级provider租约。
 - 最小修复在幂等owner进入provider前申请按session摘要键控的单一租约；生产通过现有Upstash `SET NX EX`跨实例原子化，本地用内存合同。第二项返回429、`Retry-After: 1`且`providerCalls`保持1；首项结束后第三项200并使计数变2，证明租约释放和合法恢复。
-- 异常会撤销processing幂等claim，租约有30秒崩溃TTL；相同幂等键原有single-flight合同继续通过。Agent/Patient/动态会话/AI恢复、TypeScript、ESLint及296文件scanner均exit0。持久session/attempt/IP/日配额仍为HEM-P1-037开放项，当前本地提交链仍因Git smart-HTTP受阻尚未push。
+- 异常会撤销processing幂等claim，租约有30秒崩溃TTL；相同幂等键原有single-flight合同继续通过。Agent/Patient/动态会话/AI恢复、TypeScript、ESLint及296文件scanner均exit0。当前本地提交链仍因Git smart-HTTP受阻尚未push。
+
+### HEM-P1-037 持久多维Agent预算（2026-07-14）
+
+- 失败基线把session预算设为2，三个不同IP、不同幂等键的顺序probe仍全部200，第三次进入provider；证明旧实例内IP Map不是跨实例session预算。
+- 单一原子准入现检查session/attempt请求、attempt输入字符、IP小时/日、项目日请求、项目日保守token预留、probe和session并发。客户端不能指定模型/token；默认session 60次不阻塞20轮验收，服务端变量可收紧。
+- 八个独立低阈值场景均在429时保持provider计数；模拟Upstash合同验证9个哈希键、owner完整顺序和quota撤销claim，Redis命令不含原始session/IP。六项Agent/Patient/session/恢复回归exit0。
+- 工程本地候选完成，真实Preview仍需HEM-P1-020所列持久store与签名/origin配置后验证跨实例429、TTL和日窗口；不得把模拟Redis写成真实Preview通过。provider错误率自动熔断/告警另记开放P1。

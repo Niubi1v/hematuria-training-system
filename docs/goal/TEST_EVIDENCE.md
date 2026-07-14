@@ -636,3 +636,14 @@ Preview变量只核对名称/作用域：LLM相关变量覆盖Preview；`TRAININ
 | 敏感信息 | `scripts/scan-repository-secrets.mjs` | exit0，1.6秒；296文件及可达历史/有界归档元数据，无秘密值输出 |
 
 生产Upstash租约代码已静态审查，但远程Node22/Preview部署仍待普通push后CI；没有把本地内存测试写成真实跨实例验收。
+
+## HEM-P1-037 多维预算与成本预留（2026-07-14）
+
+| 检查 | 精确命令/环境 | 退出码与结果 |
+|---|---|---|
+| 失败基线 | `test-agent-api-security.ts`，session上限2，三个不同IP/幂等键顺序probe | exit1，0.9秒；第三项实际200并进入provider |
+| 八类预算 | 同一专项，分别重置内存store并收紧session、attempt、字符、IP小时、IP日、项目请求、项目token、probe | exit0，20.9秒；各超限429，`Retry-After>=1`，provider计数不增加 |
+| 持久命令合同 | 同一专项模拟Upstash REST，不访问真实服务/密钥 | exit0；owner为claim→9键admission→complete→release；quota为claim→admission→abandon，provider callback 0；命令不含原始session/IP |
+| 受影响回归 | Agent安全/Agent Chat/Patient/动态session/API recovery/AI recovery六项 | exit0，23.2秒 |
+
+以上证明本地逻辑与持久命令形状，不证明Preview已配置Upstash或真实跨实例窗口成功。该外部验收继续归HEM-P1-020。

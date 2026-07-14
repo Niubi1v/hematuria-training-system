@@ -3,10 +3,16 @@ const crypto = require("node:crypto");
 const REQUEST_TTL_SECONDS = 24 * 60 * 60;
 const WAIT_TIMEOUT_MS = 20_000;
 const DEFAULT_SESSION_LEASE_SECONDS = 30;
+const BUDGET_TTL_SECONDS = 24 * 60 * 60;
+const HOUR_WINDOW_TTL_SECONDS = 2 * 60 * 60;
+const DAY_WINDOW_TTL_SECONDS = 2 * 24 * 60 * 60;
+const MAX_MEMORY_BUDGET_KEYS = 10_000;
 const memoryRequests = globalThis.__hematuriaAgentRequestStore || new Map();
 globalThis.__hematuriaAgentRequestStore = memoryRequests;
 const memoryAdmissions = globalThis.__hematuriaAgentAdmissionStore || new Map();
 globalThis.__hematuriaAgentAdmissionStore = memoryAdmissions;
+const memoryBudgets = globalThis.__hematuriaAgentBudgetStore || new Map();
+globalThis.__hematuriaAgentBudgetStore = memoryBudgets;
 
 function digest(value) {
   return crypto.createHash("sha256").update(String(value || "")).digest("hex");
@@ -28,13 +34,54 @@ function requestKey(sessionId, idempotencyKey) {
   return `hematuria:agent-request:v1:${digest(`${sessionId}:${idempotencyKey}`)}`;
 }
 
-function admissionKey(sessionId) {
-  return `hematuria:agent-admission:v1:${digest(sessionId)}`;
-}
-
 function sessionLeaseSeconds() {
   const parsed = Number(process.env.AGENT_SESSION_LEASE_SECONDS);
   return Number.isInteger(parsed) && parsed >= 5 && parsed <= 120 ? parsed : DEFAULT_SESSION_LEASE_SECONDS;
+}
+
+function boundedInteger(value, fallback, maximum) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? Math.min(parsed, maximum) : fallback;
+}
+
+function admissionLimits() {
+  return {
+    sessionRequests: boundedInteger(process.env.AGENT_SESSION_REQUEST_LIMIT, 60, 500),
+    attemptRequests: boundedInteger(process.env.AGENT_ATTEMPT_REQUEST_LIMIT, 80, 1000),
+    attemptInputChars: boundedInteger(process.env.AGENT_ATTEMPT_INPUT_CHAR_LIMIT, 120_000, 2_000_000),
+    ipHourlyRequests: boundedInteger(process.env.AGENT_IP_HOURLY_REQUEST_LIMIT, 120, 5000),
+    ipDailyRequests: boundedInteger(process.env.AGENT_IP_DAILY_REQUEST_LIMIT, 500, 20_000),
+    projectDailyRequests: boundedInteger(process.env.AGENT_PROJECT_DAILY_REQUEST_LIMIT, 5000, 100_000),
+    projectDailyTokens: boundedInteger(process.env.AGENT_PROJECT_DAILY_TOKEN_BUDGET, 2_000_000, 50_000_000),
+    sessionProbes: boundedInteger(process.env.AGENT_SESSION_PROBE_LIMIT, 3, 100)
+  };
+}
+
+function requestInputChars(body) {
+  return String(body?.studentInput || "").length
+    + (Array.isArray(body?.conversationHistory)
+      ? body.conversationHistory.reduce((total, item) => total + String(item?.text || "").length, 0)
+      : 0);
+}
+
+function admissionKeys({ sessionId, attemptId, caseId, clientId }) {
+  const now = new Date();
+  const hour = now.toISOString().slice(0, 13);
+  const day = now.toISOString().slice(0, 10);
+  const sessionScope = digest(sessionId);
+  const attemptScope = digest(`${String(caseId || "").toLowerCase()}:${attemptId}`);
+  const clientScope = digest(clientId || "unknown");
+  return {
+    concurrency: `hematuria:agent-admission:v1:${sessionScope}`,
+    sessionRequests: `hematuria:agent-budget:v1:session:${sessionScope}`,
+    attemptRequests: `hematuria:agent-budget:v1:attempt:${attemptScope}`,
+    attemptInputChars: `hematuria:agent-budget:v1:chars:${attemptScope}`,
+    ipHourlyRequests: `hematuria:agent-budget:v1:ip-hour:${clientScope}:${hour}`,
+    ipDailyRequests: `hematuria:agent-budget:v1:ip-day:${clientScope}:${day}`,
+    projectDailyRequests: `hematuria:agent-budget:v1:project:${day}`,
+    projectDailyTokens: `hematuria:agent-budget:v1:project-tokens:${day}`,
+    sessionProbes: `hematuria:agent-budget:v1:probe:${sessionScope}`
+  };
 }
 
 function storeMode() {
@@ -111,6 +158,36 @@ end
 return 0
 `;
 
+const ACQUIRE_ADMISSION_SCRIPT = `
+local function current(key)
+  return tonumber(redis.call('GET', key) or '0')
+end
+if current(KEYS[2]) >= tonumber(ARGV[3]) then return cjson.encode({kind='quota'}) end
+if current(KEYS[3]) >= tonumber(ARGV[4]) then return cjson.encode({kind='quota'}) end
+if current(KEYS[4]) + tonumber(ARGV[5]) > tonumber(ARGV[6]) then return cjson.encode({kind='quota'}) end
+if current(KEYS[5]) >= tonumber(ARGV[7]) then return cjson.encode({kind='quota'}) end
+if current(KEYS[6]) >= tonumber(ARGV[8]) then return cjson.encode({kind='quota'}) end
+if current(KEYS[7]) >= tonumber(ARGV[9]) then return cjson.encode({kind='quota'}) end
+if current(KEYS[8]) + tonumber(ARGV[10]) > tonumber(ARGV[11]) then return cjson.encode({kind='quota'}) end
+if tonumber(ARGV[12]) > 0 and current(KEYS[9]) >= tonumber(ARGV[13]) then return cjson.encode({kind='quota'}) end
+local acquired = redis.call('SET', KEYS[1], ARGV[1], 'NX', 'EX', ARGV[2])
+if not acquired then return cjson.encode({kind='concurrency'}) end
+local function bump(key, amount, ttl)
+  if amount <= 0 then return end
+  local value = redis.call('INCRBY', key, amount)
+  if value == amount then redis.call('EXPIRE', key, ttl) end
+end
+bump(KEYS[2], 1, tonumber(ARGV[14]))
+bump(KEYS[3], 1, tonumber(ARGV[14]))
+bump(KEYS[4], tonumber(ARGV[5]), tonumber(ARGV[14]))
+bump(KEYS[5], 1, tonumber(ARGV[15]))
+bump(KEYS[6], 1, tonumber(ARGV[16]))
+bump(KEYS[7], 1, tonumber(ARGV[16]))
+bump(KEYS[8], tonumber(ARGV[10]), tonumber(ARGV[16]))
+bump(KEYS[9], tonumber(ARGV[12]), tonumber(ARGV[14]))
+return cjson.encode({kind='owner'})
+`;
+
 function assertInputs(sessionId, idempotencyKey) {
   if (!sessionId) throw new Error("session_capability_required");
   if (!String(idempotencyKey || "").trim()) throw new Error("idempotency_key_required");
@@ -145,19 +222,65 @@ async function claim({ sessionId, idempotencyKey, requestDigest }) {
   return { ...result, mode, key, leaseId };
 }
 
-async function acquireAdmission(mode, sessionId) {
-  const key = admissionKey(sessionId);
+function memoryBudgetValue(key) {
+  const record = memoryBudgets.get(key);
+  if (!record || record.expiresAt <= Date.now()) {
+    if (record) memoryBudgets.delete(key);
+    return 0;
+  }
+  return record.value;
+}
+
+function bumpMemoryBudget(key, amount, ttlSeconds) {
+  if (amount <= 0) return;
+  if (!memoryBudgets.has(key) && memoryBudgets.size >= MAX_MEMORY_BUDGET_KEYS) memoryBudgets.delete(memoryBudgets.keys().next().value);
+  memoryBudgets.set(key, { value: memoryBudgetValue(key) + amount, expiresAt: Date.now() + ttlSeconds * 1000 });
+}
+
+async function acquireAdmission(mode, context) {
+  const keys = admissionKeys(context);
   const leaseId = crypto.randomUUID();
   const ttlSeconds = sessionLeaseSeconds();
+  const limits = admissionLimits();
+  const inputChars = requestInputChars(context.body);
+  const reservedTokens = inputChars + boundedInteger(process.env.LLM_MAX_TOKENS, 300, 500);
+  const probeIncrement = context.body?.probe ? 1 : 0;
   if (mode === "memory") {
-    const current = memoryAdmissions.get(key);
+    const overQuota = memoryBudgetValue(keys.sessionRequests) >= limits.sessionRequests
+      || memoryBudgetValue(keys.attemptRequests) >= limits.attemptRequests
+      || memoryBudgetValue(keys.attemptInputChars) + inputChars > limits.attemptInputChars
+      || memoryBudgetValue(keys.ipHourlyRequests) >= limits.ipHourlyRequests
+      || memoryBudgetValue(keys.ipDailyRequests) >= limits.ipDailyRequests
+      || memoryBudgetValue(keys.projectDailyRequests) >= limits.projectDailyRequests
+      || memoryBudgetValue(keys.projectDailyTokens) + reservedTokens > limits.projectDailyTokens
+      || (probeIncrement > 0 && memoryBudgetValue(keys.sessionProbes) >= limits.sessionProbes);
+    if (overQuota) throw new Error("agent_quota_exceeded");
+    const current = memoryAdmissions.get(keys.concurrency);
     if (current && current.expiresAt > Date.now()) throw new Error("agent_concurrency_limited");
-    memoryAdmissions.set(key, { leaseId, expiresAt: Date.now() + ttlSeconds * 1000 });
-    return { mode, key, leaseId };
+    memoryAdmissions.set(keys.concurrency, { leaseId, expiresAt: Date.now() + ttlSeconds * 1000 });
+    bumpMemoryBudget(keys.sessionRequests, 1, BUDGET_TTL_SECONDS);
+    bumpMemoryBudget(keys.attemptRequests, 1, BUDGET_TTL_SECONDS);
+    bumpMemoryBudget(keys.attemptInputChars, inputChars, BUDGET_TTL_SECONDS);
+    bumpMemoryBudget(keys.ipHourlyRequests, 1, HOUR_WINDOW_TTL_SECONDS);
+    bumpMemoryBudget(keys.ipDailyRequests, 1, DAY_WINDOW_TTL_SECONDS);
+    bumpMemoryBudget(keys.projectDailyRequests, 1, DAY_WINDOW_TTL_SECONDS);
+    bumpMemoryBudget(keys.projectDailyTokens, reservedTokens, DAY_WINDOW_TTL_SECONDS);
+    bumpMemoryBudget(keys.sessionProbes, probeIncrement, BUDGET_TTL_SECONDS);
+    return { mode, key: keys.concurrency, leaseId };
   }
-  const result = await upstash(["SET", key, leaseId, "NX", "EX", ttlSeconds]);
-  if (result !== "OK") throw new Error("agent_concurrency_limited");
-  return { mode, key, leaseId };
+  const raw = await upstash([
+    "EVAL", ACQUIRE_ADMISSION_SCRIPT, 9,
+    keys.concurrency, keys.sessionRequests, keys.attemptRequests, keys.attemptInputChars,
+    keys.ipHourlyRequests, keys.ipDailyRequests, keys.projectDailyRequests, keys.projectDailyTokens, keys.sessionProbes,
+    leaseId, ttlSeconds, limits.sessionRequests, limits.attemptRequests, inputChars, limits.attemptInputChars,
+    limits.ipHourlyRequests, limits.ipDailyRequests, limits.projectDailyRequests, reservedTokens, limits.projectDailyTokens,
+    probeIncrement, limits.sessionProbes,
+    BUDGET_TTL_SECONDS, HOUR_WINDOW_TTL_SECONDS, DAY_WINDOW_TTL_SECONDS
+  ]);
+  const result = JSON.parse(raw);
+  if (result.kind === "quota") throw new Error("agent_quota_exceeded");
+  if (result.kind !== "owner") throw new Error("agent_concurrency_limited");
+  return { mode, key: keys.concurrency, leaseId };
 }
 
 async function releaseAdmission(admission) {
@@ -219,7 +342,7 @@ async function waitForPending(claimed) {
   throw new Error("agent_request_in_progress");
 }
 
-async function executeIdempotentAgentRequest({ sessionId, idempotencyKey, body }, executor) {
+async function executeIdempotentAgentRequest({ sessionId, idempotencyKey, body, clientId }, executor) {
   const requestDigest = digest(stableJson(body));
   const claimed = await claim({ sessionId, idempotencyKey, requestDigest });
   if (claimed.kind === "conflict") throw new Error("idempotency_key_reused");
@@ -227,7 +350,7 @@ async function executeIdempotentAgentRequest({ sessionId, idempotencyKey, body }
   if (claimed.kind === "pending") return { ...await waitForPending(claimed), idempotencyReplay: true };
   let admission;
   try {
-    admission = await acquireAdmission(claimed.mode, sessionId);
+    admission = await acquireAdmission(claimed.mode, { sessionId, clientId, body, attemptId: body?.attemptId, caseId: body?.caseId });
     const result = await executor();
     return await complete(claimed, requestDigest, result);
   } catch (error) {
@@ -241,6 +364,7 @@ async function executeIdempotentAgentRequest({ sessionId, idempotencyKey, body }
 function resetMemoryAgentRequestStore() {
   memoryRequests.clear();
   memoryAdmissions.clear();
+  memoryBudgets.clear();
 }
 
 module.exports = { executeIdempotentAgentRequest, resetMemoryAgentRequestStore };

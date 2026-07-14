@@ -1,6 +1,6 @@
 const cases = require("../data/cases.json");
 const { generatePatientAnswer, probePatientProvider } = require("../server/patientSession.js");
-const { applyAgentCors, parseJsonBody, positiveInteger, setRateLimitHeaders, takeRateLimit } = require("../server/requestSecurity.js");
+const { applyAgentCors, clientKey, parseJsonBody, positiveInteger, setRateLimitHeaders, takeRateLimit } = require("../server/requestSecurity.js");
 const { setServerTiming } = require("../server/performanceTiming.js");
 const { readLLMResponse } = require("../server/llmClient.runtime.js");
 const { verifySessionCapability } = require("../server/sessionCapability.js");
@@ -316,18 +316,20 @@ module.exports = async function handler(req, res) {
     const rawIdempotencyKey = requestHeader(req, "x-idempotency-key");
     if (rawIdempotencyKey.length > 200) throw new Error("idempotency_key_too_long");
     const idempotencyKey = rawIdempotencyKey;
-    const stored = await executeIdempotentAgentRequest({ sessionId: body.sessionId, idempotencyKey, body }, () => buildAgentResponse(body, agentId, caseData, startedAt));
+    const stored = await executeIdempotentAgentRequest({ sessionId: body.sessionId, idempotencyKey, body, clientId: clientKey(req) }, () => buildAgentResponse(body, agentId, caseData, startedAt));
     setServerTiming(res, stored.timings || { app: Date.now() - startedAt });
     return res.status(stored.statusCode || 200).json(stored.payload);
   } catch (error) {
     const code = error instanceof Error ? error.message : "agent_api_failed";
     if (code === "agent_concurrency_limited") res.setHeader("Retry-After", "1");
+    if (code === "agent_quota_exceeded") res.setHeader("Retry-After", "60");
     const status = /request_body_too_large/.test(code) ? 413
       : /content_type_not_supported/.test(code) ? 415
         : /student_input_too_long|conversation_history_invalid|asked_(?:slots|questions)_invalid/.test(code) ? 422
       : /invalid_json_body|unexpected_request_field|invalid_(?:language|probe|debug|case_id|attempt_id|session_id|session_mode|agent_mode)|idempotency_key_too_long/.test(code) ? 400
         : /agent_not_allowed|stage_not_allowed/.test(code) ? 403
           : /agent_concurrency_limited/.test(code) ? 429
+            : /agent_quota_exceeded/.test(code) ? 429
         : /session_.*(?:mismatch|required)|invalid_session|expired_session/.test(code) ? 401
       : /idempotency_key_required/.test(code) ? 400
         : /idempotency_key_reused/.test(code) ? 409

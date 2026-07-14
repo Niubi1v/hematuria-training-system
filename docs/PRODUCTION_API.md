@@ -43,11 +43,23 @@ AGENT_API_ALLOWED_ORIGINS=https://niubi1v.github.io
 AGENT_CHAT_RATE_LIMIT_PER_MINUTE=30
 SESSION_INIT_RATE_LIMIT_PER_MINUTE=60
 AGENT_API_RATE_LIMIT_WINDOW_MS=60000
+AGENT_REQUEST_STORE_MODE=upstash
+AGENT_SESSION_REQUEST_LIMIT=60
+AGENT_ATTEMPT_REQUEST_LIMIT=80
+AGENT_ATTEMPT_INPUT_CHAR_LIMIT=120000
+AGENT_IP_HOURLY_REQUEST_LIMIT=120
+AGENT_IP_DAILY_REQUEST_LIMIT=500
+AGENT_PROJECT_DAILY_REQUEST_LIMIT=5000
+AGENT_PROJECT_DAILY_TOKEN_BUDGET=2000000
+AGENT_SESSION_PROBE_LIMIT=3
+AGENT_SESSION_LEASE_SECONDS=30
 # 可选；配置后，无 Origin 的服务间调用必须发送 x-agent-api-token
 AGENT_API_SERVER_TOKEN=<独立服务间令牌>
 TRAINING_API_ALLOWED_ORIGINS=https://niubi1v.github.io
 TTS_ALLOWED_ORIGINS=https://niubi1v.github.io
 ```
+
+这些预算使用`AGENT_REQUEST_STORE_MODE`选择的持久store，并与training attempt store复用同一组服务端Upstash凭据；原始session与IP只用于本地计算SHA-256摘要，不作为Redis键明文。项目token预算按输入字符上界与服务端最大输出token预留，只是成本熔断上界，不得写成真实供应商账单统计。
 
 `chat_completions`默认使用供应商SSE流并在服务端聚合为原有JSON响应，同时通过非敏感`Server-Timing`返回`firsttoken`耗时。仅当兼容供应商明确不支持SSE时才将`LLM_STREAMING_ENABLED=false`；非流式路径不会伪造首Token指标。DeepSeek的SSE合同以官方[`Create Chat Completion`](https://api-docs.deepseek.com/api/create-chat-completion)文档为准。
 
