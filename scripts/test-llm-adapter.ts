@@ -81,6 +81,7 @@ async function main() {
   assert(!dynamicSessionSource.includes("rawPatientFacingProfile: runtimeProfile"), "per-question LLM calls must not receive the raw or completed profile");
   assert(dynamicSessionSource.includes('fallbackReason: "diagnosis_boundary"'), "diagnosis requests must be blocked before slot matching");
   assert(dynamicSessionSource.includes("authoritativeProfile"), "serverless Patient Agent must rebuild authoritative patient facts per request");
+  assert(dynamicSessionSource.includes("maxRetries: 0") && dynamicSessionSource.includes("timeoutMs: 5000"), "live provider probes must fit inside the client probe timeout and avoid retry storms");
 
   const zhSession = await (require("../server/patientSession.js")).initSession({ caseId: "P001", language: "zh" });
   const zhUnmatched = await (require("../server/patientSession.js")).generatePatientAnswer({ sessionId: zhSession.sessionId, caseId: "P001", studentInput: "你今天心情怎么样？", language: "zh" });

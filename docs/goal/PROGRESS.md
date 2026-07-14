@@ -378,3 +378,14 @@
 - 最小修复在Azure前原子检查session日、IP小时、IP日、项目日请求和项目日字符预算，并取得按session隔离tuple摘要的短租约。生产/Vercel无Upstash时503 fail-closed；同进程相同tuple仍合并为一项成功Promise，不把音频写入Redis。
 - 五类低阈值预算均429且provider不增加；模拟Upstash合同验证6个哈希键、owner acquire→provider→release、quota/in-progress零provider调用，命令不含原始session/IP。TTS API/voice、API recovery、TypeScript、ESLint及297文件scanner均exit0。
 - 当前只是本地工程合同；真实Azure、配置后的Preview跨实例429/425、TTL恢复和日窗口仍待HEM-P1-020人工配置后验收。`data/**`、医学事实、419审核、18条隔离、`needs_revision`、评分和真实环境变量零修改。
+
+### HEM-P1-040 provider熔断与恢复探测（2026-07-14）
+
+- 失败基线：4个连续逻辑请求各收到provider 503；旧客户端虽把单请求重试限制为最多2次，跨请求仍调用provider 4次，没有短时熔断。
+- 最小修复在公开Patient runtime客户端前加入持久熔断：默认连续3次可计数失败后打开30秒，冷却后只允许一个探测；租约动态覆盖timeout/重试上界，半开探测不重试。恢复成功清除失败状态；瞬时网络和全部5xx只走有限退避，不对400/422等客户端错误盲目重试或计入全局熔断。
+- 阈值2合同把provider调用4降为2；两个并发恢复请求仅1个到达provider。模拟Upstash验证2键准入/失败/open合同及摘要键，serverless缺store时fail-closed；9项LLM/Agent/Patient/恢复回归9/9、24.3秒exit0。
+- 2026-07-14核对DeepSeek官方Chat Completion文档，当前允许模型为`deepseek-v4-flash`和`deepseek-v4-pro`；仓库默认`deepseek-v4-flash`仍有效，因此没有在缺少真实双语/自然度/P95基准时擅自换模。
+- 本里程碑最终门禁：TypeScript、ESLint、82/82生产静态页、25个JS bundle隐藏信息扫描和298文件敏感信息扫描均exit0。构建使用本地bundled Node 24并明确出现仓库要求Node22的engine warning，故仍须远程Node22 CI，不能用本地构建替代。
+- 提交前独立安全复核发现并阻止了“400请求级错误毒化全局熔断”的P1；新增连续400、500有限重试和损坏200 JSON合同后修正为显式错误类别。live provider probe另固定为单次、5秒timeout，避免超过前端8秒探测窗口后仍在后台重试。
+- 修正后同一只读安全复核确认无残余P0/P1；剩余P2仅为Upstash命令mock不等于真实Redis跨实例/Lua TTL验收，继续归HEM-P1-020外部配置后验证。
+- 前一HEM-P1-042提交为本地`d1fe177`；push前GitHub API确认远程/PR仍`00531d5`且Draft，但普通push因`github.com:443`连接失败，远程未变化。未使用API改ref或force；该外部阻塞不妨碍本地继续P1。

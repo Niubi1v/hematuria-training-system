@@ -246,6 +246,6 @@
 - `HEM-P1-037`（本地工程修复，待push/CI与Preview配置验收）：失败基线第三个session请求仍200；现有Upstash/内存准入原子覆盖session/attempt/IP小时/IP日/项目日请求与token/probe预算，超限providerCalls不变。真实跨实例仍受HEM-P1-020持久store配置阻塞。
 - `HEM-P1-038`（本地工程部分修复，待push/CI）：冷并发旧基线`providerCalls=2`，短text+20 KiB padding可调用Azure。现有16 KiB JSON/字段合同及同tuple single-flight，专项通过；session capability和跨实例持久配额拆为HEM-P1-041。
 - `HEM-P1-039`（本地工程修复，待push/CI）：同session不同幂等键可同时进入provider，失败基线`providerCalls=2`。新增Upstash/内存session租约后第二项429且零provider调用，首项结束后可恢复；相同键幂等不变。
-- `HEM-P1-040`（OPEN）：provider有有限重试和安全fallback，但没有跨请求错误率自动熔断或异常调用量告警。不得以无限重试或定时空请求代替；需先建立可控时钟/计数失败合同。
+- `HEM-P1-040`（本地工程修复，待push/CI与Preview配置验收）：失败基线4个连续503逻辑请求实际调用provider 4次。现有持久/内存熔断在阈值2测试中降为2次，冷却后并发恢复仅1个探测，成功闭合；模拟Upstash命令不含provider URL/model明文。真实Preview错误率、P50/P95与外部告警投递仍受HEM-P1-020配置/权限阻塞。
 - `HEM-P1-041`（本地工程修复，待push/CI）：TTS旧路径无session也200。现绑定Patient session的attempt/case/language/mode，能力拒绝providerCalls=0，cache按session摘要隔离；桌面/移动降级2/2。跨实例预算拆为HEM-P1-042。
 - `HEM-P1-042`（本地工程修复，待push/CI与Preview配置验收）：失败基线中同session换IP/文本的第二次请求仍200并调用Azure stub。现于provider前原子执行session日、IP小时/日、项目日请求/字符预算及跨实例tuple租约；五类超限、quota/in-progress和serverless缺store均保持provider计数。Redis命令仅含6个哈希键，不保存音频、原始session/IP/text。真实Preview跨实例仍受HEM-P1-020配置阻塞。

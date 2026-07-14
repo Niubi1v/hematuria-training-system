@@ -26,6 +26,12 @@ LLM_STREAMING_ENABLED=true
 LLM_ENABLE_AI_AGENTS=true
 LLM_ENABLE_AI_PATIENT=true
 LLM_REQUEST_TIMEOUT_MS=15000
+LLM_PROVIDER_CIRCUIT_STORE_MODE=upstash
+LLM_PROVIDER_CIRCUIT_FAILURE_THRESHOLD=3
+LLM_PROVIDER_CIRCUIT_OPEN_SECONDS=30
+LLM_PROVIDER_CIRCUIT_PROBE_SECONDS=15
+LLM_PROVIDER_CIRCUIT_FAILURE_TTL_SECONDS=600
+LLM_PROVIDER_CIRCUIT_STORE_TIMEOUT_MS=1000
 
 # 可选：短期会话与回答缓存（毫秒/最大条目数）
 PATIENT_SESSION_TTL_MS=1800000
@@ -69,6 +75,8 @@ TTS_TUPLE_LEASE_SECONDS=30
 这些预算使用`AGENT_REQUEST_STORE_MODE`选择的持久store，并与training attempt store复用同一组服务端Upstash凭据；原始session与IP只用于本地计算SHA-256摘要，不作为Redis键明文。项目token预算按输入字符上界与服务端最大输出token预留，只是成本熔断上界，不得写成真实供应商账单统计。
 
 TTS由`TTS_REQUEST_STORE_MODE`选择同一组Upstash凭据，原子执行session/IP/项目预算和跨实例tuple短租约。Redis不保存音频、原始session、IP或朗读文本。Preview/Production缺少持久store时云TTS fail-closed，客户端按既有安全路径降级到同语言浏览器语音或文字模式。
+
+LLM provider熔断由`LLM_PROVIDER_CIRCUIT_STORE_MODE`选择持久store。连续可计数错误达到阈值后打开短时熔断，冷却后仅一个请求取得探测租约；租约按调用timeout/重试上界自动延长，半开探测本身不重试。恢复成功会清除失败状态。健康闭合状态只有准入读取，没有额外成功写入。Redis键只含provider/base URL/model/endpoint tuple的SHA-256摘要。
 
 `chat_completions`默认使用供应商SSE流并在服务端聚合为原有JSON响应，同时通过非敏感`Server-Timing`返回`firsttoken`耗时。仅当兼容供应商明确不支持SSE时才将`LLM_STREAMING_ENABLED=false`；非流式路径不会伪造首Token指标。DeepSeek的SSE合同以官方[`Create Chat Completion`](https://api-docs.deepseek.com/api/create-chat-completion)文档为准。
 

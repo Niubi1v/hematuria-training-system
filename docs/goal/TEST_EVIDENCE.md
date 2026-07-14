@@ -684,3 +684,18 @@ Preview变量只核对名称/作用域：LLM相关变量覆盖Preview；`TRAININ
 | ESLint / API recovery / scanner | `node scripts/run-lint.mjs`；`tsx scripts/test-api-recovery.ts`；`node scripts/scan-repository-secrets.mjs` | 三项exit0；scanner覆盖297个tracked/candidate文件且不输出秘密值 |
 
 本证据验证本地逻辑和模拟持久命令形状，不代表Preview已经配置Upstash、真实跨实例租约或Azure语音通过；这些外部项保持BLOCKED。
+
+## HEM-P1-040 provider连续失败熔断（2026-07-14）
+
+| 检查 | 精确命令/环境 | 退出码与结果 |
+|---|---|---|
+| 失败基线 | bundled Node运行`test-llm-streaming.ts`，4个顺序503、`maxRetries=0`、阈值2 | exit1，0.9秒；旧实现providerCalls实际4，期望2 |
+| 熔断专项 | `node_modules/.bin/tsx.cmd scripts/test-llm-streaming.ts` | exit0，1.2秒；前2次503打开熔断，后2次零provider；冷却后并发2项仅1项探测并成功闭合 |
+| 重试边界 | 同一专项，首次fetch TypeError、第二次成功，`maxRetries=1` | exit0；恰好2次provider调用并恢复，未无限重试 |
+| 错误分类红队 | 同一专项：连续400后正常请求；500后恢复；连续200非法JSON | 初始安全复核失败合同证明400可错误开熔断；修复后400不计数、500恰好重试1次、非法JSON阈值2后第三项providerCalls=0 |
+| 持久命令与fail-closed | 同一专项模拟Upstash REST并直接验证store | exit0；2键准入、失败计数、open拒绝；命令无provider/base URL/model明文；Vercel缺store拒绝 |
+| 受影响回归 | `test-llm-streaming`、Agent security/chat、Patient、dynamic session、API/AI recovery、performance timing、LLM adapter | 红队修正后9/9 exit0，2026-07-14 12:18:08—12:18:33 CST，25.1秒 |
+| TypeScript / production build | 沙箱外只读依赖junction执行`tsc --noEmit`；`NEXT_PUBLIC_API_BASE_URL=https://hematuria-training-system.vercel.app pnpm run build` | 两项exit0；82/82静态页，build 21秒；本地Node24有engine warning，远程Node22待CI |
+| ESLint / bundle / scanner | `node scripts/run-lint.mjs`；`tsx scripts/scan-static-bundle.ts`；`node scripts/scan-repository-secrets.mjs` | 红队修正后三项exit0，2026-07-14 12:19:21—12:19:27 CST；25 JS、298 tracked/candidate文件，无秘密值输出 |
+
+官方模型核验来源为DeepSeek [`Create Chat Completion`](https://api-docs.deepseek.com/api/create-chat-completion)文档；当前`deepseek-v4-flash`仍在允许值中。没有真实Preview调用、模型切换或P50/P95样本，本地fixture不能登记为真实AI通过。

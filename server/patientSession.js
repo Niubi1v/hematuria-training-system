@@ -412,7 +412,9 @@ async function probePatientProvider() {
       systemPrompt: "Return exactly OK. Do not include any patient or case information.",
       userPayload: { probe: true },
       temperature: 0,
-      maxTokens: 8
+      maxTokens: 8,
+      maxRetries: 0,
+      timeoutMs: 5000
     });
     return { isFallback: false, provider: result.provider, model: result.model, fallbackReason: "", providerDurationMs: result.durationMs, providerFirstTokenMs: result.firstTokenMs };
   } catch (error) {

@@ -48,7 +48,7 @@
 ## 开放P1
 
 1. Agent持久预算工程合同已存在，但Preview缺少持久attempt/request store配置时会fail-closed；配置后的真实跨实例429、TTL恢复和日窗口仍待验收。
-2. provider连续错误率熔断和异常调用量告警尚未实现；管理员可用现有`LLM_ENABLE_AI_PATIENT/AGENTS`关闭AI，但目前没有自动短时熔断。
+2. provider连续失败短时熔断已有本地/模拟持久合同；真实Preview冷却、单探测恢复和告警采集仍待配置后验收。管理员仍可用`LLM_ENABLE_AI_PATIENT/AGENTS`关闭AI。
 3. TTS持久预算和跨实例tuple租约已有本地/模拟Upstash合同；Preview未配置并实测持久store前，不宣称真实跨实例通过。
 
 建议顺序：在配置后的Preview执行Agent/TTS真实跨实例预算验收；本地继续处理provider错误率熔断。任何持久配额配置缺失在Preview/Production应fail-closed，不得退回只靠客户端按钮节流。
@@ -78,6 +78,16 @@
 配置名称：`TTS_REQUEST_STORE_MODE`、`TTS_SESSION_DAILY_REQUEST_LIMIT`、`TTS_IP_HOURLY_REQUEST_LIMIT`、`TTS_IP_DAILY_REQUEST_LIMIT`、`TTS_PROJECT_DAILY_REQUEST_LIMIT`、`TTS_PROJECT_DAILY_CHAR_BUDGET`、`TTS_TUPLE_LEASE_SECONDS`。全部为服务端变量，复用现有Upstash凭据。
 
 证据：五类低阈值配额均在超限时保持provider计数；模拟Upstash合同验证6键原子准入、owner释放、quota/in-progress不调用provider，命令不含原始session/IP。真实Preview跨实例与Azure仍待配置后验收。
+
+### HEM-P1-040：provider连续失败熔断与受控恢复
+
+失败基线：四个连续逻辑请求各自收到503；虽然每个请求内部重试有上限，跨请求仍实际调用provider 4次，用户每轮都会重新等待失败路径。
+
+修复：公开Patient调用使用的runtime客户端在provider前检查共享熔断状态。连续可计数错误默认3次后打开30秒；冷却后只允许一个恢复探测，租约至少覆盖该调用的timeout/重试上界，半开探测本身不重试。探测成功清除状态，失败重新打开。429、全部5xx、timeout、网络及2xx响应解析/空内容等provider合同错误计入；400/404/409/413/422等请求级错误不计入全局熔断，也不自动重试。瞬时网络错误仅按有限指数退避重试。健康闭合状态只读一次，不额外写成功状态；Preview/Production缺少持久store时fail-closed。
+
+配置名称：`LLM_PROVIDER_CIRCUIT_STORE_MODE`、`LLM_PROVIDER_CIRCUIT_FAILURE_THRESHOLD`、`LLM_PROVIDER_CIRCUIT_OPEN_SECONDS`、`LLM_PROVIDER_CIRCUIT_PROBE_SECONDS`、`LLM_PROVIDER_CIRCUIT_FAILURE_TTL_SECONDS`、`LLM_PROVIDER_CIRCUIT_STORE_TIMEOUT_MS`。Redis键只含provider/base URL/model/endpoint tuple摘要，不含密钥、Prompt、回答或原始URL。
+
+证据：阈值2失败合同把4次provider调用降至2；冷却后两个并发恢复请求只有1个进入provider，成功后闭合。连续400不毒化熔断，500有限重试后可恢复，连续损坏JSON会打开熔断；failure TTL强制覆盖最大open/probe窗口。模拟Upstash合同验证2键准入、失败记录和open拒绝且命令无provider/model明文；Patient/Agent/LLM/恢复回归exit0。真实Preview错误率与P50/P95仍未验证。
 
 ## 日志要求
 

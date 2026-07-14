@@ -287,3 +287,8 @@
 - HEM-P1-038本地候选把TTS冷并发2次Azure调用合并为1，并增加16 KiB JSON/字段/方法/Origin/参数拒绝门禁；TTS API和voice回归通过。当时未覆盖的session capability随后由HEM-P1-041补齐；进程内single-flight仍不等于全局防滥用。
 - HEM-P1-041本地候选随后要求并验证Patient session tuple，缓存按session摘要隔离；能力失败不调用Azure，桌面/移动浏览器降级2/2。跨实例持久TTS预算仍为HEM-P1-042；真实Azure没有配置，未伪报成功。
 - HEM-P1-042本地候选现把TTS成本边界扩展为持久session/IP/项目预算和跨实例tuple租约：五类超限及quota/in-progress均不调用Azure，6键Upstash命令无原始session/IP/text且不存音频；生产缺store时fail-closed。TTS、API恢复、TypeScript、ESLint和297文件secret门禁通过。真实Azure与配置后Preview跨实例仍未验证，不能写成发布通过。
+- HEM-P1-040本地候选把跨请求连续503的provider调用由4降到2，冷却后仅一个恢复探测，成功再闭合；健康状态没有额外成功写入，摘要键不含provider URL/model明文。9项受影响回归通过。官方文档确认现用`deepseek-v4-flash`仍有效，未在无真实双语/自然度/P95证据时换模。外部告警投递、真实Preview熔断和P50/P95仍阻塞。
+- 独立安全复核在提交前发现400可毒化全局熔断的P1并已纠正：显式分类确保请求级4xx不计数，500有限重试，损坏2xx响应计入；探测租约覆盖最坏调用窗口，半开和live health probe均不重试，live probe timeout为5秒。新增红队合同通过后才允许提交。
+- 修正后复核结论为本项无残余P0/P1；模拟Upstash命令仍不能替代配置后真实Redis跨实例/Lua TTL验收，该P2与真实P50/P95一并保持外部阻塞。
+- HEM-P1-040最终本地门禁另含TypeScript、ESLint、82/82生产静态页、25 JS bundle和298文件敏感信息扫描；均exit0。构建运行时是bundled Node24且有engine warning，因此正式Node22结论仍必须来自push后的PR CI。
+- 本地提交`d1fe177`及其之前6个提交尚未到远程：GitHub API确认PR #1仍Open/Draft且远程HEAD为`00531d5`，普通push因`github.com:443`连接失败。没有force、API改ref、Ready、merge或Production部署；网络恢复后必须重新fetch核对再普通push。

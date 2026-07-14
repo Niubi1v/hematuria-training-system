@@ -99,6 +99,12 @@ LLM_STREAMING_ENABLED=true
 LLM_ENABLE_AI_AGENTS=true
 LLM_ENABLE_AI_PATIENT=true
 LLM_REQUEST_TIMEOUT_MS=15000
+LLM_PROVIDER_CIRCUIT_STORE_MODE=upstash
+LLM_PROVIDER_CIRCUIT_FAILURE_THRESHOLD=3
+LLM_PROVIDER_CIRCUIT_OPEN_SECONDS=30
+LLM_PROVIDER_CIRCUIT_PROBE_SECONDS=15
+LLM_PROVIDER_CIRCUIT_FAILURE_TTL_SECONDS=600
+LLM_PROVIDER_CIRCUIT_STORE_TIMEOUT_MS=1000
 
 AGENT_API_ALLOWED_ORIGINS=https://niubi1v.github.io
 AGENT_CHAT_RATE_LIMIT_PER_MINUTE=30
@@ -133,6 +139,8 @@ TRAINING_DEPLOYMENT_TIER=practice
 ```
 
 以上Agent预算全部由服务端执行：session/attempt/IP/项目窗口在持久store中原子检查，超限返回429且不会调用LLM。项目token预算是按输入字符上界加服务端最大输出token做的保守成本预留，不是供应商账单金额。Preview/Production缺少持久store时继续fail-closed；不得退回只靠浏览器按钮节流。
+
+Provider熔断同样使用服务端持久store：连续失败达到阈值后短时停止调用，冷却后仅允许一个恢复探测；探测租约会按调用timeout/重试上界自动延长，半开探测本身不重试。健康闭合状态只做一次准入读取，不额外写成功记录。日志只记录请求ID、错误分类、时长和短部署SHA，不记录Prompt、回答或密钥。
 
 以上TTS预算同样只在服务端执行，并复用Upstash凭据；Redis只保存哈希键、计数和短租约，不保存音频、原始session、IP或朗读文本。缺少持久store时Preview/Production云TTS安全失败，前端仍按既有路径降级为浏览器语音。
 
