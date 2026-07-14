@@ -295,3 +295,10 @@
 - **状态**：本地当前Production不可复现；Preview仍被Vercel Standard Authentication阻塞，不关闭HEM-P1-020。
 - **证据**：P001中英、双向切换、刷新、第二阶段和双击专项通过。匿名Preview病例与health返回登录HTML，合成session init POST为保护层401，尚未到应用handler；不得把该401归因为attempt token或阶段锁。
 - **人工复测需求**：使用有Preview访问权的会话记录实际`session/init`和`training-action`路径、HTTP/error code及脱敏关联ID；不得输出token、Cookie或签名。
+
+### EXT-GIT-20260714-02 GitHub smart-HTTP不可达
+
+- **状态**：外部阻塞；本地提交安全保留，未push。
+- **证据**：三次`fetch --prune`（含命令级HTTP/1.1）均连接重置；两次普通push均在`github.com:443`超时。`gh auth status`另报告本机CLI token失效，但GitHub连接器仍可只读并确认PR #1为Open/Draft、远程head仍`3541a706`。
+- **影响**：`f1d7f62`与`39aad56`尚未进入远程，不能产生新CI/Preview；本地工作树已提交且不丢失。
+- **禁止绕过**：不使用force、API update-ref、直接main、Ready、merge或Production部署。网络恢复后重新fetch，确认0落后后普通push。

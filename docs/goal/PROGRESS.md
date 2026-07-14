@@ -433,3 +433,4 @@
 - HEM-P2-043失败测试先稳定命中42个目录href均为`/cases/Pxxx/index.html`；根因是目录把静态文件实现细节编码进公开URL，而Next dev/Preview的动态route合同是`/cases/Pxxx/`。新增集中式basePath-aware目录路由构造器，目录、随机和反馈重试统一使用目录URL；静态测试服务支持GitHub Pages basePath且真实404返回404，未硬编码域名或catch-all吞错。
 - 修复后本地Next dev专项desktop/mobile 8/8；root静态导出2/2；`/hematuria-training-system` Pages模拟2/2；两个生产构建均82/82。完整行为、类型、lint、bundle与secret门禁通过。唯一完整本地Playwright在不受支持的Node24/Next dev缓存异常下49/52，随后清缓存的受影响专项8/8；按“一里程碑一次完整门禁”规则不重复昂贵全跑，以push后Node22 CI为最终完整浏览器门禁。
 - `data/**`零差异，医学事实、419审核、18条冲突、`needs_revision`、Patient医学语义、签名安全与360评分均未修改。下一步为原子代码/证据提交、普通push、Draft PR CI；QA报告中的HEM-P1-030/031/032继续保留为后续P1，不在本P2路由补丁中顺带重构。
+- 本地原子提交已形成：`f1d7f62`为路由/测试，`39aad56`为首轮证据。三次fetch及两次普通push均因`github.com:443`连接重置/超时失败；GitHub连接器在push后再次确认远程仍为`3541a706`、PR仍Open/Draft，故没有部分push或未知远程提交。当前本地领先2，待smart-HTTP恢复后必须重新fetch再普通push，不能用API改ref绕过。

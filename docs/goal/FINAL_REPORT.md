@@ -338,3 +338,4 @@
 - 本地门禁：受影响浏览器8/8、root静态2/2、Pages静态2/2、两个82/82构建、完整行为、类型、lint、25 JS bundle和300文件secret扫描通过。完整本地Playwright在不受支持Node24/Next缓存异常下49/52，保留失败并等待Node22 CI，不重复昂贵全跑。
 - 修改范围仅为公开路由helper、目录/随机/反馈链接、动态route约束、静态测试服务、Playwright配置/测试、package测试入口及四份证据文档；`data/**`、医学事实、419审核、18冲突、`needs_revision`、Patient医学语义、签名安全和360评分零修改。
 - 回滚方式：代码提交形成后使用普通`git revert <route-commit>`；证据提交可独立revert。PR必须继续Draft，不Ready、不合并、不部署Production。下一准确QA起始HEAD须待普通push和CI完成后填写；开放HEM-P1-030/031/032与真机027、Preview配置/真实AI、HEM-P0-001/023裁决继续保留。
+- 本地代码/测试提交为`f1d7f62`，首轮证据为`39aad56`；回滚分别为普通`git revert f1d7f62`和`git revert 39aad56`。三次fetch与两次普通push均被GitHub 443连接重置/超时阻塞；只读连接器确认远程仍为`3541a706`且PR保持Draft，故当前没有新CI/Preview可报告，也没有使用API改ref。网络恢复后从本地最新文档提交重新fetch、普通push，再补Node22 CI和准确长期QA HEAD。
