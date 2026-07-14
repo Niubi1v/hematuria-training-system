@@ -455,15 +455,37 @@ function oneBullet(value, language = "zh") {
   return clean.length > 80 ? `${clean.slice(0, 80)}。` : clean;
 }
 
+function wrapPatientReply(text, maxLineLength = 80) {
+  const wrapped = [];
+  for (const rawLine of String(text || "").split(/\n+/)) {
+    let remaining = rawLine.trim();
+    while (remaining.length > maxLineLength) {
+      const window = remaining.slice(0, maxLineLength + 1);
+      const whitespaceBreak = window.lastIndexOf(" ");
+      const punctuationBreak = Math.max(...["，", "。", "；", ",", ";"].map((mark) => window.lastIndexOf(mark) + 1));
+      const naturalBreak = Math.max(whitespaceBreak, punctuationBreak);
+      const breakAt = naturalBreak >= Math.floor(maxLineLength / 2) ? naturalBreak : maxLineLength;
+      wrapped.push(remaining.slice(0, breakAt).trim());
+      remaining = remaining.slice(breakAt).trimStart();
+    }
+    if (remaining) wrapped.push(remaining);
+  }
+  return wrapped.join("\n");
+}
+
 function conciseDeterministicReply(result, language = "zh") {
   const replyText = String(result?.replyText || "").trim();
   if (!replyText) return { ...result, replyText: language === "en" ? "I'm not sure about that right now." : "这项情况我现在不太清楚。" };
-  if (replyText.length <= 80 && !/患者因|现病史关键|关键阴性|病例资料|标准病例摘要/.test(replyText)) return result;
+  const originalFilter = filterPatientOutput(replyText);
+  if (originalFilter.ok) return result;
   if (language === "zh" && result.matchedSlotIds?.length === 1 && result.matchedSlotIds[0] === "hematuria_onset") {
     const duration = replyText.match(/(\d+(?:\.\d+)?)(天|周|月|年)(余|多)?/);
     if (duration) return { ...result, replyText: `大概${duration[1]}${duration[2]}${duration[3] ? "多" : ""}了。` };
   }
-  return { ...result, replyText: language === "en" ? "I'm not sure about that right now." : "这项情况我现在不太清楚。" };
+  if (originalFilter.hits.length || !originalFilter.hasBulletShape) return result;
+  const wrappedReply = wrapPatientReply(replyText);
+  if (filterPatientOutput(wrappedReply).ok) return { ...result, replyText: wrappedReply };
+  return result;
 }
 
 function profileFallbackForQuestion(question, profile) {
