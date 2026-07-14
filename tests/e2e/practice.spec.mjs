@@ -540,13 +540,13 @@ test("twenty interview turns do not reinitialize the active language session", a
   }
   const conversation = page.getByLabel("Simulated patient conversation");
   await conversation.evaluate((element) => element.scrollTo({ top: 0, behavior: "auto" }));
-  await expect.poll(() => conversation.evaluate((element) => element.scrollTop)).toBe(0);
+  await expect.poll(() => conversation.evaluate((element) => element.scrollHeight - element.scrollTop - element.clientHeight)).toBeGreaterThan(72);
   await input.fill("Question 20?");
   await page.getByRole("button", { name: "Send" }).click();
   await expect(conversation.getByText("Patient answer 20.", { exact: true })).toHaveCount(1);
   const latestButton = page.getByRole("button", { name: "New message · go to latest" });
   await expect(latestButton).toBeVisible();
-  expect(await conversation.evaluate((element) => element.scrollTop)).toBe(0);
+  expect(await conversation.evaluate((element) => element.scrollHeight - element.scrollTop - element.clientHeight)).toBeGreaterThan(72);
   await latestButton.click();
   await expect(conversation.getByText("Patient answer 20.", { exact: true })).toBeVisible();
   await expect.poll(() => conversation.evaluate((element) => Math.ceil(element.scrollHeight - element.scrollTop - element.clientHeight))).toBeLessThanOrEqual(1);

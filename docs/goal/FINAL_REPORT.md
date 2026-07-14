@@ -306,3 +306,5 @@
 - 移动端不再使用页面级sticky：composer处于聊天后的正常文档流，聚焦、输入和视觉视口变化按实际超出像素恢复可见；桌面sticky按`ResizeObserver`实测高度保留显式scroll spacer和safe-area。中英文切换的单条开场使用同步chat定位，不覆盖用户手动上翻后的多轮记录。
 - 本地证据：四视口双语2/2、既有多行输入2/2、20轮滚动2/2、完整Playwright46/46、TypeScript、ESLint、82/82 build、25 JS bundle及298文件scanner全部exit0。无`data/**`、医学审核、`needs_revision`、18条隔离或360评分修改。
 - 当前候选尚未提交/push，不能登记为远程关闭。推送后必须等待Node22 Actions与Vercel Preview，并把新的准确HEAD交给长期QA在真实360/390设备复测软键盘与safe-area。
+- 代码提交`f37309f`已普通push；Vercel deployment `FcCWHyxh2mTCCavtvwGLd7gJTgT2`及Preview Comments success。首轮Actions run `29309491866`仅在测试的精确`scrollTop=0`断言失败（45/46，实际40px仍处于上翻区），不是页面重新回底。
+- QA合同已改为直接验证距底部阈值、新消息入口及恢复后末条几何；本地按CI 2-worker重复6/6。当前需提交该测试/证据修正并等待下一轮Node22 CI，PR继续Draft。

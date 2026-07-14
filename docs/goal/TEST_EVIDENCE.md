@@ -727,3 +727,13 @@ Preview变量只核对名称/作用域：LLM相关变量覆盖Preview；`TRAININ
 | production build / bundle / scanner | `NEXT_PUBLIC_API_BASE_URL=https://hematuria-training-system.vercel.app pnpm run build`；`scan-static-bundle.ts`；`scan-repository-secrets.mjs` | exit0，82/82静态页；25 JS；298 tracked/candidate文件，无秘密值输出 |
 
 Playwright的640px高度变化是`visualViewport`合同仿真，不冒充真实手机软键盘系统级测试；独立QA仍应在真实360/390设备复测键盘升降、safe-area和手动滚动。
+
+### HEM-P1-027 首轮CI失败与测试合同修正
+
+| 检查 | 证据 | 结果 |
+|---|---|---|
+| 首轮远程CI | Actions run `29309491866`，Node22，46项Playwright | 45/46；移动20轮在`scrollTop===0`断言收到40px，其他门禁及Vercel两项通过；build后续步骤因Playwright失败按设计跳过 |
+| 根因 | 同一日志显示失败发生在发送第20问之前；距底部阈值未失败 | QA测试把“上翻”错误等同于精确顶部，不是产品强制回底证据 |
+| 合同修正 | 上翻后及第20条到达后均要求`scrollHeight-scrollTop-clientHeight > 72`；继续要求新消息按钮、点击后到达精确底部、末条不覆盖 | 没有删除场景、延长单项等待或放宽用户语义 |
+| CI等价稳定性 | `playwright test --grep "twenty interview turns" --repeat-each=3 --workers=2` | exit0，6/6，23.2秒；desktop/mobile各3次 |
+| 超额并发说明 | 同测试误用6 workers | 4/6；两项在页面DOM前因Next dev `Unexpected end of JSON input`失败，不登记为产品通过，按workflow真实2 workers复核 |

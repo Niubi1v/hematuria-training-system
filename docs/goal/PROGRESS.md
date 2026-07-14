@@ -402,3 +402,5 @@
 - 最小结构修复在小于640px时让composer回归正常文档流；用户聚焦/输入及`visualViewport`变化时，只按实际超出像素滚动根页面。640px以上保留sticky，并用`ResizeObserver`测得的composer高度加显式内容spacer与safe-area合同，避免Chromium忽略overflow末尾padding。
 - 新矩阵覆盖360×800、390×844、1280×720、1440×900中英文、safe-area标记、无横向溢出及640px模拟视觉视口；2/2、17.6秒exit0。既有390多行输入2/2、10.9秒；20轮后手动上翻、新消息入口、末条消息完整滚动2/2、12.6秒。
 - 本里程碑唯一完整Playwright为46/46、69.3秒exit0，含会话/重连/fallback/日志/快速双击/刷新/TTS/临床数据/评分与axe。TypeScript、ESLint、82/82构建、25 JS bundle及298文件scanner均exit0；`data/**`、医学事实、审核状态和360评分零修改。当前待小步提交、普通push、Node22 CI与独立QA复测。
+- `f37309f`普通push后Vercel两项success；Actions run `29309491866`在Playwright 45/46失败。首条真实错误为移动20轮测试把“手动上翻”错误写成`scrollTop===0`，CI稳定得到40px但仍距底部超过72px并未自动回底；其余依赖/数据/医学/行为/类型/lint/scanner均已通过。
+- 测试合同改为直接断言上翻后及新消息到达后“距底部>72px”，并继续要求新消息入口、回到底部、末条回答不被覆盖。按CI相同2 workers重复桌面/移动各3次6/6、23.2秒；6 workers压力跑曾因Next dev解析中断仅4/6，未误记为产品通过。
