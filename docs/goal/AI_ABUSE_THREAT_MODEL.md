@@ -14,7 +14,7 @@
 | 端点 | Provider | 当前服务端边界 | 仍需完成 |
 |---|---|---|---|
 | `/api/session/init` | 无 | POST/OPTIONS、CORS、16 KiB、IP实例限流、权威attempt token、case/language/mode绑定、幂等初始化 | 跨实例session配额与持久限流 |
-| `/api/agent-chat` | DeepSeek/配置的LLM | POST/OPTIONS、CORS、64 KiB、签名session、case/language/mode、幂等single-flight；本轮新增Patient-only角色/阶段、请求字段白名单、JSON和问题/历史长度边界 | 持久多维配额、不同幂等键的session并发lease、probe独立低配额、总轮次/token预算 |
+| `/api/agent-chat` | DeepSeek/配置的LLM | POST/OPTIONS、CORS、64 KiB、签名session、case/language/mode、幂等single-flight；本轮新增Patient-only角色/阶段、请求字段白名单、JSON和问题/历史长度边界，以及跨幂等键的持久session并发lease | 持久多维配额、probe独立低配额、总轮次/token预算 |
 | `/api/training-action` | 无 | POST/OPTIONS、96 KiB、签名attempt、stage/action、CAS、重放与幂等；history-log和score在此 | 各动作持久多维配额和字段级大小上限 |
 | `/api/tts` | Azure TTS | Origin、方法、文本1–500、voice白名单、实例限流、缓存 | session/capability、body上限、冷缓存single-flight、持久配额 |
 | `/api/patient-reply`、`/api/session/complete-profile` | 无 | 允许Origin也统一410；无旧provider路径 | 保持退役 |
@@ -29,13 +29,19 @@
 
 测试：Agent角色越权、五类模型/Prompt/隐藏上下文覆盖、超长问题和错误Content-Type全部断言错误码与`providerCalls=0`。合法Patient/动态会话/双语冲突隔离回归通过。
 
+### HEM-P1-039：不同幂等键绕过并发single-flight
+
+失败基线：同一有效session并发两个`probe=true`请求，使用不同幂等键；旧实现两项均200并产生两次provider调用。根因是request store只合并`sessionId + idempotencyKey`完全相同的请求，没有session级生成租约。
+
+修复：幂等owner在进入provider前取得按session摘要键控的单一租约；生产使用现有Upstash原子`SET NX EX`，本地使用有界生命周期内存记录。第二个不同键请求返回429和`Retry-After: 1`，不调用provider；原请求完成后释放。异常路径同时撤销processing幂等claim，租约还有30秒崩溃TTL，避免永久锁死。
+
 ## 开放P1
 
-1. Agent限流仍为单serverless实例内IP Map。不同幂等键可并行进入provider；跨实例、每session/attempt和每日成本熔断尚无可审计的持久实现。不能把当前30次/分钟写成全局配额。
+1. Agent的同session并发租约已跨实例持久化，但请求数量限流仍为单serverless实例内IP Map。跨实例每session/attempt/IP小时/日和项目每日成本熔断尚无可审计的持久实现。不能把当前30次/分钟写成全局配额。
 2. `probe=true`会调用真实provider，尚无独立低配额或跨实例缓存；可被有效session重复消耗。
 3. TTS没有session能力、明确body字节上限或冷缓存single-flight。相同冷请求并发可能产生多次Azure调用。
 
-建议顺序：先为Agent request store增加持久的session/attempt/IP窗口和并发lease，并补不同幂等键provider计数失败测试；再处理probe；随后给TTS增加请求上限、single-flight与能力边界。任何持久配额配置缺失在Preview/Production应fail-closed，不得退回只靠客户端按钮节流。
+建议顺序：继续为Agent request store增加持久的session/attempt/IP窗口与每日预算；再给probe单独低配额；随后给TTS增加请求上限、single-flight与能力边界。任何持久配额配置缺失在Preview/Production应fail-closed，不得退回只靠客户端按钮节流。
 
 ## 日志要求
 

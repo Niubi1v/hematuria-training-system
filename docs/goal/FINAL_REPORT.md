@@ -281,4 +281,5 @@
 
 - HEM-P1-036失败基线证明有效Patient session能把公开端点越权切换到`diagnostic_reasoning`。本地候选把端点固定为Patient/history并加入严格请求合同；非法角色、客户端model/Prompt/密钥/base URL/隐藏上下文、超长问题和非JSON拒绝均有`providerCalls=0`证据。
 - 合法Patient/会话/LLM/双语冲突、TypeScript、ESLint和secret扫描通过，受保护医学路径未改。当前候选尚未普通push，不能写成PR/Preview通过；网络恢复后先fetch核对远程`00531d5`，再普通push并等待CI。
-- 防滥用仍有发布前P1：持久多维Agent配额与不同幂等键并发lease（HEM-P1-037），以及TTS能力/body/single-flight（HEM-P1-038）。真实Preview AI、首Token、P50/P95和10/10双语仍受HEM-P1-020配置阻塞，不以fixture或fallback替代。
+- 防滥用仍有发布前P1：持久多维Agent请求预算与probe低额度（HEM-P1-037），以及TTS能力/body/single-flight（HEM-P1-038）。真实Preview AI、首Token、P50/P95和10/10双语仍受HEM-P1-020配置阻塞，不以fixture或fallback替代。
+- HEM-P1-039本地候选已封闭同session不同幂等键的并发绕过：第二项429且不调用provider，原请求完成后恢复；生产使用现有Upstash原子租约，异常claim清理和30秒TTL防永久锁。HEM-P1-037现仅保留跨实例请求数量/字符/小时/日预算与probe独立低配额，不把本租约误写成完整成本熔断。

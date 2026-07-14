@@ -332,6 +332,73 @@ async function verifyAgentIdempotency(session: AuthorizedSession) {
   }
 }
 
+async function verifyDistinctRequestConcurrencyLimit(session: AuthorizedSession) {
+  resetMemoryAgentRequestStore();
+  const originalFetch = globalThis.fetch;
+  process.env.LLM_ENABLE_AI_PATIENT = "true";
+  process.env.LLM_API_KEY = "unit-test-provider-key";
+  process.env.LLM_API_BASE_URL = "https://api.example.test";
+  process.env.LLM_MODEL = "test-model";
+  let providerCalls = 0;
+  let releaseFirst = () => {};
+  let markFirstStarted = () => {};
+  const firstStarted = new Promise<void>((resolve) => { markFirstStarted = resolve; });
+  const firstGate = new Promise<void>((resolve) => { releaseFirst = resolve; });
+  globalThis.fetch = async () => {
+    providerCalls += 1;
+    if (providerCalls === 1) {
+      markFirstStarted();
+      await firstGate;
+    }
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode('data: {"choices":[{"delta":{"content":"OK"}}]}\n\ndata: [DONE]\n\n'));
+        controller.close();
+      }
+    });
+    return new Response(stream, { status: 200, headers: { "Content-Type": "text/event-stream" } });
+  };
+  try {
+    const first = call(agentHandler, {
+      origin: "https://allowed.example",
+      ip: "agent-concurrency-first",
+      headers: { "x-idempotency-key": "agent-distinct-first" },
+      body: authorizedBody(session, { agentId: "standardized_patient", probe: true })
+    });
+    await firstStarted;
+    const second = await call(agentHandler, {
+      origin: "https://allowed.example",
+      ip: "agent-concurrency-second",
+      headers: { "x-idempotency-key": "agent-distinct-second" },
+      body: authorizedBody(session, { agentId: "standardized_patient", probe: true })
+    });
+    releaseFirst();
+    const firstResponse = await first;
+    assert.equal(firstResponse.statusCode, 200);
+    assert.equal(second.statusCode, 429, "one Patient session must not run distinct provider requests concurrently");
+    assert.deepEqual(second.payload, { error: "agent_concurrency_limited" });
+    assert.equal(second.headers["retry-after"], "1");
+    assert.equal(providerCalls, 1, "a rejected concurrent request must not call the provider");
+    const recovered = await call(agentHandler, {
+      origin: "https://allowed.example",
+      ip: "agent-concurrency-recovered",
+      headers: { "x-idempotency-key": "agent-distinct-recovered" },
+      body: authorizedBody(session, { agentId: "standardized_patient", probe: true })
+    });
+    assert.equal(recovered.statusCode, 200, "the session lease must release after the first provider request completes");
+    assert.equal(providerCalls, 2, "a later request may call the provider after the lease is released");
+  } finally {
+    releaseFirst();
+    globalThis.fetch = originalFetch;
+    delete process.env.LLM_ENABLE_AI_PATIENT;
+    delete process.env.LLM_API_KEY;
+    delete process.env.LLM_API_BASE_URL;
+    delete process.env.LLM_MODEL;
+    resetMemoryAgentRequestStore();
+  }
+}
+
 async function verifyPatientAgentRequestBoundary(session: AuthorizedSession) {
   const originalFetch = globalThis.fetch;
   process.env.LLM_ENABLE_AI_AGENTS = "true";
@@ -452,6 +519,7 @@ async function main() {
   await verifyProviderTimingNonDisclosure(session);
   await verifyProviderFailureNonDisclosure(session);
   await verifyAgentIdempotency(session);
+  await verifyDistinctRequestConcurrencyLimit(session);
   await verifyPatientAgentRequestBoundary(session);
   await verifyRetiredRoutes();
   await verifyBodyLimits();

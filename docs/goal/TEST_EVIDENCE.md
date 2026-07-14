@@ -624,3 +624,15 @@ Preview变量只核对名称/作用域：LLM相关变量覆盖Preview；`TRAININ
 | 敏感信息 | bundled Node `scripts/scan-repository-secrets.mjs` | exit0，2.3秒；295个当前/候选文件及可达文本历史和有界归档元数据，无秘密值输出 |
 
 远程普通push仍受GitHub smart-HTTP connection reset阻塞；本节不宣称Node22 CI或Vercel新部署通过。
+
+## HEM-P1-039 session并发租约（2026-07-14）
+
+| 检查 | 精确命令/环境 | 退出码与结果 |
+|---|---|---|
+| 失败基线 | bundled Node运行`test-agent-api-security.ts`，同session不同幂等键并发probe | exit1，0.8秒；第二项实际200，`providerCalls=2` |
+| 修复专项 | 同一命令 | exit0，20.7秒；第二项429、`Retry-After=1`、计数1，首项完成后第三项200、计数2；相同键single-flight仍为1 |
+| 受影响回归 | `test-agent-api-security.ts`、`test-agent-chat.ts`、`test-patient-agent.ts`、`test-dynamic-patient-session.ts`、`test-ai-recovery.ts` | exit0，21.9秒；合法会话、恢复与安全fallback合同未变 |
+| TypeScript / ESLint | bundled Node `tsc --noEmit`；`scripts/run-lint.mjs` | 均exit0，分别3.0秒、3.7秒 |
+| 敏感信息 | `scripts/scan-repository-secrets.mjs` | exit0，1.6秒；296文件及可达历史/有界归档元数据，无秘密值输出 |
+
+生产Upstash租约代码已静态审查，但远程Node22/Preview部署仍待普通push后CI；没有把本地内存测试写成真实跨实例验收。

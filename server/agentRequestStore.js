@@ -2,8 +2,11 @@ const crypto = require("node:crypto");
 
 const REQUEST_TTL_SECONDS = 24 * 60 * 60;
 const WAIT_TIMEOUT_MS = 20_000;
+const DEFAULT_SESSION_LEASE_SECONDS = 30;
 const memoryRequests = globalThis.__hematuriaAgentRequestStore || new Map();
 globalThis.__hematuriaAgentRequestStore = memoryRequests;
+const memoryAdmissions = globalThis.__hematuriaAgentAdmissionStore || new Map();
+globalThis.__hematuriaAgentAdmissionStore = memoryAdmissions;
 
 function digest(value) {
   return crypto.createHash("sha256").update(String(value || "")).digest("hex");
@@ -23,6 +26,15 @@ function clone(value) {
 
 function requestKey(sessionId, idempotencyKey) {
   return `hematuria:agent-request:v1:${digest(`${sessionId}:${idempotencyKey}`)}`;
+}
+
+function admissionKey(sessionId) {
+  return `hematuria:agent-admission:v1:${digest(sessionId)}`;
+}
+
+function sessionLeaseSeconds() {
+  const parsed = Number(process.env.AGENT_SESSION_LEASE_SECONDS);
+  return Number.isInteger(parsed) && parsed >= 5 && parsed <= 120 ? parsed : DEFAULT_SESSION_LEASE_SECONDS;
 }
 
 function storeMode() {
@@ -82,6 +94,23 @@ redis.call('SET', KEYS[1], cjson.encode(record), 'EX', ARGV[5])
 return cjson.encode({kind='committed'})
 `;
 
+const RELEASE_ADMISSION_SCRIPT = `
+if redis.call('GET', KEYS[1]) == ARGV[1] then
+  return redis.call('DEL', KEYS[1])
+end
+return 0
+`;
+
+const ABANDON_REQUEST_SCRIPT = `
+local raw = redis.call('GET', KEYS[1])
+if not raw then return 0 end
+local record = cjson.decode(raw)
+if record.status == 'processing' and record.leaseId == ARGV[1] then
+  return redis.call('DEL', KEYS[1])
+end
+return 0
+`;
+
 function assertInputs(sessionId, idempotencyKey) {
   if (!sessionId) throw new Error("session_capability_required");
   if (!String(idempotencyKey || "").trim()) throw new Error("idempotency_key_required");
@@ -105,13 +134,51 @@ async function claim({ sessionId, idempotencyKey, requestDigest }) {
       return { kind: "pending", promise: existing.promise };
     }
     let resolve;
-    const promise = new Promise((done) => { resolve = done; });
-    memoryRequests.set(key, { requestDigest, status: "processing", leaseId, promise, resolve, startedAt: Date.now() });
+    let reject;
+    const promise = new Promise((done, fail) => { resolve = done; reject = fail; });
+    promise.catch(() => {});
+    memoryRequests.set(key, { requestDigest, status: "processing", leaseId, promise, resolve, reject, startedAt: Date.now() });
     return { kind: "owner", mode, key, leaseId };
   }
   const raw = await upstash(["EVAL", CLAIM_SCRIPT, 1, key, requestDigest, leaseId, Date.now(), REQUEST_TTL_SECONDS]);
   const result = JSON.parse(raw);
   return { ...result, mode, key, leaseId };
+}
+
+async function acquireAdmission(mode, sessionId) {
+  const key = admissionKey(sessionId);
+  const leaseId = crypto.randomUUID();
+  const ttlSeconds = sessionLeaseSeconds();
+  if (mode === "memory") {
+    const current = memoryAdmissions.get(key);
+    if (current && current.expiresAt > Date.now()) throw new Error("agent_concurrency_limited");
+    memoryAdmissions.set(key, { leaseId, expiresAt: Date.now() + ttlSeconds * 1000 });
+    return { mode, key, leaseId };
+  }
+  const result = await upstash(["SET", key, leaseId, "NX", "EX", ttlSeconds]);
+  if (result !== "OK") throw new Error("agent_concurrency_limited");
+  return { mode, key, leaseId };
+}
+
+async function releaseAdmission(admission) {
+  if (!admission) return;
+  if (admission.mode === "memory") {
+    if (memoryAdmissions.get(admission.key)?.leaseId === admission.leaseId) memoryAdmissions.delete(admission.key);
+    return;
+  }
+  await upstash(["EVAL", RELEASE_ADMISSION_SCRIPT, 1, admission.key, admission.leaseId]);
+}
+
+async function abandon(owner, error) {
+  if (owner.mode === "memory") {
+    const record = memoryRequests.get(owner.key);
+    if (record?.leaseId === owner.leaseId && record.status === "processing") {
+      memoryRequests.delete(owner.key);
+      record.reject(error);
+    }
+    return;
+  }
+  await upstash(["EVAL", ABANDON_REQUEST_SCRIPT, 1, owner.key, owner.leaseId]);
 }
 
 async function complete(owner, requestDigest, result) {
@@ -158,12 +225,22 @@ async function executeIdempotentAgentRequest({ sessionId, idempotencyKey, body }
   if (claimed.kind === "conflict") throw new Error("idempotency_key_reused");
   if (claimed.kind === "cached") return { ...clone(claimed.result), idempotencyReplay: true };
   if (claimed.kind === "pending") return { ...await waitForPending(claimed), idempotencyReplay: true };
-  const result = await executor();
-  return complete(claimed, requestDigest, result);
+  let admission;
+  try {
+    admission = await acquireAdmission(claimed.mode, sessionId);
+    const result = await executor();
+    return await complete(claimed, requestDigest, result);
+  } catch (error) {
+    await abandon(claimed, error).catch(() => {});
+    throw error;
+  } finally {
+    await releaseAdmission(admission).catch(() => {});
+  }
 }
 
 function resetMemoryAgentRequestStore() {
   memoryRequests.clear();
+  memoryAdmissions.clear();
 }
 
 module.exports = { executeIdempotentAgentRequest, resetMemoryAgentRequestStore };

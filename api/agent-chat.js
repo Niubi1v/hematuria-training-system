@@ -321,11 +321,13 @@ module.exports = async function handler(req, res) {
     return res.status(stored.statusCode || 200).json(stored.payload);
   } catch (error) {
     const code = error instanceof Error ? error.message : "agent_api_failed";
+    if (code === "agent_concurrency_limited") res.setHeader("Retry-After", "1");
     const status = /request_body_too_large/.test(code) ? 413
       : /content_type_not_supported/.test(code) ? 415
         : /student_input_too_long|conversation_history_invalid|asked_(?:slots|questions)_invalid/.test(code) ? 422
       : /invalid_json_body|unexpected_request_field|invalid_(?:language|probe|debug|case_id|attempt_id|session_id|session_mode|agent_mode)|idempotency_key_too_long/.test(code) ? 400
         : /agent_not_allowed|stage_not_allowed/.test(code) ? 403
+          : /agent_concurrency_limited/.test(code) ? 429
         : /session_.*(?:mismatch|required)|invalid_session|expired_session/.test(code) ? 401
       : /idempotency_key_required/.test(code) ? 400
         : /idempotency_key_reused/.test(code) ? 409

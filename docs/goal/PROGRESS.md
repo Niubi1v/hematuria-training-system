@@ -344,4 +344,10 @@
 - 先建立真实失败合同：合法Patient session把`agentId`改为`diagnostic_reasoning`和stage改为diagnosis，旧实现返回200；这证明session虽绑定attempt/case/language/mode，却没有阻止公开端点进入其他LLM角色。
 - 最小修复固定公开`agent-chat`为`standardized_patient/history`，并在provider前执行字段白名单、`application/json`、2000字符问题、8项历史和有界asked列表检查；model、Prompt、API key、base URL、`unlockedData`等客户端控制字段统一拒绝。
 - 失败合同修复后exit0，Agent角色越权、五种模型/Prompt/隐藏上下文字段、超长输入和错误Content-Type均为`providerCalls=0`；Agent/Patient/动态会话/LLM/18条冲突隔离回归、TypeScript、ESLint及295文件secret扫描exit0。TypeScript首次在受限junction下误报`xlsx`缺失，允许只读junction后同一命令exit0，不登记为源码失败。
-- `docs/goal/AI_ABUSE_THREAT_MODEL.md`记录全部端点和开放P1：实例内限流不是全局配额、不同幂等键并发与probe仍可消耗provider、TTS仍需能力/body/single-flight。当前尚未push/CI，不把本地结果写成远程通过；`data/**`、医学审核、419决定、18条冲突和`needs_revision`零修改。
+- `docs/goal/AI_ABUSE_THREAT_MODEL.md`记录全部端点和开放P1：实例内限流不是全局配额、probe仍无独立低额度、TTS仍需能力/body/single-flight。当前尚未push/CI，不把本地结果写成远程通过；`data/**`、医学审核、419决定、18条冲突和`needs_revision`零修改。
+
+### HEM-P1-039 不同幂等键的session并发（2026-07-14）
+
+- 失败基线用同一合法session并发两个不同幂等键的`probe`：旧实现两项均200，`providerCalls=2`。这不属于相同请求幂等失效，而是缺少session级provider租约。
+- 最小修复在幂等owner进入provider前申请按session摘要键控的单一租约；生产通过现有Upstash `SET NX EX`跨实例原子化，本地用内存合同。第二项返回429、`Retry-After: 1`且`providerCalls`保持1；首项结束后第三项200并使计数变2，证明租约释放和合法恢复。
+- 异常会撤销processing幂等claim，租约有30秒崩溃TTL；相同幂等键原有single-flight合同继续通过。Agent/Patient/动态会话/AI恢复、TypeScript、ESLint及296文件scanner均exit0。持久session/attempt/IP/日配额仍为HEM-P1-037开放项，当前本地提交链仍因Git smart-HTTP受阻尚未push。
