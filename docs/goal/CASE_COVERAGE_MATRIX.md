@@ -73,3 +73,4 @@
 - 本地 Next 的 `/cases/P001/`–`/cases/P042/` 直接 URL、页面刷新、中文和英文 UI 均为 42/42 通过；病例目录实际 `.html` anchor 点击为 42/42 404，登记 HEM-P2-043。该本地环境结果不替代部署环境。
 - GitHub Pages 当前指向旧 `main@5a3ad119...`，为 `BLOCKED_BASELINE_MISMATCH`；精确 `ff1a932` Vercel Preview 匿名访问进入登录页，为 `BLOCKED_PREVIEW_AUTH`。两者均没有被记为病例路由通过或失败。
 - HEM-P1-027 的中英文 × 四固定 viewport 共 16/16 `PASS_EMULATION`；HEM-P1-029/033/034 的浏览器定向回归各 4/4 通过；真实手机软键盘/safe-area 保持 `BLOCKED_REAL_DEVICE`，真实 AI 保持 `REAL_AI_BLOCKED`。
+- `ff1a932` 的 42 例事件评分、抗伪造、阶段 5/6/7、attempt 隔离、11 例代表 E2E、42 例 376 条查体 QC、P008 精确开单映射及训练 API 安全合同均通过；这些是确定性协议/数据 Agent 覆盖，不替代 42 例逐例医学审批或真实 AI。

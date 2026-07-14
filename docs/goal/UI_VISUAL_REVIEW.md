@@ -58,3 +58,4 @@
 - HEM-P1-029 的英文开场、HEM-P1-033 的患者输出隔离、HEM-P1-034 的中英切换分别在四固定 viewport 各 4/4 `PASS_EMULATION`；安全能力矩阵另为 19/19。
 - 本轮截图来自 headless Chromium 设备模拟。没有真实手机，因此软键盘顶起行为与物理 safe-area 明确标记 `BLOCKED_REAL_DEVICE`，不冒充真机通过。
 - 本地病例直接 URL、刷新与中英文 UI 为 42/42 通过；病例目录 `.html` 链接在 Next dev 为 42/42 404（HEM-P2-043）。GitHub Pages 因基线不匹配阻塞，精确 SHA Vercel Preview 因登录保护阻塞，未用本地成功替代远程环境结论。
+- 继续执行后，HEM-P2-028 在 `1440×900` 仍显示两条同阶段提交时间线，`ff1a932` 实测继续为 `2/2/2`（1/1）；其失败截图与最小 trace 已刷新，状态保持 OPEN。

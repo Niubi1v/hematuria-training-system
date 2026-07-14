@@ -50,6 +50,7 @@
 - 建议方向：增加阶段提交 in-flight 状态并在请求完成前禁用按钮；一次用户动作生成并复用稳定 request ID；状态层按 stage/request ID 去重提交时间线。回归应覆盖阶段 1–6、终末报告按钮、桌面/移动端、双击/Enter 和失败重试，且不得删除或放宽当前断言。
 - 医学专家裁决：否。
 - `96fcf80` 受影响回归：`1440×900` 1/1 仍为 `2 feedback requests / 2 unique request IDs / 2 submit events`，失败帧和关闭截图/源码嵌入的最小 trace 已刷新。
+- `ff1a932` 继续回归：`1440×900` 1/1 仍为 `2 feedback requests / 2 unique request IDs / 2 submit events`；失败断言保持期望 `1/1/1`，没有删除或放宽。最小截图与 trace 已刷新到本轮基线。
 
 ## HEM-P1-029：英文 Patient Session 开场白仍为中文
 

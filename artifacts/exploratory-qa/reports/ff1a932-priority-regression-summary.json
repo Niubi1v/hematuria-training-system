@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-14T15:22:02+08:00",
+  "generatedAt": "2026-07-14T15:48:00+08:00",
   "productionSha": "ff1a932785d891749ae8e73130bde8857062e194",
   "qaBaselineMergeSha": "a8b87d7522eac811f0781e1aa2cc7b8cb36752e6",
   "medicalTruthAdjudicated": false,
@@ -54,6 +54,24 @@
     "failureGroups": 117,
     "unsafeDeterministicSourceBlocks": 161,
     "status": "FAIL_REMAINING_HEM_P1_030_031_032"
+  },
+  "continuedRegression": {
+    "HEM-P2-028": {
+      "status": "OPEN_REPRODUCED",
+      "runs": 1,
+      "feedbackRequests": 2,
+      "uniqueRequestIds": 2,
+      "submitTimelineEvents": 2,
+      "expectedEach": 1
+    },
+    "scoringAndDataAgentContracts": {
+      "status": "PASS_CONTRACT_NOT_MEDICAL_APPROVAL",
+      "suites": 9,
+      "caseScoringCoverage": 42,
+      "representativeE2eCases": 11,
+      "physicalExamResults": 376,
+      "providerCalls": 0
+    }
   },
   "routeEnvironments": {
     "localNextDev": {
