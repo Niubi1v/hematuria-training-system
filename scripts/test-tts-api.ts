@@ -3,6 +3,17 @@ import assert from "node:assert/strict";
 process.env.AZURE_SPEECH_KEY = "unit-test-only-key";
 process.env.AZURE_SPEECH_REGION = "eastasia";
 process.env.TTS_ALLOWED_ORIGINS = "https://niubi1v.github.io,https://preview.example.test";
+process.env.TRAINING_STATE_SECRET = "unit-test-training-state-secret-with-adequate-length";
+const { createSessionCapability } = require("../server/sessionCapability.js");
+const { normalizeAttemptMode } = require("../server/trainingState.js");
+const sessionContext = {
+  zh: { attemptId: "tts-attempt-zh", caseId: "P001", language: "zh", mode: "free" },
+  en: { attemptId: "tts-attempt-en", caseId: "P001", language: "en", mode: "free" }
+} as const;
+const sessionIds = {
+  zh: createSessionCapability({ ...sessionContext.zh, mode: normalizeAttemptMode(sessionContext.zh.mode), expiresAt: Date.now() + 24 * 60 * 60 * 1000 }),
+  en: createSessionCapability({ ...sessionContext.en, mode: normalizeAttemptMode(sessionContext.en.mode), expiresAt: Date.now() + 24 * 60 * 60 * 1000 })
+};
 const testAudioCache = new Map<string, unknown>();
 const testRequestWindows = new Map<string, unknown>();
 (globalThis as typeof globalThis & { __hematuriaTtsAudioCache?: Map<string, unknown>; __hematuriaTtsRequestWindows?: Map<string, unknown> }).__hematuriaTtsAudioCache = testAudioCache;
@@ -20,13 +31,19 @@ globalThis.fetch = (async (_input: string | URL | Request, init?: RequestInit) =
 
 const handler = require("../api/tts.js");
 
-async function call(voiceName: string, text: string, options: { rate?: number; pitch?: number; ip?: string; origin?: string; body?: unknown; contentType?: string; method?: string } = {}) {
+async function call(voiceName: string, text: string, options: { rate?: number; pitch?: number; ip?: string; origin?: string; body?: unknown; contentType?: string; method?: string; omitCapability?: boolean } = {}) {
   let statusCode = 200;
   let payload: unknown;
   const headers: Record<string, string> = {};
+  const language = voiceName.startsWith("en-US") ? "en" : "zh";
+  const capability = options.omitCapability ? {} : { ...sessionContext[language], sessionId: sessionIds[language] };
+  const defaultBody = { ...capability, voiceName, text, ...(options.rate === undefined ? {} : { rate: options.rate }), ...(options.pitch === undefined ? {} : { pitch: options.pitch }) };
+  const body = options.body && typeof options.body === "object" && !Array.isArray(options.body)
+    ? { ...capability, ...options.body as Record<string, unknown> }
+    : options.body ?? defaultBody;
   const req = {
     method: options.method || "POST",
-    body: options.body ?? { voiceName, text, ...(options.rate === undefined ? {} : { rate: options.rate }), ...(options.pitch === undefined ? {} : { pitch: options.pitch }) },
+    body,
     headers: { origin: options.origin || "https://niubi1v.github.io", "content-type": options.contentType || "application/json" },
     socket: { remoteAddress: options.ip || `tts-${voiceName}` }
   };
@@ -42,6 +59,47 @@ async function call(voiceName: string, text: string, options: { rate?: number; p
 }
 
 async function main() {
+  const fetchesBeforeCapability = fetchCalls;
+  const missingCapability = await call("en-US-JennyNeural", "Capability required", { ip: "capability-missing", omitCapability: true });
+  assert.equal(missingCapability.statusCode, 401, "cloud TTS must require a valid Patient session capability");
+  assert.equal(fetchCalls, fetchesBeforeCapability, "missing TTS capability must be rejected before the provider");
+
+  for (const [label, overrides] of [
+    ["forged", { sessionId: `${sessionIds.en}tampered` }],
+    ["case", { caseId: "P002" }],
+    ["language", { language: "zh" }],
+    ["mode", { mode: "osce" }]
+  ] as const) {
+    const denied = await call("en-US-JennyNeural", "Capability boundary", {
+      ip: `capability-${label}`,
+      body: { voiceName: "en-US-JennyNeural", text: "Capability boundary", ...overrides }
+    });
+    assert.equal(denied.statusCode, 401, `${label} capability mismatch must be rejected`);
+  }
+  const crossVoice = await call("zh-CN-XiaoxiaoNeural", "语言不匹配", {
+    ip: "capability-voice-language",
+    body: { voiceName: "en-US-JennyNeural", text: "Language mismatch" }
+  });
+  assert.equal(crossVoice.statusCode, 400);
+  const originalCapabilityNow = Date.now;
+  const capabilityNow = originalCapabilityNow();
+  const expiringSession = createSessionCapability({
+    ...sessionContext.en,
+    mode: normalizeAttemptMode(sessionContext.en.mode),
+    expiresAt: capabilityNow + 100
+  });
+  Date.now = () => capabilityNow + 101;
+  try {
+    const expired = await call("en-US-JennyNeural", "Expired capability", {
+      ip: "capability-expired",
+      body: { voiceName: "en-US-JennyNeural", text: "Expired capability", sessionId: expiringSession }
+    });
+    assert.equal(expired.statusCode, 401, "expired TTS capabilities must be rejected");
+  } finally {
+    Date.now = originalCapabilityNow;
+  }
+  assert.equal(fetchCalls, fetchesBeforeCapability, "invalid TTS capabilities and language tuples must not call the provider");
+
   const fetchesBeforeRejected = fetchCalls;
   assert.equal((await call("en-US-JennyNeural", "unused", { method: "GET", ip: "method-rejected" })).statusCode, 405);
   assert.equal((await call("en-US-JennyNeural", "unused", { origin: "https://evil.example", ip: "origin-rejected" })).statusCode, 403);
@@ -86,6 +144,21 @@ async function main() {
   const collisionBRepeat = await call("zh-CN-XiaoxiaoNeural", "tts-jzkt95-23ce", { ip: "collision-b-repeat" });
   assert.equal(collisionBRepeat.headers["x-tts-cache"], "HIT", "an exact tuple should still use the cache");
   assert.deepEqual(collisionBRepeat.payload, collisionB.payload);
+
+  const secondEnglishSession = createSessionCapability({
+    ...sessionContext.en,
+    mode: normalizeAttemptMode(sessionContext.en.mode),
+    expiresAt: Date.now() + 24 * 60 * 60 * 1000
+  });
+  const sessionScopedA = await call("en-US-JennyNeural", "Session-scoped audio", { ip: "session-scope-a" });
+  const fetchesAfterSessionA = fetchCalls;
+  const sessionScopedB = await call("en-US-JennyNeural", "Session-scoped audio", {
+    ip: "session-scope-b",
+    body: { voiceName: "en-US-JennyNeural", text: "Session-scoped audio", sessionId: secondEnglishSession }
+  });
+  assert.equal(sessionScopedA.headers["x-tts-cache"], "MISS");
+  assert.equal(sessionScopedB.headers["x-tts-cache"], "MISS", "different Patient sessions must not share personalized TTS cache entries");
+  assert.equal(fetchCalls, fetchesAfterSessionA + 1);
 
   const parameterBase = await call("en-US-JennyNeural", "Cache parameter isolation", { rate: 0.9, pitch: 1, ip: "parameter-base" });
   const parameterRate = await call("en-US-JennyNeural", "Cache parameter isolation", { rate: 1.1, pitch: 1, ip: "parameter-rate" });

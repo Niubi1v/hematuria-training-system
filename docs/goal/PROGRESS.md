@@ -364,3 +364,10 @@
 - 失败基线：同一未缓存tuple的并发请求产生2次Azure调用；旧handler也会解析含20 KiB padding的请求并在短text合法时进入provider。
 - 最小修复增加16 KiB JSON、Content-Type、畸形JSON和字段白名单；同一完整tuple进程内single-flight，成功才写缓存，最多100个不同冷请求并发。origin、voice、rate、pitch或text不同绝不共享。
 - TTS API/voice两项回归exit0；冷并发providerCalls=1，超大body 413，method/Origin/text/voice/字段/rate-limit/JSON拒绝均不调用provider。session capability、跨实例单飞与持久TTS预算继续作为独立开放边界，未把本地single-flight写成全局成本保护。
+
+### HEM-P1-041 TTS Patient session能力（2026-07-14）
+
+- 失败基线在Azure stub已启用时直接调用TTS且不携带session，旧实现返回200并调用provider。
+- 前端现发送当前sessionId/attempt/case/language/runtime mode；服务端复用签名session校验。缺失、伪造、过期、跨病例、跨语言、跨mode均401，voice语言不一致400，全部providerCalls=0。
+- cache/single-flight tuple加入session摘要；同文本不同session均MISS，Redis/缓存/日志不保存原始签名。TTS API/voice 2项、TypeScript、ESLint、296文件scanner通过；桌面/移动Playwright云失败降级2/2（4.6秒），本地Next服务已停止。
+- 跨实例TTS配额仍开放，不把进程内single-flight和session鉴权写成全局成本熔断；真实Azure仍因未配置而按浏览器语音降级。

@@ -658,3 +658,16 @@ Preview变量只核对名称/作用域：LLM相关变量覆盖Preview；`TRAININ
 | 语音回归 | `test-tts-api.ts`、`test-tts.ts` | 2项exit0，1.0秒；四voice、tuple隔离、TTL、容量、浏览器voice选择均通过 |
 
 本证据只覆盖同实例single-flight；session capability、真实Azure、跨实例单飞和持久配额仍待HEM-P1-041/Preview配置。
+
+## HEM-P1-041 TTS Patient session能力（2026-07-14）
+
+| 检查 | 精确命令/环境 | 退出码与结果 |
+|---|---|---|
+| 失败基线 | Azure stub启用，TTS请求省略session tuple | exit1，0.7秒；旧实现实际200并调用provider，期望401 |
+| 能力专项 | `test-tts-api.ts` | exit0，0.7秒；missing/forged/expired/case/language/mode拒绝401，voice-language拒绝400，provider计数不增加 |
+| cache隔离 | 同一专项，两个不同签名session请求相同text/voice/参数 | 两项均MISS且分别调用stub，原始session不进入cache tuple |
+| TTS回归 | `test-tts-api.ts`、`test-tts.ts` | 2项exit0，1.0秒 |
+| TypeScript / ESLint / scanner | `tsc --noEmit`；`run-lint.mjs`；`scan-repository-secrets.mjs` | 均exit0，1.9/3.8/1.6秒；296文件，无秘密值输出 |
+| 浏览器降级 | 显式本地Next，Playwright grep `cloud TTS failure`，desktop+mobile | exit0，2/2，4.6秒；仍显示浏览器语音降级且语音profile正确；测试后服务已停止 |
+
+真实Azure、跨实例TTS预算和Preview配置未验证，不登记为通过。

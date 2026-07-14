@@ -284,4 +284,5 @@
 - 防滥用仍有发布前P1：TTS能力/body/single-flight（HEM-P1-038）和provider错误率自动熔断/告警（HEM-P1-040）。HEM-P1-037多维Agent预算已在本地与模拟持久命令合同完成，但真实Preview跨实例仍受HEM-P1-020配置阻塞。真实AI、首Token、P50/P95和10/10双语不以fixture或fallback替代。
 - HEM-P1-039本地候选已封闭同session不同幂等键的并发绕过：第二项429且不调用provider，原请求完成后恢复；生产使用现有Upstash原子租约，异常claim清理和30秒TTL防永久锁。该租约本身不等同于完整成本预算，后续HEM-P1-037见下一项。
 - HEM-P1-037本地候选随后增加9键原子准入：session/attempt请求、输入字符、IP小时/日、项目日请求/token、probe和并发。八类超限测试均保持provider计数，模拟持久命令不含原始session/IP；远程push/CI及配置后Preview跨实例验收仍未完成。
-- HEM-P1-038本地候选把TTS冷并发2次Azure调用合并为1，并增加16 KiB JSON/字段/方法/Origin/参数拒绝门禁；TTS API和voice回归通过。session capability与跨实例持久预算仍为HEM-P1-041，不能把进程内single-flight写成全局防滥用完成。
+- HEM-P1-038本地候选把TTS冷并发2次Azure调用合并为1，并增加16 KiB JSON/字段/方法/Origin/参数拒绝门禁；TTS API和voice回归通过。当时未覆盖的session capability随后由HEM-P1-041补齐；进程内single-flight仍不等于全局防滥用。
+- HEM-P1-041本地候选随后要求并验证Patient session tuple，缓存按session摘要隔离；能力失败不调用Azure，桌面/移动浏览器降级2/2。跨实例持久TTS预算仍为HEM-P1-042；真实Azure没有配置，未伪报成功。

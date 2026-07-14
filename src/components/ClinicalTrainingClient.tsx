@@ -1194,7 +1194,17 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           method: "POST",
           headers: { "Content-Type": "application/json" },
           signal: controller.signal,
-          body: JSON.stringify({ text: clean, voiceName: AZURE_VOICE_BY_PROFILE[voicePreferenceKey({ ...voiceProfile, locale })], rate: speechRate, pitch: speechPitch }),
+          body: JSON.stringify({
+            text: clean,
+            voiceName: AZURE_VOICE_BY_PROFILE[voicePreferenceKey({ ...voiceProfile, locale })],
+            rate: speechRate,
+            pitch: speechPitch,
+            sessionId: aiSessionId,
+            attemptId: attempt.attemptId,
+            caseId: caseData.id,
+            language: lang,
+            mode: runtimeMode
+          }),
           timeoutMs: 10_000,
           retries: 2
         });

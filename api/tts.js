@@ -1,5 +1,7 @@
 const { createHash } = require("node:crypto");
 const { parseJsonBody, positiveInteger, setRateLimitHeaders, takeRateLimit } = require("../server/requestSecurity.js");
+const { verifySessionCapability } = require("../server/sessionCapability.js");
+const { normalizeAttemptMode } = require("../server/trainingState.js");
 
 const allowedVoices = new Set([
   "zh-CN-XiaoxiaoNeural",
@@ -31,8 +33,8 @@ function escapeXml(value) {
   return value.replace(/[<>&'\"]/g, (character) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", "\"": "&quot;" }[character]));
 }
 
-function cacheTuple(origin, text, voiceName, rate, pitch) {
-  return JSON.stringify([origin || "server", voiceName, rate, pitch, text]);
+function cacheTuple(origin, sessionScope, text, voiceName, rate, pitch) {
+  return JSON.stringify([origin || "server", sessionScope, voiceName, rate, pitch, text]);
 }
 
 function sendAudio(res, audio, cacheStatus) {
@@ -101,8 +103,24 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ code: "invalid_json_body", message: "TTS request body must be valid JSON" });
   }
   if (!body || typeof body !== "object" || Array.isArray(body)
-    || Object.keys(body).some((field) => !["text", "voiceName", "rate", "pitch"].includes(field))) {
+    || Object.keys(body).some((field) => !["text", "voiceName", "rate", "pitch", "sessionId", "attemptId", "caseId", "language", "mode"].includes(field))) {
     return res.status(400).json({ code: "unexpected_request_field", message: "TTS request contains unsupported fields" });
+  }
+  if (!body.sessionId || !body.attemptId || !body.caseId) {
+    return res.status(401).json({ code: "session_capability_required", message: "A valid Patient session is required" });
+  }
+  if (body.language !== "zh" && body.language !== "en") {
+    return res.status(400).json({ code: "invalid_language", message: "TTS language must be zh or en" });
+  }
+  try {
+    verifySessionCapability(body.sessionId, {
+      attemptId: body.attemptId,
+      caseId: body.caseId,
+      language: body.language,
+      mode: normalizeAttemptMode(body.mode)
+    });
+  } catch {
+    return res.status(401).json({ code: "tts_capability_invalid", message: "The Patient session is invalid or expired" });
   }
   const text = String(body.text || "").replace(/\s+/g, " ").trim();
   const voiceName = String(body.voiceName || "");
@@ -110,12 +128,16 @@ module.exports = async function handler(req, res) {
   const pitch = Math.min(1.1, Math.max(0.85, Number(body.pitch) || 1));
   if (!text || text.length > 500) return res.status(400).json({ code: "invalid_text", message: "Text must contain 1-500 characters" });
   if (!allowedVoices.has(voiceName)) return res.status(400).json({ code: "voice_not_allowed", message: "Voice is not allowed" });
+  if ((body.language === "en") !== voiceName.startsWith("en-US")) {
+    return res.status(400).json({ code: "voice_language_mismatch", message: "Voice does not match the Patient session language" });
+  }
 
   const speechKey = process.env.AZURE_SPEECH_KEY;
   const region = process.env.AZURE_SPEECH_REGION;
   if (!speechKey || !region) return res.status(503).json({ code: "cloud_tts_unavailable", message: "Cloud TTS is not configured" });
 
-  const tuple = cacheTuple(origin, text, voiceName, rate, pitch);
+  const sessionScope = createHash("sha256").update(String(body.sessionId), "utf8").digest("hex");
+  const tuple = cacheTuple(origin, sessionScope, text, voiceName, rate, pitch);
   const key = cacheKey(tuple);
   const cached = audioCache.get(key);
   if (cached?.tuple === tuple && cached.expiresAt > Date.now() && Buffer.isBuffer(cached.audio)) {

@@ -247,4 +247,5 @@
 - `HEM-P1-038`（本地工程部分修复，待push/CI）：冷并发旧基线`providerCalls=2`，短text+20 KiB padding可调用Azure。现有16 KiB JSON/字段合同及同tuple single-flight，专项通过；session capability和跨实例持久配额拆为HEM-P1-041。
 - `HEM-P1-039`（本地工程修复，待push/CI）：同session不同幂等键可同时进入provider，失败基线`providerCalls=2`。新增Upstash/内存session租约后第二项429且零provider调用，首项结束后可恢复；相同键幂等不变。
 - `HEM-P1-040`（OPEN）：provider有有限重试和安全fallback，但没有跨请求错误率自动熔断或异常调用量告警。不得以无限重试或定时空请求代替；需先建立可控时钟/计数失败合同。
-- `HEM-P1-041`（OPEN）：TTS仍未要求Patient session capability，无Origin直接调用也可在知道voice参数时消耗Azure；进程内single-flight不跨serverless实例。需让前端传递当前session/attempt/case/language/mode并复用签名能力校验，再增加持久tuple预算。
+- `HEM-P1-041`（本地工程修复，待push/CI）：TTS旧路径无session也200。现绑定Patient session的attempt/case/language/mode，能力拒绝providerCalls=0，cache按session摘要隔离；桌面/移动降级2/2。跨实例预算拆为HEM-P1-042。
+- `HEM-P1-042`（OPEN）：TTS的IP限流和single-flight仍是进程内；有效session可用不同tuple跨实例消耗Azure。需要复用持久store增加session/IP/项目日预算；不得把音频二进制塞入Redis或跨session共享缓存。
