@@ -417,3 +417,10 @@
 - 代码与测试已形成仅本地原子提交`3cb22cd`；尚未push，PR #1继续Draft。下一步为证据提交、普通push、Node22 CI/Vercel观察，再给长期QA准确HEAD。
 - 本地最终HEAD现为`972405a`（代码/测试`3cb22cd`、首轮证据`c4c2f25`、浏览器补证`972405a`），工作树干净。一次成功fetch确认远程`ff1a932`且落后0/领先3；随后普通push连接重置，重试fetch又因`github.com:443`不可达失败。`api.github.com:443`可达且PR API确认远程未部分更新、仍Open/Draft；未使用API改ref、force或不验host的SSH替代。
 - 完整Playwright desktop/mobile在本地Node24运行器下到242秒超时并以EPIPE结束，未返回可审计总计，不能登记为通过；超时后3000端口无残留listener。新增第一阶段专项仍为明确6/6 exit0，完整浏览器门禁待Git网络恢复后由CI规定的Node22执行。
+
+### HEM-P1-043 远程工程门禁（2026-07-14 16:29—16:34 CST）
+
+- 网络恢复后成功fetch确认远程未变化，本地落后0/领先5；`ff1a932..cade64e`已普通push，未force、未写main。Draft PR #1 head更新为`cade64e19868c1b72667c642eff3ba709f2bd7e4`，仍Open/Draft/CLEAN。
+- Actions run `29318216424` / build job `87037030905` completed/success（4分38秒）：Node22完整行为、TypeScript、ESLint、52/52 Playwright desktop/mobile、75输出幂等、42例/572/419医学治理、360评分、82/82构建、23 JS bundle、298文件scanner和最终clean gate均通过；Pages deploy按PR规则skipped。
+- Vercel deployment `CNzPNsqzCi21UkqF65bpu88My89S`及Preview Comments success。该绿灯只证明新head构建/部署成功；登录态Preview第一阶段真实POST、持久attempt store/签名变量作用域仍未直接验证，HEM-P1-020外部阻塞不因CI关闭。
+- HEM-P1-043工程修复可交长期QA从`cade64e`复测。PR继续Draft；未转Ready、未合并、未部署Production、未改医学事实/审核状态或环境变量。

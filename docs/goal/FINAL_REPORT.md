@@ -320,3 +320,11 @@
 - 代码与测试已形成本地提交`3cb22cd`，首轮证据提交为`c4c2f25`；尚未push，PR #1仍Draft。三次fetch因GitHub 443超时/重置失败，GitHub API确认远程head仍`ff1a932`，但未以API查询替代fetch门禁。网络恢复后必须先成功fetch，再普通push并补充Actions、Vercel及长期QA准确步骤。
 - 浏览器补证提交后本地HEAD为`972405a`，工作树干净。一次成功fetch确认0落后/3领先，随后普通push因Git连接重置失败；`github.com:443`不可达而API端点可达，PR API确认远程仍`ff1a932`且Draft。没有force、main写入、API改ref、Ready、merge或Production部署；网络恢复后从该HEAD重新fetch/push。
 - 完整本地Playwright因Node24运行器242秒超时/EPIPE没有有效总计，未伪报通过；新增核心流程专项desktop/mobile 6/6有效。超时后server已清理，Node22完整Playwright必须由新head CI补证。
+
+### 2026-07-14 HEM-P1-043 远程交接
+
+- 修复与证据已普通push，远程工程HEAD为`cade64e19868c1b72667c642eff3ba709f2bd7e4`。Actions run `29318216424` completed/success：Node22完整行为、52/52 Playwright、类型、lint、42例/572/419治理、360评分、82页构建、bundle/scanner均通过。
+- Vercel deployment `CNzPNsqzCi21UkqF65bpu88My89S`与Preview Comments通过；Pages deploy skipped。PR #1保持Open/Draft/CLEAN，未Ready、未合并、未部署Production。
+- 根因与修复：阶段提交缺同步单飞锁导致双击2请求；永久attempt-store配置503被重复重试且UI隐藏原因。现均收敛为1请求，并保留全部token/session/stage绑定和fail-closed安全边界。
+- 长期QA从`cade64e`在登录态最新Preview复测：P001中文第一阶段→第二阶段→刷新；英文同流程；中→英、英→中；刷新后提交；快速双击只见1个`stage-feedback`；过期/跨病例token仍401；缺store时只见1次503和明确配置提示。记录URL、deployment SHA、脱敏session/request ID、状态码/error code。
+- 尚未解除：HEM-P1-020的Preview持久store/签名/origin作用域与真实POST证据，真实AI/日志/性能，以及HEM-P0-001/023具名医学裁决。未修改生产环境变量、医学事实、419审核或`needs_revision`。

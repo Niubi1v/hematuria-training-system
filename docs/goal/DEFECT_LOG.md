@@ -272,3 +272,4 @@
 - **回归**：P001中英合法提交、双向切换、刷新、快速双击、过期token、跨病例token、七阶段与刷新阶段保持均有自动化覆盖。快速双击由2请求收敛为1；配置错误由最多3请求收敛为1。
 - **仍需人工/外部操作**：在Preview或分支专用Preview核对`TRAINING_STATE_SECRET`、`TRAINING_ATTEMPT_STORE_MODE`、`UPSTASH_REDIS_REST_URL`、`UPSTASH_REDIS_REST_TOKEN`及既有origin/tier变量的名称和作用域后重新部署；不得由Codex读取/生成值。随后用登录态Preview抓取当前失败请求并复测。
 - **Git传输阻塞**：本地修复HEAD `972405a`工作树干净；成功fetch后确认远程`ff1a932`、0落后/3领先，但普通push时连接重置。TCP探测为`github.com:443=false`、`api.github.com:443=true`，PR API确认远程仍未更新。网络恢复后必须重新fetch再普通push，不能通过API改ref或跳过主机校验。
+- **工程状态修正**：Git网络恢复后按门禁重新fetch并普通push至`cade64e`。Actions run `29318216424`在Node22通过52/52 Playwright及全部工程/医学/扫描门禁，Vercel两项success；HEM-P1-043工程项关闭，交长期QA复测。登录态Preview真实提交与变量配置仍由HEM-P1-020阻塞，不得把部署绿灯写成运行时配置通过。
