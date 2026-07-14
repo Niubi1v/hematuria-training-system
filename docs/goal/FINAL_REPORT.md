@@ -286,3 +286,4 @@
 - HEM-P1-037本地候选随后增加9键原子准入：session/attempt请求、输入字符、IP小时/日、项目日请求/token、probe和并发。八类超限测试均保持provider计数，模拟持久命令不含原始session/IP；远程push/CI及配置后Preview跨实例验收仍未完成。
 - HEM-P1-038本地候选把TTS冷并发2次Azure调用合并为1，并增加16 KiB JSON/字段/方法/Origin/参数拒绝门禁；TTS API和voice回归通过。当时未覆盖的session capability随后由HEM-P1-041补齐；进程内single-flight仍不等于全局防滥用。
 - HEM-P1-041本地候选随后要求并验证Patient session tuple，缓存按session摘要隔离；能力失败不调用Azure，桌面/移动浏览器降级2/2。跨实例持久TTS预算仍为HEM-P1-042；真实Azure没有配置，未伪报成功。
+- HEM-P1-042本地候选现把TTS成本边界扩展为持久session/IP/项目预算和跨实例tuple租约：五类超限及quota/in-progress均不调用Azure，6键Upstash命令无原始session/IP/text且不存音频；生产缺store时fail-closed。TTS、API恢复、TypeScript、ESLint和297文件secret门禁通过。真实Azure与配置后Preview跨实例仍未验证，不能写成发布通过。

@@ -57,9 +57,18 @@ AGENT_SESSION_LEASE_SECONDS=30
 AGENT_API_SERVER_TOKEN=<独立服务间令牌>
 TRAINING_API_ALLOWED_ORIGINS=https://niubi1v.github.io
 TTS_ALLOWED_ORIGINS=https://niubi1v.github.io
+TTS_REQUEST_STORE_MODE=upstash
+TTS_SESSION_DAILY_REQUEST_LIMIT=60
+TTS_IP_HOURLY_REQUEST_LIMIT=120
+TTS_IP_DAILY_REQUEST_LIMIT=500
+TTS_PROJECT_DAILY_REQUEST_LIMIT=5000
+TTS_PROJECT_DAILY_CHAR_BUDGET=1000000
+TTS_TUPLE_LEASE_SECONDS=30
 ```
 
 这些预算使用`AGENT_REQUEST_STORE_MODE`选择的持久store，并与training attempt store复用同一组服务端Upstash凭据；原始session与IP只用于本地计算SHA-256摘要，不作为Redis键明文。项目token预算按输入字符上界与服务端最大输出token预留，只是成本熔断上界，不得写成真实供应商账单统计。
+
+TTS由`TTS_REQUEST_STORE_MODE`选择同一组Upstash凭据，原子执行session/IP/项目预算和跨实例tuple短租约。Redis不保存音频、原始session、IP或朗读文本。Preview/Production缺少持久store时云TTS fail-closed，客户端按既有安全路径降级到同语言浏览器语音或文字模式。
 
 `chat_completions`默认使用供应商SSE流并在服务端聚合为原有JSON响应，同时通过非敏感`Server-Timing`返回`firsttoken`耗时。仅当兼容供应商明确不支持SSE时才将`LLM_STREAMING_ENABLED=false`；非流式路径不会伪造首Token指标。DeepSeek的SSE合同以官方[`Create Chat Completion`](https://api-docs.deepseek.com/api/create-chat-completion)文档为准。
 

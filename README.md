@@ -120,12 +120,21 @@ AGENT_API_SERVER_TOKEN=optional_server_only_secret
 AZURE_SPEECH_KEY=your_secret_key
 AZURE_SPEECH_REGION=eastasia
 TTS_ALLOWED_ORIGINS=https://niubi1v.github.io
+TTS_REQUEST_STORE_MODE=upstash
+TTS_SESSION_DAILY_REQUEST_LIMIT=60
+TTS_IP_HOURLY_REQUEST_LIMIT=120
+TTS_IP_DAILY_REQUEST_LIMIT=500
+TTS_PROJECT_DAILY_REQUEST_LIMIT=5000
+TTS_PROJECT_DAILY_CHAR_BUDGET=1000000
+TTS_TUPLE_LEASE_SECONDS=30
 TRAINING_API_ALLOWED_ORIGINS=https://niubi1v.github.io
 TRAINING_STATE_SECRET=至少32字节的随机服务端密钥
 TRAINING_DEPLOYMENT_TIER=practice
 ```
 
 以上Agent预算全部由服务端执行：session/attempt/IP/项目窗口在持久store中原子检查，超限返回429且不会调用LLM。项目token预算是按输入字符上界加服务端最大输出token做的保守成本预留，不是供应商账单金额。Preview/Production缺少持久store时继续fail-closed；不得退回只靠浏览器按钮节流。
+
+以上TTS预算同样只在服务端执行，并复用Upstash凭据；Redis只保存哈希键、计数和短租约，不保存音频、原始session、IP或朗读文本。缺少持久store时Preview/Production云TTS安全失败，前端仍按既有路径降级为浏览器语音。
 
 GitHub Pages 构建使用的公开配置：
 

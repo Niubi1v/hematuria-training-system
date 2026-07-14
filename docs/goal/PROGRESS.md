@@ -371,3 +371,10 @@
 - 前端现发送当前sessionId/attempt/case/language/runtime mode；服务端复用签名session校验。缺失、伪造、过期、跨病例、跨语言、跨mode均401，voice语言不一致400，全部providerCalls=0。
 - cache/single-flight tuple加入session摘要；同文本不同session均MISS，Redis/缓存/日志不保存原始签名。TTS API/voice 2项、TypeScript、ESLint、296文件scanner通过；桌面/移动Playwright云失败降级2/2（4.6秒），本地Next服务已停止。
 - 跨实例TTS配额仍开放，不把进程内single-flight和session鉴权写成全局成本熔断；真实Azure仍因未配置而按浏览器语音降级。
+
+### HEM-P1-042 持久TTS预算与tuple租约（2026-07-14）
+
+- 失败基线把session日预算设为1：同一合法Patient session换IP、换文本的第二项旧实现仍200并再次调用Azure stub，证明实例内IP窗口与Promise合并不能形成全局成本边界。
+- 最小修复在Azure前原子检查session日、IP小时、IP日、项目日请求和项目日字符预算，并取得按session隔离tuple摘要的短租约。生产/Vercel无Upstash时503 fail-closed；同进程相同tuple仍合并为一项成功Promise，不把音频写入Redis。
+- 五类低阈值预算均429且provider不增加；模拟Upstash合同验证6个哈希键、owner acquire→provider→release、quota/in-progress零provider调用，命令不含原始session/IP。TTS API/voice、API recovery、TypeScript、ESLint及297文件scanner均exit0。
+- 当前只是本地工程合同；真实Azure、配置后的Preview跨实例429/425、TTL恢复和日窗口仍待HEM-P1-020人工配置后验收。`data/**`、医学事实、419审核、18条隔离、`needs_revision`、评分和真实环境变量零修改。

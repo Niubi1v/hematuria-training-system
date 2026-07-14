@@ -671,3 +671,16 @@ Preview变量只核对名称/作用域：LLM相关变量覆盖Preview；`TRAININ
 | 浏览器降级 | 显式本地Next，Playwright grep `cloud TTS failure`，desktop+mobile | exit0，2/2，4.6秒；仍显示浏览器语音降级且语音profile正确；测试后服务已停止 |
 
 真实Azure、跨实例TTS预算和Preview配置未验证，不登记为通过。
+
+## HEM-P1-042 持久TTS预算与跨实例tuple租约（2026-07-14）
+
+| 检查 | 精确命令/环境 | 退出码与结果 |
+|---|---|---|
+| 失败基线 | bundled Node运行`test-tts-api.ts`，`TTS_SESSION_DAILY_REQUEST_LIMIT=1`，同session换IP/文本 | exit1，约0.7秒；第二项旧实现实际200并产生第二次provider调用 |
+| 五类预算与fail-closed | `node_modules/.bin/tsx.cmd scripts/test-tts-api.ts` | exit0，0.8秒；session日、IP小时、IP日、项目日请求、项目日字符均超限拒绝且provider不增加；Vercel无持久store为503 |
+| 持久命令合同 | 同一专项模拟Upstash REST，不访问真实服务/密钥 | exit0；6键原子准入，owner释放，quota为429、in-progress为425，后两者provider调用0；命令无原始session/IP |
+| TTS回归 | `test-tts-api.ts`；`test-tts.ts` | 2项exit0，1.1秒；四voice、session/cache隔离、TTL、冷并发和100项淘汰继续通过 |
+| TypeScript | `tsc --noEmit`，沙箱外只读依赖junction | exit0，1.7秒；沙箱内首次因无法读取已安装`xlsx`产生环境性TS2307，不是源码错误 |
+| ESLint / API recovery / scanner | `node scripts/run-lint.mjs`；`tsx scripts/test-api-recovery.ts`；`node scripts/scan-repository-secrets.mjs` | 三项exit0；scanner覆盖297个tracked/candidate文件且不输出秘密值 |
+
+本证据验证本地逻辑和模拟持久命令形状，不代表Preview已经配置Upstash、真实跨实例租约或Azure语音通过；这些外部项保持BLOCKED。

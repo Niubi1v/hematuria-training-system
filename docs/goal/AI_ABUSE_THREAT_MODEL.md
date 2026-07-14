@@ -16,7 +16,7 @@
 | `/api/session/init` | 无 | POST/OPTIONS、CORS、16 KiB、IP实例限流、权威attempt token、case/language/mode绑定、幂等初始化 | 跨实例session配额与持久限流 |
 | `/api/agent-chat` | DeepSeek/配置的LLM | POST/OPTIONS、CORS、64 KiB、签名session、case/language/mode、幂等single-flight；本轮新增Patient-only角色/阶段、请求字段白名单、JSON和问题/历史长度边界、持久session并发lease，以及session/attempt/IP/项目多维预算 | Preview持久store配置与真实跨实例负载验收、provider错误率熔断/告警 |
 | `/api/training-action` | 无 | POST/OPTIONS、96 KiB、签名attempt、stage/action、CAS、重放与幂等；history-log和score在此 | 各动作持久多维配额和字段级大小上限 |
-| `/api/tts` | Azure TTS | Origin、方法、16 KiB JSON、字段/文本/voice白名单、Patient session能力、有界实例限流、session隔离的100项音频缓存与100项冷请求single-flight | 跨实例single-flight与持久配额 |
+| `/api/tts` | Azure TTS | Origin、方法、16 KiB JSON、字段/文本/voice白名单、Patient session能力、session/IP/项目持久预算、跨实例tuple租约、session隔离的100项音频缓存与100项本地冷请求single-flight | Preview持久store配置与真实跨实例负载验收 |
 | `/api/patient-reply`、`/api/session/complete-profile` | 无 | 允许Origin也统一410；无旧provider路径 | 保持退役 |
 
 ## 已证实攻击路径与处置
@@ -49,9 +49,9 @@
 
 1. Agent持久预算工程合同已存在，但Preview缺少持久attempt/request store配置时会fail-closed；配置后的真实跨实例429、TTL恢复和日窗口仍待验收。
 2. provider连续错误率熔断和异常调用量告警尚未实现；管理员可用现有`LLM_ENABLE_AI_PATIENT/AGENTS`关闭AI，但目前没有自动短时熔断。
-3. TTS已具备body上限、Patient session能力与同实例冷single-flight，但还没有跨实例single-flight或持久配额。
+3. TTS持久预算和跨实例tuple租约已有本地/模拟Upstash合同；Preview未配置并实测持久store前，不宣称真实跨实例通过。
 
-建议顺序：在配置后的Preview执行真实跨实例预算验收；本地继续处理TTS session能力/持久预算与provider错误率熔断。任何持久配额配置缺失在Preview/Production应fail-closed，不得退回只靠客户端按钮节流。
+建议顺序：在配置后的Preview执行Agent/TTS真实跨实例预算验收；本地继续处理provider错误率熔断。任何持久配额配置缺失在Preview/Production应fail-closed，不得退回只靠客户端按钮节流。
 
 ### HEM-P1-038：TTS冷并发与请求体资源边界
 
@@ -68,6 +68,16 @@
 修复：前端携带当前Patient session tuple；服务端复用`verifySessionCapability`并绑定attempt、case、language和规范化mode。缺失、伪造、过期或跨tuple能力统一在Azure前401，voice必须与session语言一致。音频缓存与single-flight tuple加入session SHA-256摘要，不保存原始签名，也不跨Patient session复用个性化音频。
 
 证据：全部能力拒绝`providerCalls=0`；不同session同文本均为MISS；桌面/移动浏览器“云语音失败→对应浏览器语音”2/2通过。该证据不代表真实Azure或跨实例配额通过。
+
+### HEM-P1-042：TTS跨实例预算与重复合成
+
+失败基线：仅有进程内IP窗口和Promise合并。相同有效session换IP、换文本可持续调用Azure；两个serverless实例也可同时合成同一tuple。
+
+修复：在Azure调用前通过服务端持久store原子检查session日、IP小时、IP日、项目日请求和项目日字符预算，并取得按session隔离tuple摘要的短租约。生产/Vercel缺少Upstash时fail-closed；本地使用内存适配器。只保存哈希键和计数，不把音频、原始session、IP或文本写入Redis。相同进程继续共享Promise；跨实例同tuple由租约返回可重试的425，配额超限返回429，均不调用Azure。
+
+配置名称：`TTS_REQUEST_STORE_MODE`、`TTS_SESSION_DAILY_REQUEST_LIMIT`、`TTS_IP_HOURLY_REQUEST_LIMIT`、`TTS_IP_DAILY_REQUEST_LIMIT`、`TTS_PROJECT_DAILY_REQUEST_LIMIT`、`TTS_PROJECT_DAILY_CHAR_BUDGET`、`TTS_TUPLE_LEASE_SECONDS`。全部为服务端变量，复用现有Upstash凭据。
+
+证据：五类低阈值配额均在超限时保持provider计数；模拟Upstash合同验证6键原子准入、owner释放、quota/in-progress不调用provider，命令不含原始session/IP。真实Preview跨实例与Azure仍待配置后验收。
 
 ## 日志要求
 

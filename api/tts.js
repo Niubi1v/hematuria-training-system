@@ -1,7 +1,8 @@
 const { createHash } = require("node:crypto");
-const { parseJsonBody, positiveInteger, setRateLimitHeaders, takeRateLimit } = require("../server/requestSecurity.js");
+const { clientKey, parseJsonBody, positiveInteger, setRateLimitHeaders, takeRateLimit } = require("../server/requestSecurity.js");
 const { verifySessionCapability } = require("../server/sessionCapability.js");
 const { normalizeAttemptMode } = require("../server/trainingState.js");
+const { acquireTtsRequest, releaseTtsRequest } = require("../server/ttsRequestStore.js");
 
 const allowedVoices = new Set([
   "zh-CN-XiaoxiaoNeural",
@@ -159,17 +160,30 @@ module.exports = async function handler(req, res) {
     res.setHeader("Retry-After", "1");
     return res.status(429).json({ code: "tts_concurrency_limited", message: "Too many TTS requests are in progress" });
   }
-  const promise = synthesize({ speechKey, region, ssml }).then((result) => {
-    if (result.statusCode === 200) {
-      if (audioCache.size >= 100) audioCache.delete(audioCache.keys().next().value);
-      audioCache.set(key, { tuple, audio: result.audio, expiresAt: Date.now() + AUDIO_CACHE_TTL_MS });
+  const promise = (async () => {
+    let durableLease;
+    try {
+      durableLease = await acquireTtsRequest({ sessionId: body.sessionId, clientId: clientKey(req), tupleKey: key, textLength: text.length });
+      const result = await synthesize({ speechKey, region, ssml });
+      if (result.statusCode === 200) {
+        if (audioCache.size >= 100) audioCache.delete(audioCache.keys().next().value);
+        audioCache.set(key, { tuple, audio: result.audio, expiresAt: Date.now() + AUDIO_CACHE_TTL_MS });
+      }
+      return result;
+    } catch (error) {
+      const code = String(error?.message || error);
+      if (code === "tts_quota_exceeded") return { statusCode: 429, retryAfter: "60", error: { code, message: "TTS quota exceeded" } };
+      if (code === "tts_request_in_progress") return { statusCode: 425, retryAfter: "1", error: { code, message: "An equivalent TTS request is already in progress" } };
+      return { statusCode: 503, error: { code: "tts_request_store_unavailable", message: "TTS request protection is unavailable" } };
+    } finally {
+      await releaseTtsRequest(durableLease).catch(() => {});
     }
-    return result;
-  });
+  })();
   const entry = { tuple, promise };
   inFlightAudio.set(key, entry);
   try {
     const result = await promise;
+    if (result.retryAfter) res.setHeader("Retry-After", result.retryAfter);
     if (result.statusCode !== 200) return res.status(result.statusCode).json(result.error);
     return sendAudio(res, result.audio, "MISS");
   } finally {

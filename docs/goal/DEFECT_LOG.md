@@ -248,4 +248,4 @@
 - `HEM-P1-039`（本地工程修复，待push/CI）：同session不同幂等键可同时进入provider，失败基线`providerCalls=2`。新增Upstash/内存session租约后第二项429且零provider调用，首项结束后可恢复；相同键幂等不变。
 - `HEM-P1-040`（OPEN）：provider有有限重试和安全fallback，但没有跨请求错误率自动熔断或异常调用量告警。不得以无限重试或定时空请求代替；需先建立可控时钟/计数失败合同。
 - `HEM-P1-041`（本地工程修复，待push/CI）：TTS旧路径无session也200。现绑定Patient session的attempt/case/language/mode，能力拒绝providerCalls=0，cache按session摘要隔离；桌面/移动降级2/2。跨实例预算拆为HEM-P1-042。
-- `HEM-P1-042`（OPEN）：TTS的IP限流和single-flight仍是进程内；有效session可用不同tuple跨实例消耗Azure。需要复用持久store增加session/IP/项目日预算；不得把音频二进制塞入Redis或跨session共享缓存。
+- `HEM-P1-042`（本地工程修复，待push/CI与Preview配置验收）：失败基线中同session换IP/文本的第二次请求仍200并调用Azure stub。现于provider前原子执行session日、IP小时/日、项目日请求/字符预算及跨实例tuple租约；五类超限、quota/in-progress和serverless缺store均保持provider计数。Redis命令仅含6个哈希键，不保存音频、原始session/IP/text。真实Preview跨实例仍受HEM-P1-020配置阻塞。
