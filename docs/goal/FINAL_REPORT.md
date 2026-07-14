@@ -308,3 +308,5 @@
 - 当前候选尚未提交/push，不能登记为远程关闭。推送后必须等待Node22 Actions与Vercel Preview，并把新的准确HEAD交给长期QA在真实360/390设备复测软键盘与safe-area。
 - 代码提交`f37309f`已普通push；Vercel deployment `FcCWHyxh2mTCCavtvwGLd7gJTgT2`及Preview Comments success。首轮Actions run `29309491866`仅在测试的精确`scrollTop=0`断言失败（45/46，实际40px仍处于上翻区），不是页面重新回底。
 - QA合同已改为直接验证距底部阈值、新消息入口及恢复后末条几何；本地按CI 2-worker重复6/6。当前需提交该测试/证据修正并等待下一轮Node22 CI，PR继续Draft。
+- 最终测试合同提交`4fed0764e9894b34da1d3f7620df00468ff4f9bb`已普通push。Actions run `29309939497` / build job `87011370852` completed/success（4分24秒），Node22完整行为、TypeScript、ESLint、repository scanner、Playwright、82页build、bundle及clean gate全部通过；Vercel deployment `DTHT4KnLh6Eyz8NnkecexSqLFeE3`与Preview Comments success，Pages deploy skipped，PR仍为Draft。
+- HEM-P1-027工程门禁关闭；推荐长期QA准确从`4fed0764e9894b34da1d3f7620df00468ff4f9bb`或本证据提交后代，在真实360/390设备复测软键盘、safe-area、开场白、手动上翻、新消息入口和末条可见性。剩余发布阻塞仍为HEM-P1-020外部Preview持久配置/真实AI与性能，以及HEM-P0-001/023具名医学裁决；没有修改医学事实、审核状态或生产环境。

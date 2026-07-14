@@ -260,3 +260,4 @@
 - `HEM-P1-027`（本地工程修复，待push/CI与独立QA）：原QA断言已纳入主Playwright并先稳定失败7px。根因不是composer高度本身，而是移动端页面级sticky能越过尚在视口下方的聊天容器；英文换行证明固定像素补丁无效。
 - 当前候选采用移动normal-flow + 聚焦/输入/visualViewport几何校正，桌面sticky使用实际测量高度的显式spacer。四视口双语、既有输入可见性、20轮手动上翻/新消息、完整46项浏览器及构建/扫描均通过。未降低44px触控目标、未隐藏开场、未删除或放宽旧断言。
 - 首轮远程CI run `29309491866`为45/46；唯一失败是QA新增断言将上翻语义过度限定为`scrollTop=0`，实际40px仍远离底部且没有强制回底。已改为产品阈值合同（距底部>72px），新消息前后均验证；CI同并发本地6/6，待下一轮远程确认。
+- `HEM-P1-027`（工程关闭；独立真机QA待复测）：测试合同修正提交`4fed076`普通push后，Actions run `29309939497` completed/success，Node22 Playwright、完整行为、类型、lint、82页build、bundle/scanner与clean gate全部通过；Vercel两项success，Pages deploy skipped。没有放宽会话、几何、新消息或末条可见性语义。真实360/390设备软键盘与safe-area仍是独立QA项，不因自动化绿灯伪报完成。

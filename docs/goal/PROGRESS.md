@@ -404,3 +404,5 @@
 - 本里程碑唯一完整Playwright为46/46、69.3秒exit0，含会话/重连/fallback/日志/快速双击/刷新/TTS/临床数据/评分与axe。TypeScript、ESLint、82/82构建、25 JS bundle及298文件scanner均exit0；`data/**`、医学事实、审核状态和360评分零修改。当前待小步提交、普通push、Node22 CI与独立QA复测。
 - `f37309f`普通push后Vercel两项success；Actions run `29309491866`在Playwright 45/46失败。首条真实错误为移动20轮测试把“手动上翻”错误写成`scrollTop===0`，CI稳定得到40px但仍距底部超过72px并未自动回底；其余依赖/数据/医学/行为/类型/lint/scanner均已通过。
 - 测试合同改为直接断言上翻后及新消息到达后“距底部>72px”，并继续要求新消息入口、回到底部、末条回答不被覆盖。按CI相同2 workers重复桌面/移动各3次6/6、23.2秒；6 workers压力跑曾因Next dev解析中断仅4/6，未误记为产品通过。
+- 测试合同修正提交`4fed0764e9894b34da1d3f7620df00468ff4f9bb`已在fetch确认本地仅领先1、落后0且工作树干净后普通push。Draft PR #1保持Draft；Actions run `29309939497` completed/success（build 4分24秒），Node22下完整行为、TypeScript、ESLint、repository scanner、Playwright、82页build、bundle及最终clean gate全部success。Vercel deployment `DTHT4KnLh6Eyz8NnkecexSqLFeE3`和Preview Comments success，Pages deploy按PR策略skipped。
+- HEM-P1-027工程门禁由“待CI”推进为“工程关闭、独立真机QA待复测”。推荐长期QA从`4fed0764e9894b34da1d3f7620df00468ff4f9bb`或本证据提交的后代，在真实360/390设备复测软键盘升降、safe-area、开场白、手动上翻和末条消息；不能用CI仿真冒充真机验收。
