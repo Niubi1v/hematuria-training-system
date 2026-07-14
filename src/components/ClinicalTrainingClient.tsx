@@ -640,8 +640,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const ttsFallbackNotifiedRef = useRef(false);
   const timeoutHandledRef = useRef(false);
   const allowNavigationRef = useRef(false);
-  const trainingStateTokenRef = useRef("");
-  const trainingInitPromiseRef = useRef<Promise<string> | null>(null);
+  const trainingStateTokenRef = useRef<{ attemptId: string; token: string } | null>(null);
+  const trainingInitPromiseRef = useRef<{ attemptId: string; promise: Promise<string> } | null>(null);
   const trainingActionQueueRef = useRef<Promise<void>>(Promise.resolve());
   const sessionInitAbortRef = useRef<AbortController | null>(null);
   const autoSessionInitRef = useRef<{ key: string; promise: Promise<SessionInitResponse>; controller: AbortController } | null>(null);
@@ -697,14 +697,15 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   })).filter((group) => group.items.length > 0), []);
 
   const ensureTrainingStateToken = useCallback(async () => {
-    if (trainingStateTokenRef.current) return trainingStateTokenRef.current;
-    if (trainingInitPromiseRef.current) return trainingInitPromiseRef.current;
-    trainingInitPromiseRef.current = (async () => {
+    const attemptId = attempt.attemptId;
+    if (trainingStateTokenRef.current?.attemptId === attemptId) return trainingStateTokenRef.current.token;
+    if (trainingInitPromiseRef.current?.attemptId === attemptId) return trainingInitPromiseRef.current.promise;
+    const promise = (async () => {
       const storageKey = `hematuria-training-state-v3:${attempt.attemptId}`;
       try {
         const saved = sessionStorage.getItem(storageKey);
         if (saved) {
-          trainingStateTokenRef.current = saved;
+          trainingStateTokenRef.current = { attemptId, token: saved };
           return saved;
         }
       } catch { /* The signed state can continue in memory. */ }
@@ -713,11 +714,16 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         action: "init-attempt", caseId: caseData.id, attemptId: attempt.attemptId,
         language: lang, mode: runtimeMode, requestId: initRequestId
       }, "", initRequestId, 0);
-      trainingStateTokenRef.current = initialized.stateToken;
+      trainingStateTokenRef.current = { attemptId, token: initialized.stateToken };
       try { sessionStorage.setItem(storageKey, initialized.stateToken); } catch { /* Memory fallback. */ }
       return initialized.stateToken;
-    })().finally(() => { trainingInitPromiseRef.current = null; });
-    return trainingInitPromiseRef.current;
+    })();
+    const pending = { attemptId, promise };
+    trainingInitPromiseRef.current = pending;
+    promise.finally(() => {
+      if (trainingInitPromiseRef.current === pending) trainingInitPromiseRef.current = null;
+    }).catch(() => undefined);
+    return promise;
   }, [attempt.attemptId, caseData.id, lang, runtimeMode]);
 
   async function trainingAction<T>(body: Record<string, unknown>): Promise<T> {
@@ -730,7 +736,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         requestId,
         body.action === "history-log" ? 0 : 2
       );
-      trainingStateTokenRef.current = result.stateToken;
+      trainingStateTokenRef.current = { attemptId: attempt.attemptId, token: result.stateToken };
       try { sessionStorage.setItem(`hematuria-training-state-v3:${attempt.attemptId}`, result.stateToken); } catch { /* Memory fallback. */ }
       return result.payload;
     });
@@ -910,8 +916,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }, [lang]);
 
   useEffect(() => {
-    trainingStateTokenRef.current = "";
-    trainingInitPromiseRef.current = null;
+    if (trainingStateTokenRef.current?.attemptId !== attempt.attemptId) trainingStateTokenRef.current = null;
+    if (trainingInitPromiseRef.current?.attemptId !== attempt.attemptId) trainingInitPromiseRef.current = null;
     trainingActionQueueRef.current = Promise.resolve();
   }, [attempt.attemptId]);
 
@@ -1071,9 +1077,14 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     if (timeline.length > 0 && !window.confirm(next === "en" ? "Switching language starts a separate attempt. Continue?" : "切换语言将开始独立训练记录，是否继续？")) return;
     const attemptMode: AttemptMode = runtimeMode === "osce" ? "osce" : runtimeMode === "rct" ? "rct" : "free";
     const nextAttempt = createAttempt(caseData.id, attemptMode, next);
+    autoSessionInitRef.current?.controller.abort();
+    autoSessionInitRef.current = null;
     sessionInitAbortRef.current?.abort();
     patientReplyAbortRef.current?.abort();
     aiGenerationRef.current += 1;
+    trainingStateTokenRef.current = null;
+    trainingInitPromiseRef.current = null;
+    trainingActionQueueRef.current = Promise.resolve();
     setAttempt(nextAttempt);
     writeJsonStorage(attemptPointerKey(caseData.id, attemptMode, next), nextAttempt);
     setLang(next);
