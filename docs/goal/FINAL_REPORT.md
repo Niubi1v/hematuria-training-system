@@ -358,3 +358,10 @@
 - HEM-P1-032根因为确定性简化器的总长80阈值早于外层安全过滤，导致安全长事实被替换为generic unknown但仍携带matched slot。
 - 候选仅做无损换行：126个42×3代表回复与获准当前slot原文标准化后完全一致；不安全或无法满足总安全界限的来源显式安全阻断并空slot。没有摘要、编造、极性翻转或跨slot泄露。
 - P004/P005/P006来源阻断、18条冲突、历史/疼痛边界、完整行为、类型和lint通过。032尚未提交；030/031已有4个本地小提交。待网络恢复后fetch、普通push、Node22 CI及长期QA 6216矩阵复测。
+
+### 2026-07-14 18:23 三项Patient路由P1本地完成与远程阻塞
+
+- HEM-P1-030/031/032现为六个本地原子提交，HEAD=`25ef0cba76e77c4cffd8e9caac1b4733ab83015b`。42×37双语双改写QA矩阵真实重跑为6216路由、6216重复一致性、168边界检查、0失败；144/144医学冲突隔离，provider调用0。
+- 本地完整行为、受影响专项、TypeScript、ESLint与敏感信息扫描均通过；医学数据、审核状态、HEM-P0-001/023、161来源阻塞和360评分未改变。
+- GitHub CLI认证和API可用，远端仍为`4aa96d5ff20a1f4e637529d6ede46720b428c5ef`；Git smart-HTTP三次fetch均因443连接失败。按push前安全门禁，尚未push六个提交，也没有把旧HEAD的Node22/Preview绿灯归到新候选。
+- 下一步固定为：网络恢复后`git fetch --prune origin`，确认远端领先0，普通push当前专项分支；保持PR #1 Draft，等待Actions Node22完整Playwright和Vercel检查。不Ready、不合并main、不部署Production。

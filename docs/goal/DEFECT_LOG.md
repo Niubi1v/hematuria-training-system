@@ -306,17 +306,18 @@
 
 ### HEM-P1-030 Patient Session病史路由不完整/安全边界误拦截
 
-- **状态**：本地工程候选完成，待提交、Node22 CI及独立QA 42×37矩阵复测。
+- **状态**：本地工程与独立QA矩阵通过，待普通push和Node22 CI。
 - **失败基线**：QA `490fdd8`报告378/6216个路由探针失败；本地最小合同首先稳定得到中文`prior_care`实际`[]`、期望`[prior_care]`。
 - **根因**：canonical未覆盖既往诊疗和`unable to pass urine`；structured未覆盖`previous cancer`和“导过尿”；诊断/报告边界在明确既往史matcher之前执行。
 - **最小修复**：补足精确改写；先分类matcher，但仅对明确历史语境、白名单历史slot且不含结果/诊断细节意图时允许越过过宽边界。安全例外不是通用关键词绕过。
 - **红队证据**：纯“以前做过膀胱镜/既往肿瘤史”到达历史matcher；“以前做过膀胱镜，检查结果是什么”“以前的肿瘤诊断是什么”仍分别`report_boundary`/`diagnosis_boundary`且空slot。
 - **医学边界**：三个P001来源因教师元语言/诊断词继续`unsafe_deterministic_answer`，不展示、不收集；18条冲突、419审核、42例`needs_revision`、161来源阻塞和医学真值零修改。
-- **待办**：普通push后由Node22 CI复核，再让长期QA重跑6216路由矩阵；HEM-P1-031/032不由本项顺带关闭。
+- **矩阵复核**：当前HEAD以QA脚本复核42×37双语双改写，6216/6216路由、6216/6216重复一致性均通过，0失败；144/144直接冲突隔离，providerCalls=0。
+- **待办**：普通push后由Node22 CI复核；HEM-P1-031/032各自保持独立提交与证据。
 
 ### HEM-P1-031 英文特异疼痛额外命中通用pain并扩大隔离
 
-- **状态**：本地工程候选完成，待提交/CI/长期QA矩阵。
+- **状态**：本地工程与独立QA矩阵通过，待普通push/Node22 CI。
 - **失败基线**：`Do you have flank pain?`实际命中`flank_pain + pain`；QA报告252个错配、额外60次quarantine。
 - **根因**：通用英语`\bpain\b`与flank/radiating/colicky matcher并行累计，没有特异性消歧。
 - **修复**：最终slot集合按意图抑制词面附带的通用pain；明确一般疼痛或`any other pain`仍保留general/compound语义。
@@ -325,9 +326,16 @@
 
 ### HEM-P1-032 非空已匹配事实被长度保护降级为通用unknown
 
-- **状态**：本地工程候选完成，待提交/Node22 CI/长期QA矩阵。
+- **状态**：本地工程与独立QA矩阵通过，待普通push/Node22 CI。
 - **失败基线**：P001英文foamy urine路由正确但公开reply为`I'm not sure about that right now.`；QA报告191个唯一case-slot-language、365探针实例。
 - **根因**：`conciseDeterministicReply`使用总长80的前置阈值，比外层“每行80、总长180”更严，导致81–106字符的安全单slot事实被无条件抹除。
 - **修复**：对无禁词的当前slot原文做无损换行；标准化后必须与原文相同。不能安全投影的内容进入既有`unsafe_deterministic_answer`并清空slot，不把安全失败计为已询问。
 - **证据**：42×3=126个代表安全长回复语义逐字保持且单行≤80；P004/P005/P006不安全来源、18条冲突和历史/疼痛边界回归通过；完整行为、类型、lint通过。
 - **医学边界**：不修改原始双语值、审核状态或医学极性，不裁决161来源问题。
+
+### EXT-GIT-20260714-03 GitHub smart-HTTP再次间歇性不可达
+
+- **状态**：BLOCKED_EXTERNAL；本地工程不受影响，远程发布门禁受阻。
+- **证据**：2026-07-14 18:20—18:22 CST，`gh auth status`成功且GitHub API读取远程HEAD=`4aa96d5ff20a1f4e637529d6ede46720b428c5ef`；三次`git fetch --prune origin`（默认两次、命令级HTTP/1.1一次）均约21秒后因`github.com:443`连接失败退出128。
+- **影响**：本地HEAD `25ef0cb`的六个提交尚未push，不能产生该HEAD的Actions、Node22 Playwright或Vercel证据。
+- **处置**：保留干净工作树；网络恢复后重新fetch并确认远端领先0，再普通push。禁止force、API update-ref、main写入、PR Ready/merge或Production部署。

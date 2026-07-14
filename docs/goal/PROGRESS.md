@@ -456,3 +456,10 @@
 - 最小修复不摘要、不截断、不生成医学语义：无禁词且总长在安全界内时只按空格/标点换行，标准化空白后与获准单slot原文完全相同；含禁词、项目符号或超过总安全界限的非onset来源交给外层显式安全阻断并清空slot，不再伪装为已收集unknown。
 - 42例×glomerular/triggers/occupation共126个公开回复逐字语义保持、每行≤80且无generic unknown。P004/P005/P006不安全来源仍`unsafe_deterministic_answer`，18条冲突隔离不变。
 - 三个Patient路由P1里程碑最终完整`pnpm test`34.3秒exit0；相关历史/疼痛/session/Agent/冲突、TypeScript和ESLint也通过。当前032尚未提交/push；030/031已有本地原子提交，GitHub 443暂时不稳定。
+
+### HEM-P1-030/031/032 独立矩阵复核与发布阻塞（2026-07-14 18:23 CST）
+
+- 三项代码与证据已形成六个本地原子提交，当前HEAD为`25ef0cba76e77c4cffd8e9caac1b4733ab83015b`；工作树在复核报告清理后干净，`data/**`零差异。
+- 选择性读取QA分支的`patient-session-matrix.mjs`并以UTF-8、禁用provider的本地rule模式复核：42例×37槽位×中英双语×2改写，`routeChecks=6216`、`repeatChecks=6216`、`failureInstances=0`、`failureGroups=0`；144/144直接医学冲突隔离事件命中，`providerCalls=0`。首次错误启动产生的3192项`llm_error_fallback`已证明是PowerShell参数/编码失真，不登记为产品失败。
+- `gh auth status`与GitHub API成功，API确认远端专项分支仍为已知`4aa96d5ff20a1f4e637529d6ede46720b428c5ef`；但三次正式`git fetch --prune`（含一次性HTTP/1.1）均在约21秒因`github.com:443`不可达失败。
+- 因push前fetch强制门禁未通过，没有绕过为API改ref或直接push。六个本地提交尚未进入远端，新HEAD没有Node22 CI/Vercel结论；网络恢复后必须重新fetch，确认远端领先0，再普通push并观察Draft PR #1。
