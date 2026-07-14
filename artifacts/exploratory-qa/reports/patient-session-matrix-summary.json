@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-13T22:54:36.888Z",
+  "generatedAt": "2026-07-14T07:20:00.182Z",
   "mode": "local-rule-no-provider",
   "medicalTruthAdjudicated": false,
   "medicalBlocksPreserved": [
@@ -17,122 +17,17 @@
     "routeChecks": 6216,
     "repeatChecks": 6216,
     "boundaryChecks": 168,
+    "unsafeDeterministicSourceBlocks": 161,
     "providerCalls": 0,
     "expectedDirectQuarantineEvents": 144,
     "quarantineEventsObserved": 204
   },
   "result": {
     "passed": false,
-    "failureInstances": 1127,
-    "failureGroups": 127
+    "failureInstances": 1079,
+    "failureGroups": 117
   },
   "failureGroups": [
-    {
-      "kind": "english_opening_contains_cjk",
-      "language": "en",
-      "metrics": {
-        "characters": 23,
-        "lines": 1,
-        "maxLineCharacters": 23,
-        "bulletShaped": false
-      },
-      "expectedSlotIds": [],
-      "actualSlotIds": [],
-      "safetyFlags": [],
-      "caseIds": [
-        "P001",
-        "P002",
-        "P003",
-        "P004",
-        "P008",
-        "P010",
-        "P012"
-      ],
-      "count": 7
-    },
-    {
-      "kind": "english_opening_contains_cjk",
-      "language": "en",
-      "metrics": {
-        "characters": 22,
-        "lines": 1,
-        "maxLineCharacters": 22,
-        "bulletShaped": false
-      },
-      "expectedSlotIds": [],
-      "actualSlotIds": [],
-      "safetyFlags": [],
-      "caseIds": [
-        "P005",
-        "P006",
-        "P007",
-        "P009",
-        "P011"
-      ],
-      "count": 5
-    },
-    {
-      "kind": "english_opening_contains_cjk",
-      "language": "en",
-      "metrics": {
-        "characters": 19,
-        "lines": 1,
-        "maxLineCharacters": 19,
-        "bulletShaped": false
-      },
-      "expectedSlotIds": [],
-      "actualSlotIds": [],
-      "safetyFlags": [],
-      "caseIds": [
-        "HX-ADD-001",
-        "HX-ADD-003",
-        "HX-ADD-011",
-        "HX-ADD-013",
-        "HX-ADD-026",
-        "HX-ADD-030"
-      ],
-      "count": 6
-    },
-    {
-      "kind": "english_opening_contains_cjk",
-      "language": "en",
-      "metrics": {
-        "characters": 18,
-        "lines": 1,
-        "maxLineCharacters": 18,
-        "bulletShaped": false
-      },
-      "expectedSlotIds": [],
-      "actualSlotIds": [],
-      "safetyFlags": [],
-      "caseIds": [
-        "HX-ADD-002",
-        "HX-ADD-004",
-        "HX-ADD-005",
-        "HX-ADD-006",
-        "HX-ADD-007",
-        "HX-ADD-008",
-        "HX-ADD-009",
-        "HX-ADD-010",
-        "HX-ADD-012",
-        "HX-ADD-014",
-        "HX-ADD-015",
-        "HX-ADD-016",
-        "HX-ADD-017",
-        "HX-ADD-018",
-        "HX-ADD-019",
-        "HX-ADD-020",
-        "HX-ADD-021",
-        "HX-ADD-022",
-        "HX-ADD-023",
-        "HX-ADD-024",
-        "HX-ADD-025",
-        "HX-ADD-027",
-        "HX-ADD-028",
-        "HX-ADD-029"
-      ],
-      "count": 24
-    },
     {
       "kind": "history_question_false_boundary",
       "slotId": "tumor_history",
@@ -3321,120 +3216,6 @@
         "P012"
       ],
       "count": 42
-    },
-    {
-      "kind": "teacher_meta_leak",
-      "slotId": "clots",
-      "language": "zh",
-      "variantIndex": 0,
-      "metrics": {
-        "characters": 20,
-        "lines": 1,
-        "maxLineCharacters": 20,
-        "bulletShaped": false
-      },
-      "expectedSlotIds": [],
-      "actualSlotIds": [],
-      "safetyFlags": [],
-      "caseIds": [
-        "P004"
-      ],
-      "count": 1
-    },
-    {
-      "kind": "teacher_meta_leak",
-      "slotId": "clots",
-      "language": "zh",
-      "variantIndex": 1,
-      "metrics": {
-        "characters": 20,
-        "lines": 1,
-        "maxLineCharacters": 20,
-        "bulletShaped": false
-      },
-      "expectedSlotIds": [],
-      "actualSlotIds": [],
-      "safetyFlags": [],
-      "caseIds": [
-        "P004"
-      ],
-      "count": 1
-    },
-    {
-      "kind": "teacher_meta_leak",
-      "slotId": "hematuria_phase",
-      "language": "zh",
-      "variantIndex": 0,
-      "metrics": {
-        "characters": 32,
-        "lines": 1,
-        "maxLineCharacters": 32,
-        "bulletShaped": false
-      },
-      "expectedSlotIds": [],
-      "actualSlotIds": [],
-      "safetyFlags": [],
-      "caseIds": [
-        "P005"
-      ],
-      "count": 1
-    },
-    {
-      "kind": "teacher_meta_leak",
-      "slotId": "hematuria_phase",
-      "language": "zh",
-      "variantIndex": 1,
-      "metrics": {
-        "characters": 32,
-        "lines": 1,
-        "maxLineCharacters": 32,
-        "bulletShaped": false
-      },
-      "expectedSlotIds": [],
-      "actualSlotIds": [],
-      "safetyFlags": [],
-      "caseIds": [
-        "P005"
-      ],
-      "count": 1
-    },
-    {
-      "kind": "teacher_meta_leak",
-      "slotId": "hematuria_phase",
-      "language": "zh",
-      "variantIndex": 0,
-      "metrics": {
-        "characters": 30,
-        "lines": 1,
-        "maxLineCharacters": 30,
-        "bulletShaped": false
-      },
-      "expectedSlotIds": [],
-      "actualSlotIds": [],
-      "safetyFlags": [],
-      "caseIds": [
-        "P006"
-      ],
-      "count": 1
-    },
-    {
-      "kind": "teacher_meta_leak",
-      "slotId": "hematuria_phase",
-      "language": "zh",
-      "variantIndex": 1,
-      "metrics": {
-        "characters": 30,
-        "lines": 1,
-        "maxLineCharacters": 30,
-        "bulletShaped": false
-      },
-      "expectedSlotIds": [],
-      "actualSlotIds": [],
-      "safetyFlags": [],
-      "caseIds": [
-        "P006"
-      ],
-      "count": 1
     }
   ]
 }

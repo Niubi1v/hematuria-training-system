@@ -19,7 +19,7 @@
 
 ## HEM-P1-027：360×800 sticky 问诊输入遮挡患者开场白
 
-- 级别/状态：P1，OPEN；移动端核心问诊内容可读性受损，不阻断其他本地测试。
+- 级别/状态：P1，RESOLVED_ENGINEERING / PASS_EMULATION；Production `ff1a932` 的自动浏览器回归已消除遮挡。真实手机软键盘与 safe-area 仍为 `BLOCKED_REAL_DEVICE`，不得据此宣称真机通过。
 - 页面/路径：训练工作台 `/cases/P001/`；病例 P001；中文；viewport `360×800`。
 - 操作步骤：清空浏览器上下文 → 打开 P001 → 选择中文 → 保持页面首屏且不滚动 → 比较患者开场文字与 sticky 输入面板的几何边界。
 - 预期：输入面板顶边不早于开场文字底边，患者开场白完整可见。
@@ -32,6 +32,7 @@
 - 建议方向：为移动 chat scroller 增加与 sticky composer 高度一致的底部安全区，或在 360px 宽度降低 composer/标题占高；保留输入首屏可见与 44px 触控目标，并用 360/390 几何断言回归。
 - 医学专家裁决：否。
 - `96fcf80` 受影响回归：`360×800` 当前 `opening bottom=661`、`composer y=654`，仍遮挡 7px（1/1）；`390×844` 1/1 通过。旧基线的 19px、6/6 及代表截图继续保留，说明新基线缩小了遮挡但没有满足断言，状态不变。
+- `ff1a932` 修复回归：中文/英文 × `360×800`、`390×844`、`1280×720`、`1440×900` 共 16/16 `PASS_EMULATION`。开场白完整可见；输入区聚焦后仍在视口内；8 轮后手动上翻，再到达第 9 条消息时未被强制拉到底部，“有新消息”入口出现并可回到底部；最后一条答复底边不超过 composer 顶边；无横向滚动或异常移动端底部 spacer。旧 19px/6 次失败证据保留为历史复现，不删除也不改写。
 
 ## HEM-P2-028：阶段提交按钮快速双击产生两次独立反馈请求与重复时间线
 
@@ -52,7 +53,7 @@
 
 ## HEM-P1-029：英文 Patient Session 开场白仍为中文
 
-- 级别/状态：P1，OPEN；42 例英文问诊从第一句即发生语言回落，破坏双语训练主流程。
+- 级别/状态：P1，RESOLVED_LOCAL_QA；Production `ff1a932` 的规则链路与四视口页面回归均不再复现。真实 DeepSeek 仍未验证。
 - 页面/路径：公开 `POST /api/session/init/` 与训练工作台 `/cases/P001/`；全 42 例；英文；viewport `1440×900`、`1280×720`、`390×844`、`360×800`。
 - 操作步骤：全新浏览器上下文打开病例 → 等待 health/session 初始化 → 点击 `English` → 等待请求体 `language=en` 的 session 响应 → 比较响应开场白与页面首条患者消息的语言。
 - 预期：英文 session 开场白不含 CJK，页面首条患者消息为英文。
@@ -65,6 +66,7 @@
 - 建议方向：按 `language` 构造并缓存开场白，英文使用 patient-facing English chief complaint；对 session cache 的 `caseId/language/mode` 继续保持隔离，并用 42 例双语初始化矩阵回归。
 - 医学专家裁决：否；仅判断输出语言，不裁决开场内容的医学真值。
 - `96fcf80` 受影响回归：为避免 HEM-P1-034 遮蔽本缺陷，浏览器先保存英文偏好再直接进入 P001；有效英文 attempt/session 均为 200，但开场仍含 CJK，四 viewport 4/4。中文中途切换英文的 401 单独登记 HEM-P1-034。
+- `ff1a932` 修复回归：42/42 英文 session 开场均不含 CJK；四固定 viewport 的英文开场 4/4 `PASS_EMULATION`；`providerCalls=0`。该结论只关闭本地确定性语言回落，不代表真实 provider 的英文自然度通过。
 
 ## HEM-P1-030：Patient Session 病史路由不完整且自然病史问法被安全边界误拦截
 
@@ -113,7 +115,7 @@
 
 ## HEM-P1-033：确定性 canonical 回答绕过输出过滤并把教师提示送到公开 API
 
-- 级别/状态：P1，OPEN；患者接口暴露后台问诊提示，前端虽替换为泛化答复，却仍把该 slot 记为已收集，形成隐藏病史泄露与训练完整性问题。
+- 级别/状态：P1，RESOLVED_LOCAL_QA；Production `ff1a932` 不再把教师元语言送入患者回复，确定性不安全来源改为 fail-closed。相关医学来源修订仍保持阻塞。
 - 页面/路径：公开 `POST /api/agent-chat/`；浏览器 `/cases/P004/`；P004 血块、P005/P006 血尿时相；中文；四固定 viewport。
 - 操作步骤：本地 rule session 对 P004 问“有血块吗”，对 P005/P006 问血尿时相 → 检查 API 回复中教师元语言 → 在浏览器提交 P004 问题，观察前端安全替换、收集状态、console/network。
 - 预期：公开患者 API 不返回“未主动诉/需追问”等后台提示；若安全过滤拒绝回答，不应把未实际告知学生的 fact 计为已收集。
@@ -126,10 +128,11 @@
 - 建议方向：所有 canonical/structured deterministic 返回在 API 层统一执行 patient output 过滤；将“元语言清洗失败”和“事实未回答”明确返回，前端仅在安全答复实际展示后更新 collected/asked slots。
 - 医学专家裁决：否；只移除教师元语言和修复收集状态，不修改 P004/P005/P006 的医学事实。相关内容本身仍需既有医学审核。
 - `96fcf80` 受影响回归：公开训练状态和 session capability 均经真实签名校验后，P004 场景仍在四 viewport 4/4 失败；因此不是旧 stub 绕过鉴权造成的假阳性。
+- `ff1a932` 修复回归：原 6 个教师元语言实例降为 0，P004 四固定 viewport 4/4 `PASS_EMULATION`。另有 161 个来源因 `unsafe_deterministic_answer` 被 API 明确 fail-closed，空 facts/slots，未再误记为匹配；这些项目记为 `BLOCKED_SOURCE_REVISION`，不构成医学事实通过，也不解除 HEM-P0-001/023。
 
 ## HEM-P1-034：中文尝试切换英文时复用旧训练状态导致 session 401
 
-- 级别/状态：P1，OPEN；用户按界面承诺开始独立英文尝试，但新的英文会话无法建立，双语主流程被阻断。
+- 级别/状态：P1，RESOLVED_LOCAL_QA；Production `ff1a932` 的中英切换、刷新和快速切换回归未再出现 401 / `invalid_attempt_token`。
 - 页面/路径：训练工作台 `/cases/P001/` 与公开 `POST /api/session/init/`；病例 P001；中文切换英文；viewport `1440×900`、`1280×720`、`390×844`、`360×800`。
 - 操作步骤：全新上下文打开 P001 → 等待中文 `init-attempt` 与 session 均 200 → 点击 English → 捕获请求体为 `caseId=P001/language=en/mode=free` 的 session 初始化 → 检查状态、错误码和页面连接状态。
 - 预期：语言切换创建独立英文 attempt，先取得与新 attempt/language 绑定的训练状态，再以该状态初始化英文 session；HTTP 200。
@@ -142,5 +145,21 @@
 - 证据：`screenshots/live-language-switch-authorization-1440x900-failure.png`（Git 代表帧）；其余三 viewport 截图、四份 trace、失败录像、console/network、HTML/JUnit 仅本机保留。
 - 建议方向：语言/attempt 改变时在同一同步状态转换中清空 token/promise/queue 和旧 session，再允许 auto session effect 运行；或把 token 明确按 `attemptId` 键控而不是单一 ref。补充中文→英文、英文→中文、快速往返、刷新和并发 health/session 回归。
 - 医学专家裁决：否；仅为客户端授权状态和 effect 时序问题。
+- `ff1a932` 修复回归：四固定 viewport 中文→英文 4/4 `PASS_EMULATION`；Production 定向 E2E 另覆盖英文→中文、刷新后切换与快速往返。能力矩阵 19/19 通过，非法、篡改、过期、跨病例、跨语言、跨 mode/attempt session 仍被拒绝；`providerCalls=0`。
 
-基线追赶说明：当前 Production `52c24325ddd28262458f5eff4f37fe2866d53305` 相对上述运行时证据基线 `96fcf80` 只修改 secret scanner、package script 和审计文档，没有任何已登记缺陷涉及的 UI/API/server/data 差异；故开放状态保持，未把代码等价当作重复复现次数。
+## HEM-P2-043：本地 Next 开发环境病例目录链接对 42 个 `.html` 路由全部返回 404
+
+- 级别/状态：P2，OPEN_LOCAL_ENV；影响本地开发/QA 从病例目录进入训练页，不外推到部署环境。
+- 页面/路径：本地 Next 开发服务 `/cases/` → `/cases/P001/index.html` 至 `/cases/P042/index.html`；全 42 例；中英文目录；viewport `1440×900`。
+- 操作步骤：启动 Production `ff1a932` 本地 Next 服务与脱敏 API adapter → 打开病例目录 → 逐一读取并点击真实病例卡片 anchor → 记录 document 状态 → 对同病例再直接打开 `/cases/Pxxx/`、刷新、切换英文并刷新回中文。
+- 预期：目录点击、直接 URL、刷新以及中英文显示均进入有效病例，不能 404。
+- 实际：目录 42 个 anchor 均指向 `/cases/Pxxx/index.html`，本地 Next 开发服务点击后 42/42 返回 404；同一服务的 `/cases/Pxxx/` 直接 URL 42/42 为 200，刷新 42/42 为 200，中英文 UI 42/42 可见，因此问题限定为目录 href 与本地路由解析不兼容。
+- 复现：42/42 病例目录点击稳定失败；42/42 直接 URL、42/42 刷新、42/42 中文、42/42 英文对照通过。
+- AI 来源：N/A；路由/页面壳测试，`providerCalls=0`，不涉及医学裁决。
+- 状态变化时间线：`/cases/` 200 → 读取病例卡片 href → 点击 `.html` URL → document 404；对照直接目录 URL 200 → 英文 UI 可见 → 刷新 200 → 中文 UI 可见。
+- HTTP/console/network：只保存 document pathname、状态与耗时；失败为 42 个 `.html` document 404。未保存 header、query、Cookie、Authorization、签名或正文。
+- 证据：本机 `reports/local-p001-p042-route-matrix.json`、`screenshots/local-p001-p042-display-route-matrix-1440x900-failure.png`、`traces/local-p001-p042-display-route-matrix-1440x900.zip`；聚合结论见 Git 中 `reports/ff1a932-priority-regression-summary.json`。大 trace 与逐例明细不提交 Git。
+- 建议方向：目录 href 按运行环境生成 Next 可解析的 `/cases/Pxxx/`，或为 `.html` 路由提供等价 rewrite；同时保留静态托管产物的路径合同。回归需分别覆盖 Next dev、静态 GitHub Pages 和 Vercel，不能用单一环境替代。
+- 医学专家裁决：否。
+
+基线说明：本轮运行时与审计基线均为 Production `ff1a932785d891749ae8e73130bde8857062e194`，由 QA 分支普通 merge 得到 `a8b87d7522eac811f0781e1aa2cc7b8cb36752e6`。GitHub Pages 当前部署仍为 `main@5a3ad1199ae5e591160f12e410260287f0051875`，标记 `BLOCKED_BASELINE_MISMATCH`；精确 SHA 的 Vercel Preview 需要登录，匿名访问标记 `BLOCKED_PREVIEW_AUTH`，两者均不用于替代本地结论。

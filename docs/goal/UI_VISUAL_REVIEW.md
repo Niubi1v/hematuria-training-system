@@ -1,15 +1,15 @@
 # UI 自动视觉审查
 
-状态：长期执行中；当前 Production SHA `52c24325ddd28262458f5eff4f37fe2866d53305`；运行时 UI 证据采集于代码等价的 `96fcf80f5a825585be53715e65851fbc113a7ab0`。
+状态：长期执行中；当前 Production 与运行时 UI 证据基线均为 `ff1a932785d891749ae8e73130bde8857062e194`。
 
 ## 固定视口与页面
 
 | viewport | 首页 | 病例目录中/英 | P001 训练页 | 20 轮恢复后 | 状态 |
 | --- | --- | --- | --- | --- | --- |
-| 1440×900 | PASS | PASS | PASS | 不适用 | 布局 PASS；HEM-P1-029/033 |
-| 1280×720 | PASS | PASS | PASS | 不适用 | 布局 PASS；HEM-P1-029/033 |
-| 390×844 | PASS | PASS | PASS | PASS | 布局 PASS；HEM-P1-029/033 |
-| 360×800 | PASS | PASS | FAIL | 不适用 | HEM-P1-027/029/033 |
+| 1440×900 | PASS | PASS | PASS_EMULATION | PASS_EMULATION | HEM-P1-027/029/033/034 本地定向通过 |
+| 1280×720 | PASS | PASS | PASS_EMULATION | PASS_EMULATION | HEM-P1-027/029/033/034 本地定向通过 |
+| 390×844 | PASS | PASS | PASS_EMULATION | PASS_EMULATION | HEM-P1-027/029/033/034 本地定向通过；真机阻塞 |
+| 360×800 | PASS | PASS | PASS_EMULATION | PASS_EMULATION | HEM-P1-027/029/033/034 本地定向通过；真机阻塞 |
 
 ## 判定项
 
@@ -50,3 +50,11 @@
 - HEM-P2-028 在 `1440×900` 仍显示两条相同阶段提交时间线；新基线观测继续是 `2/2/2`，没有幂等修复证据。
 - 新 live trace 内浏览器只持有 QA 脱敏占位符；完整训练签名与 session capability 不进入页面、截图、trace、console 或 network 摘要。
 - 后续 `52c2432` 只更新 secret scanner/审计文档，无 UI/API/data 运行时代码差异；因此保留上述四 viewport 结论，不重复生成相同截图和大 trace。
+
+## 2026-07-14 第五轮 `ff1a932` 优先视觉回归
+
+- Production 定向 E2E 8/8 通过；本地真实 handler 浏览器文件最终 28/28 通过。HEM-P1-027 单独覆盖中文/英文 × 四固定 viewport 的开场布局和手动上翻，共 16/16 `PASS_EMULATION`。
+- `360×800` 与 `390×844` 的患者开场白完整可见；composer 聚焦后仍在视口内；最后一条消息不被输入区遮挡；手动上翻后新消息不强制回底；“有新消息”入口出现并可回到底部；四 viewport 均无横向滚动。移动端没有出现异常底部 spacer。
+- HEM-P1-029 的英文开场、HEM-P1-033 的患者输出隔离、HEM-P1-034 的中英切换分别在四固定 viewport 各 4/4 `PASS_EMULATION`；安全能力矩阵另为 19/19。
+- 本轮截图来自 headless Chromium 设备模拟。没有真实手机，因此软键盘顶起行为与物理 safe-area 明确标记 `BLOCKED_REAL_DEVICE`，不冒充真机通过。
+- 本地病例直接 URL、刷新与中英文 UI 为 42/42 通过；病例目录 `.html` 链接在 Next dev 为 42/42 404（HEM-P2-043）。GitHub Pages 因基线不匹配阻塞，精确 SHA Vercel Preview 因登录保护阻塞，未用本地成功替代远程环境结论。

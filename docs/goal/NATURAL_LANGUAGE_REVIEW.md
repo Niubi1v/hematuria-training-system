@@ -48,3 +48,11 @@
 - P004 教师元语言在有效 session capability 下仍能进入公开 API，四 viewport 复现；结论仍只判断患者口吻与隐藏提示，不裁决血块事实。
 - 新的 19 项能力安全矩阵全部通过，但它只证明访问边界、过期和幂等合同；`providerCalls=0`，不能用来通过真实 AI 自然度、错误总结纠正、20 轮语义一致性或医学正确性。
 - Production `52c2432` 相对 `96fcf80` 没有 Patient Session、matcher、UI 或医学数据变化；仅 scanner/审计更新不构成自然语言缺陷修复证据。
+
+## 2026-07-14 Production `ff1a932` 复核
+
+- 42/42 英文 session 开场均不再含 CJK，四固定 viewport 英文页面 4/4 `PASS_EMULATION`；HEM-P1-029 关闭为 `RESOLVED_LOCAL_QA`。这只证明确定性本地开场语言纯度，不代表真实 provider 英文自然度。
+- 原 6 个教师元语言实例降为 0，P004 四 viewport 4/4 通过；HEM-P1-033 关闭为 `RESOLVED_LOCAL_QA`。161 个不安全确定性来源被明确 fail-closed，仍为 `BLOCKED_SOURCE_REVISION`，QA 未裁决其医学事实。
+- 矩阵仍有 1,079 个失败实例/117 组，对应 HEM-P1-030/031/032 的路由、过匹配和 unknown 压缩问题；不得因 029/033 修复而把全 42 例自然语言链路记为通过。
+- 中文→英文、英文→中文、快速切换和刷新后切换的工程回归均未再出现 401 / `invalid_attempt_token`；非法、过期和跨病例 session 仍被拒绝。该结果是会话边界通过，不是自然语言或医学通过。
+- 本轮 `providerCalls=0`。真实 DeepSeek 的中英文自然度、故意错误总结纠正、20 轮语义一致性、来源日志和性能仍受 Preview 权限/环境阻塞。

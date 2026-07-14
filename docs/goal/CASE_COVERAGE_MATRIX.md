@@ -4,10 +4,10 @@
 
 | 病例 | 页面壳 | 中文协议/UI | 英文协议/UI | 真实 AI | 七阶段/360 | 视觉证据 | 备注 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| P001 | SHELL | UI_FIXTURE+CONTRACT_17 | UI_FIXTURE+CONTRACT_6 | REAL_AI_BLOCKED | UI_FIXTURE+CONTRACT_360 | 4_VIEWPORTS | 中文 20 轮；七阶段在 1440/390 完成；实际英文 session 开场 4 viewport 失败（HEM-P1-029） |
+| P001 | SHELL+LOCAL_ROUTE_BILINGUAL | UI_FIXTURE+CONTRACT_17 | UI_FIXTURE+CONTRACT_6 | REAL_AI_BLOCKED | UI_FIXTURE+CONTRACT_360 | 4_VIEWPORTS_PASS_EMULATION | 中文 20 轮；七阶段在 1440/390 完成；HEM-P1-027/029/034 已在 `ff1a932` 本地回归通过；真实 AI/真机仍阻塞 |
 | P002 | SHELL | CONTRACT_17 | CONTRACT_6 | REAL_AI_BLOCKED | CONTRACT_360 | PENDING |  |
 | P003 | SHELL | CONTRACT_17 | CONTRACT_6 | REAL_AI_BLOCKED | CONTRACT_360 | PENDING |  |
-| P004 | SHELL | CONTRACT_17 | CONTRACT_6 | REAL_AI_BLOCKED | CONTRACT_360 | 4_VIEWPORTS | 实际 API/UI 血块问法教师元语言失败（HEM-P1-033） |
+| P004 | SHELL+LOCAL_ROUTE_BILINGUAL | CONTRACT_17 | CONTRACT_6 | REAL_AI_BLOCKED | CONTRACT_360 | 4_VIEWPORTS_PASS_EMULATION | HEM-P1-033 在 `ff1a932` 本地回归通过；161 个不安全来源统一 fail-closed，来源修订仍阻塞 |
 | P005 | SHELL | CONTRACT_17 | CONTRACT_6 | REAL_AI_BLOCKED | CONTRACT_360 | PENDING |  |
 | P006 | SHELL | CONTRACT_17 | CONTRACT_6 | REAL_AI_BLOCKED | CONTRACT_360 | PENDING |  |
 | P007 | SHELL | CONTRACT_17 | CONTRACT_6 | REAL_AI_BLOCKED | CONTRACT_360 | PENDING |  |
@@ -65,3 +65,11 @@
 - P001 新增四 viewport 中文→英文授权回归并 4/4 失败（HEM-P1-034）；P001 的英文开场纯度仍 4/4 失败。P004 教师元语言仍 4/4 失败。
 - HEM-P1-027 新基线移动回归为 `360×800` 失败、`390×844` 通过；HEM-P2-028 桌面双击回归仍失败。未重新把 P002–P042 标成完整 UI 七阶段通过。
 - 当前 Production `52c2432` 相对该运行时基线没有病例、UI、API、server 或 `data/**` 差异，只增强 secret scanner；上述逐病例覆盖和失败计数继续适用。
+
+## Production `ff1a932` 增量覆盖
+
+- 全 42 例签名规则矩阵重跑：84 session、6,216 路由、6,216 重放、168 边界；失败由 1,127 实例/127 组降为 1,079 实例/117 组。HEM-P1-029 的 42 个英文开场失败与 HEM-P1-033 的 6 个教师元语言实例均降为 0；HEM-P1-030/031/032 仍开放。
+- 161 个不安全确定性来源由公开 API fail-closed，返回 `unsafe_deterministic_answer`、空 facts/slots；单独记为 `BLOCKED_SOURCE_REVISION`，不能作为医学内容通过。
+- 本地 Next 的 `/cases/P001/`–`/cases/P042/` 直接 URL、页面刷新、中文和英文 UI 均为 42/42 通过；病例目录实际 `.html` anchor 点击为 42/42 404，登记 HEM-P2-043。该本地环境结果不替代部署环境。
+- GitHub Pages 当前指向旧 `main@5a3ad119...`，为 `BLOCKED_BASELINE_MISMATCH`；精确 `ff1a932` Vercel Preview 匿名访问进入登录页，为 `BLOCKED_PREVIEW_AUTH`。两者均没有被记为病例路由通过或失败。
+- HEM-P1-027 的中英文 × 四固定 viewport 共 16/16 `PASS_EMULATION`；HEM-P1-029/033/034 的浏览器定向回归各 4/4 通过；真实手机软键盘/safe-area 保持 `BLOCKED_REAL_DEVICE`，真实 AI 保持 `REAL_AI_BLOCKED`。

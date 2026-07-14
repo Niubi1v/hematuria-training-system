@@ -1,27 +1,15 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-13T22:54:37.079Z",
+  "generatedAt": "2026-07-14T07:20:00.302Z",
   "mode": "api-handler-local-rule-no-provider",
   "medicalTruthAdjudicated": false,
   "checks": 17,
   "providerCalls": 0,
   "result": {
     "passed": false,
-    "failures": 7
+    "failures": 5
   },
   "failures": [
-    {
-      "kind": "english_opening_contains_cjk",
-      "probeId": "init-en-p001",
-      "metrics": {
-        "characters": 23,
-        "lines": 1,
-        "maxLineCharacters": 23
-      },
-      "expectedSlotIds": [],
-      "actualSlotIds": [],
-      "safetyFlags": []
-    },
     {
       "kind": "route_mismatch",
       "probeId": "prior-care-en",
@@ -60,18 +48,6 @@
       ],
       "fallbackReason": "report_boundary",
       "generationSource": "safety_boundary"
-    },
-    {
-      "kind": "teacher_meta_leak",
-      "probeId": "clots-meta-zh",
-      "metrics": {
-        "characters": 20,
-        "lines": 1,
-        "maxLineCharacters": 20
-      },
-      "expectedSlotIds": [],
-      "actualSlotIds": [],
-      "safetyFlags": []
     },
     {
       "kind": "route_mismatch",

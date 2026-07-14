@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-14T15:22:02+08:00",
+  "productionSha": "ff1a932785d891749ae8e73130bde8857062e194",
+  "qaBaselineMergeSha": "a8b87d7522eac811f0781e1aa2cc7b8cb36752e6",
+  "medicalTruthAdjudicated": false,
+  "providerCalls": 0,
+  "sensitiveValuesRecorded": false,
+  "priorityRegressions": {
+    "HEM-P1-027": {
+      "status": "PASS_EMULATION",
+      "fixedViewports": ["1440x900", "1280x720", "390x844", "360x800"],
+      "languages": ["zh", "en"],
+      "browserChecks": 16,
+      "browserFailures": 0,
+      "openingFullyVisible": true,
+      "composerDoesNotCoverOpening": true,
+      "manualScrollPreserved": true,
+      "newMessageEntryWorks": true,
+      "latestMessageUnobscured": true,
+      "horizontalOverflow": false,
+      "realDeviceSoftKeyboard": "BLOCKED_REAL_DEVICE",
+      "realDeviceSafeArea": "BLOCKED_REAL_DEVICE"
+    },
+    "HEM-P1-029": {
+      "status": "PASS_LOCAL_HANDLER_AND_EMULATION",
+      "englishOpeningsWithCjkBefore": 42,
+      "englishOpeningsWithCjkAfter": 0,
+      "browserViewportsPassed": 4
+    },
+    "HEM-P1-033": {
+      "status": "PASS_LOCAL_HANDLER_AND_EMULATION",
+      "teacherMetaLeakInstancesBefore": 6,
+      "teacherMetaLeakInstancesAfter": 0,
+      "browserViewportsPassed": 4,
+      "unsafeDeterministicSourceBlocks": 161,
+      "unsafeSourceBlockDisposition": "BLOCKED_SOURCE_REVISION_NOT_PRODUCT_PASS"
+    },
+    "HEM-P1-034": {
+      "status": "PASS_LOCAL_HANDLER_AND_EMULATION",
+      "browserViewportsPassed": 4,
+      "covered": ["zh_to_en", "en_to_zh", "rapid_switch", "refresh_then_switch"],
+      "invalidAttemptTokenObserved": false,
+      "securityMatrix": { "checks": 19, "failures": 0 }
+    }
+  },
+  "remainingRuleMatrix": {
+    "cases": 42,
+    "canonicalSlots": 37,
+    "languages": 2,
+    "routeChecks": 6216,
+    "repeatChecks": 6216,
+    "failureInstances": 1079,
+    "failureGroups": 117,
+    "unsafeDeterministicSourceBlocks": 161,
+    "status": "FAIL_REMAINING_HEM_P1_030_031_032"
+  },
+  "routeEnvironments": {
+    "localNextDev": {
+      "directUrl200": 42,
+      "refresh200": 42,
+      "zhUiVisible": 42,
+      "enUiVisible": 42,
+      "catalogClick404": 42,
+      "status": "FAIL_DEV_CATALOG_INDEX_HTML"
+    },
+    "localProductionBuild": {
+      "status": "BLOCKED_ENV_CONFIG",
+      "reason": "NEXT_PUBLIC_API_BASE_URL was absent and QA did not modify environment configuration"
+    },
+    "githubPages": {
+      "url": "https://niubi1v.github.io/hematuria-training-system/",
+      "deployedSha": "5a3ad1199ae5e591160f12e410260287f0051875",
+      "expectedSha": "ff1a932785d891749ae8e73130bde8857062e194",
+      "status": "BLOCKED_BASELINE_MISMATCH"
+    },
+    "vercelPreview": {
+      "deploymentId": 5436064721,
+      "deploymentStatus": "success",
+      "sourceSha": "ff1a932785d891749ae8e73130bde8857062e194",
+      "url": "https://hematuria-training-system-40gxy7vk3-niubi1vs-projects.vercel.app",
+      "anonymousP001": "VERCEL_AUTH_HTML",
+      "anonymousP042": "VERCEL_AUTH_HTML",
+      "anonymousHealth": "VERCEL_AUTH_HTML",
+      "status": "BLOCKED_PREVIEW_AUTH"
+    }
+  }
+}

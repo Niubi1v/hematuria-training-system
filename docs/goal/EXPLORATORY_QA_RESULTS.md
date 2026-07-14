@@ -1,7 +1,7 @@
 # 探索式 QA 执行结果
 
-状态：长期执行中；当前 7 个开放 P1、1 个开放 P2，不得视为最终生产验收。
-被测 Production SHA：`52c24325ddd28262458f5eff4f37fe2866d53305`。最新基线 merge 后 QA HEAD：`1123859450c4f0117294e36b9711cb9ba65684b1`。
+状态：长期执行中；当前 3 个开放 P1、2 个开放 P2；另有真机、Preview、Pages 基线和医学阻塞，不得视为最终生产验收。
+被测 Production SHA：`ff1a932785d891749ae8e73130bde8857062e194`。新基线 merge 后 QA HEAD：`a8b87d7522eac811f0781e1aa2cc7b8cb36752e6`。
 
 ## 基线核验
 
@@ -143,3 +143,40 @@
 - 受保护 Preview 权限、真实 DeepSeek 与日志验证未满足。
 - Preview 可能缺少 `TRAINING_STATE_SECRET`，只允许核对配置状态，不得读取或修改值。
 - 当前客户端为聚合 JSON 响应；真实 provider 首 Token/P95 仍需 Preview 的服务端计时证据。
+
+## 2026-07-14 长期循环第 5 轮：Production `ff1a932`
+
+### 基线与合并门禁
+
+- `git fetch --prune` 成功，`origin/codex/hematuria-production-goal` 精确为 `ff1a932785d891749ae8e73130bde8857062e194`；QA 起始/远程均为 `4e3b3b1d107d34e2027229b835e2cbd21ddc61d4`，ahead/behind `0/0`。
+- 合并前受控文件无修改，只有已索引的本机大体积证据未跟踪；普通 push 返回 `Everything up-to-date`。随后以普通 merge `a8b87d7522eac811f0781e1aa2cc7b8cb36752e6` 纳入新 Production，36 个文件全部自动合并，无业务冲突。
+- 新 Production 包含 HEM-P1-027/029/033/034 及 display route、安全预算和熔断修复。QA 分支相对新 Production 的受控差异仍仅为测试、QA 文档、最小证据和 `package.json` 的 QA 测试入口；`data/**`、医学事实和审批状态零差异。
+
+### 优先缺陷与会话回归
+
+| 范围 | 本轮结果 | 判定边界 |
+| --- | --- | --- |
+| HEM-P1-027 四 viewport × 中英文 | `16/16 PASS_EMULATION` | 开场完整、composer 不覆盖、聚焦后输入在视口、无横向溢出；真机软键盘/safe-area=`BLOCKED_REAL_DEVICE` |
+| HEM-P1-027 手动上翻/新消息/末条 | 上述 8 个中英文滚动场景全部通过 | 上翻后距底部保持 `>72px`，新消息入口可见，点击后距底部 `<=1px`，末条底边不超过 composer 顶边 |
+| HEM-P1-029 | 42/42 英文 session 开场无 CJK；四 viewport 4/4 | 本地 rule/handler，`providerCalls=0`，不是 DeepSeek 自然度通过 |
+| HEM-P1-033 | 教师元语言泄露由 6 降为 0；四 viewport 4/4 | 161 个不安全来源答复被精确 fail-closed，记 `BLOCKED_SOURCE_REVISION`，不记医学或内容通过 |
+| HEM-P1-034 | 中文→英文四 viewport 4/4；既有合同覆盖英文→中文、刷新后切换和快速往返 | 不再出现 `401 / invalid_attempt_token`；能力负例 19/19 继续拒绝，`providerCalls=0` |
+| 受影响 Production E2E | 8/8 | 四视口布局、双向/刷新/快速切换、隐藏 fact 不收集和 20 轮滚动合同 |
+| 最终本地浏览器批次 | 28/28，59.4 秒 | 四固定 viewport；每个场景保存截图、trace、console/network，本机大证据不整体提交 |
+
+规则矩阵为 42×37×双语×双问法：84 session、6,216 路由、6,216 重放、168 边界。HEM-P1-029/033 信号清零后仍有 `1,079` 个失败实例/`117` 组，归属 HEM-P1-030/031/032；另有 161 个精确安全阻塞独立计数。公开 handler 烟测从旧 7 个代表失败降为 5 个；新增 `Content-Type: application/json` 只使 QA 调用符合新公开合同，没有放宽产品断言。
+
+### 路由与环境分栏
+
+| 环境 | 基线/权限 | P001–P042 结果 | 状态 |
+| --- | --- | --- | --- |
+| 本地 Next dev | `ff1a932`，本地 adapter + route fixture | 直接 URL 42/42=200；刷新 42/42=200；中/英 UI 42/42；目录 `.html` 点击 42/42=404 | `FAIL_DEV_CATALOG_INDEX_HTML`，HEM-P2-043 |
+| 本地 production build | 同 SHA，但未配置公开 API base | Next 编译/类型阶段通过，静态预渲染因 `NEXT_PUBLIC_API_BASE_URL` 缺失 fail-closed | `BLOCKED_ENV_CONFIG`；QA 未修改环境配置 |
+| GitHub Pages | 当前 deployment=`main@5a3ad119` | 根页/目录 200，但不是 `ff1a932` | `BLOCKED_BASELINE_MISMATCH`，不在旧代码上继续验收 |
+| Vercel Preview | deployment `5436064721` success，source=`ff1a932` | P001、P042、health 匿名探针均为 `Login – Vercel` HTML | `BLOCKED_PREVIEW_AUTH`，保护页 200 不算病例/API 通过 |
+
+### 外部阻塞与下一批
+
+- HEM-P0-001、HEM-P0-023、419 条模拟事实审批、真实 DeepSeek/日志、Preview 配置、真实首 Token/P95 均保持原阻塞；本轮没有读取或修改任何环境变量值或密钥。
+- HEM-P1-030/031/032 和 HEM-P2-028 继续 OPEN；新增 HEM-P2-043 仅影响本地 Next dev 目录点击，不能外推为已部署环境失败。
+- 下一批继续原长期计划中未完成且不依赖外部权限的七阶段、评分、恢复、数据 Agent 和逐例 UI 项，不因本轮优先复测完成而暂停 Goal。
