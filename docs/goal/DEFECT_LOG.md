@@ -261,3 +261,13 @@
 - 当前候选采用移动normal-flow + 聚焦/输入/visualViewport几何校正，桌面sticky使用实际测量高度的显式spacer。四视口双语、既有输入可见性、20轮手动上翻/新消息、完整46项浏览器及构建/扫描均通过。未降低44px触控目标、未隐藏开场、未删除或放宽旧断言。
 - 首轮远程CI run `29309491866`为45/46；唯一失败是QA新增断言将上翻语义过度限定为`scrollTop=0`，实际40px仍远离底部且没有强制回底。已改为产品阈值合同（距底部>72px），新消息前后均验证；CI同并发本地6/6，待下一轮远程确认。
 - `HEM-P1-027`（工程关闭；独立真机QA待复测）：测试合同修正提交`4fed076`普通push后，Actions run `29309939497` completed/success，Node22 Playwright、完整行为、类型、lint、82页build、bundle/scanner与clean gate全部通过；Vercel两项success，Pages deploy skipped。没有放宽会话、几何、新消息或末条可见性语义。真实360/390设备软键盘与safe-area仍是独立QA项，不因自动化绿灯伪报完成。
+
+### HEM-P1-043 第一阶段提交失败
+
+- **严重度/状态**：P1；本地工程候选完成，待Node22 CI与最新Preview直接复测。PR保持Draft。
+- **用户现象**：第一阶段点击提交失败，不能进入第二阶段；页面旧提示仅为“阶段提交失败，请重试”。
+- **已证实工程根因**：提交按钮没有同步单飞锁，快速双击产生2个不同幂等请求；永久配置错误`training_attempt_store_unavailable`在客户端catch路径仍按瞬时503重试，单次操作最多3次，并被折叠为通用提示。
+- **外部根因边界**：服务端在Vercel/production缺持久Upstash attempt store时按设计返回503。既有Preview作用域审计显示相关训练变量未覆盖Preview，但本轮无法取得登录态Preview网络日志，故当前实际HTTP状态/error code仍为待直接确认，不把代码推断冒充黑盒证据。
+- **修复**：阶段提交使用同步ref锁和提交中禁用态；持久store/签名配置错误不可重试；为配置、过期和状态不匹配提供不含token的双语提示。未关闭stage、token、session、case、language或mode校验。
+- **回归**：P001中英合法提交、双向切换、刷新、快速双击、过期token、跨病例token、七阶段与刷新阶段保持均有自动化覆盖。快速双击由2请求收敛为1；配置错误由最多3请求收敛为1。
+- **仍需人工/外部操作**：在Preview或分支专用Preview核对`TRAINING_STATE_SECRET`、`TRAINING_ATTEMPT_STORE_MODE`、`UPSTASH_REDIS_REST_URL`、`UPSTASH_REDIS_REST_TOKEN`及既有origin/tier变量的名称和作用域后重新部署；不得由Codex读取/生成值。随后用登录态Preview抓取当前失败请求并复测。

@@ -310,3 +310,11 @@
 - QA合同已改为直接验证距底部阈值、新消息入口及恢复后末条几何；本地按CI 2-worker重复6/6。当前需提交该测试/证据修正并等待下一轮Node22 CI，PR继续Draft。
 - 最终测试合同提交`4fed0764e9894b34da1d3f7620df00468ff4f9bb`已普通push。Actions run `29309939497` / build job `87011370852` completed/success（4分24秒），Node22完整行为、TypeScript、ESLint、repository scanner、Playwright、82页build、bundle及clean gate全部通过；Vercel deployment `DTHT4KnLh6Eyz8NnkecexSqLFeE3`与Preview Comments success，Pages deploy skipped，PR仍为Draft。
 - HEM-P1-027工程门禁关闭；推荐长期QA准确从`4fed0764e9894b34da1d3f7620df00468ff4f9bb`或本证据提交后代，在真实360/390设备复测软键盘、safe-area、开场白、手动上翻、新消息入口和末条可见性。剩余发布阻塞仍为HEM-P1-020外部Preview持久配置/真实AI与性能，以及HEM-P0-001/023具名医学裁决；没有修改医学事实、审核状态或生产环境。
+
+### 2026-07-14 HEM-P1-043 第一阶段提交本地交接
+
+- 基线`ff1a932785d891749ae8e73130bde8857062e194`确认配置齐全的真实训练handler可接受P001中英第一阶段、语言双向切换和刷新恢复；用户无法提交不是通过关闭安全校验解决的问题。
+- 已证实客户端缺陷为阶段提交无单飞锁（双击2请求）和永久配置503被重复重试并隐藏错误原因。候选将两者分别收敛为单请求，并保留全部attempt/session/stage/case/language/mode与签名校验。
+- 本地行为、医学治理、类型、lint、82页构建、bundle和secret门禁通过；desktop/mobile新增6项断言完成，但本地Node24 runner在结果后未退出并以124结束，正式浏览器结论须等push后Node22 CI。
+- 当前Preview直接请求证据仍受登录态/浏览器控制阻塞。根据既有变量作用域和服务端fail-closed实现，Preview缺持久attempt store/训练签名是高可信阻塞；仍需用户只配置既有变量值并重新部署后抓取实际HTTP/error code。Codex未读取、生成、修改或输出任何值。
+- 代码与测试已形成本地提交`3cb22cd`，尚未push，PR #1仍Draft。完成证据提交、普通push和远程门禁后，本节需补充最终HEAD、Actions run、Vercel deployment及长期QA准确复测步骤。
