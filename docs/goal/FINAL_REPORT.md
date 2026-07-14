@@ -373,3 +373,12 @@
 - 修复前失败测试已证明；修复后desktop/mobile专项2/2、受影响矩阵8/8、完整Playwright 54/54，完整行为、训练API/安全、类型、lint、82页构建、bundle与secret扫描全部exit0。`data/**`零差异，医学事实、419审核、18条冲突、`needs_revision`与360评分未变。
 - Preview仍受Vercel认证层阻塞，没有登录态应用POST证据，故不能宣称线上已验证。远端Draft PR #1 head仍为`4aa96d5`，旧Actions/Vercel结果不属于本地候选。
 - 代码/测试提交为`610eacf`。本轮遵守此前安全收尾要求：不恢复stash、不启动新P1/P2、不push包含既有七个本地提交的新代码、不Ready、不合并main、不部署Production。代码和文档形成可单独`git revert`的本地原子提交后暂停，等待明确的push/长期QA复测安排。
+
+### 2026-07-14 HEM-P1-043-R3 初始化竞态交接
+
+- 新用户截图对应独立P1，不是`attempt_not_found`恢复回归。真实浏览器复现的失败请求为训练`init-attempt` HTTP 502 `network_error`；没有发`stage-feedback`，但未ready提交按钮可点击且错误被通用化。
+- 修复把本地记录ready与服务端签名attempt ready分开：页面启动即单飞建立训练attempt；initializing/failed时禁止必然失败的stage请求；失败可显式单飞重试。AI preparing/degraded不阻断已ready训练attempt，0轮与1轮fallback均可提交。
+- 自动重复初始化已消除；restart清除旧token key；刷新、语言/session绑定、双击防重与`attempt_not_found`安全恢复保持。错误提示区分缺attempt、过期、阶段不匹配、网络和配置问题。
+- 本地工程证据：初始化矩阵14/14、restart 2/2、配置/单飞6/6；完整行为、类型、lint、82页build、25 JS bundle和303文件scanner通过。生产静态完整浏览器63/64，唯一rAF几何同步项在保持844px阈值后focused 2/2；干净Node22完整64项待PR CI。
+- `data/**`、医学事实、419审核、18条冲突、`needs_revision`及360评分未改。新候选尚未部署到可登录Preview；需要push后记录准确SHA、Actions、Vercel deployment及真实P001立即提交网络时间线。PR必须继续Draft，不Ready、不合并main、不部署Production。
+- 代码/测试原子提交为`c069abf`；回滚使用普通`git revert c069abf`，不得reset或重写既有提交。

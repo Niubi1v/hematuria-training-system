@@ -349,3 +349,14 @@
 - **安全边界**：`expired_attempt_token`、签名、case/language/mode/session/stage错误均不自动恢复；HEM-P0-023冲突提交回归不命中评分。未关闭attempt/token/stage校验，也未在前端伪造成功。
 - **证据**：修复前失败测试命中401与原提示；修复后desktop/mobile恢复、stage2推进及刷新保持通过，完整Playwright 54/54，完整行为/类型/lint/build/bundle/secret门禁通过，`data/**`零差异。
 - **提交/外部边界**：代码/测试提交为`610eacf`。未取得登录态Preview实际POST，不能断言用户线上故障已关闭；需在新候选进入Draft PR后复测实际status/error code和脱敏关联ID。当前没有push，也不复用远端`4aa96d5`的旧CI。
+
+### HEM-P1-043-R3 页面初始化期间第一阶段提交竞态
+
+- **严重度/状态**：P1；本地修复与专项门禁完成，待提交、Node22 CI和最新Preview复测。
+- **失败基线**：训练`init-attempt`被延迟时提交按钮仍enabled；首次初始化返回HTTP 502、`network_error`时，用户即时点击不会发出`stage-feedback`，但UI显示通用“阶段提交失败，请重试”，没有初始化恢复入口。
+- **根因**：`attemptReady`是本地持久化恢复标志，不是服务端签名attempt就绪标志；提交按钮未绑定训练token初始化状态。启动effect与AI session effect又可能在快速永久失败后先后各发一次初始化。
+- **修复**：独立训练attempt三态、启动即单飞初始化、失败结果按attempt缓存；未ready禁止stage请求，显式恢复按钮快速双击仍只新增一次初始化。AI session失败/fallback与训练attempt解耦，已ready时仍可提交。
+- **错误分类**：UI分别处理`attempt_not_found`、`token_expired`、`stage_mismatch`、`network_error`、配置错误和状态不匹配；未关闭任何token/session/stage/case/language/mode校验。
+- **缓存安全**：重新开始删除旧attempt的浏览器签名token；刷新继续恢复当前attempt。测试只断言token存在性和storage key，不输出值；临时trace已删除。
+- **证据**：初始化专项、0/1轮、AI preparing/degraded、fallback、刷新、restart、双击、丢失attempt和缺store均有desktop/mobile覆盖；完整行为/类型/lint/build/bundle/secret通过，`data/**`零差异。
+- **提交**：代码/测试原子提交`c069abf`；待证据提交、普通push和Node22 CI。

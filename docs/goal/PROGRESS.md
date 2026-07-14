@@ -472,3 +472,12 @@
 - 失败测试在修复前命中401和通用错误；修复后desktop/mobile恢复2/2、相关双语/刷新/双击/缺store矩阵8/8、完整Playwright 54/54。训练API、安全、attempt、恢复、stage flow、双语冲突、完整行为、类型、lint、82页构建、25 JS bundle及303文件secret扫描均exit0。
 - Vercel Preview仍受Standard Authentication保护，未取得登录态应用POST，故不把本地修复写成Preview已通过；PR远端仍是`4aa96d5`，旧CI不归属于本地候选。未修改`data/**`、医学事实、419审核、18条裁决、`needs_revision`、360评分或环境变量。
 - 代码/测试已保存为可回滚本地原子提交`610eacf`。按上一检查点“完成安全收尾后暂停、不要再普通push新代码”的边界，不自动发布包含既有七个未推送提交的分支；等待用户明确恢复push门禁或长期QA复测安排。
+
+### HEM-P1-043-R3 第一阶段初始化竞态（2026-07-14，本地候选）
+
+- 用户新截图发生在“人工智能患者正在准备中/状态确认中/0问0答”。真实Chromium失败基线确认：本地`attemptReady`仅表示浏览器记录已恢复，服务端`init-attempt`尚未完成时“提交本阶段”仍可点击；初始化HTTP 502 `network_error`后未发`stage-feedback`，但共享Promise错误被统一显示成“阶段提交失败，请重试”。
+- 最小修复将训练attempt状态独立为`initializing/ready/failed`并在本地记录恢复后立即单飞初始化。未ready时提交按钮禁用并显示“正在初始化训练会话”；失败显示分类提示和“重新初始化训练会话”。自动AI session、React重复effect及永久配置失败复用同一次初始化结果，不重复请求；仅用户显式重试或精确`attempt_not_found`恢复可清除失败并重试。
+- AI处于preparing/degraded或session初始化失败不等于训练attempt失败：只要签名训练attempt ready，0轮、1轮fallback和正常问答均可合法提交。重新开始现在删除旧attempt对应的sessionStorage签名token；刷新继续恢复同一合法attempt。
+- desktop/mobile初始化竞态矩阵14/14、restart 2/2、永久配置/单飞6/6通过；生产构建82/82。生产静态Playwright完整运行63/64，唯一失败为既有多行输入测试在既定rAF滚动执行前读取几何；保持844px阈值并改为等待下一帧后focused desktop/mobile 2/2。完整行为、类型、lint、25 JS bundle与303文件secret扫描均exit0；Node22干净64项仍待push后CI。
+- `data/**`、42例、572事实、419审核、18条冲突、`needs_revision`与360评分零修改。现有Preview是否命中新竞态需新提交部署后按真实网络时间线复测；不把本地结果冒充Preview通过。
+- 代码/测试已保存为原子提交`c069abf`；证据文档独立提交后再执行fetch/普通push门禁。
