@@ -315,3 +315,10 @@
 - 根因是`initSession`没有把`language`传入patient-facing profile构建，且开场白只调用中文简化主诉并硬编码中文问候。`24054cf`仅增加语言感知的安全简化主诉/问候，英文不读取完整英文病历，也不暴露疼痛、血尿时相、血块、诊断或评分点。
 - 修复后42例英文开场均非空、无CJK并含自然英文问候；中文主诉合同、42例×6英文Patient Agent、训练API/恢复/安全合同和TypeScript均exit0。repository scanner覆盖295个候选文件及历史/有界归档，scanner合同均exit0；受保护医学路径零diff。
 - 本地Node 24无法加载Next 15的ESLint patch，未把该运行时兼容失败记作源码失败；远程Node 22权威门禁中Lint success。Actions run `29297252637` / build job `86973354237` completed/success，Playwright、52页build、bundle/secret及clean gate全部success；Vercel两项success，Pages deploy skipped，PR继续Open/Draft。下一项转入HEM-P1-033。
+
+### HEM-P1-033 canonical教师元语言与隐藏覆盖（2026-07-14）
+
+- 直接规则链真实复现P004血块、P005/P006血尿时相：回答分别命中`未主动诉/需追问`，但仍返回`clots`或`hematuria_phase`。桌面浏览器失败基线进一步证明可见文本被替换后，localStorage仍保存`askedSlots=["clots"]`与`colorClots=true`。
+- `36061ad`在provider调用和公开返回前统一过滤deterministic/fallback；不安全回答只返回对应语言的自然不确定表达，清空matched facts/slots，并以`unsafe_deterministic_answer`记录非敏感原因。客户端同时只为实际通过安全检查并展示的回答更新覆盖；安全边界fallback不再误判为AI断连。
+- 修复后P004/P005/P006专项、desktop/mobile 2/2和完整practice 42/42通过；Patient/Agent/LLM、18冲突隔离、TypeScript、52/52生产构建、25 JS bundle及295文件repository scan均exit0。`data/**`、419决定、42例`needs_revision`、18冲突原值和360评分零修改。
+- 当前GitHub API实时确认远程仍为`0b066dc`，但`github.com:443` smart-HTTP多次连接重置/超时；本地提交`36061ad`暂未push，远程CI不得登记为通过。网络恢复后必须重新fetch、普通push并补Node22/PR/Vercel证据。

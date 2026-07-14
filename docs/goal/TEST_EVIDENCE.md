@@ -558,3 +558,18 @@ Preview未执行真实Upstash/DeepSeek验收，因为当前没有也不得读取
 | 敏感信息与医学路径 | `scan-repository-secrets.mjs`、`test-secret-scanner.mjs`及受保护路径diff | exit0；295文件+历史/有界归档，无值输出；`data/**`、审核表及医学输出零diff |
 
 远程：`24054cfe836cd977ee82a20ad544b701ae46e335`的Actions run `29297252637` / build job `86973354237`从`2026-07-14T00:56:00Z`至`01:00:13Z` completed/success；Node 22上的完整行为、TypeScript、ESLint、repository scanner、Playwright、52页构建、bundle扫描和clean gate均success。Vercel Deployment与Preview Comments success，Pages deploy skipped，PR #1保持Draft。
+
+## HEM-P1-033 deterministic教师元语言与覆盖原子性
+
+| 检查 | 精确命令/环境 | 退出码与结果 |
+|---|---|---|
+| API/规则失败基线 | Node直接调用P004`有血块吗`、P005/P006`血尿是全程的吗` | 三例均返回HTTP层可见canonical教师元语言；filter `ok=false`，仍携带对应matched slot |
+| 浏览器失败基线 | Playwright desktop `--grep HEM-P1-033`，受控unsafe API envelope | exit1；可见泛化回答，但持久状态为`askedSlots=["clots"]`、`colorClots=true` |
+| 服务端修复专项 | `tsx scripts/test-dynamic-patient-session.ts` | exit0；三例公开回复均通过filter、无教师元语言、matched facts/slots为空 |
+| 浏览器修复专项 | 同一Playwright测试，desktop+mobile | exit0，2/2；对话无元语言且隐藏fact不进入asked/collected |
+| 完整浏览器回归 | `playwright test practice.spec.mjs` | exit0，42/42，45.6秒；含会话切换、重连、日志同步、双击、20轮、刷新、axe与评分防伪 |
+| Patient/Agent/安全 | `test-patient-agent.ts`、`test-agent-chat.ts`、`test-llm-adapter.ts`、`test-bilingual-conflict-quarantine.ts`、`test-agent-api-security.ts`、`test-ai-recovery.ts` | 均exit0；18冲突仍隔离，安全fallback不误标断连 |
+| 类型、构建与扫描 | `tsc --noEmit`；Vercel等价`next build`；`scan-static-bundle.ts`；repository scanner | 均exit0；52/52页面、25 JS、295文件+历史/有界归档 |
+| 受保护路径 | `git diff --name-only -- data outputs/medical-review docs/medical-review/...` | 无输出；没有医学数据、审批或评分改动 |
+
+本地原子提交：`36061ad`。GitHub API读取远程仍为已知`0b066dc`，但正式fetch/push因`github.com:443`连接重置/超时尚未完成；因此本节没有远程Node22、Vercel或PR新HEAD通过结论。

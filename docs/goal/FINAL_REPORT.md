@@ -255,3 +255,9 @@
 - `24054cf`修复英文session仍生成中文开场的问题：`language`现在进入profile构建，英文仅由中文公开简化主诉生成自然问候，不引入完整病例摘要、诊断、评分点或隐藏病史。回滚为普通`git revert 24054cf`。
 - 失败基线在P001稳定命中中文CJK；修复后42/42英文开场通过，42×6英文Patient Agent、中文主诉、语言纯度、训练API/恢复/安全、TypeScript及secret门禁通过。医学数据、419审核、42例`needs_revision`、18条隔离和360分算法零修改。
 - Actions run `29297252637` completed/success，Vercel两项success，Pages deploy skipped，PR继续Draft。长期QA应从`24054cfe836cd977ee82a20ad544b701ae46e335`或其文档后代独立复测HEM-P1-029；HEM-P1-033与HEM-P1-027仍开放，真实DeepSeek/Preview变量/医学裁决阻塞不变。
+
+### HEM-P1-033
+
+- `36061ad`修复canonical教师元语言绕过过滤及“可见回答被替换、隐藏slot仍收集”的不一致：服务端不安全deterministic fact fail-closed，客户端只为实际安全展示的回答更新覆盖。没有清洗后猜测P004/P005/P006医学真值；回滚为普通`git revert 36061ad`。
+- 直接失败基线和浏览器失败基线均保留；修复后P004/P005/P006、desktop/mobile、完整practice 42/42、Patient/Agent/LLM/隔离、TypeScript、52页build、bundle和secret扫描通过。医学数据、审核状态、18条冲突与360评分零修改。
+- 当前代码提交仅在本地：正式fetch/push因GitHub smart-HTTP连接超时受阻，API实时远程SHA仍为已知`0b066dc`。PR继续Draft且未变化；不得把本地门禁写成PR CI通过。网络恢复后重新fetch、普通push、等待Node22/Vercel，再给长期QA新的准确HEAD。

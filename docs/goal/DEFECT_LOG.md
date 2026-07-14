@@ -231,3 +231,4 @@
 
 - `HEM-P1-034`（工程修复完成，待独立QA复测）：旧实现等待中文session成功后切换英文会把中文attempt token发送给英文session，真实失败测试记录`headerPresent=true`、`attemptMatches=false`、`languageMatches=false`并得到401 `invalid_attempt_token`。`d8c30be`把token/promise按attempt键控，并同步取消/清理旧session能力。desktop/mobile双向切换、刷新、快速反向切换2/2及完整Playwright40/40通过；run `29296603010` completed/success，Vercel两项success。服务端跨语言/跨attempt拒绝合同保持不变。
 - `HEM-P1-029`（工程修复完成，待独立QA复测）：英文session旧路径稳定返回中文开场，42例失败合同在P001首例exit1。根因是profile构建未接收`language`且问候硬编码中文；`24054cf`只本地化安全简化主诉和开场，不使用完整病例摘要。42例英文开场、42×6英文行为及训练安全合同通过；run `29297252637` completed/success，Vercel两项success，PR仍Draft。医学数据、审核状态和评分算法零修改。
+- `HEM-P1-033`（本地工程修复完成，待push/CI与独立QA）：P004/P005/P006 deterministic canonical绕过公开输出过滤；前端替换可见文本却仍收集隐藏slot。`36061ad`增加服务端fail-closed及客户端安全展示/覆盖原子性，桌面失败基线从`clots`已收集修复为零覆盖，desktop/mobile 2/2、完整practice 42/42及相关合同通过。医学真值未改。当前仅因`github.com:443`连接超时尚未push，不能标记远程关闭。
