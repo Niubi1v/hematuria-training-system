@@ -22,6 +22,7 @@ const {
   filterPatientOutput: (text: string) => { ok: boolean; hits: string[] };
   getSession: (sessionId: string, caseId: string) => { completedPatientFacingProfile?: Record<string, unknown> } | null;
 };
+const cases = require("../data/cases.json") as Array<{ id: string }>;
 
 function assert(condition: unknown, message: string) {
   if (!condition) throw new Error(message);
@@ -55,6 +56,14 @@ async function main() {
   assert(["local-reviewed", "local-simulation"].includes(session.profileSource), "session should declare a local profile source");
   const refreshed = await initSession({ caseId: "P001", mode: "training", language: "zh", forceRefresh: true });
   assert(refreshed.sessionId !== session.sessionId, "forceRefresh must create a new sessionId");
+
+  for (const caseItem of cases) {
+    const englishSession = await initSession({ caseId: caseItem.id, mode: "training", language: "en" });
+    const opening = String(englishSession.patientOpeningStatement || "");
+    assert(opening.length > 0, `${caseItem.id} English session should have an opening statement`);
+    assert(!/[\u3400-\u9fff]/u.test(opening), `${caseItem.id} English opening must not contain Chinese text: ${opening}`);
+    assert(/\b(?:hello|hi|doctor)\b/i.test(opening), `${caseItem.id} English opening should be a natural patient greeting: ${opening}`);
+  }
   globalThis.fetch = originalFetch;
 
   const profileText = JSON.stringify(getSession(session.sessionId, "P001")?.completedPatientFacingProfile || {});

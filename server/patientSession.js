@@ -184,19 +184,58 @@ function simplifiedChiefComplaintZh(raw) {
   return `血尿${duration}`;
 }
 
-function buildRawPatientFacingProfile(caseData) {
+function durationToEnglish(duration) {
+  const chineseDigits = { 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
+  const match = /^([半\d一二两三四五六七八九十]+)(小时|天|日|周|个月|月|年)(余|多|左右)?$/.exec(duration);
+  if (!match) return "several days";
+
+  const [, rawAmount, unit, approximation] = match;
+  let amount = rawAmount;
+  if (rawAmount !== "半" && !/^\d+$/.test(rawAmount)) {
+    if (rawAmount === "十") amount = "10";
+    else if (rawAmount.startsWith("十")) amount = String(10 + (chineseDigits[rawAmount.slice(1)] || 0));
+    else if (rawAmount.endsWith("十")) amount = String((chineseDigits[rawAmount.slice(0, 1)] || 1) * 10);
+    else if (rawAmount.includes("十")) {
+      const [left, right] = rawAmount.split("十");
+      amount = String((chineseDigits[left] || 1) * 10 + (chineseDigits[right] || 0));
+    } else amount = String(chineseDigits[rawAmount] || rawAmount);
+  }
+
+  if (amount === "半") {
+    if (unit === "天" || unit === "日") return "half a day";
+    if (unit === "月" || unit === "个月") return "half a month";
+    if (unit === "年") return "half a year";
+  }
+
+  const unitEn = unit === "小时" ? "hour" : unit === "天" || unit === "日" ? "day" : unit === "周" ? "week" : unit === "月" || unit === "个月" ? "month" : "year";
+  const plural = amount === "1" ? unitEn : `${unitEn}s`;
+  return `${approximation ? "more than " : ""}${amount} ${plural}`;
+}
+
+function simplifiedChiefComplaintEn(raw) {
+  const text = String(raw || "").trim();
+  const duration = findDurationNearHematuria(text) || "数天";
+  const label = /小便|尿色|尿液|发红|变红/.test(text) && !/尿潜血|尿隐血|镜下/.test(text) ? "red urine" : "blood in my urine";
+  return `${label} for ${durationToEnglish(duration)}`;
+}
+
+function buildRawPatientFacingProfile(caseData, language = "zh") {
   const illness = caseData.presentIllness || {};
   const risk = caseData.riskFactors || {};
   const answers = caseData.patientAnswers || {};
   const pfp = caseData.patientFacingProfile || {};
   const sh = caseData.structuredHistory || {};
-  const simplifiedComplaint = simplifiedChiefComplaintZh(pfp.chiefComplaint || caseData.studentChiefComplaint || caseData.chiefComplaint);
+  const rawComplaint = pfp.chiefComplaint || caseData.studentChiefComplaint || caseData.chiefComplaint;
+  const simplifiedComplaint = language === "en" ? simplifiedChiefComplaintEn(rawComplaint) : simplifiedChiefComplaintZh(rawComplaint);
+  const openingStatement = language === "en"
+    ? `Hello, doctor. I came in because I have had ${simplifiedComplaint}.`
+    : `医生您好，我是因为${simplifiedComplaint || "小便颜色异常"}来看病的。`;
   return {
     patient_id: field(caseData.id),
     age: field(pfp.age || caseData.age),
     gender: field(pfp.sex || caseData.sex),
     chief_complaint: field(simplifiedComplaint),
-    patient_opening_statement: field(`医生您好，我是因为${simplifiedComplaint || "小便颜色异常"}来看病的。`),
+    patient_opening_statement: field(openingStatement),
     current_symptoms_patient_safe: field(simplifiedComplaint),
     hematuria_visibility: firstField(pfp.hematuriaType, illness.hematuriaType),
     hematuria_onset_time: firstField(illness.onset, illness.duration),
@@ -301,7 +340,7 @@ function buildTeacherOnlyData(caseData) {
 async function initSession({ caseId, attemptId, mode = "training", capabilityMode = mode, language = "zh", debug = false, forceRefresh = false }) {
   const caseData = getCaseById(caseId);
   if (!caseData) throw new Error(`Unknown caseId: ${caseId}`);
-  const rawPatientFacingProfile = buildRawPatientFacingProfile(caseData);
+  const rawPatientFacingProfile = buildRawPatientFacingProfile(caseData, language);
   validateRequiredProfileFacts(caseData, rawPatientFacingProfile);
   const completedPatientFacingProfile = localCompleteProfile(rawPatientFacingProfile);
   const teacherOnlyData = buildTeacherOnlyData(caseData);
@@ -336,7 +375,7 @@ async function initSession({ caseId, attemptId, mode = "training", capabilityMod
     caseId: caseData.id,
     language,
     mode,
-    patientOpeningStatement: completedPatientFacingProfile.patient_opening_statement?.value || "医生您好。",
+    patientOpeningStatement: completedPatientFacingProfile.patient_opening_statement?.value || (language === "en" ? "Hello, doctor." : "医生您好。"),
     cacheHit: false,
     sessionCreatedAt: new Date(createdAt).toISOString(),
     sessionExpiresAt: new Date(expiresAt).toISOString(),
