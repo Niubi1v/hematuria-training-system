@@ -358,3 +358,9 @@
 - 单一原子准入现检查session/attempt请求、attempt输入字符、IP小时/日、项目日请求、项目日保守token预留、probe和session并发。客户端不能指定模型/token；默认session 60次不阻塞20轮验收，服务端变量可收紧。
 - 八个独立低阈值场景均在429时保持provider计数；模拟Upstash合同验证9个哈希键、owner完整顺序和quota撤销claim，Redis命令不含原始session/IP。六项Agent/Patient/session/恢复回归exit0。
 - 工程本地候选完成，真实Preview仍需HEM-P1-020所列持久store与签名/origin配置后验证跨实例429、TTL和日窗口；不得把模拟Redis写成真实Preview通过。provider错误率自动熔断/告警另记开放P1。
+
+### HEM-P1-038 TTS冷并发与资源边界（2026-07-14）
+
+- 失败基线：同一未缓存tuple的并发请求产生2次Azure调用；旧handler也会解析含20 KiB padding的请求并在短text合法时进入provider。
+- 最小修复增加16 KiB JSON、Content-Type、畸形JSON和字段白名单；同一完整tuple进程内single-flight，成功才写缓存，最多100个不同冷请求并发。origin、voice、rate、pitch或text不同绝不共享。
+- TTS API/voice两项回归exit0；冷并发providerCalls=1，超大body 413，method/Origin/text/voice/字段/rate-limit/JSON拒绝均不调用provider。session capability、跨实例单飞与持久TTS预算继续作为独立开放边界，未把本地single-flight写成全局成本保护。

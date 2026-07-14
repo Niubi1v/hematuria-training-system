@@ -244,6 +244,7 @@
 
 - `HEM-P1-036`（本地工程修复，待push/CI）：Patient session可把公开`agent-chat`的`agentId`改成诊断/检查等其他LLM角色，旧失败合同返回200。现固定Patient-only角色与history阶段，客户端模型/Prompt/密钥/base URL/隐藏上下文和非白名单字段在provider前拒绝；专项断言拒绝路径`providerCalls=0`。
 - `HEM-P1-037`（本地工程修复，待push/CI与Preview配置验收）：失败基线第三个session请求仍200；现有Upstash/内存准入原子覆盖session/attempt/IP小时/IP日/项目日请求与token/probe预算，超限providerCalls不变。真实跨实例仍受HEM-P1-020持久store配置阻塞。
-- `HEM-P1-038`（OPEN）：TTS缺少session/capability、body字节上限和冷缓存single-flight；相同冷请求并发可能调用Azure多次。先补provider计数失败合同，再做最小能力和单飞修复。
+- `HEM-P1-038`（本地工程部分修复，待push/CI）：冷并发旧基线`providerCalls=2`，短text+20 KiB padding可调用Azure。现有16 KiB JSON/字段合同及同tuple single-flight，专项通过；session capability和跨实例持久配额拆为HEM-P1-041。
 - `HEM-P1-039`（本地工程修复，待push/CI）：同session不同幂等键可同时进入provider，失败基线`providerCalls=2`。新增Upstash/内存session租约后第二项429且零provider调用，首项结束后可恢复；相同键幂等不变。
 - `HEM-P1-040`（OPEN）：provider有有限重试和安全fallback，但没有跨请求错误率自动熔断或异常调用量告警。不得以无限重试或定时空请求代替；需先建立可控时钟/计数失败合同。
+- `HEM-P1-041`（OPEN）：TTS仍未要求Patient session capability，无Origin直接调用也可在知道voice参数时消耗Azure；进程内single-flight不跨serverless实例。需让前端传递当前session/attempt/case/language/mode并复用签名能力校验，再增加持久tuple预算。

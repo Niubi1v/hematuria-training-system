@@ -16,7 +16,7 @@
 | `/api/session/init` | 无 | POST/OPTIONS、CORS、16 KiB、IP实例限流、权威attempt token、case/language/mode绑定、幂等初始化 | 跨实例session配额与持久限流 |
 | `/api/agent-chat` | DeepSeek/配置的LLM | POST/OPTIONS、CORS、64 KiB、签名session、case/language/mode、幂等single-flight；本轮新增Patient-only角色/阶段、请求字段白名单、JSON和问题/历史长度边界、持久session并发lease，以及session/attempt/IP/项目多维预算 | Preview持久store配置与真实跨实例负载验收、provider错误率熔断/告警 |
 | `/api/training-action` | 无 | POST/OPTIONS、96 KiB、签名attempt、stage/action、CAS、重放与幂等；history-log和score在此 | 各动作持久多维配额和字段级大小上限 |
-| `/api/tts` | Azure TTS | Origin、方法、文本1–500、voice白名单、实例限流、缓存 | session/capability、body上限、冷缓存single-flight、持久配额 |
+| `/api/tts` | Azure TTS | Origin、方法、16 KiB JSON、字段/文本/voice白名单、有界实例限流、100项音频缓存与100项冷请求single-flight | session/capability、跨实例single-flight与持久配额 |
 | `/api/patient-reply`、`/api/session/complete-profile` | 无 | 允许Origin也统一410；无旧provider路径 | 保持退役 |
 
 ## 已证实攻击路径与处置
@@ -49,9 +49,17 @@
 
 1. Agent持久预算工程合同已存在，但Preview缺少持久attempt/request store配置时会fail-closed；配置后的真实跨实例429、TTL恢复和日窗口仍待验收。
 2. provider连续错误率熔断和异常调用量告警尚未实现；管理员可用现有`LLM_ENABLE_AI_PATIENT/AGENTS`关闭AI，但目前没有自动短时熔断。
-3. TTS没有session能力、明确body字节上限或冷缓存single-flight。相同冷请求并发可能产生多次Azure调用。
+3. TTS已具备body上限与同实例冷single-flight，但还没有session能力、跨实例single-flight或持久配额；无Origin直接调用也仍依赖后续能力边界。
 
-建议顺序：在配置后的Preview执行真实跨实例预算验收；本地继续处理TTS请求上限/single-flight与provider错误率熔断。任何持久配额配置缺失在Preview/Production应fail-closed，不得退回只靠客户端按钮节流。
+建议顺序：在配置后的Preview执行真实跨实例预算验收；本地继续处理TTS session能力/持久预算与provider错误率熔断。任何持久配额配置缺失在Preview/Production应fail-closed，不得退回只靠客户端按钮节流。
+
+### HEM-P1-038：TTS冷并发与请求体资源边界
+
+失败基线：相同完整tuple的两个冷请求在缓存写入前分别调用Azure，`providerCalls=2`；合法短文本附带20 KiB padding也会进入provider。
+
+修复：16 KiB JSON上限、Content-Type、畸形JSON与字段白名单在Azure前执行；相同origin/voice/rate/pitch/text的冷请求共享一个进程内Promise，成功后缓存，失败不缓存。最多100个不同冷tuple并发，超过后429；共享不会跨origin或参数tuple。
+
+测试：冷并发从2次provider降为1；超大body 413，错误方法/Origin/文本/voice/字段/JSON/Content-Type/429均显式断言provider计数不增加。跨实例single-flight和session capability未在本项伪报完成。
 
 ## 日志要求
 

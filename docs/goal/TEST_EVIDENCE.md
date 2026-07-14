@@ -647,3 +647,14 @@ Preview变量只核对名称/作用域：LLM相关变量覆盖Preview；`TRAININ
 | 受影响回归 | Agent安全/Agent Chat/Patient/动态session/API recovery/AI recovery六项 | exit0，23.2秒 |
 
 以上证明本地逻辑与持久命令形状，不证明Preview已配置Upstash或真实跨实例窗口成功。该外部验收继续归HEM-P1-020。
+
+## HEM-P1-038 TTS冷并发与输入资源（2026-07-14）
+
+| 检查 | 精确命令/环境 | 退出码与结果 |
+|---|---|---|
+| 失败基线 | bundled Node运行`test-tts-api.ts`，同tuple冷并发并加入20 ms provider延迟 | exit1，0.8秒；期望新增1次provider，实际新增2次 |
+| 修复专项 | 同一TTS API合同 | exit0，0.7秒；冷并发两项200但provider只增1，20 KiB body 413，畸形JSON 400，text/plain 415 |
+| 拒绝provider门禁 | 同一专项启用Azure stub并计数 | method/未知Origin/空text/非法voice/未知字段/429均在provider前拒绝 |
+| 语音回归 | `test-tts-api.ts`、`test-tts.ts` | 2项exit0，1.0秒；四voice、tuple隔离、TTL、容量、浏览器voice选择均通过 |
+
+本证据只覆盖同实例single-flight；session capability、真实Azure、跨实例单飞和持久配额仍待HEM-P1-041/Preview配置。
