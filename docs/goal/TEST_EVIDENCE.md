@@ -611,3 +611,16 @@ Preview变量只核对名称/作用域：LLM相关变量覆盖Preview；`TRAININ
 远程：Actions run `29301467610` / build job `86985933644` completed/success（4分14秒）；Node 22.14、75项幂等、42例/572/419医学合同、TypeScript、ESLint、295文件scanner、Playwright44/44、静态build82/82、23个JS bundle和最终clean gate均通过；依赖审计为1 moderate、0 high。Vercel Deployment与Preview Comments success，Pages deploy skipped，PR #1仍Open/Draft。
 
 已登录Preview黑盒：部署`CwbEAU3RcmH9PGpZCQuSnt9J7ag3`为Ready、source=`00531d5a1d6be939b280237d43f7c492125a448f`、不可变域名`hematuria-training-system-dbym9q3f0-niubi1vs-projects.vercel.app`。分支别名`/cases/P013/`初次直达及reload后，精确P013元素count均为1，主标题与textarea存在，`meta[name=next-error-h1]`为空。浏览器通道的Statsig外部遥测超时未计入应用性能。
+
+## HEM-P1-036 Patient Agent公开请求边界（2026-07-14）
+
+| 检查 | 精确命令/环境 | 退出码与结果 |
+|---|---|---|
+| 失败基线 | bundled Node直接运行`node_modules/tsx/dist/cli.mjs scripts/test-agent-api-security.ts` | exit1；合法Patient session请求`diagnostic_reasoning/diagnosis`实际200，期望403 |
+| 安全专项 | 同一命令，provider fetch计数 | exit0，20.9秒；角色越权、model/systemPrompt/apiKey/baseUrl/unlockedData、2001字符问题、text/plain全部在provider前拒绝且`providerCalls=0` |
+| 合法路径回归 | 依次运行`test-agent-chat.ts`、`test-patient-agent.ts`、`test-dynamic-patient-session.ts`、`test-llm-adapter.ts`、`test-bilingual-conflict-quarantine.ts` | 5项均exit0；18条冲突继续隔离，无医学真值或审批变更 |
+| TypeScript | bundled Node `tsc --noEmit`，允许只读项目xlsx junction | exit0，1.9秒；首次受限sandbox误报模块不可见，不是源码失败 |
+| ESLint | bundled Node `scripts/run-lint.mjs` | exit0，4.5秒 |
+| 敏感信息 | bundled Node `scripts/scan-repository-secrets.mjs` | exit0，2.3秒；295个当前/候选文件及可达文本历史和有界归档元数据，无秘密值输出 |
+
+远程普通push仍受GitHub smart-HTTP connection reset阻塞；本节不宣称Node22 CI或Vercel新部署通过。

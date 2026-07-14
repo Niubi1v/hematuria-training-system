@@ -8,15 +8,14 @@ const { normalizeAttemptMode } = require("../server/trainingState.js");
 const { executeIdempotentAgentRequest } = require("../server/agentRequestStore.js");
 
 const blockedTeacherKeys = ["diagnosis", "imaging", "pathology", "treatment", "teacherOnlyData", "case_card", "scoring"];
-const agentIds = new Set([
-  "standardized_patient",
-  "investigation",
-  "diagnostic_reasoning",
-  "mdt_coordinator",
-  "clinical_decision_support",
-  "perioperative_management",
-  "assessment_debriefing"
+const PUBLIC_AGENT_ID = "standardized_patient";
+const PUBLIC_REQUEST_FIELDS = new Set([
+  "caseId", "agentId", "sessionId", "attemptId", "sessionMode", "mode", "stage", "language",
+  "studentInput", "conversationHistory", "askedSlotIds", "askedQuestions", "probe", "debug"
 ]);
+const MAX_STUDENT_INPUT_CHARS = 2000;
+const MAX_HISTORY_ITEMS = 8;
+const MAX_ASKED_ITEMS = 100;
 const requestWindows = globalThis.__hematuriaAgentChatRequestWindows || new Map();
 globalThis.__hematuriaAgentChatRequestWindows = requestWindows;
 const safetyFallbackReasons = new Set([
@@ -123,6 +122,48 @@ function fallbackFor(agentId, language) {
 function requestHeader(req, name) {
   const value = req.headers?.[name] ?? req.headers?.[name.toLowerCase()];
   return Array.isArray(value) ? String(value[0] || "") : String(value || "");
+}
+
+function validateString(value, maxChars, errorCode) {
+  if (value !== undefined && (typeof value !== "string" || value.length > maxChars)) throw new Error(errorCode);
+}
+
+function validateStringList(value, maxItems, maxChars, errorCode) {
+  if (value === undefined) return;
+  if (!Array.isArray(value) || value.length > maxItems || value.some((item) => typeof item !== "string" || item.length > maxChars)) {
+    throw new Error(errorCode);
+  }
+}
+
+function validatePatientAgentRequest(req, body) {
+  const contentType = requestHeader(req, "content-type").split(";")[0].trim().toLowerCase();
+  if (contentType !== "application/json") throw new Error("content_type_not_supported");
+  if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("invalid_json_body");
+  if (Object.keys(body).some((field) => !PUBLIC_REQUEST_FIELDS.has(field))) throw new Error("unexpected_request_field");
+  if (body.agentId !== undefined && body.agentId !== PUBLIC_AGENT_ID) throw new Error("agent_not_allowed");
+  if (body.stage !== undefined && body.stage !== "history") throw new Error("stage_not_allowed");
+  if (body.language !== undefined && body.language !== "zh" && body.language !== "en") throw new Error("invalid_language");
+  if (body.probe !== undefined && typeof body.probe !== "boolean") throw new Error("invalid_probe");
+  if (body.debug !== undefined && typeof body.debug !== "boolean") throw new Error("invalid_debug");
+  validateString(body.caseId, 64, "invalid_case_id");
+  validateString(body.attemptId, 200, "invalid_attempt_id");
+  validateString(body.sessionId, 2048, "invalid_session_id");
+  validateString(body.sessionMode, 32, "invalid_session_mode");
+  validateString(body.mode, 32, "invalid_agent_mode");
+  validateString(body.studentInput, MAX_STUDENT_INPUT_CHARS, "student_input_too_long");
+  if (body.conversationHistory !== undefined) {
+    if (!Array.isArray(body.conversationHistory) || body.conversationHistory.length > MAX_HISTORY_ITEMS) throw new Error("conversation_history_invalid");
+    for (const item of body.conversationHistory) {
+      if (!item || typeof item !== "object" || Array.isArray(item)
+        || Object.keys(item).some((field) => field !== "role" && field !== "text")
+        || (item.role !== "student" && item.role !== "patient")
+        || typeof item.text !== "string" || item.text.length > MAX_STUDENT_INPUT_CHARS) {
+        throw new Error("conversation_history_invalid");
+      }
+    }
+  }
+  validateStringList(body.askedSlotIds, MAX_ASKED_ITEMS, 100, "asked_slots_invalid");
+  validateStringList(body.askedQuestions, MAX_ASKED_ITEMS, MAX_STUDENT_INPUT_CHARS, "asked_questions_invalid");
 }
 
 async function buildAgentResponse(body, agentId, caseData, startedAt) {
@@ -259,7 +300,8 @@ module.exports = async function handler(req, res) {
 
   try {
     const body = parseJsonBody(req, 64 * 1024);
-    const agentId = agentIds.has(body.agentId) ? body.agentId : "standardized_patient";
+    validatePatientAgentRequest(req, body);
+    const agentId = PUBLIC_AGENT_ID;
     const caseData = cases.find((item) => String(item.id).toLowerCase() === String(body.caseId).toLowerCase());
     if (!caseData) return res.status(400).json({ error: "unknown_case" });
     if (!body.probe && !String(body.studentInput || "").trim()) return res.status(400).json({ error: "studentInput is required" });
@@ -271,14 +313,19 @@ module.exports = async function handler(req, res) {
       mode: normalizeAttemptMode(body.sessionMode || body.mode)
     });
 
-    const idempotencyKey = requestHeader(req, "x-idempotency-key").slice(0, 200);
+    const rawIdempotencyKey = requestHeader(req, "x-idempotency-key");
+    if (rawIdempotencyKey.length > 200) throw new Error("idempotency_key_too_long");
+    const idempotencyKey = rawIdempotencyKey;
     const stored = await executeIdempotentAgentRequest({ sessionId: body.sessionId, idempotencyKey, body }, () => buildAgentResponse(body, agentId, caseData, startedAt));
     setServerTiming(res, stored.timings || { app: Date.now() - startedAt });
     return res.status(stored.statusCode || 200).json(stored.payload);
   } catch (error) {
     const code = error instanceof Error ? error.message : "agent_api_failed";
     const status = /request_body_too_large/.test(code) ? 413
-      : /invalid_json_body/.test(code) ? 400
+      : /content_type_not_supported/.test(code) ? 415
+        : /student_input_too_long|conversation_history_invalid|asked_(?:slots|questions)_invalid/.test(code) ? 422
+      : /invalid_json_body|unexpected_request_field|invalid_(?:language|probe|debug|case_id|attempt_id|session_id|session_mode|agent_mode)|idempotency_key_too_long/.test(code) ? 400
+        : /agent_not_allowed|stage_not_allowed/.test(code) ? 403
         : /session_.*(?:mismatch|required)|invalid_session|expired_session/.test(code) ? 401
       : /idempotency_key_required/.test(code) ? 400
         : /idempotency_key_reused/.test(code) ? 409

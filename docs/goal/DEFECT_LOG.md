@@ -239,3 +239,9 @@
 - `HEM-P1-033`（工程与远程CI关闭，待独立QA）：`36061ad`、`9b1ffba`与`5369966`已普通push；Actions run `29299085374` completed/success，Vercel两项success，PR仍Draft。旧条目中的Git网络阻塞已经解除。
 - `HEM-P1-035`（工程关闭）：可见病例编号P013–P042映射到内部`HX-ADD-001–030`，旧静态参数、目录链接和随机入口使用内部ID，导致按可见ID复制、直达或刷新稳定404。失败测试记录P013卡片href为`/cases/HX-ADD-001/index.html`；`79d1083`增加display ID别名且不改变runtime case ID。run `29301467610` completed/success，Vercel部署`CwbEAU3RcmH9PGpZCQuSnt9J7ag3` Ready；分支Preview P013初次直达和刷新均无404。回滚为普通`git revert 79d1083`。
 - `HEM-P1-020`（仍BLOCKED，配置证据更新）：当前Preview部署与分支SHA一致，P001静态页可加载且health runtime请求为200；但训练签名和Agent/training origin变量只覆盖Production，Preview页面仍degraded。需用户将`TRAINING_STATE_SECRET`、`TRAINING_API_ALLOWED_ORIGINS`、`AGENT_API_ALLOWED_ORIGIN`及相应deployment tier配置到Preview/分支Preview并重新部署；持久attempt store变量也须按既有安全方案配置。未读取或修改任何值，真实DeepSeek、日志10/10、20轮和P95仍未通过。
+
+### 2026-07-14 AI防滥用专项
+
+- `HEM-P1-036`（本地工程修复，待push/CI）：Patient session可把公开`agent-chat`的`agentId`改成诊断/检查等其他LLM角色，旧失败合同返回200。现固定Patient-only角色与history阶段，客户端模型/Prompt/密钥/base URL/隐藏上下文和非白名单字段在provider前拒绝；专项断言拒绝路径`providerCalls=0`。
+- `HEM-P1-037`（OPEN）：Agent限流是单实例IP Map，不是跨Vercel实例的session/attempt/IP/日配额；不同幂等键和公开probe仍可并行消耗provider。需使用现有持久store方案增加原子预算与并发lease，不能把CORS或客户端按钮当配额。
+- `HEM-P1-038`（OPEN）：TTS缺少session/capability、body字节上限和冷缓存single-flight；相同冷请求并发可能调用Azure多次。先补provider计数失败合同，再做最小能力和单飞修复。

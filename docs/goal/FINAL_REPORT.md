@@ -276,3 +276,9 @@
 - Preview真实AI仍未验收：LLM变量名称覆盖Preview，但训练签名、训练/Agent origin及deployment tier只覆盖Production；P001静态页可加载而会话进入degraded。需要用户只在Preview或分支专用Preview补齐这些已有变量并重新部署，且按既有要求配置持久attempt store。不得由Codex读取/生成值，也不得用fallback、mock或Vercel绿灯冒充真实AI成功。
 - 发布阻塞仍包括HEM-P1-027移动遮挡、HEM-P1-020 Preview配置/真实AI/日志/性能，以及HEM-P0-001/HEM-P0-023具名医学裁决。未批准医学事实、未解除`needs_revision`、未修改生产环境或部署Production。
 - HEM-P1-035远程关闭：Actions run `29301467610`在Node22通过44/44 Playwright和82/82 build；Vercel Ready部署`CwbEAU3RcmH9PGpZCQuSnt9J7ag3`绑定`00531d5`。分支Preview P013直达与刷新均显示唯一P013、工作区和输入框，无Next 404标记。PR继续Draft，Pages deploy skipped。
+
+### AI防滥用检查点
+
+- HEM-P1-036失败基线证明有效Patient session能把公开端点越权切换到`diagnostic_reasoning`。本地候选把端点固定为Patient/history并加入严格请求合同；非法角色、客户端model/Prompt/密钥/base URL/隐藏上下文、超长问题和非JSON拒绝均有`providerCalls=0`证据。
+- 合法Patient/会话/LLM/双语冲突、TypeScript、ESLint和secret扫描通过，受保护医学路径未改。当前候选尚未普通push，不能写成PR/Preview通过；网络恢复后先fetch核对远程`00531d5`，再普通push并等待CI。
+- 防滥用仍有发布前P1：持久多维Agent配额与不同幂等键并发lease（HEM-P1-037），以及TTS能力/body/single-flight（HEM-P1-038）。真实Preview AI、首Token、P50/P95和10/10双语仍受HEM-P1-020配置阻塞，不以fixture或fallback替代。
