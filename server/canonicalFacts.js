@@ -29,7 +29,12 @@ const matchers = [
 function matchCanonicalPatientFacts(caseId, question, language = "zh") {
   const caseSlots = bilingualSlots[caseId];
   if (!caseSlots) return null;
-  const slotIds = [...new Set(matchers.filter(([, pattern]) => pattern.test(question)).map(([slotId]) => slotId))];
+  const matchedSlotIds = [...new Set(matchers.filter(([, pattern]) => pattern.test(question)).map(([slotId]) => slotId))];
+  const hasSpecificPain = matchedSlotIds.some((slotId) => ["flank_pain", "renal_colic", "radiating_pain"].includes(slotId));
+  const explicitlyAsksGeneralPain = /疼不疼|有没有痛|有无疼痛|其他.*痛|别的.*痛|any (?:other )?pain|other pain|pain elsewhere|general pain|does it hurt/i.test(question);
+  const slotIds = hasSpecificPain && !explicitlyAsksGeneralPain
+    ? matchedSlotIds.filter((slotId) => slotId !== "pain")
+    : matchedSlotIds;
   if (!slotIds.length) return null;
   const answers = slotIds.map((slotId) => caseSlots[slotId]?.[language === "en" ? "patientAnswerEn" : "patientAnswerZh"]).filter(Boolean);
   if (!answers.length) return null;
