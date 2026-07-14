@@ -273,3 +273,25 @@
 - **仍需人工/外部操作**：在Preview或分支专用Preview核对`TRAINING_STATE_SECRET`、`TRAINING_ATTEMPT_STORE_MODE`、`UPSTASH_REDIS_REST_URL`、`UPSTASH_REDIS_REST_TOKEN`及既有origin/tier变量的名称和作用域后重新部署；不得由Codex读取/生成值。随后用登录态Preview抓取当前失败请求并复测。
 - **Git传输阻塞**：本地修复HEAD `972405a`工作树干净；成功fetch后确认远程`ff1a932`、0落后/3领先，但普通push时连接重置。TCP探测为`github.com:443=false`、`api.github.com:443=true`，PR API确认远程仍未更新。网络恢复后必须重新fetch再普通push，不能通过API改ref或跳过主机校验。
 - **工程状态修正**：Git网络恢复后按门禁重新fetch并普通push至`cade64e`。Actions run `29318216424`在Node22通过52/52 Playwright及全部工程/医学/扫描门禁，Vercel两项success；HEM-P1-043工程项关闭，交长期QA复测。登录态Preview真实提交与变量配置仍由HEM-P1-020阻塞，不得把部署绿灯写成运行时配置通过。
+
+### HEM-P2-043 病例目录`.html`链接42/42返回404
+
+- **状态**：本地工程修复完成，待本次push后Node22 CI与最新Preview复测。
+- **失败基线**：Production `3541a706`的目录在desktop/mobile均生成42个`/cases/Pxxx/index.html` href；Next dev逐项404，而同一病例的`/cases/Pxxx/`直接访问和刷新可用。
+- **根因**：客户端把静态导出文件名当作公开路由合同；这与Next动态目录路由、Vercel无basePath和Pages basePath三种环境不一致。
+- **最小修复**：集中生成经校验的目录URL并可选拼接`NEXT_PUBLIC_BASE_PATH`；目录、随机入口和反馈重试复用同一合同。静态测试服务器加入basePath模拟并让404保留HTTP 404；`dynamicParams=false`保持无效病例受控拒绝。
+- **证据**：公共路由合同覆盖42例；Next dev desktop/mobile 8/8专项中的目录、第一阶段和双击合同通过；root与Pages basePath静态导出各2/2，两个构建均82/82。
+- **边界**：未使用完整域名硬编码、未增加catch-all、未改`data/**`或医学/评分/session安全规则。
+
+### HEM-P2-028 一次操作产生2 requests / 2 IDs / 2 events
+
+- **状态**：工程关闭，待长期QA在新HEAD确认生产/Preview网络时间线。
+- **分类**：QA旧基线`ff1a932`上的实际两个`stage-feedback`请求，产生两个request ID与两个timeline submit事件；不是provider调用、浏览器重试或仅遥测重复。
+- **既有修复**：`3cb22cd`在任何异步状态更新前用同步ref取得阶段提交单飞锁，并对提交按钮提供提交中状态；没有关闭幂等、session、stage或attempt token校验。
+- **本轮回归**：对handler响应人为延迟150ms后同步触发两次DOM click，仍只有1 request / 1 request ID / 1 timeline event；中英文attempt分别绑定对应session且互不复用。
+
+### HEM-P1-043 Preview复测阻塞补充
+
+- **状态**：本地当前Production不可复现；Preview仍被Vercel Standard Authentication阻塞，不关闭HEM-P1-020。
+- **证据**：P001中英、双向切换、刷新、第二阶段和双击专项通过。匿名Preview病例与health返回登录HTML，合成session init POST为保护层401，尚未到应用handler；不得把该401归因为attempt token或阶段锁。
+- **人工复测需求**：使用有Preview访问权的会话记录实际`session/init`和`training-action`路径、HTTP/error code及脱敏关联ID；不得输出token、Cookie或签名。

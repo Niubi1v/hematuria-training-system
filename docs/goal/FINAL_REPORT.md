@@ -328,3 +328,13 @@
 - 根因与修复：阶段提交缺同步单飞锁导致双击2请求；永久attempt-store配置503被重复重试且UI隐藏原因。现均收敛为1请求，并保留全部token/session/stage绑定和fail-closed安全边界。
 - 长期QA从`cade64e`在登录态最新Preview复测：P001中文第一阶段→第二阶段→刷新；英文同流程；中→英、英→中；刷新后提交；快速双击只见1个`stage-feedback`；过期/跨病例token仍401；缺store时只见1次503和明确配置提示。记录URL、deployment SHA、脱敏session/request ID、状态码/error code。
 - 尚未解除：HEM-P1-020的Preview持久store/签名/origin作用域与真实POST证据，真实AI/日志/性能，以及HEM-P0-001/023具名医学裁决。未修改生产环境变量、医学事实、419审核或`needs_revision`。
+
+### 2026-07-14 QA 490fdd8与目录/重复提交里程碑（待远程确认）
+
+- Production起始HEAD和远程均为`3541a706040cd9e0f5c9f9f6b3cff92149896a4a`；QA为`490fdd842b277bada645047a65a3bc448ee014f4`，merge-base `ff1a932785d891749ae8e73130bde8857062e194`。只读取和审查QA报告/最小证据，没有整体merge或引入大体积、本机路径、视频、HTML全报告。
+- 第一阶段提交在当前本地Production不可复现：P001中文、英文、双向切换、刷新、进入第二阶段及快速双击专项均通过，且一次操作为1 request / 1 request ID / 1 timeline event。Preview仍由Vercel Authentication在应用前拦截，故真实Preview提交状态继续阻塞，不能用本地结果关闭HEM-P1-020。
+- HEM-P2-043根因是目录链接错误固化为`index.html`，与Next目录route及多部署环境合同冲突。候选集中生成basePath-aware目录URL，兼容local dev、root静态/Vercel和Pages basePath；无效病例真实404，不以catch-all隐藏。
+- HEM-P2-028是旧基线真实重复`stage-feedback`业务请求，不是provider或仅遥测重复。既有同步单飞锁已修复，本轮用延迟handler补足双击1/1/1、双语session绑定和刷新恢复合同。
+- 本地门禁：受影响浏览器8/8、root静态2/2、Pages静态2/2、两个82/82构建、完整行为、类型、lint、25 JS bundle和300文件secret扫描通过。完整本地Playwright在不受支持Node24/Next缓存异常下49/52，保留失败并等待Node22 CI，不重复昂贵全跑。
+- 修改范围仅为公开路由helper、目录/随机/反馈链接、动态route约束、静态测试服务、Playwright配置/测试、package测试入口及四份证据文档；`data/**`、医学事实、419审核、18冲突、`needs_revision`、Patient医学语义、签名安全和360评分零修改。
+- 回滚方式：代码提交形成后使用普通`git revert <route-commit>`；证据提交可独立revert。PR必须继续Draft，不Ready、不合并、不部署Production。下一准确QA起始HEAD须待普通push和CI完成后填写；开放HEM-P1-030/031/032与真机027、Preview配置/真实AI、HEM-P0-001/023裁决继续保留。

@@ -424,3 +424,12 @@
 - Actions run `29318216424` / build job `87037030905` completed/success（4分38秒）：Node22完整行为、TypeScript、ESLint、52/52 Playwright desktop/mobile、75输出幂等、42例/572/419医学治理、360评分、82/82构建、23 JS bundle、298文件scanner和最终clean gate均通过；Pages deploy按PR规则skipped。
 - Vercel deployment `CNzPNsqzCi21UkqF65bpu88My89S`及Preview Comments success。该绿灯只证明新head构建/部署成功；登录态Preview第一阶段真实POST、持久attempt store/签名变量作用域仍未直接验证，HEM-P1-020外部阻塞不因CI关闭。
 - HEM-P1-043工程修复可交长期QA从`cade64e`复测。PR继续Draft；未转Ready、未合并、未部署Production、未改医学事实/审核状态或环境变量。
+
+### QA 490fdd8 选择性复核、HEM-P2-043与HEM-P2-028（2026-07-14 17:23 CST）
+
+- `git fetch --prune`后核对Production本地/远程均为`3541a706040cd9e0f5c9f9f6b3cff92149896a4a`，QA远程为`490fdd842b277bada645047a65a3bc448ee014f4`，merge-base为`ff1a932785d891749ae8e73130bde8857062e194`。逐份读取四个QA报告/证据索引并审查QA-only diff；没有整体merge、没有引入约433.96 MB本机证据，也没有覆盖Production业务代码。
+- 当前Production的P001中英第一阶段、双向语言切换、刷新恢复、进入第二阶段及延迟响应下快速双击均在真实`training-action` handler浏览器合同通过；一次操作稳定为1个`stage-feedback`请求、1个request ID、1个timeline submit事件。故用户历史故障在本地当前HEAD不可复现，且HEM-P2-028确认为旧`ff1a932`上的真实重复training-action调用（非provider调用、非单纯遥测），已由`3cb22cd`的同步单飞锁修复并在本轮补足证据。
+- 最新Preview别名为`https://hematuria-training-system-git-codex-he-a06e54-niubi1vs-projects.vercel.app`，对应本轮开始时PR head `3541a706`。匿名GET病例/API均返回Vercel登录HTML，安全合成POST返回401 Unauthorized；浏览器控制启动又遇到工具级`Cannot redefine property: process`。因此Preview第一阶段应用请求仍为`BLOCKED_PREVIEW_AUTH`，未把保护页401或本地fixture冒充Preview结论。
+- HEM-P2-043失败测试先稳定命中42个目录href均为`/cases/Pxxx/index.html`；根因是目录把静态文件实现细节编码进公开URL，而Next dev/Preview的动态route合同是`/cases/Pxxx/`。新增集中式basePath-aware目录路由构造器，目录、随机和反馈重试统一使用目录URL；静态测试服务支持GitHub Pages basePath且真实404返回404，未硬编码域名或catch-all吞错。
+- 修复后本地Next dev专项desktop/mobile 8/8；root静态导出2/2；`/hematuria-training-system` Pages模拟2/2；两个生产构建均82/82。完整行为、类型、lint、bundle与secret门禁通过。唯一完整本地Playwright在不受支持的Node24/Next dev缓存异常下49/52，随后清缓存的受影响专项8/8；按“一里程碑一次完整门禁”规则不重复昂贵全跑，以push后Node22 CI为最终完整浏览器门禁。
+- `data/**`零差异，医学事实、419审核、18条冲突、`needs_revision`、Patient医学语义、签名安全与360评分均未修改。下一步为原子代码/证据提交、普通push、Draft PR CI；QA报告中的HEM-P1-030/031/032继续保留为后续P1，不在本P2路由补丁中顺带重构。
