@@ -434,3 +434,11 @@
 - 修复后本地Next dev专项desktop/mobile 8/8；root静态导出2/2；`/hematuria-training-system` Pages模拟2/2；两个生产构建均82/82。完整行为、类型、lint、bundle与secret门禁通过。唯一完整本地Playwright在不受支持的Node24/Next dev缓存异常下49/52，随后清缓存的受影响专项8/8；按“一里程碑一次完整门禁”规则不重复昂贵全跑，以push后Node22 CI为最终完整浏览器门禁。
 - `data/**`零差异，医学事实、419审核、18条冲突、`needs_revision`、Patient医学语义、签名安全与360评分均未修改。下一步为原子代码/证据提交、普通push、Draft PR CI；QA报告中的HEM-P1-030/031/032继续保留为后续P1，不在本P2路由补丁中顺带重构。
 - 本地原子提交已形成：`f1d7f62`为路由/测试，`39aad56`为首轮证据。三次fetch及两次普通push均因`github.com:443`连接重置/超时失败；GitHub连接器在push后再次确认远程仍为`3541a706`、PR仍Open/Draft，故没有部分push或未知远程提交。当前本地领先2，待smart-HTTP恢复后必须重新fetch再普通push，不能用API改ref绕过。
+
+### 4aa96d5远程确认与HEM-P1-030本地候选（2026-07-14 17:57 CST）
+
+- GitHub网络和CLI认证恢复后，`fetch --prune`确认本地领先3、远端领先0；`3541a70..4aa96d5`已普通push，随后远程精确为`4aa96d5ff20a1f4e637529d6ede46720b428c5ef`且0/0。Draft PR #1保持Open/Draft。
+- Actions run `29322763481` / build job `87051751710` completed/success（4分35秒）：Node 22.14下完整Playwright 52/52（2.2分钟），完整行为、TypeScript、ESLint、医学治理、构建、bundle/scanner与clean gate通过；Vercel和Preview Comments success，Pages deploy skipped。此前EXT-GIT阻塞已解除。
+- 下一P1 HEM-P1-030失败合同先收到中文`prior_care`空slot；QA准确基线为378/6216路由失败。根因为canonical缺prior-care及英文retention改写、structured缺中英常见历史表达，并且诊断/报告边界早于可证明的既往史路由。
+- 最小候选仅对白名单`PAST_MALIGNANCY`/`PAST_URINARY_PROCEDURE`且明确历史语境放行；含“结果/报告/诊断”等细节意图仍走安全边界。42例×7自然问法与4个边界通过；P001三个不安全来源仍`unsafe_deterministic_answer`且空slot，不削弱HEM-P1-033或161个来源阻塞。
+- 相关Patient/session/Agent/API/18冲突隔离回归通过；完整`pnpm test`在只读依赖junction权限下33.2秒exit0。首次普通沙箱运行只因已安装`xlsx` junction不可读而失败，权限核对后`xlsx 0.20.3`正常解析；TypeScript、ESLint通过。当前候选尚未提交/push，HEM-P1-031/032继续OPEN。

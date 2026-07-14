@@ -298,7 +298,18 @@
 
 ### EXT-GIT-20260714-02 GitHub smart-HTTP不可达
 
-- **状态**：外部阻塞；本地提交安全保留，未push。
+- **状态**：RESOLVED；2026-07-14网络与CLI认证恢复。
 - **证据**：三次`fetch --prune`（含命令级HTTP/1.1）均连接重置；两次普通push均在`github.com:443`超时。`gh auth status`另报告本机CLI token失效，但GitHub连接器仍可只读并确认PR #1为Open/Draft、远程head仍`3541a706`。
 - **影响**：`f1d7f62`与`39aad56`尚未进入远程，不能产生新CI/Preview；本地工作树已提交且不丢失。
 - **禁止绕过**：不使用force、API update-ref、直接main、Ready、merge或Production部署。网络恢复后重新fetch，确认0落后后普通push。
+- **解除证据**：恢复后fetch得到3/0，普通push成功；远程精确`4aa96d5`并回到0/0。Actions run `29322763481` success，Vercel两项pass，PR仍Draft。
+
+### HEM-P1-030 Patient Session病史路由不完整/安全边界误拦截
+
+- **状态**：本地工程候选完成，待提交、Node22 CI及独立QA 42×37矩阵复测。
+- **失败基线**：QA `490fdd8`报告378/6216个路由探针失败；本地最小合同首先稳定得到中文`prior_care`实际`[]`、期望`[prior_care]`。
+- **根因**：canonical未覆盖既往诊疗和`unable to pass urine`；structured未覆盖`previous cancer`和“导过尿”；诊断/报告边界在明确既往史matcher之前执行。
+- **最小修复**：补足精确改写；先分类matcher，但仅对明确历史语境、白名单历史slot且不含结果/诊断细节意图时允许越过过宽边界。安全例外不是通用关键词绕过。
+- **红队证据**：纯“以前做过膀胱镜/既往肿瘤史”到达历史matcher；“以前做过膀胱镜，检查结果是什么”“以前的肿瘤诊断是什么”仍分别`report_boundary`/`diagnosis_boundary`且空slot。
+- **医学边界**：三个P001来源因教师元语言/诊断词继续`unsafe_deterministic_answer`，不展示、不收集；18条冲突、419审核、42例`needs_revision`、161来源阻塞和医学真值零修改。
+- **待办**：普通push后由Node22 CI复核，再让长期QA重跑6216路由矩阵；HEM-P1-031/032不由本项顺带关闭。
