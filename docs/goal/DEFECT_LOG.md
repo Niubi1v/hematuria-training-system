@@ -230,3 +230,4 @@
 ### 长期QA开放P1处置
 
 - `HEM-P1-034`（工程修复完成，待独立QA复测）：旧实现等待中文session成功后切换英文会把中文attempt token发送给英文session，真实失败测试记录`headerPresent=true`、`attemptMatches=false`、`languageMatches=false`并得到401 `invalid_attempt_token`。`d8c30be`把token/promise按attempt键控，并同步取消/清理旧session能力。desktop/mobile双向切换、刷新、快速反向切换2/2及完整Playwright40/40通过；run `29296603010` completed/success，Vercel两项success。服务端跨语言/跨attempt拒绝合同保持不变。
+- `HEM-P1-029`（工程修复完成，待独立QA复测）：英文session旧路径稳定返回中文开场，42例失败合同在P001首例exit1。根因是profile构建未接收`language`且问候硬编码中文；`24054cf`只本地化安全简化主诉和开场，不使用完整病例摘要。42例英文开场、42×6英文行为及训练安全合同通过；run `29297252637` completed/success，Vercel两项success，PR仍Draft。医学数据、审核状态和评分算法零修改。

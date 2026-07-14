@@ -249,3 +249,9 @@
 - `d8c30be`修复语言切换时单一token/promise ref复用旧attempt能力的竞态；能力仍严格绑定case/language/mode/attempt，服务端校验未放宽。回滚为普通`git revert d8c30be`。
 - 失败基线为中文session 200后英文session 401 `invalid_attempt_token`，且脱敏观察明确指向旧attempt/旧language；修复后desktop/mobile双向切换、刷新、快速反向切换2/2，完整practice 40/40及安全合同通过。
 - Actions run `29296603010` completed/success，Vercel两项success，Pages deploy skipped，PR继续Draft。长期QA推荐从`d8c30beea1e2fa8085bd42d1a78b64354bc61be8`复测HEM-P1-034；HEM-P1-029、HEM-P1-033与HEM-P1-027仍开放。
+
+### HEM-P1-029
+
+- `24054cf`修复英文session仍生成中文开场的问题：`language`现在进入profile构建，英文仅由中文公开简化主诉生成自然问候，不引入完整病例摘要、诊断、评分点或隐藏病史。回滚为普通`git revert 24054cf`。
+- 失败基线在P001稳定命中中文CJK；修复后42/42英文开场通过，42×6英文Patient Agent、中文主诉、语言纯度、训练API/恢复/安全、TypeScript及secret门禁通过。医学数据、419审核、42例`needs_revision`、18条隔离和360分算法零修改。
+- Actions run `29297252637` completed/success，Vercel两项success，Pages deploy skipped，PR继续Draft。长期QA应从`24054cfe836cd977ee82a20ad544b701ae46e335`或其文档后代独立复测HEM-P1-029；HEM-P1-033与HEM-P1-027仍开放，真实DeepSeek/Preview变量/医学裁决阻塞不变。

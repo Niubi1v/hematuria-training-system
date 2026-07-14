@@ -544,3 +544,17 @@ Preview未执行真实Upstash/DeepSeek验收，因为当前没有也不得读取
 | 敏感信息与医学路径 | repository scanner；`git diff --name-only -- data outputs/medical-review ...` | scanner exit0（295文件+历史/有界归档）；医学路径无输出 |
 
 远程：`d8c30be`的Actions run `29296603010` / build job `86971396465` completed/success；完整行为、TypeScript、ESLint、repository scanner、Playwright、52页构建、bundle和最终clean gate全部success。Vercel Deployment与Preview Comments success，Pages deploy skipped，PR继续Draft。
+
+## HEM-P1-029 英文会话开场语言
+
+| 检查 | 精确命令/环境 | 退出码与结果 |
+|---|---|---|
+| 失败基线 | bundled Node + `tsx scripts/test-dynamic-patient-session.ts`，新增42例`language=en`循环 | exit1；首例P001返回中文开场，CJK断言准确命中 |
+| 修复后42例 | 同命令 | exit0；42/42英文开场非空、无CJK、包含自然英文问候；既有中文简化主诉/非泄露断言继续通过 |
+| 主诉与语言回归 | `test-chief-complaint.ts`、`test-language-purity.ts`、`test-bilingual-patient.ts` | exit0；后者42例×6英文fixture通过 |
+| API与安全回归 | `test-training-api.ts`、`test-api-recovery.ts`、`test-agent-api-security.ts` | exit0；能力、签名、CORS、限流、重试和非泄露边界未放宽 |
+| TypeScript | bundled Node执行`tsc --noEmit`，沙箱外只读现有pnpm junction | exit0 |
+| 本地ESLint限制 | bundled Node 24执行相关ESLint | 未进入源码检查；Next 15 rushstack patch不支持当前Node 24调用形态。项目要求Node 22，权威CI Lint success |
+| 敏感信息与医学路径 | `scan-repository-secrets.mjs`、`test-secret-scanner.mjs`及受保护路径diff | exit0；295文件+历史/有界归档，无值输出；`data/**`、审核表及医学输出零diff |
+
+远程：`24054cfe836cd977ee82a20ad544b701ae46e335`的Actions run `29297252637` / build job `86973354237`从`2026-07-14T00:56:00Z`至`01:00:13Z` completed/success；Node 22上的完整行为、TypeScript、ESLint、repository scanner、Playwright、52页构建、bundle扫描和clean gate均success。Vercel Deployment与Preview Comments success，Pages deploy skipped，PR #1保持Draft。

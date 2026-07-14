@@ -308,3 +308,10 @@
 - 浏览器专项在desktop/mobile 2/2通过，覆盖中文→英文、刷新恢复、英文→中文、在途英文session后快速反向切换、每attempt仅一次初始化及最终语言不被旧响应覆盖；完整practice回归40/40。
 - 受影响合同均exit0：agent/session安全、attempt隔离、training API/security、API recovery、TypeScript、ESLint及295文件secret扫描；`data/**`、医学审核/审批、18条冲突和360评分零修改。
 - 提交`d8c30beea1e2fa8085bd42d1a78b64354bc61be8`已普通push。Actions run `29296603010` / build job `86971396465` completed/success，Vercel Deployment与Preview Comments success，Pages deploy skipped；PR #1保持Open/Draft。该HEAD交由长期QA独立复测HEM-P1-034。
+
+### HEM-P1-029 英文会话中文开场（2026-07-14）
+
+- 独立失败基线在现有动态会话合同中命中：`P001`的`language=en`初始化返回“医生您好，我是因为小便颜色变红3月余来看病的。”，42例循环在首例以CJK断言exit1；不是provider或浏览器翻译问题。
+- 根因是`initSession`没有把`language`传入patient-facing profile构建，且开场白只调用中文简化主诉并硬编码中文问候。`24054cf`仅增加语言感知的安全简化主诉/问候，英文不读取完整英文病历，也不暴露疼痛、血尿时相、血块、诊断或评分点。
+- 修复后42例英文开场均非空、无CJK并含自然英文问候；中文主诉合同、42例×6英文Patient Agent、训练API/恢复/安全合同和TypeScript均exit0。repository scanner覆盖295个候选文件及历史/有界归档，scanner合同均exit0；受保护医学路径零diff。
+- 本地Node 24无法加载Next 15的ESLint patch，未把该运行时兼容失败记作源码失败；远程Node 22权威门禁中Lint success。Actions run `29297252637` / build job `86973354237` completed/success，Playwright、52页build、bundle/secret及clean gate全部success；Vercel两项success，Pages deploy skipped，PR继续Open/Draft。下一项转入HEM-P1-033。
