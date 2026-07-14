@@ -699,3 +699,16 @@ Preview变量只核对名称/作用域：LLM相关变量覆盖Preview；`TRAININ
 | ESLint / bundle / scanner | `node scripts/run-lint.mjs`；`tsx scripts/scan-static-bundle.ts`；`node scripts/scan-repository-secrets.mjs` | 红队修正后三项exit0，2026-07-14 12:19:21—12:19:27 CST；25 JS、298 tracked/candidate文件，无秘密值输出 |
 
 官方模型核验来源为DeepSeek [`Create Chat Completion`](https://api-docs.deepseek.com/api/create-chat-completion)文档；当前`deepseek-v4-flash`仍在允许值中。没有真实Preview调用、模型切换或P50/P95样本，本地fixture不能登记为真实AI通过。
+
+### HEM-P1-040 push后远程门禁（2026-07-14）
+
+| 检查 | 远程证据 | 结果 |
+|---|---|---|
+| Git安全核验 | `git fetch --prune origin`；`origin/codex/hematuria-production-goal...HEAD` | fetch exit0；远程`00531d5`，本地`87cb4f5`，落后0/领先8；工作树干净 |
+| 普通push | `git push origin codex/hematuria-production-goal` | exit0；`00531d5..87cb4f5`，未force、未写main |
+| GitHub Actions | run `29305846597`，job `86998878165` | completed/success，4分06秒；依赖审计、75输出幂等、Schema/医学/双语合同、行为、评分、TypeScript、ESLint、scanner、Playwright、82页build、bundle和clean gate均通过 |
+| Vercel Preview | deployment `51WtprQAFvjLBqhAXV2kJFduV9mB`；Preview Comments | 两项success；只证明Preview构建部署成功 |
+| Pages发布 | run `29305846597`的`deploy` job | skipped，符合PR不得正式部署规则 |
+| PR治理 | PR #1 head `87cb4f5` | Open/Draft；未Ready、未合并 |
+
+远程门禁没有读取或修改环境变量值，也没有执行真实DeepSeek/Azure调用。持久store、签名/origin、跨实例429/425/熔断、日志10/10、真实双语AI 10/10、20轮与P50/P95继续登记为外部配置后待验证。

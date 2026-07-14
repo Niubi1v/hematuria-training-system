@@ -389,3 +389,9 @@
 - 提交前独立安全复核发现并阻止了“400请求级错误毒化全局熔断”的P1；新增连续400、500有限重试和损坏200 JSON合同后修正为显式错误类别。live provider probe另固定为单次、5秒timeout，避免超过前端8秒探测窗口后仍在后台重试。
 - 修正后同一只读安全复核确认无残余P0/P1；剩余P2仅为Upstash命令mock不等于真实Redis跨实例/Lua TTL验收，继续归HEM-P1-020外部配置后验证。
 - 前一HEM-P1-042提交为本地`d1fe177`；push前GitHub API确认远程/PR仍`00531d5`且Draft，但普通push因`github.com:443`连接失败，远程未变化。未使用API改ref或force；该外部阻塞不妨碍本地继续P1。
+
+### HEM-P1-040 远程确认（2026-07-14 12:27 CST）
+
+- 443连通性恢复后，重新`fetch --prune`确认远程专项分支仍为`00531d5`；本地仅领先8、落后0，工作树干净且无未知远程提交。8个本地小步提交已普通push，分支/PR head更新为`87cb4f57d2fd548b5e68be7bb1d1dff75238fdad`。
+- Draft PR #1保持Open/Draft。Actions run `29305846597`的`build`在Node 22完成并success（4分06秒）；Vercel deployment `51WtprQAFvjLBqhAXV2kJFduV9mB`及Preview Comments均success，Pages正式`deploy`按PR规则skipped。
+- 远程绿灯证明代码门禁与Preview构建通过，不等于Preview已配置持久Upstash、签名/origin、真实DeepSeek/Azure，也不等于跨实例熔断、日志10/10、双语真实AI 10/10或P50/P95验收通过。PR继续Draft。

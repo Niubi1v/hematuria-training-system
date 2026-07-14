@@ -292,3 +292,10 @@
 - 修正后复核结论为本项无残余P0/P1；模拟Upstash命令仍不能替代配置后真实Redis跨实例/Lua TTL验收，该P2与真实P50/P95一并保持外部阻塞。
 - HEM-P1-040最终本地门禁另含TypeScript、ESLint、82/82生产静态页、25 JS bundle和298文件敏感信息扫描；均exit0。构建运行时是bundled Node24且有engine warning，因此正式Node22结论仍必须来自push后的PR CI。
 - 本地提交`d1fe177`及其之前6个提交尚未到远程：GitHub API确认PR #1仍Open/Draft且远程HEAD为`00531d5`，普通push因`github.com:443`连接失败。没有force、API改ref、Ready、merge或Production部署；网络恢复后必须重新fetch核对再普通push。
+
+### 2026-07-14 AI防滥用里程碑远程交接
+
+- 当前已推送代码HEAD：`87cb4f57d2fd548b5e68be7bb1d1dff75238fdad`；提交`87cb4f5`为provider失败熔断器，连同此前7个Agent/TTS安全提交从`00531d5`普通push至当前专项分支。工作树在提交和push时均干净。
+- Draft PR #1仍Open/Draft。Actions run `29305846597` completed/success，build耗时4分06秒；Vercel deployment `51WtprQAFvjLBqhAXV2kJFduV9mB`和Preview Comments success；Pages deploy skipped。未转Ready、未合并、未部署Production。
+- HEM-P1-036—042的本地工程门禁和Node22远程回归已通过；推荐长期QA从`87cb4f57d2fd548b5e68be7bb1d1dff75238fdad`或本证据文档提交的后代复测防滥用、恢复与延迟行为。
+- 剩余阻塞不变：HEM-P1-020需人工在Preview作用域核对既有持久store、签名和origin配置并重部署，随后验证真实DeepSeek/Azure、跨实例限额/熔断、日志10/10、双语10/10、20轮和P50/P95；HEM-P1-027移动遮挡仍OPEN；HEM-P0-001/023需具名医学专家裁决。CI/Vercel绿灯不得替代这些结论。

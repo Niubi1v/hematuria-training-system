@@ -249,3 +249,8 @@
 - `HEM-P1-040`（本地工程修复，待push/CI与Preview配置验收）：失败基线4个连续503逻辑请求实际调用provider 4次。现有持久/内存熔断在阈值2测试中降为2次，冷却后并发恢复仅1个探测，成功闭合；模拟Upstash命令不含provider URL/model明文。真实Preview错误率、P50/P95与外部告警投递仍受HEM-P1-020配置/权限阻塞。
 - `HEM-P1-041`（本地工程修复，待push/CI）：TTS旧路径无session也200。现绑定Patient session的attempt/case/language/mode，能力拒绝providerCalls=0，cache按session摘要隔离；桌面/移动降级2/2。跨实例预算拆为HEM-P1-042。
 - `HEM-P1-042`（本地工程修复，待push/CI与Preview配置验收）：失败基线中同session换IP/文本的第二次请求仍200并调用Azure stub。现于provider前原子执行session日、IP小时/日、项目日请求/字符预算及跨实例tuple租约；五类超限、quota/in-progress和serverless缺store均保持provider计数。Redis命令仅含6个哈希键，不保存音频、原始session/IP/text。真实Preview跨实例仍受HEM-P1-020配置阻塞。
+
+### 2026-07-14 AI防滥用远程状态修正
+
+- `HEM-P1-036`—`HEM-P1-042`的已完成本地工程提交已普通push至`87cb4f5`；此前“待push/CI”的网络阻塞解除。Actions run `29305846597` build success，Vercel两项success，PR仍Draft。
+- `HEM-P1-040`工程P1关闭；配置后Preview真实Redis跨实例/Lua TTL与provider错误率验证仍由`HEM-P1-020`阻塞，外部告警投递和真实性能样本仍待权限/配置，不得因CI绿灯关闭这些验收项。
