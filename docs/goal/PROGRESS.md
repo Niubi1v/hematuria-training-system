@@ -412,6 +412,6 @@
 - 从`ff1a932785d891749ae8e73130bde8857062e194`建立真实`training-action` handler浏览器合同。修正测试fixture的响应头暴露后，P001中文、英文、双向切换、进入第二阶段和刷新恢复均成功，证明配置齐全时服务端stage/token/session绑定没有拒绝首次合法提交。
 - 失败基线稳定复现两个工程缺陷：快速双击在desktop/mobile各发出2个`stage-feedback`请求；`training_attempt_store_unavailable`虽已分类为永久配置错误，仍在catch路径按503重试，一次点击最多发出3次请求，且UI只显示通用“阶段提交失败，请重试”。
 - 最小修复增加阶段提交单飞锁和提交中禁用态；把attempt store/签名配置错误列为不可重试，并显示不含敏感值的明确双语管理提示。过期、跨病例、跨语言、stage锁及签名校验全部保持fail-closed，没有在前端伪造阶段推进。
-- 本地专项、完整行为链、42例结构化回归、572事实/419审核合同、360评分、TypeScript、ESLint、82页构建、bundle和secret扫描通过。新增浏览器6项desktop/mobile断言全部完成，但本机Node24 Playwright进程在结果后未退出而被300秒上限终止；不能登记为命令exit0，等待push后的Node22 CI作权威门禁。
+- 本地专项、完整行为链、42例结构化回归、572事实/419审核合同、360评分、TypeScript、ESLint、82页构建、bundle和secret扫描通过。新增浏览器合同复用受控本地server与已安装Chrome，desktop/mobile 6/6、13.7秒exit0；此前自动webServer在断言后不退出及CI通道缺专用Chromium均作为运行环境失败保留，不冒充产品失败。Node22完整门禁仍待push后CI。
 - 当前执行环境无法取得登录态Vercel Preview的console/network；既有只读作用域证据显示Preview缺少训练签名/持久attempt store配置，服务端在Vercel缺共享store时明确503 fail-closed，因此这是用户实测“无法提交”的高可信外部根因，但在获得当前失败请求HTTP/error code前仍标记为待直接确认。未读取、生成或修改任何变量值。
 - 代码与测试已形成仅本地原子提交`3cb22cd`；尚未push，PR #1继续Draft。下一步为证据提交、普通push、Node22 CI/Vercel观察，再给长期QA准确HEAD。

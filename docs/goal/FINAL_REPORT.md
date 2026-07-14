@@ -315,6 +315,6 @@
 
 - 基线`ff1a932785d891749ae8e73130bde8857062e194`确认配置齐全的真实训练handler可接受P001中英第一阶段、语言双向切换和刷新恢复；用户无法提交不是通过关闭安全校验解决的问题。
 - 已证实客户端缺陷为阶段提交无单飞锁（双击2请求）和永久配置503被重复重试并隐藏错误原因。候选将两者分别收敛为单请求，并保留全部attempt/session/stage/case/language/mode与签名校验。
-- 本地行为、医学治理、类型、lint、82页构建、bundle和secret门禁通过；desktop/mobile新增6项断言完成，但本地Node24 runner在结果后未退出并以124结束，正式浏览器结论须等push后Node22 CI。
+- 本地行为、医学治理、类型、lint、82页构建、bundle和secret门禁通过；受控本地server与已安装Chrome下desktop/mobile新增专项6/6、13.7秒exit0。Node22完整浏览器结论仍须等push后PR CI。
 - 当前Preview直接请求证据仍受登录态/浏览器控制阻塞。根据既有变量作用域和服务端fail-closed实现，Preview缺持久attempt store/训练签名是高可信阻塞；仍需用户只配置既有变量值并重新部署后抓取实际HTTP/error code。Codex未读取、生成、修改或输出任何值。
-- 代码与测试已形成本地提交`3cb22cd`，尚未push，PR #1仍Draft。完成证据提交、普通push和远程门禁后，本节需补充最终HEAD、Actions run、Vercel deployment及长期QA准确复测步骤。
+- 代码与测试已形成本地提交`3cb22cd`，首轮证据提交为`c4c2f25`；尚未push，PR #1仍Draft。三次fetch因GitHub 443超时/重置失败，GitHub API确认远程head仍`ff1a932`，但未以API查询替代fetch门禁。网络恢复后必须先成功fetch，再普通push并补充Actions、Vercel及长期QA准确步骤。
