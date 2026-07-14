@@ -300,3 +300,11 @@
 - GitHub Actions run `29294906265` / build job `86966184595` completed/success：Node 22依赖安装与全依赖high审计、75项幂等、医学/行为/评分合同、TypeScript、ESLint、完整历史repository scanner、Playwright、52页构建、bundle扫描和最终clean gate全部success。Pages artifact/deploy在PR分支按策略skipped。
 - Vercel Deployment与Vercel Preview Comments均success；PR #1仍Open/Draft，HEAD精确为`04c2a0b`。这些结果只确认工程候选，不宣称真实DeepSeek、Preview日志签名、P95或医学裁决通过。
 - 已正式fetch QA分支并确认HEAD `4e3b3b1d107d34e2027229b835e2cbd21ddc61d4`、merge-base `52c24325ddd28262458f5eff4f37fe2866d53305`；仅选择性审查测试/报告，不整体merge。其余静态P2暂停，下一项为HEM-P1-034。
+
+### HEM-P1-034 双语切换attempt token竞态（2026-07-14）
+
+- QA证据先被独立复现：等待中文session 200后切换英文，英文请求header存在但同时与新`attemptId`和`language=en`不匹配，受控session fixture正确返回401 `invalid_attempt_token`；未关闭或放宽服务端校验。
+- 根因是客户端用单一token/promise ref保存能力，语言切换的session effect早于清理effect读取旧中文token。`d8c30be`将token和single-flight promise按`attemptId`键控，并在语言切换的同步转换内取消旧session、清空旧能力/队列；旧响应继续受generation/AbortController保护。
+- 浏览器专项在desktop/mobile 2/2通过，覆盖中文→英文、刷新恢复、英文→中文、在途英文session后快速反向切换、每attempt仅一次初始化及最终语言不被旧响应覆盖；完整practice回归40/40。
+- 受影响合同均exit0：agent/session安全、attempt隔离、training API/security、API recovery、TypeScript、ESLint及295文件secret扫描；`data/**`、医学审核/审批、18条冲突和360评分零修改。
+- 提交`d8c30beea1e2fa8085bd42d1a78b64354bc61be8`已普通push。Actions run `29296603010` / build job `86971396465` completed/success，Vercel Deployment与Preview Comments success，Pages deploy skipped；PR #1保持Open/Draft。该HEAD交由长期QA独立复测HEM-P1-034。

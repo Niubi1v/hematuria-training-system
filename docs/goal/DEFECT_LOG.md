@@ -226,3 +226,7 @@
 - `DCI-P2-007`（工程闭环）：`safe-workbook`此前在`XLSX.read`后才检查形状，失败fixture证明`maxExpandedBytes`被忽略。`e94721e`增加解析前ZIP中央目录和受限解压检查；本地专项及`04c2a0b`的Node 22完整行为/医学工作簿合同均success。
 - `DCI-P2-008`（工程闭环）：`d895e28`增加全依赖high门禁、全未跟踪clean gate、main-only artifact/deploy及按workflow/event/ref并发隔离；run `29294906265`的Full dependency audit、最终clean gate和PR分支deploy skipped行为均符合合同。依赖真实状态仍为1 moderate、0 high。
 - 其余静态P2按用户指令暂缓，不在本轮继续扩展；下一优先级为QA复现的HEM-P1-034。
+
+### 长期QA开放P1处置
+
+- `HEM-P1-034`（工程修复完成，待独立QA复测）：旧实现等待中文session成功后切换英文会把中文attempt token发送给英文session，真实失败测试记录`headerPresent=true`、`attemptMatches=false`、`languageMatches=false`并得到401 `invalid_attempt_token`。`d8c30be`把token/promise按attempt键控，并同步取消/清理旧session能力。desktop/mobile双向切换、刷新、快速反向切换2/2及完整Playwright40/40通过；run `29296603010` completed/success，Vercel两项success。服务端跨语言/跨attempt拒绝合同保持不变。

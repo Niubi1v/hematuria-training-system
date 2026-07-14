@@ -243,3 +243,9 @@
 - 两提交均可分别普通`git revert e94721e`、`git revert d895e28`。未修改业务页面、Patient Agent、连接状态机、医学事实、审批状态、环境变量或密钥。
 - `04c2a0b0bd61f32d7621651223d10ed0d780ba55`已普通快进push；Actions run `29294906265` / build job `86966184595` completed/success，Vercel Deployment与Preview Comments success，Pages deploy按PR策略skipped。PR #1保持Open/Draft，工作树干净。
 - 当前原子P2工程项已完成，不再扩展新的静态P2。已fetch长期QA分支并确认HEAD `4e3b3b1d107d34e2027229b835e2cbd21ddc61d4`、merge-base `52c24325ddd28262458f5eff4f37fe2866d53305`；下一优先级为HEM-P1-034。真实Preview AI/持久存储/密钥作用域及HEM-P0-001/023医学裁决仍未解除。
+
+### HEM-P1-034
+
+- `d8c30be`修复语言切换时单一token/promise ref复用旧attempt能力的竞态；能力仍严格绑定case/language/mode/attempt，服务端校验未放宽。回滚为普通`git revert d8c30be`。
+- 失败基线为中文session 200后英文session 401 `invalid_attempt_token`，且脱敏观察明确指向旧attempt/旧language；修复后desktop/mobile双向切换、刷新、快速反向切换2/2，完整practice 40/40及安全合同通过。
+- Actions run `29296603010` completed/success，Vercel两项success，Pages deploy skipped，PR继续Draft。长期QA推荐从`d8c30beea1e2fa8085bd42d1a78b64354bc61be8`复测HEM-P1-034；HEM-P1-029、HEM-P1-033与HEM-P1-027仍开放。

@@ -531,3 +531,16 @@ Preview未执行真实Upstash/DeepSeek验收，因为当前没有也不得读取
 - `deploy` check为completed/skipped，符合PR分支不上传/部署GitHub Pages的策略；没有部署Production。
 - GitHub commit checks：`build=success`、`Vercel Preview Comments=success`、`deploy=skipped`；combined status中`Vercel=success`。PR #1仍Open/Draft，HEAD `04c2a0b`。
 - 该远程结果关闭工作簿ZIP展开和CI/scanner证据真实性工程项，但不替代真实Preview AI、日志签名、持久限流、首Token/P95或医学专家验收。
+
+## HEM-P1-034 双语切换能力绑定
+
+| 检查 | 精确命令/环境 | 退出码与结果 |
+|---|---|---|
+| 有效失败基线 | Playwright desktop定向`-g "HEM-P1-034"`，等待中文session 200后切换英文 | exit1；中文tuple全匹配，英文header存在但attempt/language均不匹配，HTTP 401 |
+| 修复后定向浏览器 | 同测试，desktop+mobile | exit0；2/2，含双向切换、刷新恢复、在途英文session快速反向切换、每attempt单次init |
+| 受影响浏览器回归 | `playwright test -c <local-port-config>` | exit0；40/40，45.1秒；本地Next使用3011以避开既有3000监听，临时config未提交 |
+| TypeScript、ESLint | `tsc --noEmit`、`scripts/run-lint.mjs` | 均exit0 |
+| session/attempt安全 | `test-agent-api-security.ts`、`test-attempt-isolation.ts`、`test-training-security.ts`、`test-training-api.ts`、`test-api-recovery.ts` | 均exit0；401/403/409和非重试合同未放宽 |
+| 敏感信息与医学路径 | repository scanner；`git diff --name-only -- data outputs/medical-review ...` | scanner exit0（295文件+历史/有界归档）；医学路径无输出 |
+
+远程：`d8c30be`的Actions run `29296603010` / build job `86971396465` completed/success；完整行为、TypeScript、ESLint、repository scanner、Playwright、52页构建、bundle和最终clean gate全部success。Vercel Deployment与Preview Comments success，Pages deploy skipped，PR继续Draft。
