@@ -946,3 +946,23 @@ CI详情：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/29
 说明：浏览器控制运行时仍报`Cannot redefine property: process`，本轮没有取得登录态旧Preview的console/network；用户截图、公开旧API health和本地真实handler/bundle/trace共同构成根因证据。新提交尚未push，故没有把旧Actions或Vercel绿灯归属于该候选，也没有伪报线上已修复。
 
 发布门禁补证：代码提交`656816d`、证据提交`8a31711`；`gh auth status -h github.com`显示默认CLI token失效。`git fetch --prune origin`在22.1秒因`Recv failure: Connection was reset`退出1；`git -c http.version=HTTP/1.1 fetch --prune origin`在41.1秒因无法连接`github.com:443`退出1。未执行push，当前无属于这些提交的Node22 CI或Vercel部署结果。
+
+## HEM-P1-043-R4 CI同源合同恢复（2026-07-15，本地）
+
+| 检查 | 精确环境/命令 | 结果 |
+|---|---|---|
+| Node运行时 | 官方便携Node `v22.14.0`；下载包SHA256与Node官方`SHASUMS256.txt`一致 | PASS |
+| 修改前目标矩阵 | Playwright grep 7个失败名称，desktop+mobile | FAIL（预期），14/14；与run `29397429743`一致 |
+| 配置红灯 | `node v22.14.0 node_modules/tsx/dist/cli.mjs scripts/test-public-api-config.ts` | FAIL（预期）；开发缺省实际为`http://127.0.0.1:3001`而非相对路径 |
+| 配置/API恢复/attempt | `test-public-api-config.ts`；`test-api-recovery.ts`；`test-attempt-isolation.ts` | PASS / PASS / PASS |
+| 修改后目标矩阵 | 同一7用例grep，desktop+mobile | PASS，14/14，20.2秒 |
+| 完整浏览器 | Node 22，外部Node 22 Next dev，`playwright test` | PASS，68/68，77.2秒；desktop+mobile |
+| 类型/Lint | `pnpm run typecheck`；`pnpm run lint`（Node 22） | PASS / PASS |
+| 完整行为/安全/治理 | `pnpm run test`（Node 22） | PASS，37.6秒；42病例、572事实、419待审核、18冲突隔离、session/attempt/signature/scoring均通过 |
+| Vercel同源构建 | `VERCEL=1 VERCEL_ENV=preview next build` | PASS，82/82；18秒 |
+| GitHub Pages构建 | `NEXT_PUBLIC_BASE_PATH=/hematuria-training-system NEXT_PUBLIC_API_BASE_URL=https://hematuria-training-system.vercel.app next build` | PASS，82/82；18.9秒 |
+| bundle扫描 | 两种构建后分别运行`scan-static-bundle.ts` | PASS / PASS；各25个JS；无隐藏答案、密钥或`:3001`测试端口 |
+| repository secret scan | `pnpm run test:secrets` | PASS；303个候选文件、可达文本历史和有限归档元数据 |
+| 数据边界 | `git diff --exit-code -- data` | PASS，零差异 |
+
+修复提交：`d1c20de0ad3b96ca992c8be679df23cbf9facb28`。当前表仅记录本地候选，不复用旧HEAD的远程绿灯。

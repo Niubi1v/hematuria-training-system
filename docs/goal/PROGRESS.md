@@ -498,3 +498,11 @@
 - Vercel等价构建82/82；P003旧token/零轮desktop+mobile 2/2、受旧跨域bundle影响的同步/重连矩阵12/12、完整desktop+mobile Playwright 68/68。API配置/恢复、attempt、训练API、TypeScript、ESLint、25个JS bundle和303个候选/历史文件敏感信息扫描均exit0。
 - `data/**`零差异；未修改医学事实、419审核、18条冲突、`needs_revision`、Patient医学语义或360评分。当前仍是本地候选，须原子提交、fetch后普通push，并以Node22 Actions和新Vercel部署SHA复核；PR继续Draft。
 - 代码/测试提交`656816d`与首轮证据提交`8a31711`已本地保存。13:22—13:26 CST发布门禁中，`gh auth status`报告默认CLI token失效；标准`git fetch --prune origin`约22秒后连接重置，命令级HTTP/1.1重试约41秒后无法连接`github.com:443`。因此没有绕过成功fetch而push；本地tracking ref显示2/0仅为陈旧缓存，不能据此证明远端无新提交。
+
+### HEM-P1-043-R4 CI同源合同恢复（2026-07-15，本地候选）
+
+- 起始HEAD为`6ba9d29f73a3feea72ba80b0cb78d7030e82a5f0`；仓库外bundle `production-before-ci-fix-6ba9d29.bundle`验证为完整历史，SHA256 `EB3C6DC1FA17C0A87DC3F365343A84BEEEF91D547E3E43EDE9EC11B6A8BDE75A`。
+- Actions run `29397429743`的14项失败为7个用例×desktop/mobile：P003两项直接暴露页面`:3000`与隐式API fallback `:3001`不同源；其余12项在跨源下读不到`X-Training-State`，正确触发`training_state_token_missing` fail-closed后级联失败。CI实际没有启动`:3001`完整API，E2E一直由`page.route`提供测试适配。
+- 删除隐式`:3001`fallback；本地默认、Vercel Preview与Vercel Production统一使用相对`/api/**`，GitHub Pages继续显式注入HTTPS API origin。新增配置合同与静态bundle禁止测试端口门禁，未修改token、签名、attempt、stage或CORS安全规则。
+- 修复前Node 22目标矩阵稳定14/14失败；修复后目标14/14、完整Playwright 68/68通过。TypeScript、ESLint、完整行为/安全/医学治理、Vercel与Pages两次82页构建、两次25 JS bundle扫描、303文件/历史secret扫描均exit0；`data/**`零差异。
+- 代码/测试提交为`d1c20de0ad3b96ca992c8be679df23cbf9facb28`。独立只读复核无P0/P1；本地纯`next dev`若需外部API必须显式配置开发origin，该P2不改变生产安全合同。待证据提交、fetch门禁、普通push及新HEAD Actions/Vercel复核；PR继续Draft。

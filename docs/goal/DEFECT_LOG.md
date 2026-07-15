@@ -374,3 +374,11 @@
 - **数据边界**：`data/**`、医学审批、419决定、18条冲突、`needs_revision`和360评分零修改。新Preview部署前不得把本地结果写成线上已关闭。
 - **非阻塞后续边界**：只读安全复核未发现P0/P1；高级阶段本地进度与服务端进度不一致时当前仍安全失败并要求刷新/重新开始，`validate-attempt`返回的`status/currentStage`尚未用于自动对齐。该P2不影响本次第一阶段修复，也不得通过自动回退阶段处理。
 - **远程门禁**：本地提交为`656816d`和`8a31711`。`gh`默认token失效且两次正式fetch分别被连接重置/443不可达阻塞，故尚未push、无新Actions/Vercel证据；禁止用陈旧`origin/*`缓存或GitHub API改ref绕过fetch门禁。
+
+### HEM-P1-043-R4-CI 隐式跨源开发API导致Node 22 Playwright 14项失败
+
+- **严重度/状态**：P1发布门禁；本地根因修复和完整门禁通过，待新HEAD远程CI确认。
+- **失败证据**：Actions run `29397429743`及Node 22本地复现均为54 passed / 14 failed。P003 desktop/mobile在同源断言直接失败；另外6个用例各双视口因签名响应头跨源不可读，随后history/session/reconnect断言级联失败。
+- **根因**：`src/lib/apiConfig.ts`把未配置的开发浏览器默认指向`http://127.0.0.1:3001`，但CI只启动`:3000` Next前端，`:3001`并无完整API进程。Playwright `page.route`虽能拦截绝对URL，却不能把它变成浏览器同源响应。
+- **修复**：默认使用相对同源API；Vercel所有部署忽略可能指向其他部署的公开API origin；非Vercel生产仍要求显式HTTPS origin。保留缺签名fail-closed、origin/token隔离及非法origin拒绝。
+- **证据/提交**：目标14/14、完整68/68、全行为/安全/医学治理、类型、lint、两种82页构建、bundle/secret扫描通过，`data/**`零差异；代码提交`d1c20de0ad3b96ca992c8be679df23cbf9facb28`。

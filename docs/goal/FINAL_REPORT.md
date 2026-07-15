@@ -398,3 +398,12 @@
 - `data/**`、医学事实、419审核、18条冲突、`needs_revision`、Patient医学语义及360评分均未修改；未修改生产环境变量、未部署Production。当前候选仍需原子提交、fetch后普通push、Node22 CI及新Preview登录态P003复测，PR继续Draft。
 - 推送后QA应清除或保留旧站点sessionStorage分别复测：P003打开、preparing、0轮直接提交、1轮提交、刷新、重新开始及快速双击；记录页面/请求origin、HTTP状态、非敏感error code和部署SHA，确认不再访问旧生产API且单次合法提交只有1个`stage-feedback`。
 - 本地代码/测试提交为`656816d`，首轮证据为`8a31711`。发布前fetch门禁被GitHub CLI token失效及`github.com:443`连接重置/不可达共同阻塞，故没有盲目push；现有远程CI/Preview均不属于本候选。恢复认证/网络后必须重新fetch，确认远端领先0，再普通push当前分支并观察Draft PR，禁止force、main写入、Ready、merge或Production部署。
+
+### 2026-07-15 CI同源合同恢复本地交接
+
+- 起始HEAD `6ba9d29f73a3feea72ba80b0cb78d7030e82a5f0`；仓库外回滚bundle已验证，SHA256 `EB3C6DC1FA17C0A87DC3F365343A84BEEEF91D547E3E43EDE9EC11B6A8BDE75A`。
+- 14项失败不是14个独立产品缺陷：P003双视口直接发现`:3000`页面请求隐式`:3001` API；另12项因跨源响应头不可读而触发正确的缺签名fail-closed。CI并未启动`:3001`测试API。
+- 提交`d1c20de0ad3b96ca992c8be679df23cbf9facb28`移除隐式测试端口，Vercel Preview/Production和本地E2E默认相对同源；GitHub Pages继续使用显式HTTPS API。Playwright现有`page.route`是test-only同源适配，没有加入生产rewrite或放宽安全校验。
+- Node 22本地结果：目标14/14、完整Playwright 68/68、类型、lint、完整行为/治理、两次82页构建、两次bundle扫描、secret扫描全部通过；`data/**`零差异。
+- 当前仍须fetch确认远端领先0后普通push，并等待精确新HEAD的Actions与Vercel。Preview应用层若继续受Authentication保护，继续标记`BLOCKED_PREVIEW_AUTH`，不得把本地结果写成线上通过。
+- 回滚：优先普通`git revert d1c20de0ad3b96ca992c8be679df23cbf9facb28`；也可从仓库外bundle恢复审计基线。禁止reset、force push、main写入或关闭token/签名校验。
