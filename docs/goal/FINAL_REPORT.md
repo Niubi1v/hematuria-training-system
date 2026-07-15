@@ -397,3 +397,4 @@
 - 本地门禁：P003 desktop/mobile 2/2、受影响同步/重连12/12、完整Playwright 68/68、Vercel等价build 82/82；API配置/恢复、attempt、训练API、TypeScript、ESLint、25 JS bundle和303文件secret扫描全部exit0。所有观察到的训练/session请求与页面同源。
 - `data/**`、医学事实、419审核、18条冲突、`needs_revision`、Patient医学语义及360评分均未修改；未修改生产环境变量、未部署Production。当前候选仍需原子提交、fetch后普通push、Node22 CI及新Preview登录态P003复测，PR继续Draft。
 - 推送后QA应清除或保留旧站点sessionStorage分别复测：P003打开、preparing、0轮直接提交、1轮提交、刷新、重新开始及快速双击；记录页面/请求origin、HTTP状态、非敏感error code和部署SHA，确认不再访问旧生产API且单次合法提交只有1个`stage-feedback`。
+- 本地代码/测试提交为`656816d`，首轮证据为`8a31711`。发布前fetch门禁被GitHub CLI token失效及`github.com:443`连接重置/不可达共同阻塞，故没有盲目push；现有远程CI/Preview均不属于本候选。恢复认证/网络后必须重新fetch，确认远端领先0，再普通push当前分支并观察Draft PR，禁止force、main写入、Ready、merge或Production部署。

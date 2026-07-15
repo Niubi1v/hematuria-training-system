@@ -373,3 +373,4 @@
 - **证据**：失败单元测试先稳定得到`ERR_INVALID_URL`；修复后相关单元门禁exit0，Vercel等价82页构建通过，Playwright完整68/68，desktop/mobile均验证P003旧token被替换、所有训练/session请求与页面同源、零轮提交进入第二阶段。
 - **数据边界**：`data/**`、医学审批、419决定、18条冲突、`needs_revision`和360评分零修改。新Preview部署前不得把本地结果写成线上已关闭。
 - **非阻塞后续边界**：只读安全复核未发现P0/P1；高级阶段本地进度与服务端进度不一致时当前仍安全失败并要求刷新/重新开始，`validate-attempt`返回的`status/currentStage`尚未用于自动对齐。该P2不影响本次第一阶段修复，也不得通过自动回退阶段处理。
+- **远程门禁**：本地提交为`656816d`和`8a31711`。`gh`默认token失效且两次正式fetch分别被连接重置/443不可达阻塞，故尚未push、无新Actions/Vercel证据；禁止用陈旧`origin/*`缓存或GitHub API改ref绕过fetch门禁。

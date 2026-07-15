@@ -944,3 +944,5 @@ CI详情：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/29
 | 医学数据边界 | `git diff -- data` | PASS，零差异 |
 
 说明：浏览器控制运行时仍报`Cannot redefine property: process`，本轮没有取得登录态旧Preview的console/network；用户截图、公开旧API health和本地真实handler/bundle/trace共同构成根因证据。新提交尚未push，故没有把旧Actions或Vercel绿灯归属于该候选，也没有伪报线上已修复。
+
+发布门禁补证：代码提交`656816d`、证据提交`8a31711`；`gh auth status -h github.com`显示默认CLI token失效。`git fetch --prune origin`在22.1秒因`Recv failure: Connection was reset`退出1；`git -c http.version=HTTP/1.1 fetch --prune origin`在41.1秒因无法连接`github.com:443`退出1。未执行push，当前无属于这些提交的Node22 CI或Vercel部署结果。

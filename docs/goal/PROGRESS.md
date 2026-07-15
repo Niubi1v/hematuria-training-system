@@ -497,3 +497,4 @@
 - 同源切换后的真实失败测试进一步发现公共请求封装用`new URL(relativePath)`在发请求前抛`ERR_INVALID_URL`。现只为日志路径解析提供不可路由基址，实际fetch仍保持相对同源URL；没有硬编码Preview域名或绕过网络/签名检查。
 - Vercel等价构建82/82；P003旧token/零轮desktop+mobile 2/2、受旧跨域bundle影响的同步/重连矩阵12/12、完整desktop+mobile Playwright 68/68。API配置/恢复、attempt、训练API、TypeScript、ESLint、25个JS bundle和303个候选/历史文件敏感信息扫描均exit0。
 - `data/**`零差异；未修改医学事实、419审核、18条冲突、`needs_revision`、Patient医学语义或360评分。当前仍是本地候选，须原子提交、fetch后普通push，并以Node22 Actions和新Vercel部署SHA复核；PR继续Draft。
+- 代码/测试提交`656816d`与首轮证据提交`8a31711`已本地保存。13:22—13:26 CST发布门禁中，`gh auth status`报告默认CLI token失效；标准`git fetch --prune origin`约22秒后连接重置，命令级HTTP/1.1重试约41秒后无法连接`github.com:443`。因此没有绕过成功fetch而push；本地tracking ref显示2/0仅为陈旧缓存，不能据此证明远端无新提交。
