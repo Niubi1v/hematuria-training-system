@@ -8,13 +8,13 @@ export function resolvePublicApiBaseUrl(raw: string | undefined, env: PublicApiE
   const isProduction = env.NODE_ENV === "production";
   const vercelEnvironment = env.NEXT_PUBLIC_VERCEL_ENV || env.VERCEL_ENV;
   const isVercelBuild = env.VERCEL === "1" || Boolean(vercelEnvironment);
-  // A Vercel Preview contains its own API functions from the same commit. Project-level
-  // public variables may be inherited from Production, but routing a Preview UI to that
-  // older origin splits CORS, signing secrets and the durable attempt-store namespace.
-  if (vercelEnvironment === "preview") return "";
-  const fallback = isProduction ? "" : "http://127.0.0.1:3001";
-  const candidate = String(raw || fallback).trim().replace(/\/+$/, "");
-  if (!candidate && isVercelBuild) return "";
+  // Every Vercel deployment contains its own same-origin API functions. Project-level
+  // public variables may point at another deployment, which would split CORS, signing
+  // secrets and the durable attempt-store namespace. Local browser clients use the same
+  // relative contract by default; an explicit development origin remains opt-in.
+  if (isVercelBuild) return "";
+  const candidate = String(raw || "").trim().replace(/\/+$/, "");
+  if (!candidate && !isProduction) return "";
   if (!candidate) throw new Error("NEXT_PUBLIC_API_BASE_URL is required for production builds.");
   const parsed = new URL(candidate);
   if (isProduction && parsed.protocol !== "https:") throw new Error("Production API base URL must use HTTPS.");

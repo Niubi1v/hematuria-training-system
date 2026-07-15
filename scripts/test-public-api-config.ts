@@ -1,6 +1,25 @@
 import assert from "node:assert/strict";
-import { resolvePublicApiBaseUrl } from "../src/lib/apiConfig";
+import { publicApiConfig, resolvePublicApiBaseUrl } from "../src/lib/apiConfig";
 
+assert.deepEqual(publicApiConfig, {
+  baseUrl: "",
+  sessionInit: "/api/session/init/",
+  patientAgent: "/api/agent-chat/",
+  trainingAction: "/api/training-action/",
+  tts: "/api/tts/",
+  health: "/api/health/"
+}, "the default browser contract must expose only same-origin relative API routes");
+
+assert.equal(
+  resolvePublicApiBaseUrl(undefined, { NODE_ENV: "development" }),
+  "",
+  "local browser clients must default to same-origin relative API routes"
+);
+assert.equal(
+  resolvePublicApiBaseUrl("http://127.0.0.1:8787", { NODE_ENV: "development" }),
+  "http://127.0.0.1:8787",
+  "an explicit local API origin must remain an opt-in development contract"
+);
 assert.equal(
   resolvePublicApiBaseUrl(undefined, { NODE_ENV: "production", VERCEL: "1", VERCEL_ENV: "preview" }),
   "",
@@ -18,8 +37,8 @@ assert.equal(
 );
 assert.equal(
   resolvePublicApiBaseUrl("https://hematuria-training-system.vercel.app", { NODE_ENV: "production", VERCEL: "1", VERCEL_ENV: "production" }),
-  "https://hematuria-training-system.vercel.app",
-  "Vercel production may keep its explicit production API origin"
+  "",
+  "Vercel production must use relative same-origin API routes even when a public origin is injected"
 );
 assert.throws(
   () => resolvePublicApiBaseUrl(undefined, { NODE_ENV: "production" }),
@@ -33,6 +52,11 @@ assert.equal(
 assert.throws(
   () => resolvePublicApiBaseUrl("http://api.example.test", { NODE_ENV: "production" }),
   /must use HTTPS/
+);
+assert.throws(
+  () => resolvePublicApiBaseUrl("https://127.0.0.1:3001", { NODE_ENV: "production" }),
+  /cannot use localhost/,
+  "production must reject an explicitly injected test API origin"
 );
 assert.throws(
   () => resolvePublicApiBaseUrl("https://api.example.test/api", { NODE_ENV: "production" }),
