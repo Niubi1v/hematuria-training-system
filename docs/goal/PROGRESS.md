@@ -488,3 +488,12 @@
 - Draft PR #1保持Open/Draft。GitHub Actions run `29348368936` / build job `87137895749` completed/success：Node `22.14.0`，完整Playwright `64/64`，类型、lint、行为、scanner、82页build、bundle及最终clean gate均通过；Pages deploy按PR规则skipped。
 - Vercel Deployment与Preview Comments均success；部署记录为`F9pbrhZo1sEQBsxSrQ4jXhJwHZHC`。该绿灯确认候选可构建，不替代登录态P001立即提交的真实网络复测；in-app Browser运行时故障仍使该黑盒步骤待人工/长期QA执行。
 - 未修改生产环境、医学事实、419审核、18条冲突、`needs_revision`或360评分；PR未转Ready、未合并、未部署Production。
+
+### HEM-P1-043-R4 Preview跨部署状态与P003零轮提交（2026-07-15，本地候选）
+
+- 用户在最新Preview的P003截图再次显示“状态确认中”、0问0答和“阶段提交失败，请重试”。当前代码的真实训练handler以P003、中文、0轮和病史小结`1`直接执行`init-attempt`及`stage-feedback`均为HTTP 200，排除P003数据和0轮提交规则本身。
+- 根因证据由两层组成：Preview客户端继承了`NEXT_PUBLIC_API_BASE_URL=https://hematuria-training-system.vercel.app`，但浏览器看不到非公开的`VERCEL_ENV`，因此把当前Preview UI路由到健康信息仍为`gitSha=5a3ad11`的旧生产API；旧`sessionStorage` v3 token又未经服务端验证即被标为ready。跨部署的CORS、签名和attempt-store命名空间因此失配。
+- 最小修复只公开非敏感的Vercel部署作用域，使Preview bundle强制使用自身同源API；训练token改为按有效API origin隔离的v4 key，并以新增只读`validate-attempt`在ready前校验。响应缺少`X-Training-State`时保持fail-closed，旧token只允许在未提交的第一阶段按既有安全初始化流程恢复一次。签名、case、language、mode、stage及幂等校验全部保留。
+- 同源切换后的真实失败测试进一步发现公共请求封装用`new URL(relativePath)`在发请求前抛`ERR_INVALID_URL`。现只为日志路径解析提供不可路由基址，实际fetch仍保持相对同源URL；没有硬编码Preview域名或绕过网络/签名检查。
+- Vercel等价构建82/82；P003旧token/零轮desktop+mobile 2/2、受旧跨域bundle影响的同步/重连矩阵12/12、完整desktop+mobile Playwright 68/68。API配置/恢复、attempt、训练API、TypeScript、ESLint、25个JS bundle和303个候选/历史文件敏感信息扫描均exit0。
+- `data/**`零差异；未修改医学事实、419审核、18条冲突、`needs_revision`、Patient医学语义或360评分。当前仍是本地候选，须原子提交、fetch后普通push，并以Node22 Actions和新Vercel部署SHA复核；PR继续Draft。

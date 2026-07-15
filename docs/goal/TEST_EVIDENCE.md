@@ -924,3 +924,23 @@ in-app Browser连接两次在运行时初始化失败，无法取得登录态Pre
 | 登录态Preview交互 | P001打开后立即提交并采集应用POST | BLOCKED；in-app Browser运行时初始化失败，未伪造网络证据 |
 
 CI详情：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/29348368936`。Vercel部署记录：`https://vercel.com/niubi1vs-projects/hematuria-training-system/F9pbrhZo1sEQBsxSrQ4jXhJwHZHC`。
+
+## HEM-P1-043-R4 Preview同源训练状态与P003零轮提交（2026-07-15，本地候选）
+
+| 检查 | 精确命令/场景 | 结果 |
+|---|---|---|
+| P003 handler基线 | 当前真实handler：P003/zh/free，0问答，先`init-attempt`再`stage-feedback(history)` | PASS，HTTP 200 / 200；排除病例和零轮规则 |
+| 旧生产API版本证据 | 只读`GET https://hematuria-training-system.vercel.app/api/health/` | HTTP 200；`gitSha=5a3ad11`、API 2.6.0；未读取或输出密钥 |
+| Preview配置合同 | `tsx scripts/test-public-api-config.ts` | PASS，exit0；继承生产URL但`NEXT_PUBLIC_VERCEL_ENV=preview`时解析为同源 |
+| 相对URL失败合同 | 修复前`tsx scripts/test-api-recovery.ts` | FAIL（预期），`TypeError: Invalid URL`，输入`/api/training-action/`，网络请求0 |
+| API恢复合同 | 修复后`tsx scripts/test-api-recovery.ts` | PASS，exit0；相对同源请求恰好1次 |
+| token/API隔离 | `tsx scripts/test-attempt-isolation.ts`；`tsx scripts/test-training-api.ts` | PASS / PASS；不同API origin key不同，合法验证200、伪造旧token 401 |
+| Vercel等价构建 | `VERCEL=1 VERCEL_ENV=preview NEXT_PUBLIC_API_BASE_URL=https://hematuria-training-system.vercel.app NEXT_PUBLIC_GIT_SHA=local-p003-preview-fix next build` | PASS，21.5秒，82/82；客户端marker为preview，运行时API基址同源 |
+| P003真实浏览器 | 外部静态server；`playwright test tests/e2e/practice.spec.mjs --grep "P003 replaces"` | PASS，desktop/mobile 2/2，1.7秒；旧v3 token移除，v4 scoped token产生，0轮提交进入第二阶段，observed request origin与页面一致 |
+| 受影响同步/重连 | `--grep "rule fallback keeps\|AI reply renders\|history log transient\|history log exhausted\|twenty interview turns\|page refresh resumes"` | PASS，12/12，12.2秒 |
+| 完整浏览器门禁 | `PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173 PLAYWRIGHT_EXTERNAL_SERVER=1 playwright test tests/e2e/practice.spec.mjs` | PASS，68/68，43.8秒，desktop+mobile |
+| 类型/Lint | `tsc --noEmit`；`node scripts/run-lint.mjs` | PASS / PASS，exit0 |
+| bundle/敏感信息 | `tsx scripts/scan-static-bundle.ts`；`node scripts/scan-repository-secrets.mjs` | PASS；25个JS资源；303个tracked/candidate文件及可达历史/有限归档元数据 |
+| 医学数据边界 | `git diff -- data` | PASS，零差异 |
+
+说明：浏览器控制运行时仍报`Cannot redefine property: process`，本轮没有取得登录态旧Preview的console/network；用户截图、公开旧API health和本地真实handler/bundle/trace共同构成根因证据。新提交尚未push，故没有把旧Actions或Vercel绿灯归属于该候选，也没有伪报线上已修复。

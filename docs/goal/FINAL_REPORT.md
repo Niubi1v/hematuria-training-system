@@ -389,3 +389,11 @@
 - Actions run `29348368936` / job `87137895749`在Node `22.14.0` completed/success；完整Playwright 64/64，其余类型、lint、行为、scanner、82页build、bundle与clean gate全部通过。Pages deploy按PR规则skipped。
 - Vercel Deployment与Preview Comments通过，部署记录`F9pbrhZo1sEQBsxSrQ4jXhJwHZHC`。仍需长期QA在有Preview访问权限的真实浏览器复测：P001打开后立即提交、preparing期间提交、初始化首次失败后显式恢复、0轮/1轮/fallback、刷新和快速双击，并记录脱敏HTTP状态/error code；CI绿灯不替代该交互证据。
 - 回滚代码使用普通`git revert c069abf`；首轮证据提交可独立revert。不得reset、force push、关闭安全校验或修改医学审核状态。
+
+### 2026-07-15 HEM-P1-043-R4 Preview跨部署提交失败本地交接
+
+- P003截图所示0问0答提交失败不是病例或零轮限制：当前真实handler对该合同返回`init-attempt=200`、`stage-feedback=200`。根因是Preview客户端继承生产API地址却无法在浏览器读取`VERCEL_ENV`，把当前UI连接到仍报告`gitSha=5a3ad11`的旧API；旧v3 token又被无验证地标为ready。跨部署的签名/CORS/attempt-store随后在提交时失败。
+- 候选在构建时只公开非敏感部署作用域，Preview强制同源；token按API origin隔离并在ready前走只读`validate-attempt`。任何成功训练响应缺`X-Training-State`都fail-closed，失效高级阶段不自动重建。相对同源URL解析缺陷也已用先红后绿测试修复，实际fetch保持相对URL。
+- 本地门禁：P003 desktop/mobile 2/2、受影响同步/重连12/12、完整Playwright 68/68、Vercel等价build 82/82；API配置/恢复、attempt、训练API、TypeScript、ESLint、25 JS bundle和303文件secret扫描全部exit0。所有观察到的训练/session请求与页面同源。
+- `data/**`、医学事实、419审核、18条冲突、`needs_revision`、Patient医学语义及360评分均未修改；未修改生产环境变量、未部署Production。当前候选仍需原子提交、fetch后普通push、Node22 CI及新Preview登录态P003复测，PR继续Draft。
+- 推送后QA应清除或保留旧站点sessionStorage分别复测：P003打开、preparing、0轮直接提交、1轮提交、刷新、重新开始及快速双击；记录页面/请求origin、HTTP状态、非敏感error code和部署SHA，确认不再访问旧生产API且单次合法提交只有1个`stage-feedback`。

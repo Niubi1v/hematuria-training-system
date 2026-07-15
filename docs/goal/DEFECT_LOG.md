@@ -362,3 +362,14 @@
 - **提交**：代码/测试原子提交`c069abf`；待证据提交、普通push和Node22 CI。
 - **远程门禁**：已普通push至远程HEAD `6b41d334106a988a1cbc85b89792f6271be3b597`。Actions run `29348368936`在Node 22.14.0完整Playwright 64/64及全部工程门禁通过；Vercel Deployment与Preview Comments通过，PR #1保持Draft。
 - **剩余状态**：工程修复与CI门禁关闭；登录态Preview的P001立即提交网络时间线仍待长期QA复测，故不把CI/Vercel构建绿灯冒充用户交互已验证。
+
+### HEM-P1-043-R4 Preview UI与训练API跨部署，旧token被误判ready
+
+- **严重度/状态**：P1发布阻塞；本地工程修复与完整浏览器门禁通过，待普通push、Node22 CI和新Preview真实复测。
+- **用户证据**：P003页面显示回答来源“状态确认中”、0问0答，提交后出现“阶段提交失败，请重试”。当前handler对同一病例/语言/零轮合同返回200/200，故不是零轮规则或病例数据拒绝。
+- **根因**：Preview继承生产`NEXT_PUBLIC_API_BASE_URL`，而旧客户端依赖浏览器不可见的`VERCEL_ENV`判定Preview，最终把当前UI送往`gitSha=5a3ad11`旧生产API。客户端同时无条件信任旧v3 token；跨部署签名、CORS和attempt store失配后才在提交时失败。改为同源后，`fetchWithRecovery`又不能解析相对URL并在请求前抛错，该失败由浏览器trace中的`request_error`和仅有health、无training-action时间线证明。
+- **修复**：构建时仅公开`preview/production`作用域；Preview强制同源。token storage按API origin隔离，旧token必须先经只读`validate-attempt`验证；成功响应无签名token即失败关闭。相对URL只用不可路由基址提取日志pathname，实际请求仍同源。错误提示新增缺token、origin、限流及无效状态分类。
+- **安全边界**：`validate-attempt`必须通过既有签名、stored state、case、language和mode检查且不修改状态；高级阶段失效token不自动重建。未关闭session/token/stage校验，未伪造成功或重复计分。
+- **证据**：失败单元测试先稳定得到`ERR_INVALID_URL`；修复后相关单元门禁exit0，Vercel等价82页构建通过，Playwright完整68/68，desktop/mobile均验证P003旧token被替换、所有训练/session请求与页面同源、零轮提交进入第二阶段。
+- **数据边界**：`data/**`、医学审批、419决定、18条冲突、`needs_revision`和360评分零修改。新Preview部署前不得把本地结果写成线上已关闭。
+- **非阻塞后续边界**：只读安全复核未发现P0/P1；高级阶段本地进度与服务端进度不一致时当前仍安全失败并要求刷新/重新开始，`validate-attempt`返回的`status/currentStage`尚未用于自动对齐。该P2不影响本次第一阶段修复，也不得通过自动回退阶段处理。
