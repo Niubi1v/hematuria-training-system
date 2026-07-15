@@ -19,6 +19,7 @@
     "test:agent": "tsx scripts/test-agent-chat.ts",
     "test:session": "tsx scripts/test-dynamic-patient-session.ts",
     "test:complaint": "tsx scripts/test-chief-complaint.ts",
+    "test:complaint-wording": "tsx scripts/test-chief-complaint-wording.ts",
     "test:product": "tsx scripts/test-product-audit.ts",
     "test:history-matrix": "tsx scripts/test-structured-history-matrix.ts",
     "test:e2e-contract": "tsx scripts/test-representative-e2e.ts",
