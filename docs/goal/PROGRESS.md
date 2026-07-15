@@ -506,3 +506,9 @@
 - 删除隐式`:3001`fallback；本地默认、Vercel Preview与Vercel Production统一使用相对`/api/**`，GitHub Pages继续显式注入HTTPS API origin。新增配置合同与静态bundle禁止测试端口门禁，未修改token、签名、attempt、stage或CORS安全规则。
 - 修复前Node 22目标矩阵稳定14/14失败；修复后目标14/14、完整Playwright 68/68通过。TypeScript、ESLint、完整行为/安全/医学治理、Vercel与Pages两次82页构建、两次25 JS bundle扫描、303文件/历史secret扫描均exit0；`data/**`零差异。
 - 代码/测试提交为`d1c20de0ad3b96ca992c8be679df23cbf9facb28`。独立只读复核无P0/P1；本地纯`next dev`若需外部API必须显式配置开发origin，该P2不改变生产安全合同。待证据提交、fetch门禁、普通push及新HEAD Actions/Vercel复核；PR继续Draft。
+
+### HEM-P1-043-R4 CI同源合同远程验收（2026-07-15）
+
+- 证据HEAD `bd3bff5e2400a51d9b4f16f78eefb6895a781c1b`已普通push；Actions run `29405290154` / build job `87319150250` completed/success。Node `v22.14.0`、Playwright 68/68（2.8分钟）、TypeScript、ESLint、完整行为/医学合同、82页构建、23 JS bundle扫描、secret扫描及clean gate全部通过；Pages artifact/deploy按PR规则skipped。
+- Vercel Deployment `HdHGBhcwFXybfHe6weLVswR6vqew`及Preview Comments均success，状态查询绑定精确HEAD。PR #1仍为Open/Draft，base=`main`，未Ready、未合并、未部署Production。
+- Preview根路径与`/cases/P003/`匿名请求均最终到`vercel.com/login`（HTTP 200登录页）；浏览器控制两次导航也未在20—30秒内取得应用DOM。因此P003/P001真实提交冒烟继续标记`BLOCKED_PREVIEW_AUTH`，未绕过保护、未把CI或本地结果冒充线上交互通过。

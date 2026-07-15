@@ -407,3 +407,10 @@
 - Node 22本地结果：目标14/14、完整Playwright 68/68、类型、lint、完整行为/治理、两次82页构建、两次bundle扫描、secret扫描全部通过；`data/**`零差异。
 - 当前仍须fetch确认远端领先0后普通push，并等待精确新HEAD的Actions与Vercel。Preview应用层若继续受Authentication保护，继续标记`BLOCKED_PREVIEW_AUTH`，不得把本地结果写成线上通过。
 - 回滚：优先普通`git revert d1c20de0ad3b96ca992c8be679df23cbf9facb28`；也可从仓库外bundle恢复审计基线。禁止reset、force push、main写入或关闭token/签名校验。
+
+### 2026-07-15 CI恢复远程结论
+
+- 工程修复已由精确HEAD `bd3bff5e2400a51d9b4f16f78eefb6895a781c1b`的Actions run `29405290154`确认：Node 22.14.0、Playwright 68/68、类型、lint、行为/医学治理、82页构建、bundle、secret与clean gate全部通过。
+- Vercel deployment `HdHGBhcwFXybfHe6weLVswR6vqew`及Preview Comments通过；PR #1保持Open/Draft，未Ready、未合并main、未部署Production。
+- Preview Authentication仍阻挡根路径和P003应用DOM，故真实P003零轮、P001一轮、双语切换、刷新和双击冒烟仍须长期QA在授权登录态复测。本报告不把CI、fixture或本地结果写成线上交互通过。
+- 长期QA应以最终文档提交完成后的准确Production Goal HEAD为起点；清除与保留旧sessionStorage各测一次，并记录部署SHA、页面/请求origin、HTTP状态、非敏感error code和单次`stage-feedback`计数。

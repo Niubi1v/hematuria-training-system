@@ -966,3 +966,18 @@ CI详情：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/29
 | 数据边界 | `git diff --exit-code -- data` | PASS，零差异 |
 
 修复提交：`d1c20de0ad3b96ca992c8be679df23cbf9facb28`。当前表仅记录本地候选，不复用旧HEAD的远程绿灯。
+
+### 精确HEAD远程门禁
+
+| 检查 | 远程证据 | 结果 |
+|---|---|---|
+| 候选HEAD | `bd3bff5e2400a51d9b4f16f78eefb6895a781c1b` | PASS；包含`d1c20de`与本地证据提交 |
+| GitHub Actions | run `29405290154`，build job `87319150250` | PASS，completed/success |
+| Node / Playwright | job日志：`v22.14.0`；`Running 68 tests using 2 workers`；`68 passed (2.8m)` | PASS |
+| 工程门禁 | behavior、医学合同、typecheck、lint、repository secret、82/82 build、23 JS bundle、clean gate | 全部PASS |
+| Pages | artifact与deploy | SKIPPED，符合Draft PR规则 |
+| Vercel | deployment `HdHGBhcwFXybfHe6weLVswR6vqew`；Preview Comments | PASS / PASS；绑定精确HEAD |
+| PR状态 | PR #1，base `main` | Open / Draft / not merged |
+| Preview应用层 | 匿名根路径与`/cases/P003/` | BLOCKED_PREVIEW_AUTH；最终为`vercel.com/login`，未执行应用POST |
+
+Actions：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/29405290154`。Vercel：`https://vercel.com/niubi1vs-projects/hematuria-training-system/HdHGBhcwFXybfHe6weLVswR6vqew`。

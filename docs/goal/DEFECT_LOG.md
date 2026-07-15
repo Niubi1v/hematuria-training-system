@@ -382,3 +382,4 @@
 - **根因**：`src/lib/apiConfig.ts`把未配置的开发浏览器默认指向`http://127.0.0.1:3001`，但CI只启动`:3000` Next前端，`:3001`并无完整API进程。Playwright `page.route`虽能拦截绝对URL，却不能把它变成浏览器同源响应。
 - **修复**：默认使用相对同源API；Vercel所有部署忽略可能指向其他部署的公开API origin；非Vercel生产仍要求显式HTTPS origin。保留缺签名fail-closed、origin/token隔离及非法origin拒绝。
 - **证据/提交**：目标14/14、完整68/68、全行为/安全/医学治理、类型、lint、两种82页构建、bundle/secret扫描通过，`data/**`零差异；代码提交`d1c20de0ad3b96ca992c8be679df23cbf9facb28`。
+- **远程关闭证据**：HEAD `bd3bff5e2400a51d9b4f16f78eefb6895a781c1b`的Actions run `29405290154`在Node 22.14.0完成Playwright 68/68及全部工程门禁；Vercel Deployment与Preview Comments通过。工程CI阻塞已解除；登录态Preview交互仍为外部权限阻塞，不作为本缺陷复开证据。
