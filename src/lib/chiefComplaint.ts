@@ -1,4 +1,9 @@
+import runtimeWordingJson from "@/data/chief_complaint_wording_runtime.json";
+
 type Lang = "zh" | "en";
+type WordingUpdate = { zh: string; en: string; openingZh: string; openingEn: string };
+
+const wordingUpdates = runtimeWordingJson.updates as Record<string, WordingUpdate>;
 
 const cnDigits: Record<string, number> = {
   一: 1,
@@ -84,4 +89,19 @@ export function simplifiedChiefComplaintEn(rawZh?: string, fallbackEn?: string) 
 
 export function simplifiedChiefComplaint(rawZh: string | undefined, lang: Lang, fallbackEn?: string) {
   return lang === "en" ? simplifiedChiefComplaintEn(rawZh, fallbackEn) : simplifiedChiefComplaintZh(rawZh);
+}
+
+export function chiefComplaintForCase(caseId: string, rawZh: string | undefined, lang: Lang, fallbackEn?: string) {
+  const update = wordingUpdates[caseId];
+  if (update) return lang === "en" ? update.en : update.zh;
+  return simplifiedChiefComplaint(rawZh, lang, fallbackEn);
+}
+
+export function patientOpeningForCase(caseId: string, rawZh: string | undefined, lang: Lang, fallbackEn?: string) {
+  const update = wordingUpdates[caseId];
+  if (update) return lang === "en" ? update.openingEn : update.openingZh;
+  const complaint = simplifiedChiefComplaint(rawZh, lang, fallbackEn);
+  return lang === "en"
+    ? `Hello doctor. I came because of ${complaint || "abnormal urine color"}.`
+    : `医生您好，我是因为${complaint || "小便颜色异常"}来看病的。`;
 }

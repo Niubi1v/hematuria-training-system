@@ -4296,7 +4296,7 @@
     "caseId": "HX-ADD-002",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "反复尿频伴血尿半年",
+    "value": "反复尿频伴小便变红半年",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -4548,7 +4548,7 @@
     "caseId": "HX-ADD-003",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "左腰隐痛伴肉眼血尿1个月",
+    "value": "左腰隐痛伴小便变红1个月",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -4800,7 +4800,7 @@
     "caseId": "HX-ADD-004",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "无痛性肉眼血尿3周",
+    "value": "间断小便变红3周",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -5304,7 +5304,7 @@
     "caseId": "HX-ADD-006",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "尿频尿急尿痛伴血尿2天",
+    "value": "尿频、尿急、尿痛伴小便发红2天",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -5556,7 +5556,7 @@
     "caseId": "HX-ADD-007",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "发热腰痛伴尿频尿痛3天",
+    "value": "发热、左腰痛伴尿频、尿痛3天",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -6060,7 +6060,7 @@
     "caseId": "HX-ADD-009",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "尿频尿痛伴血尿1周",
+    "value": "尿频、尿痛伴小便发红1周",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -6312,7 +6312,7 @@
     "caseId": "HX-ADD-010",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "反复尿痛伴镜下血尿1年",
+    "value": "反复尿痛伴尿检发现血尿1年",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -6564,7 +6564,7 @@
     "caseId": "HX-ADD-011",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "右腰腹绞痛伴血尿6小时",
+    "value": "右腰腹绞痛伴小便发红6小时",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -6816,7 +6816,7 @@
     "caseId": "HX-ADD-012",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "左腰痛伴血尿1天",
+    "value": "左腰痛伴小便发红1天",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -7068,7 +7068,7 @@
     "caseId": "HX-ADD-013",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "排尿困难伴终末血尿3个月",
+    "value": "排尿困难伴排尿末小便发红3个月",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -7320,7 +7320,7 @@
     "caseId": "HX-ADD-014",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "反复发热腰痛伴血尿半年",
+    "value": "反复发热、腰痛伴小便发红半年",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -7572,7 +7572,7 @@
     "caseId": "HX-ADD-015",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "左侧腰腹痛伴血尿1天",
+    "value": "左侧腰腹痛伴小便发红1天",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -7824,7 +7824,7 @@
     "caseId": "HX-ADD-016",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "排尿困难伴肉眼血尿3天",
+    "value": "排尿困难伴小便变红3天",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -8076,7 +8076,7 @@
     "caseId": "HX-ADD-017",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "导尿后肉眼血尿1天",
+    "value": "导尿后小便变红1天",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -8328,7 +8328,7 @@
     "caseId": "HX-ADD-018",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "排尿困难伴镜下血尿半年",
+    "value": "排尿困难伴尿检发现血尿半年",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -8580,7 +8580,7 @@
     "caseId": "HX-ADD-019",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "咽痛后肉眼血尿2天",
+    "value": "咽痛后尿色呈浓茶色或可乐色2天",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -9084,7 +9084,7 @@
     "caseId": "HX-ADD-021",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "体检发现镜下血尿3年",
+    "value": "体检反复发现尿检有血3年",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -9588,7 +9588,7 @@
     "caseId": "HX-ADD-023",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "泡沫尿、血尿伴面部皮疹2周",
+    "value": "泡沫尿、尿检发现血尿伴面部皮疹2周",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -9840,7 +9840,7 @@
     "caseId": "HX-ADD-024",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "长跑后肉眼血尿1次",
+    "value": "长跑后小便发红1次",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -10092,7 +10092,7 @@
     "caseId": "HX-ADD-025",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "体检尿潜血阳性1天",
+    "value": "经期体检发现尿潜血阳性1天",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -10344,7 +10344,7 @@
     "caseId": "HX-ADD-026",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "车祸后腰痛伴肉眼血尿4小时",
+    "value": "车祸后腰痛伴小便变红4小时",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -10596,7 +10596,7 @@
     "caseId": "HX-ADD-027",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "腰痛伴血尿反复半年",
+    "value": "反复腰痛伴茶色或淡红色尿半年",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -10848,7 +10848,7 @@
     "caseId": "HX-ADD-028",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "突发左腰痛伴肉眼血尿1天",
+    "value": "突发左腰痛伴小便变红1天",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"
@@ -11352,7 +11352,7 @@
     "caseId": "HX-ADD-030",
     "category": "主诉与现病史",
     "fieldName": "chief_complaint",
-    "value": "体检发现镜下血尿1个月",
+    "value": "体检发现尿检有血1个月",
     "visibility": "按阶段/提问后释放",
     "releaseCondition": "按阶段/提问后释放",
     "agent": "主诉与现病史"

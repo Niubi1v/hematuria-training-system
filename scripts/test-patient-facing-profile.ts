@@ -35,7 +35,7 @@ async function main() {
   const table = ["| 病例 | 必填事实 | 吸烟史 | 用药史 |", "|---|---|---|---|", ...rows].join("\n");
   const reportPath = "PATIENT_PROFILE_COMPLETENESS_REPORT.md";
   const existing = fs.readFileSync(reportPath, "utf8");
-  const existingTable = existing.slice(existing.indexOf("| 病例 |")).trim();
+  const existingTable = existing.slice(existing.indexOf("| 病例 |")).trim().replace(/\r\n/g, "\n");
   assert(existingTable === table, "patient-facing profile report table is stale; review differences before using UPDATE_PATIENT_PROFILE_REPORT=1");
   if (process.env.UPDATE_PATIENT_PROFILE_REPORT === "1") {
     const report = ["# 42病例患者可见资料完整性报告", "", `生成时间：${new Date().toISOString()}`, "", table].join("\n");

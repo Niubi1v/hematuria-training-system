@@ -898,7 +898,7 @@
   "P005": {
     "chief_complaint": {
       "patientAnswerZh": "进行性排尿困难3年余，加重伴小便变红1月",
-      "patientAnswerEn": "Progressive dysuria/voiding difficulty for over 3 years, worsened with hematuria for 1 month.",
+      "patientAnswerEn": "Progressive difficulty urinating for over 3 years, worsening with red urine for 1 month.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1793,8 +1793,8 @@
   },
   "P009": {
     "chief_complaint": {
-      "patientAnswerZh": "突发右侧腰痛伴小便变红半天",
-      "patientAnswerEn": "Sudden right flank pain with hematuria for half a day.",
+      "patientAnswerZh": "突发右侧腰痛伴浓茶色尿半天",
+      "patientAnswerEn": "Sudden right flank pain with dark tea-colored urine for half a day.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2913,8 +2913,8 @@
   },
   "HX-ADD-002": {
     "chief_complaint": {
-      "patientAnswerZh": "反复尿频伴血尿半年",
-      "patientAnswerEn": "Hematuria for half a year",
+      "patientAnswerZh": "反复尿频伴小便变红半年",
+      "patientAnswerEn": "Recurrent urinary frequency with red urine for half a year.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -3137,8 +3137,8 @@
   },
   "HX-ADD-003": {
     "chief_complaint": {
-      "patientAnswerZh": "左腰隐痛伴肉眼血尿1个月",
-      "patientAnswerEn": "Hematuria for 1 month",
+      "patientAnswerZh": "左腰隐痛伴小便变红1个月",
+      "patientAnswerEn": "Red urine with dull left flank pain for 1 month.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -3361,8 +3361,8 @@
   },
   "HX-ADD-004": {
     "chief_complaint": {
-      "patientAnswerZh": "无痛性肉眼血尿3周",
-      "patientAnswerEn": "Hematuria for 3 weeks",
+      "patientAnswerZh": "间断小便变红3周",
+      "patientAnswerEn": "Intermittent red urine for 3 weeks.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -3809,8 +3809,8 @@
   },
   "HX-ADD-006": {
     "chief_complaint": {
-      "patientAnswerZh": "尿频尿急尿痛伴血尿2天",
-      "patientAnswerEn": "Hematuria for 2 days",
+      "patientAnswerZh": "尿频、尿急、尿痛伴小便发红2天",
+      "patientAnswerEn": "Urinary frequency, urgency, and pain with red-tinged urine for 2 days.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -4033,8 +4033,8 @@
   },
   "HX-ADD-007": {
     "chief_complaint": {
-      "patientAnswerZh": "发热腰痛伴尿频尿痛3天",
-      "patientAnswerEn": "Hematuria for 3 days",
+      "patientAnswerZh": "发热、左腰痛伴尿频、尿痛3天",
+      "patientAnswerEn": "Fever, left flank pain, urinary frequency, and painful urination for 3 days.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -4481,8 +4481,8 @@
   },
   "HX-ADD-009": {
     "chief_complaint": {
-      "patientAnswerZh": "尿频尿痛伴血尿1周",
-      "patientAnswerEn": "Hematuria for 1 week",
+      "patientAnswerZh": "尿频、尿痛伴小便发红1周",
+      "patientAnswerEn": "Urinary frequency and pain with red-tinged urine for 1 week.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -4705,8 +4705,8 @@
   },
   "HX-ADD-010": {
     "chief_complaint": {
-      "patientAnswerZh": "反复尿痛伴镜下血尿1年",
-      "patientAnswerEn": "Hematuria for 1 year",
+      "patientAnswerZh": "反复尿痛伴尿检发现血尿1年",
+      "patientAnswerEn": "Recurrent painful urination with microscopic blood detected on urine tests for 1 year.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -4929,8 +4929,8 @@
   },
   "HX-ADD-011": {
     "chief_complaint": {
-      "patientAnswerZh": "右腰腹绞痛伴血尿6小时",
-      "patientAnswerEn": "Hematuria for 6 hours",
+      "patientAnswerZh": "右腰腹绞痛伴小便发红6小时",
+      "patientAnswerEn": "Red-tinged urine with severe right flank and abdominal colic for 6 hours.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -5153,8 +5153,8 @@
   },
   "HX-ADD-012": {
     "chief_complaint": {
-      "patientAnswerZh": "左腰痛伴血尿1天",
-      "patientAnswerEn": "Hematuria for 1 day",
+      "patientAnswerZh": "左腰痛伴小便发红1天",
+      "patientAnswerEn": "Red-tinged urine with left flank pain for 1 day.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -5377,8 +5377,8 @@
   },
   "HX-ADD-013": {
     "chief_complaint": {
-      "patientAnswerZh": "排尿困难伴终末血尿3个月",
-      "patientAnswerEn": "Hematuria for 3 months",
+      "patientAnswerZh": "排尿困难伴排尿末小便发红3个月",
+      "patientAnswerEn": "Difficulty urinating with red urine at the end of urination for 3 months.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -5601,8 +5601,8 @@
   },
   "HX-ADD-014": {
     "chief_complaint": {
-      "patientAnswerZh": "反复发热腰痛伴血尿半年",
-      "patientAnswerEn": "Hematuria for half a year",
+      "patientAnswerZh": "反复发热、腰痛伴小便发红半年",
+      "patientAnswerEn": "Recurrent fever and flank pain with red-tinged urine for half a year.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -5825,8 +5825,8 @@
   },
   "HX-ADD-015": {
     "chief_complaint": {
-      "patientAnswerZh": "左侧腰腹痛伴血尿1天",
-      "patientAnswerEn": "Hematuria for 1 day",
+      "patientAnswerZh": "左侧腰腹痛伴小便发红1天",
+      "patientAnswerEn": "Red-tinged urine with left flank and abdominal pain for 1 day.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -6049,8 +6049,8 @@
   },
   "HX-ADD-016": {
     "chief_complaint": {
-      "patientAnswerZh": "排尿困难伴肉眼血尿3天",
-      "patientAnswerEn": "Hematuria for 3 days",
+      "patientAnswerZh": "排尿困难伴小便变红3天",
+      "patientAnswerEn": "Difficulty urinating with red urine for 3 days.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -6273,8 +6273,8 @@
   },
   "HX-ADD-017": {
     "chief_complaint": {
-      "patientAnswerZh": "导尿后肉眼血尿1天",
-      "patientAnswerEn": "Hematuria for 1 day",
+      "patientAnswerZh": "导尿后小便变红1天",
+      "patientAnswerEn": "Red urine for 1 day after catheterization.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -6497,8 +6497,8 @@
   },
   "HX-ADD-018": {
     "chief_complaint": {
-      "patientAnswerZh": "排尿困难伴镜下血尿半年",
-      "patientAnswerEn": "Hematuria for half a year",
+      "patientAnswerZh": "排尿困难伴尿检发现血尿半年",
+      "patientAnswerEn": "Difficulty urinating with microscopic blood detected on urine tests for half a year.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -6721,8 +6721,8 @@
   },
   "HX-ADD-019": {
     "chief_complaint": {
-      "patientAnswerZh": "咽痛后肉眼血尿2天",
-      "patientAnswerEn": "Hematuria for 2 days",
+      "patientAnswerZh": "咽痛后尿色呈浓茶色或可乐色2天",
+      "patientAnswerEn": "Dark tea- or cola-colored urine for 2 days after a sore throat.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -6946,7 +6946,7 @@
   "HX-ADD-020": {
     "chief_complaint": {
       "patientAnswerZh": "皮肤感染后茶色尿伴眼睑水肿1周",
-      "patientAnswerEn": "Hematuria for 1 week",
+      "patientAnswerEn": "Tea-colored urine with eyelid swelling for 1 week after a skin infection.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -7169,8 +7169,8 @@
   },
   "HX-ADD-021": {
     "chief_complaint": {
-      "patientAnswerZh": "体检发现镜下血尿3年",
-      "patientAnswerEn": "Hematuria for 3 years",
+      "patientAnswerZh": "体检反复发现尿检有血3年",
+      "patientAnswerEn": "Microscopic blood repeatedly detected on health-check urine tests for 3 years.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -7617,8 +7617,8 @@
   },
   "HX-ADD-023": {
     "chief_complaint": {
-      "patientAnswerZh": "泡沫尿、血尿伴面部皮疹2周",
-      "patientAnswerEn": "Hematuria for 2 weeks",
+      "patientAnswerZh": "泡沫尿、尿检发现血尿伴面部皮疹2周",
+      "patientAnswerEn": "Foamy urine with microscopic blood detected on urine tests and a facial rash for 2 weeks.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -7841,8 +7841,8 @@
   },
   "HX-ADD-024": {
     "chief_complaint": {
-      "patientAnswerZh": "长跑后肉眼血尿1次",
-      "patientAnswerEn": "Hematuria for several days",
+      "patientAnswerZh": "长跑后小便发红1次",
+      "patientAnswerEn": "One episode of red-tinged urine after a long-distance run.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -8065,8 +8065,8 @@
   },
   "HX-ADD-025": {
     "chief_complaint": {
-      "patientAnswerZh": "体检尿潜血阳性1天",
-      "patientAnswerEn": "Hematuria for 1 day",
+      "patientAnswerZh": "经期体检发现尿潜血阳性1天",
+      "patientAnswerEn": "Urine dipstick positive for blood during menstruation at a health check 1 day ago.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -8289,8 +8289,8 @@
   },
   "HX-ADD-026": {
     "chief_complaint": {
-      "patientAnswerZh": "车祸后腰痛伴肉眼血尿4小时",
-      "patientAnswerEn": "Hematuria for 4 hours",
+      "patientAnswerZh": "车祸后腰痛伴小便变红4小时",
+      "patientAnswerEn": "Red urine with flank pain for 4 hours after a traffic accident.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -8513,8 +8513,8 @@
   },
   "HX-ADD-027": {
     "chief_complaint": {
-      "patientAnswerZh": "腰痛伴血尿反复半年",
-      "patientAnswerEn": "Hematuria for half a year",
+      "patientAnswerZh": "反复腰痛伴茶色或淡红色尿半年",
+      "patientAnswerEn": "Recurrent flank pain with tea-colored or pale red urine for half a year.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -8737,8 +8737,8 @@
   },
   "HX-ADD-028": {
     "chief_complaint": {
-      "patientAnswerZh": "突发左腰痛伴肉眼血尿1天",
-      "patientAnswerEn": "Hematuria for 1 day",
+      "patientAnswerZh": "突发左腰痛伴小便变红1天",
+      "patientAnswerEn": "Sudden left flank pain with red urine for 1 day.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -9185,8 +9185,8 @@
   },
   "HX-ADD-030": {
     "chief_complaint": {
-      "patientAnswerZh": "体检发现镜下血尿1个月",
-      "patientAnswerEn": "Hematuria for 1 month",
+      "patientAnswerZh": "体检发现尿检有血1个月",
+      "patientAnswerEn": "Microscopic blood detected on health-check urine tests for 1 month.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
