@@ -981,3 +981,18 @@ CI详情：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/29
 | Preview应用层 | 匿名根路径与`/cases/P003/` | BLOCKED_PREVIEW_AUTH；最终为`vercel.com/login`，未执行应用POST |
 
 Actions：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/29405290154`。Vercel：`https://vercel.com/niubi1vs-projects/hematuria-training-system/HdHGBhcwFXybfHe6weLVswR6vqew`。
+
+## Preview Automation Bypass黑盒门禁（2026-07-15，本地候选）
+
+| 检查 | 精确命令/场景 | 结果 |
+|---|---|---|
+| 缺凭据合同 | 临时移除当前子进程的`VERCEL_AUTOMATION_BYPASS_SECRET`后运行`node scripts/run-preview-blackbox.mjs` | 预期阻塞；仅输出`BLOCKED_PREVIEW_AUTH`，未启动浏览器、未显示值 |
+| 配置与origin隔离 | Node 22.14.0运行`node scripts/test-preview-blackbox-config.mjs` | PASS；只对当前Preview origin生成`x-vercel-protection-bypass`，localhost、GitHub Pages、Production均为false；secret不进入URL |
+| 测试发现 | Node 22运行Playwright Preview config `--list` | PASS；5项：主页/health、P003零轮、P001中文一轮+刷新+双击、P001英文一轮、双向语言切换 |
+| 真实保护层请求 | `node scripts/run-preview-blackbox.mjs`，目标分支Preview | BLOCKED；目标origin注入计数1、跨origin计数0，302到`vercel.com/sso-api`并最终为`vercel.com/login`；应用API响应0 |
+| 后续流程 | P003/P001/双语/刷新/双击/第二阶段/live_ai/history-log | NOT RUN；串行主页门禁失败后4项未运行，未伪造应用层通过 |
+| 生成物安全 | Preview运行器对`test-results/preview-blackbox`按实际环境值做字节扫描 | PASS；未命中；trace/screenshot/video关闭，未记录Cookie、Authorization或认证响应头 |
+| TypeScript | 便携Node 22.14.0直接执行`node_modules/typescript/bin/tsc --noEmit` | PASS |
+| ESLint | Node 22.14.0执行`node scripts/run-lint.mjs` | PASS |
+
+保护层当前没有返回应用JSON错误码，不能把302/登录页解释为Patient、history-log或stage-feedback失败。需Vercel项目侧修正Automation Bypass作用域/有效性后使用同一入口复跑，届时测试将只保存脱敏路径、方法、HTTP状态、业务错误码、部署SHA和`generationSource/provider/isFallback`。

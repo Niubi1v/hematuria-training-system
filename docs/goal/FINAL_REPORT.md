@@ -414,3 +414,12 @@
 - Vercel deployment `HdHGBhcwFXybfHe6weLVswR6vqew`及Preview Comments通过；PR #1保持Open/Draft，未Ready、未合并main、未部署Production。
 - Preview Authentication仍阻挡根路径和P003应用DOM，故真实P003零轮、P001一轮、双语切换、刷新和双击冒烟仍须长期QA在授权登录态复测。本报告不把CI、fixture或本地结果写成线上交互通过。
 - 长期QA应以最终文档提交完成后的准确Production Goal HEAD为起点；清除与保留旧sessionStorage各测一次，并记录部署SHA、页面/请求origin、HTTP状态、非敏感error code和单次`stage-feedback`计数。
+
+### 2026-07-15 Preview保护绕过黑盒测试交接
+
+- 已建立独立Preview黑盒入口：只从进程环境读取`VERCEL_AUTOMATION_BYPASS_SECRET`，并仅向当前分支Preview origin添加`x-vercel-protection-bypass`。缺变量直接标记`BLOCKED_PREVIEW_AUTH`；本地、Pages及Production请求不受影响。
+- Preview运行禁用trace、截图和video；证据只含场景、API路径、方法、状态、非敏感业务错误和回答来源。运行器会用内存中的实际凭据扫描专用输出目录，命中即删除并失败；当前扫描通过。
+- 套件已定义主页/health、P003中文零轮提交、P001中英文真实AI一轮、history-log、刷新、快速双击、双向语言切换和进入第二阶段共5项串行场景。
+- 当前环境中的目标请求确实经过限定origin的保护头注入，但Vercel仍把首个请求重定向到`vercel.com/sso-api`并最终停在登录页。应用API响应为0，后续4项未运行，因此继续标记`BLOCKED_PREVIEW_AUTH`，不把保护层结果或本地测试写成线上通过。
+- 本地Node 22配置合同、TypeScript、ESLint与生成物敏感值扫描通过。需要Vercel项目管理员核对Automation Bypass secret的项目/团队归属和保护作用域；不需要也不得关闭Vercel Authentication。生效后使用同一命令复跑即可取得应用层证据。
+- Preview黑盒基础设施提交为`449e5c6`；回滚使用普通`git revert 449e5c6`，不会影响Production运行代码或医学数据。

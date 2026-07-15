@@ -512,3 +512,11 @@
 - 证据HEAD `bd3bff5e2400a51d9b4f16f78eefb6895a781c1b`已普通push；Actions run `29405290154` / build job `87319150250` completed/success。Node `v22.14.0`、Playwright 68/68（2.8分钟）、TypeScript、ESLint、完整行为/医学合同、82页构建、23 JS bundle扫描、secret扫描及clean gate全部通过；Pages artifact/deploy按PR规则skipped。
 - Vercel Deployment `HdHGBhcwFXybfHe6weLVswR6vqew`及Preview Comments均success，状态查询绑定精确HEAD。PR #1仍为Open/Draft，base=`main`，未Ready、未合并、未部署Production。
 - Preview根路径与`/cases/P003/`匿名请求均最终到`vercel.com/login`（HTTP 200登录页）；浏览器控制两次导航也未在20—30秒内取得应用DOM。因此P003/P001真实提交冒烟继续标记`BLOCKED_PREVIEW_AUTH`，未绕过保护、未把CI或本地结果冒充线上交互通过。
+
+### Preview自动化保护绕过黑盒基础设施（2026-07-15，本地候选）
+
+- 新增独立`playwright.preview.config.mjs`与`test:e2e:preview`入口。凭据只从测试进程的`VERCEL_AUTOMATION_BYPASS_SECRET`读取，缺失时明确输出`BLOCKED_PREVIEW_AUTH`；不接受URL传参，不写源码、fixture、trace、截图或日志。
+- bypass请求头通过Playwright路由仅附加到当前分支Preview origin。纯配置合同证明localhost、GitHub Pages和Production origin均不附加该头；Preview专用配置关闭trace、截图和video，运行器对生成物按内存中的实际值做字节扫描，若发现即删除专用输出目录并失败。
+- 真实Preview首个导航记录`sameOriginRequests=1`、`crossOriginRequests=0`，说明目标origin请求已注入保护头；Vercel仍返回302到`vercel.com/sso-api`并最终停在`vercel.com/login`。没有任何`/api/**`响应，P003/P001应用流程按串行门禁未运行，状态仍为`BLOCKED_PREVIEW_AUTH`，不是应用层错误。
+- Node 22.14.0配置合同、测试发现、TypeScript和ESLint均通过；生成物凭据扫描通过。下一步需在Vercel项目侧核对Automation Bypass凭据是否属于`niubi1vs-projects/hematuria-training-system`且对当前受保护Preview生效，然后原命令复跑；不得关闭Vercel Authentication。
+- 基础设施已保存为原子提交`449e5c6`；文档提交后按fetch/远端领先0/secret scan门禁普通push当前Draft PR分支。

@@ -383,3 +383,11 @@
 - **修复**：默认使用相对同源API；Vercel所有部署忽略可能指向其他部署的公开API origin；非Vercel生产仍要求显式HTTPS origin。保留缺签名fail-closed、origin/token隔离及非法origin拒绝。
 - **证据/提交**：目标14/14、完整68/68、全行为/安全/医学治理、类型、lint、两种82页构建、bundle/secret扫描通过，`data/**`零差异；代码提交`d1c20de0ad3b96ca992c8be679df23cbf9facb28`。
 - **远程关闭证据**：HEAD `bd3bff5e2400a51d9b4f16f78eefb6895a781c1b`的Actions run `29405290154`在Node 22.14.0完成Playwright 68/68及全部工程门禁；Vercel Deployment与Preview Comments通过。工程CI阻塞已解除；登录态Preview交互仍为外部权限阻塞，不作为本缺陷复开证据。
+
+### EXT-PREVIEW-AUTH-20260715-02 Automation Bypass未通过Vercel保护层
+
+- **状态**：BLOCKED_EXTERNAL；黑盒基础设施已完成，应用层P0/P1结论仍不可取得。
+- **证据**：测试进程确认环境变量存在但从不输出其值。目标Preview首个请求已通过限定origin的路由附加`x-vercel-protection-bypass`；脱敏计数为目标origin 1、跨origin 0。Vercel响应302到`vercel.com/sso-api`，最终页面为`vercel.com/login`，`/api/**`响应数0。
+- **排除项**：不是缺少本地环境变量；不是测试把secret放入URL；不是应用handler、Patient Agent、history-log或stage-feedback返回错误，因为请求尚未到达这些层。
+- **安全处置**：保持Vercel Authentication开启；Preview配置禁用trace/截图/video并扫描专用输出目录；不记录Cookie、Authorization、认证响应头或完整签名。
+- **解除条件**：在Vercel项目侧确认Automation Bypass secret属于当前项目/团队并适用于当前Preview保护配置。凭据生效后复跑`pnpm run test:e2e:preview`，再根据真实应用HTTP状态和非敏感错误码处理可重复问题。
