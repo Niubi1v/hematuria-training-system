@@ -23,6 +23,16 @@ async function main() {
     assert.equal(calls, 3, "transient failures should retry at most twice");
 
     calls = 0;
+    globalThis.fetch = async (input) => {
+      calls += 1;
+      assert.equal(input, "/api/training-action/", "same-origin API routes must remain relative");
+      return Response.json({ ok: true });
+    };
+    const sameOrigin = await fetchWithRecovery("/api/training-action/", { retries: 0 });
+    assert.equal(sameOrigin.status, 200, "same-origin Preview APIs must be callable before an absolute origin exists");
+    assert.equal(calls, 1, "relative API routes must issue exactly one request");
+
+    calls = 0;
     globalThis.fetch = async () => {
       calls += 1;
       return new Response(JSON.stringify({ error: "forbidden" }), { status: 403 });

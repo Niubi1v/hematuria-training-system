@@ -2,13 +2,19 @@ export type ApiEndpointName = "sessionInit" | "patientAgent" | "trainingAction" 
 
 export type PublicApiConfig = Readonly<Record<ApiEndpointName, string> & { baseUrl: string }>;
 
-type PublicApiEnvironment = Partial<Pick<NodeJS.ProcessEnv, "NODE_ENV" | "VERCEL" | "VERCEL_ENV">>;
+type PublicApiEnvironment = Partial<Pick<NodeJS.ProcessEnv, "NODE_ENV" | "VERCEL" | "VERCEL_ENV" | "NEXT_PUBLIC_VERCEL_ENV">>;
 
 export function resolvePublicApiBaseUrl(raw: string | undefined, env: PublicApiEnvironment = process.env): string {
   const isProduction = env.NODE_ENV === "production";
+  const vercelEnvironment = env.NEXT_PUBLIC_VERCEL_ENV || env.VERCEL_ENV;
+  const isVercelBuild = env.VERCEL === "1" || Boolean(vercelEnvironment);
+  // A Vercel Preview contains its own API functions from the same commit. Project-level
+  // public variables may be inherited from Production, but routing a Preview UI to that
+  // older origin splits CORS, signing secrets and the durable attempt-store namespace.
+  if (vercelEnvironment === "preview") return "";
   const fallback = isProduction ? "" : "http://127.0.0.1:3001";
   const candidate = String(raw || fallback).trim().replace(/\/+$/, "");
-  if (!candidate && env.VERCEL === "1") return "";
+  if (!candidate && isVercelBuild) return "";
   if (!candidate) throw new Error("NEXT_PUBLIC_API_BASE_URL is required for production builds.");
   const parsed = new URL(candidate);
   if (isProduction && parsed.protocol !== "https:") throw new Error("Production API base URL must use HTTPS.");
@@ -17,7 +23,12 @@ export function resolvePublicApiBaseUrl(raw: string | undefined, env: PublicApiE
   return parsed.toString().replace(/\/+$/, "");
 }
 
-const baseUrl = resolvePublicApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
+const baseUrl = resolvePublicApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL, {
+  NODE_ENV: process.env.NODE_ENV,
+  VERCEL: process.env.VERCEL,
+  VERCEL_ENV: process.env.VERCEL_ENV,
+  NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV
+});
 
 export const publicApiConfig: PublicApiConfig = Object.freeze({
   baseUrl,

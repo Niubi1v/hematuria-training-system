@@ -35,15 +35,17 @@ async function routeTrainingApiThroughHandler(page, observations = [], options =
   }));
   await page.route("**/api/session/init/**", async (route) => {
     const startedAt = Date.now();
-    const body = route.request().postDataJSON();
+    const request = route.request();
+    const body = request.postDataJSON();
     if (options.sessionInitDelayMs) await new Promise((resolve) => setTimeout(resolve, options.sessionInitDelayMs));
     const sessionStatus = options.sessionInitFailureCode ? 503 : 200;
     observations.push({
       action: "session-init", caseId: body.caseId, language: body.language,
       attemptId: body.attemptId, status: sessionStatus,
       error: options.sessionInitFailureCode || "",
+      url: request.url(),
       startedAt, endedAt: Date.now(), durationMs: Date.now() - startedAt,
-      tokenPresent: Boolean(route.request().headers()["x-training-state"])
+      tokenPresent: Boolean(request.headers()["x-training-state"])
     });
     if (options.sessionInitFailureCode) {
       await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: options.sessionInitFailureCode }) });
@@ -94,13 +96,16 @@ async function routeTrainingApiThroughHandler(page, observations = [], options =
       requestId: body.requestId,
       status: result.statusCode,
       error: result.payload?.error || "",
+      url: request.url(),
       score: result.payload?.score,
       hits: result.payload?.hits || [],
       startedAt, endedAt: Date.now(), durationMs: Date.now() - startedAt,
       tokenPresent: Boolean(request.headers()["x-training-state"])
     });
     const responseHeaders = { "Access-Control-Expose-Headers": "X-Training-State" };
-    if (result.headers["x-training-state"]) responseHeaders["X-Training-State"] = result.headers["x-training-state"];
+    if (result.headers["x-training-state"] && !(options.omitTrainingStateHeaderForActions || []).includes(body.action)) {
+      responseHeaders["X-Training-State"] = result.headers["x-training-state"];
+    }
     await route.fulfill({
       status: result.statusCode,
       contentType: "application/json",
@@ -228,6 +233,56 @@ test("stage submission waits for the training attempt while the AI patient is pr
   ]);
 });
 
+test("P003 replaces a legacy cross-deployment token before zero-round stage submission", async ({ page }) => {
+  const observations = [];
+  await routeTrainingApiThroughHandler(page, observations, { sessionInitDelayMs: 1200 });
+  const attemptId = "p003-legacy-preview-attempt";
+  await page.addInitScript(({ seededAttemptId }) => {
+    const attempt = {
+      attemptId: seededAttemptId,
+      caseId: "P003",
+      mode: "free",
+      language: "zh",
+      participantId: "practice-user",
+      schemaVersion: "attempt-v3",
+      createdAt: "2026-07-15T00:00:00.000Z"
+    };
+    localStorage.setItem("hematuria-attempt-pointer-v3:P003:free:zh", JSON.stringify(attempt));
+    sessionStorage.setItem(`hematuria-training-state-v3:${seededAttemptId}`, "legacy-token-from-another-api-deployment");
+  }, { seededAttemptId: attemptId });
+
+  await page.goto("/cases/P003/");
+  await expect.poll(() => observations.filter((item) => item.action === "init-attempt").length).toBe(1);
+  await expect(page.getByText("人工智能患者正在准备中……", { exact: false })).toBeVisible();
+  await expect(page.getByRole("button", { name: "提交本阶段", exact: true })).toBeEnabled();
+
+  await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
+  await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
+  expect(observations.filter((item) => item.action === "stage-feedback")).toEqual([
+    expect.objectContaining({ status: 200, stageKey: "history", tokenPresent: true })
+  ]);
+  const pageOrigin = new URL(page.url()).origin;
+  expect(observations.every((item) => new URL(item.url).origin === pageOrigin)).toBe(true);
+  expect(await page.evaluate(({ seededAttemptId }) => ({
+    legacyPresent: sessionStorage.hasOwnProperty(`hematuria-training-state-v3:${seededAttemptId}`),
+    scopedKeys: Object.keys(sessionStorage).filter((key) => key.startsWith("hematuria-training-state-v4:"))
+  }), { seededAttemptId: attemptId })).toEqual({
+    legacyPresent: false,
+    scopedKeys: [expect.stringContaining(attemptId)]
+  });
+});
+
+test("an init response without a signed training token never enables stage submission", async ({ page }) => {
+  const observations = [];
+  await routeTrainingApiThroughHandler(page, observations, { omitTrainingStateHeaderForActions: ["init-attempt"] });
+  await page.goto("/cases/P003/");
+
+  await expect(page.getByRole("alert").filter({ hasText: "训练会话响应缺少有效凭据" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "训练会话尚未就绪", exact: true })).toBeDisabled();
+  expect(observations.filter((item) => item.action === "init-attempt")).toHaveLength(1);
+  expect(observations.filter((item) => item.action === "stage-feedback")).toHaveLength(0);
+});
+
 test("failed training attempt initialization never sends stage feedback and retries explicitly", async ({ page }) => {
   const observations = [];
   await routeTrainingApiThroughHandler(page, observations, { initAttemptDelayMs: 300, initAttemptFailures: 1, initAttemptFailureStatus: 502, initAttemptFailureCode: "network_error" });
@@ -300,9 +355,9 @@ test("restart removes the prior browser token and initializes exactly one new at
   await expect(page.getByRole("button", { name: "提交本阶段", exact: true })).toBeEnabled();
   const firstInit = observations.find((item) => item.action === "init-attempt");
   expect(firstInit?.attemptId).toBeTruthy();
-  expect(await page.evaluate(() => Object.keys(sessionStorage).filter((key) => key.startsWith("hematuria-training-state-v3:")))).toEqual([
-    `hematuria-training-state-v3:${firstInit.attemptId}`
-  ]);
+  const firstTokenKeys = await page.evaluate(() => Object.keys(sessionStorage).filter((key) => key.startsWith("hematuria-training-state-v4:")));
+  expect(firstTokenKeys).toHaveLength(1);
+  expect(firstTokenKeys[0]).toContain(firstInit.attemptId);
 
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "重新开始训练", exact: true }).click();
@@ -310,9 +365,10 @@ test("restart removes the prior browser token and initializes exactly one new at
   await expect(page.getByRole("button", { name: "提交本阶段", exact: true })).toBeEnabled();
   const initAttempts = observations.filter((item) => item.action === "init-attempt");
   expect(initAttempts[1].attemptId).not.toBe(firstInit.attemptId);
-  expect(await page.evaluate(() => Object.keys(sessionStorage).filter((key) => key.startsWith("hematuria-training-state-v3:")))).toEqual([
-    `hematuria-training-state-v3:${initAttempts[1].attemptId}`
-  ]);
+  const restartedTokenKeys = await page.evaluate(() => Object.keys(sessionStorage).filter((key) => key.startsWith("hematuria-training-state-v4:")));
+  expect(restartedTokenKeys).toHaveLength(1);
+  expect(restartedTokenKeys[0]).toContain(initAttempts[1].attemptId);
+  expect(restartedTokenKeys[0]).not.toContain(firstInit.attemptId);
   expect(observations.filter((item) => item.action === "stage-feedback")).toHaveLength(0);
 });
 

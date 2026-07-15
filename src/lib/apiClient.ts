@@ -94,8 +94,14 @@ type RecoveryOptions = RequestInit & {
   endpointName?: string;
 };
 
+function endpointPath(url: string) {
+  // Client fetch accepts same-origin relative URLs. Supply a non-routable base
+  // only for parsing/log labels so no absolute origin is required or contacted.
+  return new URL(url, "http://same-origin.invalid").pathname;
+}
+
 export async function fetchWithRecovery(url: string, init: RecoveryOptions = {}) {
-  const { timeoutMs = 15_000, retries = 2, requestId = createRequestId(init.endpointName || "api"), endpointName = new URL(url).pathname, ...requestInit } = init;
+  const { timeoutMs = 15_000, retries = 2, requestId = createRequestId(init.endpointName || "api"), endpointName = endpointPath(url), ...requestInit } = init;
   let lastError: ApiRequestError | null = null;
   const startedAt = Date.now();
   for (let attempt = 0; attempt <= retries; attempt += 1) {

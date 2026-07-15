@@ -46,6 +46,20 @@ async function main() {
   assert.equal(response.payload.practiceOnly, true);
   assert.ok(response.token, "practice attempt must receive a signed state token");
 
+  const validatedAttempt = await call({
+    action: "validate-attempt", caseId: "P008", attemptId, mode: "free", language: "zh",
+    requestId: `validate-${attemptId}`
+  }, response.token);
+  assert.equal(validatedAttempt.statusCode, 200, "the current signed attempt must validate without changing state");
+  assert.equal(validatedAttempt.payload.currentStage, 1);
+  assert.equal(validatedAttempt.token, response.token, "validation must return the same current token");
+  const invalidSavedToken = await call({
+    action: "validate-attempt", caseId: "P008", attemptId, mode: "free", language: "zh",
+    requestId: `validate-invalid-${attemptId}`
+  }, "legacy-token-from-another-deployment");
+  assert.equal(invalidSavedToken.statusCode, 401);
+  assert.equal(invalidSavedToken.payload.error, "invalid_attempt_token");
+
   const conflictAttemptId = `conflict-api-test-${Date.now()}`;
   const conflictInit = await call({ action: "init-attempt", caseId: "P001", attemptId: conflictAttemptId, mode: "free", language: "en" });
   const conflictHistory = await call({ action: "history-log", caseId: "P001", attemptId: conflictAttemptId, mode: "free", language: "en", question: "Do you have urinary urgency?", requestId: "conflict-history-test" }, conflictInit.token);

@@ -16,7 +16,7 @@ const { setServerTiming } = require("../server/performanceTiming.js");
 const { parseJsonBody } = require("../server/requestSecurity.js");
 
 const catalog = [...labs, ...imaging, ...procedures, ...perioperative];
-const allowedActions = new Set(["init-attempt", "history-log", "exam", "order", "mdt", "stage-feedback", "score"]);
+const allowedActions = new Set(["init-attempt", "validate-attempt", "history-log", "exam", "order", "mdt", "stage-feedback", "score"]);
 const stageNumbers = { history: 1, orders: 2, diagnosis: 3, consult: 4, treatment: 5, perioperative: 6, debrief: 7 };
 const requests = globalThis.__hematuriaTrainingRate || new Map();
 globalThis.__hematuriaTrainingRate = requests;
@@ -323,6 +323,17 @@ module.exports = async function handler(req, res) {
     if (body.mode && normalizeAttemptMode(body.mode) !== state.mode) return res.status(409).json({ error: "attempt_mode_mismatch" });
     if (language !== state.language) return res.status(409).json({ error: "attempt_language_mismatch" });
     if (state.mode === "formal-attempt") assertFormalAllowed(caseData);
+    if (body.action === "validate-attempt") {
+      res.setHeader("X-Training-State", previousToken);
+      return res.status(200).json({
+        attemptId: state.attemptId,
+        caseId: state.caseId,
+        mode: state.mode,
+        language: state.language,
+        currentStage: Number(state.currentStage || 1),
+        status: state.status
+      });
+    }
     if (body.action === "stage-feedback" && !stageNumbers[body.stageKey]) return res.status(400).json({ error: "invalid_stage" });
     assertStageUnlocked(state, body.action, body);
     const at = new Date().toISOString();

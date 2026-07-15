@@ -41,7 +41,7 @@ import { ApiRequestError, createIdempotencyKey, createRequestId, fetchWithRecove
 import { publicApiConfig } from "@/src/lib/apiConfig";
 import { isConnectionFailureFallback, isSafetyFallback, mergeRecoveredCoverage, recordConnectionTransition, validCachedSession, type AiConnectionStatus, type CachedPatientSession, type ConnectionTransition } from "@/src/lib/aiRecovery";
 import { initializeStorageVersion, readJsonStorage, writeJsonStorage } from "@/src/lib/safeStorage";
-import { attemptPointerKey, attemptStorageKey, createAttempt, type AttemptIdentity, type AttemptMode } from "@/src/lib/attemptState";
+import { attemptPointerKey, attemptStorageKey, createAttempt, legacyTrainingStateStorageKey, trainingStateStorageKey, type AttemptIdentity, type AttemptMode } from "@/src/lib/attemptState";
 import {
   AZURE_VOICE_BY_PROFILE,
   cleanSpeechText,
@@ -138,16 +138,19 @@ type ServiceHealth = {
   apiVersion: string;
 };
 
-type TrainingFailureReason = "session_initializing" | "attempt_not_found" | "token_expired" | "stage_mismatch" | "network_error" | "configuration_error" | "state_mismatch" | "request_error";
+type TrainingFailureReason = "session_initializing" | "attempt_not_found" | "token_expired" | "token_missing" | "stage_mismatch" | "network_error" | "configuration_error" | "origin_mismatch" | "rate_limit" | "state_mismatch" | "request_error";
 
 function trainingFailureReason(error: unknown): TrainingFailureReason {
   const code = error instanceof ApiRequestError ? error.code : "";
   const kind = error instanceof ApiRequestError ? error.kind : "request";
   if (/attempt_not_found/.test(code)) return "attempt_not_found";
   if (/expired_attempt_token/.test(code)) return "token_expired";
+  if (/training_state_token_missing/.test(code)) return "token_missing";
   if (/invalid_stage|stage_not_unlocked/.test(code)) return "stage_mismatch";
   if (/training_attempt_store_unavailable|training_state_secret_(?:missing|weak|placeholder|reused)/.test(code)) return "configuration_error";
-  if (/stale_attempt_token|attempt_(?:state|language|mode|case|id)_mismatch/.test(code)) return "state_mismatch";
+  if (/origin_not_allowed/.test(code)) return "origin_mismatch";
+  if (/rate_limited/.test(code) || kind === "rate-limited") return "rate_limit";
+  if (/invalid_attempt_token|invalid_attempt_token_claims|unsupported_attempt_token_version|stale_attempt_token|attempt_already_(?:completed|exists)|idempotency_key_reused|attempt_(?:state|language|mode|case|id)_mismatch/.test(code)) return "state_mismatch";
   if (/network_error/.test(code) || ["network", "offline", "timeout"].includes(kind)) return "network_error";
   return "request_error";
 }
@@ -169,6 +172,11 @@ function stageSubmissionFailureMessage(error: unknown, language: LanguageCode) {
       ? "This training attempt has expired. Start a new attempt before submitting."
       : "本次训练凭据已过期，请重新开始训练后再提交。";
   }
+  if (reason === "token_missing") {
+    return language === "en"
+      ? "The training session response did not include a valid credential. Reinitialize the training session before submitting."
+      : "训练会话响应缺少有效凭据，请重新初始化训练会话后再提交。";
+  }
   if (reason === "stage_mismatch") {
     return language === "en"
       ? "The submitted stage does not match the server stage. Refresh to restore the current stage."
@@ -178,6 +186,14 @@ function stageSubmissionFailureMessage(error: unknown, language: LanguageCode) {
     return language === "en"
       ? "Network connection failed while initializing the training session. Check the network and retry initialization."
       : "初始化训练会话时网络连接失败，请检查网络后重新初始化。";
+  }
+  if (reason === "origin_mismatch") {
+    return language === "en"
+      ? "This Preview is connected to a mismatched training API. Refresh after the Preview redeploys."
+      : "当前 Preview 连接了不匹配的训练API，请在 Preview 重新部署后刷新页面。";
+  }
+  if (reason === "rate_limit") {
+    return language === "en" ? "Training requests are temporarily rate-limited. Wait briefly and retry." : "训练请求暂时受限，请稍候再试。";
   }
   if (reason === "state_mismatch") {
     return language === "en"
@@ -471,7 +487,9 @@ async function requestTrainingAction<T>(body: Record<string, unknown>, stateToke
       timeoutMs: PATIENT_REPLY_TIMEOUT_MS,
       retries
     });
-    return { payload: await response.json() as T, stateToken: response.headers.get("X-Training-State") || stateToken };
+    const nextStateToken = String(response.headers.get("X-Training-State") || "").trim();
+    if (!nextStateToken) throw new ApiRequestError("request", 502, "training_state_token_missing", idempotencyKey);
+    return { payload: await response.json() as T, stateToken: nextStateToken };
   } finally {
     globalThis.clearTimeout(timeoutId);
   }
@@ -708,6 +726,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const trainingStateTokenRef = useRef<{ attemptId: string; token: string } | null>(null);
   const trainingInitPromiseRef = useRef<{ attemptId: string; promise: Promise<string> } | null>(null);
   const trainingInitFailureRef = useRef<{ attemptId: string; error: unknown } | null>(null);
+  const stageProgressRef = useRef({ activeStageNo, hasSubmittedStages: Object.keys(submitted).length > 0 });
+  stageProgressRef.current = { activeStageNo, hasSubmittedStages: Object.keys(submitted).length > 0 };
   const trainingActionQueueRef = useRef<Promise<void>>(Promise.resolve());
   const sessionInitAbortRef = useRef<AbortController | null>(null);
   const autoSessionInitRef = useRef<{ key: string; promise: Promise<SessionInitResponse>; controller: AbortController } | null>(null);
@@ -776,16 +796,36 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     setTrainingAttemptStatus("initializing");
     setTrainingAttemptError("");
     const promise = (async () => {
-      const storageKey = `hematuria-training-state-v3:${attempt.attemptId}`;
-      try {
-        const saved = sessionStorage.getItem(storageKey);
-        if (saved) {
-          trainingStateTokenRef.current = { attemptId, token: saved };
+      const storageKey = trainingStateStorageKey(attempt.attemptId, publicApiConfig.baseUrl, window.location.origin);
+      const legacyStorageKey = legacyTrainingStateStorageKey(attempt.attemptId);
+      let saved = "";
+      try { saved = sessionStorage.getItem(storageKey) || sessionStorage.getItem(legacyStorageKey) || ""; } catch { /* Continue with a fresh in-memory token. */ }
+      if (saved) {
+        try {
+          const validationId = createIdempotencyKey(attemptId, "training-validate", caseData.id, runtimeMode, lang);
+          const validated = await requestTrainingAction<{ currentStage: number; status: string }>({
+            action: "validate-attempt", caseId: caseData.id, attemptId,
+            language: lang, mode: runtimeMode, requestId: validationId
+          }, saved, validationId, 0);
+          trainingStateTokenRef.current = { attemptId, token: validated.stateToken };
           trainingInitFailureRef.current = null;
+          try {
+            sessionStorage.setItem(storageKey, validated.stateToken);
+            sessionStorage.removeItem(legacyStorageKey);
+          } catch { /* The validated token can continue in memory. */ }
           setTrainingAttemptStatus("ready");
-          return saved;
+          return validated.stateToken;
+        } catch (error) {
+          const reason = trainingFailureReason(error);
+          const safeStageOneRecovery = stageProgressRef.current.activeStageNo === 1 && !stageProgressRef.current.hasSubmittedStages
+            && ["attempt_not_found", "token_expired", "state_mismatch"].includes(reason);
+          if (!safeStageOneRecovery) throw error;
+          try {
+            sessionStorage.removeItem(storageKey);
+            sessionStorage.removeItem(legacyStorageKey);
+          } catch { /* Recovery can continue in memory. */ }
         }
-      } catch { /* The signed state can continue in memory. */ }
+      }
       const initRequestId = createIdempotencyKey(attempt.attemptId, "training-init", caseData.id, runtimeMode, lang);
       const initialized = await requestTrainingAction<{ attemptId: string }>({
         action: "init-attempt", caseId: caseData.id, attemptId: attempt.attemptId,
@@ -794,7 +834,10 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       trainingStateTokenRef.current = { attemptId, token: initialized.stateToken };
       trainingInitFailureRef.current = null;
       setTrainingAttemptStatus("ready");
-      try { sessionStorage.setItem(storageKey, initialized.stateToken); } catch { /* Memory fallback. */ }
+      try {
+        sessionStorage.setItem(storageKey, initialized.stateToken);
+        sessionStorage.removeItem(legacyStorageKey);
+      } catch { /* Memory fallback. */ }
       return initialized.stateToken;
     })().catch((error) => {
       const reason = trainingFailureReason(error);
@@ -835,12 +878,18 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         trainingInitPromiseRef.current = null;
         setTrainingAttemptStatus("initializing");
         setTrainingAttemptError("");
-        try { sessionStorage.removeItem(`hematuria-training-state-v3:${attempt.attemptId}`); } catch { /* Recovery can continue in memory. */ }
+        try {
+          sessionStorage.removeItem(trainingStateStorageKey(attempt.attemptId, publicApiConfig.baseUrl, window.location.origin));
+          sessionStorage.removeItem(legacyTrainingStateStorageKey(attempt.attemptId));
+        } catch { /* Recovery can continue in memory. */ }
         token = await ensureTrainingStateToken(true);
         result = await requestTrainingAction<T>(requestBody, token, requestId, 0);
       }
       trainingStateTokenRef.current = { attemptId: attempt.attemptId, token: result.stateToken };
-      try { sessionStorage.setItem(`hematuria-training-state-v3:${attempt.attemptId}`, result.stateToken); } catch { /* Memory fallback. */ }
+      try {
+        sessionStorage.setItem(trainingStateStorageKey(attempt.attemptId, publicApiConfig.baseUrl, window.location.origin), result.stateToken);
+        sessionStorage.removeItem(legacyTrainingStateStorageKey(attempt.attemptId));
+      } catch { /* Memory fallback. */ }
       return result.payload;
     });
     trainingActionQueueRef.current = run.then(() => undefined, () => undefined);
@@ -1695,7 +1744,19 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       setFinalReport(null);
       addTimeline("submit", lang === "en" ? "Stage submitted" : "提交阶段", `${agents.find((item) => item.stageNo === activeStageNo)?.agentName[lang] ?? activeStageNo}：${evaluation.score}/${evaluation.max}`, activeStageNo);
     } catch (error) {
-      setStorageWarning(stageSubmissionFailureMessage(error, lang));
+      const message = stageSubmissionFailureMessage(error, lang);
+      const reason = trainingFailureReason(error);
+      if (["attempt_not_found", "token_expired", "token_missing", "configuration_error", "origin_mismatch", "state_mismatch"].includes(reason)) {
+        trainingStateTokenRef.current = null;
+        trainingInitFailureRef.current = { attemptId: attempt.attemptId, error };
+        setTrainingAttemptStatus("failed");
+        setTrainingAttemptError(message);
+        try {
+          sessionStorage.removeItem(trainingStateStorageKey(attempt.attemptId, publicApiConfig.baseUrl, window.location.origin));
+          sessionStorage.removeItem(legacyTrainingStateStorageKey(attempt.attemptId));
+        } catch { /* The UI still fails closed. */ }
+      }
+      setStorageWarning(message);
     } finally {
       stageSubmitLockRef.current = false;
       setStageSubmitting(false);
@@ -1755,7 +1816,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     try {
       localStorage.removeItem(attemptStorageKey(attempt));
       localStorage.removeItem(attemptPointerKey(attempt.caseId, attempt.mode, attempt.language));
-      sessionStorage.removeItem(`hematuria-training-state-v3:${attempt.attemptId}`);
+      sessionStorage.removeItem(trainingStateStorageKey(attempt.attemptId, publicApiConfig.baseUrl, window.location.origin));
+      sessionStorage.removeItem(legacyTrainingStateStorageKey(attempt.attemptId));
     } catch { /* Reload still resets the in-memory attempt. */ }
     window.location.reload();
   }
