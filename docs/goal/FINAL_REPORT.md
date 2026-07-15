@@ -423,3 +423,4 @@
 - 当前环境中的目标请求确实经过限定origin的保护头注入，但Vercel仍把首个请求重定向到`vercel.com/sso-api`并最终停在登录页。应用API响应为0，后续4项未运行，因此继续标记`BLOCKED_PREVIEW_AUTH`，不把保护层结果或本地测试写成线上通过。
 - 本地Node 22配置合同、TypeScript、ESLint与生成物敏感值扫描通过。需要Vercel项目管理员核对Automation Bypass secret的项目/团队归属和保护作用域；不需要也不得关闭Vercel Authentication。生效后使用同一命令复跑即可取得应用层证据。
 - Preview黑盒基础设施提交为`449e5c6`；回滚使用普通`git revert 449e5c6`，不会影响Production运行代码或医学数据。
+- 提交已随`0b34c84`普通push；Actions run `29414668790`在Node 22.14.0完成Playwright 68/68及所有远程门禁。Vercel deployment `DYo7Ex4RYAy1TfieMTJEEesW98GK`成功，但该新部署后的黑盒复跑仍到`vercel.com/login`且没有应用API响应，外部保护层阻塞继续有效。

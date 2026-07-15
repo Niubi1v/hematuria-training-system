@@ -982,7 +982,7 @@ CI详情：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/29
 
 Actions：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/29405290154`。Vercel：`https://vercel.com/niubi1vs-projects/hematuria-training-system/HdHGBhcwFXybfHe6weLVswR6vqew`。
 
-## Preview Automation Bypass黑盒门禁（2026-07-15，本地候选）
+## Preview Automation Bypass黑盒门禁（2026-07-15，远程已确认）
 
 | 检查 | 精确命令/场景 | 结果 |
 |---|---|---|
@@ -994,5 +994,7 @@ Actions：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/294
 | 生成物安全 | Preview运行器对`test-results/preview-blackbox`按实际环境值做字节扫描 | PASS；未命中；trace/screenshot/video关闭，未记录Cookie、Authorization或认证响应头 |
 | TypeScript | 便携Node 22.14.0直接执行`node_modules/typescript/bin/tsc --noEmit` | PASS |
 | ESLint | Node 22.14.0执行`node scripts/run-lint.mjs` | PASS |
+| 精确HEAD远程门禁 | HEAD `0b34c840d7af7b14178853e97081c5e863bff0e9`；Actions run `29414668790` / job `87349710998` | PASS；Node 22.14.0，Playwright 68/68，82/82构建，23 JS bundle与clean gate通过；Pages skipped |
+| 新Vercel部署 | deployment `DYo7Ex4RYAy1TfieMTJEEesW98GK`完成后再次运行Preview套件 | Vercel状态success；应用黑盒仍`BLOCKED_PREVIEW_AUTH`，目标origin注入1、应用API响应0 |
 
 保护层当前没有返回应用JSON错误码，不能把302/登录页解释为Patient、history-log或stage-feedback失败。需Vercel项目侧修正Automation Bypass作用域/有效性后使用同一入口复跑，届时测试将只保存脱敏路径、方法、HTTP状态、业务错误码、部署SHA和`generationSource/provider/isFallback`。
