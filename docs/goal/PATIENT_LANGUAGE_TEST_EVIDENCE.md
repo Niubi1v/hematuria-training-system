@@ -8,7 +8,7 @@
 
 专项分支：`codex/hematuria-chief-complaint-wording`
 
-当前远程Production来源HEAD：`ec74d16aebba09ec3916bfd6690dba2818889922`。该分支已晚于专项起始基线；按任务边界只记录，未rebase、未merge、未让Production新代码覆盖本专项。
+首次远程核验时Production来源HEAD为 `ec74d16aebba09ec3916bfd6690dba2818889922`；最终push后再次核验已前移到 `3fe409f0e1ee8c347758323c1422850f27124707`。两者均晚于专项起始基线；按任务边界只记录，未rebase、未merge、未让Production新代码覆盖本专项。
 
 ## 预检与运行时
 
