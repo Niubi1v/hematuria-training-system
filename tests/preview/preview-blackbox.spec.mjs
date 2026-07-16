@@ -142,7 +142,7 @@ async function askOneLiveAiQuestion(page, language) {
   const history = await historyResponse;
   expect(history.status()).toBe(200);
   await expect(page.getByText(english ? "Scoring synced" : "评分已同步", { exact: true })).toBeVisible();
-  await expect(page.getByText(english ? "AI service connected" : "人工智能服务已连接", { exact: true })).toBeVisible();
+  await expect(page.locator(".ui-status").filter({ hasText: english ? "AI service connected" : "人工智能服务已连接" })).toBeVisible();
 }
 
 async function submitFirstStage(page, language, doubleClick = false) {
