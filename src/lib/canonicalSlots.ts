@@ -40,6 +40,11 @@ export const canonicalSlotIds = [
 
 export type CanonicalSlotId = typeof canonicalSlotIds[number];
 
+const { asksIndependentGeneralPain, matchPriorityCanonicalIntents } = require("./patientIntentCatalog.js") as {
+  asksIndependentGeneralPain(question: string, language: "zh" | "en"): boolean;
+  matchPriorityCanonicalIntents(question: string, language: "zh" | "en"): Array<{ intentKey: string; sourceSlotId: CanonicalSlotId }>;
+};
+
 type SlotDefinition = {
   id: CanonicalSlotId;
   zh: RegExp;
@@ -89,8 +94,12 @@ export const canonicalSlotDefinitions: SlotDefinition[] = [
 ];
 
 export function matchCanonicalSlots(question: string, language: "zh" | "en") {
+  const priority = matchPriorityCanonicalIntents(question, language);
   const matches = canonicalSlotDefinitions.filter((definition) => (language === "en" ? definition.en : definition.zh).test(question));
-  const ids = matches.map((definition) => definition.id);
+  const ids = [...priority.map((item) => item.sourceSlotId), ...matches.map((definition) => definition.id)];
+  if (priority.some((item) => item.sourceSlotId === "dysuria") && !asksIndependentGeneralPain(question, language)) {
+    return [...new Set(ids.filter((id) => id !== "pain"))];
+  }
   return [...new Set(ids)];
 }
 

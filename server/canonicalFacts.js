@@ -1,4 +1,5 @@
 const bilingualSlots = require("../data/patient_slots_bilingual.json");
+const { asksIndependentGeneralPain, matchPriorityCanonicalIntents } = require("../src/lib/patientIntentCatalog.js");
 
 const matchers = [
   ["chief_complaint", /哪里不舒服|为什么来|主诉|怎么回事|what brings you|what is wrong|main complaint/i],
@@ -26,24 +27,134 @@ const matchers = [
   ["bleeding_tendency", /鼻出血|牙龈出血|瘀斑|紫癜|nosebleed|gum bleeding|bruis|purpura/i]
 ];
 
+function classifyDysuria(answerZh, answerEn) {
+  const zh = String(answerZh || "").replace(/\s+/g, "");
+  const en = String(answerEn || "").toLowerCase();
+  const zhValue = /无痛性|无排尿不适|(?:无|没有|否认)[^。；,，]*(?:尿痛|小便痛|排尿痛|烧灼)|(?:小便|排尿)(?:时)?不(?:痛|疼)/.test(zh)
+    ? false
+    : /尿痛|小便(?:时)?(?:刺痛|疼|痛)|排尿(?:时)?(?:烧灼|疼|痛)/.test(zh) ? true : "unknown";
+  const enValue = /does not hurt|doesn't hurt|not hurt|not painful|no dysuria|without dysuria|do not have dysuria/.test(en)
+    ? false
+    : /hurt|painful|dysuria|burn|sting/.test(en) ? true : "unknown";
+  return zhValue === enValue ? zhValue : "unknown";
+}
+
+function classifyHematuriaPhase(answerZh, answerEn) {
+  const zh = String(answerZh || "").replace(/\s+/g, "");
+  const en = String(answerEn || "").toLowerCase();
+  const ambiguousZh = /需追问|非典型|不按起始|可表现|多为|可伴/.test(zh);
+  const zhValue = ambiguousZh ? "unknown"
+    : /^全程血尿$|全程(?:尿色)?(?:变红|发红|红)|从头到尾/.test(zh) ? "whole"
+      : /^终末血尿$|终末血尿为主|快尿完.*红|最后(?:一段|几滴|才).*红/.test(zh) ? "terminal"
+        : /^起始血尿$|起始血尿为主|刚开始.*红/.test(zh) ? "initial" : "unknown";
+  const enValue = /throughout|whole (?:urinary )?stream|start to finish/.test(en) ? "whole"
+    : /near the end|terminal|last drops|only at the end/.test(en) ? "terminal"
+      : /initial|only at the beginning|start.*then clear/.test(en) ? "initial" : "unknown";
+  return zhValue === enValue ? zhValue : "unknown";
+}
+
+function naturalDysuriaAnswer(value, language) {
+  if (value === true) return language === "en" ? "Yes, it hurts when I urinate." : "有，尿的时候会痛。";
+  if (value === false) return language === "en" ? "No, it does not hurt when I urinate." : "没有，小便时不痛。";
+  return language === "en" ? "I have not been able to say for sure whether urination hurts." : "小便时是否疼，我现在说不准。";
+}
+
+function naturalPhaseAnswer(phase, language, intentKeys, question) {
+  const asked = new Set(intentKeys);
+  const asksSingle = asked.size === 1;
+  const asksInitial = asked.has("initial_hematuria");
+  const asksTerminal = asked.has("terminal_hematuria");
+  const negatedTerminalAssumption = /不是只有最后|not only.*(?:end|last)/i.test(String(question || ""));
+  if (phase === "whole") {
+    if (asksSingle && asksInitial) return language === "en"
+      ? "No, it is not limited to the beginning; it stays red from start to finish."
+      : "不是只在刚开始红，从开始尿到最后颜色都红。";
+    if (asksSingle && asksTerminal) return language === "en"
+      ? "No, it is not limited to the end; it stays red from start to finish."
+      : "不是只在最后一段红，从开始尿到最后颜色都红。";
+    return language === "en" ? "Yes, it is red from the start to the end of urination." : "是的，从开始尿到最后颜色都红。";
+  }
+  if (phase === "terminal") {
+    if (negatedTerminalAssumption) return language === "en"
+      ? "No, it is mainly the last part of urination that turns red."
+      : "不是，主要就是快尿完的那一段发红。";
+    if (asksSingle && asksTerminal) return language === "en"
+      ? "Yes, it mainly turns red near the end of urination."
+      : "是的，主要是快尿完的时候发红。";
+    if (asksSingle && asksInitial) return language === "en"
+      ? "No, it is not red at the beginning; it mainly turns red near the end."
+      : "不是刚开始红，主要是快尿完的时候发红。";
+    return language === "en" ? "No, it is not red throughout; it mainly turns red near the end." : "不是全程红，主要是快尿完的时候发红。";
+  }
+  if (phase === "initial") {
+    if (asksSingle && asksInitial) return language === "en"
+      ? "Yes, it is mainly red at the beginning of urination."
+      : "是的，主要是刚开始尿的时候发红。";
+    if (asksSingle && asksTerminal) return language === "en"
+      ? "No, it is not red at the end; it is mainly red at the beginning."
+      : "不是最后才红，主要是刚开始尿的时候发红。";
+    return language === "en" ? "No, it is not red throughout; it is mainly red at the beginning." : "不是全程红，主要是刚开始尿的时候发红。";
+  }
+  return language === "en" ? "I did not clearly notice which part of urination was red." : "我没仔细看清是刚开始、最后，还是全程都红。";
+}
+
+function factValueForIntent(intentKey, classification) {
+  if (intentKey === "dysuria") return classification;
+  if (classification === "unknown") return "unknown";
+  if (intentKey === "whole_stream_hematuria") return classification === "whole";
+  if (intentKey === "initial_hematuria") return classification === "initial";
+  if (intentKey === "terminal_hematuria") return classification === "terminal";
+  return "unknown";
+}
+
 function matchCanonicalPatientFacts(caseId, question, language = "zh") {
   const caseSlots = bilingualSlots[caseId];
   if (!caseSlots) return null;
-  const matchedSlotIds = [...new Set(matchers.filter(([, pattern]) => pattern.test(question)).map(([slotId]) => slotId))];
+  const priorityMatches = matchPriorityCanonicalIntents(question, language);
+  const prioritySourceSlots = new Set(priorityMatches.map((item) => item.sourceSlotId));
+  const legacyMatchedSlotIds = matchers.filter(([, pattern]) => pattern.test(question)).map(([slotId]) => slotId);
+  const matchedSlotIds = [...new Set([...prioritySourceSlots, ...legacyMatchedSlotIds])];
+  if (prioritySourceSlots.has("dysuria") && !asksIndependentGeneralPain(question, language)) {
+    const painIndex = matchedSlotIds.indexOf("pain");
+    if (painIndex >= 0) matchedSlotIds.splice(painIndex, 1);
+  }
   const hasSpecificPain = matchedSlotIds.some((slotId) => ["flank_pain", "renal_colic", "radiating_pain"].includes(slotId));
   const explicitlyAsksGeneralPain = /疼不疼|有没有痛|有无疼痛|其他.*痛|别的.*痛|any (?:other )?pain|other pain|pain elsewhere|general pain|does it hurt/i.test(question);
   const slotIds = hasSpecificPain && !explicitlyAsksGeneralPain
     ? matchedSlotIds.filter((slotId) => slotId !== "pain")
     : matchedSlotIds;
   if (!slotIds.length) return null;
-  const answers = slotIds.map((slotId) => caseSlots[slotId]?.[language === "en" ? "patientAnswerEn" : "patientAnswerZh"]).filter(Boolean);
+  const factValues = {};
+  let dysuriaValue = "unknown";
+  let phaseValue = "unknown";
+  if (prioritySourceSlots.has("dysuria")) {
+    dysuriaValue = classifyDysuria(caseSlots.dysuria?.patientAnswerZh, caseSlots.dysuria?.patientAnswerEn);
+  }
+  if (prioritySourceSlots.has("hematuria_phase")) {
+    phaseValue = classifyHematuriaPhase(caseSlots.hematuria_phase?.patientAnswerZh, caseSlots.hematuria_phase?.patientAnswerEn);
+  }
+  for (const item of priorityMatches) {
+    factValues[item.intentKey] = factValueForIntent(item.intentKey, item.sourceSlotId === "dysuria" ? dysuriaValue : phaseValue);
+  }
+  const answers = slotIds.map((slotId) => {
+    if (slotId === "dysuria" && prioritySourceSlots.has(slotId)) return naturalDysuriaAnswer(dysuriaValue, language);
+    if (slotId === "hematuria_phase" && prioritySourceSlots.has(slotId)) {
+      return naturalPhaseAnswer(phaseValue, language, priorityMatches.map((item) => item.intentKey), question);
+    }
+    return caseSlots[slotId]?.[language === "en" ? "patientAnswerEn" : "patientAnswerZh"];
+  }).filter(Boolean);
   if (!answers.length) return null;
+  const matchedFacts = [
+    ...priorityMatches.map((item) => item.intentKey),
+    ...slotIds.filter((slotId) => !prioritySourceSlots.has(slotId))
+  ];
   return {
     replyText: [...new Set(answers)].join("\n"),
     matchedSlotIds: slotIds,
-    matchedFacts: slotIds,
+    matchedFacts: [...new Set(matchedFacts)],
+    factValues,
     answerSource: "case_bilingual_slot",
-    confidence: 0.99,
+    confidence: Object.values(factValues).some((value) => value === "unknown") ? 0.5 : 0.99,
     safetyFlags: [],
     fallbackReason: ""
   };
