@@ -7,7 +7,7 @@ if (preview.blocked) throw new Error(`${preview.reason}: ${preview.message}`);
 
 export default defineConfig({
   testDir: "./tests/preview",
-  testMatch: "preview-blackbox.spec.mjs",
+  testMatch: ["preview-blackbox.spec.mjs", "preview-stability.spec.mjs"],
   timeout: 120_000,
   expect: { timeout: 45_000 },
   fullyParallel: false,

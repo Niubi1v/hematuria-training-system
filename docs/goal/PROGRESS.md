@@ -528,3 +528,11 @@
 - health真实配置为`patientServiceConfigured=true`、`trainingStateConfigured=false`、`durableAttemptStoreConfigured=false`。P003/zh零轮的首个`init-attempt`到达应用handler后返回HTTP 503 `training_state_secret_missing`；测试现直接报告该错误，不再等待按钮超时。
 - P001一轮、中英文、双向切换、刷新、双击和第二阶段按串行门禁未运行。需项目管理员在Vercel **Preview** 作用域配置既有`TRAINING_STATE_SECRET`，并配置`TRAINING_ATTEMPT_STORE_MODE=upstash`及对应`UPSTASH_REDIS_REST_URL`、`UPSTASH_REDIS_REST_TOKEN`后重新部署；不得生成假值、使用客户端变量或关闭fail-closed。
 - 两个保护头、首请求cookie bootstrap、严格origin断言、直接应用错误报告和生成物清理已保存为测试提交`6e6b90c`；未修改应用业务代码。
+
+### Vercel Marketplace KV兼容与真实Preview闭环（2026-07-16）
+
+- attempt持久层新增服务端兼容顺序：URL优先`UPSTASH_REDIS_REST_URL`、后备`KV_REST_API_URL`；可写token优先`UPSTASH_REDIS_REST_TOKEN`、后备`KV_REST_API_TOKEN`。只读token、`KV_URL`和`REDIS_URL`不参与解析；URL/token不完整继续fail-closed。health仅公开`upstash_rest`、`vercel_kv_rest`、`mixed_rest`或`none`，不公开值或片段。
+- Preview首次复测证明attempt store已配置，但随后真实暴露Agent admission和provider circuit仍只识别旧命名；两者均复用同一安全解析器，未关闭预算、幂等、provider circuit或签名校验。原子提交为`a405f71`、`ec74d16`、`3fe409f`。
+- `3fe409f` Preview health HTTP 200，`trainingStateConfigured=true`、`durableAttemptStoreConfigured=true`、来源`vercel_kv_rest`。P003零轮提交成功进入第二阶段；P001中文/英文均取得`live_ai`、DeepSeek、非fallback和`history-log=200`；刷新后`validate-attempt=200`，快速双击仅观察到1个`stage-feedback`；中英双向切换后合法提交成功。
+- 完整套件多次被Preview导航层间歇性`ERR_TIMED_OUT`/`ERR_CONNECTION_CLOSED`打断，但失败时无应用API响应；同一部署的逐场景零retry复测补齐5/5业务证据。生成物凭据扫描通过，仅保留`.last-run.json`，未保留截图、trace、Cookie、Authorization或任何变量值。
+- Actions run `29499921918`在Node 22完成并通过，Vercel deployment `64SACrqWNGNuhtcM22gnQsZBE7tD`及Preview Comments通过；PR #1保持Draft，Pages deploy按规则skipped，未部署Production，`data/**`零差异。

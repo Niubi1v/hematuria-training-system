@@ -400,3 +400,10 @@
 - **影响**：无法建立签名attempt，P003不能提交第一阶段；P001中英文、语言切换、刷新、双击和history-log/评分流程均不能形成合法验收证据。
 - **安全边界**：当前503是正确fail-closed。禁止关闭签名、改用NEXT_PUBLIC变量、前端伪造token、内存store冒充Vercel持久化或生成假secret。
 - **解除条件**：Vercel Preview作用域提供既有`TRAINING_STATE_SECRET`；配置`TRAINING_ATTEMPT_STORE_MODE=upstash`、`UPSTASH_REDIS_REST_URL`和`UPSTASH_REDIS_REST_TOKEN`，重新部署后health两项均须为true，再复跑Preview黑盒套件。
+- **2026-07-16关闭证据**：Marketplace已提供`KV_REST_API_URL`和可写`KV_REST_API_TOKEN`；兼容层上线后`3fe409f` health两项均为true，P003零轮、P001中英文live AI、history-log、刷新、双击和双向切换均在真实Preview通过。未使用只读token或Redis协议变量。
+
+### EXT-PREVIEW-NETWORK-20260716-02 Preview导航间歇断连
+
+- **严重度/状态**：P2观察项；OPEN_EXTERNAL_NETWORK，不阻断已取得的应用层逐场景证据。
+- **证据**：同一`3fe409f`部署在串行黑盒中偶发`ERR_TIMED_OUT`或`ERR_CONNECTION_CLOSED`，对应场景同源请求计数1、应用API响应0；立即以零retry单场景运行可通过。未观察到HTTP应用错误或失败provider调用。
+- **处置**：未增加Playwright retry、延长timeout或放宽断言。长期QA应继续记录发生频率、地区与时间；若稳定复现再按网络/CDN层调查。

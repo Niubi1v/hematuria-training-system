@@ -1,5 +1,6 @@
 const ALLOWED_METRICS = new Set(["app", "provider", "firsttoken", "session", "history", "score"]);
 const MAX_DURATION_MS = 10 * 60 * 1000;
+const FALLBACK_TIMING_HEADER = "X-Hematuria-Timing";
 
 function safeDuration(value) {
   const duration = Number(value);
@@ -28,8 +29,11 @@ function parseServerTiming(value = "") {
 
 function setServerTiming(res, metrics) {
   const value = formatServerTiming(metrics);
-  if (value) res.setHeader("Server-Timing", value);
+  if (value) {
+    res.setHeader("Server-Timing", value);
+    res.setHeader(FALLBACK_TIMING_HEADER, value);
+  }
   return value;
 }
 
-module.exports = { formatServerTiming, parseServerTiming, setServerTiming };
+module.exports = { FALLBACK_TIMING_HEADER, formatServerTiming, parseServerTiming, setServerTiming };

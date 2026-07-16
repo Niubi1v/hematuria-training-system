@@ -16,7 +16,7 @@ fs.rmSync(outputDir, { recursive: true, force: true });
 
 const require = createRequire(import.meta.url);
 const playwrightCli = require.resolve("@playwright/test/cli");
-const playwrightArgs = [playwrightCli, "test", "--config=playwright.preview.config.mjs"];
+const playwrightArgs = [playwrightCli, "test", "--config=playwright.preview.config.mjs", ...process.argv.slice(2)];
 const grep = String(process.env.PLAYWRIGHT_PREVIEW_GREP || "").trim();
 if (grep) playwrightArgs.push("--grep", grep);
 const result = spawnSync(process.execPath, playwrightArgs, {

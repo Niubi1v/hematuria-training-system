@@ -432,3 +432,11 @@
 - 这是Preview服务端环境阻塞而非代码回归。需要在Preview作用域配置既有`TRAINING_STATE_SECRET`及Upstash attempt store相关变量并重新部署；本轮不读取、生成或修改这些值。
 - P001真实AI、history-log、中文/英文、双向切换、刷新、快速双击及第二阶段仍为NOT RUN，不能登记为通过。配置生效后的唯一下一步是重新执行`pnpm run test:e2e:preview`。
 - 本轮测试基础设施提交为`6e6b90c`，可用普通`git revert 6e6b90c`回滚；不涉及Production逻辑、医学数据或审核状态。
+
+### 2026-07-16 Marketplace KV与Preview验收结论
+
+- 服务端安全兼容已完成：attempt store、Agent admission和provider circuit均使用同一可写REST凭据解析器；显式Upstash命名优先，Marketplace `KV_REST_API_*`为后备。只读token、`KV_URL`、`REDIS_URL`和任何`NEXT_PUBLIC`变量均不被接受；`TRAINING_STATE_SECRET`仍独立且不回退到LLM密钥。
+- 真实Preview部署`3fe409f0e1ee8c347758323c1422850f27124707`报告训练签名与durable store均已配置，来源类型为`vercel_kv_rest`。P003零轮提交、P001中英文真实DeepSeek、history-log、刷新恢复、双击防重、双向切换及进入第二阶段均已取得脱敏HTTP 200证据。
+- 完整串行运行受Preview网络间歇断连影响，未取得单次5/5整套绿色；同一SHA逐场景零retry已补齐全部业务场景。该限制记录为`EXT-PREVIEW-NETWORK-20260716-02`，不得伪写为网络稳定性通过。
+- Actions run `29499921918`在Node 22通过，Vercel deployment `64SACrqWNGNuhtcM22gnQsZBE7tD`及Preview Comments通过；PR #1仍为Draft，Pages deploy skipped，未合并main或部署Production。
+- 回滚按提交逆序普通执行：`git revert 3fe409f ec74d16 a405f71`。未修改`data/**`、医学事实、审核状态、419条决定或`needs_revision`。

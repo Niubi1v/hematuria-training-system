@@ -1016,3 +1016,20 @@ Actions：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/294
 | Node 22检查 | 配置合同、TypeScript、ESLint | PASS |
 
 运行命令为`pnpm run test:e2e:preview`，最终失败是预期的真实应用配置阻塞，不是Vercel保护层失败。必须在Preview作用域补齐既有服务端签名及Upstash持久化配置并重新部署后复跑。
+
+## Marketplace KV与真实Preview验收（2026-07-16）
+
+| 检查 | 结果 |
+|---|---|
+| 凭据兼容合同 | PASS：显式Upstash、Marketplace KV、双组优先级、缺URL、缺token、只读token拒绝、错误token安全错误 |
+| health非泄露 | PASS：仅布尔配置和`vercel_kv_rest`命名类型，无URL/token/片段 |
+| attempt持久层 | PASS：Preview `init-attempt`、`validate-attempt`、`stage-feedback`均200；重复提交只观察到1个stage请求 |
+| P003零轮 | PASS：第一阶段提交并进入第二阶段 |
+| P001中文 | PASS：`live_ai`、DeepSeek、非fallback、history-log 200、刷新恢复、双击防重、第二阶段 |
+| P001英文 | PASS：`live_ai`、DeepSeek、非fallback、history-log 200、第一阶段及第二阶段 |
+| 双向切换 | PASS：zh→en→zh各建立合法attempt，最终stage-feedback 200并进入第二阶段 |
+| Automation Bypass作用域 | PASS：每页cookie bootstrap 1次，同源注入，跨origin 0 |
+| 本地专项 | PASS：attempt/Agent/provider circuit、health、training API/security、TypeScript、ESLint、82/82 build、25 JS bundle、310文件repository scan |
+| Node 22远程 | PASS：Actions run `29499921918`；Vercel与Preview Comments PASS，Pages deploy skipped |
+
+完整`pnpm run test:e2e:preview`在真实Preview导航层出现间歇性连接关闭/超时；失败请求没有进入应用API。未增加自动retry或放宽业务断言，改以同一SHA的零retry逐场景运行补齐缺失场景。所有专用生成物随后按实际凭据字节及Cookie/Authorization标记扫描并清理。
