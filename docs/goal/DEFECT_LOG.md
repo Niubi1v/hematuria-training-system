@@ -391,3 +391,12 @@
 - **排除项**：不是缺少本地环境变量；不是测试把secret放入URL；不是应用handler、Patient Agent、history-log或stage-feedback返回错误，因为请求尚未到达这些层。
 - **安全处置**：保持Vercel Authentication开启；Preview配置禁用trace/截图/video并扫描专用输出目录；不记录Cookie、Authorization、认证响应头或完整签名。
 - **解除条件**：在Vercel项目侧确认Automation Bypass secret属于当前项目/团队并适用于当前Preview保护配置。凭据生效后复跑`pnpm run test:e2e:preview`，再根据真实应用HTTP状态和非敏感错误码处理可重复问题。
+- **2026-07-16关闭证据**：新secret启用且本机重启后，根路径与P003均保持目标Preview origin，health HTTP 200且出现真实应用API请求；保护层阻塞关闭。后续失败归入独立的Preview服务端训练配置缺失。
+
+### EXT-PREVIEW-CONFIG-20260716-01 Preview缺少训练签名与持久化配置
+
+- **严重度/状态**：P1发布阻塞；BLOCKED_EXTERNAL_CONFIG，不修改业务代码。
+- **证据**：目标Preview health返回`trainingStateConfigured=false`、`durableAttemptStoreConfigured=false`；P003/zh零轮`init-attempt`进入应用handler后返回HTTP 503 `training_state_secret_missing`。
+- **影响**：无法建立签名attempt，P003不能提交第一阶段；P001中英文、语言切换、刷新、双击和history-log/评分流程均不能形成合法验收证据。
+- **安全边界**：当前503是正确fail-closed。禁止关闭签名、改用NEXT_PUBLIC变量、前端伪造token、内存store冒充Vercel持久化或生成假secret。
+- **解除条件**：Vercel Preview作用域提供既有`TRAINING_STATE_SECRET`；配置`TRAINING_ATTEMPT_STORE_MODE=upstash`、`UPSTASH_REDIS_REST_URL`和`UPSTASH_REDIS_REST_TOKEN`，重新部署后health两项均须为true，再复跑Preview黑盒套件。

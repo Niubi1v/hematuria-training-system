@@ -520,3 +520,11 @@
 - 真实Preview首个导航记录`sameOriginRequests=1`、`crossOriginRequests=0`，说明目标origin请求已注入保护头；Vercel仍返回302到`vercel.com/sso-api`并最终停在`vercel.com/login`。没有任何`/api/**`响应，P003/P001应用流程按串行门禁未运行，状态仍为`BLOCKED_PREVIEW_AUTH`，不是应用层错误。
 - Node 22.14.0配置合同、测试发现、TypeScript和ESLint均通过；生成物凭据扫描通过。下一步需在Vercel项目侧核对Automation Bypass凭据是否属于`niubi1vs-projects/hematuria-training-system`且对当前受保护Preview生效，然后原命令复跑；不得关闭Vercel Authentication。
 - 基础设施提交`449e5c6`与首轮证据提交`0b34c84`已普通push。精确HEAD `0b34c84`的Actions run `29414668790` / build job `87349710998` completed/success：Node 22.14.0、Playwright 68/68、82/82构建、23个JS bundle扫描和clean gate通过；Pages deploy按Draft规则skipped。Vercel deployment `DYo7Ex4RYAy1TfieMTJEEesW98GK`成功；新部署完成后再次复跑仍被重定向到Vercel登录页，故外部阻塞结论不变。
+
+### Preview Automation Bypass生效与训练状态配置阻塞（2026-07-16）
+
+- 本机重启后仅确认`VERCEL_AUTOMATION_BYPASS_SECRET`存在且长度32，未输出或持久化值。Preview路由同时发送保护头；`x-vercel-set-bypass-cookie: true`仅在每个页面首次同源请求发送一次，`x-vercel-protection-bypass`只发送到目标Preview origin，跨origin计数0。
+- 根路径与`/cases/P003/`不再302到Vercel登录页，最终origin保持目标Preview；`/api/health/`返回HTTP 200，API 2.6.0，部署SHA `08b2843b0ee582b4b0fd5ab379b39c94476faaf9`。这关闭了`EXT-PREVIEW-AUTH-20260715-02`的保护层阻塞。
+- health真实配置为`patientServiceConfigured=true`、`trainingStateConfigured=false`、`durableAttemptStoreConfigured=false`。P003/zh零轮的首个`init-attempt`到达应用handler后返回HTTP 503 `training_state_secret_missing`；测试现直接报告该错误，不再等待按钮超时。
+- P001一轮、中英文、双向切换、刷新、双击和第二阶段按串行门禁未运行。需项目管理员在Vercel **Preview** 作用域配置既有`TRAINING_STATE_SECRET`，并配置`TRAINING_ATTEMPT_STORE_MODE=upstash`及对应`UPSTASH_REDIS_REST_URL`、`UPSTASH_REDIS_REST_TOKEN`后重新部署；不得生成假值、使用客户端变量或关闭fail-closed。
+- 两个保护头、首请求cookie bootstrap、严格origin断言、直接应用错误报告和生成物清理已保存为测试提交`6e6b90c`；未修改应用业务代码。

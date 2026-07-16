@@ -998,3 +998,21 @@ Actions：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/294
 | 新Vercel部署 | deployment `DYo7Ex4RYAy1TfieMTJEEesW98GK`完成后再次运行Preview套件 | Vercel状态success；应用黑盒仍`BLOCKED_PREVIEW_AUTH`，目标origin注入1、应用API响应0 |
 
 保护层当前没有返回应用JSON错误码，不能把302/登录页解释为Patient、history-log或stage-feedback失败。需Vercel项目侧修正Automation Bypass作用域/有效性后使用同一入口复跑，届时测试将只保存脱敏路径、方法、HTTP状态、业务错误码、部署SHA和`generationSource/provider/isFallback`。
+
+## Preview Bypass复测与应用配置门禁（2026-07-16）
+
+| 检查 | 脱敏证据 | 结果 |
+|---|---|---|
+| 本机变量 | 仅检查存在性与长度 | PRESENT，长度32；未输出值 |
+| 保护头作用域 | 根路径14个同源请求；P003 19个同源请求 | `x-vercel-protection-bypass`同源注入；cookie bootstrap各1次；跨origin 0 |
+| 根路径 | 最终origin与目标Preview一致；`/api/health/` | PASS，HTTP 200；未重定向Vercel登录 |
+| P003路径 | `/cases/P003/`最终origin与目标Preview一致 | PASS；应用静态页面可达 |
+| 部署身份 | health的git/deployment SHA | `08b2843` / `08b2843b0ee582b4b0fd5ab379b39c94476faaf9` |
+| Patient配置 | health布尔字段 | `patientServiceConfigured=true` |
+| 训练签名 | health及P003 `init-attempt` | BLOCKED；`trainingStateConfigured=false`，HTTP 503 `training_state_secret_missing` |
+| attempt持久化 | health布尔字段 | BLOCKED；`durableAttemptStoreConfigured=false` |
+| 后续四项 | P001中英一轮、双向切换、刷新、双击、第二阶段 | NOT RUN；P003应用配置门禁后串行停止 |
+| 生成物 | 实际secret字节、Cookie/Authorization字段扫描；trace/screenshot/video关闭 | PASS；error context与媒体在扫描后自动删除，仅保留非敏感运行状态 |
+| Node 22检查 | 配置合同、TypeScript、ESLint | PASS |
+
+运行命令为`pnpm run test:e2e:preview`，最终失败是预期的真实应用配置阻塞，不是Vercel保护层失败。必须在Preview作用域补齐既有服务端签名及Upstash持久化配置并重新部署后复跑。

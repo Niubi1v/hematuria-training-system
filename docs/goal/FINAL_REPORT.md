@@ -424,3 +424,11 @@
 - 本地Node 22配置合同、TypeScript、ESLint与生成物敏感值扫描通过。需要Vercel项目管理员核对Automation Bypass secret的项目/团队归属和保护作用域；不需要也不得关闭Vercel Authentication。生效后使用同一命令复跑即可取得应用层证据。
 - Preview黑盒基础设施提交为`449e5c6`；回滚使用普通`git revert 449e5c6`，不会影响Production运行代码或医学数据。
 - 提交已随`0b34c84`普通push；Actions run `29414668790`在Node 22.14.0完成Playwright 68/68及所有远程门禁。Vercel deployment `DYo7Ex4RYAy1TfieMTJEEesW98GK`成功，但该新部署后的黑盒复跑仍到`vercel.com/login`且没有应用API响应，外部保护层阻塞继续有效。
+
+### 2026-07-16 Preview Bypass成功后的应用配置结论
+
+- 新Automation Bypass配置已生效。两个保护头仅在目标Preview origin发送，cookie建立头每页面一次；根路径、P003及health均进入应用，最终origin未离开目标Preview，`EXT-PREVIEW-AUTH-20260715-02`关闭。
+- 当前部署身份为`08b2843b0ee582b4b0fd5ab379b39c94476faaf9`。health HTTP 200，但训练签名和durable attempt store均报告未配置；P003零轮`init-attempt`返回503 `training_state_secret_missing`。
+- 这是Preview服务端环境阻塞而非代码回归。需要在Preview作用域配置既有`TRAINING_STATE_SECRET`及Upstash attempt store相关变量并重新部署；本轮不读取、生成或修改这些值。
+- P001真实AI、history-log、中文/英文、双向切换、刷新、快速双击及第二阶段仍为NOT RUN，不能登记为通过。配置生效后的唯一下一步是重新执行`pnpm run test:e2e:preview`。
+- 本轮测试基础设施提交为`6e6b90c`，可用普通`git revert 6e6b90c`回滚；不涉及Production逻辑、医学数据或审核状态。
