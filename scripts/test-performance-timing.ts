@@ -20,6 +20,7 @@ const headers: Record<string, string> = {};
 const header = setServerTiming({ setHeader(name, value) { headers[name.toLowerCase()] = value; } }, { history: 4, score: 2.26 });
 assert.equal(header, "history;dur=4.0, score;dur=2.3");
 assert.equal(headers["server-timing"], header);
+assert.equal(headers["x-hematuria-timing"], header, "platform-compatible timing header must mirror the same allowlisted metrics");
 assert.doesNotMatch(header, /prompt|question|patient|secret|token|signature/i, "timing metadata must not contain sensitive labels");
 
 console.log("Non-sensitive Server-Timing format and parser contract passed.");

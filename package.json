@@ -54,6 +54,7 @@
     "test:adversarial": "tsx scripts/test-adversarial-scoring.ts",
     "test:e2e": "playwright test",
     "test:e2e:preview": "node scripts/run-preview-blackbox.mjs",
+    "test:e2e:preview:stability": "node scripts/run-preview-blackbox.mjs --grep @preview-stability",
     "test:preview-config": "node scripts/test-preview-blackbox-config.mjs",
     "test:bundle": "tsx scripts/scan-static-bundle.ts",
     "test:secrets": "node scripts/scan-repository-secrets.mjs",

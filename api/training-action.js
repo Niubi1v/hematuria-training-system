@@ -42,7 +42,7 @@ function setCors(req, res) {
   const origin = String(req.headers?.origin || "");
   const accepted = !origin || allowedOrigins().includes(origin) || sameOriginRequest(req, origin);
   if (origin && accepted) res.setHeader("Access-Control-Allow-Origin", origin);
-  res.setHeader("Access-Control-Expose-Headers", "X-Training-State, Server-Timing");
+  res.setHeader("Access-Control-Expose-Headers", "X-Training-State, Server-Timing, X-Hematuria-Timing");
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Training-State, X-Request-Id, X-Idempotency-Key");

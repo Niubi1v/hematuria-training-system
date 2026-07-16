@@ -16,7 +16,7 @@ fs.rmSync(outputDir, { recursive: true, force: true });
 
 const require = createRequire(import.meta.url);
 const playwrightCli = require.resolve("@playwright/test/cli");
-const result = spawnSync(process.execPath, [playwrightCli, "test", "--config=playwright.preview.config.mjs"], {
+const result = spawnSync(process.execPath, [playwrightCli, "test", "--config=playwright.preview.config.mjs", ...process.argv.slice(2)], {
   cwd: process.cwd(),
   env: process.env,
   stdio: "inherit"
