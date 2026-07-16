@@ -31,6 +31,7 @@ async function main() {
   assert.equal(health.payload.patientServiceConfigured, true);
   assert.equal(health.payload.trainingStateConfigured, true);
   assert.equal(health.payload.durableAttemptStoreConfigured, false, "local memory test store must not be advertised as durable");
+  assert.equal(health.payload.durableAttemptStoreCredentialSource, "none");
   assert.equal(health.payload.cloudTtsConfigured, true);
   assert.equal(health.payload.apiVersion, "2.6.0");
   assert.ok(health.payload.deploymentSha);
@@ -57,6 +58,8 @@ async function main() {
   process.env.VERCEL = "1";
   delete process.env.UPSTASH_REDIS_REST_URL;
   delete process.env.UPSTASH_REDIS_REST_TOKEN;
+  delete process.env.KV_REST_API_URL;
+  delete process.env.KV_REST_API_TOKEN;
   delete process.env.TRAINING_ATTEMPT_STORE_MODE;
   const productionWithoutStore = await call("GET");
   assert.equal(productionWithoutStore.payload.trainingStateConfigured, false, "serverless health must fail closed without a durable attempt store");

@@ -1,4 +1,5 @@
 const crypto = require("node:crypto");
+const { resolveRedisRestCredentials } = require("./redisRestCredentials.js");
 
 const ATTEMPT_TTL_SECONDS = 24 * 60 * 60;
 const MAX_IDEMPOTENCY_RECORDS = 64;
@@ -35,11 +36,16 @@ function pruneIdempotency(record) {
   }
 }
 
+function attemptStoreCredentialSource() {
+  return storeMode() === "upstash" ? resolveRedisRestCredentials().source : "none";
+}
+
 function storeMode() {
   const configured = String(process.env.TRAINING_ATTEMPT_STORE_MODE || "").toLowerCase();
   if (configured === "memory") return "memory";
   if (configured === "upstash") return "upstash";
-  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) return "upstash";
+  const credentials = resolveRedisRestCredentials();
+  if (credentials.url && credentials.token) return "upstash";
   if (process.env.VERCEL || process.env.NODE_ENV === "production") return "unavailable";
   return "memory";
 }
@@ -47,19 +53,22 @@ function storeMode() {
 function assertStoreConfigured() {
   const mode = storeMode();
   if (mode === "unavailable") throw new Error("training_attempt_store_unavailable");
-  if (mode === "upstash" && (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN)) {
+  const credentials = resolveRedisRestCredentials();
+  if (mode === "upstash" && (!credentials.url || !credentials.token)) {
     throw new Error("training_attempt_store_unavailable");
   }
   return mode;
 }
 
 function durableAttemptStoreConfigured() {
-  return storeMode() === "upstash" && Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+  const credentials = resolveRedisRestCredentials();
+  return storeMode() === "upstash" && Boolean(credentials.url && credentials.token);
 }
 
 async function upstash(command) {
-  const url = String(process.env.UPSTASH_REDIS_REST_URL || "").replace(/\/+$/, "");
-  const token = String(process.env.UPSTASH_REDIS_REST_TOKEN || "");
+  const credentials = resolveRedisRestCredentials();
+  const url = credentials.url.replace(/\/+$/, "");
+  const token = credentials.token;
   if (!url || !token) throw new Error("training_attempt_store_unavailable");
   let response;
   try {
@@ -236,6 +245,7 @@ function resetMemoryAttemptStore() {
 }
 
 module.exports = {
+  attemptStoreCredentialSource,
   assertStoreConfigured,
   commitAttempt,
   digest,

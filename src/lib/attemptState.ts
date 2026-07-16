@@ -29,6 +29,15 @@ export function attemptPointerKey(caseId: string, mode: AttemptMode, language: A
   return `hematuria-attempt-pointer-v3:${caseId}:${mode}:${language}${participantScope(participantId, schemaVersion)}`;
 }
 
+export function trainingStateStorageKey(attemptId: string, apiBaseUrl: string, pageOrigin: string) {
+  const apiScope = String(apiBaseUrl || pageOrigin || "same-origin").trim().replace(/\/+$/, "").toLowerCase();
+  return `hematuria-training-state-v4:${encodeURIComponent(apiScope)}:${attemptId}`;
+}
+
+export function legacyTrainingStateStorageKey(attemptId: string) {
+  return `hematuria-training-state-v3:${attemptId}`;
+}
+
 export function isAttemptCompatible(
   attempt: AttemptIdentity,
   expected: Pick<AttemptIdentity, "caseId" | "mode" | "language"> & Partial<Pick<AttemptIdentity, "participantId" | "schemaVersion">>

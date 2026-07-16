@@ -16,11 +16,12 @@ const matchers = [
   ["urinary_frequency", /尿频|小便次数多|urinary frequency|frequent urination|urinate often|urinat(?:e|ing) more often/i],
   ["urinary_urgency", /尿急|憋不住|\burgency\b|urgent need|cannot hold urine/i],
   ["voiding_difficulty", /排尿困难|尿线细|尿流中断|尿不尽|排尿费力|difficulty urinating|weak stream|incomplete emptying|straining/i],
-  ["retention", /尿潴留|尿不出来|urinary retention|cannot pass urine/i],
+  ["retention", /尿潴留|尿不出来|urinary retention|cannot pass urine|unable to pass urine/i],
   ["fever_chills", /发热|发烧|寒战|畏寒|体温|fever|chills?|rigors?|temperature/i],
   ["glomerular_features", /泡沫尿|水肿|眼睑肿|下肢肿|foamy urine|frothy urine|edema|oedema|swelling/i],
   ["recent_uri", /感冒|咽痛|扁桃体炎|cold|sore throat|tonsillitis|upper respiratory/i],
   ["triggers", /运动|劳累|受凉|外伤|性生活|导尿|尿路操作|exercise|exertion|trauma|sexual activity|catheter|urinary procedure/i],
+  ["prior_care", /以前看过医生|之前看过医生|之前治疗过|接受过治疗|seen a doctor before|previous treatment|treated for this before/i],
   ["general_condition", /胃口|食欲|睡眠|大便|体重|消瘦|appetite|sleep|bowel|stool|weight loss|lost weight/i],
   ["bleeding_tendency", /鼻出血|牙龈出血|瘀斑|紫癜|nosebleed|gum bleeding|bruis|purpura/i]
 ];
@@ -28,7 +29,12 @@ const matchers = [
 function matchCanonicalPatientFacts(caseId, question, language = "zh") {
   const caseSlots = bilingualSlots[caseId];
   if (!caseSlots) return null;
-  const slotIds = [...new Set(matchers.filter(([, pattern]) => pattern.test(question)).map(([slotId]) => slotId))];
+  const matchedSlotIds = [...new Set(matchers.filter(([, pattern]) => pattern.test(question)).map(([slotId]) => slotId))];
+  const hasSpecificPain = matchedSlotIds.some((slotId) => ["flank_pain", "renal_colic", "radiating_pain"].includes(slotId));
+  const explicitlyAsksGeneralPain = /疼不疼|有没有痛|有无疼痛|其他.*痛|别的.*痛|any (?:other )?pain|other pain|pain elsewhere|general pain|does it hurt/i.test(question);
+  const slotIds = hasSpecificPain && !explicitlyAsksGeneralPain
+    ? matchedSlotIds.filter((slotId) => slotId !== "pain")
+    : matchedSlotIds;
   if (!slotIds.length) return null;
   const answers = slotIds.map((slotId) => caseSlots[slotId]?.[language === "en" ? "patientAnswerEn" : "patientAnswerZh"]).filter(Boolean);
   if (!answers.length) return null;

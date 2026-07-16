@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import publicCases from "@/data/cases_public.json";
 import ClinicalTrainingClient from "@/src/components/ClinicalTrainingClient";
 
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   const routeIds = new Set<string>();
   for (const caseData of publicCases) {

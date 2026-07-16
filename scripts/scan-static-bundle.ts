@@ -19,6 +19,7 @@ const hiddenSamples = [
 const leaks = [...new Set(hiddenSamples.filter((sample) => bundle.includes(sample)))];
 if (leaks.length) throw new Error(`Student bundle contains ${leaks.length} hidden answer sample(s): ${leaks.slice(0, 3).join(" | ")}`);
 if (/sk-[A-Za-z0-9_-]{16,}|AZURE_SPEECH_KEY\s*[:=]\s*["'][^"']+/i.test(bundle)) throw new Error("Potential API secret found in static bundle.");
+if (/(?:127\.0\.0\.1|localhost):3001/i.test(bundle)) throw new Error("Static bundle contains the retired cross-origin E2E API fallback.");
 
 const expectedRoute = path.join(out, "cases", "P008", "index.html");
 if (!fs.existsSync(expectedRoute)) throw new Error("GitHub Pages refresh route is missing: cases/P008/index.html");

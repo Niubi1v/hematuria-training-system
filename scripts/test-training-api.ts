@@ -46,6 +46,20 @@ async function main() {
   assert.equal(response.payload.practiceOnly, true);
   assert.ok(response.token, "practice attempt must receive a signed state token");
 
+  const validatedAttempt = await call({
+    action: "validate-attempt", caseId: "P008", attemptId, mode: "free", language: "zh",
+    requestId: `validate-${attemptId}`
+  }, response.token);
+  assert.equal(validatedAttempt.statusCode, 200, "the current signed attempt must validate without changing state");
+  assert.equal(validatedAttempt.payload.currentStage, 1);
+  assert.equal(validatedAttempt.token, response.token, "validation must return the same current token");
+  const invalidSavedToken = await call({
+    action: "validate-attempt", caseId: "P008", attemptId, mode: "free", language: "zh",
+    requestId: `validate-invalid-${attemptId}`
+  }, "legacy-token-from-another-deployment");
+  assert.equal(invalidSavedToken.statusCode, 401);
+  assert.equal(invalidSavedToken.payload.error, "invalid_attempt_token");
+
   const conflictAttemptId = `conflict-api-test-${Date.now()}`;
   const conflictInit = await call({ action: "init-attempt", caseId: "P001", attemptId: conflictAttemptId, mode: "free", language: "en" });
   const conflictHistory = await call({ action: "history-log", caseId: "P001", attemptId: conflictAttemptId, mode: "free", language: "en", question: "Do you have urinary urgency?", requestId: "conflict-history-test" }, conflictInit.token);
@@ -57,6 +71,46 @@ async function main() {
     requestId: "inspect-conflict-state", requestDigest: digest("inspect-conflict-state")
   });
   assert.equal(conflictStored.state.events.some((event: { slotId?: string }) => event.slotId === "urinary_urgency"), false, "quarantined bilingual facts must not enter authoritative scoring state");
+  const conflictSubmission = await call({
+    action: "stage-feedback", caseId: "P001", attemptId: conflictAttemptId, mode: "free", language: "en",
+    stageKey: "history", submission: { askedQuestions: ["Do you have urinary urgency?"] }, requestId: "conflict-history-submit-test"
+  }, conflictHistory.token);
+  assert.equal(conflictSubmission.statusCode, 200);
+  assert.equal((conflictSubmission.payload.hits as string[]).some((item) => /urgency|尿急/i.test(item)), false, "stage submission recovery must not score quarantined bilingual facts");
+
+  const recoveryAttemptId = `history-recovery-${Date.now()}`;
+  const recoveryInit = await call({ action: "init-attempt", caseId: "P001", attemptId: recoveryAttemptId, mode: "free", language: "zh" });
+  const recoveredHistory = await call({
+    action: "stage-feedback", caseId: "P001", attemptId: recoveryAttemptId, mode: "free", language: "zh",
+    stageKey: "history", submission: { askedQuestions: ["您吸烟吗？"] }, requestId: "history-recovery-submit-test"
+  }, recoveryInit.token);
+  assert.equal(recoveredHistory.statusCode, 200);
+  assert.ok(Number(recoveredHistory.payload.score) > 0, "server-validated submitted questions must restore history evidence after a lost attempt record");
+  assert.match((recoveredHistory.payload.hits as string[]).join(" "), /吸烟/);
+
+  for (const language of ["zh", "en"] as const) {
+    const bilingualAttemptId = `p001-seven-stage-${language}-${Date.now()}`;
+    let bilingual = await call({
+      action: "init-attempt", caseId: "P001", attemptId: bilingualAttemptId,
+      mode: "free", language, requestId: `${bilingualAttemptId}-init`
+    });
+    assert.equal(bilingual.statusCode, 200, `P001 ${language} attempt must initialize`);
+    for (const [index, stageKey] of ["history", "orders", "diagnosis", "consult", "treatment", "perioperative", "debrief"].entries()) {
+      bilingual = await call({
+        action: "stage-feedback", caseId: "P001", attemptId: bilingualAttemptId,
+        mode: "free", language, stageKey, submission: {}, requestId: `${bilingualAttemptId}-stage-${index + 1}`
+      }, bilingual.token);
+      assert.equal(bilingual.statusCode, 200, `P001 ${language} stage ${index + 1} must submit`);
+    }
+    const completedStages = verifyAttemptState(bilingual.token, { caseId: "P001", attemptId: bilingualAttemptId });
+    assert.equal(completedStages.currentStage, 8, `P001 ${language} must advance to scoring after seven stages`);
+    const bilingualScore = await call({
+      action: "score", caseId: "P001", attemptId: bilingualAttemptId,
+      mode: "free", language, requestId: `${bilingualAttemptId}-score`
+    }, bilingual.token);
+    assert.equal(bilingualScore.statusCode, 200, `P001 ${language} score must complete`);
+    assert.equal(bilingualScore.payload.max, 360);
+  }
 
   const originalToken = response.token;
   const historyBody = { action: "history-log", caseId: "P008", attemptId, mode: "free", language: "zh", question: "idempotent history question", requestId: "history-idempotency-test" };

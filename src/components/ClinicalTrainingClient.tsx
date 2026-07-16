@@ -41,7 +41,7 @@ import { ApiRequestError, createIdempotencyKey, createRequestId, fetchWithRecove
 import { publicApiConfig } from "@/src/lib/apiConfig";
 import { isConnectionFailureFallback, isSafetyFallback, mergeRecoveredCoverage, recordConnectionTransition, validCachedSession, type AiConnectionStatus, type CachedPatientSession, type ConnectionTransition } from "@/src/lib/aiRecovery";
 import { initializeStorageVersion, readJsonStorage, writeJsonStorage } from "@/src/lib/safeStorage";
-import { attemptPointerKey, attemptStorageKey, createAttempt, type AttemptIdentity, type AttemptMode } from "@/src/lib/attemptState";
+import { attemptPointerKey, attemptStorageKey, createAttempt, legacyTrainingStateStorageKey, trainingStateStorageKey, type AttemptIdentity, type AttemptMode } from "@/src/lib/attemptState";
 import {
   AZURE_VOICE_BY_PROFILE,
   cleanSpeechText,
@@ -132,10 +132,76 @@ type ServiceHealth = {
   deploymentSha?: string;
   patientServiceConfigured: boolean;
   trainingStateConfigured: boolean;
+  durableAttemptStoreConfigured?: boolean;
   cloudTtsConfigured: boolean;
   allowedOriginConfigured: boolean;
   apiVersion: string;
 };
+
+type TrainingFailureReason = "session_initializing" | "attempt_not_found" | "token_expired" | "token_missing" | "stage_mismatch" | "network_error" | "configuration_error" | "origin_mismatch" | "rate_limit" | "state_mismatch" | "request_error";
+
+function trainingFailureReason(error: unknown): TrainingFailureReason {
+  const code = error instanceof ApiRequestError ? error.code : "";
+  const kind = error instanceof ApiRequestError ? error.kind : "request";
+  if (/attempt_not_found/.test(code)) return "attempt_not_found";
+  if (/expired_attempt_token/.test(code)) return "token_expired";
+  if (/training_state_token_missing/.test(code)) return "token_missing";
+  if (/invalid_stage|stage_not_unlocked/.test(code)) return "stage_mismatch";
+  if (/training_attempt_store_unavailable|training_state_secret_(?:missing|weak|placeholder|reused)/.test(code)) return "configuration_error";
+  if (/origin_not_allowed/.test(code)) return "origin_mismatch";
+  if (/rate_limited/.test(code) || kind === "rate-limited") return "rate_limit";
+  if (/invalid_attempt_token|invalid_attempt_token_claims|unsupported_attempt_token_version|stale_attempt_token|attempt_already_(?:completed|exists)|idempotency_key_reused|attempt_(?:state|language|mode|case|id)_mismatch/.test(code)) return "state_mismatch";
+  if (/network_error/.test(code) || ["network", "offline", "timeout"].includes(kind)) return "network_error";
+  return "request_error";
+}
+
+function stageSubmissionFailureMessage(error: unknown, language: LanguageCode) {
+  const reason = trainingFailureReason(error);
+  if (reason === "configuration_error") {
+    return language === "en"
+      ? "The training record service is not configured, so this stage cannot be submitted. Ask an administrator to configure the Preview attempt store and retry."
+      : "训练记录服务未配置，当前无法提交阶段。请管理员完成 Preview 持久存储配置后重试。";
+  }
+  if (reason === "attempt_not_found") {
+    return language === "en"
+      ? "The training session record is no longer available. Reinitialize the training session before submitting."
+      : "训练会话记录已失效，请重新初始化训练会话后再提交。";
+  }
+  if (reason === "token_expired") {
+    return language === "en"
+      ? "This training attempt has expired. Start a new attempt before submitting."
+      : "本次训练凭据已过期，请重新开始训练后再提交。";
+  }
+  if (reason === "token_missing") {
+    return language === "en"
+      ? "The training session response did not include a valid credential. Reinitialize the training session before submitting."
+      : "训练会话响应缺少有效凭据，请重新初始化训练会话后再提交。";
+  }
+  if (reason === "stage_mismatch") {
+    return language === "en"
+      ? "The submitted stage does not match the server stage. Refresh to restore the current stage."
+      : "提交阶段与服务端当前阶段不一致，请刷新页面恢复后重试。";
+  }
+  if (reason === "network_error") {
+    return language === "en"
+      ? "Network connection failed while initializing the training session. Check the network and retry initialization."
+      : "初始化训练会话时网络连接失败，请检查网络后重新初始化。";
+  }
+  if (reason === "origin_mismatch") {
+    return language === "en"
+      ? "This Preview is connected to a mismatched training API. Refresh after the Preview redeploys."
+      : "当前 Preview 连接了不匹配的训练API，请在 Preview 重新部署后刷新页面。";
+  }
+  if (reason === "rate_limit") {
+    return language === "en" ? "Training requests are temporarily rate-limited. Wait briefly and retry." : "训练请求暂时受限，请稍候再试。";
+  }
+  if (reason === "state_mismatch") {
+    return language === "en"
+      ? "The training state changed. Refresh the page to restore the latest valid stage, then retry."
+      : "训练状态已变化，请刷新页面恢复最新有效阶段后重试。";
+  }
+  return language === "en" ? "Stage submission failed. Please retry." : "阶段提交失败，请重试。";
+}
 type PendingFailedQuestion = {
   question: string;
   patientMessageIndex: number;
@@ -421,7 +487,9 @@ async function requestTrainingAction<T>(body: Record<string, unknown>, stateToke
       timeoutMs: PATIENT_REPLY_TIMEOUT_MS,
       retries
     });
-    return { payload: await response.json() as T, stateToken: response.headers.get("X-Training-State") || stateToken };
+    const nextStateToken = String(response.headers.get("X-Training-State") || "").trim();
+    if (!nextStateToken) throw new ApiRequestError("request", 502, "training_state_token_missing", idempotencyKey);
+    return { payload: await response.json() as T, stateToken: nextStateToken };
   } finally {
     globalThis.clearTimeout(timeoutId);
   }
@@ -626,6 +694,9 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [reconnectNotice, setReconnectNotice] = useState("");
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error">("saved");
   const [storageWarning, setStorageWarning] = useState("");
+  const [stageSubmitting, setStageSubmitting] = useState(false);
+  const [trainingAttemptStatus, setTrainingAttemptStatus] = useState<"initializing" | "ready" | "failed">("initializing");
+  const [trainingAttemptError, setTrainingAttemptError] = useState("");
   const [pendingHistoryLogs, setPendingHistoryLogs] = useState<PendingHistoryLog[]>([]);
   const [logSyncStatus, setLogSyncStatus] = useState<"idle" | "pending" | "verified" | "failed">("idle");
   const [logRetryNonce, setLogRetryNonce] = useState(0);
@@ -654,11 +725,15 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const allowNavigationRef = useRef(false);
   const trainingStateTokenRef = useRef<{ attemptId: string; token: string } | null>(null);
   const trainingInitPromiseRef = useRef<{ attemptId: string; promise: Promise<string> } | null>(null);
+  const trainingInitFailureRef = useRef<{ attemptId: string; error: unknown } | null>(null);
+  const stageProgressRef = useRef({ activeStageNo, hasSubmittedStages: Object.keys(submitted).length > 0 });
+  stageProgressRef.current = { activeStageNo, hasSubmittedStages: Object.keys(submitted).length > 0 };
   const trainingActionQueueRef = useRef<Promise<void>>(Promise.resolve());
   const sessionInitAbortRef = useRef<AbortController | null>(null);
   const autoSessionInitRef = useRef<{ key: string; promise: Promise<SessionInitResponse>; controller: AbortController } | null>(null);
   const patientReplyAbortRef = useRef<AbortController | null>(null);
   const patientSubmitLockRef = useRef(false);
+  const stageSubmitLockRef = useRef(false);
   const historyLogSyncRef = useRef(false);
   const historyLogRetryTimerRef = useRef(0);
   const historyLogRetryWaitingRef = useRef(false);
@@ -708,28 +783,70 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     items: consultCatalog.filter((item) => item.group === group)
   })).filter((group) => group.items.length > 0), []);
 
-  const ensureTrainingStateToken = useCallback(async () => {
+  const ensureTrainingStateToken = useCallback(async (forceRetry = false) => {
     const attemptId = attempt.attemptId;
-    if (trainingStateTokenRef.current?.attemptId === attemptId) return trainingStateTokenRef.current.token;
+    if (trainingStateTokenRef.current?.attemptId === attemptId) {
+      setTrainingAttemptStatus("ready");
+      setTrainingAttemptError("");
+      return trainingStateTokenRef.current.token;
+    }
     if (trainingInitPromiseRef.current?.attemptId === attemptId) return trainingInitPromiseRef.current.promise;
+    if (!forceRetry && trainingInitFailureRef.current?.attemptId === attemptId) throw trainingInitFailureRef.current.error;
+    if (forceRetry && trainingInitFailureRef.current?.attemptId === attemptId) trainingInitFailureRef.current = null;
+    setTrainingAttemptStatus("initializing");
+    setTrainingAttemptError("");
     const promise = (async () => {
-      const storageKey = `hematuria-training-state-v3:${attempt.attemptId}`;
-      try {
-        const saved = sessionStorage.getItem(storageKey);
-        if (saved) {
-          trainingStateTokenRef.current = { attemptId, token: saved };
-          return saved;
+      const storageKey = trainingStateStorageKey(attempt.attemptId, publicApiConfig.baseUrl, window.location.origin);
+      const legacyStorageKey = legacyTrainingStateStorageKey(attempt.attemptId);
+      let saved = "";
+      try { saved = sessionStorage.getItem(storageKey) || sessionStorage.getItem(legacyStorageKey) || ""; } catch { /* Continue with a fresh in-memory token. */ }
+      if (saved) {
+        try {
+          const validationId = createIdempotencyKey(attemptId, "training-validate", caseData.id, runtimeMode, lang);
+          const validated = await requestTrainingAction<{ currentStage: number; status: string }>({
+            action: "validate-attempt", caseId: caseData.id, attemptId,
+            language: lang, mode: runtimeMode, requestId: validationId
+          }, saved, validationId, 0);
+          trainingStateTokenRef.current = { attemptId, token: validated.stateToken };
+          trainingInitFailureRef.current = null;
+          try {
+            sessionStorage.setItem(storageKey, validated.stateToken);
+            sessionStorage.removeItem(legacyStorageKey);
+          } catch { /* The validated token can continue in memory. */ }
+          setTrainingAttemptStatus("ready");
+          return validated.stateToken;
+        } catch (error) {
+          const reason = trainingFailureReason(error);
+          const safeStageOneRecovery = stageProgressRef.current.activeStageNo === 1 && !stageProgressRef.current.hasSubmittedStages
+            && ["attempt_not_found", "token_expired", "state_mismatch"].includes(reason);
+          if (!safeStageOneRecovery) throw error;
+          try {
+            sessionStorage.removeItem(storageKey);
+            sessionStorage.removeItem(legacyStorageKey);
+          } catch { /* Recovery can continue in memory. */ }
         }
-      } catch { /* The signed state can continue in memory. */ }
+      }
       const initRequestId = createIdempotencyKey(attempt.attemptId, "training-init", caseData.id, runtimeMode, lang);
       const initialized = await requestTrainingAction<{ attemptId: string }>({
         action: "init-attempt", caseId: caseData.id, attemptId: attempt.attemptId,
         language: lang, mode: runtimeMode, requestId: initRequestId
       }, "", initRequestId, 0);
       trainingStateTokenRef.current = { attemptId, token: initialized.stateToken };
-      try { sessionStorage.setItem(storageKey, initialized.stateToken); } catch { /* Memory fallback. */ }
+      trainingInitFailureRef.current = null;
+      setTrainingAttemptStatus("ready");
+      try {
+        sessionStorage.setItem(storageKey, initialized.stateToken);
+        sessionStorage.removeItem(legacyStorageKey);
+      } catch { /* Memory fallback. */ }
       return initialized.stateToken;
-    })();
+    })().catch((error) => {
+      const reason = trainingFailureReason(error);
+      console.warn("training_attempt_initialization_failed", { reason });
+      trainingInitFailureRef.current = { attemptId, error };
+      setTrainingAttemptStatus("failed");
+      setTrainingAttemptError(stageSubmissionFailureMessage(error, lang));
+      throw error;
+    });
     const pending = { attemptId, promise };
     trainingInitPromiseRef.current = pending;
     promise.finally(() => {
@@ -738,18 +855,41 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     return promise;
   }, [attempt.attemptId, caseData.id, lang, runtimeMode]);
 
+  useEffect(() => {
+    if (!attemptReady) return;
+    void ensureTrainingStateToken().catch(() => undefined);
+  }, [attemptReady, ensureTrainingStateToken]);
+
   async function trainingAction<T>(body: Record<string, unknown>): Promise<T> {
     const run = trainingActionQueueRef.current.then(async () => {
-      const token = await ensureTrainingStateToken();
       const requestId = String(body.requestId || createRequestId(String(body.action || "training")));
-      const result = await requestTrainingAction<T>(
-        { ...body, requestId, caseId: caseData.id, attemptId: attempt.attemptId, language: lang, mode: runtimeMode },
-        token,
-        requestId,
-        body.action === "history-log" ? 0 : 2
-      );
+      const requestBody = { ...body, requestId, caseId: caseData.id, attemptId: attempt.attemptId, language: lang, mode: runtimeMode };
+      let token = await ensureTrainingStateToken();
+      let result: { payload: T; stateToken: string };
+      try {
+        result = await requestTrainingAction<T>(requestBody, token, requestId, body.action === "history-log" ? 0 : 2);
+      } catch (error) {
+        const recoverableMissingAttempt = error instanceof ApiRequestError
+          && error.code === "attempt_not_found"
+          && body.action === "stage-feedback"
+          && body.stageKey === "history";
+        if (!recoverableMissingAttempt) throw error;
+        trainingStateTokenRef.current = null;
+        trainingInitPromiseRef.current = null;
+        setTrainingAttemptStatus("initializing");
+        setTrainingAttemptError("");
+        try {
+          sessionStorage.removeItem(trainingStateStorageKey(attempt.attemptId, publicApiConfig.baseUrl, window.location.origin));
+          sessionStorage.removeItem(legacyTrainingStateStorageKey(attempt.attemptId));
+        } catch { /* Recovery can continue in memory. */ }
+        token = await ensureTrainingStateToken(true);
+        result = await requestTrainingAction<T>(requestBody, token, requestId, 0);
+      }
       trainingStateTokenRef.current = { attemptId: attempt.attemptId, token: result.stateToken };
-      try { sessionStorage.setItem(`hematuria-training-state-v3:${attempt.attemptId}`, result.stateToken); } catch { /* Memory fallback. */ }
+      try {
+        sessionStorage.setItem(trainingStateStorageKey(attempt.attemptId, publicApiConfig.baseUrl, window.location.origin), result.stateToken);
+        sessionStorage.removeItem(legacyTrainingStateStorageKey(attempt.attemptId));
+      } catch { /* Memory fallback. */ }
       return result.payload;
     });
     trainingActionQueueRef.current = run.then(() => undefined, () => undefined);
@@ -930,6 +1070,9 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   useEffect(() => {
     if (trainingStateTokenRef.current?.attemptId !== attempt.attemptId) trainingStateTokenRef.current = null;
     if (trainingInitPromiseRef.current?.attemptId !== attempt.attemptId) trainingInitPromiseRef.current = null;
+    if (trainingInitFailureRef.current?.attemptId !== attempt.attemptId) trainingInitFailureRef.current = null;
+    setTrainingAttemptStatus("initializing");
+    setTrainingAttemptError("");
     trainingActionQueueRef.current = Promise.resolve();
   }, [attempt.attemptId]);
 
@@ -1567,7 +1710,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }
 
   async function submitStage() {
-    if (osceLocked) return;
+    if (osceLocked || stageSubmitLockRef.current || trainingAttemptStatus !== "ready") return;
     if (activeStageNo === 4 && answers.consultNeeded === "需要会诊" && (answers.consultDepartments.length === 0 || answers.consultPurpose.trim().length < 6 || answers.consultQuestions.trim().length < 6 || answers.consultSummary.trim().length < 6)) {
       alert(t(lang, "purposeRequired"));
       return;
@@ -1583,15 +1726,40 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       stageAnswerText(activeStageNo, answers, messages, examLogs, orderLogs, mdtOpinions),
       activeStageNo === 1 ? askedSlots.join("；") : ""
     ].filter(Boolean).join("；");
+    stageSubmitLockRef.current = true;
+    setStageSubmitting(true);
     try {
-      const evaluation = await trainingAction<StageEvaluation>({ action: "stage-feedback", stageKey: stageScoreKey(activeStageNo), submission: { ...answers, answerText } });
+      const evaluation = await trainingAction<StageEvaluation>({
+        action: "stage-feedback",
+        stageKey: stageScoreKey(activeStageNo),
+        submission: {
+          ...answers,
+          answerText,
+          ...(activeStageNo === 1 ? { askedQuestions: messages.filter((message) => message.role === "student").map((message) => message.text) } : {})
+        }
+      });
       setSubmitted((current) => Object.fromEntries(
         Object.entries({ ...current, [activeStageNo]: evaluation }).filter(([stage]) => Number(stage) <= activeStageNo)
       ) as Partial<Record<AgentStageNo, StageEvaluation>>);
       setFinalReport(null);
       addTimeline("submit", lang === "en" ? "Stage submitted" : "提交阶段", `${agents.find((item) => item.stageNo === activeStageNo)?.agentName[lang] ?? activeStageNo}：${evaluation.score}/${evaluation.max}`, activeStageNo);
-    } catch {
-      setStorageWarning(lang === "en" ? "Stage submission failed. Please retry." : "阶段提交失败，请重试。" );
+    } catch (error) {
+      const message = stageSubmissionFailureMessage(error, lang);
+      const reason = trainingFailureReason(error);
+      if (["attempt_not_found", "token_expired", "token_missing", "configuration_error", "origin_mismatch", "state_mismatch"].includes(reason)) {
+        trainingStateTokenRef.current = null;
+        trainingInitFailureRef.current = { attemptId: attempt.attemptId, error };
+        setTrainingAttemptStatus("failed");
+        setTrainingAttemptError(message);
+        try {
+          sessionStorage.removeItem(trainingStateStorageKey(attempt.attemptId, publicApiConfig.baseUrl, window.location.origin));
+          sessionStorage.removeItem(legacyTrainingStateStorageKey(attempt.attemptId));
+        } catch { /* The UI still fails closed. */ }
+      }
+      setStorageWarning(message);
+    } finally {
+      stageSubmitLockRef.current = false;
+      setStageSubmitting(false);
     }
   }
 
@@ -1648,6 +1816,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     try {
       localStorage.removeItem(attemptStorageKey(attempt));
       localStorage.removeItem(attemptPointerKey(attempt.caseId, attempt.mode, attempt.language));
+      sessionStorage.removeItem(trainingStateStorageKey(attempt.attemptId, publicApiConfig.baseUrl, window.location.origin));
+      sessionStorage.removeItem(legacyTrainingStateStorageKey(attempt.attemptId));
     } catch { /* Reload still resets the in-memory attempt. */ }
     window.location.reload();
   }
@@ -1766,6 +1936,14 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         <div role="alert" className="mb-4 flex items-start justify-between gap-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <span>{storageWarning}</span>
           <button type="button" onClick={() => setStorageWarning("")} className="font-medium underline">{t(lang, "dismiss")}</button>
+        </div>
+      )}
+      {trainingAttemptStatus === "failed" && trainingAttemptError && (
+        <div role="alert" className="mb-4 flex items-start justify-between gap-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <span>{trainingAttemptError}</span>
+          <button type="button" onClick={() => void ensureTrainingStateToken(true).catch(() => undefined)} className="font-medium underline">
+            {lang === "en" ? "Reinitialize training session" : "重新初始化训练会话"}
+          </button>
         </div>
       )}
       <div className="mb-3 min-h-9" aria-live="polite">
@@ -2173,8 +2351,16 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 <CheckCircle2 size={16} /> {t(lang, "finishTraining")}
               </button>
             ) : (
-              <button disabled={osceLocked} onClick={submitStage} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white hover:bg-clinic-teal disabled:cursor-not-allowed disabled:opacity-50">
-                <CheckCircle2 size={16} /> {activeEvaluation ? (lang === "en" ? "Resubmit this stage" : "修改后重新提交") : t(lang, "submitStage")}
+              <button disabled={osceLocked || stageSubmitting || trainingAttemptStatus !== "ready"} onClick={submitStage} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white hover:bg-clinic-teal disabled:cursor-not-allowed disabled:opacity-50">
+                <CheckCircle2 size={16} /> {trainingAttemptStatus === "initializing"
+                  ? (lang === "en" ? "Initializing training session..." : "正在初始化训练会话……")
+                  : trainingAttemptStatus === "failed"
+                    ? (lang === "en" ? "Training session unavailable" : "训练会话尚未就绪")
+                    : stageSubmitting
+                      ? (lang === "en" ? "Submitting..." : "正在提交……")
+                      : activeEvaluation
+                        ? (lang === "en" ? "Resubmit this stage" : "修改后重新提交")
+                        : t(lang, "submitStage")}
               </button>
             )}
             {activeEvaluation && activeStageNo !== 7 && (

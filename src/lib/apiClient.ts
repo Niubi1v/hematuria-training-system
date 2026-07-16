@@ -35,6 +35,7 @@ function classify(status: number, code: string): ApiFailureKind {
   const normalized = code.toLowerCase();
   if (status === 404) return "not-deployed";
   if (/backend_outdated|version_mismatch/.test(normalized)) return "backend-outdated";
+  if (/training_attempt_store_unavailable|training_state_secret_(?:missing|weak|placeholder|reused)/.test(normalized)) return "not-configured";
   if (/provider_not_configured|llm_not_configured|missing_llm/.test(normalized)) return "not-configured";
   if (/provider_timeout|upstream_timeout/.test(normalized)) return "provider-timeout";
   if (/provider_rate_limit|upstream_rate_limit/.test(normalized) || status === 429) return "provider-rate-limited";
@@ -93,8 +94,14 @@ type RecoveryOptions = RequestInit & {
   endpointName?: string;
 };
 
+function endpointPath(url: string) {
+  // Client fetch accepts same-origin relative URLs. Supply a non-routable base
+  // only for parsing/log labels so no absolute origin is required or contacted.
+  return new URL(url, "http://same-origin.invalid").pathname;
+}
+
 export async function fetchWithRecovery(url: string, init: RecoveryOptions = {}) {
-  const { timeoutMs = 15_000, retries = 2, requestId = createRequestId(init.endpointName || "api"), endpointName = new URL(url).pathname, ...requestInit } = init;
+  const { timeoutMs = 15_000, retries = 2, requestId = createRequestId(init.endpointName || "api"), endpointName = endpointPath(url), ...requestInit } = init;
   let lastError: ApiRequestError | null = null;
   const startedAt = Date.now();
   for (let attempt = 0; attempt <= retries; attempt += 1) {
@@ -124,7 +131,8 @@ export async function fetchWithRecovery(url: string, init: RecoveryOptions = {})
         ? error
         : new ApiRequestError(error instanceof DOMException && error.name === "AbortError" ? "timeout" : "network", undefined, "", requestId);
       if (externalSignal?.aborted) throw normalized;
-      if ((normalized.status && !transientStatuses.has(normalized.status)) || attempt === retries) {
+      const nonRetryableKind = ["not-configured", "backend-outdated", "not-deployed", "safety-filter"].includes(normalized.kind);
+      if (nonRetryableKind || (normalized.status && !transientStatuses.has(normalized.status)) || attempt === retries) {
         console.warn("api_request_failed", { requestId, endpoint: endpointName, status: normalized.status || 0, durationMs: Date.now() - startedAt, retryCount: attempt, fallbackReason: normalized.code || normalized.kind });
         throw normalized;
       }

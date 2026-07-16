@@ -16,7 +16,7 @@ const { setServerTiming } = require("../server/performanceTiming.js");
 const { parseJsonBody } = require("../server/requestSecurity.js");
 
 const catalog = [...labs, ...imaging, ...procedures, ...perioperative];
-const allowedActions = new Set(["init-attempt", "history-log", "exam", "order", "mdt", "stage-feedback", "score"]);
+const allowedActions = new Set(["init-attempt", "validate-attempt", "history-log", "exam", "order", "mdt", "stage-feedback", "score"]);
 const stageNumbers = { history: 1, orders: 2, diagnosis: 3, consult: 4, treatment: 5, perioperative: 6, debrief: 7 };
 const requests = globalThis.__hematuriaTrainingRate || new Map();
 globalThis.__hematuriaTrainingRate = requests;
@@ -119,6 +119,25 @@ function assertStageUnlocked(state, action, body) {
   if (!allowed) {
     throw new Error("stage_not_unlocked");
   }
+}
+
+function reconcileSubmittedHistory(caseData, state, submission, at) {
+  const questions = Array.isArray(submission?.askedQuestions)
+    ? submission.askedQuestions.filter((item) => typeof item === "string" && item.trim()).slice(0, 64).map((item) => item.trim().slice(0, 500))
+    : [];
+  if (!questions.length) return;
+  const matchedEvents = questions.flatMap((question, questionIndex) => matchHistoryQuestion(caseData.id, question, at, `${state.sequence + 1}-submit-${questionIndex}`));
+  const quarantine = filterQuarantinedEvents(caseData.id, matchedEvents);
+  if (quarantine.quarantinedSlotIds.length) {
+    console.warn("training_fact_quarantined", { caseId: caseData.id, slotIds: quarantine.quarantinedSlotIds, reason: BILINGUAL_CONFLICT_REASON });
+  }
+  const existingSlotIds = new Set(state.events.filter((event) => event.type === "slot_answered" && event.slotId).map((event) => event.slotId));
+  const reconciled = quarantine.events.filter((event) => {
+    if (!event.slotId || existingSlotIds.has(event.slotId)) return false;
+    existingSlotIds.add(event.slotId);
+    return true;
+  });
+  appendEvents(state, reconciled);
 }
 
 function splitOrders(text) {
@@ -304,6 +323,17 @@ module.exports = async function handler(req, res) {
     if (body.mode && normalizeAttemptMode(body.mode) !== state.mode) return res.status(409).json({ error: "attempt_mode_mismatch" });
     if (language !== state.language) return res.status(409).json({ error: "attempt_language_mismatch" });
     if (state.mode === "formal-attempt") assertFormalAllowed(caseData);
+    if (body.action === "validate-attempt") {
+      res.setHeader("X-Training-State", previousToken);
+      return res.status(200).json({
+        attemptId: state.attemptId,
+        caseId: state.caseId,
+        mode: state.mode,
+        language: state.language,
+        currentStage: Number(state.currentStage || 1),
+        status: state.status
+      });
+    }
     if (body.action === "stage-feedback" && !stageNumbers[body.stageKey]) return res.status(400).json({ error: "invalid_stage" });
     assertStageUnlocked(state, body.action, body);
     const at = new Date().toISOString();
@@ -352,6 +382,7 @@ module.exports = async function handler(req, res) {
         state.completedStages = (state.completedStages || []).filter((stage) => stage < submittedStage);
         state.currentStage = submittedStage;
       }
+      if (body.stageKey === "history") reconcileSubmittedHistory(caseData, state, body.submission || {}, at);
       const validation = validateStage(caseData, body.stageKey, body.submission || {});
       appendEvents(state, validation.events);
       state.submissions[body.stageKey] = { submittedAt: at, warnings: validation.warnings };

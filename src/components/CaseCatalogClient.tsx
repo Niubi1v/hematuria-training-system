@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Circle, Clock3, Filter, Languages, Search, Shuffle, X } from "lucide-react";
+import { publicCaseHref, publicPageHref } from "@/src/lib/publicRoutes";
 
 export type PublicCase = {
   id: string;
@@ -19,11 +20,6 @@ export type PublicCase = {
 };
 
 type LanguageCode = "zh" | "en";
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
-
-function caseHref(caseId: string) {
-  return `${basePath}/cases/${caseId}/index.html`;
-}
 
 export default function CaseCatalogClient({ cases }: { cases: PublicCase[] }) {
   const [lang, setLang] = useState<LanguageCode>("zh");
@@ -92,7 +88,7 @@ export default function CaseCatalogClient({ cases }: { cases: PublicCase[] }) {
             <button type="button" onClick={() => setLang("zh")} className={`ui-segment ${lang === "zh" ? "ui-segment-active" : ""}`}>中文</button>
             <button type="button" onClick={() => setLang("en")} className={`ui-segment ${lang === "en" ? "ui-segment-active" : ""}`}>English</button>
           </div>
-          <a className="ui-button-primary" href={`${basePath}/random/index.html`}>
+          <a className="ui-button-primary" href={publicPageHref("random")}>
             <Shuffle size={16} /> {lang === "en" ? "Random case" : "随机抽题"}
           </a>
         </div>
@@ -122,7 +118,7 @@ export default function CaseCatalogClient({ cases }: { cases: PublicCase[] }) {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {filtered.map((item) => (
-          <a key={item.id} href={caseHref(item.displayCaseId || item.id)} className="ui-card group p-5 transition-colors hover:border-clinic-blue focus-visible:border-clinic-blue">
+          <a key={item.id} href={publicCaseHref(item.displayCaseId || item.id)} className="ui-card group p-5 transition-colors hover:border-clinic-blue focus-visible:border-clinic-blue">
             <div className="flex items-start justify-between gap-3">
               <span className="text-sm font-semibold text-clinic-blue">{item.displayCaseId || item.id}</span>
               <span className="ui-status bg-clinic-paper text-clinic-muted">{item.difficultyLabel || (lang === "en" ? "Unrated" : "未分级")}</span>

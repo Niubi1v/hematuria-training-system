@@ -310,3 +310,125 @@
 - QA合同已改为直接验证距底部阈值、新消息入口及恢复后末条几何；本地按CI 2-worker重复6/6。当前需提交该测试/证据修正并等待下一轮Node22 CI，PR继续Draft。
 - 最终测试合同提交`4fed0764e9894b34da1d3f7620df00468ff4f9bb`已普通push。Actions run `29309939497` / build job `87011370852` completed/success（4分24秒），Node22完整行为、TypeScript、ESLint、repository scanner、Playwright、82页build、bundle及clean gate全部通过；Vercel deployment `DTHT4KnLh6Eyz8NnkecexSqLFeE3`与Preview Comments success，Pages deploy skipped，PR仍为Draft。
 - HEM-P1-027工程门禁关闭；推荐长期QA准确从`4fed0764e9894b34da1d3f7620df00468ff4f9bb`或本证据提交后代，在真实360/390设备复测软键盘、safe-area、开场白、手动上翻、新消息入口和末条可见性。剩余发布阻塞仍为HEM-P1-020外部Preview持久配置/真实AI与性能，以及HEM-P0-001/023具名医学裁决；没有修改医学事实、审核状态或生产环境。
+
+### 2026-07-14 HEM-P1-043 第一阶段提交本地交接
+
+- 基线`ff1a932785d891749ae8e73130bde8857062e194`确认配置齐全的真实训练handler可接受P001中英第一阶段、语言双向切换和刷新恢复；用户无法提交不是通过关闭安全校验解决的问题。
+- 已证实客户端缺陷为阶段提交无单飞锁（双击2请求）和永久配置503被重复重试并隐藏错误原因。候选将两者分别收敛为单请求，并保留全部attempt/session/stage/case/language/mode与签名校验。
+- 本地行为、医学治理、类型、lint、82页构建、bundle和secret门禁通过；受控本地server与已安装Chrome下desktop/mobile新增专项6/6、13.7秒exit0。Node22完整浏览器结论仍须等push后PR CI。
+- 当前Preview直接请求证据仍受登录态/浏览器控制阻塞。根据既有变量作用域和服务端fail-closed实现，Preview缺持久attempt store/训练签名是高可信阻塞；仍需用户只配置既有变量值并重新部署后抓取实际HTTP/error code。Codex未读取、生成、修改或输出任何值。
+- 代码与测试已形成本地提交`3cb22cd`，首轮证据提交为`c4c2f25`；尚未push，PR #1仍Draft。三次fetch因GitHub 443超时/重置失败，GitHub API确认远程head仍`ff1a932`，但未以API查询替代fetch门禁。网络恢复后必须先成功fetch，再普通push并补充Actions、Vercel及长期QA准确步骤。
+- 浏览器补证提交后本地HEAD为`972405a`，工作树干净。一次成功fetch确认0落后/3领先，随后普通push因Git连接重置失败；`github.com:443`不可达而API端点可达，PR API确认远程仍`ff1a932`且Draft。没有force、main写入、API改ref、Ready、merge或Production部署；网络恢复后从该HEAD重新fetch/push。
+- 完整本地Playwright因Node24运行器242秒超时/EPIPE没有有效总计，未伪报通过；新增核心流程专项desktop/mobile 6/6有效。超时后server已清理，Node22完整Playwright必须由新head CI补证。
+
+### 2026-07-14 HEM-P1-043 远程交接
+
+- 修复与证据已普通push，远程工程HEAD为`cade64e19868c1b72667c642eff3ba709f2bd7e4`。Actions run `29318216424` completed/success：Node22完整行为、52/52 Playwright、类型、lint、42例/572/419治理、360评分、82页构建、bundle/scanner均通过。
+- Vercel deployment `CNzPNsqzCi21UkqF65bpu88My89S`与Preview Comments通过；Pages deploy skipped。PR #1保持Open/Draft/CLEAN，未Ready、未合并、未部署Production。
+- 根因与修复：阶段提交缺同步单飞锁导致双击2请求；永久attempt-store配置503被重复重试且UI隐藏原因。现均收敛为1请求，并保留全部token/session/stage绑定和fail-closed安全边界。
+- 长期QA从`cade64e`在登录态最新Preview复测：P001中文第一阶段→第二阶段→刷新；英文同流程；中→英、英→中；刷新后提交；快速双击只见1个`stage-feedback`；过期/跨病例token仍401；缺store时只见1次503和明确配置提示。记录URL、deployment SHA、脱敏session/request ID、状态码/error code。
+- 尚未解除：HEM-P1-020的Preview持久store/签名/origin作用域与真实POST证据，真实AI/日志/性能，以及HEM-P0-001/023具名医学裁决。未修改生产环境变量、医学事实、419审核或`needs_revision`。
+
+### 2026-07-14 QA 490fdd8与目录/重复提交里程碑（待远程确认）
+
+- Production起始HEAD和远程均为`3541a706040cd9e0f5c9f9f6b3cff92149896a4a`；QA为`490fdd842b277bada645047a65a3bc448ee014f4`，merge-base `ff1a932785d891749ae8e73130bde8857062e194`。只读取和审查QA报告/最小证据，没有整体merge或引入大体积、本机路径、视频、HTML全报告。
+- 第一阶段提交在当前本地Production不可复现：P001中文、英文、双向切换、刷新、进入第二阶段及快速双击专项均通过，且一次操作为1 request / 1 request ID / 1 timeline event。Preview仍由Vercel Authentication在应用前拦截，故真实Preview提交状态继续阻塞，不能用本地结果关闭HEM-P1-020。
+- HEM-P2-043根因是目录链接错误固化为`index.html`，与Next目录route及多部署环境合同冲突。候选集中生成basePath-aware目录URL，兼容local dev、root静态/Vercel和Pages basePath；无效病例真实404，不以catch-all隐藏。
+- HEM-P2-028是旧基线真实重复`stage-feedback`业务请求，不是provider或仅遥测重复。既有同步单飞锁已修复，本轮用延迟handler补足双击1/1/1、双语session绑定和刷新恢复合同。
+- 本地门禁：受影响浏览器8/8、root静态2/2、Pages静态2/2、两个82/82构建、完整行为、类型、lint、25 JS bundle和300文件secret扫描通过。完整本地Playwright在不受支持Node24/Next缓存异常下49/52，保留失败并等待Node22 CI，不重复昂贵全跑。
+- 修改范围仅为公开路由helper、目录/随机/反馈链接、动态route约束、静态测试服务、Playwright配置/测试、package测试入口及四份证据文档；`data/**`、医学事实、419审核、18冲突、`needs_revision`、Patient医学语义、签名安全和360评分零修改。
+- 回滚方式：代码提交形成后使用普通`git revert <route-commit>`；证据提交可独立revert。PR必须继续Draft，不Ready、不合并、不部署Production。下一准确QA起始HEAD须待普通push和CI完成后填写；开放HEM-P1-030/031/032与真机027、Preview配置/真实AI、HEM-P0-001/023裁决继续保留。
+- 本地代码/测试提交为`f1d7f62`，首轮证据为`39aad56`；回滚分别为普通`git revert f1d7f62`和`git revert 39aad56`。三次fetch与两次普通push均被GitHub 443连接重置/超时阻塞；只读连接器确认远程仍为`3541a706`且PR保持Draft，故当前没有新CI/Preview可报告，也没有使用API改ref。网络恢复后从本地最新文档提交重新fetch、普通push，再补Node22 CI和准确长期QA HEAD。
+
+### 2026-07-14 4aa96d5远程确认与HEM-P1-030本地交接
+
+- 先前Git网络阻塞已解除：3/0门禁后普通push成功，远程与本地均为`4aa96d5ff20a1f4e637529d6ede46720b428c5ef`。Actions run `29322763481` success；Node22.14完整Playwright52/52、Vercel与Preview Comments通过，PR继续Draft，Pages deploy skipped。
+- HEM-P1-030本地候选补足prior-care、retention、previous cancer和“导过尿”路由，并把过宽诊断/报告边界改为可证明的历史语境例外。例外严格限白名单slot且拒绝结果/诊断细节意图，不关闭安全校验。
+- 42例×7自然问法、4安全边界、相关Patient/session/API/18冲突隔离、完整行为、TypeScript和ESLint通过。三个不安全来源仍被阻断并保持空slot，未把来源问题写成医学通过。
+- 当前候选尚未提交或push；代码提交形成后回滚应为普通`git revert <HEM-P1-030-commit>`。推送后必须补Node22 CI、Vercel和长期QA 6216矩阵准确HEAD。HEM-P1-031/032、Preview真实AI/配置、HEM-P0-001/023与161来源裁决仍未解除。
+
+### 2026-07-14 HEM-P1-031本地交接
+
+- HEM-P1-031确认为matcher集合的工程过匹配：英语特异疼痛中的`pain`同时触发general slot，扩大5个医学冲突病例的隔离范围。
+- 候选按问句意图做最小消歧；42×6、5病例特异隔离和真正general pain隔离均通过，合法compound问法仍保留两个slot。
+- Patient/session/18冲突、TypeScript和ESLint通过；没有修改数据、医学冲突、审批或评分。尚未提交/push，CI与长期QA 6216矩阵待补；HEM-P1-032仍开放。
+
+### 2026-07-14 HEM-P1-032本地交接
+
+- HEM-P1-032根因为确定性简化器的总长80阈值早于外层安全过滤，导致安全长事实被替换为generic unknown但仍携带matched slot。
+- 候选仅做无损换行：126个42×3代表回复与获准当前slot原文标准化后完全一致；不安全或无法满足总安全界限的来源显式安全阻断并空slot。没有摘要、编造、极性翻转或跨slot泄露。
+- P004/P005/P006来源阻断、18条冲突、历史/疼痛边界、完整行为、类型和lint通过。032尚未提交；030/031已有4个本地小提交。待网络恢复后fetch、普通push、Node22 CI及长期QA 6216矩阵复测。
+
+### 2026-07-14 18:23 三项Patient路由P1本地完成与远程阻塞
+
+- HEM-P1-030/031/032现为六个本地原子提交，HEAD=`25ef0cba76e77c4cffd8e9caac1b4733ab83015b`。42×37双语双改写QA矩阵真实重跑为6216路由、6216重复一致性、168边界检查、0失败；144/144医学冲突隔离，provider调用0。
+- 本地完整行为、受影响专项、TypeScript、ESLint与敏感信息扫描均通过；医学数据、审核状态、HEM-P0-001/023、161来源阻塞和360评分未改变。
+- GitHub CLI认证和API可用，远端仍为`4aa96d5ff20a1f4e637529d6ede46720b428c5ef`；Git smart-HTTP三次fetch均因443连接失败。按push前安全门禁，尚未push六个提交，也没有把旧HEAD的Node22/Preview绿灯归到新候选。
+- 下一步固定为：网络恢复后`git fetch --prune origin`，确认远端领先0，普通push当前专项分支；保持PR #1 Draft，等待Actions Node22完整Playwright和Vercel检查。不Ready、不合并main、不部署Production。
+
+### 2026-07-14 HEM-P1-043-R2 第一阶段提交恢复交接
+
+- 已在本地真实handler复现用户可见失败：有效签名浏览器token对应的服务端attempt记录丢失时，`stage-feedback`返回401 `attempt_not_found`，旧客户端显示“阶段提交失败，请重试。”并停留第一阶段。
+- 修复仅在首阶段精确错误上重新走合法attempt初始化并以同一幂等requestId重试一次；安全拒绝不放宽。重建后的history证据由服务端从受限学生问句经现有matcher、HEM-P0-023隔离及去重重新产生，客户端不能提交score或可信slot。
+- 修复前失败测试已证明；修复后desktop/mobile专项2/2、受影响矩阵8/8、完整Playwright 54/54，完整行为、训练API/安全、类型、lint、82页构建、bundle与secret扫描全部exit0。`data/**`零差异，医学事实、419审核、18条冲突、`needs_revision`与360评分未变。
+- Preview仍受Vercel认证层阻塞，没有登录态应用POST证据，故不能宣称线上已验证。远端Draft PR #1 head仍为`4aa96d5`，旧Actions/Vercel结果不属于本地候选。
+- 代码/测试提交为`610eacf`。本轮遵守此前安全收尾要求：不恢复stash、不启动新P1/P2、不push包含既有七个本地提交的新代码、不Ready、不合并main、不部署Production。代码和文档形成可单独`git revert`的本地原子提交后暂停，等待明确的push/长期QA复测安排。
+
+### 2026-07-14 HEM-P1-043-R3 初始化竞态交接
+
+- 新用户截图对应独立P1，不是`attempt_not_found`恢复回归。真实浏览器复现的失败请求为训练`init-attempt` HTTP 502 `network_error`；没有发`stage-feedback`，但未ready提交按钮可点击且错误被通用化。
+- 修复把本地记录ready与服务端签名attempt ready分开：页面启动即单飞建立训练attempt；initializing/failed时禁止必然失败的stage请求；失败可显式单飞重试。AI preparing/degraded不阻断已ready训练attempt，0轮与1轮fallback均可提交。
+- 自动重复初始化已消除；restart清除旧token key；刷新、语言/session绑定、双击防重与`attempt_not_found`安全恢复保持。错误提示区分缺attempt、过期、阶段不匹配、网络和配置问题。
+- 本地工程证据：初始化矩阵14/14、restart 2/2、配置/单飞6/6；完整行为、类型、lint、82页build、25 JS bundle和303文件scanner通过。生产静态完整浏览器63/64，唯一rAF几何同步项在保持844px阈值后focused 2/2；干净Node22完整64项待PR CI。
+- `data/**`、医学事实、419审核、18条冲突、`needs_revision`及360评分未改。新候选尚未部署到可登录Preview；需要push后记录准确SHA、Actions、Vercel deployment及真实P001立即提交网络时间线。PR必须继续Draft，不Ready、不合并main、不部署Production。
+- 代码/测试原子提交为`c069abf`；回滚使用普通`git revert c069abf`，不得reset或重写既有提交。
+
+### 2026-07-15 HEM-P1-043-R3 远程验收交接
+
+- 候选已普通push，远程HEAD=`6b41d334106a988a1cbc85b89792f6271be3b597`，包含初始化竞态修复`c069abf`。Draft PR #1保持Draft，未Ready、未合并main、未部署Production。
+- Actions run `29348368936` / job `87137895749`在Node `22.14.0` completed/success；完整Playwright 64/64，其余类型、lint、行为、scanner、82页build、bundle与clean gate全部通过。Pages deploy按PR规则skipped。
+- Vercel Deployment与Preview Comments通过，部署记录`F9pbrhZo1sEQBsxSrQ4jXhJwHZHC`。仍需长期QA在有Preview访问权限的真实浏览器复测：P001打开后立即提交、preparing期间提交、初始化首次失败后显式恢复、0轮/1轮/fallback、刷新和快速双击，并记录脱敏HTTP状态/error code；CI绿灯不替代该交互证据。
+- 回滚代码使用普通`git revert c069abf`；首轮证据提交可独立revert。不得reset、force push、关闭安全校验或修改医学审核状态。
+
+### 2026-07-15 HEM-P1-043-R4 Preview跨部署提交失败本地交接
+
+- P003截图所示0问0答提交失败不是病例或零轮限制：当前真实handler对该合同返回`init-attempt=200`、`stage-feedback=200`。根因是Preview客户端继承生产API地址却无法在浏览器读取`VERCEL_ENV`，把当前UI连接到仍报告`gitSha=5a3ad11`的旧API；旧v3 token又被无验证地标为ready。跨部署的签名/CORS/attempt-store随后在提交时失败。
+- 候选在构建时只公开非敏感部署作用域，Preview强制同源；token按API origin隔离并在ready前走只读`validate-attempt`。任何成功训练响应缺`X-Training-State`都fail-closed，失效高级阶段不自动重建。相对同源URL解析缺陷也已用先红后绿测试修复，实际fetch保持相对URL。
+- 本地门禁：P003 desktop/mobile 2/2、受影响同步/重连12/12、完整Playwright 68/68、Vercel等价build 82/82；API配置/恢复、attempt、训练API、TypeScript、ESLint、25 JS bundle和303文件secret扫描全部exit0。所有观察到的训练/session请求与页面同源。
+- `data/**`、医学事实、419审核、18条冲突、`needs_revision`、Patient医学语义及360评分均未修改；未修改生产环境变量、未部署Production。当前候选仍需原子提交、fetch后普通push、Node22 CI及新Preview登录态P003复测，PR继续Draft。
+- 推送后QA应清除或保留旧站点sessionStorage分别复测：P003打开、preparing、0轮直接提交、1轮提交、刷新、重新开始及快速双击；记录页面/请求origin、HTTP状态、非敏感error code和部署SHA，确认不再访问旧生产API且单次合法提交只有1个`stage-feedback`。
+- 本地代码/测试提交为`656816d`，首轮证据为`8a31711`。发布前fetch门禁被GitHub CLI token失效及`github.com:443`连接重置/不可达共同阻塞，故没有盲目push；现有远程CI/Preview均不属于本候选。恢复认证/网络后必须重新fetch，确认远端领先0，再普通push当前分支并观察Draft PR，禁止force、main写入、Ready、merge或Production部署。
+
+### 2026-07-15 CI同源合同恢复本地交接
+
+- 起始HEAD `6ba9d29f73a3feea72ba80b0cb78d7030e82a5f0`；仓库外回滚bundle已验证，SHA256 `EB3C6DC1FA17C0A87DC3F365343A84BEEEF91D547E3E43EDE9EC11B6A8BDE75A`。
+- 14项失败不是14个独立产品缺陷：P003双视口直接发现`:3000`页面请求隐式`:3001` API；另12项因跨源响应头不可读而触发正确的缺签名fail-closed。CI并未启动`:3001`测试API。
+- 提交`d1c20de0ad3b96ca992c8be679df23cbf9facb28`移除隐式测试端口，Vercel Preview/Production和本地E2E默认相对同源；GitHub Pages继续使用显式HTTPS API。Playwright现有`page.route`是test-only同源适配，没有加入生产rewrite或放宽安全校验。
+- Node 22本地结果：目标14/14、完整Playwright 68/68、类型、lint、完整行为/治理、两次82页构建、两次bundle扫描、secret扫描全部通过；`data/**`零差异。
+- 当前仍须fetch确认远端领先0后普通push，并等待精确新HEAD的Actions与Vercel。Preview应用层若继续受Authentication保护，继续标记`BLOCKED_PREVIEW_AUTH`，不得把本地结果写成线上通过。
+- 回滚：优先普通`git revert d1c20de0ad3b96ca992c8be679df23cbf9facb28`；也可从仓库外bundle恢复审计基线。禁止reset、force push、main写入或关闭token/签名校验。
+
+### 2026-07-15 CI恢复远程结论
+
+- 工程修复已由精确HEAD `bd3bff5e2400a51d9b4f16f78eefb6895a781c1b`的Actions run `29405290154`确认：Node 22.14.0、Playwright 68/68、类型、lint、行为/医学治理、82页构建、bundle、secret与clean gate全部通过。
+- Vercel deployment `HdHGBhcwFXybfHe6weLVswR6vqew`及Preview Comments通过；PR #1保持Open/Draft，未Ready、未合并main、未部署Production。
+- Preview Authentication仍阻挡根路径和P003应用DOM，故真实P003零轮、P001一轮、双语切换、刷新和双击冒烟仍须长期QA在授权登录态复测。本报告不把CI、fixture或本地结果写成线上交互通过。
+- 长期QA应以最终文档提交完成后的准确Production Goal HEAD为起点；清除与保留旧sessionStorage各测一次，并记录部署SHA、页面/请求origin、HTTP状态、非敏感error code和单次`stage-feedback`计数。
+
+### 2026-07-15 Preview保护绕过黑盒测试交接
+
+- 已建立独立Preview黑盒入口：只从进程环境读取`VERCEL_AUTOMATION_BYPASS_SECRET`，并仅向当前分支Preview origin添加`x-vercel-protection-bypass`。缺变量直接标记`BLOCKED_PREVIEW_AUTH`；本地、Pages及Production请求不受影响。
+- Preview运行禁用trace、截图和video；证据只含场景、API路径、方法、状态、非敏感业务错误和回答来源。运行器会用内存中的实际凭据扫描专用输出目录，命中即删除并失败；当前扫描通过。
+- 套件已定义主页/health、P003中文零轮提交、P001中英文真实AI一轮、history-log、刷新、快速双击、双向语言切换和进入第二阶段共5项串行场景。
+- 当前环境中的目标请求确实经过限定origin的保护头注入，但Vercel仍把首个请求重定向到`vercel.com/sso-api`并最终停在登录页。应用API响应为0，后续4项未运行，因此继续标记`BLOCKED_PREVIEW_AUTH`，不把保护层结果或本地测试写成线上通过。
+- 本地Node 22配置合同、TypeScript、ESLint与生成物敏感值扫描通过。需要Vercel项目管理员核对Automation Bypass secret的项目/团队归属和保护作用域；不需要也不得关闭Vercel Authentication。生效后使用同一命令复跑即可取得应用层证据。
+- Preview黑盒基础设施提交为`449e5c6`；回滚使用普通`git revert 449e5c6`，不会影响Production运行代码或医学数据。
+- 提交已随`0b34c84`普通push；Actions run `29414668790`在Node 22.14.0完成Playwright 68/68及所有远程门禁。Vercel deployment `DYo7Ex4RYAy1TfieMTJEEesW98GK`成功，但该新部署后的黑盒复跑仍到`vercel.com/login`且没有应用API响应，外部保护层阻塞继续有效。
+
+### 2026-07-16 Preview Bypass成功后的应用配置结论
+
+- 新Automation Bypass配置已生效。两个保护头仅在目标Preview origin发送，cookie建立头每页面一次；根路径、P003及health均进入应用，最终origin未离开目标Preview，`EXT-PREVIEW-AUTH-20260715-02`关闭。
+- 当前部署身份为`08b2843b0ee582b4b0fd5ab379b39c94476faaf9`。health HTTP 200，但训练签名和durable attempt store均报告未配置；P003零轮`init-attempt`返回503 `training_state_secret_missing`。
+- 这是Preview服务端环境阻塞而非代码回归。需要在Preview作用域配置既有`TRAINING_STATE_SECRET`及Upstash attempt store相关变量并重新部署；本轮不读取、生成或修改这些值。
+- P001真实AI、history-log、中文/英文、双向切换、刷新、快速双击及第二阶段仍为NOT RUN，不能登记为通过。配置生效后的唯一下一步是重新执行`pnpm run test:e2e:preview`。
+- 本轮测试基础设施提交为`6e6b90c`，可用普通`git revert 6e6b90c`回滚；不涉及Production逻辑、医学数据或审核状态。
