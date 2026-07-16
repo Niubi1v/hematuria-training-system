@@ -427,3 +427,12 @@
 - **补证**：新增服务端真实handler矩阵和桌面浏览器84条完整旅程；移动端补一条完整代表旅程。服务端共588次阶段提交和84份报告，浏览器共84条桌面旅程，均未跳过token、stage、case、language、mode或幂等校验。
 - **结果**：专项与完整Playwright均exit 0；完整行为链将该矩阵纳入默认门禁。该关闭仅针对工程流程证据，医学正确性、真实AI自然度、Production服务与真实设备软键盘不在关闭范围。
 - **远程状态**：当前为本地候选，Node 22 CI及新Preview构建待普通push后记录；在新HEAD绿灯前不写成远程通过。
+
+### HEM-P1-046 已知Patient事实因口语/同义词返回unknown
+
+- **严重度/状态**：P1发布体验；首批4 intent本地修复，待完整门禁、普通push、Node 22 CI及长期QA。
+- **失败基线**：74问canonical命中8、错误unknown 37、极性错误67；典型“小便痛不痛、排尿疼、撒尿痛、从头到尾都红、整个排尿过程都红”未命中。
+- **根因**：server与TS平铺正则各自维护；未建立问题级whole/initial/terminal intent和fact value；英文未命中不走profile fallback。
+- **修复**：共享NFKC/alias catalog；dysuria与三类时相先映射canonical intent，再从既有source slot读取并双语一致分类；query-relative自然模板明确有/没有、是/不是。
+- **治理**：P001等HEM-P0-023 dysuria仍在后置quarantine返回pending-review reason；模糊/双语不一致保持unknown；没有修改事实或审核状态。
+- **证据**：86问专项和42例840问矩阵均0失败；相关Patient/安全/评分回归通过。剩余11个首批候选intent未关闭，故本缺陷仅标记“首批修复”。

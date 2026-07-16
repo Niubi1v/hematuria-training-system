@@ -1064,3 +1064,13 @@ Actions：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/294
 测试运行器证据边界：两次由Playwright自管`next dev`的运行均已完成目标断言，但Windows子进程未退出导致外层exit 124；改为显式受控Next进程与`PLAYWRIGHT_EXTERNAL_SERVER=1`后专项和全量均正常exit 0。此前一次`pnpm run test:e2e -- ...`把`--`当字面参数并误启动全套，不作为门禁通过证据。未增加retry、timeout断言或放宽安全检查来制造通过。
 
 该矩阵验证路由、签名attempt、阶段顺序、UI解锁和360分报告生成；不验证训练占位文本的医学正确性，也不改变或批准任何医学事实。
+
+## 2026-07-17 Patient intent normalization首批
+
+| 命令/场景 | 退出码 | 结果 |
+|---|---:|---|
+| 修复前`test-patient-intent-normalization.ts` | 1 | 74问：命中8、错误unknown 37、极性错误67、245条聚合断言失败 |
+| `pnpm run test:patient-intents` | 0 | 86/86专项；42例840/840矩阵；595 known零错误unknown；230 correct unknown；15 quarantine；0极性错误 |
+| bilingual/conflict/history/pain/safe projection/session/agent/history-matrix/scoring-v3 | 0 | 42例双语复合、18冲突、42×7、42×6、126安全投影、42×17及360分均通过 |
+
+首轮相关回归曾稳定失败“compound English question silently dropped pain”；共享normalizer新增独立general pain检测后原测试通过。没有删除断言或把unknown当negative。4 intent、66 alias；`data/**`和医学治理状态零修改。

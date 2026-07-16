@@ -552,3 +552,11 @@
 - 专项结果：服务端矩阵exit 0（0.9秒）；桌面浏览器1 passed/1 skip（3.3分钟）；移动端1 passed/1 skip（3.1秒）。完整Playwright为70 passed/2按项目隔离skip/0 failed（3.4分钟，exit 0）。
 - 完整行为链33.5秒exit 0，含42例、572事实、153/419严格分离、419零自动批准、18条冲突隔离及360分；TypeScript和ESLint exit 0。沙箱内`xlsx`目录联接不可见造成的两次基础设施失败已在沙箱外以相同命令通过，不登记为产品失败。
 - `data/**`、医学事实、419审核决定、18条冲突、42例`needs_revision`和360评分算法均未修改。当前候选仍需小步提交、普通push及Node 22 CI；Production 10+5+5、医学裁决、人工自然度和真实设备键盘验收继续保持阻塞/人工。
+
+### Patient intent normalization首批（2026-07-17，本地候选）
+
+- 失败基线74问：canonical 8/74、错误unknown 37/74、极性错误67/74。根因是server/TypeScript两套平铺正则漂移，dysuria和时相缺口，以及没有query-relative fact value。
+- 新增共享canonical catalog，首批4 intent/66 alias：dysuria、whole-stream、initial、terminal。事实值只从既有双语source slot分类且要求中英文一致；否定词不当作病例答案。
+- 修复后86/86专项通过；42例840问为840/840命中、595个known零错误unknown、230个正确unknown、15个医学冲突隔离、0极性错误、双语值一致。
+- 相关Patient Agent、pain、history、safe projection、session、Agent API、42×17和360评分回归通过。英文复合general pain+dysuria的首轮回归失败已按真实根因修复，旧断言保持。
+- 本批未修改`data/**`、医学事实/极性、review状态、419/161、HEM-P0-001/023、`needs_revision`、Redis/session/deploy或评分。其余11个候选intent仍待下一批，不提前登记完成。

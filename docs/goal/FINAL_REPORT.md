@@ -454,3 +454,10 @@
 - 完整Playwright结果为70 passed、2个互斥项目skip、0 failed，exit 0；完整行为链、TypeScript和ESLint均exit 0。新增测试没有放宽签名、session、attempt、stage、origin、医学隔离或评分安全边界。
 - 本结论不代表训练占位答案医学正确，不代表Production真实AI通过，也不替代42例`needs_revision`、419条人工审核、HEM-P0-001/023具名医学裁决、人工自然度和真实设备键盘验收。
 - 当前候选需经diff/secret/data零差异检查后小步提交并普通push；新HEAD的Node 22 Actions、Vercel deployment和Preview Comments必须重新记录。PR继续Draft，不Ready、不合并main、不部署Production。
+
+### 2026-07-17 Patient intent normalization首批结论
+
+- 从HEAD `8014045`开始，已为dysuria及全程/起始/终末血尿建立共享canonical intent catalog（4 intent、66 alias），server真实API与TypeScript规则链共同使用。
+- 修复前74问命中率10.81%、错误unknown率50%、极性错误率90.54%；修复后扩展86问均为0错误，42例840问矩阵100% canonical命中，明确事实错误unknown=0，真实unknown与15个医学冲突保持不确定。
+- 未通过全局LLM猜测补事实；query-relative模板只使用双语一致分类。HEM-P0-001/023、419、161、`needs_revision`和`data/**`未改。
+- 当前只完成首批4个最关键intent；其余11个目标仍待按同一安全模式推进。本地候选尚需完整门禁、提交、push和Node 22 CI，不能宣称整个自然语言专项完成。
