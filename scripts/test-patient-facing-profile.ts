@@ -34,8 +34,23 @@ async function main() {
   assert(/45包年/.test(hx30Profile.smoking_history?.value || ""), "HX-ADD-030 must retain 45 pack-years");
   const table = ["| 病例 | 必填事实 | 吸烟史 | 用药史 |", "|---|---|---|---|", ...rows].join("\n");
   const reportPath = "PATIENT_PROFILE_COMPLETENESS_REPORT.md";
-  const existing = fs.readFileSync(reportPath, "utf8");
+  const existing = fs.readFileSync(reportPath, "utf8").replace(/\r\n/g, "\n");
   const existingTable = existing.slice(existing.indexOf("| 病例 |")).trim();
+  if (existingTable !== table) {
+    const existingRows = existingTable.split("\n");
+    const expectedRows = table.split("\n");
+    const columnNames = ["edge", "caseId", "requiredFacts", "smokingHistory", "medicationHistory", "edge"];
+    const staleRows = expectedRows.slice(2).flatMap((row, index) => {
+      if (existingRows[index + 2] === row) return [];
+      const expectedColumns = row.split("|");
+      const existingColumns = String(existingRows[index + 2] || "").split("|");
+      const changedColumns = expectedColumns.flatMap((value, columnIndex) => value === existingColumns[columnIndex]
+        ? []
+        : [{ name: columnNames[columnIndex] || `column-${columnIndex}`, lengthDelta: value.length - String(existingColumns[columnIndex] || "").length }]);
+      return [{ row: index + 3, caseId: cases[index]?.id || "unknown", changedColumns }];
+    });
+    console.error(JSON.stringify({ reportPath, staleRows: staleRows.slice(0, 42), staleRowCount: staleRows.length }));
+  }
   assert(existingTable === table, "patient-facing profile report table is stale; review differences before using UPDATE_PATIENT_PROFILE_REPORT=1");
   if (process.env.UPDATE_PATIENT_PROFILE_REPORT === "1") {
     const report = ["# 42病例患者可见资料完整性报告", "", `生成时间：${new Date().toISOString()}`, "", table].join("\n");

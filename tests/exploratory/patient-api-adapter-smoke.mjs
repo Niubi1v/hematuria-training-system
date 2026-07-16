@@ -165,8 +165,8 @@ async function main() {
     const probes = [
       { id: "onset-en", caseId: "P001", session: sessions.get("P001/en"), language: "en", question: "When did it start?", expected: ["hematuria_onset"] },
       { id: "prior-care-en", caseId: "P001", session: sessions.get("P001/en"), language: "en", question: "Have you seen a doctor before?", expected: ["prior_care"] },
-      { id: "tumor-history-zh", caseId: "P001", session: sessions.get("P001/zh"), language: "zh", question: "以前有肿瘤史吗？", expected: ["PAST_MALIGNANCY"] },
-      { id: "cystoscopy-history-zh", caseId: "P001", session: sessions.get("P001/zh"), language: "zh", question: "以前做过膀胱镜吗？", expected: ["PAST_URINARY_PROCEDURE"] },
+      { id: "tumor-history-zh", caseId: "P001", session: sessions.get("P001/zh"), language: "zh", question: "以前有肿瘤史吗？", expected: ["PAST_MALIGNANCY"], expectUnsafeBlock: true },
+      { id: "cystoscopy-history-zh", caseId: "P001", session: sessions.get("P001/zh"), language: "zh", question: "以前做过膀胱镜吗？", expected: ["PAST_URINARY_PROCEDURE"], expectUnsafeBlock: true },
       { id: "clots-meta-zh", caseId: "P004", session: sessions.get("P004/zh"), language: "zh", question: "有血块吗？", expected: ["clots"], noTeacherMeta: true, expectUnsafeBlock: true },
       { id: "flank-pain-en", caseId: "P002", session: sessions.get("P002/en"), language: "en", question: "Do you have flank pain?", expected: ["flank_pain"] },
       { id: "glomerular-en", caseId: "P001", session: sessions.get("P001/en"), language: "en", question: "Do you have foamy urine?", expected: ["glomerular_features"], noGenericUnknown: true }
