@@ -1,7 +1,7 @@
 # 探索式 QA 执行结果
 
-状态：长期执行中；当前 3 个开放 P1、2 个开放 P2；另有真机、Preview、Pages 基线和医学阻塞，不得视为最终生产验收。
-被测 Production SHA：`ff1a932785d891749ae8e73130bde8857062e194`。新基线 merge 后 QA HEAD：`a8b87d7522eac811f0781e1aa2cc7b8cb36752e6`。
+状态：长期执行中；当前本地工程缺陷均已通过本轮定向回归，仍有 Preview 安全、Pages 部署、真机和医学阻塞，不得视为最终生产验收。
+被测 Production SHA：`8e7d148e3459f3b960161903fba9214998661635`。基线 merge 后 QA HEAD：`ad2f6a42fd9b82cfc39b61fb09520784f2360432`；本轮 QA 报告提交待生成。
 
 ## 基线核验
 
@@ -187,3 +187,30 @@
 - 360 评分、抗伪造、阶段 5/6/7、attempt 隔离和 11 例代表 E2E 共 5 个合同套件通过；覆盖 42 例 360 事件评分的单调性、同义词、反摘要投机、过度使用扣分，以及空答/错误/危险/伪造模板行为。
 - 数据 Agent/训练边界继续通过：P008 精确开单映射与前置条件、42 例 376 条查体结果 QC、训练 API 签名/精确释放/反伪造/治理/mode lock，以及 secret 分离、服务端阶段授权、原子重放拒绝和过期门禁。
 - 上述结果均为本地确定性合同，`providerCalls=0`。运行中出现的 P001 `urinary_urgency` quarantine 日志是 HEM-P0-023 既有冲突隔离，不是医学通过或新缺陷。
+
+## 2026-07-17 夜间第 6 轮：Production `8e7d148`
+
+### 基线与远程门禁
+
+- `git fetch --prune` 后 Production 精确为 `8e7d148e3459f3b960161903fba9214998661635`。GitHub Actions run `29532192980` 为 completed/success，Vercel deployment `5479992482` 为 success；Draft PR #1 仍 Open/Draft/Clean。
+- QA 先将安全修正 `0c27a2d36e4a629de43bb752d80ddbcd2ba7376d` 普通 push，再以 merge `ad2f6a42fd9b82cfc39b61fb09520784f2360432` 合入 Production 并普通 push。仅 `scripts/run-preview-blackbox.mjs` 与 `tests/preview/preview-blackbox.spec.mjs` 有 QA 测试冲突；Production 的 `api/server` 变更原样接收，`data/**` 零差异。
+
+### 三项重点与相关回归
+
+| 范围 | 结果 | 边界 |
+| --- | --- | --- |
+| 第一阶段/会话 | `PASS_LOCAL_FIXTURE_CONTRACT`；Playwright desktop/mobile 68/68，session 能力 19/19 | P001 中英提交、双向/快速/刷新切换、双击、第二阶段、刷新恢复；非法/过期/跨病例/跨语言/mode/attempt 仍拒绝 |
+| HEM-P2-028 | `RESOLVED_LOCAL_QA`；探索断言为 `1 request / 1 request ID / 1 timeline event`，完整 desktop/mobile 双击合同通过 | 当前 SHA 的真实 Preview provider call 因安全阻塞未复测，不用本地替代 |
+| HEM-P2-043 | 本地 public route 合同 42/42、root 和 Pages basePath 通过；真实 Pages 在 1440×900/390×844 均为 42 卡片、12 显示路由、30 旧内部路由 | 工程源码标 `RESOLVED_ENGINEERING_LOCAL_DEPLOYMENT_PENDING`；真实 Pages=`BLOCKED_DEPLOYMENT_MISMATCH`，Preview=`SECURITY_BLOCKED` |
+| HEM-P1-030/031/032 | 42×37×双语×双问法：6,216 路由、6,216 重放、168 边界，0 失败；adapter 17/17 | 295 个不安全来源精确 fail-closed，144/144 冲突隔离；均不构成医学内容通过 |
+| 七阶段/评分/数据 Agent | 360 事件评分 42 例、对抗评分、阶段 5/6/7、attempt 隔离、11 例代表 E2E、42 例 376 条查体、P008 开单均 PASS | 探索 UI 七阶段在 1440×900/390×844 2/2；均为本地确定性合同 |
+| UI/稳定性 | 四固定 viewport 双语布局通过；20 轮、手动上翻、新消息入口、末条不遮挡、无横向溢出；0 serious/critical a11y | `PASS_EMULATION`；真机软键盘和物理 safe-area=`BLOCKED_REAL_DEVICE` |
+
+Patient Session 报告记录 295 个 `unsafe_deterministic_answer` 阻断，而旧 smoke 只把 P004 作为预期阻断，最初产生 2 项 QA 预期失败。根据已有 Production 安全合同，将 P001 肿瘤史/泌尿操作三个不安全来源改为必须满足同一“空 facts/slots + 明确阻断原因”的强断言后 17/17 通过；没有解除来源审核。`test-patient-facing-profile.ts` 的首次失败仅由 CRLF/LF 逐字比较造成，所有 41 个差异行都只多一个 `\r`，标准化换行后 42 例完整性通过，医学列未变。
+
+### Preview 安全事件与环境分栏
+
+- 在 42 例 Preview 路由试跑中，Playwright `APIRequestContext` 失败日志把受保护 request header 写入 runner stdout。该批次立即标记 `SECURITY_BLOCKED`，专用 `test-results/preview-blackbox` 已删除，未作为测试结果；磁盘 artifact 扫描为 0 命中。报告不记录或复述任何值。
+- QA runner 现捕获 stdout/stderr，扫描实际运行时 secret bytes 和 Authorization/Cookie/Set-Cookie/bypass header 名，再决定是否输出；安全单元契约通过。路由用例也移除显式 APIRequestContext header，改为同源页面导航并中止不相关 API 流量。本轮按事件边界不再运行当前 SHA 的真实 Preview。
+- 先前 Production `3fe409f` 上得到的 health/durable store、中文 1 轮和英文 1 轮 `live_ai` 只保留为历史证据，明确 `notCurrentBaselineAcceptance=true`；不能替代 `8e7d148` Preview 验收。
+- HEM-P1-030/031/032 已具备当前本地规则/公开 handler 的关闭证据，建议主 Goal 不再继续工程修复 HEM-P1-030；后续只保留不安全来源医学修订和真实 Preview 自然语言验证，二者不得混写为该路由缺陷未修复。

@@ -1,0 +1,12 @@
+{
+  "environment": "github-pages",
+  "baseURL": "https://niubi1v.github.io/hematuria-training-system/",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "catalogHrefCount": 42,
+  "displayRouteCount": 12,
+  "nonDisplayRouteCount": 30,
+  "englishHrefCount": 42
+}

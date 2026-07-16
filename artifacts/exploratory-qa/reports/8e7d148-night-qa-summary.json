@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-16T21:35:00.000Z",
+  "productionSha": "8e7d148e3459f3b960161903fba9214998661635",
+  "qaBaselineMergeHead": "ad2f6a42fd9b82cfc39b61fb09520784f2360432",
+  "sourceBranch": "origin/codex/hematuria-production-goal",
+  "qaBranch": "codex/hematuria-exploratory-qa",
+  "remoteGates": {
+    "githubActions": {
+      "runId": 29532192980,
+      "status": "completed",
+      "conclusion": "success"
+    },
+    "vercelDeployment": {
+      "deploymentId": 5479992482,
+      "state": "success"
+    },
+    "pullRequest": {
+      "number": 1,
+      "state": "open",
+      "draft": true,
+      "mergeableState": "clean"
+    }
+  },
+  "priorityResults": {
+    "firstStageAndSession": {
+      "status": "PASS_LOCAL_FIXTURE_CONTRACT",
+      "playwrightDesktopMobile": { "passed": 68, "failed": 0 },
+      "sessionCapabilityChecks": { "passed": 19, "failed": 0, "providerCalls": 0 },
+      "covered": [
+        "P001 zh and en submit",
+        "zh-en-zh and refresh submit",
+        "rapid double submit and double send",
+        "stage-two transition and refresh recovery",
+        "invalid, expired, cross-case, cross-language, cross-mode and cross-attempt rejection"
+      ]
+    },
+    "HEM-P2-028": {
+      "status": "RESOLVED_LOCAL_QA",
+      "observed": { "feedbackRequests": 1, "uniqueRequestIds": 1, "timelineEvents": 1 },
+      "viewports": ["desktop-chromium", "mobile-chromium", "1440x900 exploratory"],
+      "latestPreview": "SECURITY_BLOCKED"
+    },
+    "HEM-P2-043": {
+      "status": "RESOLVED_ENGINEERING_LOCAL_DEPLOYMENT_PENDING",
+      "currentSourceContracts": { "cases": 42, "localRoot": "PASS", "githubPagesBasePath": "PASS" },
+      "githubPages": {
+        "status": "BLOCKED_DEPLOYMENT_MISMATCH",
+        "viewports": ["1440x900", "390x844"],
+        "catalogCards": 42,
+        "displayIdRoutes": 12,
+        "legacyInternalIdRoutes": 30
+      },
+      "latestPreview": "SECURITY_BLOCKED"
+    }
+  },
+  "patientAndLanguage": {
+    "status": "PASS_LOCAL_RULE_CONTRACT",
+    "cases": 42,
+    "canonicalSlots": 37,
+    "languages": 2,
+    "routeChecks": 6216,
+    "repeatChecks": 6216,
+    "boundaryChecks": 168,
+    "failures": 0,
+    "unsafeDeterministicSourceBlocks": 295,
+    "expectedConflictQuarantineEvents": 144,
+    "observedConflictQuarantineEvents": 144,
+    "providerCalls": 0,
+    "apiAdapterChecks": { "passed": 17, "failed": 0 }
+  },
+  "deterministicRegression": {
+    "eventScoring360": "PASS_42_CASES",
+    "adversarialScoring": "PASS",
+    "stage567": "PASS",
+    "sevenStageUi": { "passed": 2, "viewports": ["1440x900", "390x844"] },
+    "attemptIsolation": "PASS",
+    "representativeE2E": "PASS_11_CASES",
+    "physicalExam": "PASS_42_CASES_376_RESULTS",
+    "orderMapping": "PASS_P008",
+    "ttsAndFallback": "PASS_LOCAL_CONTRACT",
+    "performanceAndStreaming": "PASS_LOCAL_CONTRACT_NOT_REAL_PROVIDER_TTFT"
+  },
+  "ui": {
+    "status": "PASS_EMULATION",
+    "viewports": ["1440x900", "1280x720", "390x844", "360x800"],
+    "languages": ["zh", "en"],
+    "twentyTurnScrollAndLatestEntry": "PASS",
+    "lastMessageNotCovered": "PASS",
+    "horizontalOverflow": "PASS",
+    "seriousAccessibilityViolations": 0,
+    "realDevice": "BLOCKED_REAL_DEVICE"
+  },
+  "preview": {
+    "currentProductionSha": "8e7d148e3459f3b960161903fba9214998661635",
+    "status": "SECURITY_BLOCKED",
+    "reason": "A failed APIRequestContext call could disclose protected request headers in runner stdout. Generated dedicated output was removed, the runner now captures and scans output before printing, and no further real Preview requests were accepted in this round.",
+    "priorShaEvidence": {
+      "productionSha": "3fe409f0e1ee8c347758323c1422850f27124707",
+      "healthAndStore": "PASS",
+      "liveAiRounds": { "zh": 1, "en": 1 },
+      "notCurrentBaselineAcceptance": true
+    }
+  },
+  "medicalAndExternalBlocks": {
+    "HEM-P0-001": "BLOCKED_NAMED_MEDICAL_ADJUDICATION",
+    "HEM-P0-023": "BLOCKED_NAMED_MEDICAL_ADJUDICATION",
+    "unsafeDeterministicSources": "BLOCKED_SOURCE_REVISION",
+    "realDeepSeekLongRun": "SECURITY_BLOCKED",
+    "realProviderFirstToken": "BLOCKED_NON_STREAMING_MEASUREMENT",
+    "realPhoneKeyboardAndSafeArea": "BLOCKED_REAL_DEVICE"
+  },
+  "dataHandling": {
+    "businessCodeModifiedByQa": false,
+    "medicalDataModifiedByQa": false,
+    "credentialsPersisted": false,
+    "previewIncidentOutputRetained": false,
+    "completeAnswersPersisted": false,
+    "evidenceScan": {
+      "files": 329,
+      "zipEntries": 6854,
+      "streamedBytes": 992086874,
+      "findings": 0
+    }
+  }
+}
