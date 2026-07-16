@@ -1,4 +1,5 @@
 const crypto = require("node:crypto");
+const chiefComplaintWording = require("../data/chief_complaint_wording_runtime.json");
 const cases = require("../data/cases.json");
 const { callLLM, getLLMProviderConfig } = require("./llmClient.runtime.js");
 const { BILINGUAL_CONFLICT_REASON, quarantineForMatchedSlots, uncertainConflictReply } = require("./bilingualConflictQuarantine.js");
@@ -229,10 +230,15 @@ function buildRawPatientFacingProfile(caseData, language = "zh") {
   const pfp = caseData.patientFacingProfile || {};
   const sh = caseData.structuredHistory || {};
   const rawComplaint = pfp.chiefComplaint || caseData.studentChiefComplaint || caseData.chiefComplaint;
-  const simplifiedComplaint = language === "en" ? simplifiedChiefComplaintEn(rawComplaint) : simplifiedChiefComplaintZh(rawComplaint);
-  const openingStatement = language === "en"
-    ? `Hello, doctor. I came in because I have had ${simplifiedComplaint}.`
-    : `医生您好，我是因为${simplifiedComplaint || "小便颜色异常"}来看病的。`;
+  const wording = chiefComplaintWording.updates[caseData.id];
+  const simplifiedComplaint = wording
+    ? (language === "en" ? wording.en : wording.zh)
+    : (language === "en" ? simplifiedChiefComplaintEn(rawComplaint) : simplifiedChiefComplaintZh(rawComplaint));
+  const openingStatement = wording
+    ? (language === "en" ? wording.openingEn : wording.openingZh)
+    : language === "en"
+      ? `Hello, doctor. I came in because I have had ${simplifiedComplaint}.`
+      : `医生您好，我是因为${simplifiedComplaint || "小便颜色异常"}来看病的。`;
   return {
     patient_id: field(caseData.id),
     age: field(pfp.age || caseData.age),

@@ -36,7 +36,7 @@ import orderCatalogLabsJson from "@/data/order_catalog_labs.json";
 import orderCatalogPerioperativeJson from "@/data/order_catalog_perioperative.json";
 import orderCatalogProceduresJson from "@/data/order_catalog_procedures.json";
 import physicalExamItemsJson from "@/data/physical_exam_items.json";
-import { simplifiedChiefComplaint } from "@/src/lib/chiefComplaint";
+import { chiefComplaintForCase, patientOpeningForCase } from "@/src/lib/chiefComplaint";
 import { ApiRequestError, createIdempotencyKey, createRequestId, fetchWithRecovery, requestJson, studentFacingApiMessage } from "@/src/lib/apiClient";
 import { publicApiConfig } from "@/src/lib/apiConfig";
 import { isConnectionFailureFallback, isSafetyFallback, mergeRecoveredCoverage, recordConnectionTransition, validCachedSession, type AiConnectionStatus, type CachedPatientSession, type ConnectionTransition } from "@/src/lib/aiRecovery";
@@ -386,9 +386,7 @@ function nextStage(stageNo: AgentStageNo): AgentStageNo | null {
 }
 
 function patientOpening(caseData: StudentVisibleCase, lang: LanguageCode) {
-  const complaint = simplifiedChiefComplaint(caseData.studentChiefComplaint || caseData.chiefComplaint, lang, caseData.chiefComplaintEn);
-  if (lang === "en") return `Hello doctor. I came because of ${complaint || "abnormal urine color"}.`;
-  return `医生您好，我是因为${complaint || "小便颜色异常"}来看病的。`;
+  return patientOpeningForCase(caseData.id, caseData.studentChiefComplaint || caseData.chiefComplaint, lang, caseData.chiefComplaintEn);
 }
 
 function caseDisplay(caseData: StudentVisibleCase, lang: LanguageCode) {
@@ -397,7 +395,7 @@ function caseDisplay(caseData: StudentVisibleCase, lang: LanguageCode) {
     age: caseData.age,
     sex: lang === "en" ? caseData.sexEn || (caseData.sex === "女" ? "Female" : "Male") : caseData.sex,
     difficulty: caseData.difficulty || "",
-    chiefComplaint: simplifiedChiefComplaint(caseData.studentChiefComplaint || caseData.chiefComplaint, lang, caseData.chiefComplaintEn)
+    chiefComplaint: chiefComplaintForCase(caseData.id, caseData.studentChiefComplaint || caseData.chiefComplaint, lang, caseData.chiefComplaintEn)
   };
 }
 

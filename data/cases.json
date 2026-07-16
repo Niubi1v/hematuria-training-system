@@ -5092,7 +5092,7 @@
     "age": "83",
     "sex": "男",
     "studentChiefComplaint": "进行性排尿困难3年余，加重伴小便变红1月",
-    "chiefComplaint": "进行性排尿困难3年余，加重伴血尿1月",
+    "chiefComplaint": "进行性排尿困难3年余，加重伴小便变红1月",
     "presentIllness": {
       "onset": "患者因“进行性排尿困难3年余，加重伴小便变红1月”就诊。血尿类型及定位线索：肉眼血尿为主，尿检镜下红细胞升高。现病史关键阳性信息：肉眼血尿为主，尿检镜下红细胞升高；间断血尿，饮水增多后可减轻，需追问是否全程/终末；合并下尿路梗阻；鲜红色；排尿困难加重时伴尿痛及下腹憋胀；尿频尿急、尿线变细、尿分叉、夜尿5-6次/晚、急迫性尿失禁、排尿困难；无泡沫尿、水肿、上感后血尿。关键阴性信息：未诉血块，追问可否认明显血块；否认腰背部及四肢疼痛；否认发热。",
       "hematuriaType": "肉眼血尿为主，尿检镜下红细胞升高",
@@ -5145,7 +5145,7 @@
       "stoneClues": "否认腰背部及四肢疼痛",
       "tumorRisk": "高龄男性、PSA显著升高、MRI PI-RADS 5、精囊侵犯可能，需考虑前列腺癌；双抗不能作为血尿唯一解释",
       "glomerularClues": "无泡沫尿、水肿、上感后血尿",
-      "opening": "进行性排尿困难3年余，加重伴小便变红1月",
+      "opening": "医生，我排尿越来越费劲，最近一个月小便还会变红。",
       "smoking": "具体抽没抽烟、抽了多少年，我现在记不准确。",
       "alcohol": "平时喝酒的种类和量，我现在记不太清。"
     },
@@ -5206,7 +5206,7 @@
         "slotId": "HX001",
         "label": "主诉/哪里不舒服",
         "possibleQuestion": "您这次主要为什么来看病？",
-        "patientAnswer": "进行性排尿困难3年余，加重伴血尿1月",
+        "patientAnswer": "医生，我排尿越来越费劲，最近一个月小便还会变红。",
         "clinicalMeaning": "用于Patient Agent；不能主动泄露。",
         "scoringKeywords": "主诉/哪里不舒服",
         "finalDiagnosis": "",
@@ -6203,7 +6203,7 @@
       "en"
     ],
     "diseaseSubcategory": "前列腺增生/前列腺癌鉴别",
-    "standardChiefComplaint": "进行性排尿困难3年余，加重伴血尿1月",
+    "standardChiefComplaint": "进行性排尿困难3年余，加重伴小便变红1月",
     "patientRole": {
       "identity": "83岁男性教学模拟患者",
       "concerns": "高龄男性，对排尿困难最关心，对前列腺穿刺有顾虑；冠脉支架和双抗需追问。",
@@ -10115,8 +10115,8 @@
     "diseaseCategory": "感染",
     "age": "36",
     "sex": "女",
-    "studentChiefComplaint": "突发右侧腰痛伴小便变红半天",
-    "chiefComplaint": "突发右侧腰痛伴血尿半天",
+    "studentChiefComplaint": "突发右侧腰痛伴浓茶色尿半天",
+    "chiefComplaint": "突发右侧腰痛伴浓茶色尿半天",
     "presentIllness": {
       "onset": "患者因“突发右侧腰痛伴小便变红半天”就诊。血尿类型及定位线索：肉眼茶色/镜下大量红细胞。现病史关键阳性信息：肉眼茶色/镜下大量红细胞；血尿与肾绞痛同时出现，非典型起始/终末；多为全程尿色加深；浓茶样；右腰刀割样阵发性疼痛，向右下腹及会阴放射，伴恶心呕吐；右侧肾绞痛明显；尿频尿急；无发热；无泡沫尿、水肿，茶色尿主要与结石血尿相关但需尿沉渣鉴别。关键阴性信息：无明显血块。",
       "hematuriaType": "肉眼茶色/镜下大量红细胞",
@@ -10169,7 +10169,7 @@
       "stoneClues": "右侧肾绞痛明显",
       "tumorRisk": "输尿管结石9×8mm伴轻度积水，尿白细胞升高；需警惕感染性梗阻进展",
       "glomerularClues": "无泡沫尿、水肿，茶色尿主要与结石血尿相关但需尿沉渣鉴别",
-      "opening": "突发右侧腰痛伴小便变红半天",
+      "opening": "医生，我右边腰突然痛得厉害，小便还是浓茶色，已经半天了。",
       "smoking": "我不吸烟。",
       "alcohol": "我平时不喝酒。"
     },
@@ -10230,7 +10230,7 @@
         "slotId": "HX001",
         "label": "主诉/哪里不舒服",
         "possibleQuestion": "您这次主要为什么来看病？",
-        "patientAnswer": "突发右侧腰痛伴血尿半天",
+        "patientAnswer": "医生，我右边腰突然痛得厉害，小便还是浓茶色，已经半天了。",
         "clinicalMeaning": "用于Patient Agent；不能主动泄露。",
         "scoringKeywords": "主诉/哪里不舒服",
         "finalDiagnosis": "",
@@ -11189,7 +11189,7 @@
       "en"
     ],
     "diseaseSubcategory": "右侧肾输尿管结石伴积水和感染",
-    "standardChiefComplaint": "突发右侧腰痛伴血尿半天",
+    "standardChiefComplaint": "突发右侧腰痛伴浓茶色尿半天",
     "patientRole": {
       "identity": "36岁女性教学模拟患者",
       "concerns": "年轻女性，疼痛明显、焦虑，回答较急躁；月经史需追问排除污染。",
@@ -16399,8 +16399,8 @@
     "diseaseCategory": "泌尿系肿瘤",
     "age": "72",
     "sex": "女",
-    "studentChiefComplaint": "反复尿频伴血尿半年",
-    "chiefComplaint": "反复尿频伴血尿半年",
+    "studentChiefComplaint": "反复尿频伴小便变红半年",
+    "chiefComplaint": "反复尿频伴小便变红半年",
     "presentIllness": {
       "onset": "患者半年前开始反复出现尿频、尿急和轻度尿痛，间歇伴尿液由淡红转暗红，多为全程血尿，无明显血块。每次被当作“尿路感染”口服抗菌药后刺激症状可暂时减轻，但停药后数周再次出现，血尿并未完全消失。近1个月发作更频繁，夜间排尿次数增加。无明显腰痛、肾绞痛、发热寒战及排尿中断，无泡沫尿、水肿。",
       "hematuriaType": "肉眼血尿",
@@ -16453,7 +16453,7 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无明确；结石史：否；感染史：反复尿路感染样发作；外伤/操作：否；家族史：母亲膀胱肿瘤史不详",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "医生，我这半年老是尿频、尿急，有时候尿里还有血，吃消炎药好一点又会犯。",
+      "opening": "医生，我这半年尿频反反复复，小便也会变红。",
       "smoking": "我不吸烟。",
       "alcohol": "我平时不喝酒。"
     },
@@ -16469,7 +16469,7 @@
       "caseId": "HX-ADD-002",
       "age": "72",
       "sex": "女",
-      "chiefComplaint": "反复尿频伴血尿半年",
+      "chiefComplaint": "反复尿频伴小便变红半年",
       "subjectiveHistory": "半年反复发作，近期抗感染后尿频减轻但血尿仍存在。 血尿性质：肉眼为主，间有镜下，全程，颜色淡红至暗红，血块：无明显血块，疼痛关系：轻度尿痛，非主要症状。伴随症状：尿频是、尿急是、尿痛轻度、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力近3个月体重下降约3kg、泡沫尿否、水肿否。",
       "hematuriaType": "肉眼血尿",
       "hematuriaPhase": "全程血尿",
@@ -16551,7 +16551,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为反复尿频伴血尿半年来看的。",
+        "patientAnswer": "医生，我这半年尿频反反复复，小便也会变红。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -16961,7 +16961,7 @@
         "caseId": "HX-ADD-002",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "反复尿频伴血尿半年",
+        "value": "反复尿频伴小便变红半年",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -17167,7 +17167,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-002\",\"age\":\"72\",\"sex\":\"女\",\"chiefComplaint\":\"反复尿频伴血尿半年\",\"subjectiveHistory\":\"半年反复发作，近期抗感染后尿频减轻但血尿仍存在。 血尿性质：肉眼为主，间有镜下，全程，颜色淡红至暗红，血块：无明显血块，疼痛关系：轻度尿痛，非主要症状。伴随症状：尿频是、尿急是、尿痛轻度、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力近3个月体重下降约3kg、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"淡红至暗红\",\"clots\":\"无明显血块\",\"painRelation\":\"轻度尿痛\",\"fever\":\"否\",\"flankPain\":\"否\",\"luts\":\"尿频是；尿急是；尿痛轻度；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无明确；结石史：否；感染史：反复尿路感染样发作；外伤/操作：否；肿瘤/放化疗：否；家族史：母亲膀胱肿瘤史不详；既往史：2型糖尿病8年。\",\"knownMedication\":\"二甲双胍\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无明确；结石史：否；感染史：反复尿路感染样发作；外伤/操作：否；家族史：母亲膀胱肿瘤史不详\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-002\",\"age\":\"72\",\"sex\":\"女\",\"chiefComplaint\":\"反复尿频伴小便变红半年\",\"subjectiveHistory\":\"半年反复发作，近期抗感染后尿频减轻但血尿仍存在。 血尿性质：肉眼为主，间有镜下，全程，颜色淡红至暗红，血块：无明显血块，疼痛关系：轻度尿痛，非主要症状。伴随症状：尿频是、尿急是、尿痛轻度、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力近3个月体重下降约3kg、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"淡红至暗红\",\"clots\":\"无明显血块\",\"painRelation\":\"轻度尿痛\",\"fever\":\"否\",\"flankPain\":\"否\",\"luts\":\"尿频是；尿急是；尿痛轻度；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无明确；结石史：否；感染史：反复尿路感染样发作；外伤/操作：否；肿瘤/放化疗：否；家族史：母亲膀胱肿瘤史不详；既往史：2型糖尿病8年。\",\"knownMedication\":\"二甲双胍\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无明确；结石史：否；感染史：反复尿路感染样发作；外伤/操作：否；家族史：母亲膀胱肿瘤史不详\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 尿细胞学；尿路上皮肿瘤可加尿肿瘤相关检测（仅作辅助，不能替代膀胱镜/病理）；术前传染病筛查；按手术风险完善心肺功能。",
       "imagingOrders": "泌尿系超声；CTU评估上尿路和占位；膀胱镜；尿细胞学；疑肌层浸润时盆腔MRI；胸腹盆增强CT或胸部CT用于分期；必要时输尿管镜活检/核素肾图。",
@@ -17563,7 +17563,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "膀胱癌/感染样表现",
-    "standardChiefComplaint": "反复尿频伴血尿半年",
+    "standardChiefComplaint": "反复尿频伴小便变红半年",
     "patientRole": {
       "identity": "72岁女性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -17690,8 +17690,8 @@
     "diseaseCategory": "泌尿系肿瘤",
     "age": "64",
     "sex": "男",
-    "studentChiefComplaint": "左腰隐痛伴肉眼血尿1个月",
-    "chiefComplaint": "左腰隐痛伴肉眼血尿1个月",
+    "studentChiefComplaint": "左腰隐痛伴小便变红1个月",
+    "chiefComplaint": "左腰隐痛伴小便变红1个月",
     "presentIllness": {
       "onset": "患者1个月前开始出现左腰部持续性隐胀不适，疼痛程度轻至中等，不呈阵发性绞痛，也不向腹股沟放射。同期发现全程暗红色肉眼血尿，间断出现，偶见细条索样血块；血尿与活动、体位关系不明显。无尿频、尿急、尿痛及排尿困难，无发热寒战、恶心呕吐。无泡沫尿、水肿或近期上呼吸道感染后茶色尿。",
       "hematuriaType": "肉眼血尿",
@@ -17744,7 +17744,7 @@
       "stoneClues": "是",
       "tumorRisk": "吸烟：30包年；职业暴露：皮革/染料接触20年；结石史：否；感染史：否；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "医生，我左边腰一直有点胀，最近尿是暗红色的，有时还能看到细长的血块。",
+      "opening": "医生，我左边腰一直隐隐作痛，小便变红有一个月了。",
       "smoking": "吸烟，具体每天多少支记不准，累计约30包年。",
       "alcohol": "我平时不喝酒。"
     },
@@ -17760,7 +17760,7 @@
       "caseId": "HX-ADD-003",
       "age": "64",
       "sex": "男",
-      "chiefComplaint": "左腰隐痛伴肉眼血尿1个月",
+      "chiefComplaint": "左腰隐痛伴小便变红1个月",
       "subjectiveHistory": "1个月前出现无明显诱因血尿，伴左腰酸胀，无典型绞痛。 血尿性质：肉眼，全程，颜色暗红，血块：偶有条索状血块，疼痛关系：隐痛，不是绞痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛是、肾绞痛否、发热否、恶心呕吐否、体重/乏力轻度乏力、泡沫尿否、水肿否。",
       "hematuriaType": "肉眼血尿",
       "hematuriaPhase": "全程血尿",
@@ -17842,7 +17842,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为左腰隐痛伴肉眼血尿1个月来看的。",
+        "patientAnswer": "医生，我左边腰一直隐隐作痛，小便变红有一个月了。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -18252,7 +18252,7 @@
         "caseId": "HX-ADD-003",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "左腰隐痛伴肉眼血尿1个月",
+        "value": "左腰隐痛伴小便变红1个月",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -18458,7 +18458,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-003\",\"age\":\"64\",\"sex\":\"男\",\"chiefComplaint\":\"左腰隐痛伴肉眼血尿1个月\",\"subjectiveHistory\":\"1个月前出现无明显诱因血尿，伴左腰酸胀，无典型绞痛。 血尿性质：肉眼，全程，颜色暗红，血块：偶有条索状血块，疼痛关系：隐痛，不是绞痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛是、肾绞痛否、发热否、恶心呕吐否、体重/乏力轻度乏力、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"暗红\",\"clots\":\"偶有条索状血块\",\"painRelation\":\"隐痛\",\"fever\":\"否\",\"flankPain\":\"是\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：30包年；职业暴露：皮革/染料接触20年；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：高血压；无结石史。\",\"knownMedication\":\"缬沙坦\",\"personalAndFamilyRisk\":\"吸烟：30包年；职业暴露：皮革/染料接触20年；结石史：否；感染史：否；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-003\",\"age\":\"64\",\"sex\":\"男\",\"chiefComplaint\":\"左腰隐痛伴小便变红1个月\",\"subjectiveHistory\":\"1个月前出现无明显诱因血尿，伴左腰酸胀，无典型绞痛。 血尿性质：肉眼，全程，颜色暗红，血块：偶有条索状血块，疼痛关系：隐痛，不是绞痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛是、肾绞痛否、发热否、恶心呕吐否、体重/乏力轻度乏力、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"暗红\",\"clots\":\"偶有条索状血块\",\"painRelation\":\"隐痛\",\"fever\":\"否\",\"flankPain\":\"是\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：30包年；职业暴露：皮革/染料接触20年；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：高血压；无结石史。\",\"knownMedication\":\"缬沙坦\",\"personalAndFamilyRisk\":\"吸烟：30包年；职业暴露：皮革/染料接触20年；结石史：否；感染史：否；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 尿细胞学；尿路上皮肿瘤可加尿肿瘤相关检测（仅作辅助，不能替代膀胱镜/病理）；术前传染病筛查；按手术风险完善心肺功能。",
       "imagingOrders": "泌尿系超声；CTU评估上尿路和占位；膀胱镜；尿细胞学；疑肌层浸润时盆腔MRI；胸腹盆增强CT或胸部CT用于分期；必要时输尿管镜活检/核素肾图。",
@@ -18854,7 +18854,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "上尿路尿路上皮癌",
-    "standardChiefComplaint": "左腰隐痛伴肉眼血尿1个月",
+    "standardChiefComplaint": "左腰隐痛伴小便变红1个月",
     "patientRole": {
       "identity": "64岁男性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -18982,8 +18982,8 @@
     "diseaseCategory": "泌尿系肿瘤",
     "age": "58",
     "sex": "男",
-    "studentChiefComplaint": "无痛性肉眼血尿3周",
-    "chiefComplaint": "无痛性肉眼血尿3周",
+    "studentChiefComplaint": "间断小便变红3周",
+    "chiefComplaint": "间断小便变红3周",
     "presentIllness": {
       "onset": "患者3周前首次发现全程暗红色肉眼血尿，无明显诱因，无明显血块，间歇出现，休息和饮水后可变淡但未完全消失。伴右侧腰部轻度胀感、乏力和食欲下降，不呈绞痛。无排尿烧灼感、尿频尿急、排尿困难，无发热寒战。未诉明显泡沫尿、水肿；近期无外伤、剧烈运动或泌尿操作。",
       "hematuriaType": "肉眼血尿",
@@ -19036,7 +19036,7 @@
       "stoneClues": "轻度",
       "tumorRisk": "吸烟：20包年；职业暴露：无明确；结石史：否；感染史：否；外伤/操作：否；家族史：父亲肾脏肿瘤史不详",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我这三周尿一直断断续续发红，但不痛，右腰偶尔有点胀。",
+      "opening": "医生，我这三周小便断断续续变红，但排尿时不疼。",
       "smoking": "吸烟，具体每天多少支记不准，累计约20包年。",
       "alcohol": "我平时不喝酒。"
     },
@@ -19052,7 +19052,7 @@
       "caseId": "HX-ADD-004",
       "age": "58",
       "sex": "男",
-      "chiefComplaint": "无痛性肉眼血尿3周",
+      "chiefComplaint": "间断小便变红3周",
       "subjectiveHistory": "3周内出现2次肉眼血尿，伴右腰胀感和乏力。 血尿性质：肉眼，全程，颜色暗红，血块：无明显血块，疼痛关系：无痛或胀痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛轻度、肾绞痛否、发热否、恶心呕吐否、体重/乏力乏力、食欲差、泡沫尿否、水肿否。",
       "hematuriaType": "肉眼血尿",
       "hematuriaPhase": "全程血尿",
@@ -19134,7 +19134,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为无痛性肉眼血尿3周来看的。",
+        "patientAnswer": "医生，我这三周小便断断续续变红，但排尿时不疼。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -19544,7 +19544,7 @@
         "caseId": "HX-ADD-004",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "无痛性肉眼血尿3周",
+        "value": "间断小便变红3周",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -19750,7 +19750,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-004\",\"age\":\"58\",\"sex\":\"男\",\"chiefComplaint\":\"无痛性肉眼血尿3周\",\"subjectiveHistory\":\"3周内出现2次肉眼血尿，伴右腰胀感和乏力。 血尿性质：肉眼，全程，颜色暗红，血块：无明显血块，疼痛关系：无痛或胀痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛轻度、肾绞痛否、发热否、恶心呕吐否、体重/乏力乏力、食欲差、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"暗红\",\"clots\":\"无明显血块\",\"painRelation\":\"无痛或胀痛\",\"fever\":\"否\",\"flankPain\":\"轻度\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：20包年；职业暴露：无明确；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：父亲肾脏肿瘤史不详；既往史：肥胖、高血压。\",\"knownMedication\":\"降压药\",\"personalAndFamilyRisk\":\"吸烟：20包年；职业暴露：无明确；结石史：否；感染史：否；外伤/操作：否；家族史：父亲肾脏肿瘤史不详\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-004\",\"age\":\"58\",\"sex\":\"男\",\"chiefComplaint\":\"间断小便变红3周\",\"subjectiveHistory\":\"3周内出现2次肉眼血尿，伴右腰胀感和乏力。 血尿性质：肉眼，全程，颜色暗红，血块：无明显血块，疼痛关系：无痛或胀痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛轻度、肾绞痛否、发热否、恶心呕吐否、体重/乏力乏力、食欲差、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"暗红\",\"clots\":\"无明显血块\",\"painRelation\":\"无痛或胀痛\",\"fever\":\"否\",\"flankPain\":\"轻度\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：20包年；职业暴露：无明确；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：父亲肾脏肿瘤史不详；既往史：肥胖、高血压。\",\"knownMedication\":\"降压药\",\"personalAndFamilyRisk\":\"吸烟：20包年；职业暴露：无明确；结石史：否；感染史：否；外伤/操作：否；家族史：父亲肾脏肿瘤史不详\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 尿细胞学；尿路上皮肿瘤可加尿肿瘤相关检测（仅作辅助，不能替代膀胱镜/病理）；术前传染病筛查；按手术风险完善心肺功能。",
       "imagingOrders": "泌尿系超声；肾脏增强CT或MRI评估肾实质占位、肾静脉/下腔静脉瘤栓；胸腹盆CT分期；必要时骨扫描/核素检查；穿刺活检仅在结果改变治疗策略时考虑。",
@@ -20146,7 +20146,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "肾细胞癌",
-    "standardChiefComplaint": "无痛性肉眼血尿3周",
+    "standardChiefComplaint": "间断小便变红3周",
     "patientRole": {
       "identity": "58岁男性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -21577,8 +21577,8 @@
     "diseaseCategory": "感染",
     "age": "24",
     "sex": "女",
-    "studentChiefComplaint": "尿频尿急尿痛伴血尿2天",
-    "chiefComplaint": "尿频尿急尿痛伴血尿2天",
+    "studentChiefComplaint": "尿频、尿急、尿痛伴小便发红2天",
+    "chiefComplaint": "尿频、尿急、尿痛伴小便发红2天",
     "presentIllness": {
       "onset": "患者2天前开始出现明显尿频、尿急和排尿烧灼痛，排尿末段可见淡红色血尿，尿量每次不多。下腹有轻度坠胀感，无肉眼血块。否认发热寒战、腰背部疼痛、恶心呕吐及排尿困难。饮水后症状稍缓解，尚未自行使用抗菌药。",
       "hematuriaType": "肉眼血尿",
@@ -21631,7 +21631,7 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：偶有尿路感染；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "医生，我这两天一小会儿就想尿，尿的时候特别刺痛，最后还有点血。",
+      "opening": "医生，我这两天老想小便，又急又疼，尿也有点发红。",
       "smoking": "我不吸烟。",
       "alcohol": "我平时不喝酒。"
     },
@@ -21647,7 +21647,7 @@
       "caseId": "HX-ADD-006",
       "age": "24",
       "sex": "女",
-      "chiefComplaint": "尿频尿急尿痛伴血尿2天",
+      "chiefComplaint": "尿频、尿急、尿痛伴小便发红2天",
       "subjectiveHistory": "2天前受凉/饮水少后出现尿频尿急尿痛，少量血尿。 血尿性质：肉眼少量/镜下，终末或排尿后擦拭可见，颜色淡红，血块：无，疼痛关系：排尿痛。伴随症状：尿频是、尿急是、尿痛是、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
       "hematuriaType": "肉眼血尿",
       "hematuriaPhase": "终末血尿",
@@ -21729,7 +21729,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为尿频尿急尿痛伴血尿2天来看的。",
+        "patientAnswer": "医生，我这两天老想小便，又急又疼，尿也有点发红。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -22139,7 +22139,7 @@
         "caseId": "HX-ADD-006",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "尿频尿急尿痛伴血尿2天",
+        "value": "尿频、尿急、尿痛伴小便发红2天",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -22345,7 +22345,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-006\",\"age\":\"24\",\"sex\":\"女\",\"chiefComplaint\":\"尿频尿急尿痛伴血尿2天\",\"subjectiveHistory\":\"2天前受凉/饮水少后出现尿频尿急尿痛，少量血尿。 血尿性质：肉眼少量/镜下，终末或排尿后擦拭可见，颜色淡红，血块：无，疼痛关系：排尿痛。伴随症状：尿频是、尿急是、尿痛是、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"终末血尿\",\"urineColor\":\"淡红\",\"clots\":\"无\",\"painRelation\":\"排尿痛\",\"fever\":\"否\",\"flankPain\":\"否\",\"luts\":\"尿频是；尿急是；尿痛是；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：偶有尿路感染；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：既往体健。\",\"knownMedication\":\"无\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：偶有尿路感染；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-006\",\"age\":\"24\",\"sex\":\"女\",\"chiefComplaint\":\"尿频、尿急、尿痛伴小便发红2天\",\"subjectiveHistory\":\"2天前受凉/饮水少后出现尿频尿急尿痛，少量血尿。 血尿性质：肉眼少量/镜下，终末或排尿后擦拭可见，颜色淡红，血块：无，疼痛关系：排尿痛。伴随症状：尿频是、尿急是、尿痛是、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"终末血尿\",\"urineColor\":\"淡红\",\"clots\":\"无\",\"painRelation\":\"排尿痛\",\"fever\":\"否\",\"flankPain\":\"否\",\"luts\":\"尿频是；尿急是；尿痛是；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：偶有尿路感染；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：既往体健。\",\"knownMedication\":\"无\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：偶有尿路感染；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 中段尿培养+药敏；发热或系统感染者查血培养、PCT、乳酸；糖尿病/妊娠/免疫抑制等复杂因素需同步评估。",
       "imagingOrders": "泌尿系超声评估积水/残余尿/脓肾；复杂感染、发热腰痛或疑梗阻时行CT KUB或增强CT；妊娠女性避免不必要辐射，优先超声。",
@@ -22688,7 +22688,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "急性膀胱炎",
-    "standardChiefComplaint": "尿频尿急尿痛伴血尿2天",
+    "standardChiefComplaint": "尿频、尿急、尿痛伴小便发红2天",
     "patientRole": {
       "identity": "24岁女性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -22815,8 +22815,8 @@
     "diseaseCategory": "感染",
     "age": "35",
     "sex": "女",
-    "studentChiefComplaint": "发热腰痛伴尿频尿痛3天",
-    "chiefComplaint": "发热腰痛伴尿频尿痛3天",
+    "studentChiefComplaint": "发热、左腰痛伴尿频、尿痛3天",
+    "chiefComplaint": "发热、左腰痛伴尿频、尿痛3天",
     "presentIllness": {
       "onset": "患者3天前先出现尿频、尿急、尿痛，随后出现高热和寒战，体温最高约39℃，伴明显一侧腰背部持续痛和全身乏力，尿液外观可正常或略呈淡红。服用退热药后体温可短暂下降，但数小时后再次升高。无明显血块或排尿中断，暂未出现意识改变，但食欲差、饮水减少。",
       "hematuriaType": "镜下血尿",
@@ -22869,7 +22869,7 @@
       "stoneClues": "是",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：既往有膀胱炎；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我这三天发高烧、打冷战，腰也很痛，还一直尿频尿痛。",
+      "opening": "医生，我发烧、左腰痛，还尿频尿痛，已经三天了。",
       "smoking": "我不吸烟。",
       "alcohol": "我平时不喝酒。"
     },
@@ -22885,7 +22885,7 @@
       "caseId": "HX-ADD-007",
       "age": "35",
       "sex": "女",
-      "chiefComplaint": "发热腰痛伴尿频尿痛3天",
+      "chiefComplaint": "发热、左腰痛伴尿频、尿痛3天",
       "subjectiveHistory": "3天前尿路刺激症状，随后高热寒战和左腰痛。 血尿性质：镜下为主，偶见淡红，不清楚/全程轻度，颜色淡红或外观不明显，血块：无，疼痛关系：腰痛明显。伴随症状：尿频是、尿急是、尿痛是、排尿困难否、腰痛是、肾绞痛否、发热高热寒战、恶心呕吐恶心、体重/乏力乏力、泡沫尿否、水肿否。",
       "hematuriaType": "镜下血尿",
       "hematuriaPhase": "全程血尿",
@@ -22967,7 +22967,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为发热腰痛伴尿频尿痛3天来看的。",
+        "patientAnswer": "医生，我发烧、左腰痛，还尿频尿痛，已经三天了。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -23377,7 +23377,7 @@
         "caseId": "HX-ADD-007",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "发热腰痛伴尿频尿痛3天",
+        "value": "发热、左腰痛伴尿频、尿痛3天",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -23583,7 +23583,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-007\",\"age\":\"35\",\"sex\":\"女\",\"chiefComplaint\":\"发热腰痛伴尿频尿痛3天\",\"subjectiveHistory\":\"3天前尿路刺激症状，随后高热寒战和左腰痛。 血尿性质：镜下为主，偶见淡红，不清楚/全程轻度，颜色淡红或外观不明显，血块：无，疼痛关系：腰痛明显。伴随症状：尿频是、尿急是、尿痛是、排尿困难否、腰痛是、肾绞痛否、发热高热寒战、恶心呕吐恶心、体重/乏力乏力、泡沫尿否、水肿否。\",\"hematuriaType\":\"镜下血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"淡红或外观不明显\",\"clots\":\"无\",\"painRelation\":\"腰痛明显\",\"fever\":\"高热寒战\",\"flankPain\":\"是\",\"luts\":\"尿频是；尿急是；尿痛是；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：既往有膀胱炎；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：既往体健。\",\"knownMedication\":\"退热药\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：既往有膀胱炎；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-007\",\"age\":\"35\",\"sex\":\"女\",\"chiefComplaint\":\"发热、左腰痛伴尿频、尿痛3天\",\"subjectiveHistory\":\"3天前尿路刺激症状，随后高热寒战和左腰痛。 血尿性质：镜下为主，偶见淡红，不清楚/全程轻度，颜色淡红或外观不明显，血块：无，疼痛关系：腰痛明显。伴随症状：尿频是、尿急是、尿痛是、排尿困难否、腰痛是、肾绞痛否、发热高热寒战、恶心呕吐恶心、体重/乏力乏力、泡沫尿否、水肿否。\",\"hematuriaType\":\"镜下血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"淡红或外观不明显\",\"clots\":\"无\",\"painRelation\":\"腰痛明显\",\"fever\":\"高热寒战\",\"flankPain\":\"是\",\"luts\":\"尿频是；尿急是；尿痛是；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：既往有膀胱炎；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：既往体健。\",\"knownMedication\":\"退热药\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：既往有膀胱炎；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 中段尿培养+药敏；发热或系统感染者查血培养、PCT、乳酸；糖尿病/妊娠/免疫抑制等复杂因素需同步评估。",
       "imagingOrders": "泌尿系超声评估积水/残余尿/脓肾；复杂感染、发热腰痛或疑梗阻时行CT KUB或增强CT；妊娠女性避免不必要辐射，优先超声。",
@@ -23970,7 +23970,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "急性肾盂肾炎/系统性UTI",
-    "standardChiefComplaint": "发热腰痛伴尿频尿痛3天",
+    "standardChiefComplaint": "发热、左腰痛伴尿频、尿痛3天",
     "patientRole": {
       "identity": "35岁女性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -25371,8 +25371,8 @@
     "diseaseCategory": "感染",
     "age": "63",
     "sex": "女",
-    "studentChiefComplaint": "尿频尿痛伴血尿1周",
-    "chiefComplaint": "尿频尿痛伴血尿1周",
+    "studentChiefComplaint": "尿频、尿痛伴小便发红1周",
+    "chiefComplaint": "尿频、尿痛伴小便发红1周",
     "presentIllness": {
       "onset": "患者1周前开始出现尿频、尿急、尿痛，终末尿呈淡红色，伴轻度下腹坠胀和低热，无明显血块。症状逐渐加重，夜间多次起床排尿。无明显腰痛、寒战、恶心呕吐或排尿困难。既往类似发作多次，本次尚未留取尿培养即自行服过少量旧抗菌药，效果不明显。",
       "hematuriaType": "肉眼血尿",
@@ -25425,7 +25425,7 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：反复UTI；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "医生，我这一个星期尿得特别频，尿的时候疼，最后还有点血，血糖最近也没好好管。",
+      "opening": "医生，我这一周尿得频、尿的时候疼，尿色还有点发红。",
       "smoking": "我不吸烟。",
       "alcohol": "我平时不喝酒。"
     },
@@ -25441,7 +25441,7 @@
       "caseId": "HX-ADD-009",
       "age": "63",
       "sex": "女",
-      "chiefComplaint": "尿频尿痛伴血尿1周",
+      "chiefComplaint": "尿频、尿痛伴小便发红1周",
       "subjectiveHistory": "1周来尿频尿痛，尿色淡红，口渴乏力。 血尿性质：肉眼淡红/镜下，终末较明显，颜色淡红，血块：无，疼痛关系：排尿痛。伴随症状：尿频是、尿急是、尿痛是、排尿困难否、腰痛否、肾绞痛否、发热低热、恶心呕吐否、体重/乏力乏力、泡沫尿否、水肿否。",
       "hematuriaType": "肉眼血尿",
       "hematuriaPhase": "终末血尿",
@@ -25523,7 +25523,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为尿频尿痛伴血尿1周来看的。",
+        "patientAnswer": "医生，我这一周尿得频、尿的时候疼，尿色还有点发红。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -25933,7 +25933,7 @@
         "caseId": "HX-ADD-009",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "尿频尿痛伴血尿1周",
+        "value": "尿频、尿痛伴小便发红1周",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -26139,7 +26139,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-009\",\"age\":\"63\",\"sex\":\"女\",\"chiefComplaint\":\"尿频尿痛伴血尿1周\",\"subjectiveHistory\":\"1周来尿频尿痛，尿色淡红，口渴乏力。 血尿性质：肉眼淡红/镜下，终末较明显，颜色淡红，血块：无，疼痛关系：排尿痛。伴随症状：尿频是、尿急是、尿痛是、排尿困难否、腰痛否、肾绞痛否、发热低热、恶心呕吐否、体重/乏力乏力、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"终末血尿\",\"urineColor\":\"淡红\",\"clots\":\"无\",\"painRelation\":\"排尿痛\",\"fever\":\"低热\",\"flankPain\":\"否\",\"luts\":\"尿频是；尿急是；尿痛是；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：反复UTI；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：2型糖尿病15年，血糖控制差。\",\"knownMedication\":\"胰岛素间断使用\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：反复UTI；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-009\",\"age\":\"63\",\"sex\":\"女\",\"chiefComplaint\":\"尿频、尿痛伴小便发红1周\",\"subjectiveHistory\":\"1周来尿频尿痛，尿色淡红，口渴乏力。 血尿性质：肉眼淡红/镜下，终末较明显，颜色淡红，血块：无，疼痛关系：排尿痛。伴随症状：尿频是、尿急是、尿痛是、排尿困难否、腰痛否、肾绞痛否、发热低热、恶心呕吐否、体重/乏力乏力、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"终末血尿\",\"urineColor\":\"淡红\",\"clots\":\"无\",\"painRelation\":\"排尿痛\",\"fever\":\"低热\",\"flankPain\":\"否\",\"luts\":\"尿频是；尿急是；尿痛是；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：反复UTI；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：2型糖尿病15年，血糖控制差。\",\"knownMedication\":\"胰岛素间断使用\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：反复UTI；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 中段尿培养+药敏；发热或系统感染者查血培养、PCT、乳酸；糖尿病/妊娠/免疫抑制等复杂因素需同步评估。",
       "imagingOrders": "泌尿系超声评估积水/残余尿/脓肾；复杂感染、发热腰痛或疑梗阻时行CT KUB或增强CT；妊娠女性避免不必要辐射，优先超声。",
@@ -26535,7 +26535,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "复杂性尿路感染",
-    "standardChiefComplaint": "尿频尿痛伴血尿1周",
+    "standardChiefComplaint": "尿频、尿痛伴小便发红1周",
     "patientRole": {
       "identity": "63岁女性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -26662,8 +26662,8 @@
     "diseaseCategory": "感染",
     "age": "55",
     "sex": "女",
-    "studentChiefComplaint": "反复尿痛伴镜下血尿1年",
-    "chiefComplaint": "反复尿痛伴镜下血尿1年",
+    "studentChiefComplaint": "反复尿痛伴尿检发现血尿1年",
+    "chiefComplaint": "反复尿痛伴尿检发现血尿1年",
     "presentIllness": {
       "onset": "患者近1年反复出现尿频、尿急、尿痛，每次持续数天，偶伴低热，口服抗菌药后症状可缓解。多次尿检提示镜下血尿，即使刺激症状消失后仍有红细胞阳性；肉眼观察尿色多正常。无明显腰痛、肾绞痛、血块、排尿困难或水肿。既往治疗多未保留尿培养和药敏结果。",
       "hematuriaType": "镜下血尿",
@@ -26716,7 +26716,7 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：反复UTI；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我这一年总是尿痛、尿急，吃药时好一点，但每次复查尿里还是有红细胞。",
+      "opening": "医生，我这一年尿痛反反复复，尿检还总能查到血。",
       "smoking": "我不吸烟。",
       "alcohol": "我平时不喝酒。"
     },
@@ -26732,7 +26732,7 @@
       "caseId": "HX-ADD-010",
       "age": "55",
       "sex": "女",
-      "chiefComplaint": "反复尿痛伴镜下血尿1年",
+      "chiefComplaint": "反复尿痛伴尿检发现血尿1年",
       "subjectiveHistory": "1年内多次尿路刺激症状，抗感染后症状好转但镜下血尿仍间断存在。 血尿性质：镜下为主，不清楚，颜色外观多正常，血块：无，疼痛关系：排尿痛发作期有。伴随症状：尿频发作时有、尿急发作时有、尿痛发作时有、排尿困难否、腰痛否、肾绞痛否、发热偶低热、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
       "hematuriaType": "镜下血尿",
       "hematuriaPhase": "镜下血尿",
@@ -26814,7 +26814,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为反复尿痛伴镜下血尿1年来看的。",
+        "patientAnswer": "医生，我这一年尿痛反反复复，尿检还总能查到血。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -27224,7 +27224,7 @@
         "caseId": "HX-ADD-010",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "反复尿痛伴镜下血尿1年",
+        "value": "反复尿痛伴尿检发现血尿1年",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -27430,7 +27430,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-010\",\"age\":\"55\",\"sex\":\"女\",\"chiefComplaint\":\"反复尿痛伴镜下血尿1年\",\"subjectiveHistory\":\"1年内多次尿路刺激症状，抗感染后症状好转但镜下血尿仍间断存在。 血尿性质：镜下为主，不清楚，颜色外观多正常，血块：无，疼痛关系：排尿痛发作期有。伴随症状：尿频发作时有、尿急发作时有、尿痛发作时有、排尿困难否、腰痛否、肾绞痛否、发热偶低热、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"镜下血尿\",\"hematuriaPhase\":\"镜下血尿\",\"urineColor\":\"外观多正常\",\"clots\":\"无\",\"painRelation\":\"排尿痛发作期有\",\"fever\":\"偶低热\",\"flankPain\":\"否\",\"luts\":\"尿频发作时有；尿急发作时有；尿痛发作时有；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：反复UTI；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：绝经后阴道干涩。\",\"knownMedication\":\"无\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：反复UTI；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-010\",\"age\":\"55\",\"sex\":\"女\",\"chiefComplaint\":\"反复尿痛伴尿检发现血尿1年\",\"subjectiveHistory\":\"1年内多次尿路刺激症状，抗感染后症状好转但镜下血尿仍间断存在。 血尿性质：镜下为主，不清楚，颜色外观多正常，血块：无，疼痛关系：排尿痛发作期有。伴随症状：尿频发作时有、尿急发作时有、尿痛发作时有、排尿困难否、腰痛否、肾绞痛否、发热偶低热、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"镜下血尿\",\"hematuriaPhase\":\"镜下血尿\",\"urineColor\":\"外观多正常\",\"clots\":\"无\",\"painRelation\":\"排尿痛发作期有\",\"fever\":\"偶低热\",\"flankPain\":\"否\",\"luts\":\"尿频发作时有；尿急发作时有；尿痛发作时有；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：反复UTI；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：绝经后阴道干涩。\",\"knownMedication\":\"无\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：反复UTI；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 中段尿培养+药敏；发热或系统感染者查血培养、PCT、乳酸；糖尿病/妊娠/免疫抑制等复杂因素需同步评估。",
       "imagingOrders": "泌尿系超声评估积水/残余尿/脓肾；复杂感染、发热腰痛或疑梗阻时行CT KUB或增强CT；妊娠女性避免不必要辐射，优先超声。",
@@ -27762,7 +27762,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "复发性UTI后持续血尿",
-    "standardChiefComplaint": "反复尿痛伴镜下血尿1年",
+    "standardChiefComplaint": "反复尿痛伴尿检发现血尿1年",
     "patientRole": {
       "identity": "55岁女性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -27890,8 +27890,8 @@
     "diseaseCategory": "结石",
     "age": "39",
     "sex": "男",
-    "studentChiefComplaint": "右腰腹绞痛伴血尿6小时",
-    "chiefComplaint": "右腰腹绞痛伴血尿6小时",
+    "studentChiefComplaint": "右腰腹绞痛伴小便发红6小时",
+    "chiefComplaint": "右腰腹绞痛伴小便发红6小时",
     "presentIllness": {
       "onset": "患者6小时前无明显诱因突发右侧腰腹部剧烈阵发性绞痛，疼痛向右下腹及腹股沟放射，发作时辗转不安，伴恶心和肉眼淡红色血尿。可有轻度尿频、尿急，但无明显排尿困难。否认发热寒战、持续呕吐或尿量明显减少。发病后未自行服用抗菌药。",
       "hematuriaType": "肉眼血尿",
@@ -27944,7 +27944,7 @@
       "stoneClues": "是",
       "tumorRisk": "吸烟：5包年；职业暴露：无；结石史：既往小结石1次；感染史：否；外伤/操作：否；家族史：父亲结石史",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "医生，我右边腰突然像绞一样疼，坐也坐不住，尿也变红了。",
+      "opening": "医生，我右边腰和肚子绞着疼，小便有点发红，已经六个小时了。",
       "smoking": "吸烟，具体每天多少支记不准，累计约5包年。",
       "alcohol": "我平时不喝酒。"
     },
@@ -27960,7 +27960,7 @@
       "caseId": "HX-ADD-011",
       "age": "39",
       "sex": "男",
-      "chiefComplaint": "右腰腹绞痛伴血尿6小时",
+      "chiefComplaint": "右腰腹绞痛伴小便发红6小时",
       "subjectiveHistory": "6小时前突发右腰腹剧烈绞痛，向右下腹/腹股沟放射。 血尿性质：肉眼/镜下均可，全程轻度，颜色淡红，血块：无，疼痛关系：剧烈绞痛。伴随症状：尿频可有、尿急可有、尿痛可有、排尿困难否、腰痛是、肾绞痛是、发热否、恶心呕吐恶心呕吐、体重/乏力否、泡沫尿否、水肿否。",
       "hematuriaType": "肉眼血尿",
       "hematuriaPhase": "全程血尿",
@@ -28042,7 +28042,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为右腰腹绞痛伴血尿6小时来看的。",
+        "patientAnswer": "医生，我右边腰和肚子绞着疼，小便有点发红，已经六个小时了。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -28452,7 +28452,7 @@
         "caseId": "HX-ADD-011",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "右腰腹绞痛伴血尿6小时",
+        "value": "右腰腹绞痛伴小便发红6小时",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -28658,7 +28658,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-011\",\"age\":\"39\",\"sex\":\"男\",\"chiefComplaint\":\"右腰腹绞痛伴血尿6小时\",\"subjectiveHistory\":\"6小时前突发右腰腹剧烈绞痛，向右下腹/腹股沟放射。 血尿性质：肉眼/镜下均可，全程轻度，颜色淡红，血块：无，疼痛关系：剧烈绞痛。伴随症状：尿频可有、尿急可有、尿痛可有、排尿困难否、腰痛是、肾绞痛是、发热否、恶心呕吐恶心呕吐、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"淡红\",\"clots\":\"无\",\"painRelation\":\"剧烈绞痛\",\"fever\":\"否\",\"flankPain\":\"是\",\"luts\":\"尿频可有；尿急可有；尿痛可有；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：5包年；职业暴露：无；结石史：既往小结石1次；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：父亲结石史；既往史：饮水少，久坐。\",\"knownMedication\":\"无\",\"personalAndFamilyRisk\":\"吸烟：5包年；职业暴露：无；结石史：既往小结石1次；感染史：否；外伤/操作：否；家族史：父亲结石史\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-011\",\"age\":\"39\",\"sex\":\"男\",\"chiefComplaint\":\"右腰腹绞痛伴小便发红6小时\",\"subjectiveHistory\":\"6小时前突发右腰腹剧烈绞痛，向右下腹/腹股沟放射。 血尿性质：肉眼/镜下均可，全程轻度，颜色淡红，血块：无，疼痛关系：剧烈绞痛。伴随症状：尿频可有、尿急可有、尿痛可有、排尿困难否、腰痛是、肾绞痛是、发热否、恶心呕吐恶心呕吐、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"淡红\",\"clots\":\"无\",\"painRelation\":\"剧烈绞痛\",\"fever\":\"否\",\"flankPain\":\"是\",\"luts\":\"尿频可有；尿急可有；尿痛可有；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：5包年；职业暴露：无；结石史：既往小结石1次；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：父亲结石史；既往史：饮水少，久坐。\",\"knownMedication\":\"无\",\"personalAndFamilyRisk\":\"吸烟：5包年；职业暴露：无；结石史：既往小结石1次；感染史：否；外伤/操作：否；家族史：父亲结石史\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 尿pH、尿酸、血钙；感染性结石加尿培养/血培养/PCT；复发结石或特殊结石完善24小时尿代谢评估。",
       "imagingOrders": "泌尿系超声；非增强CT KUB首选定位结石并评估肾积水；KUB平片按显影情况；复杂病例或疑肿瘤/感染时增强CT。",
@@ -29034,7 +29034,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "输尿管结石",
-    "standardChiefComplaint": "右腰腹绞痛伴血尿6小时",
+    "standardChiefComplaint": "右腰腹绞痛伴小便发红6小时",
     "patientRole": {
       "identity": "39岁男性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -29162,8 +29162,8 @@
     "diseaseCategory": "结石",
     "age": "45",
     "sex": "男",
-    "studentChiefComplaint": "左腰痛伴血尿1天",
-    "chiefComplaint": "左腰痛伴血尿1天",
+    "studentChiefComplaint": "左腰痛伴小便发红1天",
+    "chiefComplaint": "左腰痛伴小便发红1天",
     "presentIllness": {
       "onset": "患者1天前出现左腰部持续性钝痛，活动后略加重，无明显向腹股沟放射，同时发现全程淡红色肉眼血尿。无发热寒战、尿频尿急尿痛、恶心呕吐或排尿困难。既往有肾结石史，本次疼痛较既往绞痛轻，尚未使用止痛药。",
       "hematuriaType": "肉眼血尿",
@@ -29216,7 +29216,7 @@
       "stoneClues": "是",
       "tumorRisk": "吸烟：10包年；职业暴露：无；结石史：有肾结石史；感染史：否；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我左边腰这一天一直钝钝地疼，尿也有点红，不像以前那种很剧烈的绞痛。",
+      "opening": "医生，我左边腰痛了一天，小便看着有点发红。",
       "smoking": "吸烟，具体每天多少支记不准，累计约10包年。",
       "alcohol": "我平时不喝酒。"
     },
@@ -29232,7 +29232,7 @@
       "caseId": "HX-ADD-012",
       "age": "45",
       "sex": "男",
-      "chiefComplaint": "左腰痛伴血尿1天",
+      "chiefComplaint": "左腰痛伴小便发红1天",
       "subjectiveHistory": "1天前劳累后左腰痛，活动后血尿明显。 血尿性质：肉眼，全程，颜色淡红，血块：无，疼痛关系：腰部钝痛，可阵发加重。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛是、肾绞痛轻度、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
       "hematuriaType": "肉眼血尿",
       "hematuriaPhase": "全程血尿",
@@ -29314,7 +29314,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为左腰痛伴血尿1天来看的。",
+        "patientAnswer": "医生，我左边腰痛了一天，小便看着有点发红。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -29724,7 +29724,7 @@
         "caseId": "HX-ADD-012",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "左腰痛伴血尿1天",
+        "value": "左腰痛伴小便发红1天",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -29930,7 +29930,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-012\",\"age\":\"45\",\"sex\":\"男\",\"chiefComplaint\":\"左腰痛伴血尿1天\",\"subjectiveHistory\":\"1天前劳累后左腰痛，活动后血尿明显。 血尿性质：肉眼，全程，颜色淡红，血块：无，疼痛关系：腰部钝痛，可阵发加重。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛是、肾绞痛轻度、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"淡红\",\"clots\":\"无\",\"painRelation\":\"腰部钝痛\",\"fever\":\"否\",\"flankPain\":\"是\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：10包年；职业暴露：无；结石史：有肾结石史；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：既往左肾结石未处理。\",\"knownMedication\":\"无\",\"personalAndFamilyRisk\":\"吸烟：10包年；职业暴露：无；结石史：有肾结石史；感染史：否；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-012\",\"age\":\"45\",\"sex\":\"男\",\"chiefComplaint\":\"左腰痛伴小便发红1天\",\"subjectiveHistory\":\"1天前劳累后左腰痛，活动后血尿明显。 血尿性质：肉眼，全程，颜色淡红，血块：无，疼痛关系：腰部钝痛，可阵发加重。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛是、肾绞痛轻度、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"淡红\",\"clots\":\"无\",\"painRelation\":\"腰部钝痛\",\"fever\":\"否\",\"flankPain\":\"是\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：10包年；职业暴露：无；结石史：有肾结石史；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：既往左肾结石未处理。\",\"knownMedication\":\"无\",\"personalAndFamilyRisk\":\"吸烟：10包年；职业暴露：无；结石史：有肾结石史；感染史：否；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 尿pH、尿酸、血钙；感染性结石加尿培养/血培养/PCT；复发结石或特殊结石完善24小时尿代谢评估。",
       "imagingOrders": "泌尿系超声；非增强CT KUB首选定位结石并评估肾积水；KUB平片按显影情况；复杂病例或疑肿瘤/感染时增强CT。",
@@ -30306,7 +30306,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "肾盂/肾盏结石",
-    "standardChiefComplaint": "左腰痛伴血尿1天",
+    "standardChiefComplaint": "左腰痛伴小便发红1天",
     "patientRole": {
       "identity": "45岁男性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -30434,8 +30434,8 @@
     "diseaseCategory": "结石",
     "age": "67",
     "sex": "男",
-    "studentChiefComplaint": "排尿困难伴终末血尿3个月",
-    "chiefComplaint": "排尿困难伴终末血尿3个月",
+    "studentChiefComplaint": "排尿困难伴排尿末小便发红3个月",
+    "chiefComplaint": "排尿困难伴排尿末小便发红3个月",
     "presentIllness": {
       "onset": "患者3个月来逐渐出现尿线变细、排尿费力和尿流中断，部分时候变换体位后可继续排尿，伴尿频、尿急和下腹不适。排尿末段常见淡红至鲜红色血尿，偶有少量血块，偶伴轻度尿痛。无发热寒战或腰部绞痛。近期夜尿增多，间断服用坦索罗辛后改善不明显。",
       "hematuriaType": "肉眼血尿",
@@ -30488,7 +30488,7 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：20包年；职业暴露：无；结石史：否；感染史：反复尿路感染；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "医生，我这三个月小便越来越不顺，尿到一半会突然停，最后还会滴几滴血。",
+      "opening": "医生，我这三个月排尿很费劲，快尿完时尿色会发红。",
       "smoking": "吸烟，具体每天多少支记不准，累计约20包年。",
       "alcohol": "我平时不喝酒。"
     },
@@ -30504,7 +30504,7 @@
       "caseId": "HX-ADD-013",
       "age": "67",
       "sex": "男",
-      "chiefComplaint": "排尿困难伴终末血尿3个月",
+      "chiefComplaint": "排尿困难伴排尿末小便发红3个月",
       "subjectiveHistory": "3个月排尿费力、尿线变细，排尿中断，改变体位后可继续。 血尿性质：肉眼少量，终末，颜色鲜红/淡红，血块：少量，疼痛关系：下腹不适。伴随症状：尿频有、尿急有、尿痛偶有、排尿困难明显、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
       "hematuriaType": "肉眼血尿",
       "hematuriaPhase": "终末血尿",
@@ -30586,7 +30586,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为排尿困难伴终末血尿3个月来看的。",
+        "patientAnswer": "医生，我这三个月排尿很费劲，快尿完时尿色会发红。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -30996,7 +30996,7 @@
         "caseId": "HX-ADD-013",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "排尿困难伴终末血尿3个月",
+        "value": "排尿困难伴排尿末小便发红3个月",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -31202,7 +31202,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-013\",\"age\":\"67\",\"sex\":\"男\",\"chiefComplaint\":\"排尿困难伴终末血尿3个月\",\"subjectiveHistory\":\"3个月排尿费力、尿线变细，排尿中断，改变体位后可继续。 血尿性质：肉眼少量，终末，颜色鲜红/淡红，血块：少量，疼痛关系：下腹不适。伴随症状：尿频有、尿急有、尿痛偶有、排尿困难明显、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"终末血尿\",\"urineColor\":\"鲜红/淡红\",\"clots\":\"少量\",\"painRelation\":\"下腹不适\",\"fever\":\"否\",\"flankPain\":\"否\",\"luts\":\"尿频有；尿急有；尿痛偶有；排尿困难明显\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：20包年；职业暴露：无；结石史：否；感染史：反复尿路感染；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：BPH多年。\",\"knownMedication\":\"坦索罗辛间断\",\"personalAndFamilyRisk\":\"吸烟：20包年；职业暴露：无；结石史：否；感染史：反复尿路感染；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-013\",\"age\":\"67\",\"sex\":\"男\",\"chiefComplaint\":\"排尿困难伴排尿末小便发红3个月\",\"subjectiveHistory\":\"3个月排尿费力、尿线变细，排尿中断，改变体位后可继续。 血尿性质：肉眼少量，终末，颜色鲜红/淡红，血块：少量，疼痛关系：下腹不适。伴随症状：尿频有、尿急有、尿痛偶有、排尿困难明显、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"终末血尿\",\"urineColor\":\"鲜红/淡红\",\"clots\":\"少量\",\"painRelation\":\"下腹不适\",\"fever\":\"否\",\"flankPain\":\"否\",\"luts\":\"尿频有；尿急有；尿痛偶有；排尿困难明显\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：20包年；职业暴露：无；结石史：否；感染史：反复尿路感染；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：BPH多年。\",\"knownMedication\":\"坦索罗辛间断\",\"personalAndFamilyRisk\":\"吸烟：20包年；职业暴露：无；结石史：否；感染史：反复尿路感染；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 尿pH、尿酸、血钙；感染性结石加尿培养/血培养/PCT；复发结石或特殊结石完善24小时尿代谢评估。",
       "imagingOrders": "泌尿系超声；非增强CT KUB首选定位结石并评估肾积水；KUB平片按显影情况；复杂病例或疑肿瘤/感染时增强CT。",
@@ -31565,7 +31565,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "膀胱结石",
-    "standardChiefComplaint": "排尿困难伴终末血尿3个月",
+    "standardChiefComplaint": "排尿困难伴排尿末小便发红3个月",
     "patientRole": {
       "identity": "67岁男性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -31694,8 +31694,8 @@
     "diseaseCategory": "结石",
     "age": "61",
     "sex": "女",
-    "studentChiefComplaint": "反复发热腰痛伴血尿半年",
-    "chiefComplaint": "反复发热腰痛伴血尿半年",
+    "studentChiefComplaint": "反复发热、腰痛伴小便发红半年",
+    "chiefComplaint": "反复发热、腰痛伴小便发红半年",
     "presentIllness": {
       "onset": "患者近半年反复出现一侧腰部胀痛、发热和寒战，每次持续数天，伴尿频、尿急、尿痛，尿液浑浊并呈淡红色。曾多次自行或门诊使用抗菌药，症状可短暂缓解但很快复发。近1周发热和腰痛加重，乏力、食欲下降。无明显排尿中断或血块，但需警惕感染性梗阻和脓毒症。",
       "hematuriaType": "肉眼血尿",
@@ -31748,7 +31748,7 @@
       "stoneClues": "是",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否认已知，但影像发现；感染史：反复UTI；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我这半年反复发烧、腰痛，尿又浑又红，吃消炎药好一阵又复发。",
+      "opening": "医生，我这半年反复发烧、腰痛，小便也会发红。",
       "smoking": "我不吸烟。",
       "alcohol": "我平时不喝酒。"
     },
@@ -31764,7 +31764,7 @@
       "caseId": "HX-ADD-014",
       "age": "61",
       "sex": "女",
-      "chiefComplaint": "反复发热腰痛伴血尿半年",
+      "chiefComplaint": "反复发热、腰痛伴小便发红半年",
       "subjectiveHistory": "半年反复尿路感染样发作，伴右腰痛，近期高热。 血尿性质：肉眼/镜下，全程，颜色浑浊淡红，血块：无，疼痛关系：腰痛胀痛。伴随症状：尿频有、尿急有、尿痛有、排尿困难否、腰痛是、肾绞痛否、发热发热寒战、恶心呕吐恶心、体重/乏力乏力、泡沫尿否、水肿否。",
       "hematuriaType": "肉眼血尿",
       "hematuriaPhase": "全程血尿",
@@ -31846,7 +31846,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为反复发热腰痛伴血尿半年来看的。",
+        "patientAnswer": "医生，我这半年反复发烧、腰痛，小便也会发红。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -32256,7 +32256,7 @@
         "caseId": "HX-ADD-014",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "反复发热腰痛伴血尿半年",
+        "value": "反复发热、腰痛伴小便发红半年",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -32462,7 +32462,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-014\",\"age\":\"61\",\"sex\":\"女\",\"chiefComplaint\":\"反复发热腰痛伴血尿半年\",\"subjectiveHistory\":\"半年反复尿路感染样发作，伴右腰痛，近期高热。 血尿性质：肉眼/镜下，全程，颜色浑浊淡红，血块：无，疼痛关系：腰痛胀痛。伴随症状：尿频有、尿急有、尿痛有、排尿困难否、腰痛是、肾绞痛否、发热发热寒战、恶心呕吐恶心、体重/乏力乏力、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"浑浊淡红\",\"clots\":\"无\",\"painRelation\":\"腰痛胀痛\",\"fever\":\"发热寒战\",\"flankPain\":\"是\",\"luts\":\"尿频有；尿急有；尿痛有；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否认已知，但影像发现；感染史：反复UTI；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：糖尿病、反复尿感。\",\"knownMedication\":\"降糖药\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否认已知，但影像发现；感染史：反复UTI；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-014\",\"age\":\"61\",\"sex\":\"女\",\"chiefComplaint\":\"反复发热、腰痛伴小便发红半年\",\"subjectiveHistory\":\"半年反复尿路感染样发作，伴右腰痛，近期高热。 血尿性质：肉眼/镜下，全程，颜色浑浊淡红，血块：无，疼痛关系：腰痛胀痛。伴随症状：尿频有、尿急有、尿痛有、排尿困难否、腰痛是、肾绞痛否、发热发热寒战、恶心呕吐恶心、体重/乏力乏力、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"浑浊淡红\",\"clots\":\"无\",\"painRelation\":\"腰痛胀痛\",\"fever\":\"发热寒战\",\"flankPain\":\"是\",\"luts\":\"尿频有；尿急有；尿痛有；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否认已知，但影像发现；感染史：反复UTI；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：糖尿病、反复尿感。\",\"knownMedication\":\"降糖药\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否认已知，但影像发现；感染史：反复UTI；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 中段尿培养+药敏；发热或系统感染者查血培养、PCT、乳酸；糖尿病/妊娠/免疫抑制等复杂因素需同步评估。",
       "imagingOrders": "泌尿系超声评估积水/残余尿/脓肾；复杂感染、发热腰痛或疑梗阻时行CT KUB或增强CT；妊娠女性避免不必要辐射，优先超声。",
@@ -32838,7 +32838,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "感染性鹿角形结石",
-    "standardChiefComplaint": "反复发热腰痛伴血尿半年",
+    "standardChiefComplaint": "反复发热、腰痛伴小便发红半年",
     "patientRole": {
       "identity": "61岁女性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -32966,8 +32966,8 @@
     "diseaseCategory": "结石",
     "age": "52",
     "sex": "男",
-    "studentChiefComplaint": "左侧腰腹痛伴血尿1天",
-    "chiefComplaint": "左侧腰腹痛伴血尿1天",
+    "studentChiefComplaint": "左侧腰腹痛伴小便发红1天",
+    "chiefComplaint": "左侧腰腹痛伴小便发红1天",
     "presentIllness": {
       "onset": "患者1天前突发左侧腰腹部阵发性绞痛，疼痛向下腹放射，伴轻度尿急和全程淡红色肉眼血尿。无发热寒战、明显尿痛、持续呕吐或尿量减少。既往有痛风和小结石发作，本次症状相似。发病前一段时间饮水少，降尿酸治疗不规律。",
       "hematuriaType": "肉眼血尿",
@@ -33020,7 +33020,7 @@
       "stoneClues": "是",
       "tumorRisk": "吸烟：15包年；职业暴露：无；结石史：痛风/既往小结石；感染史：否；外伤/操作：否；家族史：父亲痛风",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我左边腰突然一阵阵绞痛，尿里有血。我有痛风，降尿酸药也没怎么按时吃。",
+      "opening": "医生，我左边腰腹疼了一天，小便有点发红。",
       "smoking": "吸烟，具体每天多少支记不准，累计约15包年。",
       "alcohol": "我平时不喝酒。"
     },
@@ -33036,7 +33036,7 @@
       "caseId": "HX-ADD-015",
       "age": "52",
       "sex": "男",
-      "chiefComplaint": "左侧腰腹痛伴血尿1天",
+      "chiefComplaint": "左侧腰腹痛伴小便发红1天",
       "subjectiveHistory": "1天前突发左腰腹阵发痛，饮酒火锅后出现。 血尿性质：肉眼少量/镜下，全程，颜色淡红，血块：无，疼痛关系：阵发性绞痛。伴随症状：尿频否、尿急轻度、尿痛否、排尿困难否、腰痛是、肾绞痛是、发热否、恶心呕吐恶心、体重/乏力否、泡沫尿否、水肿否。",
       "hematuriaType": "肉眼血尿",
       "hematuriaPhase": "全程血尿",
@@ -33118,7 +33118,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为左侧腰腹痛伴血尿1天来看的。",
+        "patientAnswer": "医生，我左边腰腹疼了一天，小便有点发红。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -33528,7 +33528,7 @@
         "caseId": "HX-ADD-015",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "左侧腰腹痛伴血尿1天",
+        "value": "左侧腰腹痛伴小便发红1天",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -33734,7 +33734,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-015\",\"age\":\"52\",\"sex\":\"男\",\"chiefComplaint\":\"左侧腰腹痛伴血尿1天\",\"subjectiveHistory\":\"1天前突发左腰腹阵发痛，饮酒火锅后出现。 血尿性质：肉眼少量/镜下，全程，颜色淡红，血块：无，疼痛关系：阵发性绞痛。伴随症状：尿频否、尿急轻度、尿痛否、排尿困难否、腰痛是、肾绞痛是、发热否、恶心呕吐恶心、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"淡红\",\"clots\":\"无\",\"painRelation\":\"阵发性绞痛\",\"fever\":\"否\",\"flankPain\":\"是\",\"luts\":\"尿频否；尿急轻度；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：15包年；职业暴露：无；结石史：痛风/既往小结石；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：父亲痛风；既往史：高尿酸血症、痛风。\",\"knownMedication\":\"别嘌醇不规律\",\"personalAndFamilyRisk\":\"吸烟：15包年；职业暴露：无；结石史：痛风/既往小结石；感染史：否；外伤/操作：否；家族史：父亲痛风\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-015\",\"age\":\"52\",\"sex\":\"男\",\"chiefComplaint\":\"左侧腰腹痛伴小便发红1天\",\"subjectiveHistory\":\"1天前突发左腰腹阵发痛，饮酒火锅后出现。 血尿性质：肉眼少量/镜下，全程，颜色淡红，血块：无，疼痛关系：阵发性绞痛。伴随症状：尿频否、尿急轻度、尿痛否、排尿困难否、腰痛是、肾绞痛是、发热否、恶心呕吐恶心、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"淡红\",\"clots\":\"无\",\"painRelation\":\"阵发性绞痛\",\"fever\":\"否\",\"flankPain\":\"是\",\"luts\":\"尿频否；尿急轻度；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：15包年；职业暴露：无；结石史：痛风/既往小结石；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：父亲痛风；既往史：高尿酸血症、痛风。\",\"knownMedication\":\"别嘌醇不规律\",\"personalAndFamilyRisk\":\"吸烟：15包年；职业暴露：无；结石史：痛风/既往小结石；感染史：否；外伤/操作：否；家族史：父亲痛风\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 尿pH、尿酸、血钙；感染性结石加尿培养/血培养/PCT；复发结石或特殊结石完善24小时尿代谢评估。",
       "imagingOrders": "泌尿系超声；非增强CT KUB首选定位结石并评估肾积水；KUB平片按显影情况；复杂病例或疑肿瘤/感染时增强CT。",
@@ -34099,7 +34099,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "尿酸结石",
-    "standardChiefComplaint": "左侧腰腹痛伴血尿1天",
+    "standardChiefComplaint": "左侧腰腹痛伴小便发红1天",
     "patientRole": {
       "identity": "52岁男性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -34227,8 +34227,8 @@
     "diseaseCategory": "前列腺疾病",
     "age": "73",
     "sex": "男",
-    "studentChiefComplaint": "排尿困难伴肉眼血尿3天",
-    "chiefComplaint": "排尿困难伴肉眼血尿3天",
+    "studentChiefComplaint": "排尿困难伴小便变红3天",
+    "chiefComplaint": "排尿困难伴小便变红3天",
     "presentIllness": {
       "onset": "患者有多年尿频、夜尿、尿线细、排尿等待和尿不尽感，近3天无明显诱因出现全程淡红至鲜红色肉眼血尿，可见少量小血块，排尿困难较前加重。无尿痛、发热寒战或腰部绞痛。间断服用坦索罗辛和非那雄胺，依从性差。若血块增多或不能排尿，需按急症处理。",
       "hematuriaType": "肉眼血尿",
@@ -34281,7 +34281,7 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：20包年；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "医生，我本来就小便费劲，这三天尿突然变红了，有时还有小血块。",
+      "opening": "医生，我排尿一直费劲，这三天小便还变红了。",
       "smoking": "吸烟，具体每天多少支记不准，累计约20包年。",
       "alcohol": "我平时不喝酒。"
     },
@@ -34297,7 +34297,7 @@
       "caseId": "HX-ADD-016",
       "age": "73",
       "sex": "男",
-      "chiefComplaint": "排尿困难伴肉眼血尿3天",
+      "chiefComplaint": "排尿困难伴小便变红3天",
       "subjectiveHistory": "多年尿线变细、夜尿增多，3天前出现终末或全程血尿。 血尿性质：肉眼，终末或全程，颜色鲜红/淡红，血块：可有小血块，疼痛关系：无明显疼痛。伴随症状：尿频有、尿急有、尿痛否、排尿困难明显、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
       "hematuriaType": "肉眼血尿",
       "hematuriaPhase": "全程血尿",
@@ -34379,7 +34379,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为排尿困难伴肉眼血尿3天来看的。",
+        "patientAnswer": "医生，我排尿一直费劲，这三天小便还变红了。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -34789,7 +34789,7 @@
         "caseId": "HX-ADD-016",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "排尿困难伴肉眼血尿3天",
+        "value": "排尿困难伴小便变红3天",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -34995,7 +34995,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-016\",\"age\":\"73\",\"sex\":\"男\",\"chiefComplaint\":\"排尿困难伴肉眼血尿3天\",\"subjectiveHistory\":\"多年尿线变细、夜尿增多，3天前出现终末或全程血尿。 血尿性质：肉眼，终末或全程，颜色鲜红/淡红，血块：可有小血块，疼痛关系：无明显疼痛。伴随症状：尿频有、尿急有、尿痛否、排尿困难明显、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"鲜红/淡红\",\"clots\":\"可有小血块\",\"painRelation\":\"无明显疼痛\",\"fever\":\"否\",\"flankPain\":\"否\",\"luts\":\"尿频有；尿急有；尿痛否；排尿困难明显\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：20包年；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：BPH多年，高血压。\",\"knownMedication\":\"坦索罗辛、非那雄胺不规律，阿司匹林\",\"personalAndFamilyRisk\":\"吸烟：20包年；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-016\",\"age\":\"73\",\"sex\":\"男\",\"chiefComplaint\":\"排尿困难伴小便变红3天\",\"subjectiveHistory\":\"多年尿线变细、夜尿增多，3天前出现终末或全程血尿。 血尿性质：肉眼，终末或全程，颜色鲜红/淡红，血块：可有小血块，疼痛关系：无明显疼痛。伴随症状：尿频有、尿急有、尿痛否、排尿困难明显、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"鲜红/淡红\",\"clots\":\"可有小血块\",\"painRelation\":\"无明显疼痛\",\"fever\":\"否\",\"flankPain\":\"否\",\"luts\":\"尿频有；尿急有；尿痛否；排尿困难明显\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：20包年；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：BPH多年，高血压。\",\"knownMedication\":\"坦索罗辛、非那雄胺不规律，阿司匹林\",\"personalAndFamilyRisk\":\"吸烟：20包年；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 尿pH、尿酸、血钙；感染性结石加尿培养/血培养/PCT；复发结石或特殊结石完善24小时尿代谢评估。",
       "imagingOrders": "泌尿系超声；非增强CT KUB首选定位结石并评估肾积水；KUB平片按显影情况；复杂病例或疑肿瘤/感染时增强CT。",
@@ -35396,7 +35396,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "良性前列腺增生相关血尿",
-    "standardChiefComplaint": "排尿困难伴肉眼血尿3天",
+    "standardChiefComplaint": "排尿困难伴小便变红3天",
     "patientRole": {
       "identity": "73岁男性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -35526,8 +35526,8 @@
     "diseaseCategory": "前列腺疾病",
     "age": "80",
     "sex": "男",
-    "studentChiefComplaint": "导尿后肉眼血尿1天",
-    "chiefComplaint": "导尿后肉眼血尿1天",
+    "studentChiefComplaint": "导尿后小便变红1天",
+    "chiefComplaint": "导尿后小便变红1天",
     "presentIllness": {
       "onset": "患者既往长期有尿频、夜尿、尿线细和排尿费力，1天前突发下腹明显胀痛并完全不能排尿，急诊导尿后尿潴留缓解。导尿后出现鲜红色肉眼血尿，尿袋内可见少量小血块。无发热寒战、腰痛或明显尿痛。需鉴别导尿损伤、前列腺增生相关出血及其他泌尿系病变。",
       "hematuriaType": "肉眼血尿",
@@ -35580,7 +35580,7 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：导尿操作；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我昨晚完全尿不出来，医院插了尿管以后尿变成鲜红色，还带点小血块。",
+      "opening": "医生，我导尿以后小便变红了，已经一天了。",
       "smoking": "我不吸烟。",
       "alcohol": "我平时不喝酒。"
     },
@@ -35596,7 +35596,7 @@
       "caseId": "HX-ADD-017",
       "age": "80",
       "sex": "男",
-      "chiefComplaint": "导尿后肉眼血尿1天",
+      "chiefComplaint": "导尿后小便变红1天",
       "subjectiveHistory": "急性尿潴留导尿后出现血尿，既往排尿困难多年。 血尿性质：肉眼，全程，颜色鲜红，血块：小血块可能，疼痛关系：下腹胀痛缓解后血尿。伴随症状：尿频有、尿急有、尿痛否、排尿困难明显、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
       "hematuriaType": "肉眼血尿",
       "hematuriaPhase": "全程血尿",
@@ -35678,7 +35678,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为导尿后肉眼血尿1天来看的。",
+        "patientAnswer": "医生，我导尿以后小便变红了，已经一天了。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -36088,7 +36088,7 @@
         "caseId": "HX-ADD-017",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "导尿后肉眼血尿1天",
+        "value": "导尿后小便变红1天",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -36294,7 +36294,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-017\",\"age\":\"80\",\"sex\":\"男\",\"chiefComplaint\":\"导尿后肉眼血尿1天\",\"subjectiveHistory\":\"急性尿潴留导尿后出现血尿，既往排尿困难多年。 血尿性质：肉眼，全程，颜色鲜红，血块：小血块可能，疼痛关系：下腹胀痛缓解后血尿。伴随症状：尿频有、尿急有、尿痛否、排尿困难明显、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"鲜红\",\"clots\":\"小血块可能\",\"painRelation\":\"下腹胀痛缓解后血尿\",\"fever\":\"否\",\"flankPain\":\"否\",\"luts\":\"尿频有；尿急有；尿痛否；排尿困难明显\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：导尿操作；肿瘤/放化疗：否；家族史：无；既往史：BPH、冠心病。\",\"knownMedication\":\"阿司匹林、坦索罗辛\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：导尿操作；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-017\",\"age\":\"80\",\"sex\":\"男\",\"chiefComplaint\":\"导尿后小便变红1天\",\"subjectiveHistory\":\"急性尿潴留导尿后出现血尿，既往排尿困难多年。 血尿性质：肉眼，全程，颜色鲜红，血块：小血块可能，疼痛关系：下腹胀痛缓解后血尿。伴随症状：尿频有、尿急有、尿痛否、排尿困难明显、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"鲜红\",\"clots\":\"小血块可能\",\"painRelation\":\"下腹胀痛缓解后血尿\",\"fever\":\"否\",\"flankPain\":\"否\",\"luts\":\"尿频有；尿急有；尿痛否；排尿困难明显\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：导尿操作；肿瘤/放化疗：否；家族史：无；既往史：BPH、冠心病。\",\"knownMedication\":\"阿司匹林、坦索罗辛\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：导尿操作；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 尿pH、尿酸、血钙；感染性结石加尿培养/血培养/PCT；复发结石或特殊结石完善24小时尿代谢评估。",
       "imagingOrders": "泌尿系超声；非增强CT KUB首选定位结石并评估肾积水；KUB平片按显影情况；复杂病例或疑肿瘤/感染时增强CT。",
@@ -36703,7 +36703,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "BPH急性尿潴留/导尿相关血尿",
-    "standardChiefComplaint": "导尿后肉眼血尿1天",
+    "standardChiefComplaint": "导尿后小便变红1天",
     "patientRole": {
       "identity": "80岁男性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -36833,8 +36833,8 @@
     "diseaseCategory": "前列腺疾病",
     "age": "69",
     "sex": "男",
-    "studentChiefComplaint": "排尿困难伴镜下血尿半年",
-    "chiefComplaint": "排尿困难伴镜下血尿半年",
+    "studentChiefComplaint": "排尿困难伴尿检发现血尿半年",
+    "chiefComplaint": "排尿困难伴尿检发现血尿半年",
     "presentIllness": {
       "onset": "患者近半年逐渐出现尿线变细、排尿等待、排尿费力和尿不尽感，伴尿频，尿液外观一直正常。体检及复查尿检发现持续镜下血尿，无肉眼血尿、血块、尿痛、发热或腰痛。否认骨痛、下肢水肿和近期明显消瘦。尚未完成PSA复核、直肠指检及影像/病理评估。",
       "hematuriaType": "镜下血尿",
@@ -36887,7 +36887,7 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：30包年；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：兄弟前列腺癌",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我这半年小便越来越困难，体检又发现尿里有红细胞，担心是不是前列腺癌。",
+      "opening": "医生，我排尿费劲有半年了，尿检还发现有血。",
       "smoking": "吸烟，具体每天多少支记不准，累计约30包年。",
       "alcohol": "我平时不喝酒。"
     },
@@ -36903,7 +36903,7 @@
       "caseId": "HX-ADD-018",
       "age": "69",
       "sex": "男",
-      "chiefComplaint": "排尿困难伴镜下血尿半年",
+      "chiefComplaint": "排尿困难伴尿检发现血尿半年",
       "subjectiveHistory": "半年下尿路症状，体检PSA升高和镜下血尿。 血尿性质：镜下，不清楚，颜色外观正常，血块：无，疼痛关系：无痛。伴随症状：尿频有、尿急否、尿痛否、排尿困难明显、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力轻度消瘦、泡沫尿否、水肿否。",
       "hematuriaType": "镜下血尿",
       "hematuriaPhase": "镜下血尿",
@@ -36985,7 +36985,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为排尿困难伴镜下血尿半年来看的。",
+        "patientAnswer": "医生，我排尿费劲有半年了，尿检还发现有血。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -37395,7 +37395,7 @@
         "caseId": "HX-ADD-018",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "排尿困难伴镜下血尿半年",
+        "value": "排尿困难伴尿检发现血尿半年",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -37601,7 +37601,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-018\",\"age\":\"69\",\"sex\":\"男\",\"chiefComplaint\":\"排尿困难伴镜下血尿半年\",\"subjectiveHistory\":\"半年下尿路症状，体检PSA升高和镜下血尿。 血尿性质：镜下，不清楚，颜色外观正常，血块：无，疼痛关系：无痛。伴随症状：尿频有、尿急否、尿痛否、排尿困难明显、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力轻度消瘦、泡沫尿否、水肿否。\",\"hematuriaType\":\"镜下血尿\",\"hematuriaPhase\":\"镜下血尿\",\"urineColor\":\"外观正常\",\"clots\":\"无\",\"painRelation\":\"无痛\",\"fever\":\"否\",\"flankPain\":\"否\",\"luts\":\"尿频有；尿急否；尿痛否；排尿困难明显\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：30包年；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：兄弟前列腺癌；既往史：高血压。\",\"knownMedication\":\"降压药\",\"personalAndFamilyRisk\":\"吸烟：30包年；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：兄弟前列腺癌\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-018\",\"age\":\"69\",\"sex\":\"男\",\"chiefComplaint\":\"排尿困难伴尿检发现血尿半年\",\"subjectiveHistory\":\"半年下尿路症状，体检PSA升高和镜下血尿。 血尿性质：镜下，不清楚，颜色外观正常，血块：无，疼痛关系：无痛。伴随症状：尿频有、尿急否、尿痛否、排尿困难明显、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力轻度消瘦、泡沫尿否、水肿否。\",\"hematuriaType\":\"镜下血尿\",\"hematuriaPhase\":\"镜下血尿\",\"urineColor\":\"外观正常\",\"clots\":\"无\",\"painRelation\":\"无痛\",\"fever\":\"否\",\"flankPain\":\"否\",\"luts\":\"尿频有；尿急否；尿痛否；排尿困难明显\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：30包年；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：兄弟前列腺癌；既往史：高血压。\",\"knownMedication\":\"降压药\",\"personalAndFamilyRisk\":\"吸烟：30包年；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：兄弟前列腺癌\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 尿pH、尿酸、血钙；感染性结石加尿培养/血培养/PCT；复发结石或特殊结石完善24小时尿代谢评估。",
       "imagingOrders": "泌尿系超声；非增强CT KUB首选定位结石并评估肾积水；KUB平片按显影情况；复杂病例或疑肿瘤/感染时增强CT。",
@@ -37986,7 +37986,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "前列腺癌待排/鉴别",
-    "standardChiefComplaint": "排尿困难伴镜下血尿半年",
+    "standardChiefComplaint": "排尿困难伴尿检发现血尿半年",
     "patientRole": {
       "identity": "69岁男性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -38115,8 +38115,8 @@
     "diseaseCategory": "肾小球疾病",
     "age": "21",
     "sex": "男",
-    "studentChiefComplaint": "咽痛后肉眼血尿2天",
-    "chiefComplaint": "咽痛后肉眼血尿2天",
+    "studentChiefComplaint": "咽痛后尿色呈浓茶色或可乐色2天",
+    "chiefComplaint": "咽痛后尿色呈浓茶色或可乐色2天",
     "presentIllness": {
       "onset": "患者2天前在咽痛、低热期间发现全程浓茶色或可乐色肉眼血尿，时间上与上呼吸道症状几乎同步，伴轻度腰酸、尿液泡沫增多和晨起眼睑轻度浮肿。无血块、尿频尿急尿痛、排尿困难或典型肾绞痛。尿量未明显减少。既往感冒时是否出现类似尿色变化需进一步追问。",
       "hematuriaType": "肉眼血尿",
@@ -38169,7 +38169,7 @@
       "stoneClues": "轻度腰酸",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿可有泡沫；水肿轻度眼睑浮肿可有",
-      "opening": "我前两天咽痛，几乎同时尿就变成可乐色了，早上眼皮还有点肿。",
+      "opening": "医生，我咽痛以后尿变成了浓茶色，有两天了。",
       "smoking": "我不吸烟。",
       "alcohol": "我平时不喝酒。"
     },
@@ -38185,7 +38185,7 @@
       "caseId": "HX-ADD-019",
       "age": "21",
       "sex": "男",
-      "chiefComplaint": "咽痛后肉眼血尿2天",
+      "chiefComplaint": "咽痛后尿色呈浓茶色或可乐色2天",
       "subjectiveHistory": "上呼吸道感染后1-2天出现肉眼血尿，反复类似发作。 血尿性质：肉眼，全程，颜色浓茶色/可乐色，血块：无，疼痛关系：无明显尿痛，可腰酸。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛轻度腰酸、肾绞痛否、发热低热/咽痛前驱、恶心呕吐否、体重/乏力否、泡沫尿可有泡沫、水肿轻度眼睑浮肿可有。",
       "hematuriaType": "肉眼血尿",
       "hematuriaPhase": "全程血尿",
@@ -38267,7 +38267,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为咽痛后肉眼血尿2天来看的。",
+        "patientAnswer": "医生，我咽痛以后尿变成了浓茶色，有两天了。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -38677,7 +38677,7 @@
         "caseId": "HX-ADD-019",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "咽痛后肉眼血尿2天",
+        "value": "咽痛后尿色呈浓茶色或可乐色2天",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -38883,7 +38883,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-019\",\"age\":\"21\",\"sex\":\"男\",\"chiefComplaint\":\"咽痛后肉眼血尿2天\",\"subjectiveHistory\":\"上呼吸道感染后1-2天出现肉眼血尿，反复类似发作。 血尿性质：肉眼，全程，颜色浓茶色/可乐色，血块：无，疼痛关系：无明显尿痛，可腰酸。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛轻度腰酸、肾绞痛否、发热低热/咽痛前驱、恶心呕吐否、体重/乏力否、泡沫尿可有泡沫、水肿轻度眼睑浮肿可有。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"浓茶色/可乐色\",\"clots\":\"无\",\"painRelation\":\"无明显尿痛\",\"fever\":\"低热/咽痛前驱\",\"flankPain\":\"轻度腰酸\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿可有泡沫；水肿轻度眼睑浮肿可有\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：既往类似咽痛后血尿1次。\",\"knownMedication\":\"无\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-019\",\"age\":\"21\",\"sex\":\"男\",\"chiefComplaint\":\"咽痛后尿色呈浓茶色或可乐色2天\",\"subjectiveHistory\":\"上呼吸道感染后1-2天出现肉眼血尿，反复类似发作。 血尿性质：肉眼，全程，颜色浓茶色/可乐色，血块：无，疼痛关系：无明显尿痛，可腰酸。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛轻度腰酸、肾绞痛否、发热低热/咽痛前驱、恶心呕吐否、体重/乏力否、泡沫尿可有泡沫、水肿轻度眼睑浮肿可有。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"浓茶色/可乐色\",\"clots\":\"无\",\"painRelation\":\"无明显尿痛\",\"fever\":\"低热/咽痛前驱\",\"flankPain\":\"轻度腰酸\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿可有泡沫；水肿轻度眼睑浮肿可有\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：既往类似咽痛后血尿1次。\",\"knownMedication\":\"无\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 中段尿培养+药敏；发热或系统感染者查血培养、PCT、乳酸；糖尿病/妊娠/免疫抑制等复杂因素需同步评估。",
       "imagingOrders": "泌尿系超声评估积水/残余尿/脓肾；复杂感染、发热腰痛或疑梗阻时行CT KUB或增强CT；妊娠女性避免不必要辐射，优先超声。",
@@ -39204,7 +39204,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "IgA肾病",
-    "standardChiefComplaint": "咽痛后肉眼血尿2天",
+    "standardChiefComplaint": "咽痛后尿色呈浓茶色或可乐色2天",
     "patientRole": {
       "identity": "21岁男性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -39386,7 +39386,7 @@
       "stoneClues": "可有腰酸",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿可有；水肿眼睑/下肢水肿",
-      "opening": "两三周前腿上长过脓疱，现在尿像浓茶，眼皮和脚都有点肿。",
+      "opening": "医生，我皮肤感染以后尿呈茶色，眼皮也肿了一个星期。",
       "smoking": "我不吸烟。",
       "alcohol": "我平时不喝酒。"
     },
@@ -39484,7 +39484,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为皮肤感染后茶色尿伴眼睑水肿1周来看的。",
+        "patientAnswer": "医生，我皮肤感染以后尿呈茶色，眼皮也肿了一个星期。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -40549,8 +40549,8 @@
     "diseaseCategory": "肾小球疾病",
     "age": "28",
     "sex": "女",
-    "studentChiefComplaint": "体检发现镜下血尿3年",
-    "chiefComplaint": "体检发现镜下血尿3年",
+    "studentChiefComplaint": "体检反复发现尿检有血3年",
+    "chiefComplaint": "体检反复发现尿检有血3年",
     "presentIllness": {
       "onset": "患者3年前体检首次发现镜下血尿，之后多次复查仍有红细胞，尿液外观始终正常。期间无肉眼血尿、血块、腰痛、尿频尿急尿痛、排尿困难、泡沫尿或水肿。既往肾功能和血压大致正常，蛋白尿情况需以定量检查确认。血尿与运动、感染和月经无明确关系。",
       "hematuriaType": "镜下血尿",
@@ -40603,7 +40603,7 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：母亲也长期尿潜血",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我连续三年体检都说尿里有红细胞，但自己看尿一直正常，也没有不舒服。",
+      "opening": "医生，我这三年体检尿检反复查到有血，但自己看不出来。",
       "smoking": "我不吸烟。",
       "alcohol": "我平时不喝酒。"
     },
@@ -40619,7 +40619,7 @@
       "caseId": "HX-ADD-021",
       "age": "28",
       "sex": "女",
-      "chiefComplaint": "体检发现镜下血尿3年",
+      "chiefComplaint": "体检反复发现尿检有血3年",
       "subjectiveHistory": "3年体检反复镜下血尿，无肉眼血尿，无明显症状。 血尿性质：镜下，不清楚，颜色外观正常，血块：无，疼痛关系：无痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
       "hematuriaType": "镜下血尿",
       "hematuriaPhase": "镜下血尿",
@@ -40701,7 +40701,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为体检发现镜下血尿3年来看的。",
+        "patientAnswer": "医生，我这三年体检尿检反复查到有血，但自己看不出来。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -41111,7 +41111,7 @@
         "caseId": "HX-ADD-021",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "体检发现镜下血尿3年",
+        "value": "体检反复发现尿检有血3年",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -41317,7 +41317,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-021\",\"age\":\"28\",\"sex\":\"女\",\"chiefComplaint\":\"体检发现镜下血尿3年\",\"subjectiveHistory\":\"3年体检反复镜下血尿，无肉眼血尿，无明显症状。 血尿性质：镜下，不清楚，颜色外观正常，血块：无，疼痛关系：无痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"镜下血尿\",\"hematuriaPhase\":\"镜下血尿\",\"urineColor\":\"外观正常\",\"clots\":\"无\",\"painRelation\":\"无痛\",\"fever\":\"否\",\"flankPain\":\"否\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：母亲也长期尿潜血；既往史：既往体健。\",\"knownMedication\":\"无\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：母亲也长期尿潜血\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-021\",\"age\":\"28\",\"sex\":\"女\",\"chiefComplaint\":\"体检反复发现尿检有血3年\",\"subjectiveHistory\":\"3年体检反复镜下血尿，无肉眼血尿，无明显症状。 血尿性质：镜下，不清楚，颜色外观正常，血块：无，疼痛关系：无痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"镜下血尿\",\"hematuriaPhase\":\"镜下血尿\",\"urineColor\":\"外观正常\",\"clots\":\"无\",\"painRelation\":\"无痛\",\"fever\":\"否\",\"flankPain\":\"否\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：母亲也长期尿潜血；既往史：既往体健。\",\"knownMedication\":\"无\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：母亲也长期尿潜血\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 尿pH、尿酸、血钙；感染性结石加尿培养/血培养/PCT；复发结石或特殊结石完善24小时尿代谢评估。",
       "imagingOrders": "泌尿系超声；非增强CT KUB首选定位结石并评估肾积水；KUB平片按显影情况；复杂病例或疑肿瘤/感染时增强CT。",
@@ -41638,7 +41638,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "COL4相关薄基底膜病待确认",
-    "standardChiefComplaint": "体检发现镜下血尿3年",
+    "standardChiefComplaint": "体检反复发现尿检有血3年",
     "patientRole": {
       "identity": "28岁女性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -42994,8 +42994,8 @@
     "diseaseCategory": "肾小球疾病",
     "age": "25",
     "sex": "女",
-    "studentChiefComplaint": "泡沫尿、血尿伴面部皮疹2周",
-    "chiefComplaint": "泡沫尿、血尿伴面部皮疹2周",
+    "studentChiefComplaint": "泡沫尿、尿检发现血尿伴面部皮疹2周",
+    "chiefComplaint": "泡沫尿、尿检发现血尿伴面部皮疹2周",
     "presentIllness": {
       "onset": "患者2周前开始出现尿液泡沫明显增多，尿检提示镜下血尿，尿色偶呈茶色，随后出现双下肢轻度水肿和低热。同期面颊及鼻梁部出现红色皮疹，日晒后可能加重，并可伴乏力、关节酸痛。无尿频、尿急、尿痛、血块或肾绞痛。尿量、血压和近期体重变化需进一步评估。",
       "hematuriaType": "镜下血尿",
@@ -43048,7 +43048,7 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：自身免疫病家族史不详",
       "glomerularClues": "泡沫尿明显泡沫尿；水肿下肢轻肿",
-      "opening": "我这两周尿泡沫很多，检查有血尿，脸上还出了红疹，腿也有点肿。",
+      "opening": "医生，我这两周尿里泡沫多，脸上起了皮疹，尿检还发现有血。",
       "smoking": "我不吸烟。",
       "alcohol": "我平时不喝酒。"
     },
@@ -43064,7 +43064,7 @@
       "caseId": "HX-ADD-023",
       "age": "25",
       "sex": "女",
-      "chiefComplaint": "泡沫尿、血尿伴面部皮疹2周",
+      "chiefComplaint": "泡沫尿、尿检发现血尿伴面部皮疹2周",
       "subjectiveHistory": "2周来泡沫尿、镜下血尿，伴蝶形红斑、关节痛、乏力。 血尿性质：镜下，偶浓茶色，全程/不清楚，颜色外观多正常或茶色，血块：无，疼痛关系：无尿痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热低热、恶心呕吐否、体重/乏力乏力明显、泡沫尿明显泡沫尿、水肿下肢轻肿。",
       "hematuriaType": "镜下血尿",
       "hematuriaPhase": "全程血尿",
@@ -43146,7 +43146,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为泡沫尿、血尿伴面部皮疹2周来看的。",
+        "patientAnswer": "医生，我这两周尿里泡沫多，脸上起了皮疹，尿检还发现有血。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -43556,7 +43556,7 @@
         "caseId": "HX-ADD-023",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "泡沫尿、血尿伴面部皮疹2周",
+        "value": "泡沫尿、尿检发现血尿伴面部皮疹2周",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -43762,7 +43762,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-023\",\"age\":\"25\",\"sex\":\"女\",\"chiefComplaint\":\"泡沫尿、血尿伴面部皮疹2周\",\"subjectiveHistory\":\"2周来泡沫尿、镜下血尿，伴蝶形红斑、关节痛、乏力。 血尿性质：镜下，偶浓茶色，全程/不清楚，颜色外观多正常或茶色，血块：无，疼痛关系：无尿痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热低热、恶心呕吐否、体重/乏力乏力明显、泡沫尿明显泡沫尿、水肿下肢轻肿。\",\"hematuriaType\":\"镜下血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"外观多正常或茶色\",\"clots\":\"无\",\"painRelation\":\"无尿痛\",\"fever\":\"低热\",\"flankPain\":\"否\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿明显泡沫尿；水肿下肢轻肿\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：自身免疫病家族史不详；既往史：口腔溃疡、光敏感。\",\"knownMedication\":\"无\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：自身免疫病家族史不详\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-023\",\"age\":\"25\",\"sex\":\"女\",\"chiefComplaint\":\"泡沫尿、尿检发现血尿伴面部皮疹2周\",\"subjectiveHistory\":\"2周来泡沫尿、镜下血尿，伴蝶形红斑、关节痛、乏力。 血尿性质：镜下，偶浓茶色，全程/不清楚，颜色外观多正常或茶色，血块：无，疼痛关系：无尿痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热低热、恶心呕吐否、体重/乏力乏力明显、泡沫尿明显泡沫尿、水肿下肢轻肿。\",\"hematuriaType\":\"镜下血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"外观多正常或茶色\",\"clots\":\"无\",\"painRelation\":\"无尿痛\",\"fever\":\"低热\",\"flankPain\":\"否\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿明显泡沫尿；水肿下肢轻肿\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：自身免疫病家族史不详；既往史：口腔溃疡、光敏感。\",\"knownMedication\":\"无\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：自身免疫病家族史不详\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 尿pH、尿酸、血钙；感染性结石加尿培养/血培养/PCT；复发结石或特殊结石完善24小时尿代谢评估。",
       "imagingOrders": "泌尿系超声；非增强CT KUB首选定位结石并评估肾积水；KUB平片按显影情况；复杂病例或疑肿瘤/感染时增强CT。",
@@ -44083,7 +44083,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "狼疮性肾炎",
-    "standardChiefComplaint": "泡沫尿、血尿伴面部皮疹2周",
+    "standardChiefComplaint": "泡沫尿、尿检发现血尿伴面部皮疹2周",
     "patientRole": {
       "identity": "25岁女性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -44211,8 +44211,8 @@
     "diseaseCategory": "功能性血尿",
     "age": "20",
     "sex": "男",
-    "studentChiefComplaint": "长跑后肉眼血尿1次",
-    "chiefComplaint": "长跑后肉眼血尿1次",
+    "studentChiefComplaint": "长跑后小便发红1次",
+    "chiefComplaint": "长跑后小便发红1次",
     "presentIllness": {
       "onset": "患者完成长距离跑步后数小时发现一次全程淡红色肉眼血尿，无疼痛、血块、尿频尿急尿痛、腰痛或发热。停止运动、休息及补液后尿色逐渐恢复，既往无类似发作。运动中无明显碰撞、脱水晕厥或横纹肌溶解相关肌痛、无力；仍需复查尿沉渣确认是否真正血尿。",
       "hematuriaType": "肉眼血尿",
@@ -44265,7 +44265,7 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我昨天跑完长跑后尿变红了一次，休息喝水后今天已经淡下来了。",
+      "opening": "医生，我长跑以后有一次小便发红，休息后就好了。",
       "smoking": "我不吸烟。",
       "alcohol": "我平时不喝酒。"
     },
@@ -44281,7 +44281,7 @@
       "caseId": "HX-ADD-024",
       "age": "20",
       "sex": "男",
-      "chiefComplaint": "长跑后肉眼血尿1次",
+      "chiefComplaint": "长跑后小便发红1次",
       "subjectiveHistory": "长距离跑步后出现短暂淡红尿，无其他症状，休息后缓解。 血尿性质：肉眼短暂/镜下，全程，颜色淡红，血块：无，疼痛关系：无痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
       "hematuriaType": "肉眼血尿",
       "hematuriaPhase": "全程血尿",
@@ -44363,7 +44363,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为长跑后肉眼血尿1次来看的。",
+        "patientAnswer": "医生，我长跑以后有一次小便发红，休息后就好了。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -44773,7 +44773,7 @@
         "caseId": "HX-ADD-024",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "长跑后肉眼血尿1次",
+        "value": "长跑后小便发红1次",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -44979,7 +44979,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-024\",\"age\":\"20\",\"sex\":\"男\",\"chiefComplaint\":\"长跑后肉眼血尿1次\",\"subjectiveHistory\":\"长距离跑步后出现短暂淡红尿，无其他症状，休息后缓解。 血尿性质：肉眼短暂/镜下，全程，颜色淡红，血块：无，疼痛关系：无痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"淡红\",\"clots\":\"无\",\"painRelation\":\"无痛\",\"fever\":\"否\",\"flankPain\":\"否\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：既往体健。\",\"knownMedication\":\"无\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-024\",\"age\":\"20\",\"sex\":\"男\",\"chiefComplaint\":\"长跑后小便发红1次\",\"subjectiveHistory\":\"长距离跑步后出现短暂淡红尿，无其他症状，休息后缓解。 血尿性质：肉眼短暂/镜下，全程，颜色淡红，血块：无，疼痛关系：无痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"淡红\",\"clots\":\"无\",\"painRelation\":\"无痛\",\"fever\":\"否\",\"flankPain\":\"否\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：既往体健。\",\"knownMedication\":\"无\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 尿pH、尿酸、血钙；感染性结石加尿培养/血培养/PCT；复发结石或特殊结石完善24小时尿代谢评估。",
       "imagingOrders": "泌尿系超声；非增强CT KUB首选定位结石并评估肾积水；KUB平片按显影情况；复杂病例或疑肿瘤/感染时增强CT。",
@@ -45333,7 +45333,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "运动性血尿",
-    "standardChiefComplaint": "长跑后肉眼血尿1次",
+    "standardChiefComplaint": "长跑后小便发红1次",
     "patientRole": {
       "identity": "20岁男性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -45460,8 +45460,8 @@
     "diseaseCategory": "假性血尿",
     "age": "31",
     "sex": "女",
-    "studentChiefComplaint": "体检尿潜血阳性1天",
-    "chiefComplaint": "体检尿潜血阳性1天",
+    "studentChiefComplaint": "经期体检发现尿潜血阳性1天",
+    "chiefComplaint": "经期体检发现尿潜血阳性1天",
     "presentIllness": {
       "onset": "患者体检留取尿标本时处于月经期，未采用规范清洁中段尿，尿潜血阳性。本人无肉眼血尿、尿频尿急尿痛、腰痛、血块、泡沫尿或水肿。月经结束后尚未完成规范复查。需同时确认是否有异常阴道流血、宫颈或其他妇科出血。",
       "hematuriaType": "镜下血尿",
@@ -45514,7 +45514,7 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我体检那天正好来月经，尿检说潜血阳性，但我自己没有尿痛或看到尿血。",
+      "opening": "医生，我经期体检时尿潜血阳性，刚发现一天。",
       "smoking": "我不吸烟。",
       "alcohol": "我平时不喝酒。"
     },
@@ -45530,7 +45530,7 @@
       "caseId": "HX-ADD-025",
       "age": "31",
       "sex": "女",
-      "chiefComplaint": "体检尿潜血阳性1天",
+      "chiefComplaint": "经期体检发现尿潜血阳性1天",
       "subjectiveHistory": "月经期体检尿潜血阳性，无泌尿症状。 血尿性质：镜下/假阳性可能，不适用，颜色外观受经血影响，血块：无，疼痛关系：无痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
       "hematuriaType": "镜下血尿",
       "hematuriaPhase": "镜下血尿",
@@ -45612,7 +45612,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为体检尿潜血阳性1天来看的。",
+        "patientAnswer": "医生，我经期体检时尿潜血阳性，刚发现一天。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -46022,7 +46022,7 @@
         "caseId": "HX-ADD-025",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "体检尿潜血阳性1天",
+        "value": "经期体检发现尿潜血阳性1天",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -46228,7 +46228,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-025\",\"age\":\"31\",\"sex\":\"女\",\"chiefComplaint\":\"体检尿潜血阳性1天\",\"subjectiveHistory\":\"月经期体检尿潜血阳性，无泌尿症状。 血尿性质：镜下/假阳性可能，不适用，颜色外观受经血影响，血块：无，疼痛关系：无痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"镜下血尿\",\"hematuriaPhase\":\"镜下血尿\",\"urineColor\":\"外观受经血影响\",\"clots\":\"无\",\"painRelation\":\"无痛\",\"fever\":\"否\",\"flankPain\":\"否\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：月经规律，正在经期。\",\"knownMedication\":\"无\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-025\",\"age\":\"31\",\"sex\":\"女\",\"chiefComplaint\":\"经期体检发现尿潜血阳性1天\",\"subjectiveHistory\":\"月经期体检尿潜血阳性，无泌尿症状。 血尿性质：镜下/假阳性可能，不适用，颜色外观受经血影响，血块：无，疼痛关系：无痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"镜下血尿\",\"hematuriaPhase\":\"镜下血尿\",\"urineColor\":\"外观受经血影响\",\"clots\":\"无\",\"painRelation\":\"无痛\",\"fever\":\"否\",\"flankPain\":\"否\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：月经规律，正在经期。\",\"knownMedication\":\"无\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 尿pH、尿酸、血钙；感染性结石加尿培养/血培养/PCT；复发结石或特殊结石完善24小时尿代谢评估。",
       "imagingOrders": "泌尿系超声；非增强CT KUB首选定位结石并评估肾积水；KUB平片按显影情况；复杂病例或疑肿瘤/感染时增强CT。",
@@ -46549,7 +46549,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "月经污染/妇科来源",
-    "standardChiefComplaint": "体检尿潜血阳性1天",
+    "standardChiefComplaint": "经期体检发现尿潜血阳性1天",
     "patientRole": {
       "identity": "31岁女性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -46677,8 +46677,8 @@
     "diseaseCategory": "外伤",
     "age": "29",
     "sex": "男",
-    "studentChiefComplaint": "车祸后腰痛伴肉眼血尿4小时",
-    "chiefComplaint": "车祸后腰痛伴肉眼血尿4小时",
+    "studentChiefComplaint": "车祸后腰痛伴小便变红4小时",
+    "chiefComplaint": "车祸后腰痛伴小便变红4小时",
     "presentIllness": {
       "onset": "患者4小时前发生交通事故，腰腹部受到直接撞击，随后出现持续性腰痛和全程鲜红至暗红色肉眼血尿，可见少量血块。无既往血尿。需立即询问事故机制、是否短暂意识丧失、腹痛、头晕心悸、尿量和最后一次排尿情况，并评估生命体征。发病前未服抗凝或抗血小板药。",
       "hematuriaType": "肉眼血尿",
@@ -46731,7 +46731,7 @@
       "stoneClues": "是",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：明显外伤；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我四小时前出了车祸，左边腰被撞得很痛，后来尿出来都是红的。",
+      "opening": "医生，我车祸撞到腰后小便变红了，已经四个小时。",
       "smoking": "我不吸烟。",
       "alcohol": "我平时不喝酒。"
     },
@@ -46747,7 +46747,7 @@
       "caseId": "HX-ADD-026",
       "age": "29",
       "sex": "男",
-      "chiefComplaint": "车祸后腰痛伴肉眼血尿4小时",
+      "chiefComplaint": "车祸后腰痛伴小便变红4小时",
       "subjectiveHistory": "摩托车摔倒撞击左腰后出现腰痛和肉眼血尿。 血尿性质：肉眼，全程，颜色鲜红/暗红，血块：可有，疼痛关系：腰部疼痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛是、肾绞痛否、发热否、恶心呕吐恶心可有、体重/乏力否、泡沫尿否、水肿否。",
       "hematuriaType": "肉眼血尿",
       "hematuriaPhase": "全程血尿",
@@ -46829,7 +46829,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为车祸后腰痛伴肉眼血尿4小时来看的。",
+        "patientAnswer": "医生，我车祸撞到腰后小便变红了，已经四个小时。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -47239,7 +47239,7 @@
         "caseId": "HX-ADD-026",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "车祸后腰痛伴肉眼血尿4小时",
+        "value": "车祸后腰痛伴小便变红4小时",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -47445,7 +47445,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-026\",\"age\":\"29\",\"sex\":\"男\",\"chiefComplaint\":\"车祸后腰痛伴肉眼血尿4小时\",\"subjectiveHistory\":\"摩托车摔倒撞击左腰后出现腰痛和肉眼血尿。 血尿性质：肉眼，全程，颜色鲜红/暗红，血块：可有，疼痛关系：腰部疼痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛是、肾绞痛否、发热否、恶心呕吐恶心可有、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"鲜红/暗红\",\"clots\":\"可有\",\"painRelation\":\"腰部疼痛\",\"fever\":\"否\",\"flankPain\":\"是\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：明显外伤；肿瘤/放化疗：否；家族史：无；既往史：既往体健。\",\"knownMedication\":\"无\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：明显外伤；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-026\",\"age\":\"29\",\"sex\":\"男\",\"chiefComplaint\":\"车祸后腰痛伴小便变红4小时\",\"subjectiveHistory\":\"摩托车摔倒撞击左腰后出现腰痛和肉眼血尿。 血尿性质：肉眼，全程，颜色鲜红/暗红，血块：可有，疼痛关系：腰部疼痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛是、肾绞痛否、发热否、恶心呕吐恶心可有、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"鲜红/暗红\",\"clots\":\"可有\",\"painRelation\":\"腰部疼痛\",\"fever\":\"否\",\"flankPain\":\"是\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：明显外伤；肿瘤/放化疗：否；家族史：无；既往史：既往体健。\",\"knownMedication\":\"无\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：明显外伤；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 尿pH、尿酸、血钙；感染性结石加尿培养/血培养/PCT；复发结石或特殊结石完善24小时尿代谢评估。",
       "imagingOrders": "泌尿系超声；非增强CT KUB首选定位结石并评估肾积水；KUB平片按显影情况；复杂病例或疑肿瘤/感染时增强CT。",
@@ -47810,7 +47810,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "肾挫伤/泌尿系外伤",
-    "standardChiefComplaint": "车祸后腰痛伴肉眼血尿4小时",
+    "standardChiefComplaint": "车祸后腰痛伴小便变红4小时",
     "patientRole": {
       "identity": "29岁男性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -47938,8 +47938,8 @@
     "diseaseCategory": "肾实质/结构性疾病",
     "age": "56",
     "sex": "女",
-    "studentChiefComplaint": "腰痛伴血尿反复半年",
-    "chiefComplaint": "腰痛伴血尿反复半年",
+    "studentChiefComplaint": "反复腰痛伴茶色或淡红色尿半年",
+    "chiefComplaint": "反复腰痛伴茶色或淡红色尿半年",
     "presentIllness": {
       "onset": "患者近半年反复出现腰部持续性或阵发性疼痛，伴全程茶色或淡红色肉眼血尿，偶见类似灰白或褐色组织碎片样物，部分发作伴低热。无明显尿频尿急尿痛或排尿困难。长期因慢性疼痛自行服用布洛芬或复方止痛药，具体剂量和频率不清。近期发作次数增加。",
       "hematuriaType": "肉眼血尿",
@@ -47992,7 +47992,7 @@
       "stoneClues": "是",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我这半年腰痛、尿血反复发作，有时尿里好像还有一点组织碎片。我平时经常吃止痛药。",
+      "opening": "医生，我这半年腰痛反反复复，尿色有时像茶色、有时偏淡红。",
       "smoking": "我不吸烟。",
       "alcohol": "我平时不喝酒。"
     },
@@ -48008,7 +48008,7 @@
       "caseId": "HX-ADD-027",
       "age": "56",
       "sex": "女",
-      "chiefComplaint": "腰痛伴血尿反复半年",
+      "chiefComplaint": "反复腰痛伴茶色或淡红色尿半年",
       "subjectiveHistory": "半年反复腰痛和镜下/肉眼血尿，有长期NSAIDs使用。 血尿性质：肉眼间断/镜下，全程，颜色茶色或淡红，血块：可有坏死组织样碎片描述，疼痛关系：腰痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛是、肾绞痛可有绞痛样、发热偶低热、恶心呕吐否、体重/乏力乏力、泡沫尿否、水肿否。",
       "hematuriaType": "肉眼血尿",
       "hematuriaPhase": "全程血尿",
@@ -48090,7 +48090,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为腰痛伴血尿反复半年来看的。",
+        "patientAnswer": "医生，我这半年腰痛反反复复，尿色有时像茶色、有时偏淡红。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -48500,7 +48500,7 @@
         "caseId": "HX-ADD-027",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "腰痛伴血尿反复半年",
+        "value": "反复腰痛伴茶色或淡红色尿半年",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -48706,7 +48706,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-027\",\"age\":\"56\",\"sex\":\"女\",\"chiefComplaint\":\"腰痛伴血尿反复半年\",\"subjectiveHistory\":\"半年反复腰痛和镜下/肉眼血尿，有长期NSAIDs使用。 血尿性质：肉眼间断/镜下，全程，颜色茶色或淡红，血块：可有坏死组织样碎片描述，疼痛关系：腰痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛是、肾绞痛可有绞痛样、发热偶低热、恶心呕吐否、体重/乏力乏力、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"茶色或淡红\",\"clots\":\"可有坏死组织样碎片描述\",\"painRelation\":\"腰痛\",\"fever\":\"偶低热\",\"flankPain\":\"是\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：慢性头痛，贫血倾向。\",\"knownMedication\":\"布洛芬/复方止痛药长期自行服用\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-027\",\"age\":\"56\",\"sex\":\"女\",\"chiefComplaint\":\"反复腰痛伴茶色或淡红色尿半年\",\"subjectiveHistory\":\"半年反复腰痛和镜下/肉眼血尿，有长期NSAIDs使用。 血尿性质：肉眼间断/镜下，全程，颜色茶色或淡红，血块：可有坏死组织样碎片描述，疼痛关系：腰痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛是、肾绞痛可有绞痛样、发热偶低热、恶心呕吐否、体重/乏力乏力、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"茶色或淡红\",\"clots\":\"可有坏死组织样碎片描述\",\"painRelation\":\"腰痛\",\"fever\":\"偶低热\",\"flankPain\":\"是\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：慢性头痛，贫血倾向。\",\"knownMedication\":\"布洛芬/复方止痛药长期自行服用\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 尿pH、尿酸、血钙；感染性结石加尿培养/血培养/PCT；复发结石或特殊结石完善24小时尿代谢评估。",
       "imagingOrders": "泌尿系超声；非增强CT KUB首选定位结石并评估肾积水；KUB平片按显影情况；复杂病例或疑肿瘤/感染时增强CT。",
@@ -49060,7 +49060,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "肾乳头坏死",
-    "standardChiefComplaint": "腰痛伴血尿反复半年",
+    "standardChiefComplaint": "反复腰痛伴茶色或淡红色尿半年",
     "patientRole": {
       "identity": "56岁女性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -49187,8 +49187,8 @@
     "diseaseCategory": "肾实质/结构性疾病",
     "age": "48",
     "sex": "男",
-    "studentChiefComplaint": "突发左腰痛伴肉眼血尿1天",
-    "chiefComplaint": "突发左腰痛伴肉眼血尿1天",
+    "studentChiefComplaint": "突发左腰痛伴小便变红1天",
+    "chiefComplaint": "突发左腰痛伴小便变红1天",
     "presentIllness": {
       "onset": "患者1天前无明显诱因突发左侧腰部持续疼痛，伴全程暗红色肉眼血尿，无或仅少量血块。无发热寒战、尿频尿急尿痛和排尿困难。训练设定为既往影像发现双肾多发囊肿，近期无明显外伤。需评估疼痛和血尿是否自行缓解、血红蛋白及感染征象。",
       "hematuriaType": "肉眼血尿",
@@ -49241,7 +49241,7 @@
       "stoneClues": "是",
       "tumorRisk": "吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：父亲多囊肾",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我突然左边腰痛，尿也变成暗红色。我以前查出两边肾上有很多囊肿。",
+      "opening": "医生，我左边腰突然痛起来，小便也变红一天了。",
       "smoking": "我不吸烟。",
       "alcohol": "我平时不喝酒。"
     },
@@ -49257,7 +49257,7 @@
       "caseId": "HX-ADD-028",
       "age": "48",
       "sex": "男",
-      "chiefComplaint": "突发左腰痛伴肉眼血尿1天",
+      "chiefComplaint": "突发左腰痛伴小便变红1天",
       "subjectiveHistory": "已知ADPKD，突发腰痛和肉眼血尿。 血尿性质：肉眼，全程，颜色暗红，血块：无或少量，疼痛关系：腰痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛是、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
       "hematuriaType": "肉眼血尿",
       "hematuriaPhase": "全程血尿",
@@ -49339,7 +49339,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为突发左腰痛伴肉眼血尿1天来看的。",
+        "patientAnswer": "医生，我左边腰突然痛起来，小便也变红一天了。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -49749,7 +49749,7 @@
         "caseId": "HX-ADD-028",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "突发左腰痛伴肉眼血尿1天",
+        "value": "突发左腰痛伴小便变红1天",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -49955,7 +49955,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-028\",\"age\":\"48\",\"sex\":\"男\",\"chiefComplaint\":\"突发左腰痛伴肉眼血尿1天\",\"subjectiveHistory\":\"已知ADPKD，突发腰痛和肉眼血尿。 血尿性质：肉眼，全程，颜色暗红，血块：无或少量，疼痛关系：腰痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛是、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"暗红\",\"clots\":\"无或少量\",\"painRelation\":\"腰痛\",\"fever\":\"否\",\"flankPain\":\"是\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：父亲多囊肾；既往史：多囊肾、高血压。\",\"knownMedication\":\"ARB类降压药\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：父亲多囊肾\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-028\",\"age\":\"48\",\"sex\":\"男\",\"chiefComplaint\":\"突发左腰痛伴小便变红1天\",\"subjectiveHistory\":\"已知ADPKD，突发腰痛和肉眼血尿。 血尿性质：肉眼，全程，颜色暗红，血块：无或少量，疼痛关系：腰痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛是、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"肉眼血尿\",\"hematuriaPhase\":\"全程血尿\",\"urineColor\":\"暗红\",\"clots\":\"无或少量\",\"painRelation\":\"腰痛\",\"fever\":\"否\",\"flankPain\":\"是\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：父亲多囊肾；既往史：多囊肾、高血压。\",\"knownMedication\":\"ARB类降压药\",\"personalAndFamilyRisk\":\"吸烟：不吸烟；职业暴露：无；结石史：否；感染史：否；外伤/操作：否；家族史：父亲多囊肾\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 尿pH、尿酸、血钙；感染性结石加尿培养/血培养/PCT；复发结石或特殊结石完善24小时尿代谢评估。",
       "imagingOrders": "泌尿系超声；非增强CT KUB首选定位结石并评估肾积水；KUB平片按显影情况；复杂病例或疑肿瘤/感染时增强CT。",
@@ -50318,7 +50318,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "多囊肾囊肿出血",
-    "standardChiefComplaint": "突发左腰痛伴肉眼血尿1天",
+    "standardChiefComplaint": "突发左腰痛伴小便变红1天",
     "patientRole": {
       "identity": "48岁男性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
@@ -51661,8 +51661,8 @@
     "diseaseCategory": "泌尿系肿瘤",
     "age": "62",
     "sex": "男",
-    "studentChiefComplaint": "体检发现镜下血尿1个月",
-    "chiefComplaint": "体检发现镜下血尿1个月",
+    "studentChiefComplaint": "体检发现尿检有血1个月",
+    "chiefComplaint": "体检发现尿检有血1个月",
     "presentIllness": {
       "onset": "患者1个月前体检发现镜下血尿，复查仍有红细胞，尿液外观正常。无肉眼血尿、血块、尿频尿急尿痛、排尿困难、腰痛、发热、泡沫尿或水肿。既往无类似检查异常，近期无剧烈运动、外伤或泌尿操作。因年龄、重度吸烟和化工暴露属于高危人群，需要完成风险分层评估。",
       "hematuriaType": "镜下血尿",
@@ -51715,7 +51715,7 @@
       "stoneClues": "否",
       "tumorRisk": "吸烟：45包年；职业暴露：苯/芳香胺相关化工暴露；结石史：否；感染史：否；外伤/操作：否；家族史：无",
       "glomerularClues": "泡沫尿否；水肿否",
-      "opening": "我体检两次都说尿里有红细胞，但自己完全看不出来，也没有不舒服。",
+      "opening": "医生，我体检两次都说尿检有血，已经一个月了。",
       "smoking": "吸烟，具体每天多少支记不准，累计约45包年。",
       "alcohol": "我平时不喝酒。"
     },
@@ -51731,7 +51731,7 @@
       "caseId": "HX-ADD-030",
       "age": "62",
       "sex": "男",
-      "chiefComplaint": "体检发现镜下血尿1个月",
+      "chiefComplaint": "体检发现尿检有血1个月",
       "subjectiveHistory": "1个月内两次尿检均镜下血尿，无症状。 血尿性质：镜下，不清楚，颜色外观正常，血块：无，疼痛关系：无痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。",
       "hematuriaType": "镜下血尿",
       "hematuriaPhase": "镜下血尿",
@@ -51813,7 +51813,7 @@
         "slotId": "HX001",
         "label": "主诉/来诊原因",
         "possibleQuestion": "主诉|怎么不舒服|为什么来|哪里不舒服",
-        "patientAnswer": "我主要是因为体检发现镜下血尿1个月来看的。",
+        "patientAnswer": "医生，我体检两次都说尿检有血，已经一个月了。",
         "clinicalMeaning": "",
         "scoringKeywords": "1",
         "finalDiagnosis": "",
@@ -52223,7 +52223,7 @@
         "caseId": "HX-ADD-030",
         "category": "主诉与现病史",
         "fieldName": "chief_complaint",
-        "value": "体检发现镜下血尿1个月",
+        "value": "体检发现尿检有血1个月",
         "visibility": "按阶段/提问后释放",
         "releaseCondition": "按阶段/提问后释放",
         "agent": "主诉与现病史"
@@ -52429,7 +52429,7 @@
     ],
     "agentProfile": {
       "patientPersona": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
-      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-030\",\"age\":\"62\",\"sex\":\"男\",\"chiefComplaint\":\"体检发现镜下血尿1个月\",\"subjectiveHistory\":\"1个月内两次尿检均镜下血尿，无症状。 血尿性质：镜下，不清楚，颜色外观正常，血块：无，疼痛关系：无痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"镜下血尿\",\"hematuriaPhase\":\"镜下血尿\",\"urineColor\":\"外观正常\",\"clots\":\"无\",\"painRelation\":\"无痛\",\"fever\":\"否\",\"flankPain\":\"否\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：45包年；职业暴露：苯/芳香胺相关化工暴露；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：高血压。\",\"knownMedication\":\"降压药\",\"personalAndFamilyRisk\":\"吸烟：45包年；职业暴露：苯/芳香胺相关化工暴露；结石史：否；感染史：否；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
+      "patientVisibleInfo": "{\"caseId\":\"HX-ADD-030\",\"age\":\"62\",\"sex\":\"男\",\"chiefComplaint\":\"体检发现尿检有血1个月\",\"subjectiveHistory\":\"1个月内两次尿检均镜下血尿，无症状。 血尿性质：镜下，不清楚，颜色外观正常，血块：无，疼痛关系：无痛。伴随症状：尿频否、尿急否、尿痛否、排尿困难否、腰痛否、肾绞痛否、发热否、恶心呕吐否、体重/乏力否、泡沫尿否、水肿否。\",\"hematuriaType\":\"镜下血尿\",\"hematuriaPhase\":\"镜下血尿\",\"urineColor\":\"外观正常\",\"clots\":\"无\",\"painRelation\":\"无痛\",\"fever\":\"否\",\"flankPain\":\"否\",\"luts\":\"尿频否；尿急否；尿痛否；排尿困难否\",\"glomerularClues\":\"泡沫尿否；水肿否\",\"knownPastHistory\":\"吸烟：45包年；职业暴露：苯/芳香胺相关化工暴露；结石史：否；感染史：否；外伤/操作：否；肿瘤/放化疗：否；家族史：无；既往史：高血压。\",\"knownMedication\":\"降压药\",\"personalAndFamilyRisk\":\"吸烟：45包年；职业暴露：苯/芳香胺相关化工暴露；结石史：否；感染史：否；外伤/操作：否；家族史：无\",\"persona\":\"配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。\",\"reportBoundary\":\"患者可以说做过检查，但不能说出尿检、影像、膀胱镜、病理等报告细节。\"}",
       "layeredReleaseRule": "Standardized Patient Agent only receives patientFacingProfile and the current matched slot answer. Investigation/MDT/Evaluator read teacherOnlyData only after the relevant stage action or submission.",
       "labOrders": "血常规、尿常规+尿沉渣镜检、尿红细胞形态、肾功能/eGFR、电解质、肝功能、凝血功能、血糖、CRP，必要时血型+交叉配血。 尿细胞学；尿路上皮肿瘤可加尿肿瘤相关检测（仅作辅助，不能替代膀胱镜/病理）；术前传染病筛查；按手术风险完善心肺功能。",
       "imagingOrders": "泌尿系超声；CTU评估上尿路和占位；膀胱镜；尿细胞学；疑肌层浸润时盆腔MRI；胸腹盆增强CT或胸部CT用于分期；必要时输尿管镜活检/核素肾图。",
@@ -52781,7 +52781,7 @@
       "zh-CN"
     ],
     "diseaseSubcategory": "高危无症状镜下血尿待查（肿瘤筛查路径）",
-    "standardChiefComplaint": "体检发现镜下血尿1个月",
+    "standardChiefComplaint": "体检发现尿检有血1个月",
     "patientRole": {
       "identity": "62岁男性教学模拟患者",
       "concerns": "配合度较好，表达较清楚；对血尿原因有担心，但不会主动说出未被询问的信息。",
