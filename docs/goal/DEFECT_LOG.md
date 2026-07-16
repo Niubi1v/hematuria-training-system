@@ -436,3 +436,19 @@
 - **修复**：共享NFKC/alias catalog；dysuria与三类时相先映射canonical intent，再从既有source slot读取并双语一致分类；query-relative自然模板明确有/没有、是/不是。
 - **治理**：P001等HEM-P0-023 dysuria仍在后置quarantine返回pending-review reason；模糊/双语不一致保持unknown；没有修改事实或审核状态。
 - **证据**：86问专项和42例840问矩阵均0失败；相关Patient/安全/评分回归通过。剩余11个首批候选intent未关闭，故本缺陷仅标记“首批修复”。
+
+### QA-SEC-P1-001 Preview失败输出可能回显受保护请求头
+
+- **严重度/状态**：P1安全发布阻塞；本地安全合同已修复，真实Preview在新HEAD部署前保持`SECURITY_BLOCKED`。
+- **证据**：QA在Production `8e7d148`的Preview路由试跑中观察到Playwright失败日志可能把受保护request header写入stdout；该批专用输出已删除，QA磁盘扫描命中0，不能作为Preview验收通过。
+- **根因**：旧runner使用`stdio: inherit`，Playwright/Node/fetch的异常在凭据扫描前就可直接写终端；旧artifact扫描也没有覆盖stdout、stderr、Error cause/stack、文件名、HTML/report或扫描器异常。
+- **修复**：子进程输出先进入受控内存；对动态canary、凭据字段、URL查询参数和递归错误对象做统一检测与脱敏；生成物统一fail-closed扫描。任何泄露或扫描失败只输出无值的`SECURITY_BLOCKED`并删除专用目录。
+- **安全边界**：不读取除运行所需Automation Bypass之外的环境凭据，不输出值、长度、前后缀或哈希；不关闭Vercel Authentication；不改变本地、Pages、Production、Patient Agent、session或医学数据逻辑。
+- **本地证据**：10类合成异常与5类artifact通道全部拒绝；配置测试、ESLint和repository secret scan通过。真实Preview长跑必须等待新HEAD远程部署并再次扫描后执行。
+
+### HEM-P2-043 GitHub Pages部署基线不匹配
+
+- **严重度/状态**：P2部署观察；`BLOCKED_DEPLOYMENT_MISMATCH`，不是当前源码路由回归。
+- **部署证据**：Pages由`main` workflow发布；公开deployment `5410354110`为`5a3ad1199ae5e591160f12e410260287f0051875`，早于当前Production Goal `221b22e237ec3e142baea5ac760c21e1a14decfd`。
+- **30个旧路由来源**：`5a3ad119`的目录直接使用`item.id`生成`/cases/<id>/index.html`；P013–P042显示ID背后的内部ID仍为`HX-ADD-001`–`HX-ADD-030`，因此公开站点只有前12张卡使用当前P编号路由。
+- **处理**：不转Ready、不合并main、不手工部署Production、不硬编码Pages域名，也不改动已通过本地/basePath/Vercel合同的路由。正式合并后的新Pages deployment必须重新执行42卡目录、直接URL、刷新和双语验证。

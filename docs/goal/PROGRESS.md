@@ -560,3 +560,13 @@
 - 修复后86/86专项通过；42例840问为840/840命中、595个known零错误unknown、230个正确unknown、15个医学冲突隔离、0极性错误、双语值一致。
 - 相关Patient Agent、pain、history、safe projection、session、Agent API、42×17和360评分回归通过。英文复合general pain+dysuria的首轮回归失败已按真实根因修复，旧断言保持。
 - 本批未修改`data/**`、医学事实/极性、review状态、419/161、HEM-P0-001/023、`needs_revision`、Redis/session/deploy或评分。其余11个候选intent仍待下一批，不提前登记完成。
+
+### Preview QA输出安全合同（2026-07-17，本地候选）
+
+- 选择性读取QA HEAD `26920ed977f3ae17449cb9ed1af3359b81d165d5`的报告与最小runner diff，没有整体merge QA，也没有引入其业务代码、大体积trace或本机路径。
+- 根因证据为Playwright失败路径可能把受保护请求头写入runner stdout；专用旧输出已由QA删除且磁盘扫描命中0。本轮先冻结真实Preview长跑，不读取或输出真实凭据。
+- runner现先将stdout、stderr和spawn错误保存在内存，递归检查Error message/cause/stack及嵌套对象，再扫描JSON、HTML、trace、截图文件名和临时文件；任一明文命中、扫描异常、符号链接或超限文件均fail-closed并删除专用输出。
+- 合成随机canary覆盖302、401、403、500、超时、DNS、导航、request interception、assertion及未捕获异常共10条错误路径，以及stdout/stderr、JSON、HTML、trace、截图文件名和临时文件通道；全部被拒绝且canary未进入测试输出。
+- Preview配置继续关闭trace、video和screenshot，仅允许目标Preview origin注入；缺少环境变量时保持`BLOCKED_PREVIEW_AUTH`。本地配置测试、canary、ESLint和repository secret scan均通过；真实Preview须在该原子提交推送并完成远程门禁后再运行。
+- QA对HEM-P2-028给出`1 request / 1 ID / 1 event`本地关闭证据；HEM-P1-030/031/032为6,216/6,216与168/168零失败，均不再修改。161个来源问题仍为`BLOCKED_SOURCE_REVISION`。Pages旧部署差异只登记部署来源，不修改已通过的路由合同。
+- 公开GitHub API独立确认Pages来源为`main`/workflow，最新deployment `5410354110`对应`5a3ad1199ae5e591160f12e410260287f0051875`（2026-07-12）。该历史构建的`cases_public.json`仅P001–P012使用显示ID，P013–P042的30张卡仍以`HX-ADD-001`–`HX-ADD-030`作为href内部ID；这解释了QA观察的12当前路由/30旧路由。当前Production Goal `221b22e`未部署到Pages，故保持`BLOCKED_DEPLOYMENT_MISMATCH`，不修改当前路由代码。

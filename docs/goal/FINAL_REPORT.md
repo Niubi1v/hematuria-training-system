@@ -461,3 +461,11 @@
 - 修复前74问命中率10.81%、错误unknown率50%、极性错误率90.54%；修复后扩展86问均为0错误，42例840问矩阵100% canonical命中，明确事实错误unknown=0，真实unknown与15个医学冲突保持不确定。
 - 未通过全局LLM猜测补事实；query-relative模板只使用双语一致分类。HEM-P0-001/023、419、161、`needs_revision`和`data/**`未改。
 - 当前只完成首批4个最关键intent；其余11个目标仍待按同一安全模式推进。本地候选尚需完整门禁、提交、push和Node 22 CI，不能宣称整个自然语言专项完成。
+
+### 2026-07-17 Preview输出安全里程碑候选
+
+- QA HEAD `26920ed977f3ae17449cb9ed1af3359b81d165d5`确认当前真实Preview验收因失败输出风险为`SECURITY_BLOCKED`；本轮仅选择性吸收证据思路，没有merge QA分支。
+- 旧runner的`stdio: inherit`已替换为内存捕获、递归敏感值检查和生成物fail-closed扫描。允许的报告只保留header名称、`[REDACTED]`、是否注入和请求计数，不保留值、长度、哈希、Cookie、Authorization、token或完整签名。
+- 10类异常与5类artifact合成canary门禁、配置测试、ESLint和repository scanner均通过。真实Preview仍需等待本提交普通push、Node 22 Actions及Vercel新部署后再执行，当前未将历史Preview或本地结果写成线上通过。
+- HEM-P2-028及HEM-P1-030/031/032不再进行无依据业务修改；161个来源修订、HEM-P0-001/023、419与`needs_revision`继续冻结。Patient intent第二批4个未提交文件保持原样，待安全原子提交完成后继续。
+- Pages公开deployment已确认为`main@5a3ad119`；30个旧链接来自该构建中P013–P042仍采用的`HX-ADD-*`内部ID，而不是当前Production Goal。当前PR保持Draft且Pages按规则跳过，因此只登记部署差异，正式合并后的Pages重建与42卡复测仍为人工发布链步骤。

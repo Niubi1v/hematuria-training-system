@@ -1074,3 +1074,15 @@ Actions：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/294
 | bilingual/conflict/history/pain/safe projection/session/agent/history-matrix/scoring-v3 | 0 | 42例双语复合、18冲突、42×7、42×6、126安全投影、42×17及360分均通过 |
 
 首轮相关回归曾稳定失败“compound English question silently dropped pain”；共享normalizer新增独立general pain检测后原测试通过。没有删除断言或把unknown当negative。4 intent、66 alias；`data/**`和医学治理状态零修改。
+
+## 2026-07-17 Preview输出安全合同
+
+| 命令/场景 | 退出码 | 结果 |
+|---|---:|---|
+| `node scripts/test-preview-blackbox-config.mjs` | 0 | 缺凭据明确阻塞；bypass不进入URL；仅目标Preview origin允许注入 |
+| `node scripts/test-preview-output-security.mjs` | 0 | 10类合成错误路径、5类artifact通道均检测并拒绝；输出不含动态canary |
+| 缺凭据运行`node scripts/run-preview-blackbox.mjs` | 非0（预期） | 明确`BLOCKED_PREVIEW_AUTH`，未启动浏览器或生成凭据证据 |
+| `node scripts/run-lint.mjs` | 0 | runner、安全模块和canary测试通过ESLint |
+| `node scripts/scan-repository-secrets.mjs` | 0 | 322个tracked/candidate文件、可达文本历史及有界归档元数据无凭据命中 |
+
+首轮canary测试曾发现已脱敏Cookie行被正则回溯误判；修复为先解析值再判断`[REDACTED]`后重复运行通过，证明脱敏器具有幂等性。真实环境变量未用于合成测试，真实Preview在该原子提交进入Production Goal并完成远程部署前保持`SECURITY_BLOCKED`。
