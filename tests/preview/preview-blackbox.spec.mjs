@@ -47,6 +47,7 @@ function createSanitizedEvidence(page, scenario) {
           item.generationSource = typeof payload.generationSource === "string" ? payload.generationSource : undefined;
           item.provider = typeof payload.provider === "string" ? payload.provider : undefined;
           item.isFallback = typeof payload.isFallback === "boolean" ? payload.isFallback : undefined;
+          item.fallbackReason = typeof payload.fallbackReason === "string" ? payload.fallbackReason : undefined;
         } catch { /* Evidence remains status-only. */ }
       }
       evidence.responses.push(item);

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 const ENV_NAMES = [
   "TRAINING_ATTEMPT_STORE_MODE",
   "AGENT_REQUEST_STORE_MODE",
+  "LLM_PROVIDER_CIRCUIT_STORE_MODE",
   "TRAINING_STATE_SECRET",
   "UPSTASH_REDIS_REST_URL",
   "UPSTASH_REDIS_REST_TOKEN",
@@ -164,6 +165,41 @@ async function main() {
       body: { caseId: "P001", attemptId: "attempt-test", studentInput: "test" }
     }, async () => ({ answer: "must-not-run" })),
     (error: Error) => error.message === "agent_request_store_unavailable"
+  );
+
+  const circuitStore = require("../server/providerCircuitStore.js");
+  clearStoreEnv();
+  process.env.LLM_PROVIDER_CIRCUIT_STORE_MODE = "upstash";
+  process.env.KV_REST_API_URL = "https://vercel-kv.example.test";
+  process.env.KV_REST_API_TOKEN = "unit-test-kv-write-token";
+  let circuitCalls = 0;
+  globalThis.fetch = async (input, init) => {
+    circuitCalls += 1;
+    assert.equal(String(input), "https://vercel-kv.example.test");
+    assert.equal(String((init?.headers as Record<string, string>)?.Authorization || ""), "Bearer unit-test-kv-write-token");
+    return { ok: true, json: async () => ({ result: JSON.stringify({ kind: "closed", failures: 0 }) }) } as Response;
+  };
+  const circuitAdmission = await circuitStore.enterProviderCircuit({
+    provider: "test-provider",
+    baseUrl: "https://provider.example.test",
+    model: "test-model",
+    endpointType: "chat_completions"
+  });
+  assert.equal(circuitAdmission.mode, "upstash");
+  assert.equal(circuitCalls, 1);
+
+  clearStoreEnv();
+  process.env.LLM_PROVIDER_CIRCUIT_STORE_MODE = "upstash";
+  process.env.KV_REST_API_URL = "https://vercel-kv.example.test";
+  process.env.KV_REST_API_READ_ONLY_TOKEN = "unit-test-read-only-token";
+  await assert.rejects(
+    circuitStore.enterProviderCircuit({
+      provider: "test-provider",
+      baseUrl: "https://provider.example.test",
+      model: "test-model",
+      endpointType: "chat_completions"
+    }),
+    (error: Error) => error.message === "provider_circuit_store_unavailable"
   );
 
   console.log("Training attempt store credential compatibility and safe health contract passed.");

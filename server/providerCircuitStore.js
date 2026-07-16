@@ -1,4 +1,5 @@
 const crypto = require("node:crypto");
+const { resolveRedisRestCredentials } = require("./redisRestCredentials.js");
 
 const MAX_MEMORY_CIRCUITS = 100;
 const memoryCircuits = globalThis.__hematuriaProviderCircuits || new Map();
@@ -33,7 +34,8 @@ function storeMode() {
   const configured = String(process.env.LLM_PROVIDER_CIRCUIT_STORE_MODE || process.env.AGENT_REQUEST_STORE_MODE || process.env.TRAINING_ATTEMPT_STORE_MODE || "").toLowerCase();
   if (configured === "memory") return process.env.VERCEL || process.env.NODE_ENV === "production" ? "unavailable" : "memory";
   if (configured === "upstash") return "upstash";
-  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) return "upstash";
+  const credentials = resolveRedisRestCredentials();
+  if (credentials.url && credentials.token) return "upstash";
   if (process.env.VERCEL || process.env.NODE_ENV === "production") return "unavailable";
   return "memory";
 }
@@ -58,8 +60,9 @@ function circuitError(retryAfterSeconds) {
 }
 
 async function upstash(command) {
-  const url = String(process.env.UPSTASH_REDIS_REST_URL || "").replace(/\/+$/, "");
-  const token = String(process.env.UPSTASH_REDIS_REST_TOKEN || "");
+  const credentials = resolveRedisRestCredentials();
+  const url = credentials.url.replace(/\/+$/, "");
+  const token = credentials.token;
   if (!url || !token) throw new Error("provider_circuit_store_unavailable");
   let response;
   try {
