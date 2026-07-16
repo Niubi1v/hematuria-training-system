@@ -77,7 +77,7 @@
 
 ## Production `8e7d148` 增量覆盖
 
-- 42×37 双语双改写矩阵当前为 84 session、6,216/6,216 路由、6,216/6,216 重放、168/168 边界、0 失败；HEM-P1-030/031/032 关闭为 `RESOLVED_LOCAL_QA`。295 个不安全确定性来源仍为 `BLOCKED_SOURCE_REVISION`，144/144 医学冲突隔离不解除 HEM-P0-023。
+- 42×37 双语双改写矩阵当前为 84 session、6,216/6,216 路由、6,216/6,216 重放、168/168 边界、0 失败；HEM-P1-030/031/032 关闭为 `RESOLVED_LOCAL_QA`。295 次不安全 source-cell 阻断观测对应既有 161 个来源修订项，仍为 `BLOCKED_SOURCE_REVISION`；144/144 医学冲突隔离不解除 HEM-P0-023。
 - 本地 desktop/mobile Playwright 68/68；覆盖 P001 双语第一阶段、双向/快速/刷新切换、快速双击、20 轮、日志恢复、语音降级、a11y 和 P008 抗伪造。探索套件另有七阶段 2/2、HEM-P2-028 1/1、HEM-P1-027 移动端 2/2、中文 20 轮 1/1。
 - 当前每例的本地 route/Patient/评分/data-agent 合同可标为 `LOCAL_CONTRACT_PASS`；真实 AI 列仍为 `SECURITY_BLOCKED`，不得由 42 例本地通过替代。真实手机列仍为 `BLOCKED_REAL_DEVICE`。
 - 真实 GitHub Pages 只映射 12 个显示 ID、30 个旧内部 ID，故全 42 例部署路由仍为 `BLOCKED_DEPLOYMENT_MISMATCH`；当前 Preview 路由矩阵因 QA-SEC-P1-001 为 `SECURITY_BLOCKED`。

@@ -60,6 +60,6 @@
 ## 2026-07-17 Production `8e7d148` 复核
 
 - 42 例、37 canonical slot、中英文双改写的当前矩阵为 6,216/6,216 路由与 6,216/6,216 重放通过，168 个诊断/报告边界通过；HEM-P1-030/031/032 的工程信号均清零。公开 adapter 17/17，`providerCalls=0`。
-- 295 个不安全确定性来源继续返回明确 `unsafe_deterministic_answer` 且空 facts/slots；P001 肿瘤史/泌尿操作代表项被 QA 强制断言为 fail-closed。该结果是安全隔离通过，不是医学语义或患者自然度通过。
+- 295 次不安全 source-cell 观测继续返回明确 `unsafe_deterministic_answer` 且空 facts/slots，对应既有 161 个来源修订项；P001 肿瘤史/泌尿操作代表项被 QA 强制断言为 fail-closed。该结果是安全隔离通过，不是医学语义或患者自然度通过。
 - 18 条双语冲突的直接隔离为 144/144，没有旧 pain 过匹配导致的额外隔离；HEM-P0-023 仍由具名专家裁决。
 - 本地 fixture 的英文 20 轮、手动上翻、错误恢复与日志幂等通过，只证明 UI/协议稳定性。当前 Production 的真实 Preview 长对话因 QA 输出安全事件标记 `SECURITY_BLOCKED`；先前 `3fe409f` 的中/英文各 1 个 live_ai 回合不作为当前基线自然语言验收。

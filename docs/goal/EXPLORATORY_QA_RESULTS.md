@@ -1,7 +1,7 @@
 # 探索式 QA 执行结果
 
 状态：长期执行中；当前本地工程缺陷均已通过本轮定向回归，仍有 Preview 安全、Pages 部署、真机和医学阻塞，不得视为最终生产验收。
-被测 Production SHA：`8e7d148e3459f3b960161903fba9214998661635`。基线 merge 后 QA HEAD：`ad2f6a42fd9b82cfc39b61fb09520784f2360432`；本轮 QA 报告提交待生成。
+被测 Production SHA：`8e7d148e3459f3b960161903fba9214998661635`。基线 merge 后 QA HEAD：`ad2f6a42fd9b82cfc39b61fb09520784f2360432`；本轮报告里程碑提交从 `53f99dbe5ee109b70274a6033a10e1e9078ee42e` 起，最终 QA HEAD 以 Git 同步状态为准。
 
 ## 基线核验
 
@@ -202,11 +202,11 @@
 | 第一阶段/会话 | `PASS_LOCAL_FIXTURE_CONTRACT`；Playwright desktop/mobile 68/68，session 能力 19/19 | P001 中英提交、双向/快速/刷新切换、双击、第二阶段、刷新恢复；非法/过期/跨病例/跨语言/mode/attempt 仍拒绝 |
 | HEM-P2-028 | `RESOLVED_LOCAL_QA`；探索断言为 `1 request / 1 request ID / 1 timeline event`，完整 desktop/mobile 双击合同通过 | 当前 SHA 的真实 Preview provider call 因安全阻塞未复测，不用本地替代 |
 | HEM-P2-043 | 本地 public route 合同 42/42、root 和 Pages basePath 通过；真实 Pages 在 1440×900/390×844 均为 42 卡片、12 显示路由、30 旧内部路由 | 工程源码标 `RESOLVED_ENGINEERING_LOCAL_DEPLOYMENT_PENDING`；真实 Pages=`BLOCKED_DEPLOYMENT_MISMATCH`，Preview=`SECURITY_BLOCKED` |
-| HEM-P1-030/031/032 | 42×37×双语×双问法：6,216 路由、6,216 重放、168 边界，0 失败；adapter 17/17 | 295 个不安全来源精确 fail-closed，144/144 冲突隔离；均不构成医学内容通过 |
+| HEM-P1-030/031/032 | 42×37×双语×双问法：6,216 路由、6,216 重放、168 边界，0 失败；adapter 17/17 | 295 次不安全 source-cell 阻断观测，对应既有 161 个来源修订项；144/144 冲突隔离；均不构成医学内容通过 |
 | 七阶段/评分/数据 Agent | 360 事件评分 42 例、对抗评分、阶段 5/6/7、attempt 隔离、11 例代表 E2E、42 例 376 条查体、P008 开单均 PASS | 探索 UI 七阶段在 1440×900/390×844 2/2；均为本地确定性合同 |
 | UI/稳定性 | 四固定 viewport 双语布局通过；20 轮、手动上翻、新消息入口、末条不遮挡、无横向溢出；0 serious/critical a11y | `PASS_EMULATION`；真机软键盘和物理 safe-area=`BLOCKED_REAL_DEVICE` |
 
-Patient Session 报告记录 295 个 `unsafe_deterministic_answer` 阻断，而旧 smoke 只把 P004 作为预期阻断，最初产生 2 项 QA 预期失败。根据已有 Production 安全合同，将 P001 肿瘤史/泌尿操作三个不安全来源改为必须满足同一“空 facts/slots + 明确阻断原因”的强断言后 17/17 通过；没有解除来源审核。`test-patient-facing-profile.ts` 的首次失败仅由 CRLF/LF 逐字比较造成，所有 41 个差异行都只多一个 `\r`，标准化换行后 42 例完整性通过，医学列未变。
+Patient Session 报告记录 295 次 `unsafe_deterministic_answer` source-cell 阻断观测，而旧 smoke 只把 P004 作为预期阻断，最初产生 2 项 QA 预期失败。该观测数不替代既有 161 个来源修订项。根据已有 Production 安全合同，将 P001 肿瘤史/泌尿操作三个不安全来源改为必须满足同一“空 facts/slots + 明确阻断原因”的强断言后 17/17 通过；没有解除来源审核。`test-patient-facing-profile.ts` 的首次失败仅由 CRLF/LF 逐字比较造成，所有 41 个差异行都只多一个 `\r`，标准化换行后 42 例完整性通过，医学列未变。
 
 ### Preview 安全事件与环境分栏
 

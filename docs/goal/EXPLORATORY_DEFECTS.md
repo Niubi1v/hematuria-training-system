@@ -116,7 +116,7 @@
 - 证据：`reports/patient-session-matrix-summary.json`、`reports/patient-api-adapter-smoke-summary.json`。
 - 建议方向：对获准的当前 slot 做句级/字段级安全投影，保留否定、数字、单位和时间含义；无法安全压缩时明确标记需审核，不应在仍计入 slot coverage 的同时伪装成患者未知。
 - 医学专家裁决：不需要判断该工程缺陷；具体 191 条内容仍保留 `teacherReviewRequired`，医学真值不得由 QA 批准。
-- `8e7d148` 修复回归：6,216 路由与 6,216 重放中 `failureInstances=0`；Patient-facing profile 42 例完整性合同通过。295 个来源因安全内容阻断而返回 unknown 的场景单独记 `BLOCKED_SOURCE_REVISION`，不纳入本工程缺陷关闭计数。
+- `8e7d148` 修复回归：6,216 路由与 6,216 重放中 `failureInstances=0`；Patient-facing profile 42 例完整性合同通过。295 次 source-cell 安全阻断观测对应既有 161 个来源修订项，单独记 `BLOCKED_SOURCE_REVISION`，不纳入本工程缺陷关闭计数。
 
 ## HEM-P1-033：确定性 canonical 回答绕过输出过滤并把教师提示送到公开 API
 
