@@ -23,6 +23,20 @@ $compiled = foreach ($item in $patterns.GetEnumerator()) {
   }
 }
 
+$runtimeSecrets = foreach ($name in @(
+  "VERCEL_AUTOMATION_BYPASS_SECRET",
+  "TRAINING_STATE_SECRET",
+  "KV_REST_API_URL",
+  "KV_REST_API_TOKEN",
+  "UPSTASH_REDIS_REST_URL",
+  "UPSTASH_REDIS_REST_TOKEN"
+)) {
+  $value = [Environment]::GetEnvironmentVariable($name)
+  if (![string]::IsNullOrEmpty($value)) {
+    [Text.Encoding]::GetEncoding(28591).GetString([Text.Encoding]::UTF8.GetBytes($value))
+  }
+}
+
 $findingKeys = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 $fileCount = 0L
 $entryCount = 0L
@@ -36,6 +50,11 @@ function Test-Chunk {
   foreach ($pattern in $script:compiled) {
     if ($pattern.Regex.IsMatch($text)) {
       [void]$script:findingKeys.Add("$($pattern.Name)`t$Label")
+    }
+  }
+  foreach ($secret in $script:runtimeSecrets) {
+    if ($text.IndexOf($secret, [StringComparison]::Ordinal) -ge 0) {
+      [void]$script:findingKeys.Add("runtime-secret-bytes`t$Label")
     }
   }
 }

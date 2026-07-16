@@ -142,7 +142,8 @@ async function askOneLiveAiQuestion(page, language) {
   const history = await historyResponse;
   expect(history.status()).toBe(200);
   await expect(page.getByText(english ? "Scoring synced" : "评分已同步", { exact: true })).toBeVisible();
-  await expect(page.getByText(english ? "AI service connected" : "人工智能服务已连接", { exact: true })).toBeVisible();
+  const connectedText = english ? "AI service connected" : "人工智能服务已连接";
+  await expect(page.locator('span[aria-live="polite"]').filter({ hasText: connectedText })).toContainText(connectedText);
 }
 
 async function submitFirstStage(page, language, doubleClick = false) {
@@ -199,7 +200,56 @@ test("protected Preview homepage and health reach the application", async ({ pag
     expect(health.trainingStateConfigured).toBe(true);
     expect(health.durableAttemptStoreConfigured).toBe(true);
     expect(["upstash_rest", "vercel_kv_rest", "mixed_rest"]).toContain(health.durableAttemptStoreCredentialSource);
+    if (process.env.PLAYWRIGHT_EXPECTED_PREVIEW_SHA) {
+      expect(health.deploymentSha).toBe(process.env.PLAYWRIGHT_EXPECTED_PREVIEW_SHA);
+    }
     collector.evidence.deployment = health;
+  } finally {
+    await attachSanitizedEvidence(testInfo, collector);
+  }
+});
+
+test("P001-P042 catalog and direct routes stay portable on Preview", async ({ page }, testInfo) => {
+  testInfo.setTimeout(600_000);
+  const collector = createSanitizedEvidence(page, "P001-P042-preview-routes");
+  try {
+    const catalogResponse = await page.goto("/cases/", { waitUntil: "domcontentloaded" });
+    await assertApplicationReached(page, catalogResponse);
+    const displayIds = Array.from({ length: 42 }, (_, index) => `P${String(index + 1).padStart(3, "0")}`);
+    const expectedHrefs = displayIds.map((caseId) => `/cases/${caseId}/`);
+    const catalogLinks = page.locator('a[href*="/cases/P"]');
+    expect(await catalogLinks.evaluateAll((links) => links.map((link) => link.getAttribute("href")))).toEqual(expectedHrefs);
+
+    await page.getByRole("button", { name: "English", exact: true }).click();
+    expect(await catalogLinks.evaluateAll((links) => links.map((link) => link.getAttribute("href")))).toEqual(expectedHrefs);
+
+    // Route portability is a document-navigation check. Abort API traffic so the
+    // matrix does not create 84 training attempts or expose request headers in an
+    // APIRequestContext failure log. The beforeEach route still scopes Preview
+    // protection to same-origin browser navigations.
+    await page.route("**/api/**", (route) => route.abort("blockedbyclient"));
+    let direct200 = 0;
+    let refresh200 = 0;
+    for (const href of expectedHrefs) {
+      const direct = await page.goto(href, { waitUntil: "domcontentloaded" });
+      await assertApplicationReached(page, direct);
+      await expect(page.getByText(href.slice(-5, -1), { exact: true }).first()).toBeVisible();
+      direct200 += 1;
+      const refresh = await page.reload({ waitUntil: "domcontentloaded" });
+      await assertApplicationReached(page, refresh);
+      await expect(page.getByText(href.slice(-5, -1), { exact: true }).first()).toBeVisible();
+      refresh200 += 1;
+    }
+    const invalid = await page.goto("/cases/P999/", { waitUntil: "domcontentloaded" });
+    expect(new URL(page.url()).origin).toBe(new URL(preview.baseURL).origin);
+    expect(invalid?.status()).toBe(404);
+    collector.evidence.routeMatrix = {
+      catalogZhHrefs: expectedHrefs.length,
+      catalogEnHrefs: expectedHrefs.length,
+      direct200,
+      refresh200,
+      invalid404: invalid?.status() === 404
+    };
   } finally {
     await attachSanitizedEvidence(testInfo, collector);
   }

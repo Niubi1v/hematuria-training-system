@@ -48,3 +48,10 @@ export function shouldAttachPreviewProtection(requestUrl, baseURL) {
     return false;
   }
 }
+
+export function previewOutputHasSensitiveData(output, bypassSecret) {
+  const text = String(output || "");
+  const secret = String(bypassSecret || "");
+  return (secret.length > 0 && Buffer.from(text).includes(Buffer.from(secret)))
+    || /\b(?:authorization|cookie|set-cookie|x-vercel-protection-bypass)\s*:/i.test(text);
+}

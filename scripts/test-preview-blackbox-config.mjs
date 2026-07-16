@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   DEFAULT_PREVIEW_URL,
   createPreviewProtectionHeaders,
+  previewOutputHasSensitiveData,
   resolvePreviewBlackboxConfig,
   shouldAttachPreviewProtection
 } from "./preview-blackbox-config.mjs";
@@ -31,6 +32,10 @@ assert.equal(shouldAttachPreviewProtection(`${DEFAULT_PREVIEW_URL}api/health/`, 
 assert.equal(shouldAttachPreviewProtection("http://127.0.0.1:3000/api/health/", DEFAULT_PREVIEW_URL), false);
 assert.equal(shouldAttachPreviewProtection("https://niubi1v.github.io/hematuria-training-system/api/health/", DEFAULT_PREVIEW_URL), false);
 assert.equal(shouldAttachPreviewProtection("https://hematuria-training-system.vercel.app/api/health/", DEFAULT_PREVIEW_URL), false);
+assert.equal(previewOutputHasSensitiveData("safe test summary", secret), false);
+assert.equal(previewOutputHasSensitiveData(`request failed ${secret}`, secret), true);
+assert.equal(previewOutputHasSensitiveData("Cookie: redacted-test-value", secret), true);
+assert.equal(previewOutputHasSensitiveData("x-vercel-protection-bypass: redacted-test-value", secret), true);
 
 assert.throws(
   () => resolvePreviewBlackboxConfig({

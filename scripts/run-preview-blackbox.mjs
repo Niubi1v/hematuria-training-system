@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import fs from "node:fs";
 import path from "node:path";
 
-import { resolvePreviewBlackboxConfig } from "./preview-blackbox-config.mjs";
+import { previewOutputHasSensitiveData, resolvePreviewBlackboxConfig } from "./preview-blackbox-config.mjs";
 
 const config = resolvePreviewBlackboxConfig(process.env);
 if (config.blocked) {
@@ -16,10 +16,15 @@ fs.rmSync(outputDir, { recursive: true, force: true });
 
 const require = createRequire(import.meta.url);
 const playwrightCli = require.resolve("@playwright/test/cli");
-const result = spawnSync(process.execPath, [playwrightCli, "test", "--config=playwright.preview.config.mjs"], {
+const playwrightArgs = [playwrightCli, "test", "--config=playwright.preview.config.mjs"];
+const grep = String(process.env.PLAYWRIGHT_PREVIEW_GREP || "").trim();
+if (grep) playwrightArgs.push("--grep", grep);
+const result = spawnSync(process.execPath, playwrightArgs, {
   cwd: process.cwd(),
   env: process.env,
-  stdio: "inherit"
+  encoding: "utf8",
+  maxBuffer: 20 * 1024 * 1024,
+  stdio: ["ignore", "pipe", "pipe"]
 });
 
 function filesUnder(directory) {
@@ -32,6 +37,8 @@ function filesUnder(directory) {
 
 const secretBytes = Buffer.from(config.bypassSecret);
 const generatedFiles = filesUnder(outputDir);
+const runnerOutput = `${result.stdout || ""}${result.stderr || ""}`;
+const unsafeRunnerOutput = previewOutputHasSensitiveData(runnerOutput, config.bypassSecret);
 const leaked = generatedFiles.filter((file) => {
   const bytes = fs.readFileSync(file);
   if (bytes.includes(secretBytes)) return true;
@@ -42,11 +49,14 @@ const leaked = generatedFiles.filter((file) => {
     '"set-cookie":', "set-cookie:"
   ].some((marker) => text.includes(marker));
 });
-if (leaked.length > 0) {
+if (leaked.length > 0 || unsafeRunnerOutput) {
   fs.rmSync(outputDir, { recursive: true, force: true });
-  console.error("PREVIEW_SECRET_LEAK_DETECTED: generated Preview test artifacts were removed.");
+  console.error("SECURITY_BLOCKED: Preview test output contained credential bytes or sensitive request headers and was removed without being printed.");
   process.exit(1);
 }
+
+if (result.stdout) process.stdout.write(result.stdout);
+if (result.stderr) process.stderr.write(result.stderr);
 
 for (const file of generatedFiles) {
   if (path.basename(file) === "error-context.md" || /\.(png|jpe?g|webp|webm|zip)$/i.test(file)) {
