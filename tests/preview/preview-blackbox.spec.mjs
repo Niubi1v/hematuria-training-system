@@ -24,7 +24,7 @@ function safeRequestMetadata(request) {
 function createSanitizedEvidence(page, scenario) {
   const evidence = {
     scenario,
-    protection: protectionAudits.get(page) || { sameOriginRequests: 0, crossOriginRequests: 0 },
+    protection: protectionAudits.get(page) || { sameOriginRequests: 0, cookieBootstrapRequests: 0, crossOriginRequests: 0 },
     responses: [],
     deployment: undefined
   };
@@ -65,11 +65,20 @@ async function attachSanitizedEvidence(testInfo, collector) {
 
 async function installProtectionBypass(page) {
   const headers = createPreviewProtectionHeaders(preview);
-  const audit = { sameOriginRequests: 0, crossOriginRequests: 0 };
+  const cookieBootstrapHeader = headers["x-vercel-set-bypass-cookie"];
+  const scopedHeaders = { "x-vercel-protection-bypass": headers["x-vercel-protection-bypass"] };
+  let cookieBootstrapSent = false;
+  const audit = { sameOriginRequests: 0, cookieBootstrapRequests: 0, crossOriginRequests: 0 };
   protectionAudits.set(page, audit);
   await page.route((url) => shouldAttachPreviewProtection(url.toString(), preview.baseURL), async (route) => {
     audit.sameOriginRequests += 1;
-    await route.continue({ headers: { ...route.request().headers(), ...headers } });
+    const requestHeaders = { ...route.request().headers(), ...scopedHeaders };
+    if (!cookieBootstrapSent) {
+      requestHeaders["x-vercel-set-bypass-cookie"] = cookieBootstrapHeader;
+      cookieBootstrapSent = true;
+      audit.cookieBootstrapRequests += 1;
+    }
+    await route.continue({ headers: requestHeaders });
   });
 }
 
@@ -83,6 +92,7 @@ async function assertApplicationReached(page, navigationResponse) {
   if (current.hostname === "vercel.com" || current.pathname.startsWith("/login") || current.pathname.startsWith("/sso-api")) {
     throw new Error(`BLOCKED_PREVIEW_AUTH: request ended at ${current.hostname}${current.pathname}; application handlers were not reached.`);
   }
+  expect(current.origin).toBe(new URL(preview.baseURL).origin);
   if (navigationResponse) expect(navigationResponse.status()).toBe(200);
 }
 
@@ -90,6 +100,15 @@ async function gotoCase(page, caseId) {
   const response = await page.goto(`/cases/${caseId}/`, { waitUntil: "domcontentloaded" });
   await assertApplicationReached(page, response);
   await expect(page.getByText(caseId, { exact: true }).first()).toBeVisible();
+}
+
+async function gotoCaseWithReadyAttempt(page, caseId) {
+  const initialized = page.waitForResponse((response) => isTrainingAction(response, "init-attempt"));
+  await gotoCase(page, caseId);
+  const response = await initialized;
+  let error = "";
+  try { error = String((await response.json()).error || ""); } catch { /* Status remains authoritative. */ }
+  expect(response.status(), `init-attempt ${caseId} failed: HTTP ${response.status()} ${error || "unknown_error"}`).toBe(200);
 }
 
 async function switchLanguage(page, label, textboxName) {
@@ -170,7 +189,8 @@ test("protected Preview homepage and health reach the application", async ({ pag
         gitSha: payload.gitSha,
         deploymentSha: payload.deploymentSha,
         patientServiceConfigured: payload.patientServiceConfigured,
-        trainingStateConfigured: payload.trainingStateConfigured
+        trainingStateConfigured: payload.trainingStateConfigured,
+        durableAttemptStoreConfigured: payload.durableAttemptStoreConfigured
       };
     });
     expect(health.status).toBe(200);
@@ -183,7 +203,7 @@ test("protected Preview homepage and health reach the application", async ({ pag
 test("P003 zero-round Chinese submission enters stage two", async ({ page }, testInfo) => {
   const collector = createSanitizedEvidence(page, "P003-zero-round-zh");
   try {
-    await gotoCase(page, "P003");
+    await gotoCaseWithReadyAttempt(page, "P003");
     await submitFirstStage(page, "zh");
     await enterSecondStage(page, "zh");
   } finally {
@@ -194,7 +214,7 @@ test("P003 zero-round Chinese submission enters stage two", async ({ page }, tes
 test("P001 Chinese live-AI round survives refresh and double submission", async ({ page }, testInfo) => {
   const collector = createSanitizedEvidence(page, "P001-one-round-zh-refresh-double-submit");
   try {
-    await gotoCase(page, "P001");
+    await gotoCaseWithReadyAttempt(page, "P001");
     await askOneLiveAiQuestion(page, "zh");
     const patientMessages = await page.getByText("标准化患者", { exact: true }).count();
     await page.reload({ waitUntil: "domcontentloaded" });
@@ -210,7 +230,7 @@ test("P001 Chinese live-AI round survives refresh and double submission", async 
 test("P001 English live-AI round submits and enters stage two", async ({ page }, testInfo) => {
   const collector = createSanitizedEvidence(page, "P001-one-round-en");
   try {
-    await gotoCase(page, "P001");
+    await gotoCaseWithReadyAttempt(page, "P001");
     await switchLanguage(page, "English", "Enter an interview question");
     await askOneLiveAiQuestion(page, "en");
     await submitFirstStage(page, "en");
@@ -223,7 +243,7 @@ test("P001 English live-AI round submits and enters stage two", async ({ page },
 test("P001 switches Chinese to English and back without reusing an invalid attempt", async ({ page }, testInfo) => {
   const collector = createSanitizedEvidence(page, "P001-zh-en-zh");
   try {
-    await gotoCase(page, "P001");
+    await gotoCaseWithReadyAttempt(page, "P001");
     await switchLanguage(page, "English", "Enter an interview question");
     await switchLanguage(page, "中文", "输入问诊问题");
     await submitFirstStage(page, "zh");

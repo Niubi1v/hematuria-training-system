@@ -31,11 +31,27 @@ function filesUnder(directory) {
 }
 
 const secretBytes = Buffer.from(config.bypassSecret);
-const leaked = filesUnder(outputDir).filter((file) => fs.readFileSync(file).includes(secretBytes));
+const generatedFiles = filesUnder(outputDir);
+const leaked = generatedFiles.filter((file) => {
+  const bytes = fs.readFileSync(file);
+  if (bytes.includes(secretBytes)) return true;
+  const text = bytes.toString("utf8").toLowerCase();
+  return [
+    '"authorization":', "authorization:",
+    '"cookie":', "cookie:",
+    '"set-cookie":', "set-cookie:"
+  ].some((marker) => text.includes(marker));
+});
 if (leaked.length > 0) {
   fs.rmSync(outputDir, { recursive: true, force: true });
   console.error("PREVIEW_SECRET_LEAK_DETECTED: generated Preview test artifacts were removed.");
   process.exit(1);
+}
+
+for (const file of generatedFiles) {
+  if (path.basename(file) === "error-context.md" || /\.(png|jpe?g|webp|webm|zip)$/i.test(file)) {
+    fs.rmSync(file, { force: true });
+  }
 }
 
 console.log("Preview artifact credential scan passed.");

@@ -35,7 +35,10 @@ export function createPreviewProtectionHeaders(config) {
   if (!config || config.blocked || !config.bypassSecret) {
     throw new Error("BLOCKED_PREVIEW_AUTH: preview protection credentials are unavailable.");
   }
-  return { "x-vercel-protection-bypass": config.bypassSecret };
+  return {
+    "x-vercel-protection-bypass": config.bypassSecret,
+    "x-vercel-set-bypass-cookie": "true"
+  };
 }
 
 export function shouldAttachPreviewProtection(requestUrl, baseURL) {

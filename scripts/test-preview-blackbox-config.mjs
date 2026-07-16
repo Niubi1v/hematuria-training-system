@@ -24,7 +24,8 @@ assert.equal(ready.baseURL, DEFAULT_PREVIEW_URL);
 assert.equal(ready.bypassSecret, secret);
 assert.equal(ready.baseURL.includes(secret), false, "the bypass secret must never enter the URL");
 assert.deepEqual(createPreviewProtectionHeaders(ready), {
-  "x-vercel-protection-bypass": secret
+  "x-vercel-protection-bypass": secret,
+  "x-vercel-set-bypass-cookie": "true"
 });
 assert.equal(shouldAttachPreviewProtection(`${DEFAULT_PREVIEW_URL}api/health/`, DEFAULT_PREVIEW_URL), true);
 assert.equal(shouldAttachPreviewProtection("http://127.0.0.1:3000/api/health/", DEFAULT_PREVIEW_URL), false);
