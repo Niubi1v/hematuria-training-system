@@ -124,11 +124,11 @@ async function askOneLiveAiQuestion(page, language) {
   const input = page.getByRole("textbox", { name: english ? "Enter an interview question" : "输入问诊问题" });
   const send = page.getByRole("button", { name: english ? "Send" : "发送", exact: true });
   await expect(input).toBeVisible();
+  await input.fill(english ? "When did you first notice blood in your urine?" : "您最早什么时候发现尿里有血？");
   await expect(send).toBeEnabled();
 
   const patientResponse = page.waitForResponse((response) => new URL(response.url()).pathname === "/api/agent-chat/" && response.request().method() === "POST");
   const historyResponse = page.waitForResponse((response) => isTrainingAction(response, "history-log"));
-  await input.fill(english ? "When did you first notice blood in your urine?" : "您最早什么时候发现尿里有血？");
   await send.click();
 
   const patient = await patientResponse;

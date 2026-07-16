@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 
 const ENV_NAMES = [
   "TRAINING_ATTEMPT_STORE_MODE",
+  "AGENT_REQUEST_STORE_MODE",
   "TRAINING_STATE_SECRET",
   "UPSTASH_REDIS_REST_URL",
   "UPSTASH_REDIS_REST_TOKEN",
@@ -123,6 +124,47 @@ async function main() {
   assert.equal(serializedHealth.includes("vercel-kv.example.test"), false);
   assert.equal(serializedHealth.includes("unit-test-invalid-write-token"), false);
   assert.equal(serializedHealth.includes("unit-test-read-only-token"), false);
+
+  const agentStore = require("../server/agentRequestStore.js");
+  clearStoreEnv();
+  process.env.AGENT_REQUEST_STORE_MODE = "upstash";
+  process.env.KV_REST_API_URL = "https://vercel-kv.example.test";
+  process.env.KV_REST_API_TOKEN = "unit-test-kv-write-token";
+  const redisResults = [
+    JSON.stringify({ kind: "owner" }),
+    JSON.stringify({ kind: "owner" }),
+    JSON.stringify({ kind: "committed" }),
+    1
+  ];
+  const agentUrls: string[] = [];
+  globalThis.fetch = async (input, init) => {
+    agentUrls.push(String(input));
+    assert.equal(String((init?.headers as Record<string, string>)?.Authorization || ""), "Bearer unit-test-kv-write-token");
+    return { ok: true, json: async () => ({ result: redisResults.shift() }) } as Response;
+  };
+  const agentResult = await agentStore.executeIdempotentAgentRequest({
+    sessionId: "session-test",
+    idempotencyKey: "request-test",
+    clientId: "client-test",
+    body: { caseId: "P001", attemptId: "attempt-test", studentInput: "test" }
+  }, async () => ({ answer: "test-answer" }));
+  assert.deepEqual(agentResult, { answer: "test-answer" });
+  assert.equal(agentUrls.length, 4);
+  assert.equal(agentUrls.every((url) => url === "https://vercel-kv.example.test"), true);
+
+  clearStoreEnv();
+  process.env.AGENT_REQUEST_STORE_MODE = "upstash";
+  process.env.KV_REST_API_URL = "https://vercel-kv.example.test";
+  process.env.KV_REST_API_READ_ONLY_TOKEN = "unit-test-read-only-token";
+  await assert.rejects(
+    agentStore.executeIdempotentAgentRequest({
+      sessionId: "session-test",
+      idempotencyKey: "request-readonly-test",
+      clientId: "client-test",
+      body: { caseId: "P001", attemptId: "attempt-test", studentInput: "test" }
+    }, async () => ({ answer: "must-not-run" })),
+    (error: Error) => error.message === "agent_request_store_unavailable"
+  );
 
   console.log("Training attempt store credential compatibility and safe health contract passed.");
 }

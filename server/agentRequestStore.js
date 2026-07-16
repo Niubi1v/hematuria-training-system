@@ -1,4 +1,5 @@
 const crypto = require("node:crypto");
+const { resolveRedisRestCredentials } = require("./redisRestCredentials.js");
 
 const REQUEST_TTL_SECONDS = 24 * 60 * 60;
 const WAIT_TIMEOUT_MS = 20_000;
@@ -88,14 +89,16 @@ function storeMode() {
   const configured = String(process.env.AGENT_REQUEST_STORE_MODE || process.env.TRAINING_ATTEMPT_STORE_MODE || "").toLowerCase();
   if (configured === "memory") return "memory";
   if (configured === "upstash") return "upstash";
-  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) return "upstash";
+  const credentials = resolveRedisRestCredentials();
+  if (credentials.url && credentials.token) return "upstash";
   if (process.env.VERCEL || process.env.NODE_ENV === "production") return "unavailable";
   return "memory";
 }
 
 async function upstash(command) {
-  const url = String(process.env.UPSTASH_REDIS_REST_URL || "").replace(/\/+$/, "");
-  const token = String(process.env.UPSTASH_REDIS_REST_TOKEN || "");
+  const credentials = resolveRedisRestCredentials();
+  const url = credentials.url.replace(/\/+$/, "");
+  const token = credentials.token;
   if (!url || !token) throw new Error("agent_request_store_unavailable");
   let response;
   try {
@@ -193,7 +196,8 @@ function assertInputs(sessionId, idempotencyKey) {
   if (!String(idempotencyKey || "").trim()) throw new Error("idempotency_key_required");
   const mode = storeMode();
   if (mode === "unavailable") throw new Error("agent_request_store_unavailable");
-  if (mode === "upstash" && (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN)) {
+  const credentials = resolveRedisRestCredentials();
+  if (mode === "upstash" && (!credentials.url || !credentials.token)) {
     throw new Error("agent_request_store_unavailable");
   }
   return mode;
