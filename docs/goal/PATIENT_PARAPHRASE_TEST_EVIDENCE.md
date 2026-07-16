@@ -4,7 +4,7 @@
 
 ## 失败基线
 
-命令：`tsx scripts/test-patient-intent-normalization.ts`（修复前）  
+命令：`tsx scripts/test-patient-intent-normalization.ts`（修复前）
 退出码：1
 
 `totalQuestions=74, canonicalHits=8, canonicalHitRate=0.1081, erroneousUnknowns=37, erroneousUnknownRate=0.5, polarityErrors=67, polarityErrorRate=0.9054, compoundComplete=true, failures=245`
@@ -13,7 +13,7 @@
 
 ## 修复后专项
 
-命令：`pnpm run test:patient-intents`  
+命令：`pnpm run test:patient-intents`
 退出码：0
 
 - 86个否定、反问、选择、口语及中英文问题：86/86 canonical命中；错误unknown=0；极性错误=0；复合三事实完整。

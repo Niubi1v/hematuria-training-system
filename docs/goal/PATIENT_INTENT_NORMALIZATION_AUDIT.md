@@ -1,6 +1,6 @@
 # Patient Intent Normalization Audit
 
-审计日期：2026-07-17（Asia/Shanghai）  
+审计日期：2026-07-17（Asia/Shanghai）
 起始HEAD：`8014045d92ae310250baa5299bc424147263a012`
 
 ## 当前真实运行链
