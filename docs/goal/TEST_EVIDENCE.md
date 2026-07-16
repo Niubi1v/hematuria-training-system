@@ -1033,3 +1033,34 @@ Actions：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/294
 | Node 22远程 | PASS：Actions run `29499921918`；Vercel与Preview Comments PASS，Pages deploy skipped |
 
 完整`pnpm run test:e2e:preview`在真实Preview导航层出现间歇性连接关闭/超时；失败请求没有进入应用API。未增加自动retry或放宽业务断言，改以同一SHA的零retry逐场景运行补齐缺失场景。所有专用生成物随后按实际凭据字节及Cookie/Authorization标记扫描并清理。
+
+## Preview 10次session、中文5次、英文5次与P95（2026-07-17）
+
+| 命令/范围 | 结果 | 关键指标 |
+|---|---|---|
+| Playwright `--grep 'initializes 10 fresh training sessions'` | exit 0，1 passed，13.3s | P001–P010=10/10；端到端P95 2504ms；server session P95 100ms |
+| Playwright `--grep '5 live AI zh answers'` | exit 0，1 passed，14.4s | 5/5 live_ai/DeepSeek/非fallback；answer P95 1623ms；provider 1210ms；firsttoken 878ms；history 6ms |
+| Playwright `--grep '5 live AI en answers'` | exit 0，1 passed，16.8s | 5/5 live_ai/DeepSeek/非fallback；answer P95 1377ms；provider 1060ms；firsttoken 877ms；history 11ms；UI dispatch 43ms |
+| `test-performance-timing.ts`、`test-agent-api-security.ts`、`test-training-api.ts`、Preview配置合同 | exit 0 | 标准/平台兼容头同值且仅允许指标；CORS与非泄露合同通过 |
+| TypeScript、ESLint、82页build、repository scan | exit 0 | 82/82；311 tracked/candidate；`data/**`零差异 |
+| Actions run `29532192980` | success | Node 22.14、完整Playwright 68/68、构建、bundle、scanner、clean gate通过 |
+
+测试输出不含问题/回答正文、session/attempt ID、签名、Cookie、Authorization或环境变量值。Preview专用目录最终仅1个`.last-run.json`，实际Automation Bypass字节及敏感header标记扫描命中0。
+
+失败证据保留在文字记录中：标准`Server-Timing`在Vercel响应缺失；变体问法的首轮中文为3/5 live AI，P003/P004分别因`compound_question_preserves_all_facts`与`unsafe_deterministic_answer`被安全隔离；英文首轮点击到响应9221ms经分段后确认provider仅802ms，随后精确计时证明UI dispatch P95=43ms。未删除断言或把这些基线改写成通过。
+
+## 2026-07-17 42例双语七阶段工程验收
+
+| 命令/场景 | 结果 | 关键证据 |
+|---|---|---|
+| `pnpm run test:42-stage-flow` | PASS，exit 0，0.9秒 | 42 cases、84 journeys、588 stage submissions、84 score reports、maxScore 360 |
+| `playwright ... 42-bilingual-stage-flow.spec.mjs --project=desktop-chromium`（外部受控Next server） | PASS，exit 0，3.3分钟 | 42例×中文/英文共84条完整UI七阶段旅程；1 passed、1按项目skip |
+| `playwright ... 42-bilingual-stage-flow.spec.mjs --project=mobile-chromium`（外部受控Next server） | PASS，exit 0，3.1秒 | P001英文移动端完整七阶段；1 passed、1按项目skip |
+| 完整`playwright test`（外部受控Next server） | PASS，exit 0，3.4分钟 | 72项：70 passed、2个互斥项目skip、0 failed；desktop/mobile、axe、会话/重连、日志同步、双击、刷新及七阶段矩阵 |
+| `pnpm run test` | PASS，exit 0，33.5秒 | 完整行为/安全/医学治理；新42×双语阶段handler矩阵纳入默认链 |
+| `pnpm run typecheck` | PASS，exit 0 | 沙箱内首次因现有`xlsx`目录联接不可见exit 2；沙箱外同命令2.0秒通过 |
+| `pnpm run lint` | PASS，exit 0，3.6秒 | 新脚本、Playwright及Preview稳定性测试无lint错误 |
+
+测试运行器证据边界：两次由Playwright自管`next dev`的运行均已完成目标断言，但Windows子进程未退出导致外层exit 124；改为显式受控Next进程与`PLAYWRIGHT_EXTERNAL_SERVER=1`后专项和全量均正常exit 0。此前一次`pnpm run test:e2e -- ...`把`--`当字面参数并误启动全套，不作为门禁通过证据。未增加retry、timeout断言或放宽安全检查来制造通过。
+
+该矩阵验证路由、签名attempt、阶段顺序、UI解锁和360分报告生成；不验证训练占位文本的医学正确性，也不改变或批准任何医学事实。

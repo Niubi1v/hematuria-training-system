@@ -407,3 +407,23 @@
 - **严重度/状态**：P2观察项；OPEN_EXTERNAL_NETWORK，不阻断已取得的应用层逐场景证据。
 - **证据**：同一`3fe409f`部署在串行黑盒中偶发`ERR_TIMED_OUT`或`ERR_CONNECTION_CLOSED`，对应场景同源请求计数1、应用API响应0；立即以零retry单场景运行可通过。未观察到HTTP应用错误或失败provider调用。
 - **处置**：未增加Playwright retry、延长timeout或放宽断言。长期QA应继续记录发生频率、地区与时间；若稳定复现再按网络/CDN层调查。
+
+### HEM-P0-018 / HEM-P1-019 / HEM-P1-020 / HEM-P1-021关闭补证（2026-07-17）
+
+- **状态**：工程与Preview配置阻塞已解除；不等同于Production发布或医学验收。
+- **证据**：`8e7d148` Preview health两项配置为true；session 10/10；中文/英文live DeepSeek各5/5；history-log 10/10；回答来源均非fallback；session/回答/provider/firsttoken/history/UI dispatch P95均有白名单响应头证据且满足当前门槛。
+- **安全边界**：未读取或输出任何Vercel、Redis、LLM或签名凭据；没有将时间写入JSON；没有关闭Vercel保护、签名、attempt、session、预算、熔断或日志验证。
+- **剩余项**：Production 10+5+5和正式live alias需要生产权限；自然度仍需人工样本终验；`EXT-PREVIEW-NETWORK-20260716-02`继续作为P2网络观察；HEM-P0-001/023仍需具名医学裁决。
+
+### HEM-P1-044 Vercel未透传标准Server-Timing（已解除）
+
+- **失败基线**：Preview `/api/session/init/` HTTP 200，但全部响应头名称中没有`server-timing`，导致线上首Token/P95不可审计；本地handler合同通过。
+- **修复**：保留标准`Server-Timing`并增加同值`X-Hematuria-Timing`，两者都由同一白名单格式化器生成；CORS只额外暴露该非敏感头。
+- **验证**：真实Preview成功读取session/provider/firsttoken/history指标；TypeScript、ESLint、性能/Agent/training合同、Node22 CI、bundle和repository扫描通过。
+
+### ACC-P1-045 42例双语完整七阶段缺少可执行证据（本地工程关闭）
+
+- **原状态**：强制验收矩阵只有局部阶段、单病例和API合同，没有42例×中英文从初始化到最终360分报告的完整可重复证据。
+- **补证**：新增服务端真实handler矩阵和桌面浏览器84条完整旅程；移动端补一条完整代表旅程。服务端共588次阶段提交和84份报告，浏览器共84条桌面旅程，均未跳过token、stage、case、language、mode或幂等校验。
+- **结果**：专项与完整Playwright均exit 0；完整行为链将该矩阵纳入默认门禁。该关闭仅针对工程流程证据，医学正确性、真实AI自然度、Production服务与真实设备软键盘不在关闭范围。
+- **远程状态**：当前为本地候选，Node 22 CI及新Preview构建待普通push后记录；在新HEAD绿灯前不写成远程通过。

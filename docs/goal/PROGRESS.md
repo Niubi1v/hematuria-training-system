@@ -536,3 +536,19 @@
 - `3fe409f` Preview health HTTP 200，`trainingStateConfigured=true`、`durableAttemptStoreConfigured=true`、来源`vercel_kv_rest`。P003零轮提交成功进入第二阶段；P001中文/英文均取得`live_ai`、DeepSeek、非fallback和`history-log=200`；刷新后`validate-attempt=200`，快速双击仅观察到1个`stage-feedback`；中英双向切换后合法提交成功。
 - 完整套件多次被Preview导航层间歇性`ERR_TIMED_OUT`/`ERR_CONNECTION_CLOSED`打断，但失败时无应用API响应；同一部署的逐场景零retry复测补齐5/5业务证据。生成物凭据扫描通过，仅保留`.last-run.json`，未保留截图、trace、Cookie、Authorization或任何变量值。
 - Actions run `29499921918`在Node 22完成并通过，Vercel deployment `64SACrqWNGNuhtcM22gnQsZBE7tD`及Preview Comments通过；PR #1保持Draft，Pages deploy按规则skipped，未部署Production，`data/**`零差异。
+
+### Preview 10+5+5稳定性与性能补证（2026-07-17）
+
+- 失败基线证明Vercel Preview没有透传handler本地已设置的标准`Server-Timing`。保持标准头不变，同时增加只含`app/provider/firsttoken/session/history/score`白名单毫秒值的`X-Hematuria-Timing`；不写入JSON，不含病例内容、request/session ID、token或凭据。Vercel官方文档允许自定义响应头，实测新头可读。
+- 新增`test:e2e:preview:stability`，每个样本零自动retry并只记录caseId、HTTP状态、回答来源及允许的时间指标。测试基础设施先修复三个自身问题：失败页面未结算promise导致browser级联关闭、英文复用context后的语言偏好污染、把Playwright点击调度等待误算为AI请求耗时。没有修改产品session/token/AI状态逻辑，也没有放宽3秒门槛。
+- 当前`8e7d148e3459f3b960161903fba9214998661635` Preview：P001–P010 session一次性10/10，端到端P95=2504ms、服务端P95=100ms；中文P001–P005 live DeepSeek 5/5，回答P95=1623ms、provider P95=1210ms、首Token P95=878ms、history P95=6ms；英文5/5，回答P95=1377ms、provider P95=1060ms、首Token P95=877ms、history P95=11ms、UI dispatch P95=43ms。
+- 变体问法基线曾在P003返回`compound_question_preserves_all_facts`、P004返回`unsafe_deterministic_answer`，两者history-log仍200；这是既有安全边界而非provider失败。稳定性门禁改用仓库`smoke-production.mjs`既有单slot onset问法，并以不同病例避免缓存；没有把安全fallback冒充live AI。
+- Actions run `29532192980`、Vercel deployment `6X9d21RfowZJWvBMSpbSzTfRvvHb`和Preview Comments均success；Pages deploy按Draft规则skipped。当前下一强制缺口为42例×双语完整七阶段，而Production 10+5+5仍需生产权限/正式部署。
+
+### 42例×双语完整七阶段工程矩阵（2026-07-17，本地候选）
+
+- 新增服务端真实handler矩阵：42例中文与英文共84条attempt依次完成7个受签名阶段，得到588次合法`stage-feedback`和84份`max=360`最终报告；token、case、language、mode、阶段锁及幂等均保持服务端权威。
+- 新增浏览器矩阵：桌面端P001–P042中英文共84条UI旅程全部完成七阶段并渲染最终360分报告；移动端P001英文代表旅程同样完成。测试仅用明显的训练占位输入满足UI字段完整性，不断言医学答案得分，不把流程通过写成医学正确性通过。
+- 专项结果：服务端矩阵exit 0（0.9秒）；桌面浏览器1 passed/1 skip（3.3分钟）；移动端1 passed/1 skip（3.1秒）。完整Playwright为70 passed/2按项目隔离skip/0 failed（3.4分钟，exit 0）。
+- 完整行为链33.5秒exit 0，含42例、572事实、153/419严格分离、419零自动批准、18条冲突隔离及360分；TypeScript和ESLint exit 0。沙箱内`xlsx`目录联接不可见造成的两次基础设施失败已在沙箱外以相同命令通过，不登记为产品失败。
+- `data/**`、医学事实、419审核决定、18条冲突、42例`needs_revision`和360评分算法均未修改。当前候选仍需小步提交、普通push及Node 22 CI；Production 10+5+5、医学裁决、人工自然度和真实设备键盘验收继续保持阻塞/人工。

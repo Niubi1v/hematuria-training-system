@@ -440,3 +440,17 @@
 - 完整串行运行受Preview网络间歇断连影响，未取得单次5/5整套绿色；同一SHA逐场景零retry已补齐全部业务场景。该限制记录为`EXT-PREVIEW-NETWORK-20260716-02`，不得伪写为网络稳定性通过。
 - Actions run `29499921918`在Node 22通过，Vercel deployment `64SACrqWNGNuhtcM22gnQsZBE7tD`及Preview Comments通过；PR #1仍为Draft，Pages deploy skipped，未合并main或部署Production。
 - 回滚按提交逆序普通执行：`git revert 3fe409f ec74d16 a405f71`。未修改`data/**`、医学事实、审核状态、419条决定或`needs_revision`。
+
+### 2026-07-17 Preview强制稳定性证据
+
+- 当前工程候选`8e7d148`已在受保护Preview完成10次全新session、中文5次与英文5次真实DeepSeek。session 10/10、history-log 10/10均为HTTP 200；真实AI 10/10为`live_ai`、DeepSeek、非fallback。
+- P95：session端到端2504ms、server session 100ms；中文answer/provider/firsttoken/history为1623/1210/878/6ms；英文为1377/1060/877/11ms；英文UI dispatch为43ms。所有当前3秒性能门槛通过。
+- 标准`Server-Timing`在Vercel响应被实测缺失；新增同白名单、同值的`X-Hematuria-Timing`作为平台兼容证据通道，继续保留标准头。没有暴露正文、ID、token、签名或凭据。
+- Actions run `29532192980`、Vercel deployment `6X9d21RfowZJWvBMSpbSzTfRvvHb`、Preview Comments均通过，PR #1仍为Draft，Pages deploy skipped。Production 10+5+5、正式live alias、42例双语完整七阶段和医学专家裁决仍未完成，项目不得宣称生产完成。
+
+### 2026-07-17 42例双语完整七阶段本地工程结论
+
+- 42例中英文完整训练工程流程已补齐：服务端84条签名attempt依次完成七阶段并生成84份360分报告；桌面浏览器42例×双语84条完整UI旅程全部完成，移动端P001代表旅程完成。
+- 完整Playwright结果为70 passed、2个互斥项目skip、0 failed，exit 0；完整行为链、TypeScript和ESLint均exit 0。新增测试没有放宽签名、session、attempt、stage、origin、医学隔离或评分安全边界。
+- 本结论不代表训练占位答案医学正确，不代表Production真实AI通过，也不替代42例`needs_revision`、419条人工审核、HEM-P0-001/023具名医学裁决、人工自然度和真实设备键盘验收。
+- 当前候选需经diff/secret/data零差异检查后小步提交并普通push；新HEAD的Node 22 Actions、Vercel deployment和Preview Comments必须重新记录。PR继续Draft，不Ready、不合并main、不部署Production。
