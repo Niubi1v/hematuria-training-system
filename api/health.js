@@ -4,7 +4,7 @@ function allowedOrigins() {
 }
 
 const { signingSecretConfigured } = require("../server/trainingState.js");
-const { durableAttemptStoreConfigured } = require("../server/trainingAttemptStore.js");
+const { attemptStoreCredentialSource, durableAttemptStoreConfigured } = require("../server/trainingAttemptStore.js");
 
 module.exports = function handler(req, res) {
   const origin = String(req.headers?.origin || "");
@@ -24,6 +24,7 @@ module.exports = function handler(req, res) {
     patientServiceConfigured: Boolean(process.env.LLM_API_KEY && process.env.LLM_API_BASE_URL && process.env.LLM_MODEL),
     trainingStateConfigured: signingSecretConfigured() && (!process.env.VERCEL || durableAttemptStoreConfigured()),
     durableAttemptStoreConfigured: durableAttemptStoreConfigured(),
+    durableAttemptStoreCredentialSource: attemptStoreCredentialSource(),
     cloudTtsConfigured: Boolean(process.env.AZURE_SPEECH_KEY && process.env.AZURE_SPEECH_REGION),
     allowedOriginConfigured: allowed.length > 0,
     apiVersion: "2.6.0"

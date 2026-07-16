@@ -190,10 +190,14 @@ test("protected Preview homepage and health reach the application", async ({ pag
         deploymentSha: payload.deploymentSha,
         patientServiceConfigured: payload.patientServiceConfigured,
         trainingStateConfigured: payload.trainingStateConfigured,
-        durableAttemptStoreConfigured: payload.durableAttemptStoreConfigured
+        durableAttemptStoreConfigured: payload.durableAttemptStoreConfigured,
+        durableAttemptStoreCredentialSource: payload.durableAttemptStoreCredentialSource
       };
     });
     expect(health.status).toBe(200);
+    expect(health.trainingStateConfigured).toBe(true);
+    expect(health.durableAttemptStoreConfigured).toBe(true);
+    expect(["upstash_rest", "vercel_kv_rest", "mixed_rest"]).toContain(health.durableAttemptStoreCredentialSource);
     collector.evidence.deployment = health;
   } finally {
     await attachSanitizedEvidence(testInfo, collector);

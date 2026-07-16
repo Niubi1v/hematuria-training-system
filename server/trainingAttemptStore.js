@@ -35,11 +35,32 @@ function pruneIdempotency(record) {
   }
 }
 
+function resolveAttemptStoreCredentials() {
+  const upstashUrl = String(process.env.UPSTASH_REDIS_REST_URL || "").trim();
+  const upstashToken = String(process.env.UPSTASH_REDIS_REST_TOKEN || "").trim();
+  const kvUrl = String(process.env.KV_REST_API_URL || "").trim();
+  const kvToken = String(process.env.KV_REST_API_TOKEN || "").trim();
+  const url = upstashUrl || kvUrl;
+  const token = upstashToken || kvToken;
+  let source = "none";
+  if (url && token) {
+    if (upstashUrl && upstashToken) source = "upstash_rest";
+    else if (!upstashUrl && !upstashToken && kvUrl && kvToken) source = "vercel_kv_rest";
+    else source = "mixed_rest";
+  }
+  return { url, token, source };
+}
+
+function attemptStoreCredentialSource() {
+  return storeMode() === "upstash" ? resolveAttemptStoreCredentials().source : "none";
+}
+
 function storeMode() {
   const configured = String(process.env.TRAINING_ATTEMPT_STORE_MODE || "").toLowerCase();
   if (configured === "memory") return "memory";
   if (configured === "upstash") return "upstash";
-  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) return "upstash";
+  const credentials = resolveAttemptStoreCredentials();
+  if (credentials.url && credentials.token) return "upstash";
   if (process.env.VERCEL || process.env.NODE_ENV === "production") return "unavailable";
   return "memory";
 }
@@ -47,19 +68,22 @@ function storeMode() {
 function assertStoreConfigured() {
   const mode = storeMode();
   if (mode === "unavailable") throw new Error("training_attempt_store_unavailable");
-  if (mode === "upstash" && (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN)) {
+  const credentials = resolveAttemptStoreCredentials();
+  if (mode === "upstash" && (!credentials.url || !credentials.token)) {
     throw new Error("training_attempt_store_unavailable");
   }
   return mode;
 }
 
 function durableAttemptStoreConfigured() {
-  return storeMode() === "upstash" && Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+  const credentials = resolveAttemptStoreCredentials();
+  return storeMode() === "upstash" && Boolean(credentials.url && credentials.token);
 }
 
 async function upstash(command) {
-  const url = String(process.env.UPSTASH_REDIS_REST_URL || "").replace(/\/+$/, "");
-  const token = String(process.env.UPSTASH_REDIS_REST_TOKEN || "");
+  const credentials = resolveAttemptStoreCredentials();
+  const url = credentials.url.replace(/\/+$/, "");
+  const token = credentials.token;
   if (!url || !token) throw new Error("training_attempt_store_unavailable");
   let response;
   try {
@@ -236,6 +260,7 @@ function resetMemoryAttemptStore() {
 }
 
 module.exports = {
+  attemptStoreCredentialSource,
   assertStoreConfigured,
   commitAttempt,
   digest,
