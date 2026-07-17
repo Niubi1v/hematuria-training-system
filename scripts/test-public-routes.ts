@@ -5,6 +5,7 @@ import { publicCaseHref, publicPageHref } from "../src/lib/publicRoutes";
 const displayIds = publicCases.map((item) => item.displayCaseId || item.id);
 assert.equal(displayIds.length, 42, "public route contract must cover all 42 cases");
 assert.deepEqual(displayIds, Array.from({ length: 42 }, (_, index) => `P${String(index + 1).padStart(3, "0")}`));
+assert.equal(displayIds.includes("P999"), false, "unknown display IDs must not enter generated static parameters");
 
 for (const caseId of displayIds) {
   assert.equal(publicCaseHref(caseId), `/cases/${caseId}/`);
