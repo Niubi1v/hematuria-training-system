@@ -7,7 +7,12 @@ process.env.LLM_ENABLE_AI_PATIENT = "false";
 
 const cases = require("../data/cases.json") as Array<{ id: string }>;
 const { matchCanonicalPatientFacts } = require("../server/canonicalFacts.js") as {
-  matchCanonicalPatientFacts(caseId: string, question: string, language: "en"): { replyText: string; matchedSlotIds: string[] } | null;
+  matchCanonicalPatientFacts(caseId: string, question: string, language: "en"): {
+    replyText: string;
+    matchedSlotIds: string[];
+    collectableSlotIds?: string[];
+    factValues?: Record<string, boolean | "unknown">;
+  } | null;
 };
 const { matchStructuredFacts } = require("../server/structuredFacts.js") as {
   matchStructuredFacts(caseData: unknown, question: string, language: "en"): { replyText: string; matchedSlotIds: string[] } | null;
@@ -39,10 +44,11 @@ async function main() {
   assert.equal(cases.length, 42);
   let projected = 0;
   let safetyBlocked = 0;
+  let canonicalUnknown = 0;
   for (const caseData of cases) {
     for (const probe of probes) {
-      const routed = matchStructuredFacts(caseData, probe.question, "en")
-        || matchCanonicalPatientFacts(caseData.id, probe.question, "en");
+      const canonical = matchCanonicalPatientFacts(caseData.id, probe.question, "en");
+      const routed = canonical || matchStructuredFacts(caseData, probe.question, "en");
       assert.ok(routed, `${caseData.id}/${probe.id} route`);
       assert.deepEqual(routed.matchedSlotIds, probe.expected, `${caseData.id}/${probe.id} slots`);
 
@@ -59,6 +65,15 @@ async function main() {
         assert.ok(result.safetyFlags?.includes("deterministic_answer_blocked"));
         continue;
       }
+      if (result.fallbackReason === "canonical_fact_unknown") {
+        canonicalUnknown += 1;
+        assert.ok(canonical, `${caseData.id}/${probe.id} unknown must come from canonical governance`);
+        assert.ok(Object.values(canonical.factValues || {}).every((value) => value === "unknown"));
+        assert.deepEqual(canonical.collectableSlotIds || [], []);
+        assert.deepEqual(result.matchedSlotIds || [], [], `${caseData.id}/${probe.id} unknown must not be collectable`);
+        assert.ok(!GENERIC_UNKNOWN.has(String(result.replyText || "")), `${caseData.id}/${probe.id} natural unknown`);
+        continue;
+      }
 
       projected += 1;
       assert.deepEqual(result.matchedSlotIds || [], probe.expected, `${caseData.id}/${probe.id} public slots`);
@@ -69,7 +84,7 @@ async function main() {
   }
 
   assert.ok(projected > 0);
-  console.log(`Patient safe projection preserved ${projected} approved route replies; ${safetyBlocked} unsafe sources stayed blocked.`);
+  console.log(`Patient safe projection preserved ${projected} approved route replies; ${safetyBlocked} unsafe sources stayed blocked; ${canonicalUnknown} governed unknown facts stayed non-collectable.`);
 }
 
 main().catch((error) => {
