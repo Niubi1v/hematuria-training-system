@@ -20,4 +20,11 @@ const playwrightConfig = fs.readFileSync(path.resolve("playwright.config.mjs"), 
 assert.match(playwrightConfig, /command:\s*"node node_modules\/next\/dist\/bin\/next dev"/);
 assert.doesNotMatch(playwrightConfig, /command:\s*"pnpm run dev"/);
 
-console.log("Next runtime configuration keeps development routing dynamic, owns the test server directly and preserves static production output.");
+const deployWorkflow = fs.readFileSync(path.resolve(".github/workflows/deploy.yml"), "utf8");
+const e2eStep = deployWorkflow.match(/- name: Playwright E2E([\s\S]*?)\n\s*- name:/)?.[1] || "";
+const e2eStepBudget = Number(e2eStep.match(/timeout-minutes:\s*(\d+)/)?.[1]);
+assert.ok(e2eStepBudget >= 10, "the expanded 72-test E2E gate needs a bounded budget of at least 10 minutes");
+assert.match(e2eStep, /run:\s*pnpm run test:e2e/);
+assert.doesNotMatch(e2eStep, /--retries|--timeout/);
+
+console.log("Next runtime configuration preserves dynamic development routing, static production output and a bounded CI E2E budget without retries.");
