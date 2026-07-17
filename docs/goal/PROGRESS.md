@@ -570,3 +570,11 @@
 - Preview配置继续关闭trace、video和screenshot，仅允许目标Preview origin注入；缺少环境变量时保持`BLOCKED_PREVIEW_AUTH`。本地配置测试、canary、ESLint和repository secret scan均通过；真实Preview须在该原子提交推送并完成远程门禁后再运行。
 - QA对HEM-P2-028给出`1 request / 1 ID / 1 event`本地关闭证据；HEM-P1-030/031/032为6,216/6,216与168/168零失败，均不再修改。161个来源问题仍为`BLOCKED_SOURCE_REVISION`。Pages旧部署差异只登记部署来源，不修改已通过的路由合同。
 - 公开GitHub API独立确认Pages来源为`main`/workflow，最新deployment `5410354110`对应`5a3ad1199ae5e591160f12e410260287f0051875`（2026-07-12）。该历史构建的`cases_public.json`仅P001–P012使用显示ID，P013–P042的30张卡仍以`HX-ADD-001`–`HX-ADD-030`作为href内部ID；这解释了QA观察的12当前路由/30旧路由。当前Production Goal `221b22e`未部署到Pages，故保持`BLOCKED_DEPLOYMENT_MISMATCH`，不修改当前路由代码。
+
+### Patient intent normalization首批15项与CI恢复候选（2026-07-17）
+
+- 在保留首批4项的基础上完成11项扩展；共享catalog现有15 intent、190 alias。42例×15 intent×3中文/2英文共3,150问：3,150/3,150 canonical命中，1,370 known错误unknown=0、极性错误=0；1,715 correct unknown不收集；65次医学冲突保持隔离。
+- canonical matcher现优先于旧structured matcher；治理slot与可计分slot分离。未知、双语不一致和待审核事实不会因alias命中而被当成negative或收集；已知事实才返回明确有/没有。
+- 完整行为/安全门禁、TypeScript、ESLint通过；受控外部Next进程下完整Playwright为70 passed/2互斥skip/0 failed（184.1秒）。root与Pages basePath均82/82静态页，bundle各25个JS资产，repository scan为323个tracked/candidate，`data/**`零差异。
+- 安全HEAD `f22dd1a`的Actions run `29541184518`在旧Playwright基础设施中5分钟超时：此前置单元、TypeScript、ESLint和secret scan均通过。当前候选将`next dev`与production static export分离，并让Playwright直接管理Next进程；42个href继续双语全量断言，浏览器direct/refresh覆盖P001/P013/P042，全部物理路由由82页build兜底。尚需新提交/push后的Node 22 run确认。
+- P999在公共路由合同中保持未知且不进入静态参数；本机static server未成功启动，因此当前不声称HTTP 404烟测通过，留给新CI/长期QA复核。

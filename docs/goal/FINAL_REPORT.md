@@ -469,3 +469,11 @@
 - 10类异常与5类artifact合成canary门禁、配置测试、ESLint和repository scanner均通过。真实Preview仍需等待本提交普通push、Node 22 Actions及Vercel新部署后再执行，当前未将历史Preview或本地结果写成线上通过。
 - HEM-P2-028及HEM-P1-030/031/032不再进行无依据业务修改；161个来源修订、HEM-P0-001/023、419与`needs_revision`继续冻结。Patient intent第二批4个未提交文件保持原样，待安全原子提交完成后继续。
 - Pages公开deployment已确认为`main@5a3ad119`；30个旧链接来自该构建中P013–P042仍采用的`HX-ADD-*`内部ID，而不是当前Production Goal。当前PR保持Draft且Pages按规则跳过，因此只登记部署差异，正式合并后的Pages重建与42卡复测仍为人工发布链步骤。
+
+### 2026-07-17 15-intent与CI恢复本地结论
+
+- Patient canonical catalog已从4项扩展到15项、190 alias。修复前核心74问错误unknown 37、极性错误67；扩展失败基线3,150问有600个错误unknown、711个极性错误。最终3,150/3,150命中、1,370 known零错误、1,715 correct unknown保持不确定、65冲突隔离。
+- canonical只决定“问哪个事实”；值仍来自既有双语source，必须中英文一致。`governanceSlotIds`与`collectableSlotIds`分开，missing/ambiguous/needs-review/conflict不进入收集或评分。没有修改`data/**`、HEM-P0-001/023、419、161、`needs_revision`或360规则。
+- 完整本地门禁通过：行为/安全链、TypeScript、ESLint、70 passed/2 skip Playwright、root和Pages各82页、两次25-asset bundle以及323-file repository scan。
+- 远程最新已推安全HEAD仍为`f22dd1a`，其Actions run `29541184518`因旧Playwright步骤5分钟超时失败；当前E2E基础设施修复和15-intent扩展尚未提交/push。下一步为diff复核、敏感信息扫描、小步提交、普通push，再等待新Node22 Actions/Vercel；PR保持Draft。
+- 真实Preview必须在新部署安全runner下重新执行；若凭据扫描或远程门禁失败，继续保持`SECURITY_BLOCKED`。Production、Pages正式发布、真机键盘、专家裁决和人工自然度均未完成。

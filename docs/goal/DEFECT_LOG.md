@@ -430,12 +430,12 @@
 
 ### HEM-P1-046 已知Patient事实因口语/同义词返回unknown
 
-- **严重度/状态**：P1发布体验；首批4 intent本地修复，待完整门禁、普通push、Node 22 CI及长期QA。
+- **严重度/状态**：P1发布体验；首批15 intent本地工程关闭候选，待普通push、Node 22 CI、真实Preview及长期QA。
 - **失败基线**：74问canonical命中8、错误unknown 37、极性错误67；典型“小便痛不痛、排尿疼、撒尿痛、从头到尾都红、整个排尿过程都红”未命中。
 - **根因**：server与TS平铺正则各自维护；未建立问题级whole/initial/terminal intent和fact value；英文未命中不走profile fallback。
-- **修复**：共享NFKC/alias catalog；dysuria与三类时相先映射canonical intent，再从既有source slot读取并双语一致分类；query-relative自然模板明确有/没有、是/不是。
+- **修复**：共享NFKC/alias catalog；15项先映射canonical intent，再从既有source slot读取并双语一致分类；query-relative自然模板明确有/没有、是/不是；unknown治理与收集分离，旧structured matcher不再抢答已识别canonical问题。
 - **治理**：P001等HEM-P0-023 dysuria仍在后置quarantine返回pending-review reason；模糊/双语不一致保持unknown；没有修改事实或审核状态。
-- **证据**：86问专项和42例840问矩阵均0失败；相关Patient/安全/评分回归通过。剩余11个首批候选intent未关闭，故本缺陷仅标记“首批修复”。
+- **证据**：86问核心专项和42例3,150问矩阵均0失败；15 intent、190 alias；known错误unknown=0、极性错误=0；相关Patient/安全/评分及完整工程门禁通过。远程Node 22与真实Preview尚待新HEAD，故不标记生产关闭。
 
 ### QA-SEC-P1-001 Preview失败输出可能回显受保护请求头
 
@@ -452,3 +452,17 @@
 - **部署证据**：Pages由`main` workflow发布；公开deployment `5410354110`为`5a3ad1199ae5e591160f12e410260287f0051875`，早于当前Production Goal `221b22e237ec3e142baea5ac760c21e1a14decfd`。
 - **30个旧路由来源**：`5a3ad119`的目录直接使用`item.id`生成`/cases/<id>/index.html`；P013–P042显示ID背后的内部ID仍为`HX-ADD-001`–`HX-ADD-030`，因此公开站点只有前12张卡使用当前P编号路由。
 - **处理**：不转Ready、不合并main、不手工部署Production、不硬编码Pages域名，也不改动已通过本地/basePath/Vercel合同的路由。正式合并后的新Pages deployment必须重新执行42卡目录、直接URL、刷新和双语验证。
+
+### HEM-P1-046 扩展里程碑更新
+
+- **状态**：15-intent本地工程关闭候选；待新HEAD Node 22 CI、真实Preview和长期QA。
+- **范围**：dysuria、三类血尿时相及urinary frequency/urgency、clots、flank pain、fever、foamy urine、edema、weak stream、incomplete emptying、retention、nocturia。
+- **证据**：3,150/3,150命中；1,370 known零错误unknown/零极性错误；1,715 correct unknown不收集；65 conflict quarantine。完整行为链、70/72 Playwright、82页双构建和扫描通过。
+- **剩余边界**：未覆盖全部37个历史slot和任意自由改写；医学冲突复合问题仍保守整答隔离；真实DeepSeek自然度和人工抽查需长期QA。不得据本地rule结果关闭医学审核。
+
+### CI-P1-20260717 Playwright步骤达到5分钟硬上限
+
+- **失败证据**：Actions run `29541184518`，Node 22.14；步骤1–20全部通过，Playwright启动72项后在5分钟被workflow终止，后续build/bundle/clean gate skipped。首条真实server错误为dev模式错误应用static export并处理P999未知参数，最后失败为步骤超时。
+- **根因**：新增42例双语七阶段矩阵后套件由68增至72；Playwright通过`pnpm run dev`管理孙进程，生命周期不稳定；dev同时继承`output: export`，P999未知参数会触发静态参数错误/挂起；目录测试还重复执行42×2 HTTP探针。
+- **修复候选**：dev阶段不启用static export，production build仍强制`output: export`；Playwright直接启动Node/Next；42 href保持中英文全量，浏览器direct/refresh改为P001/P013/P042代表，82页build继续覆盖所有静态参数。
+- **本地证据**：受控外部server的目录desktop/mobile 2/2（4.4秒）；完整Playwright 70 passed/2 skip（184.1秒）；两个82页build通过。新Node 22 CI前状态为`LOCAL_PASS_REMOTE_PENDING`，不写成远程已恢复。

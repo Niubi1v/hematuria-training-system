@@ -1086,3 +1086,20 @@ Actions：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/294
 | `node scripts/scan-repository-secrets.mjs` | 0 | 322个tracked/candidate文件、可达文本历史及有界归档元数据无凭据命中 |
 
 首轮canary测试曾发现已脱敏Cookie行被正则回溯误判；修复为先解析值再判断`[REDACTED]`后重复运行通过，证明脱敏器具有幂等性。真实环境变量未用于合成测试，真实Preview在该原子提交进入Production Goal并完成远程部署前保持`SECURITY_BLOCKED`。
+
+## 2026-07-17 15-intent与CI恢复候选门禁
+
+| 命令/场景 | 退出码 | 结果 |
+|---|---:|---|
+| `test-patient-intent-normalization.ts` | 0 | 86/86；错误unknown=0；极性错误=0；复合完整 |
+| `test-patient-paraphrase-matrix.ts` | 0 | 42例×15 intent×5问法=3,150/3,150；known 1,370；correct unknown 1,715；quarantine 65；failures 0 |
+| 完整行为/安全链 | 0 | 42例、572事实、419 pending、18冲突、42×17、360分、训练签名和attempt隔离全部通过 |
+| TypeScript / ESLint | 0 / 0 | 无类型或lint错误 |
+| 目录E2E desktop/mobile | 0 | 2/2，4.4秒；42 href双语全量，P001/P013/P042 direct+refresh |
+| 完整Playwright | 0 | 72项：70 passed、2互斥skip、0 failed，184.1秒 |
+| root production build | 0 | 82/82静态页；bundle 25个JS资产 |
+| GitHub Pages basePath build | 0 | 82/82静态页；bundle 25个JS资产 |
+| repository secret scan | 0 | 323个tracked/candidate文件、历史和有界归档元数据通过 |
+| `git diff -- data` | 0 | 零差异；医学事实及审核状态未修改 |
+
+Actions run `29541184518`（HEAD `f22dd1a`）为失败证据：Node22前置门禁全部通过，Playwright步骤在旧dev/static-export与server生命周期下达到5分钟上限，后续build被跳过。当前修复尚未push，不能用上述本地结果覆盖该远程失败；需新HEAD的Actions和Vercel重新验收。P999本机静态HTTP smoke未启动成功，保持待验证。

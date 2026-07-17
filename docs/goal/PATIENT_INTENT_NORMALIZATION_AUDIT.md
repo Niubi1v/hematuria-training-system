@@ -34,14 +34,16 @@ Preview/Vercel的标准化患者请求实际经过：
 - 复合“尿频尿急尿痛”三事实：完整；
 - P001中文“痛不痛”错误路由到宽泛`pain`，没有稳定命中`dysuria`。
 
-## 首批实现边界
+## 第一批实现范围
 
-本批只启用4个问题级canonical intent：
+第一阶段先启用4个核心问题级canonical intent：
 
 - `dysuria` → source slot `dysuria`；
 - `whole_stream_hematuria` → source slot `hematuria_phase`；
 - `initial_hematuria` → source slot `hematuria_phase`；
 - `terminal_hematuria` → source slot `hematuria_phase`。
+
+第二阶段按同一治理模型扩展11个intent：`urinary_frequency`、`urinary_urgency`、`blood_clots`、`flank_pain`、`fever`、`foamy_urine`、`edema`、`weak_stream`、`incomplete_emptying`、`urinary_retention`和`nocturia`。当前合计15个intent、190个显式中英文alias，另有受限语义单元pattern；没有加入整句白名单或全局LLM猜测。
 
 事实值由现有中英文答案分别分类，只有两种语言分类一致才输出true/false；任一语言含“需追问、非典型、不按起始/终末、可表现、多为、可伴”或双语分类不一致时输出unknown。没有修改或反转原始值。
 
@@ -56,6 +58,8 @@ canonical匹配只决定“问的是哪个事实”，不决定绕过治理：
 5. compound answer继续用规则路径保留全部已匹配事实；
 6. 未改`data/**`、事实极性、reviewerStatus、teacherReviewRequired、`needs_revision`或评分。
 
+扩展批还明确分离`governanceSlotIds`与`collectableSlotIds`：已识别但双语不一致、原文不详或患者未观察的事实继续进入治理/冲突检查，但不会进入评分收集；只有true/false已由双语source一致确认的canonical事实才可收集。Patient Session优先执行canonical投影，旧structured matcher只处理未命中的其他slot，避免宽泛slot抢答并泄露整段内容。
+
 ## 当前结论
 
-首批4 intent已解决用户列出的dysuria与血尿时相口语问题，并建立可扩展catalog结构。其余11个首批候选事实尚未在本文件宣称完成，将按相同模式分批补充，不能用本批结果代替全部自然语言验收。
+首批15 intent已完成可扩展catalog、双语source分类、自然true/false/unknown回复和42例矩阵。该结论只覆盖这15项和当前固定改写集，不等于全部37个历史slot、真实DeepSeek自然度或人工医学审核完成；HEM-P0-001/023、161个来源问题、419条模拟事实和42例`needs_revision`继续冻结。
