@@ -466,3 +466,22 @@
 - **根因**：新增42例双语七阶段矩阵后套件由68增至72；Playwright通过`pnpm run dev`管理孙进程，生命周期不稳定；dev同时继承`output: export`，P999未知参数会触发静态参数错误/挂起；目录测试还重复执行42×2 HTTP探针。
 - **修复候选**：dev阶段不启用static export，production build仍强制`output: export`；Playwright直接启动Node/Next；42 href保持中英文全量，浏览器direct/refresh改为P001/P013/P042代表，82页build继续覆盖所有静态参数。
 - **本地证据**：受控外部server的目录desktop/mobile 2/2（4.4秒）；完整Playwright 70 passed/2 skip（184.1秒）；两个82页build通过。新Node 22 CI前状态为`LOCAL_PASS_REMOTE_PENDING`，不写成远程已恢复。
+
+### CI-P1-20260717远程关闭补证
+
+- **状态**：`RESOLVED_REMOTE_CI`；不等同于PR可转Ready或Production完成。
+- **新增证据**：HEAD `b46ddd8`的run `29545158103`仍在Playwright步骤精确达到5分钟硬上限，步骤日志仅显示`Running 72 tests using 2 workers`和workflow timeout，没有断言失败。该结果排除了旧dev/static-export错误后，确认剩余根因是步骤预算低于扩展矩阵实际耗时。
+- **最小修复**：`51f9c6f`仅把Actions Playwright步骤预算调整为10分钟；静态测试要求预算不低于10分钟、命令仍为完整`pnpm run test:e2e`，且不得添加`--retries`或`--timeout`。未修改Playwright断言、业务代码、session/token安全或医学数据。
+- **远程结果**：run `29546344990` completed/success；Node 22.14前置行为/医学/TypeScript/ESLint/secret门禁全部通过，Playwright用时8分06秒success，82页build、bundle与clean gate继续success。Pages deploy按Draft规则skipped。
+
+### QA-SEC-P1-001远程关闭补证
+
+- **状态**：当前安全runner与当前Preview为`RESOLVED_CURRENT_HEAD`；若未来runner重新启用trace/video/screenshot/HTML报告，必须重新打开审计。
+- **真实Preview证据**：HEAD `51f9c6f`上安全runner 8/8、输出凭据扫描通过、专用目录删除；同源保护注入有效且跨origin为0。Preview health报告签名与持久化attempt store均configured；真实中英文回答均为`live_ai`/DeepSeek而非fallback。
+- **保留边界**：P003零轮提交成功进入第二阶段后，一个较晚完成的AI session init被服务端以409 `stale_attempt_token`拒绝；该拒绝没有覆盖已成功的阶段提交，也未重复计分，属于fail-closed晚响应证据，不登记为发布失败。
+
+### HEM-P1-046远程工程结论
+
+- **状态**：15-intent确定性工程门禁`REMOTE_PASS_LONG_TERM_QA_PENDING`。
+- **证据**：本地3,150/3,150矩阵、治理隔离和完整回归通过；Node 22 run `29546344990`完整行为及Playwright success；同一HEAD真实Preview 10次session和中英文各5次live AI/history-log均成功。
+- **剩余验收**：190 aliases不等同于任意自由改写全覆盖；真实自然度、复合已知/冲突问题的保守整答体验及更多37-slot覆盖仍交长期QA。161个来源修订、HEM-P0-001/023与医学审批继续阻塞人工，不得自动修改。

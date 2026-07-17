@@ -477,3 +477,13 @@
 - 完整本地门禁通过：行为/安全链、TypeScript、ESLint、70 passed/2 skip Playwright、root和Pages各82页、两次25-asset bundle以及323-file repository scan。
 - 远程最新已推安全HEAD仍为`f22dd1a`，其Actions run `29541184518`因旧Playwright步骤5分钟超时失败；当前E2E基础设施修复和15-intent扩展尚未提交/push。下一步为diff复核、敏感信息扫描、小步提交、普通push，再等待新Node22 Actions/Vercel；PR保持Draft。
 - 真实Preview必须在新部署安全runner下重新执行；若凭据扫描或远程门禁失败，继续保持`SECURITY_BLOCKED`。Production、Pages正式发布、真机键盘、专家裁决和人工自然度均未完成。
+
+### 2026-07-17 当前里程碑最终远程结论
+
+- 当前已验收业务HEAD为`51f9c6fc8543ac0b6a5907fc65974cd72027f67b`。该HEAD包含Preview输出安全层、15-intent/190-alias Patient canonical归一化、Next E2E生命周期修复及有证据的Node 22步骤预算；没有修改`data/**`、医学事实、审核状态、419、161、`needs_revision`、HEM-P0-001/023或360分算法。
+- CI-P1-20260717真实根因是扩展后的72项套件在GitHub 2 workers下需要超过旧5分钟步骤预算。`51f9c6f`未增加retry、未延长单项断言、未删除测试；run `29546344990`在8分06秒完成Playwright并整体success，随后82页build、bundle、secret和clean gate均success。
+- 当前Vercel Preview精确部署`51f9c6f`，黑盒8/8与安全扫描通过。P003零轮以及P001中文、英文、双向切换、刷新、快速双击和进入第二阶段均成功；真实AI样本全部为DeepSeek `live_ai`且history-log 200。10次初始化及中英文各5次稳定性门槛通过。
+- Draft PR #1保持Open/Draft；Vercel Deployment与Preview Comments success；Pages upload/deploy按Draft规则skipped。公开Pages仍为`main@5a3ad119`，30个旧内部路由属于部署基线差异，不能通过修改当前已通过路由合同或手工Production部署消除。
+- 尚未关闭的人工/权限边界：Production正式alias与正式部署、GitHub Pages合并后42卡复测、真机软键盘/safe-area、Patient自然度人工抽查、161个来源修订、42例`needs_revision`、419条人工审核、HEM-P0-001/023具名医学裁决。PR不得因此转Ready或合并。
+- 长期QA准确起始HEAD：`51f9c6fc8543ac0b6a5907fc65974cd72027f67b`。重点复测15 intent口语/否定/选择/复合问法、医学冲突隔离、P003晚session响应不覆盖成功提交、P001中英文live AI/history-log、42例双语七阶段及Preview输出零凭据。
+- 回滚：CI预算提交可普通执行`git revert 51f9c6f`；Patient canonical实现可独立普通revert `56c3b0d`。不得使用reset、rebase或force push；任何回滚仍需完整安全门禁与Draft PR检查。

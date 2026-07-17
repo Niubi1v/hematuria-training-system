@@ -578,3 +578,12 @@
 - 完整行为/安全门禁、TypeScript、ESLint通过；受控外部Next进程下完整Playwright为70 passed/2互斥skip/0 failed（184.1秒）。root与Pages basePath均82/82静态页，bundle各25个JS资产，repository scan为323个tracked/candidate，`data/**`零差异。
 - 安全HEAD `f22dd1a`的Actions run `29541184518`在旧Playwright基础设施中5分钟超时：此前置单元、TypeScript、ESLint和secret scan均通过。当前候选将`next dev`与production static export分离，并让Playwright直接管理Next进程；42个href继续双语全量断言，浏览器direct/refresh覆盖P001/P013/P042，全部物理路由由82页build兜底。尚需新提交/push后的Node 22 run确认。
 - P999在公共路由合同中保持未知且不进入静态参数；本机static server未成功启动，因此当前不声称HTTP 404烟测通过，留给新CI/长期QA复核。
+
+### Patient intent、Preview安全与Node 22远程闭环（2026-07-17）
+
+- Patient canonical首批15项已推送：15 intent、190 aliases；3,150/3,150同义问法命中，1,370个known回答中错误unknown=0、极性错误=0；1,715个真实unknown和65个医学冲突继续保持不确定/隔离。`data/**`、医学事实、审核状态、419条决定、`needs_revision`与360分规则均未修改。
+- Preview输出安全层已在真实受保护部署复核：Automation Bypass仅注入目标origin，跨origin注入0；完整runner先捕获、扫描、脱敏再输出，8/8通过后扫描1个生成文件并删除专用目录。没有输出或保留Cookie、Authorization、token、完整签名或环境变量值。
+- `b46ddd8`对应Actions run `29545158103`的第一条真实失败是72项Playwright在旧5分钟步骤上限被终止；无测试断言失败。新增42例双语七阶段矩阵单项本地约3.3分钟，完整套件本地4 workers为184.1秒，而Actions固定2 workers，因此旧预算与新门禁不匹配。
+- 原子提交`51f9c6f`只将Playwright步骤有界预算由5分钟调整为10分钟，并增加静态合同，禁止通过CLI retries或额外test timeout掩盖失败。Actions run `29546344990`在Node 22.14下success：Playwright 8分06秒success，随后82页build、bundle scan、repository secret scan与clean gate均success；Pages upload/deploy按Draft规则skipped。
+- Vercel对`51f9c6fc8543ac0b6a5907fc65974cd72027f67b`部署success，Preview health精确返回该SHA、Training State与Durable Attempt Store均configured。黑盒8/8通过：P003零轮、P001中英文真实DeepSeek、history-log、双向切换、刷新、快速双击与进入第二阶段；10次session 10/10，P95 1304ms；中文5/5回答P95 1560ms，英文5/5回答P95 1662ms。云TTS 403继续按设计降级浏览器语音，不影响问诊与计分。
+- PR #1保持Open/Draft；Vercel Preview Comments与Vercel deployment success，Pages继续为`main@5a3ad119`的部署基线差异。下一长期QA起始HEAD为`51f9c6fc8543ac0b6a5907fc65974cd72027f67b`。

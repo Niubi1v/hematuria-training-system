@@ -1103,3 +1103,20 @@ Actions：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/294
 | `git diff -- data` | 0 | 零差异；医学事实及审核状态未修改 |
 
 Actions run `29541184518`（HEAD `f22dd1a`）为失败证据：Node22前置门禁全部通过，Playwright步骤在旧dev/static-export与server生命周期下达到5分钟上限，后续build被跳过。当前修复尚未push，不能用上述本地结果覆盖该远程失败；需新HEAD的Actions和Vercel重新验收。P999本机静态HTTP smoke未启动成功，保持待验证。
+
+## 2026-07-17 Node 22 CI与当前Preview最终补证
+
+| 命令/检查 | 结果 | 可审计证据 |
+|---|---:|---|
+| `node scripts/test-next-runtime-config.mjs` | exit 0 | dev保持动态路由、production保持static export；CI E2E有界预算不少于10分钟；无CLI retry/额外timeout |
+| `node scripts/run-lint.mjs` | exit 0 | CI合同测试与workflow改动无lint错误 |
+| `node scripts/scan-repository-secrets.mjs` | exit 0 | 323个tracked/candidate文件、可达文本历史及有界归档元数据通过；未打印secret值 |
+| `git diff -- data` | exit 0 | 医学数据零差异 |
+| Actions run `29545158103` / HEAD `b46ddd8` | failure | 前置门禁全绿；72 tests / 2 workers；Playwright步骤在5分12秒由旧5分钟workflow上限终止；无断言失败输出 |
+| Actions run `29546344990` / HEAD `51f9c6f` | success | Node 22.14；Playwright步骤8分06秒success；行为、医学合同、TypeScript、ESLint、secret scan、82页build、bundle和clean gate全部success；Pages deploy skipped |
+| Vercel deployment / HEAD `51f9c6f` | success | commit status success；Preview Comments success；health返回完整deployment SHA `51f9c6fc8543ac0b6a5907fc65974cd72027f67b` |
+| `node scripts/run-preview-blackbox.mjs` | exit 0 | 8/8，约1.3分钟；P003零轮、P001中英文live AI/history-log、双向切换、刷新、双击、第二阶段均通过 |
+| Preview稳定性 | pass | session 10/10，P95 1304ms；中文live AI 5/5、回答P95 1560ms、provider P95 1191ms、first token P95 976ms、history P95 8ms；英文5/5、1662/1279/1028/6ms |
+| Preview输出安全收尾 | pass | 同源保护注入、跨origin 0；1个生成文件扫描通过；专用目录删除；未保留trace/video/screenshot/HTML或凭据上下文 |
+
+远程Playwright日志页面未用于推断单项医学正确性；Actions只登记步骤success和精确耗时，本地72项明细仍为70 passed/2互斥skip。当前证据不替代Production正式alias、真机软键盘、具名医学专家裁决或人工自然度验收。
