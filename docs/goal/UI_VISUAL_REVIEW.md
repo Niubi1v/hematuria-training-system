@@ -1,6 +1,6 @@
 # UI 自动视觉审查
 
-状态：长期执行中；当前 Production 与运行时 UI 证据基线均为 `8e7d148e3459f3b960161903fba9214998661635`。
+状态：长期执行中；当前 Production 与运行时 UI 证据基线均为 `3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`。
 
 ## 固定视口与页面
 
@@ -67,3 +67,11 @@
 - HEM-P2-028 当前探索场景为 `1/1/1`，七阶段/360 报告在 1440×900 与 390×844 为 2/2；旧重复提交失败截图与 trace 保留，不被本次 PASS 输出覆盖。
 - 严重/致命 axe 违规为 0；TTS 云端失败可见降级到匹配的浏览器 voice。本轮仍无真实手机，软键盘和物理 safe-area 明确 `BLOCKED_REAL_DEVICE`。
 - 真实 GitHub Pages 在 1440×900 与 390×844 都显示 42 张卡片，但只有 12 个 P001–P012 显示 ID 路由、30 个旧内部 ID 路由。失败帧只证明公开部署不匹配；本地源码/Pages basePath 仿真通过不能代替部署。
+
+## 2026-07-19 第七轮 `3a16f931` 视觉、键盘与语音回归
+
+- Production 完整本地 Playwright desktop/mobile 为 70 passed / 2 互斥 skip / 0 failed；四固定 viewport 的双语七阶段、最后消息与 composer 几何、手动上翻/新消息入口、无横向溢出继续 `PASS_EMULATION`。新增独立 HEM-P2-044 探针的移动失败另列；HEM-P1-027 没有重新打开，真实手机软键盘和物理 safe-area 仍为 `BLOCKED_REAL_DEVICE`。
+- 新增 QA-only 可访问性/语音场景：桌面 `Shift+Enter`、`Enter`、正反向 Tab、可见焦点、Escape 关闭与 reduced-motion 为 2/2；浏览器语音播放、暂停、继续、停止、重播、快速重复、客户端切病例与刷新为四 viewport 4/4。测试使用脱敏本地 fixture，`providerCalls=0`，不宣称云 TTS 成功。
+- 新发现 HEM-P2-044：`390×844` 与 `360×800` 均复现四个不足 44×44 CSS px 的语音触控目标——入口 `106×38`、关闭 `26×28`、试听 `75×38`、停止 `34×38`。最小证据为 `screenshots/hem-p2-044-touch-targets-390x844-failure.png` 与聚合 JSON；状态 `FAIL_EMULATION`，真实设备仍阻塞。
+- 当前 Vercel Preview 的 P001–P042 目录/直接 URL/刷新为 42/42，P999 受控 404；GitHub Pages 仍显示 42 卡片但仅 12 个显示 ID 路由、30 个旧内部 ID，继续 `BLOCKED_DEPLOYMENT_MISMATCH`。两个环境不互相替代。
+- Preview 单 session 20 轮刷新后 DOM 对话项由 42 保持 42，证明最终渲染恢复；前两次即时 DOM/折叠状态断言失败属于测试同步，不登记视觉或数据丢失产品缺陷。

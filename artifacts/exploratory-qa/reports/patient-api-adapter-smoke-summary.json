@@ -1,79 +1,14 @@
 {
-  "schemaVersion": 1,
-  "generatedAt": "2026-07-14T07:20:00.302Z",
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-19T03:16:28.879Z",
+  "productionSha": "3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8",
   "mode": "api-handler-local-rule-no-provider",
   "medicalTruthAdjudicated": false,
   "checks": 17,
   "providerCalls": 0,
   "result": {
-    "passed": false,
-    "failures": 5
+    "passed": true,
+    "failures": 0
   },
-  "failures": [
-    {
-      "kind": "route_mismatch",
-      "probeId": "prior-care-en",
-      "expectedSlotIds": [
-        "prior_care"
-      ],
-      "actualSlotIds": [],
-      "safetyFlags": [
-        "llm_error_fallback"
-      ],
-      "fallbackReason": "ai_unavailable_or_rule_mode",
-      "generationSource": "rule_fallback"
-    },
-    {
-      "kind": "route_mismatch",
-      "probeId": "tumor-history-zh",
-      "expectedSlotIds": [
-        "PAST_MALIGNANCY"
-      ],
-      "actualSlotIds": [],
-      "safetyFlags": [
-        "blocked_diagnosis_request"
-      ],
-      "fallbackReason": "diagnosis_boundary",
-      "generationSource": "safety_boundary"
-    },
-    {
-      "kind": "route_mismatch",
-      "probeId": "cystoscopy-history-zh",
-      "expectedSlotIds": [
-        "PAST_URINARY_PROCEDURE"
-      ],
-      "actualSlotIds": [],
-      "safetyFlags": [
-        "blocked_report_request"
-      ],
-      "fallbackReason": "report_boundary",
-      "generationSource": "safety_boundary"
-    },
-    {
-      "kind": "route_mismatch",
-      "probeId": "flank-pain-en",
-      "expectedSlotIds": [
-        "flank_pain"
-      ],
-      "actualSlotIds": [
-        "flank_pain",
-        "pain"
-      ],
-      "safetyFlags": [],
-      "fallbackReason": "compound_question_preserves_all_facts",
-      "generationSource": "safety_boundary"
-    },
-    {
-      "kind": "matched_fact_suppressed_to_unknown",
-      "probeId": "glomerular-en",
-      "metrics": {
-        "characters": 34,
-        "lines": 1,
-        "maxLineCharacters": 34
-      },
-      "expectedSlotIds": [],
-      "actualSlotIds": [],
-      "safetyFlags": []
-    }
-  ]
+  "failures": []
 }

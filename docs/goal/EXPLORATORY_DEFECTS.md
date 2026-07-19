@@ -8,10 +8,10 @@
 | --- | --- | --- | --- | --- |
 | HEM-P0-001 | P0 | BLOCKED | 151 条 source 辅助来源语义 | 具名医学负责人裁决与受控迁移 |
 | HEM-P0-023 | P0 | BLOCKED | 18 条双语医学极性冲突 | 具名医学/双语专家逐条裁决 |
-| HEM-P0-018 | P0 | BLOCKED_REMOTE | Preview AI、日志同步与来源体验 | 登录态 Preview 真实 AI 20 轮及日志证据 |
-| HEM-P1-019 | P1 | BLOCKED_REMOTE | Preview 变量作用域 | 仅核对名称/状态；不得读取值；补配由环境 owner 执行 |
-| HEM-P1-020 | P1 | BLOCKED_REMOTE | 受保护 Preview API 可审计性 | 具备权限的会话采集脱敏 trace/network |
-| HEM-P1-021 | P1 | BLOCKED_REMOTE | 真实首 Token/P95 | 真实 provider 和服务端计时样本 |
+| HEM-P0-018 | P0 | RESOLVED_PREVIEW_QA | Preview AI、日志同步与来源体验 | `3a16f931` 上中英各 10/10、单 session 20/20 与 history-log 200 已验证；完整问答不落盘 |
+| HEM-P1-019 | P1 | RESOLVED_PREVIEW_QA | Preview 变量作用域 | health 仅以非敏感布尔状态确认 Training State / Durable Store 均配置；未读取值 |
+| HEM-P1-020 | P1 | RESOLVED_PREVIEW_QA | 受保护 Preview API 可审计性 | fail-closed runner 15/15；同源注入、脱敏摘要及凭据字节扫描通过，专用输出安全删除 |
+| HEM-P1-021 | P1 | BLOCKED_MEASUREMENT | 浏览器真实首个可见文字 | 当前非流式 UI 只能得到完整回答与服务端 firsttoken 计时，二者不得冒充浏览器首个可见文字 |
 
 ## 新发现缺陷模板
 
@@ -70,9 +70,9 @@
 - `96fcf80` 受影响回归：为避免 HEM-P1-034 遮蔽本缺陷，浏览器先保存英文偏好再直接进入 P001；有效英文 attempt/session 均为 200，但开场仍含 CJK，四 viewport 4/4。中文中途切换英文的 401 单独登记 HEM-P1-034。
 - `ff1a932` 修复回归：42/42 英文 session 开场均不含 CJK；四固定 viewport 的英文开场 4/4 `PASS_EMULATION`；`providerCalls=0`。该结论只关闭本地确定性语言回落，不代表真实 provider 的英文自然度通过。
 
-## HEM-P1-030：Patient Session 病史路由不完整且自然病史问法被安全边界误拦截
+## HEM-P1-030：Patient Session 病史路由不完整或错配
 
-- 级别/状态：P1，RESOLVED_LOCAL_QA；Production `8e7d148` 的 42×37 双语双改写矩阵已无路由或错误边界失败；不安全来源仍独立 `BLOCKED_SOURCE_REVISION`。
+- 级别/状态：P1，REGRESSED_LOCAL_QA；Production `8e7d148` 曾关闭，但 `3a16f931` 的严格 v2 矩阵发现 1 个工程路由失败组；不安全来源仍独立 `BLOCKED_SOURCE_REVISION`。
 - 页面/路径：`server/patientSession.js` 生产规则链路及公开 `POST /api/agent-chat/`；42 例；中英文；N/A（API/契约）。
 - 操作步骤：每例初始化中英文 session → 对 37 canonical slot 各发送 2 条固定自然问法 → 要求单项问题仅命中预期逻辑 slot → 对同一请求立即重放 → 用公开 handler 对代表性 `prior_care`、中文肿瘤史和中文膀胱镜史复核。
 - 预期：37 个 slot 的主问法和固定改写均能到达相应病史事实；询问“既往肿瘤史/做过膀胱镜”不应被当成当前诊断或检查结果请求。
@@ -85,6 +85,9 @@
 - 建议方向：使 `server/canonicalFacts.js`/`structuredFacts.js` 与 37-slot 前端定义同源；先识别明确的“既往史/做过”上下文，再应用当前诊断/报告边界；补齐 `prior_care` 与常见中英文改写的精确回归。
 - 医学专家裁决：否；只判断路由可达性和边界分类，不判断病例是否实际存在相关病史。
 - `8e7d148` 修复回归：6,216/6,216 路由、6,216/6,216 重放与 168/168 边界通过；公开 adapter 17/17。P001 三个不安全来源继续精确 fail-closed、空 facts/slots，不把来源修订阻塞误报为路由失败。
+- `3a16f931` 回归：v2 矩阵明确接受 711 个严格 governed unknown 与 18 个 unsafe governed unknown，144/144 冲突隔离一致；6,216 路由与 6,216 重放只剩 42 个失败、1 个失败组。英文 `Have you had a urinary procedure?` 在全 42 例实际匹配 `triggers`，预期为 `PAST_URINARY_PROCEDURE`；同组公开 adapter 17/17 仍通过，`providerCalls=0`。
+- 复现/证据：42/42；`reports/patient-session-matrix-summary.json` 与 QA-only `tests/exploratory/patient-session-matrix.mjs`。聚合文件不含回答正文、session 或凭据。
+- 建议方向：收紧 `triggers` 英文同义词的泛化边界，并为完整短语 `urinary procedure` 增加泌尿操作史优先级；保留 governed unknown、来源阻断与冲突 quarantine 强断言。医学专家裁决：否。
 
 ## HEM-P1-031：英文特异疼痛问法额外命中通用 pain 并扩大医学冲突隔离
 
@@ -154,7 +157,7 @@
 
 ## HEM-P2-043：本地 Next 开发环境病例目录链接对 42 个 `.html` 路由全部返回 404
 
-- 级别/状态：P2，RESOLVED_ENGINEERING_LOCAL_DEPLOYMENT_PENDING；本地 Next、root build 与 GitHub Pages basePath 仿真已通过，真实 Pages 仍部署不匹配，当前 Preview 因 QA 安全事件阻塞。
+- 级别/状态：P2，RESOLVED_ENGINEERING_PREVIEW / PAGES_DEPLOYMENT_PENDING；本地 Next、root build、GitHub Pages basePath 仿真与当前 Vercel Preview 已通过，真实 Pages 仍部署不匹配。
 - 页面/路径：本地 Next 开发服务 `/cases/` → `/cases/P001/index.html` 至 `/cases/P042/index.html`；全 42 例；中英文目录；viewport `1440×900`。
 - 操作步骤：启动 Production `ff1a932` 本地 Next 服务与脱敏 API adapter → 打开病例目录 → 逐一读取并点击真实病例卡片 anchor → 记录 document 状态 → 对同病例再直接打开 `/cases/Pxxx/`、刷新、切换英文并刷新回中文。
 - 预期：目录点击、直接 URL、刷新以及中英文显示均进入有效病例，不能 404。
@@ -168,17 +171,32 @@
 - 医学专家裁决：否。
 
 - `8e7d148` 回归：本地 public route 合同为 42/42，desktop/mobile 目录 portable route 通过；真实 GitHub Pages 在 `1440×900` 与 `390×844` 均为 42 张卡片但只有 12 个 `Pxxx` 显示路由，另 30 个仍为旧内部 ID。由于公开站点不是当前 route 产物，标记 `BLOCKED_DEPLOYMENT_MISMATCH`，不重新打开源码修复状态。
+- `3a16f931` 回归：Vercel Preview 的病例目录、直接 URL 与刷新对 P001–P042 为 42/42，中英文入口保持 caseId，P999 为真实受控 404；状态 `PASS_PREVIEW`。真实 GitHub Pages 仍为 42 卡片 / 12 显示路由 / 30 旧内部路由，继续 `BLOCKED_DEPLOYMENT_MISMATCH`，不能用 Preview 成功替代。
+
+## HEM-P2-044：移动端语音设置触控目标小于 44×44 CSS px
+
+- 级别/状态：P2，OPEN / FAIL_EMULATION；真实设备仍为 `BLOCKED_REAL_DEVICE`。
+- 页面/路径：训练工作台 `/cases/P001/` → “语音设置”；病例 P001；中文；viewport `390×844`、`360×800`。
+- 前置与步骤：全新浏览器上下文 → 安装脱敏本地 API fixture → 打开 P001 中文训练页 → 打开语音设置 → 读取可交互目标 `getBoundingClientRect()` → 与最小 44×44 CSS px 比较。
+- 预期：移动端所有主要触控目标的宽和高均不小于 44 CSS px，不依赖精确点按。
+- 实际：两个 viewport 的数值一致：语音设置入口 `106×38`、对话框关闭 `26×28`、试听 `75×38`、停止 `34×38`；四项均至少一维不足 44px。
+- 复现：2/2（两个固定移动 viewport 均失败）；浏览器语音播放、暂停、继续、停止、重播、快速重复、切病例和刷新合同另为 4/4 通过。
+- AI 来源：本地确定性 fixture，`providerCalls=0`；不宣称 Azure/云 TTS 成功。真实手机软键盘、地址栏和 safe-area 未测试。
+- HTTP/console/network：页面及脱敏 fixture 请求 200；该缺陷为纯几何测量，无 Authorization、Cookie、签名、session 或问答正文记录。
+- 最小证据：`screenshots/hem-p2-044-touch-targets-390x844-failure.png`、`reports/hem-p2-044-touch-targets-summary.json`；360 截图和逐 viewport 原始 JSON 仅本机保留。
+- 建议方向：为语音入口、关闭、试听、停止采用共享 `min-h-11 min-w-11`（或等价 44px）触控容器，并保留视觉图标大小；在 360/390 自动几何断言中回归。医学专家裁决：否。
 
 ## QA-SEC-P1-001：Preview runner 失败输出可能回显受保护请求头
 
-- 级别/状态：QA 基础设施 P1，MITIGATED_LOCAL / SECURITY_BLOCKED_PREVIEW；不是业务产品缺陷。
+- 级别/状态：QA 基础设施 P1，RESOLVED_QA_INFRA；不是业务产品缺陷。
 - 页面/路径：`scripts/run-preview-blackbox.mjs`、`tests/preview/preview-blackbox.spec.mjs`；受保护 Preview；N/A viewport。
 - 操作步骤：在 42 例 Preview 路由用例中以 APIRequestContext 显式附加保护 header → 请求超时 → Playwright 失败 call log 写入请求 header → runner 原先 `stdio=inherit` 直接把日志送入 stdout。
 - 预期：任何失败日志、trace、截图和报告都不能包含 bypass、Authorization、Cookie、签名或环境变量值；命中时必须删除输出并 fail closed。
 - 实际：runner 的 artifact 扫描发现运行时 secret bytes 后删除专用输出，但 stdout 已在扫描前由 Playwright 直接输出。未提交或保留该批次 artifact；报告不复述任何值。
 - 复现：1/1；事件发生后立即停止真实 Preview 扩展测试。本机 `test-results/preview-blackbox` 已删除，证据根与剩余 test-results 的运行时精确值扫描均为 0 命中。
 - 修正：runner 改为 pipe 捕获 stdout/stderr，先扫描实际 secret bytes 和敏感 header 名，再决定是否打印；命中则只输出通用 `SECURITY_BLOCKED` 并删除目录。路由用例不再显式把保护 header 交给 APIRequestContext；安全单元契约已通过。
-- 后续门禁：在独立复核 runner fail-closed 行为前，不恢复当前 SHA 的真实 Preview 长跑。任何本地/fixture PASS 均不得替代。
+- 历史门禁：事件发生时要求先独立复核 runner fail-closed 行为，再恢复真实 Preview 长跑；任何本地/fixture PASS 均不得替代。
+- `3a16f931` 复核：10 条失败路径与 5 类产物通道安全 canary 15/15；真实 Preview health、9 项黑盒、两批中英稳定性及20轮长会话均经 wrapper 执行，扫描后专用输出删除，未发现运行时凭据字节或敏感 header 名。该 QA 基础设施事件关闭，不改变业务缺陷状态。
 - 医学专家裁决：否。
 
-基线说明：当前运行时与审计基线为 Production `8e7d148e3459f3b960161903fba9214998661635`，由 QA 分支普通 merge 得到 `ad2f6a42fd9b82cfc39b61fb09520784f2360432`。GitHub Pages 公开产物仍有 30 个旧内部路由，标记 `BLOCKED_DEPLOYMENT_MISMATCH`；当前 SHA Vercel Preview 标记 `SECURITY_BLOCKED`，二者均不用于替代本地结论。
+基线说明：当前运行时与审计基线为 Production `3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`，由 QA 分支普通 merge 得到 `991ec7605ca9b82c4c4835a9fcb075dfaf770e35`。Vercel Preview 精确 SHA 为 `PASS_PREVIEW`；GitHub Pages 公开产物仍有 30 个旧内部路由，标记 `BLOCKED_DEPLOYMENT_MISMATCH`；两者分别记录，不互相替代。

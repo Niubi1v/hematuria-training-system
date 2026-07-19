@@ -1,6 +1,6 @@
 # 自然语言与双语审查
 
-状态：fixture 协议覆盖扩展中，真实 AI 自然语言审查受 Preview 条件阻塞。
+状态：真实 Preview 已完成当前 SHA 的中英文来源/稳定性最低样本；逐答复定性、错误总结纠正与医学语义审查仍持续，医学冲突不由 QA 裁决。
 
 ## 审查维度
 
@@ -15,7 +15,7 @@
 
 - `HEM-P0-023` 的 18 条冲突只记录为待专家裁决，不做医学真值判断。
 - 首轮 20 轮脚本用于 UI 稳定性和问法覆盖，回答为明确标记的脱敏 fixture，不能用于自然度或医学一致性通过结论。
-- 真实中文/英文样本、纠错能力、长对话一致性和 P95 必须在受保护 Preview 的真实 DeepSeek 环境复核。
+- 历史首轮未取得真实样本；当前 `3a16f931` 的真实 Preview 增量结论见文末，不能用后续工程证据改写当时历史事实。
 
 ## 首轮样本
 
@@ -63,3 +63,11 @@
 - 295 次不安全 source-cell 观测继续返回明确 `unsafe_deterministic_answer` 且空 facts/slots，对应既有 161 个来源修订项；P001 肿瘤史/泌尿操作代表项被 QA 强制断言为 fail-closed。该结果是安全隔离通过，不是医学语义或患者自然度通过。
 - 18 条双语冲突的直接隔离为 144/144，没有旧 pain 过匹配导致的额外隔离；HEM-P0-023 仍由具名专家裁决。
 - 本地 fixture 的英文 20 轮、手动上翻、错误恢复与日志幂等通过，只证明 UI/协议稳定性。当前 Production 的真实 Preview 长对话因 QA 输出安全事件标记 `SECURITY_BLOCKED`；先前 `3fe409f` 的中/英文各 1 个 live_ai 回合不作为当前基线自然语言验收。
+
+## 2026-07-19 Production `3a16f931` 复核
+
+- 受保护 Vercel Preview 精确匹配当前 SHA；两个零重试稳定性批次累计中文 10/10、英文 10/10，全部 `generationSource=live_ai`、provider=`deepseek`、`isFallback=false` 且 history-log=200。该结论证明当前中英文真实 provider 闭环与日志稳定，不等同于逐条医学或文风审批。
+- P001 中文单 session 20 轮采用 20 种“何时开始”自然改写，20/20 live AI、20 个 agent request、1 个 session、0 重初始化；刷新前持久化 41 条消息，刷新后全部恢复。测试只保存来源、状态和耗时聚合，不保存完整问答，因此本轮不对20条回答逐字自然度或医学一致性作超出证据的通过结论。
+- 第二批 P001–P005 中文完整回答 P95 `1707ms`、英文 `1753ms`；UI 请求发出 P95 均 `42ms`。服务端 `firsttoken` 字段分别为 `1017ms`/`1009ms`，只标记为服务端计时；当前非流式界面没有浏览器第一个可见文字测量，HEM-P1-021 保持 `BLOCKED_MEASUREMENT`。
+- Patient Session v2 明确接受 711 个 governed unknown、18 个 unsafe governed unknown 与 144/144 冲突隔离；唯一工程失败是英文 `Have you had a urinary procedure?` 在 42/42 例匹配 `triggers` 而非 `PAST_URINARY_PROCEDURE`，HEM-P1-030 重新标记 `REGRESSED_LOCAL_QA`。这是路由优先级缺陷，不需要 QA 裁决医学真值。
+- 中英切换、刷新后切换、快速往返与非法/过期/跨病例 session 拒绝继续通过；HEM-P0-001、HEM-P0-023、来源修订和具名审批保持阻塞。患者主诉文案专项分支未合入、未测试、未修改。

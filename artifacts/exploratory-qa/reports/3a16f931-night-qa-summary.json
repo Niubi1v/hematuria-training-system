@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-19T03:47:12.477Z",
+  "productionSha": "3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8",
+  "qaBaselineMergeHead": "991ec7605ca9b82c4c4835a9fcb075dfaf770e35",
+  "sourceBranch": "origin/codex/hematuria-production-goal",
+  "qaBranch": "codex/hematuria-exploratory-qa",
+  "local": {
+    "productionPlaywright": { "passed": 70, "skipped": 2, "failed": 0, "classification": "PASS_EMULATION" },
+    "bilingualSevenStage": { "cases": 42, "journeys": 84, "stageSubmissions": 588, "scoreReports": 84, "maximumScore": 360 },
+    "sessionCapability": { "passed": 19, "failed": 0, "providerCalls": 0 },
+    "patientApiAdapter": { "passed": 17, "failed": 0, "providerCalls": 0 },
+    "patientSessionMatrix": {
+      "routeChecks": 6216,
+      "repeatChecks": 6216,
+      "boundaryChecks": 168,
+      "governedUnknowns": 711,
+      "conflictQuarantine": "144/144",
+      "failureInstances": 42,
+      "failureGroups": 1,
+      "regression": "English urinary procedure question routes to triggers in all 42 cases"
+    }
+  },
+  "preview": {
+    "status": "PASS_PREVIEW",
+    "deploymentSha": "3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8",
+    "apiVersion": "2.6.0",
+    "patientServiceConfigured": true,
+    "trainingStateConfigured": true,
+    "durableAttemptStoreConfigured": true,
+    "credentialSource": "vercel_kv_rest",
+    "catalogAndRoutes": { "validCases": "42/42", "invalidCase404": true },
+    "liveAiMinimum": { "zh": "10/10", "en": "10/10", "source": "live_ai", "provider": "deepseek" },
+    "singleSessionTwentyTurns": {
+      "success": "20/20",
+      "agentRequests": 20,
+      "distinctSessions": 1,
+      "sessionReinitializations": 0,
+      "persistedMessagesBeforeRefresh": 41,
+      "domItemsBeforeRefresh": 42,
+      "domItemsAfterRefresh": 42,
+      "p95CompleteAnswerMs": 1726,
+      "p95UiDispatchMs": 45,
+      "p95ProviderMs": 1297,
+      "p95HistoryLogMs": 6
+    },
+    "sessionInitialization": { "success": "20/20", "latestBatchP95TotalMs": 1735, "latestBatchP95ServerSessionMs": 14 },
+    "browserVisibleFirstText": "NOT_MEASURED_NON_STREAMING",
+    "outputCredentialScan": "PASS_AND_DEDICATED_OUTPUT_REMOVED"
+  },
+  "deployments": {
+    "localRootAndBasePath": "PASS",
+    "githubPages": { "status": "BLOCKED_DEPLOYMENT_MISMATCH", "catalogCards": 42, "displayRoutes": 12, "legacyInternalRoutes": 30 }
+  },
+  "ui": {
+    "voiceControls": { "passed": 4, "failed": 0 },
+    "keyboardFocusReducedMotion": { "passed": 2, "failed": 0 },
+    "HEM-P2-044": { "status": "OPEN", "reproductions": "2/2", "realDevice": "BLOCKED_REAL_DEVICE" }
+  },
+  "medicalBlocksPreserved": ["HEM-P0-001", "HEM-P0-023"],
+  "businessCodeModifiedByQa": false,
+  "medicalDataModifiedByQa": false
+}

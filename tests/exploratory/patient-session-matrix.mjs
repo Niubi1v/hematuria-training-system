@@ -16,8 +16,9 @@ const {
   generatePatientAnswer,
   initSession
 } = require("../../server/patientSession.js");
+const { matchCanonicalPatientFacts } = require("../../server/canonicalFacts.js");
 
-const MATRIX_SCHEMA_VERSION = 1;
+const MATRIX_SCHEMA_VERSION = 2;
 const DEFAULT_REPORT = "artifacts/exploratory-qa/reports/patient-session-matrix.json";
 const TEACHER_META = /根据原始病史|根据病例资料|病例资料显示|未主动诉|需追问|教师提示|标准答案|评分点|标准病例摘要|teacher hint|standard answer|scoring point|case data shows/i;
 const CJK = /[\u3400-\u9fff]/;
@@ -311,6 +312,8 @@ async function main() {
   let boundaryChecks = 0;
   let sessionChecks = 0;
   let unsafeDeterministicSourceBlocks = 0;
+  let governedUnknowns = 0;
+  let unsafeGovernedUnknowns = 0;
   const sessionIds = new Set();
 
   try {
@@ -422,6 +425,24 @@ async function main() {
             }
 
             const sourceAnswer = String(sourceSlots[probe.slotId]?.[language === "en" ? "patientAnswerEn" : "patientAnswerZh"] || "");
+            const canonical = matchCanonicalPatientFacts(caseData.id, routeProbe.question, language);
+            const canonicalFactValues = Object.values(canonical?.factValues || {});
+            const canonicalFactReasons = Object.values(canonical?.factValueReasons || {});
+            const governedUnknown =
+              ["canonical_fact_unknown", "unsafe_deterministic_answer"].includes(first.fallbackReason) &&
+              first.answerSource === "unknown" &&
+              first.confidence === 0 &&
+              (first.matchedSlotIds || []).length === 0 &&
+              (first.matchedFacts || []).length === 0 &&
+              sameSet(canonical?.matchedSlotIds || [], routeProbe.expectedSlotIds) &&
+              (canonical?.collectableSlotIds || []).length === 0 &&
+              canonicalFactValues.length > 0 &&
+              canonicalFactValues.every((value) => value === "unknown") &&
+              (first.fallbackReason !== "unsafe_deterministic_answer" || canonicalFactReasons.includes("unsafe_deterministic_answer"));
+            if (governedUnknown) {
+              governedUnknowns += 1;
+              if (first.fallbackReason === "unsafe_deterministic_answer") unsafeGovernedUnknowns += 1;
+            }
             const unsafeDeterministicSourceBlocked =
               first.fallbackReason === "unsafe_deterministic_answer" &&
               (first.safetyFlags || []).includes("deterministic_answer_blocked") &&
@@ -429,7 +450,7 @@ async function main() {
               (first.matchedFacts || []).length === 0;
             if (unsafeDeterministicSourceBlocked) unsafeDeterministicSourceBlocks += 1;
 
-            if (!unsafeDeterministicSourceBlocked && !sameSet(first.matchedSlotIds || [], routeProbe.expectedSlotIds)) {
+            if (!unsafeDeterministicSourceBlocked && !governedUnknown && !sameSet(first.matchedSlotIds || [], routeProbe.expectedSlotIds)) {
               addFailure(failures, {
                 kind: "route_mismatch",
                 caseId: caseData.id,
@@ -563,6 +584,8 @@ async function main() {
       repeatChecks,
       boundaryChecks,
       unsafeDeterministicSourceBlocks,
+      governedUnknowns,
+      unsafeGovernedUnknowns,
       providerCalls,
       expectedDirectQuarantineEvents: bilingualConflictEntries.length * 2 * 2 * 2,
       quarantineEventsObserved: quarantineEvents.length

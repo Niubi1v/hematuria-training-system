@@ -7,6 +7,7 @@ const require = createRequire(import.meta.url);
 const initHandler = require("../../api/session/init.js");
 const chatHandler = require("../../api/agent-chat.js");
 const trainingHandler = require("../../api/training-action.js");
+const { matchCanonicalPatientFacts } = require("../../server/canonicalFacts.js");
 const { resetMemoryAttemptStore } = require("../../server/trainingAttemptStore.js");
 const { resetMemoryAgentRequestStore } = require("../../server/agentRequestStore.js");
 
@@ -167,9 +168,9 @@ async function main() {
       { id: "prior-care-en", caseId: "P001", session: sessions.get("P001/en"), language: "en", question: "Have you seen a doctor before?", expected: ["prior_care"] },
       { id: "tumor-history-zh", caseId: "P001", session: sessions.get("P001/zh"), language: "zh", question: "以前有肿瘤史吗？", expected: ["PAST_MALIGNANCY"], expectUnsafeBlock: true },
       { id: "cystoscopy-history-zh", caseId: "P001", session: sessions.get("P001/zh"), language: "zh", question: "以前做过膀胱镜吗？", expected: ["PAST_URINARY_PROCEDURE"], expectUnsafeBlock: true },
-      { id: "clots-meta-zh", caseId: "P004", session: sessions.get("P004/zh"), language: "zh", question: "有血块吗？", expected: ["clots"], noTeacherMeta: true, expectUnsafeBlock: true },
+      { id: "clots-meta-zh", caseId: "P004", session: sessions.get("P004/zh"), language: "zh", question: "有血块吗？", expected: ["clots"], noTeacherMeta: true, expectedGovernedUnknownReason: "unsafe_deterministic_answer" },
       { id: "flank-pain-en", caseId: "P002", session: sessions.get("P002/en"), language: "en", question: "Do you have flank pain?", expected: ["flank_pain"] },
-      { id: "glomerular-en", caseId: "P001", session: sessions.get("P001/en"), language: "en", question: "Do you have foamy urine?", expected: ["glomerular_features"], noGenericUnknown: true }
+      { id: "glomerular-en", caseId: "P001", session: sessions.get("P001/en"), language: "en", question: "Do you have foamy urine?", expected: ["glomerular_features"], noGenericUnknown: true, expectedGovernedUnknownReason: "canonical_fact_unknown" }
     ];
 
     for (const [index, probe] of probes.entries()) {
@@ -192,7 +193,34 @@ async function main() {
         (payload.safetyFlags || []).includes("deterministic_answer_blocked") &&
         (payload.matchedSlotIds || []).length === 0 &&
         (payload.matchedFacts || []).length === 0;
-      if (!expectedUnsafeBlock && !sameSet(payload.matchedSlotIds, probe.expected)) {
+      const canonical = probe.expectedGovernedUnknownReason
+        ? matchCanonicalPatientFacts(probe.caseId, probe.question, probe.language)
+        : null;
+      const canonicalFactValues = Object.values(canonical?.factValues || {});
+      const canonicalFactReasons = Object.values(canonical?.factValueReasons || {});
+      const expectedGovernedUnknown = Boolean(probe.expectedGovernedUnknownReason) &&
+        payload.fallbackReason === probe.expectedGovernedUnknownReason &&
+        payload.answerSource === "unknown" &&
+        payload.confidence === 0 &&
+        (payload.matchedSlotIds || []).length === 0 &&
+        (payload.matchedFacts || []).length === 0 &&
+        sameSet(canonical?.matchedSlotIds, probe.expected) &&
+        (canonical?.collectableSlotIds || []).length === 0 &&
+        canonicalFactValues.length > 0 &&
+        canonicalFactValues.every((value) => value === "unknown") &&
+        (probe.expectedGovernedUnknownReason !== "unsafe_deterministic_answer" || canonicalFactReasons.includes("unsafe_deterministic_answer"));
+      if (probe.expectedGovernedUnknownReason && !expectedGovernedUnknown) {
+        addFailure(failures, {
+          kind: "governed_unknown_contract",
+          probeId: probe.id,
+          expectedSlotIds: probe.expected,
+          actualSlotIds: payload.matchedSlotIds,
+          safetyFlags: payload.safetyFlags,
+          fallbackReason: payload.fallbackReason || "",
+          generationSource: payload.generationSource || ""
+        });
+      }
+      if (!expectedUnsafeBlock && !expectedGovernedUnknown && !sameSet(payload.matchedSlotIds, probe.expected)) {
         addFailure(failures, {
           kind: "route_mismatch",
           probeId: probe.id,
@@ -263,7 +291,7 @@ async function main() {
 
   if (providerCalls !== 0) addFailure(failures, { kind: "unexpected_provider_call", probeId: "provider", providerCalls });
   const report = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     generatedAt: new Date().toISOString(),
     mode: "api-handler-local-rule-no-provider",
     medicalTruthAdjudicated: false,

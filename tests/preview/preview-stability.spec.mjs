@@ -258,3 +258,116 @@ for (const language of ["zh", "en"]) {
     expect(summary.p95UiDispatchMs).toBeLessThanOrEqual(1000);
   });
 }
+
+test("@preview-long-session returns 20 sequential live AI answers without reinitializing", async ({ browser }, testInfo) => {
+  test.setTimeout(600_000);
+  const questions = [
+    "请问是什么时候开始的？",
+    "能说说是什么时候开始的吗？",
+    "您记得是什么时候开始的吗？",
+    "大概是什么时候开始的？",
+    "最早是什么时候开始的？",
+    "具体是什么时候开始的？",
+    "回想一下是什么时候开始的？",
+    "方便说说是什么时候开始的吗？",
+    "您能确认是什么时候开始的吗？",
+    "麻烦回忆是什么时候开始的？",
+    "想请教是什么时候开始的？",
+    "可以告诉我是什么时候开始的吗？",
+    "您印象中是什么时候开始的？",
+    "请仔细想想是什么时候开始的？",
+    "最初大约是什么时候开始的？",
+    "您第一次留意是什么时候开始的？",
+    "按您的记忆是什么时候开始的？",
+    "请尽量回忆是什么时候开始的？",
+    "您觉得大约是什么时候开始的？",
+    "最后再确认一次是什么时候开始的？"
+  ];
+  const context = await browser.newContext();
+  await context.addInitScript(() => localStorage.removeItem("hematuria-language"));
+  let opened;
+  const samples = [];
+  try {
+    opened = await openReadyCase(context, "P001", "zh");
+    expect(opened.attemptResponse.status()).toBe(200);
+    expect(opened.sessionResponse.status()).toBe(200);
+    let sessionReinitializations = 0;
+    let agentRequestCount = 0;
+    const sessionIds = new Set();
+    opened.page.on("response", (response) => {
+      if (isSessionInit(response, "zh")) sessionReinitializations += 1;
+    });
+    opened.page.on("request", (request) => {
+      if (new URL(request.url()).pathname !== "/api/agent-chat/" || request.method() !== "POST") return;
+      agentRequestCount += 1;
+      const sessionId = String(safeBody(request).sessionId || "");
+      if (sessionId) sessionIds.add(sessionId);
+    });
+
+    for (const [index, question] of questions.entries()) {
+      const answer = await askLiveQuestion(opened.page, "zh", question);
+      samples.push({ turn: index + 1, ...answer });
+      expect(answer.patientStatus).toBe(200);
+      expect(answer.historyStatus).toBe(200);
+      expect(answer.generationSource, `turn=${index + 1} fallback=${answer.fallbackReason || "none"}`).toBe("live_ai");
+      expect(answer.isFallback, `turn=${index + 1}`).toBe(false);
+      expect(String(answer.provider || "").toLowerCase(), `turn=${index + 1}`).toBe("deepseek");
+    }
+
+    expect(agentRequestCount).toBe(20);
+    expect(sessionIds.size).toBe(1);
+    expect(sessionReinitializations).toBe(0);
+    const readPersistenceSummary = () => opened.page.evaluate(() => {
+      const records = Object.keys(localStorage)
+        .filter((key) => key.startsWith("hematuria-attempt-v3:P001:free:zh:"))
+        .map((key) => {
+          try {
+            return JSON.parse(localStorage.getItem(key) || "null");
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean);
+      return {
+        attemptRecordCount: records.length,
+        savedMessageCount: Array.isArray(records[0]?.messages) ? records[0].messages.length : 0
+      };
+    });
+    await expect.poll(readPersistenceSummary, { message: "20-turn conversation must be durably saved before refresh", timeout: 10_000 }).toEqual({
+      attemptRecordCount: 1,
+      savedMessageCount: 41
+    });
+    const persistedBeforeRefresh = await readPersistenceSummary();
+    const beforeRefresh = await opened.page.getByRole("log", { name: "模拟问诊对话" }).locator(".space-y-3 > *").count();
+    await opened.page.reload({ waitUntil: "domcontentloaded" });
+    await expect(opened.page.getByRole("textbox", { name: "输入问诊问题" })).toBeVisible();
+    const readRenderedMessageCount = () => opened.page.getByRole("log", { name: "模拟问诊对话" }).locator(".space-y-3 > *").count();
+    await expect.poll(readRenderedMessageCount, { message: "saved 20-turn conversation must render after refresh", timeout: 10_000 }).toBe(beforeRefresh);
+    const afterRefresh = await readRenderedMessageCount();
+    expect(afterRefresh).toBe(beforeRefresh);
+
+    const summary = {
+      scenario: "preview-live-ai-zh-20-single-session",
+      successCount: samples.filter((item) => item.patientStatus === 200 && item.historyStatus === 200 && item.generationSource === "live_ai" && item.isFallback === false).length,
+      agentRequestCount,
+      distinctSessionCount: sessionIds.size,
+      sessionReinitializations,
+      persistedMessageCountBeforeRefresh: persistedBeforeRefresh.savedMessageCount,
+      domMessageCountBeforeRefresh: beforeRefresh,
+      domMessageCountAfterRefresh: afterRefresh,
+      refreshMessageCountPreserved: afterRefresh === beforeRefresh,
+      p95AnswerMs: percentile95(samples.map((item) => item.answerMs).filter(Number.isFinite)),
+      p95UiDispatchMs: percentile95(samples.map((item) => item.uiDispatchMs).filter(Number.isFinite)),
+      p95ProviderMs: percentile95(samples.map((item) => item.patientTiming?.provider).filter(Number.isFinite)),
+      p95HistoryMs: percentile95(samples.map((item) => item.historyTiming?.history).filter(Number.isFinite)),
+      samples
+    };
+    await testInfo.attach("preview-live-ai-zh-20-single-session", { body: JSON.stringify(summary, null, 2), contentType: "application/json" });
+    console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
+    expect(summary.successCount).toBe(20);
+    expect(summary.p95AnswerMs).toBeLessThanOrEqual(3000);
+  } finally {
+    await opened?.page.close().catch(() => undefined);
+    await context.close().catch(() => undefined);
+  }
+});

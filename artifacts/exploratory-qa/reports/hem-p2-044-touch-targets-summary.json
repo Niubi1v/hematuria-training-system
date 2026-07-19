@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-19T03:47:12.477Z",
+  "productionSha": "3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8",
+  "defectId": "HEM-P2-044",
+  "minimumCssPixels": 44,
+  "reproductions": 2,
+  "viewports": [
+    { "width": 390, "height": 844 },
+    { "width": 360, "height": 800 }
+  ],
+  "undersizedInBothViewports": [
+    { "name": "voice-settings", "width": 106, "height": 38 },
+    { "name": "dialog-close", "width": 26, "height": 28 },
+    { "name": "voice-test", "width": 75, "height": 38 },
+    { "name": "voice-stop", "width": 34, "height": 38 }
+  ],
+  "result": "FAIL_EMULATION",
+  "realDevice": "BLOCKED_REAL_DEVICE"
+}
