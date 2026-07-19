@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-19T07:07:17.434Z",
+  "productionSha": "657ba5da8fc6460ad7d0deea882a010c40938b40",
+  "status": "PASS_LOCAL",
+  "runtime": {
+    "nodeVersion": "v24.14.0",
+    "remoteNode22GateSubstituted": false,
+    "dependencyInstallPerformed": false
+  },
+  "scripts": [
+    {"name": "test-agent-api-security", "status": "PASS"},
+    {"name": "test-training-security", "status": "PASS"},
+    {"name": "test-api-recovery", "status": "PASS"},
+    {"name": "test-ai-recovery", "status": "PASS"}
+  ],
+  "coverage": {
+    "originAndCors": true,
+    "sameOriginPreviewBinding": true,
+    "serverTokenDoesNotBypassOrigin": true,
+    "sessionCapabilityMissingForgedAndCrossLanguage": true,
+    "sessionClaimLanguageAndModeBinding": true,
+    "agentRoleEscalationRejected": true,
+    "unexpectedClientFieldsRejected": ["model", "systemPrompt", "apiKey", "baseUrl", "unlockedData"],
+    "oversizedQuestionRejected": true,
+    "oversizedAgentAndSessionBodiesRejected": true,
+    "unsupportedContentTypeRejected": true,
+    "retiredRoutesRemainClosed": true,
+    "idempotentConcurrentRequestsSingleFlight": true,
+    "distinctConcurrentRequestLimitedAndRecovered": true,
+    "rateLimitRetryAfter": true,
+    "sessionAttemptInputIpProjectAndProbeBudgets": true,
+    "durableAdmissionOwnerAndQuotaPaths": true,
+    "trainingSecretStageExpiryAndReplayGates": true,
+    "apiRetryIdempotencyNonRetryableAndTimeout": true,
+    "aiSessionExpiryDeploymentInvalidationAndFallbackRecovery": true
+  },
+  "providerBoundary": {
+    "explicitSecurityRejectionProviderCallAssertionsPassed": true,
+    "rejectedRoleFieldInputConcurrencyAndQuotaProviderCalls": 0,
+    "providerFailureFallbackNonDisclosurePassed": true,
+    "providerTimingBodyNonDisclosurePassed": true
+  },
+  "externalBoundaries": {
+    "realPreviewFaultInjectionPerformed": false,
+    "realPreviewRateLimitExercised": false,
+    "remoteNode22ResultReusedAsLocal": false
+  },
+  "security": {
+    "requestIdentifiersRetained": false,
+    "responseBodiesRetained": false,
+    "environmentValuesRetained": false,
+    "rawStdoutRetained": false
+  }
+}

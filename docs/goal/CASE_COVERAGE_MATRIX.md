@@ -100,3 +100,4 @@
 - P023新增同session中文→英文→中文事实保持：病程时长3/3一致，来源为`live_ai/safety_boundary/live_ai`，agent/history 3/3且切换初始化均200。只将P023跨语言连续性记为`PASS_PREVIEW_GOVERNED`；英文安全边界不计入live AI，其他41例也不由此扩张。
 - P038新增中英文各5轮多问题追问：10回答中8次live AI、2次中文safety boundary，重复4小时时长4/4一致，agent/history 10/10。P038上下文列记为`PASS_PREVIEW_GOVERNED`，不由此替代其他病例的多轮真实AI覆盖。
 - P037新增中英文刷新后继续追问：刷新前各2轮及DOM 6→6恢复通过，但刷新后首个agent请求均401 `session_capability_required`、无history-log，三批共6/6复现HEM-P1-045。P037刷新可继续列为`FAIL_PREVIEW`，事实连续性因无回答不评价。
+- 系统级AI接口防滥用四脚本本地通过：Origin/CORS、capability、角色/字段/输入、幂等并发、预算限流、训练状态和恢复合同适用于公共边界，但不把该系统级结果逐行扩张为42例真实AI或医学通过；真实Preview限流/故障注入仍未执行。
