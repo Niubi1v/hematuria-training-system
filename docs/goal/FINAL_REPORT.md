@@ -487,3 +487,10 @@
 - 尚未关闭的人工/权限边界：Production正式alias与正式部署、GitHub Pages合并后42卡复测、真机软键盘/safe-area、Patient自然度人工抽查、161个来源修订、42例`needs_revision`、419条人工审核、HEM-P0-001/023具名医学裁决。PR不得因此转Ready或合并。
 - 长期QA准确起始HEAD：`51f9c6fc8543ac0b6a5907fc65974cd72027f67b`。重点复测15 intent口语/否定/选择/复合问法、医学冲突隔离、P003晚session响应不覆盖成功提交、P001中英文live AI/history-log、42例双语七阶段及Preview输出零凭据。
 - 回滚：CI预算提交可普通执行`git revert 51f9c6f`；Patient canonical实现可独立普通revert `56c3b0d`。不得使用reset、rebase或force push；任何回滚仍需完整安全门禁与Draft PR检查。
+
+### 2026-07-19 Production Goal完成度审计结论
+
+- 审计起点为干净且已同步的`3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`。最终Actions、Vercel、Preview、42例双语七阶段、Patient canonical、临床Agent、360评分和安全门禁证据均有效；权威Goal与Acceptance Matrix中旧候选/旧SHA状态已按这些事实校正。
+- 新补P999真实静态HTTP证据：root与GitHub Pages basePath下代表有效病例200、P999 404，basePath外路径受控404。HEM-P2-043当前工程项关闭；公开Pages的30个旧内部路由仍明确归因于`main@5a3ad119`部署差异。
+- 完成度审计没有证明整个生产目标完成：HEM-P0-001/023、151/18条语义裁决、42例与419条人工终签、Production health/10+5+5、正式live alias、合并后Pages、真机软键盘/safe-area和人工自然度仍缺具名人员或生产权限证据。不得转Ready、合并或正式部署。
+- 本轮不修改业务代码或医学数据；回滚仅需对最终文档提交执行普通`git revert <commit>`，不得reset或force push。

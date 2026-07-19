@@ -276,12 +276,12 @@
 
 ### HEM-P2-043 病例目录`.html`链接42/42返回404
 
-- **状态**：本地工程修复完成，待本次push后Node22 CI与最新Preview复测。
+- **状态**：`RESOLVED_ENGINEERING`；公开Pages仍为旧`main@5a3ad119`，故线上30个旧内部路由继续登记为`BLOCKED_DEPLOYMENT_MISMATCH`，不属于当前源码回归。
 - **失败基线**：Production `3541a706`的目录在desktop/mobile均生成42个`/cases/Pxxx/index.html` href；Next dev逐项404，而同一病例的`/cases/Pxxx/`直接访问和刷新可用。
 - **根因**：客户端把静态导出文件名当作公开路由合同；这与Next动态目录路由、Vercel无basePath和Pages basePath三种环境不一致。
 - **最小修复**：集中生成经校验的目录URL并可选拼接`NEXT_PUBLIC_BASE_PATH`；目录、随机入口和反馈重试复用同一合同。静态测试服务器加入basePath模拟并让404保留HTTP 404；`dynamicParams=false`保持无效病例受控拒绝。
-- **证据**：公共路由合同覆盖42例；Next dev desktop/mobile 8/8专项中的目录、第一阶段和双击合同通过；root与Pages basePath静态导出各2/2，两个构建均82/82。
-- **边界**：未使用完整域名硬编码、未增加catch-all、未改`data/**`或医学/评分/session安全规则。
+- **证据**：公共路由合同覆盖42例；Next dev desktop/mobile专项中的目录、第一阶段和双击合同通过；最终run `29547532678`在Node 22.14完成72项Playwright与82页build。2026-07-19对当前`out`启动受控静态服务器：root及`/hematuria-training-system` basePath下P001/P013/P042均HTTP 200、P999均404，basePath外P001亦404；服务器在`finally`停止且无残留。
+- **边界**：未使用完整域名硬编码、未增加catch-all、未改`data/**`或医学/评分/session安全规则。正式合并后的Pages部署仍须复测42卡、直达、刷新和双语，当前禁止为旧部署修改已通过合同。
 
 ### HEM-P2-028 一次操作产生2 requests / 2 IDs / 2 events
 
