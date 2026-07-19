@@ -1,7 +1,8 @@
 # Agent C 安全、Session/Attempt 与 API 工程审阅
 
-审阅日期：2026-07-20  
-审阅范围：`api/**`、`server/**`（未修改 `server/canonicalFacts.js`、`server/structuredFacts.js`）、`src/server/**` 及安全/API/attempt 专项测试。  
+审阅日期：2026-07-20
+
+审阅范围：`api/**`、`server/**`（未修改 `server/canonicalFacts.js`、`server/structuredFacts.js`）、`src/server/**` 及安全/API/attempt 专项测试。
 医学治理：未修改 `data/**`、医学真值、审核状态、360 分医学规则或病例事实。
 
 ## 结论
