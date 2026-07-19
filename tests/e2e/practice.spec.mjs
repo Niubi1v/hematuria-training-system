@@ -150,6 +150,24 @@ test("case catalog switches public complaint language", async ({ page }) => {
   await page.getByRole("button", { name: "English" }).click();
   await expect(page.getByRole("heading", { name: "Case selection" })).toBeVisible();
   await expect(page.getByText(/Hematuria/i).first()).toBeVisible();
+  await expect(page.locator('a[href="/cases/P013/"]')).toContainText("Intermittent red urine for 2 months");
+  await expect(page.locator('a[href="/cases/P019/"]')).toContainText("Chief complaint pending medical review");
+  await expect(page.locator('a[href="/cases/P020/"]')).toContainText("Chief complaint pending medical review");
+});
+
+test("saved English preference initializes one English patient session and opening", async ({ page }) => {
+  const observations = [];
+  await page.addInitScript(() => localStorage.setItem("hematuria-language", "en"));
+  await routeTrainingApiThroughHandler(page, observations);
+  await page.goto("/cases/P034/");
+
+  const conversation = page.getByRole("log", { name: "Simulated patient conversation" });
+  await expect(conversation).toContainText("Hello doctor. My urine has looked red.");
+  await expect(conversation).not.toContainText("医生您好");
+  await expect.poll(() => observations.filter((item) => item.action === "session-init").length).toBe(1);
+  expect(observations.filter((item) => item.action === "session-init")).toEqual([
+    expect.objectContaining({ caseId: "HX-ADD-022", language: "en", status: 200 })
+  ]);
 });
 
 test("P001 stage one submission advances across language switches and refresh", async ({ page }) => {
