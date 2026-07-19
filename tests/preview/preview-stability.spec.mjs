@@ -747,3 +747,134 @@ test("@preview-wrong-summary-correction rejects a contradictory P001 recap witho
     await context.close().catch(() => undefined);
   }
 });
+
+test("@preview-language-quality corrects a contradictory English P001 recap", async ({ browser }, testInfo) => {
+  test.setTimeout(240_000);
+  const context = await browser.newContext();
+  await context.addInitScript(() => localStorage.removeItem("hematuria-language"));
+  let opened;
+  try {
+    opened = await openReadyCase(context, "P001", "en");
+    expect(opened.attemptResponse.status()).toBe(200);
+    expect(opened.sessionResponse.status()).toBe(200);
+    let agentRequestCount = 0;
+    let historyLogCount = 0;
+    opened.page.on("request", (request) => {
+      const pathname = new URL(request.url()).pathname;
+      if (pathname === "/api/agent-chat/" && request.method() === "POST" && !safeBody(request).probe) agentRequestCount += 1;
+      if (pathname === "/api/training-action/" && request.method() === "POST" && safeBody(request).action === "history-log") historyLogCount += 1;
+    });
+
+    const baseline = await askLiveQuestion(opened.page, "en", "When did you first notice the red urine?", { includeReplyText: true });
+    expect(baseline.patientStatus).toBe(200);
+    expect(baseline.historyStatus).toBe(200);
+    expect(baseline.generationSource).toBe("live_ai");
+    expect(baseline.isFallback).toBe(false);
+    expect(String(baseline.provider || "").toLowerCase()).toBe("deepseek");
+    const baselineDurationConfirmed = /(?:three|3)[^.!?]{0,12}months?/i.test(baseline.replyText);
+    expect(baselineDurationConfirmed).toBe(true);
+
+    const correction = await askLiveQuestion(opened.page, "en", "So this only started today and it has never happened before, correct?", { includeReplyText: true });
+    expect(correction.patientStatus).toBe(200);
+    expect(correction.historyStatus).toBe(200);
+    expect(correction.generationSource).toBe("live_ai");
+    expect(correction.isFallback).toBe(false);
+    expect(String(correction.provider || "").toLowerCase()).toBe("deepseek");
+    const correctionDetected = /\b(?:no|not|incorrect|actually|months?|intermittent|before|on and off)\b/i.test(correction.replyText);
+    const chineseLeakageDetected = /[\u3400-\u9fff]/u.test(correction.replyText);
+    const teacherMetaLeakageDetected = /scor(?:e|ing)|rubric|teacher|standard answer|JSON|system\s*prompt/i.test(correction.replyText);
+    const finalDiagnosisLeakageDetected = /bladder\s+(?:cancer|malignan)|urothelial\s+carcinoma/i.test(correction.replyText);
+    expect(correctionDetected).toBe(true);
+    expect(chineseLeakageDetected).toBe(false);
+    expect(teacherMetaLeakageDetected).toBe(false);
+    expect(finalDiagnosisLeakageDetected).toBe(false);
+    expect({ agentRequestCount, historyLogCount }).toEqual({ agentRequestCount: 2, historyLogCount: 2 });
+    expect(opened.protection.crossOriginProtectionRequests).toBe(0);
+
+    const summary = {
+      scenario: "preview-wrong-summary-correction-p001-en",
+      baselineGenerationSource: baseline.generationSource,
+      correctionGenerationSource: correction.generationSource,
+      provider: correction.provider,
+      baselineDurationConfirmed,
+      correctionDetected,
+      chineseLeakageDetected,
+      teacherMetaLeakageDetected,
+      finalDiagnosisLeakageDetected,
+      agentRequestCount,
+      historyLogCount,
+      crossOriginProtectionRequests: opened.protection.crossOriginProtectionRequests,
+      responseTextRetained: false
+    };
+    await testInfo.attach("preview-wrong-summary-correction-p001-en", { body: JSON.stringify(summary, null, 2), contentType: "application/json" });
+    console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
+  } finally {
+    await opened?.page.close().catch(() => undefined);
+    await context.close().catch(() => undefined);
+  }
+});
+
+test("@preview-language-quality asks for clarification instead of dumping English history", async ({ browser }, testInfo) => {
+  test.setTimeout(180_000);
+  const context = await browser.newContext();
+  await context.addInitScript(() => localStorage.removeItem("hematuria-language"));
+  let opened;
+  try {
+    opened = await openReadyCase(context, "P001", "en");
+    expect(opened.attemptResponse.status()).toBe(200);
+    expect(opened.sessionResponse.status()).toBe(200);
+    let agentRequestCount = 0;
+    let historyLogCount = 0;
+    opened.page.on("request", (request) => {
+      const pathname = new URL(request.url()).pathname;
+      if (pathname === "/api/agent-chat/" && request.method() === "POST" && !safeBody(request).probe) agentRequestCount += 1;
+      if (pathname === "/api/training-action/" && request.method() === "POST" && safeBody(request).action === "history-log") historyLogCount += 1;
+    });
+
+    const answer = await askLiveQuestion(opened.page, "en", "Could you explain the other part?", { includeReplyText: true });
+    expect(answer.patientStatus).toBe(200);
+    expect(answer.historyStatus).toBe(200);
+    expect(answer.generationSource).toBe("live_ai");
+    expect(answer.isFallback).toBe(false);
+    expect(String(answer.provider || "").toLowerCase()).toBe("deepseek");
+    const clarificationDetected = /\b(?:what|which|mean|part|refer|specific|clarif|like to know|about what|anything in particular|not sure)\b/i.test(answer.replyText);
+    const chineseLeakageDetected = /[\u3400-\u9fff]/u.test(answer.replyText);
+    const teacherMetaLeakageDetected = /scor(?:e|ing)|rubric|teacher|standard answer|JSON|system\s*prompt/i.test(answer.replyText);
+    const finalDiagnosisLeakageDetected = /bladder\s+(?:cancer|malignan)|urothelial\s+carcinoma/i.test(answer.replyText);
+    const historyFactSignalCount = [
+      /(?:three|3)[^.!?]{0,12}months?/i,
+      /blood\s+clots?/i,
+      /aspirin/i,
+      /hypertension|high\s+blood\s+pressure/i,
+      /difficult(?:y)?\s+(?:to\s+)?ur|empty(?:ing)?\s+my\s+bladder/i
+    ].filter((pattern) => pattern.test(answer.replyText)).length;
+    const fullHistoryDumpDetected = historyFactSignalCount >= 3;
+    const summary = {
+      scenario: "preview-ungrounded-vague-question-clarification-p001-en",
+      generationSource: answer.generationSource,
+      provider: answer.provider,
+      clarificationDetected,
+      chineseLeakageDetected,
+      teacherMetaLeakageDetected,
+      finalDiagnosisLeakageDetected,
+      fullHistoryDumpDetected,
+      historyFactSignalCount,
+      agentRequestCount,
+      historyLogCount,
+      crossOriginProtectionRequests: opened.protection.crossOriginProtectionRequests,
+      responseTextRetained: false
+    };
+    await testInfo.attach("preview-vague-question-clarification-p001-en", { body: JSON.stringify(summary, null, 2), contentType: "application/json" });
+    console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
+    expect(clarificationDetected).toBe(true);
+    expect(chineseLeakageDetected).toBe(false);
+    expect(teacherMetaLeakageDetected).toBe(false);
+    expect(finalDiagnosisLeakageDetected).toBe(false);
+    expect(fullHistoryDumpDetected).toBe(false);
+    expect({ agentRequestCount, historyLogCount }).toEqual({ agentRequestCount: 1, historyLogCount: 1 });
+    expect(opened.protection.crossOriginProtectionRequests).toBe(0);
+  } finally {
+    await opened?.page.close().catch(() => undefined);
+    await context.close().catch(() => undefined);
+  }
+});

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-19T05:08:02.182Z",
+  "generatedAt": "2026-07-19T05:19:31.028Z",
   "productionSha": "657ba5da8fc6460ad7d0deea882a010c40938b40",
   "previewHealth": {
     "status": 200,
@@ -75,6 +75,40 @@
     "finalDiagnosisLeakageDetected": false,
     "agentRequests": 2,
     "historyLogs": 2,
+    "crossOriginProtectionRequests": 0,
+    "responseTextRetained": false
+  },
+  "englishWrongSummaryCorrection": {
+    "status": "PASS_PREVIEW",
+    "caseId": "P001",
+    "language": "en",
+    "baselineGenerationSource": "live_ai",
+    "correctionGenerationSource": "live_ai",
+    "provider": "deepseek",
+    "baselineDurationConfirmed": true,
+    "correctionDetected": true,
+    "chineseLeakageDetected": false,
+    "teacherMetaLeakageDetected": false,
+    "finalDiagnosisLeakageDetected": false,
+    "agentRequests": 2,
+    "historyLogs": 2,
+    "crossOriginProtectionRequests": 0,
+    "responseTextRetained": false
+  },
+  "englishUngroundedVagueQuestion": {
+    "status": "PASS_PREVIEW",
+    "caseId": "P001",
+    "language": "en",
+    "generationSource": "live_ai",
+    "provider": "deepseek",
+    "clarificationDetected": true,
+    "chineseLeakageDetected": false,
+    "teacherMetaLeakageDetected": false,
+    "finalDiagnosisLeakageDetected": false,
+    "fullHistoryDumpDetected": false,
+    "historyFactSignalCount": 0,
+    "agentRequests": 1,
+    "historyLogs": 1,
     "crossOriginProtectionRequests": 0,
     "responseTextRetained": false
   },
