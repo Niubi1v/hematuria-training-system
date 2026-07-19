@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-19T05:19:31.028Z",
+  "generatedAt": "2026-07-19T05:30:31.051Z",
   "productionSha": "657ba5da8fc6460ad7d0deea882a010c40938b40",
   "previewHealth": {
     "status": 200,
@@ -110,6 +110,30 @@
     "agentRequests": 1,
     "historyLogs": 1,
     "crossOriginProtectionRequests": 0,
+    "responseTextRetained": false
+  },
+  "representativeChiefComplaintMatrix": {
+    "status": "PASS_PREVIEW",
+    "caseIds": ["P013", "P017", "P019", "P023", "P028", "P032", "P034", "P037", "P038", "P042"],
+    "categories": ["urinary-tumor", "anticoagulation", "infection", "stone", "prostate", "glomerular", "hereditary-pediatric-clue", "female-contamination", "trauma", "high-risk-microscopic"],
+    "languages": ["zh", "en"],
+    "sampleCount": 20,
+    "sourceCounts": {
+      "live_ai": 20,
+      "ai_cache": 0,
+      "rule_fallback": 0,
+      "safety_boundary": 0,
+      "mock": 0,
+      "unknown": 0
+    },
+    "httpContractFailures": 0,
+    "providerContractFailures": 0,
+    "requestContractFailures": 0,
+    "languageLeakCount": 0,
+    "teacherMetaLeakCount": 0,
+    "structuredPayloadLeakCount": 0,
+    "diagnosisHeuristicCount": 0,
+    "crossOriginProtectionRequestCount": 0,
     "responseTextRetained": false
   },
   "security": {

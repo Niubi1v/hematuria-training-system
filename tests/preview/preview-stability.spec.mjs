@@ -878,3 +878,98 @@ test("@preview-language-quality asks for clarification instead of dumping Englis
     await context.close().catch(() => undefined);
   }
 });
+
+test("@preview-representative-chief-complaint samples ten clinical categories bilingually", async ({ browser }, testInfo) => {
+  test.setTimeout(900_000);
+  const representatives = [
+    { caseId: "P013", category: "urinary-tumor", diagnosisLeak: /膀胱(?:癌|恶性)|尿路上皮癌|bladder\s+(?:cancer|malignan)|urothelial\s+carcinoma/i },
+    { caseId: "P017", category: "anticoagulation", diagnosisLeak: /抗凝相关血尿|anticoagulant-related\s+hematuria/i },
+    { caseId: "P019", category: "infection", diagnosisLeak: /肾盂肾炎|pyelonephritis/i },
+    { caseId: "P023", category: "stone", diagnosisLeak: /输尿管结石|ureter(?:al|ic)\s+(?:stone|calculus)/i },
+    { caseId: "P028", category: "prostate", diagnosisLeak: /前列腺增生|benign\s+prostatic\s+hyperplasia|\bBPH\b/i },
+    { caseId: "P032", category: "glomerular", diagnosisLeak: /肾小球肾炎|glomerulonephritis/i },
+    { caseId: "P034", category: "hereditary-pediatric-clue", diagnosisLeak: /Alport|遗传性肾炎/i },
+    { caseId: "P037", category: "female-contamination", diagnosisLeak: /月经污染|妇科来源|menstrual\s+contamination|gynecologic\s+source/i },
+    { caseId: "P038", category: "trauma", diagnosisLeak: /肾挫伤|renal\s+contusion/i },
+    { caseId: "P042", category: "high-risk-microscopic", diagnosisLeak: /高危无症状镜下血尿|high-risk\s+asymptomatic\s+microscopic/i }
+  ];
+  const sourceVocabulary = new Set(["live_ai", "ai_cache", "rule_fallback", "safety_boundary", "mock", "unknown"]);
+  const samples = [];
+  for (const representative of representatives) {
+    for (const language of ["zh", "en"]) {
+      const context = await browser.newContext();
+      await context.addInitScript(() => localStorage.removeItem("hematuria-language"));
+      let opened;
+      try {
+        opened = await openReadyCase(context, representative.caseId, language);
+        let agentRequestCount = 0;
+        let historyLogCount = 0;
+        opened.page.on("request", (request) => {
+          const pathname = new URL(request.url()).pathname;
+          if (pathname === "/api/agent-chat/" && request.method() === "POST" && !safeBody(request).probe) agentRequestCount += 1;
+          if (pathname === "/api/training-action/" && request.method() === "POST" && safeBody(request).action === "history-log") historyLogCount += 1;
+        });
+        const question = language === "en"
+          ? "Please describe the main problem that brought you here in your own words."
+          : "请用自己的话说说这次最主要的不舒服是什么？";
+        const answer = await askLiveQuestion(opened.page, language, question, { includeReplyText: true });
+        const source = sourceVocabulary.has(answer.generationSource) ? answer.generationSource : "unknown";
+        const chinesePresent = /[\u3400-\u9fff]/u.test(answer.replyText);
+        const languageLeakDetected = language === "en" ? chinesePresent : !chinesePresent;
+        const teacherMetaLeakageDetected = /评分|得分点|教师|标准答案|scor(?:e|ing)|rubric|teacher|standard answer|JSON|system\s*prompt/i.test(answer.replyText);
+        const structuredPayloadLeakageDetected = /matchedSlotIds?|matchedFacts?|generationSource|isFallback|caseId|slotId/i.test(answer.replyText);
+        const diagnosisHeuristicDetected = representative.diagnosisLeak.test(answer.replyText);
+        samples.push({
+          caseId: representative.caseId,
+          category: representative.category,
+          language,
+          source,
+          patientStatus: answer.patientStatus,
+          historyStatus: answer.historyStatus,
+          providerContractPass: source !== "live_ai" || (String(answer.provider || "").toLowerCase() === "deepseek" && answer.isFallback === false),
+          languageLeakDetected,
+          teacherMetaLeakageDetected,
+          structuredPayloadLeakageDetected,
+          diagnosisHeuristicDetected,
+          agentRequestCount,
+          historyLogCount,
+          crossOriginProtectionRequests: opened.protection.crossOriginProtectionRequests,
+          responseTextRetained: false
+        });
+      } finally {
+        await opened?.page.close().catch(() => undefined);
+        await context.close().catch(() => undefined);
+      }
+    }
+  }
+
+  const sourceCounts = Object.fromEntries([...sourceVocabulary].map((source) => [source, samples.filter((sample) => sample.source === source).length]));
+  const summary = {
+    scenario: "preview-representative-chief-complaint-bilingual-20",
+    caseCount: representatives.length,
+    sampleCount: samples.length,
+    sourceCounts,
+    httpContractFailures: samples.filter((sample) => sample.patientStatus !== 200 || sample.historyStatus !== 200).length,
+    providerContractFailures: samples.filter((sample) => !sample.providerContractPass).length,
+    requestContractFailures: samples.filter((sample) => sample.agentRequestCount !== 1 || sample.historyLogCount !== 1).length,
+    languageLeakCount: samples.filter((sample) => sample.languageLeakDetected).length,
+    teacherMetaLeakCount: samples.filter((sample) => sample.teacherMetaLeakageDetected).length,
+    structuredPayloadLeakCount: samples.filter((sample) => sample.structuredPayloadLeakageDetected).length,
+    diagnosisHeuristicCount: samples.filter((sample) => sample.diagnosisHeuristicDetected).length,
+    crossOriginProtectionRequestCount: samples.reduce((sum, sample) => sum + sample.crossOriginProtectionRequests, 0),
+    responseTextRetained: false,
+    samples
+  };
+  await testInfo.attach("preview-representative-chief-complaint-bilingual-20", { body: JSON.stringify(summary, null, 2), contentType: "application/json" });
+  console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
+  expect(summary.sampleCount).toBe(20);
+  expect(summary.httpContractFailures).toBe(0);
+  expect(summary.providerContractFailures).toBe(0);
+  expect(summary.requestContractFailures).toBe(0);
+  expect(summary.languageLeakCount).toBe(0);
+  expect(summary.teacherMetaLeakCount).toBe(0);
+  expect(summary.structuredPayloadLeakCount).toBe(0);
+  expect(summary.diagnosisHeuristicCount).toBe(0);
+  expect(summary.crossOriginProtectionRequestCount).toBe(0);
+  expect(sourceCounts.unknown).toBe(0);
+});
