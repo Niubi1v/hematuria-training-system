@@ -88,6 +88,7 @@
 - `3a16f931` 回归：v2 矩阵明确接受 711 个严格 governed unknown 与 18 个 unsafe governed unknown，144/144 冲突隔离一致；6,216 路由与 6,216 重放只剩 42 个失败、1 个失败组。英文 `Have you had a urinary procedure?` 在全 42 例实际匹配 `triggers`，预期为 `PAST_URINARY_PROCEDURE`；同组公开 adapter 17/17 仍通过，`providerCalls=0`。
 - 复现/证据：42/42；`reports/patient-session-matrix-summary.json` 与 QA-only `tests/exploratory/patient-session-matrix.mjs`。聚合文件不含回答正文、session 或凭据。
 - 建议方向：收紧 `triggers` 英文同义词的泛化边界，并为完整短语 `urinary procedure` 增加泌尿操作史优先级；保留 governed unknown、来源阻断与冲突 quarantine 强断言。医学专家裁决：否。
+- `657ba5d` 状态审计差异：Production `DEFECT_LOG.md` 权威索引依据15-intent/190-alias矩阵将 HEM-P1-030列为关闭，但该提交没有运行时代码变化，也未覆盖上述37-slot最小问法。独立QA失败证据优先保持 `REGRESSED_LOCAL_QA`，请求主 Goal 重新打开该工程项；不得用纯文档状态覆盖42/42复现。
 
 ## HEM-P1-031：英文特异疼痛问法额外命中通用 pain 并扩大医学冲突隔离
 
@@ -199,4 +200,4 @@
 - `3a16f931` 复核：10 条失败路径与 5 类产物通道安全 canary 15/15；真实 Preview health、9 项黑盒、两批中英稳定性及20轮长会话均经 wrapper 执行，扫描后专用输出删除，未发现运行时凭据字节或敏感 header 名。该 QA 基础设施事件关闭，不改变业务缺陷状态。
 - 医学专家裁决：否。
 
-基线说明：当前运行时与审计基线为 Production `3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`，由 QA 分支普通 merge 得到 `991ec7605ca9b82c4c4835a9fcb075dfaf770e35`。Vercel Preview 精确 SHA 为 `PASS_PREVIEW`；GitHub Pages 公开产物仍有 30 个旧内部路由，标记 `BLOCKED_DEPLOYMENT_MISMATCH`；两者分别记录，不互相替代。
+基线说明：当前 Production 文档基线为 `657ba5da8fc6460ad7d0deea882a010c40938b40`，运行时与黑盒证据基线为代码等价的 `3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`；QA 普通 merge HEAD 为 `bd08566ddb91806abc9c1cc2123138b0ac29a2b4`。Vercel Preview 精确运行时 SHA 为 `PASS_PREVIEW`；GitHub Pages 公开产物仍有 30 个旧内部路由，标记 `BLOCKED_DEPLOYMENT_MISMATCH`；两者分别记录，不互相替代。

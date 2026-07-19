@@ -89,3 +89,4 @@
 - Preview 稳定性两批覆盖 P001–P005 的中英文各 10 个 live AI 样本，总体中文 10/10、英文 10/10；P001 另完成单 session 中文 20/20 和刷新恢复。P006–P042 当前只完成 Preview 路由和本地协议/UI，不把未抽样记成 AI 失败或通过。
 - Patient Session v2 为 6,216 路由、6,216 重放、168 边界；711 个 governed unknown 与 18 个 unsafe governed unknown 按新严格合同通过，144/144 冲突 quarantine 保持。唯一失败组是 `Have you had a urinary procedure?` 在 42/42 例匹配 `triggers`，HEM-P1-030 标记 `REGRESSED_LOCAL_QA`。
 - 42 例评分、数据 Agent、attempt 隔离和结构化历史合同继续本地通过；HEM-P0-001/023 与来源审批不因工程覆盖解除，真实手机继续 `BLOCKED_REAL_DEVICE`。
+- 后续 Production `657ba5d` 只修改权威验收文档，病例、Patient、路由、UI、评分、API、server 和 `data/**` 均与 `3a16f931` 相同；本矩阵作为运行时证据继续有效。其 Production 状态索引未覆盖37-slot中的英文泌尿操作问法，HEM-P1-030独立失败列不随文档merge关闭。

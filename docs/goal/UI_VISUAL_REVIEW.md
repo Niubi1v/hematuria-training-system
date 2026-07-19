@@ -1,6 +1,6 @@
 # UI 自动视觉审查
 
-状态：长期执行中；当前 Production 与运行时 UI 证据基线均为 `3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`。
+状态：长期执行中；当前 Production 文档基线为 `657ba5da8fc6460ad7d0deea882a010c40938b40`，运行时 UI 证据基线为代码等价的 `3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`。
 
 ## 固定视口与页面
 

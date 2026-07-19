@@ -71,3 +71,4 @@
 - 第二批 P001–P005 中文完整回答 P95 `1707ms`、英文 `1753ms`；UI 请求发出 P95 均 `42ms`。服务端 `firsttoken` 字段分别为 `1017ms`/`1009ms`，只标记为服务端计时；当前非流式界面没有浏览器第一个可见文字测量，HEM-P1-021 保持 `BLOCKED_MEASUREMENT`。
 - Patient Session v2 明确接受 711 个 governed unknown、18 个 unsafe governed unknown 与 144/144 冲突隔离；唯一工程失败是英文 `Have you had a urinary procedure?` 在 42/42 例匹配 `triggers` 而非 `PAST_URINARY_PROCEDURE`，HEM-P1-030 重新标记 `REGRESSED_LOCAL_QA`。这是路由优先级缺陷，不需要 QA 裁决医学真值。
 - 中英切换、刷新后切换、快速往返与非法/过期/跨病例 session 拒绝继续通过；HEM-P0-001、HEM-P0-023、来源修订和具名审批保持阻塞。患者主诉文案专项分支未合入、未测试、未修改。
+- Production `657ba5d` 仅校正验收文档，与上述应用树代码等价；其状态索引没有消除英文 `urinary procedure` 的42/42路由错配。自然语言/路由结论继续以独立QA v2矩阵为准，等待运行时代码修复后复测。

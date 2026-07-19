@@ -1,6 +1,6 @@
 # 探索式 QA 证据索引
 
-当前 Production 与运行时证据基线：`3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`
+当前 Production 文档基线：`657ba5da8fc6460ad7d0deea882a010c40938b40`；运行时证据代码基线：`3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`
 QA 分支：`codex/hematuria-exploratory-qa`
 本机证据根目录：`<QA_WORKTREE>\artifacts\exploratory-qa\`
 
@@ -78,7 +78,7 @@ SHA-256：
 | 脱敏 fixture transcript | P001 中文 20 轮 | `transcripts/fixture-20-turn-interview-390x844.json` | 1 | 3,295 | 否 | 非真实 AI，且不是缺陷最小证据 | 证据根目录下同路径 |
 | 失败录像 | HEM-P1-027–034、HEM-P2-028/043 | `videos/**` | 19 | 12,769,520 | 否 | 截图与最小 trace 已足够；按规则视频不进 Git | 证据根目录下同路径 |
 
-当前本机共有 345 个证据文件（含本索引）、427,689,117 字节。拟提交/既有 Git 最小证据集共 28 个文件（含本索引）、1,902,056 字节；其余 317 个文件、425,787,061 字节仅本机保留。定向 Playwright 复跑按 reporter 设计重建 HTML/JUnit/test-results；聚合 JSON、代表截图与历史最小 trace 进入 Git，大量重复截图、完整报告、长 trace、录像与 transcript 不整体提交。没有浏览器用户目录进入证据根目录；`.pnpm-store`、`node_modules` 与 `.next` 不进入证据或提交。
+当前本机共有 345 个证据文件（含本索引）、427,689,180 字节。拟提交/既有 Git 最小证据集共 28 个文件（含本索引）、1,902,119 字节；其余 317 个文件、425,787,061 字节仅本机保留。定向 Playwright 复跑按 reporter 设计重建 HTML/JUnit/test-results；聚合 JSON、代表截图与历史最小 trace 进入 Git，大量重复截图、完整报告、长 trace、录像与 transcript 不整体提交。没有浏览器用户目录进入证据根目录；`.pnpm-store`、`node_modules` 与 `.next` 不进入证据或提交。
 
 ## HEM-P1-027 复现与测量
 
