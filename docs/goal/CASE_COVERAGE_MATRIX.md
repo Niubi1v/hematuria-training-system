@@ -102,3 +102,4 @@
 - P037新增中英文刷新后继续追问：刷新前各2轮及DOM 6→6恢复通过，但刷新后首个agent请求均401 `session_capability_required`、无history-log，三批共6/6复现HEM-P1-045。P037刷新可继续列为`FAIL_PREVIEW`，事实连续性因无回答不评价。
 - 系统级AI接口防滥用四脚本本地通过：Origin/CORS、capability、角色/字段/输入、幂等并发、预算限流、训练状态和恢复合同适用于公共边界，但不把该系统级结果逐行扩张为42例真实AI或医学通过；真实Preview限流/故障注入仍未执行。
 - P001新增真实Preview双语内容滥用边界：2/2为safety boundary、provider timing 0、agent/history 2/2、内部/教师/诊断/代码泄露0。只更新P001安全输入列，不替代P002–P042或高频限流/故障注入。
+- P001新增真实Preview公开API会话能力拒绝矩阵：11/11缺失或不匹配state/capability/case/language/mode/attempt/stage请求按合同拒绝，公开error envelope 11/11、provider timing 0、跨源保护头0。该系统边界结论不扩张为P002–P042真实AI或医学内容通过，过期墙钟/限流/故障注入仍单列。

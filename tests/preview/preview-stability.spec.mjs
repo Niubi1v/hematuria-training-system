@@ -141,6 +141,34 @@ function safeFailureKind(error) {
   return "unexpected_failure";
 }
 
+async function postSameOriginJson(page, pathname, body, extraHeaders = {}) {
+  return page.evaluate(async ({ pathname, body, extraHeaders }) => {
+    const response = await fetch(pathname, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-idempotency-key": `qa-${crypto.randomUUID()}`,
+        ...extraHeaders
+      },
+      body: JSON.stringify(body)
+    });
+    let payload = {};
+    try { payload = await response.json(); } catch { payload = {}; }
+    const rawErrorCode = String(payload?.error || "");
+    const timingNames = String(response.headers.get("server-timing") || response.headers.get("x-hematuria-timing") || "")
+      .split(",")
+      .map((item) => item.trim().split(";")[0].toLowerCase())
+      .filter(Boolean);
+    return {
+      status: response.status,
+      errorCode: /^[a-z][a-z0-9_]{0,63}$/.test(rawErrorCode) ? rawErrorCode : "invalid_error_envelope",
+      publicErrorEnvelope: payload && typeof payload === "object" && !Array.isArray(payload)
+        && Object.keys(payload).every((key) => key === "error"),
+      providerTimingPresent: timingNames.includes("provider") || timingNames.includes("firsttoken")
+    };
+  }, { pathname, body, extraHeaders });
+}
+
 async function askLiveQuestion(page, language, question, options = {}) {
   const english = language === "en";
   const input = page.getByRole("textbox", { name: english ? "Enter an interview question" : "输入问诊问题" });
@@ -1609,4 +1637,88 @@ test("@preview-content-abuse rejects prompt extraction and code requests before 
   expect(summary.executableCodeLeakCount).toBe(0);
   expect(summary.replyLengthBoundaryFailures).toBe(0);
   expect(summary.crossOriginProtectionRequestCount).toBe(0);
+});
+
+test("@preview-session-abuse rejects missing and mismatched capabilities before provider use", async ({ browser }, testInfo) => {
+  test.setTimeout(180_000);
+  const context = await browser.newContext();
+  await context.addInitScript(() => localStorage.removeItem("hematuria-language"));
+  let opened;
+  try {
+    opened = await openReadyCase(context, "P001", "zh");
+    const attemptBody = safeBody(opened.attemptResponse.request());
+    const attemptHeaders = await opened.attemptResponse.allHeaders();
+    const trainingState = String(attemptHeaders["x-training-state"] || "");
+    const sessionPayload = await opened.sessionResponse.json();
+    const sessionId = String(sessionPayload.sessionId || "");
+    expect(Boolean(trainingState)).toBe(true);
+    expect(Boolean(sessionId)).toBe(true);
+
+    const runtimeMode = String(attemptBody.mode || "free");
+    const attemptId = String(attemptBody.attemptId || "");
+    const sessionHeaders = { "x-training-state": trainingState };
+    const baseSessionBody = { caseId: "P001", attemptId, mode: runtimeMode, language: "zh" };
+    const baseAgentBody = {
+      caseId: "P001",
+      attemptId,
+      agentId: "standardized_patient",
+      sessionId,
+      sessionMode: runtimeMode,
+      stage: "history",
+      mode: "training",
+      language: "zh",
+      studentInput: "什么时候开始的？",
+      conversationHistory: [],
+      askedSlotIds: [],
+      askedQuestions: []
+    };
+    const scenarios = [
+      { id: "session_missing_state", path: "/api/session/init/", body: baseSessionBody, headers: {}, status: 401, error: "invalid_attempt_token" },
+      { id: "session_cross_language", path: "/api/session/init/", body: { ...baseSessionBody, language: "en" }, headers: sessionHeaders, status: 409, error: "attempt_language_mismatch" },
+      { id: "session_cross_mode", path: "/api/session/init/", body: { ...baseSessionBody, mode: "osce" }, headers: sessionHeaders, status: 409, error: "attempt_mode_mismatch" },
+      { id: "session_cross_case", path: "/api/session/init/", body: { ...baseSessionBody, caseId: "P002" }, headers: sessionHeaders, status: 401, error: "attempt_case_mismatch" },
+      { id: "agent_missing_capability", path: "/api/agent-chat/", body: { ...baseAgentBody, sessionId: "" }, headers: {}, status: 401, error: "session_capability_required" },
+      { id: "agent_tampered_capability", path: "/api/agent-chat/", body: { ...baseAgentBody, sessionId: `${sessionId}tampered` }, headers: {}, status: 401, error: "invalid_session_capability" },
+      { id: "agent_cross_case", path: "/api/agent-chat/", body: { ...baseAgentBody, caseId: "P002" }, headers: {}, status: 401, error: "session_case_mismatch" },
+      { id: "agent_cross_language", path: "/api/agent-chat/", body: { ...baseAgentBody, language: "en" }, headers: {}, status: 401, error: "session_language_mismatch" },
+      { id: "agent_cross_mode", path: "/api/agent-chat/", body: { ...baseAgentBody, sessionMode: "osce" }, headers: {}, status: 401, error: "session_mode_mismatch" },
+      { id: "agent_cross_attempt", path: "/api/agent-chat/", body: { ...baseAgentBody, attemptId: "qa-preview-boundary-other" }, headers: {}, status: 401, error: "session_attempt_mismatch" },
+      { id: "agent_wrong_stage", path: "/api/agent-chat/", body: { ...baseAgentBody, stage: "diagnosis" }, headers: {}, status: 403, error: "stage_not_allowed" }
+    ];
+
+    const samples = [];
+    for (const scenario of scenarios) {
+      const actual = await postSameOriginJson(opened.page, scenario.path, scenario.body, scenario.headers);
+      samples.push({
+        id: scenario.id,
+        expectedStatus: scenario.status,
+        actualStatus: actual.status,
+        expectedError: scenario.error,
+        actualError: actual.errorCode,
+        publicErrorEnvelope: actual.publicErrorEnvelope,
+        providerTimingPresent: actual.providerTimingPresent
+      });
+    }
+    const summary = {
+      scenario: "preview-session-capability-abuse-p001",
+      caseId: "P001",
+      rejectionCount: samples.length,
+      contractFailureCount: samples.filter((sample) => sample.actualStatus !== sample.expectedStatus || sample.actualError !== sample.expectedError).length,
+      privateEnvelopeCount: samples.filter((sample) => !sample.publicErrorEnvelope).length,
+      providerTimingCount: samples.filter((sample) => sample.providerTimingPresent).length,
+      crossOriginProtectionRequestCount: opened.protection.crossOriginProtectionRequests,
+      secretsRetained: false,
+      samples
+    };
+    await testInfo.attach("preview-session-capability-abuse-p001", { body: JSON.stringify(summary, null, 2), contentType: "application/json" });
+    console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
+    expect(summary.rejectionCount).toBe(11);
+    expect(summary.contractFailureCount).toBe(0);
+    expect(summary.privateEnvelopeCount).toBe(0);
+    expect(summary.providerTimingCount).toBe(0);
+    expect(summary.crossOriginProtectionRequestCount).toBe(0);
+  } finally {
+    await opened?.page.close().catch(() => undefined);
+    await context.close().catch(() => undefined);
+  }
 });
