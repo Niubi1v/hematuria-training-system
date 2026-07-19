@@ -148,18 +148,30 @@ async function askLiveQuestion(page, language, question, options = {}) {
   await input.fill(question);
   await expect(send).toBeEnabled();
   let requestStartedAt;
-  const patientRequestPending = page.waitForRequest((request) => new URL(request.url()).pathname === "/api/agent-chat/" && request.method() === "POST")
-    .then((request) => {
-      requestStartedAt = Date.now();
-      return request;
-    });
-  const patientPending = page.waitForResponse((response) => new URL(response.url()).pathname === "/api/agent-chat/" && response.request().method() === "POST");
-  const historyPending = page.waitForResponse((response) => isAction(response, "history-log"));
+  const patientRequestPending = page.waitForRequest(
+    (request) => new URL(request.url()).pathname === "/api/agent-chat/" && request.method() === "POST",
+    { timeout: options.patientTimeoutMs ?? 45_000 }
+  ).then((request) => {
+    requestStartedAt = Date.now();
+    return request;
+  });
+  const patientPending = page.waitForResponse(
+    (response) => new URL(response.url()).pathname === "/api/agent-chat/" && response.request().method() === "POST",
+    { timeout: options.patientTimeoutMs ?? 45_000 }
+  );
+  const historyPending = page.waitForResponse(
+    (response) => isAction(response, "history-log"),
+    { timeout: options.historyTimeoutMs ?? 45_000 }
+  ).catch((error) => {
+    if (options.allowMissingHistory && /timeout/i.test(error instanceof Error ? error.message : String(error))) return undefined;
+    throw error;
+  });
   const clickStartedAt = Date.now();
   await send.click();
   await patientRequestPending;
   const patient = await patientPending;
   const payload = await patient.json();
+  const rawErrorCode = String(payload.error || "");
   const responseReceivedAt = Date.now();
   const uiDispatchMs = requestStartedAt - clickStartedAt;
   const answerMs = responseReceivedAt - requestStartedAt;
@@ -167,17 +179,18 @@ async function askLiveQuestion(page, language, question, options = {}) {
   const history = await historyPending;
   return {
     patientStatus: patient.status(),
-    historyStatus: history.status(),
+    historyStatus: history?.status() ?? 0,
     generationSource: payload.generationSource,
     provider: payload.provider,
     isFallback: payload.isFallback,
+    errorCode: /^[a-z][a-z0-9_]{0,63}$/.test(rawErrorCode) ? rawErrorCode : undefined,
     fallbackReason: payload.fallbackReason,
     replyText: options.includeReplyText ? String(payload.replyText || "") : undefined,
     uiDispatchMs,
     answerMs,
     clickToAnswerMs,
     patientTiming: parseServerTiming(timingHeader(await patient.allHeaders())),
-    historyTiming: parseServerTiming(timingHeader(await history.allHeaders()))
+    historyTiming: history ? parseServerTiming(timingHeader(await history.allHeaders())) : {}
   };
 }
 
@@ -1326,6 +1339,190 @@ test("@preview-multi-followup preserves P038 trauma context across five bilingua
   expect(summary.httpContractFailures).toBe(0);
   expect(summary.durationContinuityFailures).toBe(0);
   expect(summary.requestContractFailures).toBe(0);
+  expect(summary.apiUnauthorizedCount).toBe(0);
+  expect(summary.languageLeakCount).toBe(0);
+  expect(summary.teacherMetaLeakCount).toBe(0);
+  expect(summary.structuredPayloadLeakCount).toBe(0);
+  expect(summary.finalDiagnosisLeakCount).toBe(0);
+  expect(summary.crossOriginProtectionRequestCount).toBe(0);
+});
+
+test("@preview-refresh-followup restores P037 context and continues bilingually", async ({ browser }, testInfo) => {
+  test.setTimeout(180_000);
+  const scenarios = {
+    zh: {
+      questions: [
+        "请用自己的话说说这次为什么来就诊。",
+        "尿检异常是多久以前发现的？",
+        "现在正值月经期吗？",
+        "刷新后再确认一下，尿检异常是多久以前发现的？"
+      ],
+      duration: /(?:1|一)\s*天|一天/
+    },
+    en: {
+      questions: [
+        "Please tell me in your own words why you came today.",
+        "How long ago was the urine test abnormality first found?",
+        "Are you currently menstruating?",
+        "After the refresh, please confirm how long ago the urine test abnormality was found."
+      ],
+      duration: /(?:one|1|a)\s+days?|yesterday/i
+    }
+  };
+  const samples = [];
+  for (const language of ["zh", "en"]) {
+    const context = await browser.newContext();
+    await context.addInitScript(() => {
+      if (sessionStorage.getItem("qa-language-reset-complete") === "true") return;
+      localStorage.removeItem("hematuria-language");
+      sessionStorage.setItem("qa-language-reset-complete", "true");
+    });
+    let opened;
+    try {
+      opened = await openReadyCase(context, "P037", language);
+      expect(opened.attemptResponse.status()).toBe(200);
+      expect(opened.sessionResponse.status()).toBe(200);
+      let agentRequestCount = 0;
+      let historyLogCount = 0;
+      let attemptReinitializations = 0;
+      let sessionReinitializations = 0;
+      let apiUnauthorizedCount = 0;
+      opened.page.on("request", (request) => {
+        const pathname = new URL(request.url()).pathname;
+        if (pathname === "/api/agent-chat/" && request.method() === "POST" && !safeBody(request).probe) agentRequestCount += 1;
+        if (pathname === "/api/training-action/" && request.method() === "POST" && safeBody(request).action === "history-log") historyLogCount += 1;
+      });
+      opened.page.on("response", (response) => {
+        if (isAction(response, "init-attempt")) attemptReinitializations += 1;
+        if (isSessionInit(response, language)) sessionReinitializations += 1;
+        const pathname = new URL(response.url()).pathname;
+        if (pathname.startsWith("/api/") && response.status() === 401) apiUnauthorizedCount += 1;
+      });
+      const answers = [];
+      answers.push(await askLiveQuestion(opened.page, language, scenarios[language].questions[0], {
+        includeReplyText: true,
+        patientTimeoutMs: 20_000,
+        historyTimeoutMs: 15_000
+      }));
+      answers.push(await askLiveQuestion(opened.page, language, scenarios[language].questions[1], {
+        includeReplyText: true,
+        patientTimeoutMs: 20_000,
+        historyTimeoutMs: 15_000
+      }));
+      const conversation = opened.page.getByRole("log").locator(".space-y-3 > *");
+      await expect.poll(() => conversation.count(), { timeout: 10_000 }).toBeGreaterThanOrEqual(6);
+      const domMessageCountBeforeRefresh = await conversation.count();
+      await opened.page.reload({ waitUntil: "domcontentloaded" });
+      await expect(opened.page.getByRole("textbox", { name: language === "en" ? "Enter an interview question" : "输入问诊问题" })).toBeVisible();
+      await expect.poll(() => conversation.count(), { timeout: 10_000 }).toBe(domMessageCountBeforeRefresh);
+      const domMessageCountAfterRefresh = await conversation.count();
+      const firstPostRefresh = await askLiveQuestion(opened.page, language, scenarios[language].questions[2], {
+        includeReplyText: true,
+        allowMissingHistory: true,
+        patientTimeoutMs: 20_000,
+        historyTimeoutMs: 15_000
+      });
+      answers.push(firstPostRefresh);
+      if (firstPostRefresh.historyStatus === 200) {
+        answers.push(await askLiveQuestion(opened.page, language, scenarios[language].questions[3], {
+          includeReplyText: true,
+          allowMissingHistory: true,
+          patientTimeoutMs: 20_000,
+          historyTimeoutMs: 15_000
+        }));
+      }
+
+      const successfulAnswers = answers.filter((answer) => answer.patientStatus === 200);
+      const combinedText = successfulAnswers.map((answer) => answer.replyText).join("\n");
+      const liveAiCount = successfulAnswers.filter((answer) => answer.generationSource === "live_ai").length;
+      const safetyBoundaryCount = successfulAnswers.filter((answer) => answer.generationSource === "safety_boundary").length;
+      const sourceContractPass = liveAiCount >= 1 && successfulAnswers.every((answer) => {
+        if (answer.generationSource === "live_ai") {
+          return String(answer.provider || "").toLowerCase() === "deepseek" && answer.isFallback === false;
+        }
+        return answer.generationSource === "safety_boundary" && answer.isFallback === true;
+      });
+      const languageLeakDetected = language === "en"
+        ? /[\u3400-\u9fff]/u.test(combinedText)
+        : successfulAnswers.some((answer) => !/[\u3400-\u9fff]/u.test(answer.replyText));
+      const durationContinuityEvaluable = answers[1]?.generationSource === "live_ai" && answers[3]?.generationSource === "live_ai";
+      const preRefreshDurationMatched = scenarios[language].duration.test(answers[1]?.replyText || "");
+      const postRefreshDurationMatched = scenarios[language].duration.test(answers[3]?.replyText || "");
+      samples.push({
+        language,
+        answerCount: answers.length,
+        answerSources: answers.map((answer) => answer.generationSource),
+        answerFallbackFlags: answers.map((answer) => answer.isFallback === true),
+        liveAiCount,
+        safetyBoundaryCount,
+        sourceContractPass,
+        httpContractPass: answers.every((answer) => answer.patientStatus === 200 && answer.historyStatus === 200),
+        durationContinuityEvaluable,
+        preRefreshDurationMatched,
+        postRefreshDurationMatched,
+        durationContinuityPass: durationContinuityEvaluable ? preRefreshDurationMatched && postRefreshDurationMatched : null,
+        firstPostRefreshPatientStatus: firstPostRefresh.patientStatus,
+        firstPostRefreshHistoryStatus: firstPostRefresh.historyStatus,
+        firstPostRefreshErrorCode: firstPostRefresh.errorCode,
+        firstPostRefreshAnswerMs: firstPostRefresh.answerMs,
+        stoppedAfterMissingHistory: firstPostRefresh.historyStatus !== 200,
+        domMessageCountBeforeRefresh,
+        domMessageCountAfterRefresh,
+        refreshMessageCountPreserved: domMessageCountAfterRefresh === domMessageCountBeforeRefresh,
+        agentRequestCount,
+        historyLogCount,
+        attemptReinitializations,
+        sessionReinitializations,
+        apiUnauthorizedCount,
+        languageLeakDetected,
+        teacherMetaLeakageDetected: /评分|得分点|教师|标准答案|scor(?:e|ing)|rubric|teacher|standard answer|JSON|system\s*prompt/i.test(combinedText),
+        structuredPayloadLeakageDetected: /matchedSlotIds?|matchedFacts?|generationSource|isFallback|caseId|slotId/i.test(combinedText),
+        finalDiagnosisLeakageDetected: /月经污染|妇科来源|menstrual\s+contamination|gynecologic\s+source/i.test(combinedText),
+        crossOriginProtectionRequests: opened.protection.crossOriginProtectionRequests,
+        responseTextRetained: false
+      });
+    } finally {
+      await opened?.page.close().catch(() => undefined);
+      await context.close().catch(() => undefined);
+    }
+  }
+  const summary = {
+    scenario: "preview-refresh-followup-p037-bilingual",
+    caseId: "P037",
+    languageCount: samples.length,
+    answerCount: samples.reduce((sum, sample) => sum + sample.answerCount, 0),
+    liveAiCount: samples.reduce((sum, sample) => sum + sample.liveAiCount, 0),
+    safetyBoundaryCount: samples.reduce((sum, sample) => sum + sample.safetyBoundaryCount, 0),
+    sourceContractFailures: samples.filter((sample) => !sample.sourceContractPass).length,
+    httpContractFailures: samples.filter((sample) => !sample.httpContractPass).length,
+    durationContinuityEvaluableCount: samples.filter((sample) => sample.durationContinuityEvaluable).length,
+    durationContinuityFailures: samples.filter((sample) => sample.durationContinuityEvaluable && !sample.durationContinuityPass).length,
+    refreshRestorationFailures: samples.filter((sample) => !sample.refreshMessageCountPreserved).length,
+    requestContractFailures: samples.filter((sample) => sample.agentRequestCount !== 4 || sample.historyLogCount !== 4).length,
+    attemptReinitializationCount: samples.reduce((sum, sample) => sum + sample.attemptReinitializations, 0),
+    sessionReinitializationCount: samples.reduce((sum, sample) => sum + sample.sessionReinitializations, 0),
+    apiUnauthorizedCount: samples.reduce((sum, sample) => sum + sample.apiUnauthorizedCount, 0),
+    postRefreshUnauthorizedCount: samples.filter((sample) => sample.firstPostRefreshPatientStatus === 401).length,
+    postRefreshHistoryMissingCount: samples.filter((sample) => sample.firstPostRefreshHistoryStatus === 0).length,
+    languageLeakCount: samples.filter((sample) => sample.languageLeakDetected).length,
+    teacherMetaLeakCount: samples.filter((sample) => sample.teacherMetaLeakageDetected).length,
+    structuredPayloadLeakCount: samples.filter((sample) => sample.structuredPayloadLeakageDetected).length,
+    finalDiagnosisLeakCount: samples.filter((sample) => sample.finalDiagnosisLeakageDetected).length,
+    crossOriginProtectionRequestCount: samples.reduce((sum, sample) => sum + sample.crossOriginProtectionRequests, 0),
+    responseTextRetained: false,
+    samples
+  };
+  await testInfo.attach("preview-refresh-followup-p037-bilingual", { body: JSON.stringify(summary, null, 2), contentType: "application/json" });
+  console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
+  expect(summary.languageCount).toBe(2);
+  expect(summary.answerCount).toBe(8);
+  expect(summary.sourceContractFailures).toBe(0);
+  expect(summary.httpContractFailures).toBe(0);
+  expect(summary.durationContinuityFailures).toBe(0);
+  expect(summary.refreshRestorationFailures).toBe(0);
+  expect(summary.requestContractFailures).toBe(0);
+  expect(summary.attemptReinitializationCount).toBe(0);
+  expect(summary.sessionReinitializationCount).toBe(0);
   expect(summary.apiUnauthorizedCount).toBe(0);
   expect(summary.languageLeakCount).toBe(0);
   expect(summary.teacherMetaLeakCount).toBe(0);

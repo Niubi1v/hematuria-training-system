@@ -156,6 +156,21 @@
 - 医学专家裁决：否；仅为客户端授权状态和 effect 时序问题。
 - `ff1a932` 修复回归：四固定 viewport 中文→英文 4/4 `PASS_EMULATION`；Production 定向 E2E 另覆盖英文→中文、刷新后切换与快速往返。能力矩阵 19/19 通过，非法、篡改、过期、跨病例、跨语言、跨 mode/attempt session 仍被拒绝；`providerCalls=0`。
 
+## HEM-P1-045：刷新后对话可见但 session capability 未恢复，继续提问返回 401
+
+- 级别/状态：P1，OPEN / FAIL_PREVIEW；精确 Production/Preview `657ba5da8fc6460ad7d0deea882a010c40938b40`。
+- 页面/路径：受保护 Vercel Preview `/cases/P037/`；病例 P037；中文、英文；Playwright Desktop Chrome `1280×720`。
+- 操作步骤：全新上下文打开 P037 → 等待 attempt/session 200 → 连续发送2个问题并确认各自 agent/history 200 → 记录对话DOM为6项 → 刷新页面并确认DOM仍为6项 → 不切病例/语言，发送第3个问题 → 捕获 agent、history、attempt/session初始化和401计数。
+- 预期：刷新恢复既有对话与可继续使用的当前session能力；下一次发送为1个agent请求、HTTP 200、1个history-log，不重新使用缺失能力，也不出现401。
+- 实际：中英文DOM均6→6恢复，但刷新后首个agent请求均在约302/344ms返回HTTP 401 / `session_capability_required`；没有history-log。刷新期间attempt/session重初始化均为0，页面仍显示输入框，因此“可见恢复”和“可继续会话”状态不一致。
+- 复现：3批有效独立运行×中英文，共6/6。诊断期间3次长超时来自QA有限等待补丁误命中相邻helper，另1次英文回退来自QA在每次导航清理语言偏好；均已修正且不计产品复现。
+- AI来源：最终批刷新前3次DeepSeek `live_ai`、1次明确`safety_boundary`；刷新后401响应无`generationSource`，未产生患者回答。安全边界不计为真实AI通过。
+- 状态变化时间线：document/attempt/session 200 → 两轮agent/history 200 → DOM 6 → reload document 200 → DOM仍6、attempt/session初始化0/0 → 第3个agent请求 → 401 `session_capability_required` → history缺失。
+- HTTP/console/network：最终批两种语言各3个agent请求、2个history-log、1个API 401；跨源保护头请求0。wrapper对每批输出执行凭据扫描并删除专用目录；未保存Authorization、Cookie、签名、session ID、环境变量值或回答正文。
+- 最小证据：`tests/preview/preview-stability.spec.mjs` 中 `@preview-refresh-followup` 失败断言；`artifacts/exploratory-qa/reports/657ba5d-navigation-summary.json` 中仅状态、计数、错误码和耗时聚合。原始失败附件、error context与回答正文不提交Git。
+- 建议方向：刷新恢复消息时同步恢复/重新签发与attempt绑定的session capability，或在启用发送前重新执行安全的session初始化；必须继续拒绝伪造、过期、跨病例/语言/mode/attempt能力，不能通过放宽服务端401门禁修复。补充中英文“2轮→刷新→继续发送→history幂等”的门禁。
+- 医学专家裁决：否；纯客户端会话能力恢复与日志完整性缺陷，不修改病例事实。
+
 ## HEM-P2-043：本地 Next 开发环境病例目录链接对 42 个 `.html` 路由全部返回 404
 
 - 级别/状态：P2，RESOLVED_ENGINEERING_PREVIEW / PAGES_DEPLOYMENT_PENDING；本地 Next、root build、GitHub Pages basePath 仿真与当前 Vercel Preview 已通过，真实 Pages 仍部署不匹配。

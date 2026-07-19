@@ -99,3 +99,4 @@
 - 同事实双改写新增P019/P023/P032/P038/P042中英文10对：7对live AI病程时长一致7/7；P032中英文与P042中文3对为safety boundary来源一致3/3，事实内容不评价。HTTP/history/请求/语言/泄露合同20/20通过，不解除teacherReviewRequired或来源阻塞。
 - P023新增同session中文→英文→中文事实保持：病程时长3/3一致，来源为`live_ai/safety_boundary/live_ai`，agent/history 3/3且切换初始化均200。只将P023跨语言连续性记为`PASS_PREVIEW_GOVERNED`；英文安全边界不计入live AI，其他41例也不由此扩张。
 - P038新增中英文各5轮多问题追问：10回答中8次live AI、2次中文safety boundary，重复4小时时长4/4一致，agent/history 10/10。P038上下文列记为`PASS_PREVIEW_GOVERNED`，不由此替代其他病例的多轮真实AI覆盖。
+- P037新增中英文刷新后继续追问：刷新前各2轮及DOM 6→6恢复通过，但刷新后首个agent请求均401 `session_capability_required`、无history-log，三批共6/6复现HEM-P1-045。P037刷新可继续列为`FAIL_PREVIEW`，事实连续性因无回答不评价。

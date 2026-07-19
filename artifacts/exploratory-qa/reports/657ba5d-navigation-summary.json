@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-19T06:05:24.635Z",
+  "generatedAt": "2026-07-19T06:49:41.268Z",
   "productionSha": "657ba5da8fc6460ad7d0deea882a010c40938b40",
   "previewHealth": {
     "status": 200,
@@ -220,6 +220,38 @@
         "historyLogCount": 5
       }
     ]
+  },
+  "refreshFollowup": {
+    "status": "FAIL_PREVIEW",
+    "defectId": "HEM-P1-045",
+    "caseId": "P037",
+    "languages": ["zh", "en"],
+    "viewport": {"width": 1280, "height": 720},
+    "validRunCount": 3,
+    "reproductionCount": 6,
+    "reproductionTotal": 6,
+    "expectedAnswerCount": 8,
+    "completedAnswerCount": 6,
+    "preRefreshLiveAiCount": 3,
+    "preRefreshSafetyBoundaryCount": 1,
+    "sourceContractFailuresBeforeRefresh": 0,
+    "domMessageCountsBeforeRefresh": [6, 6],
+    "domMessageCountsAfterRefresh": [6, 6],
+    "refreshRestorationFailures": 0,
+    "postRefreshAgentRequestCount": 2,
+    "postRefreshPatientStatuses": [401, 401],
+    "postRefreshErrorCodes": ["session_capability_required", "session_capability_required"],
+    "postRefreshAnswerMs": [302, 344],
+    "postRefreshHistoryLogCount": 0,
+    "attemptReinitializationCount": 0,
+    "sessionReinitializationCount": 0,
+    "apiUnauthorizedCount": 2,
+    "languageLeakCount": 0,
+    "teacherMetaLeakCount": 0,
+    "structuredPayloadLeakCount": 0,
+    "finalDiagnosisLeakCount": 0,
+    "crossOriginProtectionRequestCount": 0,
+    "responseTextRetained": false
   },
   "security": {
     "crossOriginProtectionRequests": 0,
