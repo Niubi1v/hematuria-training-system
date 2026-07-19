@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-19T05:45:35.334Z",
+  "generatedAt": "2026-07-19T05:57:15.502Z",
   "productionSha": "657ba5da8fc6460ad7d0deea882a010c40938b40",
   "previewHealth": {
     "status": 200,
@@ -153,6 +153,29 @@
     "languageLeakCount": 0,
     "teacherMetaLeakCount": 0,
     "structuredPayloadLeakCount": 0,
+    "crossOriginProtectionRequestCount": 0,
+    "responseTextRetained": false
+  },
+  "crossLanguageFactContinuity": {
+    "status": "PASS_PREVIEW_GOVERNED",
+    "caseId": "P023",
+    "languageSequence": ["zh", "en", "zh"],
+    "answerCount": 3,
+    "answerSources": ["live_ai", "safety_boundary", "live_ai"],
+    "answerFallbackFlags": [false, true, false],
+    "liveAiCount": 2,
+    "safetyBoundaryCount": 1,
+    "sourceContractPass": true,
+    "httpContractPass": true,
+    "durationMatchCount": 3,
+    "switchAttemptStatuses": [200, 200],
+    "switchSessionStatuses": [200, 200],
+    "agentRequestCount": 3,
+    "historyLogCount": 3,
+    "apiUnauthorizedCount": 0,
+    "chineseLeakInEnglishDetected": false,
+    "teacherMetaLeakageDetected": false,
+    "structuredPayloadLeakageDetected": false,
     "crossOriginProtectionRequestCount": 0,
     "responseTextRetained": false
   },

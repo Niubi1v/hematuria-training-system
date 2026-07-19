@@ -76,3 +76,4 @@
 - Patient Session v2 明确接受 711 个 governed unknown、18 个 unsafe governed unknown 与 144/144 冲突隔离；唯一工程失败是英文 `Have you had a urinary procedure?` 在 42/42 例匹配 `triggers` 而非 `PAST_URINARY_PROCEDURE`，HEM-P1-030 重新标记 `REGRESSED_LOCAL_QA`。这是路由优先级缺陷，不需要 QA 裁决医学真值。
 - 中英切换、刷新后切换、快速往返与非法/过期/跨病例 session 拒绝继续通过；HEM-P0-001、HEM-P0-023、来源修订和具名审批保持阻塞。患者主诉文案专项分支未合入、未测试、未修改。
 - Production `657ba5d` 仅校正验收文档，与上述应用树代码等价；其状态索引没有消除英文 `urinary procedure` 的42/42路由错配。自然语言/路由结论继续以独立QA v2矩阵为准，等待运行时代码修复后复测。
+- P023同session中文→英文→中文的三次病程提问均保持6小时事实；两次中文回答为DeepSeek `live_ai`，英文回答稳定进入`safety_boundary`且明确标记fallback。该结果只证明跨语言事实连续性和治理来源可审计，不把英文安全边界算作真实AI自然度通过，也不评价其进入边界是否医学合宜。

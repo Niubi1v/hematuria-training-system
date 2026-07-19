@@ -117,6 +117,21 @@ async function openReadyCase(context, caseId, language = "zh") {
   }
 }
 
+async function switchReadyLanguage(page, language) {
+  const english = language === "en";
+  const attemptPending = page.waitForResponse((response) => isAction(response, "init-attempt") && safeBody(response.request()).language === language, { timeout: 45_000 });
+  const sessionPending = page.waitForResponse((response) => isSessionInit(response, language), { timeout: 45_000 });
+  void attemptPending.catch(() => undefined);
+  void sessionPending.catch(() => undefined);
+  const accept = (dialog) => dialog.accept();
+  page.once("dialog", accept);
+  await page.getByRole("button", { name: english ? "English" : "中文", exact: true }).click();
+  page.off("dialog", accept);
+  const [attempt, session] = await Promise.all([attemptPending, sessionPending]);
+  await expect(page.getByRole("textbox", { name: english ? "Enter an interview question" : "输入问诊问题" })).toBeVisible();
+  return { attemptStatus: attempt.status(), sessionStatus: session.status() };
+}
+
 function safeFailureKind(error) {
   const message = error instanceof Error ? error.message : String(error || "unknown_error");
   if (/ERR_CONNECTION_CLOSED/.test(message)) return "network_connection_closed";
@@ -1099,4 +1114,95 @@ test("@preview-paraphrase-consistency preserves onset duration across bilingual 
   expect(summary.teacherMetaLeakCount).toBe(0);
   expect(summary.structuredPayloadLeakCount).toBe(0);
   expect(summary.crossOriginProtectionRequestCount).toBe(0);
+});
+
+test("@preview-cross-language-fact preserves P023 duration across zh-en-zh", async ({ browser }, testInfo) => {
+  test.setTimeout(360_000);
+  const context = await browser.newContext();
+  await context.addInitScript(() => localStorage.removeItem("hematuria-language"));
+  let opened;
+  try {
+    opened = await openReadyCase(context, "P023", "zh");
+    expect(opened.attemptResponse.status()).toBe(200);
+    expect(opened.sessionResponse.status()).toBe(200);
+    let agentRequestCount = 0;
+    let historyLogCount = 0;
+    let apiUnauthorizedCount = 0;
+    opened.page.on("request", (request) => {
+      const pathname = new URL(request.url()).pathname;
+      if (pathname === "/api/agent-chat/" && request.method() === "POST" && !safeBody(request).probe) agentRequestCount += 1;
+      if (pathname === "/api/training-action/" && request.method() === "POST" && safeBody(request).action === "history-log") historyLogCount += 1;
+    });
+    opened.page.on("response", (response) => {
+      const pathname = new URL(response.url()).pathname;
+      if (pathname.startsWith("/api/") && response.status() === 401) apiUnauthorizedCount += 1;
+    });
+
+    const zhFirst = await askLiveQuestion(opened.page, "zh", "右侧腰痛和血尿大概从什么时候开始？", { includeReplyText: true });
+    const enSwitch = await switchReadyLanguage(opened.page, "en");
+    const enAnswer = await askLiveQuestion(opened.page, "en", "When did the right-sided pain and blood in the urine start?", { includeReplyText: true });
+    const zhSwitch = await switchReadyLanguage(opened.page, "zh");
+    const zhSecond = await askLiveQuestion(opened.page, "zh", "再确认一下，右腰腹痛和血尿是多久以前出现的？", { includeReplyText: true });
+
+    const zhDurationPattern = /(?:6|六)\s*个?小时|半天/;
+    const enDurationPattern = /(?:six|6)\s+hours?|half\s+a\s+day/i;
+    const durationMatches = [
+      zhDurationPattern.test(zhFirst.replyText),
+      enDurationPattern.test(enAnswer.replyText),
+      zhDurationPattern.test(zhSecond.replyText)
+    ];
+    const answers = [zhFirst, enAnswer, zhSecond];
+    const liveAiCount = answers.filter((answer) => answer.generationSource === "live_ai").length;
+    const safetyBoundaryCount = answers.filter((answer) => answer.generationSource === "safety_boundary").length;
+    const sourceContractPass = liveAiCount >= 1 && answers.every((answer) => {
+      if (answer.generationSource === "live_ai") {
+        return String(answer.provider || "").toLowerCase() === "deepseek" && answer.isFallback === false;
+      }
+      return answer.generationSource === "safety_boundary" && answer.isFallback === true;
+    });
+    const httpContractPass = answers.every((answer) => answer.patientStatus === 200 && answer.historyStatus === 200)
+      && [enSwitch, zhSwitch].every((item) => item.attemptStatus === 200 && item.sessionStatus === 200);
+    const chineseLeakInEnglishDetected = /[\u3400-\u9fff]/u.test(enAnswer.replyText);
+    const teacherMetaLeakageDetected = /评分|得分点|教师|标准答案|scor(?:e|ing)|rubric|teacher|standard answer|JSON|system\s*prompt/i.test(answers.map((answer) => answer.replyText).join("\n"));
+    const structuredPayloadLeakageDetected = /matchedSlotIds?|matchedFacts?|generationSource|isFallback|caseId|slotId/i.test(answers.map((answer) => answer.replyText).join("\n"));
+    const summary = {
+      scenario: "preview-cross-language-fact-p023-zh-en-zh",
+      caseId: "P023",
+      answerCount: answers.length,
+      answerSources: answers.map((answer) => answer.generationSource),
+      answerFallbackFlags: answers.map((answer) => answer.isFallback === true),
+      liveAiProviderContractPasses: answers.map((answer) => answer.generationSource !== "live_ai"
+        || (String(answer.provider || "").toLowerCase() === "deepseek" && answer.isFallback === false)),
+      liveAiCount,
+      safetyBoundaryCount,
+      sourceContractPass,
+      httpContractPass,
+      durationMatchCount: durationMatches.filter(Boolean).length,
+      switchAttemptStatuses: [enSwitch.attemptStatus, zhSwitch.attemptStatus],
+      switchSessionStatuses: [enSwitch.sessionStatus, zhSwitch.sessionStatus],
+      agentRequestCount,
+      historyLogCount,
+      apiUnauthorizedCount,
+      chineseLeakInEnglishDetected,
+      teacherMetaLeakageDetected,
+      structuredPayloadLeakageDetected,
+      crossOriginProtectionRequests: opened.protection.crossOriginProtectionRequests,
+      responseTextRetained: false
+    };
+    await testInfo.attach("preview-cross-language-fact-p023-zh-en-zh", { body: JSON.stringify(summary, null, 2), contentType: "application/json" });
+    console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
+    expect(sourceContractPass).toBe(true);
+    expect(httpContractPass).toBe(true);
+    expect(summary.durationMatchCount).toBe(3);
+    expect(agentRequestCount).toBe(3);
+    expect(historyLogCount).toBe(3);
+    expect(apiUnauthorizedCount).toBe(0);
+    expect(chineseLeakInEnglishDetected).toBe(false);
+    expect(teacherMetaLeakageDetected).toBe(false);
+    expect(structuredPayloadLeakageDetected).toBe(false);
+    expect(opened.protection.crossOriginProtectionRequests).toBe(0);
+  } finally {
+    await opened?.page.close().catch(() => undefined);
+    await context.close().catch(() => undefined);
+  }
 });
