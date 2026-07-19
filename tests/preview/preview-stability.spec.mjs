@@ -1206,3 +1206,130 @@ test("@preview-cross-language-fact preserves P023 duration across zh-en-zh", asy
     await context.close().catch(() => undefined);
   }
 });
+
+test("@preview-multi-followup preserves P038 trauma context across five bilingual turns", async ({ browser }, testInfo) => {
+  test.setTimeout(600_000);
+  const scenarios = {
+    zh: {
+      questions: [
+        "请用自己的话说说受伤后这次不舒服的经过。",
+        "外伤大约发生在多久以前？",
+        "血尿是在外伤后才出现的吗？",
+        "现在主要是哪里疼？",
+        "再确认一下，外伤离现在有多久？"
+      ],
+      duration: /(?:4|四)\s*个?小时/
+    },
+    en: {
+      questions: [
+        "Please describe what happened after the injury in your own words.",
+        "About how long ago did the injury happen?",
+        "Did the blood in your urine appear only after the injury?",
+        "Where is the pain mainly located now?",
+        "Just to confirm, how long ago was the injury?"
+      ],
+      duration: /(?:four|4)\s+hours?/i
+    }
+  };
+  const samples = [];
+  for (const language of ["zh", "en"]) {
+    const context = await browser.newContext();
+    await context.addInitScript(() => localStorage.removeItem("hematuria-language"));
+    let opened;
+    try {
+      opened = await openReadyCase(context, "P038", language);
+      expect(opened.attemptResponse.status()).toBe(200);
+      expect(opened.sessionResponse.status()).toBe(200);
+      let agentRequestCount = 0;
+      let historyLogCount = 0;
+      let apiUnauthorizedCount = 0;
+      opened.page.on("request", (request) => {
+        const pathname = new URL(request.url()).pathname;
+        if (pathname === "/api/agent-chat/" && request.method() === "POST" && !safeBody(request).probe) agentRequestCount += 1;
+        if (pathname === "/api/training-action/" && request.method() === "POST" && safeBody(request).action === "history-log") historyLogCount += 1;
+      });
+      opened.page.on("response", (response) => {
+        const pathname = new URL(response.url()).pathname;
+        if (pathname.startsWith("/api/") && response.status() === 401) apiUnauthorizedCount += 1;
+      });
+      const answers = [];
+      for (const question of scenarios[language].questions) {
+        answers.push(await askLiveQuestion(opened.page, language, question, { includeReplyText: true }));
+      }
+      const combinedText = answers.map((answer) => answer.replyText).join("\n");
+      const liveAiCount = answers.filter((answer) => answer.generationSource === "live_ai").length;
+      const safetyBoundaryCount = answers.filter((answer) => answer.generationSource === "safety_boundary").length;
+      const sourceContractPass = liveAiCount >= 1 && answers.every((answer) => {
+        if (answer.generationSource === "live_ai") {
+          return String(answer.provider || "").toLowerCase() === "deepseek" && answer.isFallback === false;
+        }
+        return answer.generationSource === "safety_boundary" && answer.isFallback === true;
+      });
+      const httpContractPass = answers.every((answer) => answer.patientStatus === 200 && answer.historyStatus === 200);
+      const languageLeakDetected = language === "en"
+        ? /[\u3400-\u9fff]/u.test(combinedText)
+        : answers.some((answer) => !/[\u3400-\u9fff]/u.test(answer.replyText));
+      const teacherMetaLeakageDetected = /评分|得分点|教师|标准答案|scor(?:e|ing)|rubric|teacher|standard answer|JSON|system\s*prompt/i.test(combinedText);
+      const structuredPayloadLeakageDetected = /matchedSlotIds?|matchedFacts?|generationSource|isFallback|caseId|slotId/i.test(combinedText);
+      const finalDiagnosisLeakageDetected = /肾挫伤|renal\s+contusion/i.test(combinedText);
+      samples.push({
+        language,
+        answerCount: answers.length,
+        answerSources: answers.map((answer) => answer.generationSource),
+        answerFallbackFlags: answers.map((answer) => answer.isFallback === true),
+        liveAiCount,
+        safetyBoundaryCount,
+        sourceContractPass,
+        httpContractPass,
+        firstDurationMatched: scenarios[language].duration.test(answers[1].replyText),
+        repeatedDurationMatched: scenarios[language].duration.test(answers[4].replyText),
+        agentRequestCount,
+        historyLogCount,
+        apiUnauthorizedCount,
+        languageLeakDetected,
+        teacherMetaLeakageDetected,
+        structuredPayloadLeakageDetected,
+        finalDiagnosisLeakageDetected,
+        crossOriginProtectionRequests: opened.protection.crossOriginProtectionRequests,
+        responseTextRetained: false
+      });
+    } finally {
+      await opened?.page.close().catch(() => undefined);
+      await context.close().catch(() => undefined);
+    }
+  }
+  const summary = {
+    scenario: "preview-multi-followup-p038-bilingual-five-turn",
+    caseId: "P038",
+    languageCount: samples.length,
+    answerCount: samples.reduce((sum, sample) => sum + sample.answerCount, 0),
+    liveAiCount: samples.reduce((sum, sample) => sum + sample.liveAiCount, 0),
+    safetyBoundaryCount: samples.reduce((sum, sample) => sum + sample.safetyBoundaryCount, 0),
+    sourceContractFailures: samples.filter((sample) => !sample.sourceContractPass).length,
+    httpContractFailures: samples.filter((sample) => !sample.httpContractPass).length,
+    durationContinuityFailures: samples.filter((sample) => !sample.firstDurationMatched || !sample.repeatedDurationMatched).length,
+    requestContractFailures: samples.filter((sample) => sample.agentRequestCount !== 5 || sample.historyLogCount !== 5).length,
+    apiUnauthorizedCount: samples.reduce((sum, sample) => sum + sample.apiUnauthorizedCount, 0),
+    languageLeakCount: samples.filter((sample) => sample.languageLeakDetected).length,
+    teacherMetaLeakCount: samples.filter((sample) => sample.teacherMetaLeakageDetected).length,
+    structuredPayloadLeakCount: samples.filter((sample) => sample.structuredPayloadLeakageDetected).length,
+    finalDiagnosisLeakCount: samples.filter((sample) => sample.finalDiagnosisLeakageDetected).length,
+    crossOriginProtectionRequestCount: samples.reduce((sum, sample) => sum + sample.crossOriginProtectionRequests, 0),
+    responseTextRetained: false,
+    samples
+  };
+  await testInfo.attach("preview-multi-followup-p038-bilingual-five-turn", { body: JSON.stringify(summary, null, 2), contentType: "application/json" });
+  console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
+  expect(summary.languageCount).toBe(2);
+  expect(summary.answerCount).toBe(10);
+  expect(summary.sourceContractFailures).toBe(0);
+  expect(summary.httpContractFailures).toBe(0);
+  expect(summary.durationContinuityFailures).toBe(0);
+  expect(summary.requestContractFailures).toBe(0);
+  expect(summary.apiUnauthorizedCount).toBe(0);
+  expect(summary.languageLeakCount).toBe(0);
+  expect(summary.teacherMetaLeakCount).toBe(0);
+  expect(summary.structuredPayloadLeakCount).toBe(0);
+  expect(summary.finalDiagnosisLeakCount).toBe(0);
+  expect(summary.crossOriginProtectionRequestCount).toBe(0);
+});

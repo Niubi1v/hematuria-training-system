@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-19T05:57:15.502Z",
+  "generatedAt": "2026-07-19T06:05:24.635Z",
   "productionSha": "657ba5da8fc6460ad7d0deea882a010c40938b40",
   "previewHealth": {
     "status": 200,
@@ -178,6 +178,48 @@
     "structuredPayloadLeakageDetected": false,
     "crossOriginProtectionRequestCount": 0,
     "responseTextRetained": false
+  },
+  "multiQuestionFollowup": {
+    "status": "PASS_PREVIEW_GOVERNED",
+    "caseId": "P038",
+    "languages": ["zh", "en"],
+    "turnsPerLanguage": 5,
+    "answerCount": 10,
+    "liveAiCount": 8,
+    "safetyBoundaryCount": 2,
+    "sourceContractFailures": 0,
+    "httpContractFailures": 0,
+    "durationContinuityFailures": 0,
+    "requestContractFailures": 0,
+    "apiUnauthorizedCount": 0,
+    "languageLeakCount": 0,
+    "teacherMetaLeakCount": 0,
+    "structuredPayloadLeakCount": 0,
+    "finalDiagnosisLeakCount": 0,
+    "crossOriginProtectionRequestCount": 0,
+    "responseTextRetained": false,
+    "samples": [
+      {
+        "language": "zh",
+        "answerSources": ["live_ai", "safety_boundary", "live_ai", "live_ai", "safety_boundary"],
+        "liveAiCount": 3,
+        "safetyBoundaryCount": 2,
+        "firstDurationMatched": true,
+        "repeatedDurationMatched": true,
+        "agentRequestCount": 5,
+        "historyLogCount": 5
+      },
+      {
+        "language": "en",
+        "answerSources": ["live_ai", "live_ai", "live_ai", "live_ai", "live_ai"],
+        "liveAiCount": 5,
+        "safetyBoundaryCount": 0,
+        "firstDurationMatched": true,
+        "repeatedDurationMatched": true,
+        "agentRequestCount": 5,
+        "historyLogCount": 5
+      }
+    ]
   },
   "security": {
     "crossOriginProtectionRequests": 0,

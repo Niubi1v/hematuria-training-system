@@ -98,3 +98,4 @@
 - 代表类别真实AI开放式主诉扩展为P013/P017/P019/P023/P028/P032/P034/P037/P038/P042，中英文20/20均live AI、history 200、单请求；覆盖肿瘤、抗凝、感染、结石、前列腺、肾小球、遗传/儿童线索、女性污染、外伤、高危镜下血尿。其余32例仍不由本矩阵冒充逐例真实AI通过。
 - 同事实双改写新增P019/P023/P032/P038/P042中英文10对：7对live AI病程时长一致7/7；P032中英文与P042中文3对为safety boundary来源一致3/3，事实内容不评价。HTTP/history/请求/语言/泄露合同20/20通过，不解除teacherReviewRequired或来源阻塞。
 - P023新增同session中文→英文→中文事实保持：病程时长3/3一致，来源为`live_ai/safety_boundary/live_ai`，agent/history 3/3且切换初始化均200。只将P023跨语言连续性记为`PASS_PREVIEW_GOVERNED`；英文安全边界不计入live AI，其他41例也不由此扩张。
+- P038新增中英文各5轮多问题追问：10回答中8次live AI、2次中文safety boundary，重复4小时时长4/4一致，agent/history 10/10。P038上下文列记为`PASS_PREVIEW_GOVERNED`，不由此替代其他病例的多轮真实AI覆盖。
