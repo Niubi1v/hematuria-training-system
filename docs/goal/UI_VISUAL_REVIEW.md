@@ -77,3 +77,4 @@
 - Preview 单 session 20 轮刷新后 DOM 对话项由 42 保持 42，证明最终渲染恢复；前两次即时 DOM/折叠状态断言失败属于测试同步，不登记视觉或数据丢失产品缺陷。
 - 精确 `657ba5d` Preview 的浏览器history专项通过：P001一轮真实AI后，前进到病例库、后退、再次前进/后退，DOM对话项始终为4，agent/history请求保持1/1；没有旧页面覆盖、重复消息或重复日志。
 - Chromium后台生命周期仿真也通过：`frozen → active` 后页面恢复visible，原4项对话保留，第二轮后精确增加到6项；输入框可继续操作且没有session/attempt重建。此项不覆盖真实手机操作系统回收、软键盘或safe-area，后者仍`BLOCKED_REAL_DEVICE`。
+- P001中文5个样本的患者回答DOM均在完整响应后稳定新增，无重复消息；点击至DOM首现P50 `1315.9ms`、P95 `1527.4ms`。这是headless Chromium DOM可见性计时，不等于真实屏幕绘制或真机感知时间。

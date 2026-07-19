@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-19T04:47:14.916Z",
+  "generatedAt": "2026-07-19T04:55:43.214Z",
   "productionSha": "657ba5da8fc6460ad7d0deea882a010c40938b40",
   "previewHealth": {
     "status": 200,
@@ -41,6 +41,26 @@
     "domItemsBeforeFreeze": 4,
     "domItemsAfterRecovery": 6,
     "preservedWithoutDuplication": true
+  },
+  "visibleAnswerTiming": {
+    "status": "PASS_PREVIEW",
+    "caseId": "P001",
+    "language": "zh",
+    "transportMode": "non-streaming",
+    "providerFirstTokenMeasured": false,
+    "browserVisibleAnswerMeasured": true,
+    "sampleCount": 5,
+    "liveAiCount": 5,
+    "provider": "deepseek",
+    "agentRequests": 5,
+    "historyLogs": 5,
+    "attemptReinitializations": 0,
+    "sessionReinitializations": 0,
+    "p50ClickToFirstVisibleMs": 1315.9,
+    "p95ClickToFirstVisibleMs": 1527.4,
+    "p50ClickToFullResponseMs": 1349,
+    "p95ClickToFullResponseMs": 1573,
+    "crossOriginProtectionRequests": 0
   },
   "security": {
     "crossOriginProtectionRequests": 0,

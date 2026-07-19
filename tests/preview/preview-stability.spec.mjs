@@ -29,6 +29,12 @@ function percentile95(values) {
   return sorted[Math.max(0, Math.ceil(sorted.length * 0.95) - 1)];
 }
 
+function percentile50(values) {
+  if (!values.length) return undefined;
+  const sorted = [...values].sort((a, b) => a - b);
+  return sorted[Math.max(0, Math.ceil(sorted.length * 0.5) - 1)];
+}
+
 function parseServerTiming(value) {
   const parsed = {};
   for (const item of String(value || "").split(",")) {
@@ -156,6 +162,81 @@ async function askLiveQuestion(page, language, question) {
     clickToAnswerMs,
     patientTiming: parseServerTiming(timingHeader(await patient.allHeaders())),
     historyTiming: parseServerTiming(timingHeader(await history.allHeaders()))
+  };
+}
+
+async function askLiveQuestionWithVisibleTiming(page, language, question) {
+  const english = language === "en";
+  const input = page.getByRole("textbox", { name: english ? "Enter an interview question" : "输入问诊问题" });
+  const send = page.getByRole("button", { name: english ? "Send" : "发送", exact: true });
+  const log = page.getByRole("log", { name: english ? "Simulated interview conversation" : "模拟问诊对话" });
+  const conversation = log.locator(".space-y-3 > *");
+  await input.fill(question);
+  await expect(send).toBeEnabled();
+  const initialDomItems = await conversation.count();
+  await log.evaluate((element, expectedCount) => {
+    const state = { clickAt: undefined, firstVisibleAt: undefined, observer: undefined };
+    const observer = new MutationObserver(() => {
+      if (state.firstVisibleAt !== undefined) return;
+      const count = element.querySelectorAll(".space-y-3 > *").length;
+      if (count >= expectedCount) {
+        state.firstVisibleAt = performance.now();
+        observer.disconnect();
+      }
+    });
+    state.observer = observer;
+    observer.observe(element, { childList: true, subtree: true });
+    window.__qaVisibleAnswerTiming = state;
+  }, initialDomItems + 2);
+  await send.evaluate((element) => {
+    element.addEventListener("click", () => {
+      window.__qaVisibleAnswerTiming.clickAt = performance.now();
+    }, { capture: true, once: true });
+  });
+
+  let requestStartedAt;
+  const patientRequestPending = page.waitForRequest((request) => new URL(request.url()).pathname === "/api/agent-chat/" && request.method() === "POST")
+    .then((request) => {
+      requestStartedAt = Date.now();
+      return request;
+    });
+  const patientPending = page.waitForResponse((response) => new URL(response.url()).pathname === "/api/agent-chat/" && response.request().method() === "POST");
+  const historyPending = page.waitForResponse((response) => isAction(response, "history-log"));
+  const clickStartedAt = Date.now();
+  await send.click();
+  await patientRequestPending;
+  const patient = await patientPending;
+  const payload = await patient.json();
+  const responseReceivedAt = Date.now();
+  const history = await historyPending;
+  await expect.poll(() => page.evaluate(() => window.__qaVisibleAnswerTiming?.firstVisibleAt), {
+    message: "patient answer must become visible in the browser DOM",
+    timeout: 10_000
+  }).not.toBeUndefined();
+  const visibleTiming = await page.evaluate(() => {
+    const state = window.__qaVisibleAnswerTiming;
+    state?.observer?.disconnect();
+    return {
+      clickAt: state?.clickAt,
+      firstVisibleAt: state?.firstVisibleAt
+    };
+  });
+  expect(visibleTiming.clickAt).toBeDefined();
+  expect(visibleTiming.firstVisibleAt).toBeDefined();
+  const clickToFirstVisibleMs = Math.max(0, visibleTiming.firstVisibleAt - visibleTiming.clickAt);
+  await expect.poll(() => conversation.count(), { timeout: 10_000 }).toBe(initialDomItems + 2);
+  return {
+    patientStatus: patient.status(),
+    historyStatus: history.status(),
+    generationSource: payload.generationSource,
+    provider: payload.provider,
+    isFallback: payload.isFallback,
+    clickToFirstVisibleMs,
+    uiDispatchMs: requestStartedAt - clickStartedAt,
+    fullResponseMs: responseReceivedAt - requestStartedAt,
+    clickToFullResponseMs: responseReceivedAt - clickStartedAt,
+    initialDomItems,
+    finalDomItems: await conversation.count()
   };
 }
 
@@ -520,6 +601,84 @@ test("@preview-background-recovery continues one session after a frozen lifecycl
     console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
   } finally {
     await cdp?.detach().catch(() => undefined);
+    await opened?.page.close().catch(() => undefined);
+    await context.close().catch(() => undefined);
+  }
+});
+
+test("@preview-visible-answer-timing measures five non-streaming browser-visible answers", async ({ browser }, testInfo) => {
+  test.setTimeout(360_000);
+  const context = await browser.newContext();
+  await context.addInitScript(() => localStorage.removeItem("hematuria-language"));
+  let opened;
+  try {
+    opened = await openReadyCase(context, "P001", "zh");
+    expect(opened.attemptResponse.status()).toBe(200);
+    expect(opened.sessionResponse.status()).toBe(200);
+    let agentRequestCount = 0;
+    let historyLogCount = 0;
+    let attemptReinitCount = 0;
+    let sessionReinitCount = 0;
+    opened.page.on("request", (request) => {
+      const pathname = new URL(request.url()).pathname;
+      if (pathname === "/api/agent-chat/" && request.method() === "POST" && !safeBody(request).probe) agentRequestCount += 1;
+      if (pathname === "/api/training-action/" && request.method() === "POST") {
+        const action = safeBody(request).action;
+        if (action === "history-log") historyLogCount += 1;
+        if (action === "init-attempt") attemptReinitCount += 1;
+      }
+      if (pathname === "/api/session/init/" && request.method() === "POST") sessionReinitCount += 1;
+    });
+
+    const questions = [
+      "请问是什么时候开始的？",
+      "能说说是什么时候开始的吗？",
+      "您记得是什么时候开始的吗？",
+      "大概是什么时候开始的？",
+      "最早是什么时候开始的？"
+    ];
+    const samples = [];
+    for (const question of questions) {
+      const sample = await askLiveQuestionWithVisibleTiming(opened.page, "zh", question);
+      expect(sample.patientStatus).toBe(200);
+      expect(sample.historyStatus).toBe(200);
+      expect(sample.generationSource).toBe("live_ai");
+      expect(sample.isFallback).toBe(false);
+      expect(String(sample.provider || "").toLowerCase()).toBe("deepseek");
+      expect(sample.clickToFirstVisibleMs).toBeGreaterThanOrEqual(0);
+      samples.push(sample);
+    }
+    expect({ agentRequestCount, historyLogCount, attemptReinitCount, sessionReinitCount }).toEqual({
+      agentRequestCount: 5,
+      historyLogCount: 5,
+      attemptReinitCount: 0,
+      sessionReinitCount: 0
+    });
+    expect(opened.protection.crossOriginProtectionRequests).toBe(0);
+
+    const visibleValues = samples.map((sample) => sample.clickToFirstVisibleMs);
+    const fullResponseValues = samples.map((sample) => sample.clickToFullResponseMs);
+    const summary = {
+      scenario: "preview-visible-answer-timing-zh-5",
+      transportMode: "non-streaming",
+      providerFirstTokenMeasured: false,
+      browserVisibleAnswerMeasured: true,
+      sampleCount: samples.length,
+      liveAiCount: samples.filter((sample) => sample.generationSource === "live_ai" && sample.isFallback === false).length,
+      provider: samples[0]?.provider,
+      agentRequestCount,
+      historyLogCount,
+      attemptReinitCount,
+      sessionReinitCount,
+      p50ClickToFirstVisibleMs: percentile50(visibleValues),
+      p95ClickToFirstVisibleMs: percentile95(visibleValues),
+      p50ClickToFullResponseMs: percentile50(fullResponseValues),
+      p95ClickToFullResponseMs: percentile95(fullResponseValues),
+      crossOriginProtectionRequests: opened.protection.crossOriginProtectionRequests
+    };
+    await testInfo.attach("preview-visible-answer-timing-zh-5", { body: JSON.stringify(summary, null, 2), contentType: "application/json" });
+    console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
+  } finally {
     await opened?.page.close().catch(() => undefined);
     await context.close().catch(() => undefined);
   }

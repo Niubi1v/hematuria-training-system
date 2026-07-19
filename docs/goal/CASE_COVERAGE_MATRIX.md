@@ -92,3 +92,4 @@
 - 后续 Production `657ba5d` 只修改权威验收文档，病例、Patient、路由、UI、评分、API、server 和 `data/**` 均与 `3a16f931` 相同；本矩阵作为运行时证据继续有效。其 Production 状态索引未覆盖37-slot中的英文泌尿操作问法，HEM-P1-030独立失败列不随文档merge关闭。
 - 精确 `657ba5d` Vercel部署补测 P001 中文一轮live AI的浏览器前进/后退：对话4项在两次返回后保持，agent/history为1/1，更新 P001 稳定性覆盖；未因此扩大 P006–P042的逐例真实AI列。
 - 同一部署补测 P001 中文浏览器后台恢复仿真：`frozen → active` 后页面恢复visible，第二轮继续live AI，agent/history 2/2、attempt/session重初始化0/0、DOM 4→6；只覆盖Chromium生命周期仿真，不替代真实手机后台策略。
+- P001中文新增5个浏览器可见回答计时样本，5/5 live AI、agent/history 5/5、attempt/session重初始化0/0；只扩展性能观察，不把同一病例的5个改写当成P002–P042自然语言覆盖。
