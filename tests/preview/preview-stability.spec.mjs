@@ -371,3 +371,65 @@ test("@preview-long-session returns 20 sequential live AI answers without reinit
     await context.close().catch(() => undefined);
   }
 });
+
+test("@preview-history-navigation preserves one logged turn across back and forward", async ({ browser }, testInfo) => {
+  test.setTimeout(180_000);
+  const context = await browser.newContext();
+  await context.addInitScript(() => localStorage.removeItem("hematuria-language"));
+  let opened;
+  try {
+    opened = await openReadyCase(context, "P001", "zh");
+    expect(opened.attemptResponse.status()).toBe(200);
+    expect(opened.sessionResponse.status()).toBe(200);
+    let agentRequestCount = 0;
+    let historyLogCount = 0;
+    opened.page.on("request", (request) => {
+      const pathname = new URL(request.url()).pathname;
+      if (pathname === "/api/agent-chat/" && request.method() === "POST" && !safeBody(request).probe) agentRequestCount += 1;
+      if (pathname === "/api/training-action/" && request.method() === "POST" && safeBody(request).action === "history-log") historyLogCount += 1;
+    });
+
+    const answer = await askLiveQuestion(opened.page, "zh", "请问是什么时候开始的？");
+    expect(answer.patientStatus).toBe(200);
+    expect(answer.historyStatus).toBe(200);
+    expect(answer.generationSource).toBe("live_ai");
+    expect(answer.isFallback).toBe(false);
+    expect(String(answer.provider || "").toLowerCase()).toBe("deepseek");
+    expect({ agentRequestCount, historyLogCount }).toEqual({ agentRequestCount: 1, historyLogCount: 1 });
+
+    const conversation = opened.page.getByRole("log", { name: "模拟问诊对话" }).locator(".space-y-3 > *");
+    const beforeNavigation = await conversation.count();
+    expect(beforeNavigation).toBeGreaterThanOrEqual(4);
+    const catalog = await opened.page.goto("/cases/", { waitUntil: "domcontentloaded" });
+    expect(catalog?.status()).toBe(200);
+    await expect(opened.page.getByText("病例库", { exact: true }).first()).toBeVisible();
+
+    await opened.page.goBack({ waitUntil: "domcontentloaded" });
+    await expect(opened.page.getByRole("textbox", { name: "输入问诊问题" })).toBeVisible();
+    await expect.poll(() => conversation.count(), { message: "back navigation must restore the logged turn", timeout: 10_000 }).toBe(beforeNavigation);
+    expect({ agentRequestCount, historyLogCount }).toEqual({ agentRequestCount: 1, historyLogCount: 1 });
+
+    await opened.page.goForward({ waitUntil: "domcontentloaded" });
+    await expect(opened.page.getByText("病例库", { exact: true }).first()).toBeVisible();
+    await opened.page.goBack({ waitUntil: "domcontentloaded" });
+    await expect(opened.page.getByRole("textbox", { name: "输入问诊问题" })).toBeVisible();
+    await expect.poll(() => conversation.count(), { message: "second back navigation must not duplicate the logged turn", timeout: 10_000 }).toBe(beforeNavigation);
+    expect({ agentRequestCount, historyLogCount }).toEqual({ agentRequestCount: 1, historyLogCount: 1 });
+
+    const summary = {
+      scenario: "preview-history-navigation-one-turn",
+      generationSource: answer.generationSource,
+      provider: answer.provider,
+      agentRequestCount,
+      historyLogCount,
+      domItemsBeforeNavigation: beforeNavigation,
+      domItemsAfterSecondBack: await conversation.count(),
+      preservedWithoutDuplication: true
+    };
+    await testInfo.attach("preview-history-navigation-one-turn", { body: JSON.stringify(summary, null, 2), contentType: "application/json" });
+    console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
+  } finally {
+    await opened?.page.close().catch(() => undefined);
+    await context.close().catch(() => undefined);
+  }
+});

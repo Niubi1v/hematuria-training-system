@@ -22,6 +22,7 @@ QA 分支：`codex/hematuria-exploratory-qa`
 | ff1a932 优先回归聚合摘要 | 本轮基线、P1、P2、评分/数据合同、路由与环境分层 | `reports/ff1a932-priority-regression-summary.json` | 3,566 | 是 | —；仅计数、状态与公开部署元数据 | 证据根目录下同路径 |
 | 8e7d148 夜间 QA 聚合摘要 | 当前基线、第一阶段、P1/P2、评分/数据、UI 与环境分层 | `reports/8e7d148-night-qa-summary.json` | 4,573 | 是 | —；仅计数、状态和公开门禁元数据，不含问答或凭据 | 证据根目录下同路径 |
 | 3a16f931 夜间 QA 聚合摘要 | 当前基线、Preview、真实 AI、20 轮、路由、UI 与缺陷 | `reports/3a16f931-night-qa-summary.json` | 2,722 | 是 | —；仅计数、状态和公开 health 元数据，不含问答或凭据 | 证据根目录下同路径 |
+| 657ba5d Preview history聚合 | 当前精确部署health与浏览器前进/后退恢复 | `reports/657ba5d-navigation-summary.json` | 861 | 是 | —；仅配置布尔值、来源、请求/DOM计数，不含问答或凭据 | 证据根目录下同路径 |
 | 移动语音触控目标聚合 | HEM-P2-044 / 44×44 CSS px 几何断言 | `reports/hem-p2-044-touch-targets-summary.json` | 645 | 是 | —；仅 viewport 和几何尺寸 | 证据根目录下同路径 |
 | 390×844 语音触控失败帧 | HEM-P2-044 / 语音设置 | `screenshots/hem-p2-044-touch-targets-390x844-failure.png` | 73,163 | 是 | —；公开合成病例 UI，无凭据或隐私 | 证据根目录下同路径 |
 | GitHub Pages 路由预检 | HEM-P2-043 部署分层 / 42 卡片、12 显示路由、30 旧内部路由 | `reports/deployed-route-preflight-deployed-1440x900.json` | 272 | 是 | —；只含公开 URL、viewport 和计数 | 证据根目录下同路径 |
@@ -65,6 +66,7 @@ SHA-256：
 - `patient-session-matrix-summary.json`：`798C7757E7A8F656EE5392894ED9A43D2CBFD8B341109E5565B66DAF31B3FDBF`
 - `patient-api-adapter-smoke-summary.json`：`63E05E49E1C4A85F9DDC7A35AF994B3C4614A35FFE647BFB831866852DE0AD25`
 - `3a16f931-night-qa-summary.json`：`4E4DD12A77FEA9066E7ECC79FFE8E69DC3061FD3417D907C71F80D036E99EF7D`
+- `657ba5d-navigation-summary.json`：`25F493609A8C9135BC24C49BF7F6629E02E19F6A6EC3602C45EE50023EA44595`
 - `hem-p2-044-touch-targets-summary.json`：`D649401B4D980FE0DD44C2F7310B965F87A08F737678073F04E4FBB38C99595C`
 - `hem-p2-044-touch-targets-390x844-failure.png`：`B35AAEC4F35365C384E2690E56CE98C0B8A2368907BF171D249B410061DD7703`
 
@@ -72,13 +74,13 @@ SHA-256：
 
 | 证据名称 | 对应测试或缺陷 | 文件路径 | 文件数 | 大小（字节） | 提交 Git | 未提交原因 | 本机保留位置 |
 | --- | --- | --- | ---: | ---: | --- | --- | --- |
-| HTML/JSON/JUnit、console/network、test-results 和本地服务日志 | 七轮汇总、fixture E2E、HEM-P1-027–034/044、HEM-P2-043、Pages/Preview 分层 | `reports/**`（排除上表最小聚合/预检 JSON） | 174 | 2,568,890 | 否 | 可重建；部分报告含本机绝对路径；整个 HTML/report 目录不进 Git | 证据根目录下同路径 |
-| 通过、重复及非最小失败截图 | 四 viewport、42 页面壳、20 轮、七阶段/360、a11y、live API、Pages/HEM-P2-044 对照 | `screenshots/**`（排除上表代表帧） | 81 | 11,960,416 | 否 | 通过、重复或非代表视觉证据；无新增最小失败价值 | 证据根目录下同路径 |
-| 通过、重复及大体积 trace | 公共页、42 页面壳、20 轮、七阶段/360、a11y、live API、路由矩阵 | `traces/**`（排除上表 2 个） | 42 | 398,484,940 | 否 | 通过场景、重复复跑或大体积失败 trace；可由测试重建 | 证据根目录下同路径 |
+| HTML/JSON/JUnit、console/network、test-results 和本地服务日志 | 七轮汇总、fixture E2E、HEM-P1-027–034/044、HEM-P2-043、Pages/Preview 分层 | `reports/**`（排除上表最小聚合/预检 JSON） | 185 | 2,556,910 | 否 | 可重建；部分报告含本机绝对路径；整个 HTML/report 目录不进 Git | 证据根目录下同路径 |
+| 通过、重复及非最小失败截图 | 四 viewport、42 页面壳、20 轮、七阶段/360、a11y、live API、Pages/HEM-P2-044 对照 | `screenshots/**`（排除上表代表帧） | 85 | 12,437,041 | 否 | 通过、重复或非代表视觉证据；无新增最小失败价值 | 证据根目录下同路径 |
+| 通过、重复及大体积 trace | 公共页、42 页面壳、20 轮、七阶段/360、a11y、live API、路由矩阵 | `traces/**`（排除上表 2 个） | 46 | 401,759,966 | 否 | 通过场景、重复复跑或大体积失败 trace；可由测试重建 | 证据根目录下同路径 |
 | 脱敏 fixture transcript | P001 中文 20 轮 | `transcripts/fixture-20-turn-interview-390x844.json` | 1 | 3,295 | 否 | 非真实 AI，且不是缺陷最小证据 | 证据根目录下同路径 |
-| 失败录像 | HEM-P1-027–034、HEM-P2-028/043 | `videos/**` | 19 | 12,769,520 | 否 | 截图与最小 trace 已足够；按规则视频不进 Git | 证据根目录下同路径 |
+| 失败录像 | HEM-P1-027–034、HEM-P2-028/043及旧静态history环境尝试 | `videos/**` | 23 | 13,956,746 | 否 | 截图与最小 trace 已足够；按规则视频不进 Git | 证据根目录下同路径 |
 
-当前本机共有 345 个证据文件（含本索引）、427,689,180 字节。拟提交/既有 Git 最小证据集共 28 个文件（含本索引）、1,902,119 字节；其余 317 个文件、425,787,061 字节仅本机保留。定向 Playwright 复跑按 reporter 设计重建 HTML/JUnit/test-results；聚合 JSON、代表截图与历史最小 trace 进入 Git，大量重复截图、完整报告、长 trace、录像与 transcript 不整体提交。没有浏览器用户目录进入证据根目录；`.pnpm-store`、`node_modules` 与 `.next` 不进入证据或提交。
+当前本机共有 369 个证据文件（含本索引）、432,617,608 字节。拟提交/既有 Git 最小证据集共 29 个文件（含本索引）、1,903,650 字节；其余 340 个文件、430,713,958 字节仅本机保留。定向 Playwright 复跑按 reporter 设计重建 HTML/JUnit/test-results；聚合 JSON、代表截图与历史最小 trace 进入 Git，大量重复截图、完整报告、长 trace、录像与 transcript 不整体提交。没有浏览器用户目录进入证据根目录；`.pnpm-store`、`node_modules` 与 `.next` 不进入证据或提交。
 
 ## HEM-P1-027 复现与测量
 
@@ -120,6 +122,7 @@ SHA-256：
 3. `hem-p2-044-touch-targets-summary.json` 与 390×844 代表帧记录两个移动 viewport 的四个不足 44px 目标；360×800 重复截图和两个原始几何 JSON 仅本机保留。
 4. 真实 Preview 的 health、9 项黑盒、两批中英稳定性和20轮长会话均由安全 wrapper 执行；专用 `test-results/preview-blackbox` 在输出/凭据扫描通过后删除，因此索引只记录可重建的脱敏聚合结论，不声称保留 Preview trace 或完整 transcript。
 5. GitHub Pages 新一轮两个 viewport 的原始报告、390×844 对照截图和失败 test-results 仍本机保留；Git 继续使用既有 1440×900 聚合/代表帧，因公开部署现象相同，不重复提交。
+6. 浏览器history本地首轮误用页脚为`3fe409f`的旧静态`out`，会话未ready，四viewport只产生环境失败证据；测试未发患者/history请求，不能作为当前产品失败。最终结论来自精确`657ba5d` Preview，1/1通过；旧环境截图/trace/录像仅本机保留。
 
 ## 敏感信息复核
 
@@ -127,9 +130,9 @@ SHA-256：
 
 - 已提交和拟提交截图均经视觉复核，只含公开合成病例界面、fixture 文本和本地构建元数据；没有 Cookie、Authorization、签名、环境变量值、浏览器用户数据或直接身份信息。
 - Production `ff1a932` 的 `test-secret-scanner.mjs` 通过文本、二进制元数据、压缩 workbook、占位符、非泄露输出、完整历史与浅克隆 fail-closed 合同。
-- 对本轮最终拟提交集执行 `tests/exploratory/scan-staged-secrets.mjs`：16 个 staged 文件、完整可达文本历史，敏感值命中 0；只输出路径/规则/计数，不输出值。
-- 只读 `tests/exploratory/scan-evidence-secrets.ps1` 对刷新后的证据根目录全部 345 个物理文件（含本索引）及 ZIP 内 6,855 个条目执行流式扫描，累计读取 990,752,125 字节；同时逐字检查当前进程可见的 Preview/training/KV/Upstash 运行时值，私钥、Bearer/JWT、provider/API key、AWS/Google/Azure key、非占位敏感环境赋值、Authorization/Cookie/Set-Cookie 和运行时精确值命中均为 0，扫描过程不输出值。
-- 本轮 16 个 staged 路径严格为 6 份 QA 文档、4 个 QA 测试、EVIDENCE_INDEX、4 个聚合 JSON 和 1 张 HEM-P2-044 代表截图；代表截图已视觉复核，只含公开合成病例 UI，无凭据或隐私数据。
+- 对本轮最终拟提交集执行 `tests/exploratory/scan-staged-secrets.mjs`：7 个 staged 文件、完整可达文本历史，敏感值命中 0；只输出路径/规则/计数，不输出值。
+- 只读 `tests/exploratory/scan-evidence-secrets.ps1` 对刷新后的证据根目录全部 369 个物理文件（含本索引）及 ZIP 内 6,947 个条目执行流式扫描，累计读取 999,924,325 字节；同时逐字检查当前进程可见的 Preview/training/KV/Upstash 运行时值，私钥、Bearer/JWT、provider/API key、AWS/Google/Azure key、非占位敏感环境赋值、Authorization/Cookie/Set-Cookie 和运行时精确值命中均为 0，扫描过程不输出值。
+- 本轮 7 个 staged 路径严格为 4 份 QA 文档、1 个 Preview QA 测试、EVIDENCE_INDEX 和 1 个脱敏聚合 JSON；没有截图、trace、录像、完整问答或凭据上下文进入本提交。
 - 通用 candidate scanner 对 5 个本机不提交的大 trace 按大小上限 fail-closed（4 个 ZIP 内 trace entry 过大、1 个 ZIP 文件过大）；这些文件未 staged，且已由上面的全证据树流式/解包扫描覆盖并得到 0 命中。未删除或放宽 scanner 断言。
 - 绝对用户路径只出现在不提交的 `reports/junit.xml`（36）、`local-dev-3010d.stdout.log`（16）、`local-dev-3010e.log`（34）和 `local-dev-3010f.log`（1），全部保持本机未跟踪。1,551 个邮箱样式全部是 Playwright `page@hash` 内部 ID；504 个身份证样式均无有效生日；8 个手机号样式嵌在哈希中，另 1 个来自 network 浮点耗时，均为误报。
 - `reports/results.json` 等其余本机报告也可能含 `<QA_WORKTREE>` 的实际绝对路径，因此整类报告保持不提交；本索引使用占位符，不暴露用户目录。
