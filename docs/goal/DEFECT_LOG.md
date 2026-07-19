@@ -485,3 +485,29 @@
 - **状态**：15-intent确定性工程门禁`REMOTE_PASS_LONG_TERM_QA_PENDING`。
 - **证据**：本地3,150/3,150矩阵、治理隔离和完整回归通过；Node 22 run `29546344990`完整行为及Playwright success；同一HEAD真实Preview 10次session和中英文各5次live AI/history-log均成功。
 - **剩余验收**：190 aliases不等同于任意自由改写全覆盖；真实自然度、复合已知/冲突问题的保守整答体验及更多37-slot覆盖仍交长期QA。161个来源修订、HEM-P0-001/023与医学审批继续阻塞人工，不得自动修改。
+
+## P0/P1权威状态索引（2026-07-19）
+
+本索引只校正当前状态，不删除前文失败基线、根因、修复或中间阻塞证据。若前文出现“待push”“待CI”“候选”或旧Preview配置描述，当前状态以本索引及`ACCEPTANCE_MATRIX.md`为准。
+
+### OPEN / HUMAN：不得由工程自动关闭
+
+- `HEM-P0-001`：151条source辅助来源标记需要具名医学/数据治理负责人裁决；当前运行时隔离不等于语义真值已决定。
+- `HEM-P0-023`：18条双语医学极性冲突需要具名医学与双语负责人裁决；当前不进入确定性Patient上下文或评分，不得自动翻转、翻译或批准。
+- 42例病例级`needs_revision`、419条模拟事实终签、161个来源修订及P003/P005具名来源复核继续为人工治理工作，不得计作工程缺陷已修改。
+
+### ENGINEERING CLOSED：最终分支门禁已覆盖
+
+- `HEM-P0-018`以及`HEM-P1-002/004/005/010/011/012/014/015/016/017/019/020/021/024/025/026/029/030/031/032/033/034/035/036/037/038/039/040/041/042/043/044/046`的已确认工程根因均已修复并进入完整行为、Playwright或Preview门禁。
+- `HEM-P1-027`的移动布局工程项已关闭；真机软键盘与safe-area属于下节外部验收，不因模拟器通过而自动关闭。
+- `SRA-P1-001`至`SRA-P1-008`、`DCI-P1-001/003/005/006`均已有专项合同及后续完整Node 22门禁；早期“待CI”只表示当时快照，不是当前开放状态。
+- 此前验收证据HEAD `270c20b`的Actions run `29672230597` completed/success：Node 22 Playwright、82页build、bundle、repository secret scan和clean gate通过；Vercel Deployment与Preview Comments通过，Pages deploy按Draft规则skipped。
+
+### EXTERNAL / HUMAN ACCEPTANCE：不是可自行修复的当前工程缺陷
+
+- `HEM-P1-003`：Production正式alias、health、真实Origin及10+5+5需要生产部署权限；Preview证据不得替代。
+- `HEM-P1-027`：360/390真实设备软键盘、visual viewport及safe-area需要真机QA。
+- `HEM-P1-046`：真实患者语言自然度、任意自由改写及复合已知/冲突体验需要人工抽查；确定性15-intent工程矩阵已通过。
+- 正式教师鉴权、RCT数据库、正式OSCE、合并后Pages与Production发布均需要权限、approved病例或具名签署。
+
+**当前工程结论**：没有仍待实现、待push或待CI的可重复P0/P1工程缺陷；项目仍因上述医学P0和外部验收项保持Draft/执行中，不得标记生产完成。

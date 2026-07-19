@@ -594,3 +594,9 @@
 - 完成Goal逐项审计后确认：权威`HEMATURIA_PRODUCTION_GOAL.md`与`ACCEPTANCE_MATRIX.md`仍引用旧`8e7d148`候选及“待push/待Node22复核”，与最终run `29547532678`冲突。本轮只校正文档状态和证据，不扩大验收标准，也不把Production/医学/真机证据写成通过。
 - P999静态HTTP缺口已补证：受控`serve-static.mjs`在root和GitHub Pages basePath分别验证P001/P013/P042为200、P999为404；basePath外P001为404。没有catch-all或域名硬编码，测试进程已停止。
 - 当前可执行工程P0/P1均已有远程闭环；剩余强制项为具名医学裁决、病例/事实人工终签、Production与合并后Pages权限、真机软键盘/safe-area及人工自然度终验。Goal继续保持“执行中”，PR继续Draft。
+
+### P0/P1状态索引收口（2026-07-19）
+
+- 对`DEFECT_LOG.md`逐ID读取最后状态时发现，部分早期条目仍保留“待CI/待push”历史措辞，虽然后续总括及最终run已经关闭。这会让自动完成度审计产生假开放项。
+- 新增文件末尾权威索引：医学P0保持OPEN/HUMAN；已修复工程P0/P1集中标记ENGINEERING CLOSED；Production、真机、自然度和正式系统能力单列EXTERNAL/HUMAN。历史失败证据不删除、不重写。
+- 状态索引引用此前验收证据HEAD `270c20b`的run `29672230597`及现有Preview证据；不把文档整理冒充新的应用测试，也不改变任何业务或医学数据。

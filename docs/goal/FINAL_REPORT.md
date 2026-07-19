@@ -494,3 +494,8 @@
 - 新补P999真实静态HTTP证据：root与GitHub Pages basePath下代表有效病例200、P999 404，basePath外路径受控404。HEM-P2-043当前工程项关闭；公开Pages的30个旧内部路由仍明确归因于`main@5a3ad119`部署差异。
 - 完成度审计没有证明整个生产目标完成：HEM-P0-001/023、151/18条语义裁决、42例与419条人工终签、Production health/10+5+5、正式live alias、合并后Pages、真机软键盘/safe-area和人工自然度仍缺具名人员或生产权限证据。不得转Ready、合并或正式部署。
 - 本轮不修改业务代码或医学数据；回滚仅需对最终文档提交执行普通`git revert <commit>`，不得reset或force push。
+
+### P0/P1状态判定规则
+
+- `DEFECT_LOG.md`末尾的“P0/P1权威状态索引”是当前状态入口；前文的待push、待CI和旧Preview描述保留为时间点证据，不再被解释为当前开放工程缺陷。
+- 当前无待实现或待CI的可重复P0/P1工程问题。HEM-P0-001/023仍为OPEN/HUMAN，Production、真机、人工自然度、正式教师/RCT/OSCE及合并后Pages仍为外部验收，故整个Production Goal继续执行中。
