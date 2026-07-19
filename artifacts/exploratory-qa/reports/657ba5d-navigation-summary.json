@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-19T05:30:31.051Z",
+  "generatedAt": "2026-07-19T05:45:35.334Z",
   "productionSha": "657ba5da8fc6460ad7d0deea882a010c40938b40",
   "previewHealth": {
     "status": 200,
@@ -133,6 +133,26 @@
     "teacherMetaLeakCount": 0,
     "structuredPayloadLeakCount": 0,
     "diagnosisHeuristicCount": 0,
+    "crossOriginProtectionRequestCount": 0,
+    "responseTextRetained": false
+  },
+  "paraphraseOnsetConsistency": {
+    "status": "PASS_PREVIEW_GOVERNED",
+    "caseIds": ["P019", "P023", "P032", "P038", "P042"],
+    "languages": ["zh", "en"],
+    "pairCount": 10,
+    "responseCount": 20,
+    "liveAiPairCount": 7,
+    "liveAiConsistentPairCount": 7,
+    "safetyBoundaryPairCount": 3,
+    "safetyBoundarySourceConsistentCount": 3,
+    "safetyBoundaryPairs": ["P032/zh", "P032/en", "P042/zh"],
+    "httpContractFailures": 0,
+    "providerContractFailures": 0,
+    "requestContractFailures": 0,
+    "languageLeakCount": 0,
+    "teacherMetaLeakCount": 0,
+    "structuredPayloadLeakCount": 0,
     "crossOriginProtectionRequestCount": 0,
     "responseTextRetained": false
   },

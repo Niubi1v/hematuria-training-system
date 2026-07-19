@@ -973,3 +973,130 @@ test("@preview-representative-chief-complaint samples ten clinical categories bi
   expect(summary.crossOriginProtectionRequestCount).toBe(0);
   expect(sourceCounts.unknown).toBe(0);
 });
+
+test("@preview-paraphrase-consistency preserves onset duration across bilingual rephrasing", async ({ browser }, testInfo) => {
+  test.setTimeout(900_000);
+  const representatives = [
+    { caseId: "P019", category: "infection", expected: "3-days", zh: /(?:3|三)\s*天/, en: /(?:three|3)\s+days?/i },
+    { caseId: "P023", category: "stone", expected: "6-hours", zh: /(?:6|六)\s*个?小时|半天/, en: /(?:six|6)\s+hours?|half\s+a\s+day/i },
+    {
+      caseId: "P032",
+      category: "glomerular",
+      expected: "1-week",
+      zh: /(?:1|一)\s*周|一个星期/,
+      en: /(?:one|1|a)\s+weeks?|last\s+week/i,
+      questions: {
+        zh: ["茶色尿和眼睑水肿大概从什么时候开始？", "再确认一下，尿变成茶色并出现水肿是多久以前？"],
+        en: ["About when did the tea-colored urine and swelling start?", "Just to confirm, how long ago did the dark urine and swelling first appear?"]
+      }
+    },
+    { caseId: "P038", category: "trauma", expected: "4-hours", zh: /(?:4|四)\s*个?小时/, en: /(?:four|4)\s+hours?/i },
+    { caseId: "P042", category: "high-risk-microscopic", expected: "1-month", zh: /(?:1|一)\s*个?月/, en: /(?:one|1|a)\s+months?/i }
+  ];
+  const samples = [];
+  for (const representative of representatives) {
+    for (const language of ["zh", "en"]) {
+      const context = await browser.newContext();
+      await context.addInitScript(() => localStorage.removeItem("hematuria-language"));
+      let opened;
+      try {
+        opened = await openReadyCase(context, representative.caseId, language);
+        let agentRequestCount = 0;
+        let historyLogCount = 0;
+        opened.page.on("request", (request) => {
+          const pathname = new URL(request.url()).pathname;
+          if (pathname === "/api/agent-chat/" && request.method() === "POST" && !safeBody(request).probe) agentRequestCount += 1;
+          if (pathname === "/api/training-action/" && request.method() === "POST" && safeBody(request).action === "history-log") historyLogCount += 1;
+        });
+        const questions = representative.questions?.[language] || (language === "en"
+          ? ["About when did these symptoms start?", "Just to confirm, how long ago did you first notice them?"]
+          : ["这些症状大概从什么时候开始？", "再确认一下，最早是多久以前出现的？"]);
+        const first = await askLiveQuestion(opened.page, language, questions[0], { includeReplyText: true });
+        const second = await askLiveQuestion(opened.page, language, questions[1], { includeReplyText: true });
+        const pattern = representative[language];
+        const firstDurationMatched = pattern.test(first.replyText);
+        const secondDurationMatched = pattern.test(second.replyText);
+        const joinedText = `${first.replyText}\n${second.replyText}`;
+        const chinesePresentInFirst = /[\u3400-\u9fff]/u.test(first.replyText);
+        const chinesePresentInSecond = /[\u3400-\u9fff]/u.test(second.replyText);
+        const languageLeakDetected = language === "en"
+          ? chinesePresentInFirst || chinesePresentInSecond
+          : !chinesePresentInFirst || !chinesePresentInSecond;
+        const teacherMetaLeakageDetected = /评分|得分点|教师|标准答案|scor(?:e|ing)|rubric|teacher|standard answer|JSON|system\s*prompt/i.test(joinedText);
+        const structuredPayloadLeakageDetected = /matchedSlotIds?|matchedFacts?|generationSource|isFallback|caseId|slotId/i.test(joinedText);
+        const liveAiPair = [first, second].every((answer) => answer.generationSource === "live_ai");
+        const safetyBoundaryPair = [first, second].every((answer) => answer.generationSource === "safety_boundary");
+        const sourcePairClassified = liveAiPair || safetyBoundaryPair;
+        samples.push({
+          caseId: representative.caseId,
+          category: representative.category,
+          language,
+          expected: representative.expected,
+          firstSource: first.generationSource,
+          secondSource: second.generationSource,
+          firstPatientStatus: first.patientStatus,
+          secondPatientStatus: second.patientStatus,
+          firstHistoryStatus: first.historyStatus,
+          secondHistoryStatus: second.historyStatus,
+          liveAiPair,
+          safetyBoundaryPair,
+          sourcePairClassified,
+          providerContractPass: !liveAiPair || [first, second].every((answer) => String(answer.provider || "").toLowerCase() === "deepseek" && answer.isFallback === false),
+          firstDurationMatched,
+          secondDurationMatched,
+          factConsistencyEvaluable: liveAiPair,
+          consistent: liveAiPair ? firstDurationMatched && secondDurationMatched : null,
+          languageLeakDetected,
+          teacherMetaLeakageDetected,
+          structuredPayloadLeakageDetected,
+          agentRequestCount,
+          historyLogCount,
+          crossOriginProtectionRequests: opened.protection.crossOriginProtectionRequests,
+          responseTextRetained: false
+        });
+      } finally {
+        await opened?.page.close().catch(() => undefined);
+        await context.close().catch(() => undefined);
+      }
+    }
+  }
+
+  const summary = {
+    scenario: "preview-paraphrase-onset-consistency-bilingual-10",
+    caseCount: representatives.length,
+    sampleCount: samples.length,
+    responseCount: samples.length * 2,
+    classifiedPairCount: samples.filter((sample) => sample.sourcePairClassified).length,
+    liveAiPairCount: samples.filter((sample) => sample.liveAiPair).length,
+    safetyBoundaryPairCount: samples.filter((sample) => sample.safetyBoundaryPair).length,
+    providerContractFailures: samples.filter((sample) => !sample.providerContractPass).length,
+    factConsistencyEvaluablePairCount: samples.filter((sample) => sample.factConsistencyEvaluable).length,
+    consistentEvaluablePairCount: samples.filter((sample) => sample.factConsistencyEvaluable && sample.consistent).length,
+    safetyBoundarySourceConsistentCount: samples.filter((sample) => sample.safetyBoundaryPair).length,
+    httpContractFailures: samples.filter((sample) => sample.firstPatientStatus !== 200 || sample.secondPatientStatus !== 200 || sample.firstHistoryStatus !== 200 || sample.secondHistoryStatus !== 200).length,
+    requestContractFailures: samples.filter((sample) => sample.agentRequestCount !== 2 || sample.historyLogCount !== 2).length,
+    languageLeakCount: samples.filter((sample) => sample.languageLeakDetected).length,
+    teacherMetaLeakCount: samples.filter((sample) => sample.teacherMetaLeakageDetected).length,
+    structuredPayloadLeakCount: samples.filter((sample) => sample.structuredPayloadLeakageDetected).length,
+    crossOriginProtectionRequestCount: samples.reduce((sum, sample) => sum + sample.crossOriginProtectionRequests, 0),
+    responseTextRetained: false,
+    samples
+  };
+  await testInfo.attach("preview-paraphrase-onset-consistency-bilingual-10", { body: JSON.stringify(summary, null, 2), contentType: "application/json" });
+  console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
+  expect(summary.sampleCount).toBe(10);
+  expect(summary.responseCount).toBe(20);
+  expect(summary.classifiedPairCount).toBe(10);
+  expect(summary.liveAiPairCount).toBe(7);
+  expect(summary.safetyBoundaryPairCount).toBe(3);
+  expect(summary.providerContractFailures).toBe(0);
+  expect(summary.factConsistencyEvaluablePairCount).toBe(7);
+  expect(summary.consistentEvaluablePairCount).toBe(7);
+  expect(summary.safetyBoundarySourceConsistentCount).toBe(3);
+  expect(summary.httpContractFailures).toBe(0);
+  expect(summary.requestContractFailures).toBe(0);
+  expect(summary.languageLeakCount).toBe(0);
+  expect(summary.teacherMetaLeakCount).toBe(0);
+  expect(summary.structuredPayloadLeakCount).toBe(0);
+  expect(summary.crossOriginProtectionRequestCount).toBe(0);
+});
