@@ -39,6 +39,11 @@ function findDurationNearHematuria(text: string) {
   return allDurations.at(-1) || "";
 }
 
+function findOccurrence(text: string) {
+  const match = /(\d+)次/.exec(text.replace(/\s+/g, ""));
+  return match?.[1] || "";
+}
+
 function durationToEnglish(duration: string) {
   if (duration === "数天") return "several days";
   const match = /^([半\d一二两三四五六七八九十]+)(小时|天|日|周|个月|月|年)(余|多|左右)?$/.exec(duration);
@@ -64,22 +69,55 @@ function durationToEnglish(duration: string) {
 
 export function simplifiedChiefComplaintZh(raw?: string) {
   const text = String(raw || "").trim();
-  const duration = findDurationNearHematuria(text) || "数天";
-  if (/小便|尿色|尿液|发红|变红/.test(text) && !/尿潜血|尿隐血|镜下/.test(text)) {
-    return `小便颜色变红${duration}`;
-  }
-  return `血尿${duration}`;
+  if (!text) return "";
+  if (!/(?:血尿|尿潜血|尿隐血|小便.*红|尿色.*红|尿液.*红|茶色尿|可乐色尿|酱油色尿)/.test(text)) return text;
+  if (/(?:茶色尿|可乐色尿|酱油色尿)/.test(text)) return text;
+
+  return text
+    .replace(/体检发现镜下血尿/g, "体检发现尿检异常")
+    .replace(/体检尿潜血阳性/g, "体检发现尿潜血阳性")
+    .replace(/镜下血尿/g, "尿检发现潜血")
+    .replace(/(?:无痛性)?肉眼血尿/g, "小便变红")
+    .replace(/血尿/g, "尿中有血");
 }
 
 export function simplifiedChiefComplaintEn(rawZh?: string, fallbackEn?: string) {
   const text = String(rawZh || "").trim();
-  const duration = findDurationNearHematuria(text) || "数天";
-  if (duration) {
-    const label = /小便|尿色|尿液|发红|变红/.test(text) && !/尿潜血|尿隐血|镜下/.test(text) ? "Red urine" : "Hematuria";
-    return `${label} for ${durationToEnglish(duration)}`;
+  const cleanFallback = String(fallbackEn || "").trim().replace(/\.$/, "");
+  if (!text) return cleanFallback;
+  if (!/(?:血尿|尿潜血|尿隐血|小便.*红|尿色.*红|尿液.*红|茶色尿|可乐色尿|酱油色尿)/.test(text)) {
+    if (/(?:hematuria|blood in (?:the )?urine|red urine)/i.test(cleanFallback)) {
+      return "Chief complaint pending medical review";
+    }
+    return cleanFallback || text;
   }
-  if (fallbackEn) return fallbackEn.replace(/\.$/, "");
-  return "Hematuria";
+
+  const duration = findDurationNearHematuria(text);
+  const occurrence = findOccurrence(text);
+  const suffix = duration
+    ? ` for ${durationToEnglish(duration)}`
+    : occurrence === "1"
+      ? " once"
+      : occurrence
+        ? ` ${occurrence} times`
+        : "";
+
+  if (/茶色尿/.test(text)) return `Tea-colored urine${suffix}`;
+  if (/可乐色尿/.test(text)) return `Cola-colored urine${suffix}`;
+  if (/酱油色尿/.test(text)) return `Dark brown urine${suffix}`;
+  if (/体检.*(?:镜下血尿|尿潜血|尿隐血)/.test(text)) {
+    const finding = /尿潜血|尿隐血/.test(text) ? "been positive for blood" : "shown microscopic blood";
+    return `A routine urine test has ${finding}${suffix}`;
+  }
+  if (/镜下血尿/.test(text)) {
+    const repeat = /反复/.test(text) ? " has repeatedly been" : " was";
+    return `Microscopic blood${repeat} found on urine testing${suffix}`;
+  }
+  if (/(?:肉眼血尿|小便.*红|尿色.*红|尿液.*红)/.test(text)) {
+    const modifier = /间断/.test(text) ? "Intermittent " : /反复/.test(text) ? "Recurrent " : "";
+    return `${modifier}red urine${suffix}`.replace(/^./, (value) => value.toUpperCase());
+  }
+  return `Blood in the urine${suffix}`;
 }
 
 export function simplifiedChiefComplaint(rawZh: string | undefined, lang: Lang, fallbackEn?: string) {

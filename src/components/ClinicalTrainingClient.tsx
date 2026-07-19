@@ -991,11 +991,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }, [lang]);
 
   useEffect(() => {
+    if (!attemptReady) return;
     setMessages((current) => current.length ? current : [{ role: "patient", text: patientOpening(caseData, lang) }]);
-  }, [caseData, lang]);
+  }, [attemptReady, caseData, lang]);
 
   useEffect(() => {
-    if (aiMode === "rule" || !healthResolved) return;
+    if (!attemptReady || aiMode === "rule" || !healthResolved) return;
     let cancelled = false;
     const generation = ++aiGenerationRef.current;
     const cacheKey = aiSessionCacheKey(attempt.attemptId, caseData.id, lang, runtimeMode);
@@ -1060,7 +1061,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     return () => {
       cancelled = true;
     };
-  }, [aiMode, attempt.attemptId, caseData, ensureTrainingStateToken, healthResolved, lang, runtimeMode, serviceHealth?.apiVersion, serviceHealth?.deploymentSha, serviceHealth?.gitSha]);
+  }, [aiMode, attempt.attemptId, attemptReady, caseData, ensureTrainingStateToken, healthResolved, lang, runtimeMode, serviceHealth?.apiVersion, serviceHealth?.deploymentSha, serviceHealth?.gitSha]);
 
   useEffect(() => {
     try { localStorage.setItem("hematuria-language", lang); } catch { setStorageWarning("语言偏好无法保存。 "); }
