@@ -1,6 +1,6 @@
 # Acceptance Matrix
 
-基线：`codex/hematuria-production-goal`，起点 `5a3ad11`。本文件将主工作树中未跟踪的交接矩阵纳入版本控制，并按当前可重复证据校正状态。状态仅使用：
+基线：`codex/hematuria-production-goal`，起点`5a3ad11`；最新完整远程工程门禁HEAD `3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`，已验收应用树`51f9c6fc8543ac0b6a5907fc65974cd72027f67b`。本文件按当前可重复证据校正状态；后续纯文档提交不冒充新的应用验收。状态仅使用：
 
 - **PASS**：当前专项分支已有可重复的本地或远程证据。
 - **PENDING**：实现存在，但当前提交缺少所要求的远程、生产或 CI 证据。
@@ -11,8 +11,8 @@
 
 | 领域 | 强制标准 | 当前状态 | 当前证据 |
 |---|---|---|---|
-| API health | HTTP 200；仅非敏感配置状态/命名类型、版本和SHA；CORS受控 | PASS（Preview）/PENDING（Production） | `8e7d148` Preview health HTTP 200，训练签名与durable store均为true，凭据仅显示`vercel_kv_rest`类型；生产health仍无当次证据 |
-| 会话初始化 | 初始化不等待LLM；连续10次成功；P95≤3秒 | PASS（Preview）/PENDING（Production） | `8e7d148` Preview P001–P010一次性10/10，端到端P95=2504ms、服务端session P95=100ms；Production仍待授权后验收 |
+| API health | HTTP 200；仅非敏感配置状态/命名类型、版本和SHA；CORS受控 | PASS（Preview）/PENDING（Production） | `51f9c6f` Preview health HTTP 200并回报完整deployment SHA；训练签名与durable store均为true，凭据仅显示`vercel_kv_rest`类型；生产health仍无当次证据 |
+| 会话初始化 | 初始化不等待LLM；连续10次成功；P95≤3秒 | PASS（Preview）/PENDING（Production） | `51f9c6f` Preview P001–P010一次性10/10，端到端P95=1304ms、服务端session P95=9ms；Production仍待授权后验收 |
 | 最小化会话 | 不返回完整patient profile或teacher data | PASS | `test:session`、`test:llm` |
 | 重连与部署失效 | 单次forceRefresh；保留attempt；不重复evidence；SHA变化丢弃旧session | PASS | `test:ai-recovery`、Playwright 22/22 |
 | 超时与错误恢复 | AbortController；404/429/502/503/504有限重试或明确降级 | PASS | `test:api-recovery`、`test:ai-recovery` |
@@ -20,7 +20,7 @@
 | 离线恢复 | 记录保留，恢复在线后可继续 | PASS | Playwright desktop/mobile 22/22 |
 | CORS与限流 | 仅允许配置Origin；公开Agent/session有界限流 | PASS | `test:health`、`test:agent-api-security` |
 | 正式模式防绕过 | 客户端改mode不能解锁；独立签名secret；病例必须formalUseAllowed | PASS | `test:training-api` |
-| PR CI | PR运行完整质量门禁且不部署Pages | PASS | 证据提交`30b0d45`：run `29289645684` build全绿；Pages deploy按PR规则跳过 |
+| PR CI | PR运行完整质量门禁且不部署Pages | PASS | 最终文档HEAD `3a16f93`的run `29547532678` completed/success；Playwright、82页build、bundle、secret和clean gate通过，Pages deploy按PR规则跳过 |
 
 ## Patient Agent与双语
 
@@ -31,7 +31,7 @@
 | 复合问题逐项回答、单slot边界、无匹配安全降级 | PASS | `test:patient`、`test:bilingual` |
 | 不泄露JSON、prompt、教师字段、诊断、检查、病理、治疗或完整病史 | PASS | `test:patient`、`test:llm`、`test:agent`、bundle scan |
 | 每问LLM仅接收当前允许答案，不接收完整profile | PASS | `test:llm` |
-| DeepSeek真实中文5次、英文5次 | PASS（Preview）/PENDING（Production） | `8e7d148`受保护Preview：中文5/5、英文5/5均`live_ai`/DeepSeek/非fallback，history-log各5/5；Production仍待授权后验收 |
+| DeepSeek真实中文5次、英文5次 | PASS（Preview）/PENDING（Production） | `51f9c6f`受保护Preview：中文5/5、英文5/5均`live_ai`/DeepSeek/非fallback，history-log各5/5；Production仍待授权后验收 |
 | 中英文患者事实语义一致 | BLOCKED/HUMAN | HEM-P0-023：18条已做运行时/评分隔离并生成裁决包；医学真值全部待具名医学/双语负责人裁决 |
 
 ## 临床数据Agent
@@ -79,22 +79,23 @@
 
 | 强制标准 | 当前状态 | 当前证据 |
 |---|---|---|
-| TypeScript、ESLint、完整行为链 | PASS | 证据提交`30b0d45`：run `29289645684` Unit/behavior、Typecheck、Lint均success |
-| 69 JSON幂等、生成数据无漂移 | PASS | run `29289645684`验证69 JSON、75个受控输出幂等及最终clean gate；`data/**`零差异 |
-| 82页生产构建 | PASS | HEAD `8e7d148` / run `29532192980`静态生成82/82 |
-| 静态答案/密钥扫描 | PASS | run `29532192980`的repository与bundle扫描success；本地311个tracked/candidate文件扫描exit 0 |
+| TypeScript、ESLint、完整行为链 | PASS | run `29547532678`在Node 22.14下Unit/behavior、Typecheck、Lint均success |
+| 69 JSON幂等、生成数据无漂移 | PASS | run `29547532678`验证幂等生成、提交基线及最终clean gate；`data/**`零差异 |
+| 82页生产构建 | PASS | HEAD `3a16f93` / run `29547532678`静态生成82/82 |
+| 静态答案/密钥扫描 | PASS | run `29547532678`的repository与bundle扫描success；本地323个tracked/candidate文件扫描exit 0 |
 | 当前文本、Office归档、二进制可见元数据与Git文本历史密钥扫描 | PASS | `04c2a0b` / run `29294906265`以`fetch-depth: 0`执行scanner专项和仓库扫描并success；浅仓库fixture fail-closed；历史压缩二进制/OCR仍按已知限制保留 |
-| Playwright桌面/移动 | PASS（远程基线）/PASS（本地候选） | HEAD `8e7d148`的Actions run `29532192980`在Node 22.14下完整Playwright 68/68；本地候选新增七阶段矩阵后70 passed、2个按项目隔离的skip、0 failed；既有四视口axe critical/serious=0，候选Node 22复核待push后CI |
-| 42例中英文完整七阶段工程流程 | PASS（本地候选） | 服务端真实签名/阶段锁矩阵84条旅程、588次阶段提交、84份360分报告；桌面浏览器42例×中英文84条完整旅程通过，移动端P001完整七阶段通过。该项验证工程流程，不替代医学正确性或专家审核 |
+| Playwright桌面/移动 | PASS | run `29547532678`在Node 22.14、2 workers下完整72项Playwright步骤8分06秒success；本地明细为70 passed、2个按项目隔离的skip、0 failed；四视口axe继续要求critical/serious=0 |
+| 42例中英文完整七阶段工程流程 | PASS | 服务端真实签名/阶段锁矩阵84条旅程、588次阶段提交、84份360分报告；桌面浏览器42例×中英文84条完整旅程和移动端P001完整旅程已纳入最终Node 22 Playwright门禁并通过。该项不替代医学正确性或专家审核 |
+| 静态病例路由与无效ID | PASS | 当前`out`在root及`/hematuria-training-system` basePath下P001/P013/P042均HTTP 200、P999均404；basePath外路径404。公共路由合同仍覆盖42个display ID |
 | 专项分支普通push | PASS | `origin/codex/hematuria-production-goal` |
-| draft PR与GitHub Actions | PASS（当前工程候选） | PR #1保持Draft；HEAD `8e7d148`的run `29532192980` completed/success，Vercel deployment与Preview Comments success，Pages deploy按PR策略skipped |
-| Pages/Vercel SHA与live alias | PASS（Preview branch alias）/PENDING（正式live alias） | Preview health精确回报`8e7d148e3459f3b960161903fba9214998661635`；正式Pages/Production alias未部署、未验证 |
+| draft PR与GitHub Actions | PASS | PR #1保持Open/Draft；HEAD `3a16f93`的run `29547532678` completed/success，Vercel deployment与Preview Comments success，Pages deploy按PR策略skipped |
+| Pages/Vercel SHA与live alias | PASS（Preview branch alias）/PENDING（正式live alias） | Preview health精确回报应用SHA `51f9c6fc8543ac0b6a5907fc65974cd72027f67b`，末端文档HEAD `3a16f93`的Vercel状态success；公开Pages仍为`main@5a3ad119`，正式Production alias未部署、未验证 |
 | 生产health、10次session、中文5次、英文5次 | PENDING | Preview已补齐10+5+5；Production需生产权限和正式部署，当前不得以Preview替代 |
 | 正式教师鉴权、RCT数据库、正式OSCE | BLOCKED/HUMAN | 需要安全后端、approved病例及具名医学签署 |
 
 ## 当前结论
 
-工程本地专项回归、42例双语完整七阶段、当前SHA PR Actions与受保护Vercel Preview的health、10次session、中文5次、英文5次、日志同步和P95均已有真实证据。但强制验收尚未完成：`HEM-P0-001`及`HEM-P0-023`需要具名医学裁决；Production 10+5+5、正式live alias、真实设备软键盘/safe-area和人工自然度终验仍缺证据；Azure按未配置状态为SKIP。本地七阶段候选还需新HEAD的Node 22 CI确认。
+当前工程专项、42例双语完整七阶段、最终Draft PR Node 22 Actions与受保护Vercel Preview的health、10次session、中文5次、英文5次、日志同步和P95均已有真实证据；不存在仍待push或待CI的P0/P1工程候选。强制生产验收仍未完成：`HEM-P0-001`及`HEM-P0-023`需要具名医学裁决；Production 10+5+5、正式live alias、合并后Pages新部署、真实设备软键盘/safe-area和人工自然度终验仍缺证据；Azure按未配置状态为SKIP。
 
 ## UI集成增量（远程已确认）
 
@@ -113,8 +114,8 @@
 |---|---|---|
 | session/provider/history/score分段计时 | LOCAL PASS | 白名单`Server-Timing`合同与API集成测试通过；响应不含内容、签名、token或密钥 |
 | 完整回答耗时 | LOCAL PASS | production smoke已采集端到端与服务端app/provider指标 |
-| 首Token耗时 | PASS（Preview） | `8e7d148` Preview中文5次P95=878ms、英文5次P95=877ms；标准`Server-Timing`本地保留，Vercel通过同值白名单`X-Hematuria-Timing`补证 |
-| Preview真实P95 | PASS（10+5+5专项）/P2网络观察 | session端到端P95=2504ms；中文回答P95=1623ms；英文回答P95=1377ms；UI dispatch P95=43ms；另有独立Preview导航间歇断连观察项，不伪写为网络稳定性完全通过 |
+| 首Token耗时 | PASS（Preview） | `51f9c6f` Preview中文5次P95=976ms、英文5次P95=1028ms；标准`Server-Timing`本地保留，Vercel通过同值白名单`X-Hematuria-Timing`补证 |
+| Preview真实P95 | PASS（10+5+5专项）/P2网络观察 | session端到端P95=1304ms；中文回答/provider P95=1560/1191ms；英文回答/provider P95=1662/1279ms；另有历史Preview导航间歇断连观察项，不伪写为Production网络稳定性通过 |
 | TypeScript、行为、构建、扫描 | LOCAL PASS | 当前33项、52/52、25 JS、284文件，均exit 0 |
 | ESLint | PASS | run `29234298382`的Node 22 Lint步骤success；本机Node 24不兼容不再是证据缺口 |
 

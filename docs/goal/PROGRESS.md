@@ -587,3 +587,16 @@
 - 原子提交`51f9c6f`只将Playwright步骤有界预算由5分钟调整为10分钟，并增加静态合同，禁止通过CLI retries或额外test timeout掩盖失败。Actions run `29546344990`在Node 22.14下success：Playwright 8分06秒success，随后82页build、bundle scan、repository secret scan与clean gate均success；Pages upload/deploy按Draft规则skipped。
 - Vercel对`51f9c6fc8543ac0b6a5907fc65974cd72027f67b`部署success，Preview health精确返回该SHA、Training State与Durable Attempt Store均configured。黑盒8/8通过：P003零轮、P001中英文真实DeepSeek、history-log、双向切换、刷新、快速双击与进入第二阶段；10次session 10/10，P95 1304ms；中文5/5回答P95 1560ms，英文5/5回答P95 1662ms。云TTS 403继续按设计降级浏览器语音，不影响问诊与计分。
 - PR #1保持Open/Draft；Vercel Preview Comments与Vercel deployment success，Pages继续为`main@5a3ad119`的部署基线差异。下一长期QA起始HEAD为`51f9c6fc8543ac0b6a5907fc65974cd72027f67b`。
+
+### 权威Goal/验收矩阵校正与P999补证（2026-07-19）
+
+- 从干净分支`3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`恢复；`git fetch --prune origin`后本地/远端HEAD一致、ahead/behind `0/0`，没有未知远程提交。
+- 完成Goal逐项审计后确认：权威`HEMATURIA_PRODUCTION_GOAL.md`与`ACCEPTANCE_MATRIX.md`仍引用旧`8e7d148`候选及“待push/待Node22复核”，与最终run `29547532678`冲突。本轮只校正文档状态和证据，不扩大验收标准，也不把Production/医学/真机证据写成通过。
+- P999静态HTTP缺口已补证：受控`serve-static.mjs`在root和GitHub Pages basePath分别验证P001/P013/P042为200、P999为404；basePath外P001为404。没有catch-all或域名硬编码，测试进程已停止。
+- 当前可执行工程P0/P1均已有远程闭环；剩余强制项为具名医学裁决、病例/事实人工终签、Production与合并后Pages权限、真机软键盘/safe-area及人工自然度终验。Goal继续保持“执行中”，PR继续Draft。
+
+### P0/P1状态索引收口（2026-07-19）
+
+- 对`DEFECT_LOG.md`逐ID读取最后状态时发现，部分早期条目仍保留“待CI/待push”历史措辞，虽然后续总括及最终run已经关闭。这会让自动完成度审计产生假开放项。
+- 新增文件末尾权威索引：医学P0保持OPEN/HUMAN；已修复工程P0/P1集中标记ENGINEERING CLOSED；Production、真机、自然度和正式系统能力单列EXTERNAL/HUMAN。历史失败证据不删除、不重写。
+- 状态索引引用此前验收证据HEAD `270c20b`的run `29672230597`及现有Preview证据；不把文档整理冒充新的应用测试，也不改变任何业务或医学数据。

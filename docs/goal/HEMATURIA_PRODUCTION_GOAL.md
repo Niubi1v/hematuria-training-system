@@ -1,22 +1,23 @@
 # Hematuria AI Clinical Interview Training System 生产目标
 
 状态：执行中，尚未达到生产验收。
-基线日期：2026-07-12（Asia/Shanghai）。
+基线日期：2026-07-12；最新工程检查点：2026-07-19（Asia/Shanghai）。
 目标分支：`codex/hematuria-production-goal`，起点 `5a3ad11`。
 
 ## 唯一目标
 
-在不改变既有42例医学内容、七阶段训练流程、360分唯一总分和公开练习边界的前提下，建立可复现、可审计的工程基线；修复经证据确认的稳定性、安全和数据契约缺陷；完成独立回归后，再由负责人决定是否进行普通 push 和生产验收。
+在不改变既有42例医学内容、七阶段训练流程、360分唯一总分和公开练习边界的前提下，建立可复现、可审计的工程基线；修复经证据确认的稳定性、安全和数据契约缺陷；专项分支普通push和Draft PR已完成，是否转Ready、合并或进入生产验收仍由负责人另行决定。
 
 ## 当前已确认基线
 
-- 本地目标仓库 `main`、本地 HEAD、`origin/main` 以及 GitHub API compare 均指向 `5a3ad11`；没有证据表明该提交仍落后于远程。
-- 首次 `git fetch --prune` 挂起约30秒后被终止，因此远程结论同时依赖本地 remote-tracking ref 和 GitHub API；不得把 fetch 失败写成成功。
+- 本轮完成度审计从已同步且工作树干净的`3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`开始，ahead/behind为`0/0`；已验收应用代码树为其父提交`51f9c6fc8543ac0b6a5907fc65974cd72027f67b`，后续仅更新审计文档时不得改变该应用证据边界。
+- Draft PR #1保持Open/Draft；最终Actions run `29547532678`在Node 22.14下completed/success，完整72项Playwright步骤用时8分06秒，82页build、bundle、repository secret scan和clean gate均通过，Pages deploy按Draft规则skipped。
 - 42例均保持 `needs_revision`、`formalUseAllowed=false`。
 - 医学审核队列为572条审核追踪项：153条来源追踪项和419条模拟补充事实。419条不得自动 approved；42例不得批量解除 `needs_revision`。
 - 151条 `source` 记录的辅助字段“是否程序或AI补充”为“是”，与153/419来源分离口径冲突。主 provenance、queue 和审批状态当前未被自动改变，但该冲突是正式签署与发布前的P0阻断。
-- 本地基线的类型检查、lint、27项行为测试、69 JSON幂等、52页构建、24个JS资源静态扫描及4项医学审核合同测试已通过。Playwright全量21/22，失败的移动端离线重连定向重跑1/1，仍需在CI复核其稳定性。
-- 生产 API 因网络 `fetch failed` 未完成本轮真实验证；历史成功记录不得替代本轮证据。
+- HEM-P0-023的18条双语医学极性冲突已从确定性Patient上下文和评分隔离，裁决包已生成但医学真值、审核人和日期仍为空；不得自动翻转或批准。
+- 当前行为/安全/医学治理链、42例×双语七阶段、15-intent/190-alias Patient矩阵、69 JSON幂等、82页双环境构建、25个JS资源bundle扫描及323个tracked/candidate repository扫描均有可重复证据；`data/**`零差异。
+- 受保护Vercel Preview已在应用HEAD `51f9c6f`完成health、P003零轮、P001中英文、双向切换、刷新、双击、history-log、10次session及中英文各5次真实DeepSeek；安全runner 8/8且专用输出扫描后删除。Production正式alias、Production 10+5+5和公开Pages新基线仍未获授权或部署，Preview证据不得替代Production。
 
 ## 不可回退边界
 
@@ -38,7 +39,7 @@
 4. GitHub Actions、Pages、Vercel SHA/live alias、`/api/health/`、10次session初始化、中文5次和英文5次真实冒烟均有当次证据。
 5. Azure未配置时明确 `SKIP`；配置后四种音色必须真实返回 `audio/mpeg`。
 6. `TEST_EVIDENCE.md` 记录精确命令、时间、退出码、计数与失败复现；`DEFECT_LOG.md` 无未处置P0。
-7. 完成 diff、密钥、PII、静态答案和回滚审查，并获得负责人对普通 push/部署的明确授权。
+7. 完成 diff、密钥、PII、静态答案和回滚审查；普通push已获授权并完成，转Ready、合并及生产部署仍须负责人明确授权。
 
 ## 权威执行记录
 
