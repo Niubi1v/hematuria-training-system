@@ -11,8 +11,8 @@
 - [x] 无未解决 P0/P1 工程问题。
 - [x] 剩余项仅为 `BLOCKED_MEDICAL`、`BLOCKED_REAL_DEVICE` 或正式发布权限。
 - [x] 专项与完整门禁通过并记录退出码。
-- [ ] `data/**` 无差异，工作树 clean（提交后最终确认）。
-- [ ] 专项分支普通 push 成功；未修改/推送 Production 分支（提交后确认）。
+- [x] `data/**` 无差异，工作树 clean（交付前已最终确认）。
+- [x] 专项分支普通 push 成功；未修改/推送 Production 分支。
 
 ## 最终指标
 

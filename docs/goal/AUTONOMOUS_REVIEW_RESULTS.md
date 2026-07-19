@@ -24,7 +24,7 @@
 ## 最终摘要
 
 - 起始 Production HEAD：`657ba5da8fc6460ad7d0deea882a010c40938b40`。
-- 专项代码最终 HEAD（报告提交前）：`6ec6c8b`；包含报告与证据的分支最终 HEAD 由 push 后交付信息记录。
+- 专项实现与证据 HEAD：`8a461afdecf80f13e8676db19784b98aa946c19a`；交付状态文档提交后的分支最终 HEAD 由最终交付信息记录。
 - 审阅范围：首页、病例库、42 个展示病例、72 个唯一病例 route ID、82 个静态页面、双语 Patient Agent、七阶段、360 分、session/attempt、安全、语音与多视口。
 - 缺陷：P0=0；P1=5（自动修复 4，`BLOCKED_MEDICAL` 1）；P2=2（自动修复 2）。自动修复合计 6。
 - `BLOCKED_MEDICAL`：2 个病例（P019/P020，合并为 1 个双语来源冲突缺陷）；既有 HEM-P0-001、HEM-P0-023、419 条事实、161 个来源修订、42 例 needs_revision 与专家终签继续保留，不计为本轮新发现。
@@ -43,6 +43,8 @@
 - GitHub Pages basePath build：82/82 exit 0。
 - bundle scan：25 个 JS 资产，exit 0；repository secret scan：339 个 tracked/candidate 文件及历史/归档元数据，exit 0；`data/**` diff exit 0；`git diff --check` exit 0。
 - 本地运行时为 Node 24.14.0；仓库声明/远程 CI 使用 Node 22，最终远程分支 CI 状态在 push 后核验。
+- Push：专项分支普通 push 成功，本地/远程 SHA 一致；未 force push，未推送 main 或 Production Goal。
+- 远程检查：该非 PR 分支未触发 GitHub Actions；Vercel Preview 在实现与证据 HEAD 上 completed/success；Production PR #1 仍为 Draft 且 HEAD 仍是 `657ba5da8fc6460ad7d0deea882a010c40938b40`。
 
 ## 提交与选择性合入建议
 
