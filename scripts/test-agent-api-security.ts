@@ -253,6 +253,44 @@ async function verifySessionClaimBinding() {
   assert.deepEqual(wrongMode.payload, { error: "attempt_mode_mismatch" });
 }
 
+async function verifySessionRequestBoundary() {
+  const attemptId = `session-request-boundary-${Date.now()}`;
+  const trainingRequestId = `${attemptId}:training-init`;
+  const training = await call(trainingHandler, {
+    origin: "https://allowed.example", ip: "session-boundary-training",
+    headers: { "x-idempotency-key": trainingRequestId },
+    body: { action: "init-attempt", caseId: "P001", attemptId, mode: "free", language: "zh", requestId: trainingRequestId }
+  });
+  assert.equal(training.statusCode, 200);
+  const authorizedHeaders = { "x-training-state": training.headers["x-training-state"] };
+
+  for (const field of ["model", "systemPrompt", "tools", "apiKey"] as const) {
+    const response = await call(sessionHandler, {
+      origin: "https://allowed.example", ip: `session-field-${field}`,
+      headers: { ...authorizedHeaders, "x-idempotency-key": `session-field-${field}` },
+      body: { caseId: "P001", attemptId, mode: "free", language: "zh", [field]: "attacker-controlled" }
+    });
+    assert.equal(response.statusCode, 400, `${field} must not be accepted by the session endpoint`);
+    assert.deepEqual(response.payload, { error: "unexpected_request_field" });
+  }
+
+  const invalidLanguage = await call(sessionHandler, {
+    origin: "https://allowed.example", ip: "session-invalid-language",
+    headers: { ...authorizedHeaders, "x-idempotency-key": "session-invalid-language" },
+    body: { caseId: "P001", attemptId, mode: "free", language: "fr" }
+  });
+  assert.equal(invalidLanguage.statusCode, 400, "unsupported languages must not silently normalize to Chinese");
+  assert.deepEqual(invalidLanguage.payload, { error: "invalid_language" });
+
+  const longIdempotencyKey = await call(sessionHandler, {
+    origin: "https://allowed.example", ip: "session-long-idempotency",
+    headers: { ...authorizedHeaders, "x-idempotency-key": "x".repeat(201) },
+    body: { caseId: "P001", attemptId, mode: "free", language: "zh" }
+  });
+  assert.equal(longIdempotencyKey.statusCode, 400, "oversized idempotency keys must be rejected instead of truncated");
+  assert.deepEqual(longIdempotencyKey.payload, { error: "idempotency_key_too_long" });
+}
+
 async function verifyGenerationSourceClassification(session: AuthorizedSession) {
   const compound = await call(agentHandler, {
     origin: "https://allowed.example",
@@ -722,6 +760,7 @@ async function main() {
   await verifyOptionalServerToken(sessionHandler);
   await verifySessionIdempotency();
   await verifySessionClaimBinding();
+  await verifySessionRequestBoundary();
   const session = await createAuthorizedSession("shared-agent");
   await verifySessionCapabilityBoundary(session);
   await verifyGenerationSourceClassification(session);
