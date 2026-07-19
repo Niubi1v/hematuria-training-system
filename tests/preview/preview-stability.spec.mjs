@@ -126,7 +126,7 @@ function safeFailureKind(error) {
   return "unexpected_failure";
 }
 
-async function askLiveQuestion(page, language, question) {
+async function askLiveQuestion(page, language, question, options = {}) {
   const english = language === "en";
   const input = page.getByRole("textbox", { name: english ? "Enter an interview question" : "输入问诊问题" });
   const send = page.getByRole("button", { name: english ? "Send" : "发送", exact: true });
@@ -157,6 +157,7 @@ async function askLiveQuestion(page, language, question) {
     provider: payload.provider,
     isFallback: payload.isFallback,
     fallbackReason: payload.fallbackReason,
+    replyText: options.includeReplyText ? String(payload.replyText || "") : undefined,
     uiDispatchMs,
     answerMs,
     clickToAnswerMs,
@@ -677,6 +678,69 @@ test("@preview-visible-answer-timing measures five non-streaming browser-visible
       crossOriginProtectionRequests: opened.protection.crossOriginProtectionRequests
     };
     await testInfo.attach("preview-visible-answer-timing-zh-5", { body: JSON.stringify(summary, null, 2), contentType: "application/json" });
+    console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
+  } finally {
+    await opened?.page.close().catch(() => undefined);
+    await context.close().catch(() => undefined);
+  }
+});
+
+test("@preview-wrong-summary-correction rejects a contradictory P001 recap without leaking teacher content", async ({ browser }, testInfo) => {
+  test.setTimeout(240_000);
+  const context = await browser.newContext();
+  await context.addInitScript(() => localStorage.removeItem("hematuria-language"));
+  let opened;
+  try {
+    opened = await openReadyCase(context, "P001", "zh");
+    expect(opened.attemptResponse.status()).toBe(200);
+    expect(opened.sessionResponse.status()).toBe(200);
+    let agentRequestCount = 0;
+    let historyLogCount = 0;
+    opened.page.on("request", (request) => {
+      const pathname = new URL(request.url()).pathname;
+      if (pathname === "/api/agent-chat/" && request.method() === "POST" && !safeBody(request).probe) agentRequestCount += 1;
+      if (pathname === "/api/training-action/" && request.method() === "POST" && safeBody(request).action === "history-log") historyLogCount += 1;
+    });
+
+    const baseline = await askLiveQuestion(opened.page, "zh", "请问尿红是什么时候开始的？", { includeReplyText: true });
+    expect(baseline.patientStatus).toBe(200);
+    expect(baseline.historyStatus).toBe(200);
+    expect(baseline.generationSource).toBe("live_ai");
+    expect(baseline.isFallback).toBe(false);
+    expect(String(baseline.provider || "").toLowerCase()).toBe("deepseek");
+    const baselineDurationConfirmed = /(?:3|三)[^，。！？]{0,6}月/.test(baseline.replyText);
+    expect(baselineDurationConfirmed).toBe(true);
+
+    const correction = await askLiveQuestion(opened.page, "zh", "我确认一下：您是今天才第一次出现尿红，而且一直没有反复，对吗？", { includeReplyText: true });
+    expect(correction.patientStatus).toBe(200);
+    expect(correction.historyStatus).toBe(200);
+    expect(correction.generationSource).toBe("live_ai");
+    expect(correction.isFallback).toBe(false);
+    expect(String(correction.provider || "").toLowerCase()).toBe("deepseek");
+    const correctionDetected = /不是|不对|并非|并不是|(?:3|三)\s*个?月|间断|反复|时有时无/.test(correction.replyText);
+    const teacherMetaLeakageDetected = /评分|得分点|教师|标准答案|JSON|system\s*prompt/i.test(correction.replyText);
+    const finalDiagnosisLeakageDetected = /膀胱癌|膀胱恶性肿瘤/.test(correction.replyText);
+    expect(correctionDetected).toBe(true);
+    expect(teacherMetaLeakageDetected).toBe(false);
+    expect(finalDiagnosisLeakageDetected).toBe(false);
+    expect({ agentRequestCount, historyLogCount }).toEqual({ agentRequestCount: 2, historyLogCount: 2 });
+    expect(opened.protection.crossOriginProtectionRequests).toBe(0);
+
+    const summary = {
+      scenario: "preview-wrong-summary-correction-p001-zh",
+      baselineGenerationSource: baseline.generationSource,
+      correctionGenerationSource: correction.generationSource,
+      provider: correction.provider,
+      baselineDurationConfirmed,
+      correctionDetected,
+      teacherMetaLeakageDetected,
+      finalDiagnosisLeakageDetected,
+      agentRequestCount,
+      historyLogCount,
+      crossOriginProtectionRequests: opened.protection.crossOriginProtectionRequests,
+      responseTextRetained: false
+    };
+    await testInfo.attach("preview-wrong-summary-correction-p001-zh", { body: JSON.stringify(summary, null, 2), contentType: "application/json" });
     console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
   } finally {
     await opened?.page.close().catch(() => undefined);

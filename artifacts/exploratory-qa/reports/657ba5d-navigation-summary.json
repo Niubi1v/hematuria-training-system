@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-19T04:55:43.214Z",
+  "generatedAt": "2026-07-19T05:08:02.182Z",
   "productionSha": "657ba5da8fc6460ad7d0deea882a010c40938b40",
   "previewHealth": {
     "status": 200,
@@ -61,6 +61,22 @@
     "p50ClickToFullResponseMs": 1349,
     "p95ClickToFullResponseMs": 1573,
     "crossOriginProtectionRequests": 0
+  },
+  "wrongSummaryCorrection": {
+    "status": "PASS_PREVIEW",
+    "caseId": "P001",
+    "language": "zh",
+    "baselineGenerationSource": "live_ai",
+    "correctionGenerationSource": "live_ai",
+    "provider": "deepseek",
+    "baselineDurationConfirmed": true,
+    "correctionDetected": true,
+    "teacherMetaLeakageDetected": false,
+    "finalDiagnosisLeakageDetected": false,
+    "agentRequests": 2,
+    "historyLogs": 2,
+    "crossOriginProtectionRequests": 0,
+    "responseTextRetained": false
   },
   "security": {
     "crossOriginProtectionRequests": 0,
