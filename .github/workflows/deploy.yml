@@ -83,7 +83,11 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Playwright E2E
-        timeout-minutes: 5
+        # The exhaustive 42-case bilingual seven-stage browser matrix takes
+        # about 3.3 minutes by itself. GitHub runs the complete 72-test suite
+        # with two workers, so retain a bounded step budget without masking
+        # individual Playwright failures or enabling retries.
+        timeout-minutes: 10
         run: pnpm run test:e2e
 
       - name: Prepare build metadata

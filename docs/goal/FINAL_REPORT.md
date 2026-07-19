@@ -440,3 +440,50 @@
 - 完整串行运行受Preview网络间歇断连影响，未取得单次5/5整套绿色；同一SHA逐场景零retry已补齐全部业务场景。该限制记录为`EXT-PREVIEW-NETWORK-20260716-02`，不得伪写为网络稳定性通过。
 - Actions run `29499921918`在Node 22通过，Vercel deployment `64SACrqWNGNuhtcM22gnQsZBE7tD`及Preview Comments通过；PR #1仍为Draft，Pages deploy skipped，未合并main或部署Production。
 - 回滚按提交逆序普通执行：`git revert 3fe409f ec74d16 a405f71`。未修改`data/**`、医学事实、审核状态、419条决定或`needs_revision`。
+
+### 2026-07-17 Preview强制稳定性证据
+
+- 当前工程候选`8e7d148`已在受保护Preview完成10次全新session、中文5次与英文5次真实DeepSeek。session 10/10、history-log 10/10均为HTTP 200；真实AI 10/10为`live_ai`、DeepSeek、非fallback。
+- P95：session端到端2504ms、server session 100ms；中文answer/provider/firsttoken/history为1623/1210/878/6ms；英文为1377/1060/877/11ms；英文UI dispatch为43ms。所有当前3秒性能门槛通过。
+- 标准`Server-Timing`在Vercel响应被实测缺失；新增同白名单、同值的`X-Hematuria-Timing`作为平台兼容证据通道，继续保留标准头。没有暴露正文、ID、token、签名或凭据。
+- Actions run `29532192980`、Vercel deployment `6X9d21RfowZJWvBMSpbSzTfRvvHb`、Preview Comments均通过，PR #1仍为Draft，Pages deploy skipped。Production 10+5+5、正式live alias、42例双语完整七阶段和医学专家裁决仍未完成，项目不得宣称生产完成。
+
+### 2026-07-17 42例双语完整七阶段本地工程结论
+
+- 42例中英文完整训练工程流程已补齐：服务端84条签名attempt依次完成七阶段并生成84份360分报告；桌面浏览器42例×双语84条完整UI旅程全部完成，移动端P001代表旅程完成。
+- 完整Playwright结果为70 passed、2个互斥项目skip、0 failed，exit 0；完整行为链、TypeScript和ESLint均exit 0。新增测试没有放宽签名、session、attempt、stage、origin、医学隔离或评分安全边界。
+- 本结论不代表训练占位答案医学正确，不代表Production真实AI通过，也不替代42例`needs_revision`、419条人工审核、HEM-P0-001/023具名医学裁决、人工自然度和真实设备键盘验收。
+- 当前候选需经diff/secret/data零差异检查后小步提交并普通push；新HEAD的Node 22 Actions、Vercel deployment和Preview Comments必须重新记录。PR继续Draft，不Ready、不合并main、不部署Production。
+
+### 2026-07-17 Patient intent normalization首批结论
+
+- 从HEAD `8014045`开始，已为dysuria及全程/起始/终末血尿建立共享canonical intent catalog（4 intent、66 alias），server真实API与TypeScript规则链共同使用。
+- 修复前74问命中率10.81%、错误unknown率50%、极性错误率90.54%；修复后扩展86问均为0错误，42例840问矩阵100% canonical命中，明确事实错误unknown=0，真实unknown与15个医学冲突保持不确定。
+- 未通过全局LLM猜测补事实；query-relative模板只使用双语一致分类。HEM-P0-001/023、419、161、`needs_revision`和`data/**`未改。
+- 当前只完成首批4个最关键intent；其余11个目标仍待按同一安全模式推进。本地候选尚需完整门禁、提交、push和Node 22 CI，不能宣称整个自然语言专项完成。
+
+### 2026-07-17 Preview输出安全里程碑候选
+
+- QA HEAD `26920ed977f3ae17449cb9ed1af3359b81d165d5`确认当前真实Preview验收因失败输出风险为`SECURITY_BLOCKED`；本轮仅选择性吸收证据思路，没有merge QA分支。
+- 旧runner的`stdio: inherit`已替换为内存捕获、递归敏感值检查和生成物fail-closed扫描。允许的报告只保留header名称、`[REDACTED]`、是否注入和请求计数，不保留值、长度、哈希、Cookie、Authorization、token或完整签名。
+- 10类异常与5类artifact合成canary门禁、配置测试、ESLint和repository scanner均通过。真实Preview仍需等待本提交普通push、Node 22 Actions及Vercel新部署后再执行，当前未将历史Preview或本地结果写成线上通过。
+- HEM-P2-028及HEM-P1-030/031/032不再进行无依据业务修改；161个来源修订、HEM-P0-001/023、419与`needs_revision`继续冻结。Patient intent第二批4个未提交文件保持原样，待安全原子提交完成后继续。
+- Pages公开deployment已确认为`main@5a3ad119`；30个旧链接来自该构建中P013–P042仍采用的`HX-ADD-*`内部ID，而不是当前Production Goal。当前PR保持Draft且Pages按规则跳过，因此只登记部署差异，正式合并后的Pages重建与42卡复测仍为人工发布链步骤。
+
+### 2026-07-17 15-intent与CI恢复本地结论
+
+- Patient canonical catalog已从4项扩展到15项、190 alias。修复前核心74问错误unknown 37、极性错误67；扩展失败基线3,150问有600个错误unknown、711个极性错误。最终3,150/3,150命中、1,370 known零错误、1,715 correct unknown保持不确定、65冲突隔离。
+- canonical只决定“问哪个事实”；值仍来自既有双语source，必须中英文一致。`governanceSlotIds`与`collectableSlotIds`分开，missing/ambiguous/needs-review/conflict不进入收集或评分。没有修改`data/**`、HEM-P0-001/023、419、161、`needs_revision`或360规则。
+- 完整本地门禁通过：行为/安全链、TypeScript、ESLint、70 passed/2 skip Playwright、root和Pages各82页、两次25-asset bundle以及323-file repository scan。
+- 远程最新已推安全HEAD仍为`f22dd1a`，其Actions run `29541184518`因旧Playwright步骤5分钟超时失败；当前E2E基础设施修复和15-intent扩展尚未提交/push。下一步为diff复核、敏感信息扫描、小步提交、普通push，再等待新Node22 Actions/Vercel；PR保持Draft。
+- 真实Preview必须在新部署安全runner下重新执行；若凭据扫描或远程门禁失败，继续保持`SECURITY_BLOCKED`。Production、Pages正式发布、真机键盘、专家裁决和人工自然度均未完成。
+
+### 2026-07-17 当前里程碑最终远程结论
+
+- 当前已验收业务HEAD为`51f9c6fc8543ac0b6a5907fc65974cd72027f67b`。该HEAD包含Preview输出安全层、15-intent/190-alias Patient canonical归一化、Next E2E生命周期修复及有证据的Node 22步骤预算；没有修改`data/**`、医学事实、审核状态、419、161、`needs_revision`、HEM-P0-001/023或360分算法。
+- CI-P1-20260717真实根因是扩展后的72项套件在GitHub 2 workers下需要超过旧5分钟步骤预算。`51f9c6f`未增加retry、未延长单项断言、未删除测试；run `29546344990`在8分06秒完成Playwright并整体success，随后82页build、bundle、secret和clean gate均success。
+- 当前Vercel Preview精确部署`51f9c6f`，黑盒8/8与安全扫描通过。P003零轮以及P001中文、英文、双向切换、刷新、快速双击和进入第二阶段均成功；真实AI样本全部为DeepSeek `live_ai`且history-log 200。10次初始化及中英文各5次稳定性门槛通过。
+- Draft PR #1保持Open/Draft；Vercel Deployment与Preview Comments success；Pages upload/deploy按Draft规则skipped。公开Pages仍为`main@5a3ad119`，30个旧内部路由属于部署基线差异，不能通过修改当前已通过路由合同或手工Production部署消除。
+- 尚未关闭的人工/权限边界：Production正式alias与正式部署、GitHub Pages合并后42卡复测、真机软键盘/safe-area、Patient自然度人工抽查、161个来源修订、42例`needs_revision`、419条人工审核、HEM-P0-001/023具名医学裁决。PR不得因此转Ready或合并。
+- 长期QA准确起始HEAD：`51f9c6fc8543ac0b6a5907fc65974cd72027f67b`。重点复测15 intent口语/否定/选择/复合问法、医学冲突隔离、P003晚session响应不覆盖成功提交、P001中英文live AI/history-log、42例双语七阶段及Preview输出零凭据。
+- 回滚：CI预算提交可普通执行`git revert 51f9c6f`；Patient canonical实现可独立普通revert `56c3b0d`。不得使用reset、rebase或force push；任何回滚仍需完整安全门禁与Draft PR检查。

@@ -23,7 +23,11 @@ const { matchStructuredFacts } = require("../server/structuredFacts.js") as {
   matchStructuredFacts(caseData: unknown, question: string, language: "zh" | "en"): { matchedSlotIds?: string[] } | null;
 };
 const { matchCanonicalPatientFacts } = require("../server/canonicalFacts.js") as {
-  matchCanonicalPatientFacts(caseId: string, question: string, language: "zh" | "en"): { matchedSlotIds?: string[] } | null;
+  matchCanonicalPatientFacts(caseId: string, question: string, language: "zh" | "en"): {
+    matchedSlotIds?: string[];
+    collectableSlotIds?: string[];
+    factValues?: Record<string, boolean | "unknown">;
+  } | null;
 };
 
 type Probe = {
@@ -49,14 +53,15 @@ async function main() {
   assert.equal(cases.length, 42, "history routing contract must cover all 42 cases");
   for (const currentCase of cases) {
     for (const probe of historyProbes) {
-      const routed: { matchedSlotIds?: string[] } | null = matchStructuredFacts(currentCase, probe.question, probe.language)
-        || matchCanonicalPatientFacts(currentCase.id, probe.question, probe.language);
+      const routed: { matchedSlotIds?: string[] } | null = matchCanonicalPatientFacts(currentCase.id, probe.question, probe.language)
+        || matchStructuredFacts(currentCase, probe.question, probe.language);
       assert.deepEqual(routed?.matchedSlotIds || [], probe.expectedSlots, `${currentCase.id}/${probe.id} matcher`);
     }
   }
   for (const probe of historyProbes) {
-    const routed: { matchedSlotIds?: string[] } | null = matchStructuredFacts(caseData, probe.question, probe.language)
-      || matchCanonicalPatientFacts("P001", probe.question, probe.language);
+    const canonical = matchCanonicalPatientFacts("P001", probe.question, probe.language);
+    const routed: { matchedSlotIds?: string[] } | null = canonical
+      || matchStructuredFacts(caseData, probe.question, probe.language);
     assert.deepEqual(routed?.matchedSlotIds || [], probe.expectedSlots, `${probe.id} matcher`);
     const result = await generatePatientAnswer({
       sessionId: `routing-${probe.id}`,
@@ -70,6 +75,11 @@ async function main() {
     if (result.fallbackReason === "unsafe_deterministic_answer") {
       assert.deepEqual(result.matchedSlotIds || [], [], `${probe.id} unsafe source must remain uncollected`);
       assert.ok(result.safetyFlags?.includes("deterministic_answer_blocked"), `${probe.id} safety boundary`);
+    } else if (result.fallbackReason === "canonical_fact_unknown") {
+      assert.ok(canonical, `${probe.id} unknown must remain under canonical governance`);
+      assert.ok(Object.values(canonical.factValues || {}).every((value) => value === "unknown"));
+      assert.deepEqual(canonical.collectableSlotIds || [], []);
+      assert.deepEqual(result.matchedSlotIds || [], [], `${probe.id} unknown must remain uncollected`);
     } else {
       assert.deepEqual(result.matchedSlotIds || [], probe.expectedSlots, probe.id);
     }

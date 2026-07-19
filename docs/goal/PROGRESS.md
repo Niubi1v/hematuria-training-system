@@ -536,3 +536,54 @@
 - `3fe409f` Preview health HTTP 200，`trainingStateConfigured=true`、`durableAttemptStoreConfigured=true`、来源`vercel_kv_rest`。P003零轮提交成功进入第二阶段；P001中文/英文均取得`live_ai`、DeepSeek、非fallback和`history-log=200`；刷新后`validate-attempt=200`，快速双击仅观察到1个`stage-feedback`；中英双向切换后合法提交成功。
 - 完整套件多次被Preview导航层间歇性`ERR_TIMED_OUT`/`ERR_CONNECTION_CLOSED`打断，但失败时无应用API响应；同一部署的逐场景零retry复测补齐5/5业务证据。生成物凭据扫描通过，仅保留`.last-run.json`，未保留截图、trace、Cookie、Authorization或任何变量值。
 - Actions run `29499921918`在Node 22完成并通过，Vercel deployment `64SACrqWNGNuhtcM22gnQsZBE7tD`及Preview Comments通过；PR #1保持Draft，Pages deploy按规则skipped，未部署Production，`data/**`零差异。
+
+### Preview 10+5+5稳定性与性能补证（2026-07-17）
+
+- 失败基线证明Vercel Preview没有透传handler本地已设置的标准`Server-Timing`。保持标准头不变，同时增加只含`app/provider/firsttoken/session/history/score`白名单毫秒值的`X-Hematuria-Timing`；不写入JSON，不含病例内容、request/session ID、token或凭据。Vercel官方文档允许自定义响应头，实测新头可读。
+- 新增`test:e2e:preview:stability`，每个样本零自动retry并只记录caseId、HTTP状态、回答来源及允许的时间指标。测试基础设施先修复三个自身问题：失败页面未结算promise导致browser级联关闭、英文复用context后的语言偏好污染、把Playwright点击调度等待误算为AI请求耗时。没有修改产品session/token/AI状态逻辑，也没有放宽3秒门槛。
+- 当前`8e7d148e3459f3b960161903fba9214998661635` Preview：P001–P010 session一次性10/10，端到端P95=2504ms、服务端P95=100ms；中文P001–P005 live DeepSeek 5/5，回答P95=1623ms、provider P95=1210ms、首Token P95=878ms、history P95=6ms；英文5/5，回答P95=1377ms、provider P95=1060ms、首Token P95=877ms、history P95=11ms、UI dispatch P95=43ms。
+- 变体问法基线曾在P003返回`compound_question_preserves_all_facts`、P004返回`unsafe_deterministic_answer`，两者history-log仍200；这是既有安全边界而非provider失败。稳定性门禁改用仓库`smoke-production.mjs`既有单slot onset问法，并以不同病例避免缓存；没有把安全fallback冒充live AI。
+- Actions run `29532192980`、Vercel deployment `6X9d21RfowZJWvBMSpbSzTfRvvHb`和Preview Comments均success；Pages deploy按Draft规则skipped。当前下一强制缺口为42例×双语完整七阶段，而Production 10+5+5仍需生产权限/正式部署。
+
+### 42例×双语完整七阶段工程矩阵（2026-07-17，本地候选）
+
+- 新增服务端真实handler矩阵：42例中文与英文共84条attempt依次完成7个受签名阶段，得到588次合法`stage-feedback`和84份`max=360`最终报告；token、case、language、mode、阶段锁及幂等均保持服务端权威。
+- 新增浏览器矩阵：桌面端P001–P042中英文共84条UI旅程全部完成七阶段并渲染最终360分报告；移动端P001英文代表旅程同样完成。测试仅用明显的训练占位输入满足UI字段完整性，不断言医学答案得分，不把流程通过写成医学正确性通过。
+- 专项结果：服务端矩阵exit 0（0.9秒）；桌面浏览器1 passed/1 skip（3.3分钟）；移动端1 passed/1 skip（3.1秒）。完整Playwright为70 passed/2按项目隔离skip/0 failed（3.4分钟，exit 0）。
+- 完整行为链33.5秒exit 0，含42例、572事实、153/419严格分离、419零自动批准、18条冲突隔离及360分；TypeScript和ESLint exit 0。沙箱内`xlsx`目录联接不可见造成的两次基础设施失败已在沙箱外以相同命令通过，不登记为产品失败。
+- `data/**`、医学事实、419审核决定、18条冲突、42例`needs_revision`和360评分算法均未修改。当前候选仍需小步提交、普通push及Node 22 CI；Production 10+5+5、医学裁决、人工自然度和真实设备键盘验收继续保持阻塞/人工。
+
+### Patient intent normalization首批（2026-07-17，本地候选）
+
+- 失败基线74问：canonical 8/74、错误unknown 37/74、极性错误67/74。根因是server/TypeScript两套平铺正则漂移，dysuria和时相缺口，以及没有query-relative fact value。
+- 新增共享canonical catalog，首批4 intent/66 alias：dysuria、whole-stream、initial、terminal。事实值只从既有双语source slot分类且要求中英文一致；否定词不当作病例答案。
+- 修复后86/86专项通过；42例840问为840/840命中、595个known零错误unknown、230个正确unknown、15个医学冲突隔离、0极性错误、双语值一致。
+- 相关Patient Agent、pain、history、safe projection、session、Agent API、42×17和360评分回归通过。英文复合general pain+dysuria的首轮回归失败已按真实根因修复，旧断言保持。
+- 本批未修改`data/**`、医学事实/极性、review状态、419/161、HEM-P0-001/023、`needs_revision`、Redis/session/deploy或评分。其余11个候选intent仍待下一批，不提前登记完成。
+
+### Preview QA输出安全合同（2026-07-17，本地候选）
+
+- 选择性读取QA HEAD `26920ed977f3ae17449cb9ed1af3359b81d165d5`的报告与最小runner diff，没有整体merge QA，也没有引入其业务代码、大体积trace或本机路径。
+- 根因证据为Playwright失败路径可能把受保护请求头写入runner stdout；专用旧输出已由QA删除且磁盘扫描命中0。本轮先冻结真实Preview长跑，不读取或输出真实凭据。
+- runner现先将stdout、stderr和spawn错误保存在内存，递归检查Error message/cause/stack及嵌套对象，再扫描JSON、HTML、trace、截图文件名和临时文件；任一明文命中、扫描异常、符号链接或超限文件均fail-closed并删除专用输出。
+- 合成随机canary覆盖302、401、403、500、超时、DNS、导航、request interception、assertion及未捕获异常共10条错误路径，以及stdout/stderr、JSON、HTML、trace、截图文件名和临时文件通道；全部被拒绝且canary未进入测试输出。
+- Preview配置继续关闭trace、video和screenshot，仅允许目标Preview origin注入；缺少环境变量时保持`BLOCKED_PREVIEW_AUTH`。本地配置测试、canary、ESLint和repository secret scan均通过；真实Preview须在该原子提交推送并完成远程门禁后再运行。
+- QA对HEM-P2-028给出`1 request / 1 ID / 1 event`本地关闭证据；HEM-P1-030/031/032为6,216/6,216与168/168零失败，均不再修改。161个来源问题仍为`BLOCKED_SOURCE_REVISION`。Pages旧部署差异只登记部署来源，不修改已通过的路由合同。
+- 公开GitHub API独立确认Pages来源为`main`/workflow，最新deployment `5410354110`对应`5a3ad1199ae5e591160f12e410260287f0051875`（2026-07-12）。该历史构建的`cases_public.json`仅P001–P012使用显示ID，P013–P042的30张卡仍以`HX-ADD-001`–`HX-ADD-030`作为href内部ID；这解释了QA观察的12当前路由/30旧路由。当前Production Goal `221b22e`未部署到Pages，故保持`BLOCKED_DEPLOYMENT_MISMATCH`，不修改当前路由代码。
+
+### Patient intent normalization首批15项与CI恢复候选（2026-07-17）
+
+- 在保留首批4项的基础上完成11项扩展；共享catalog现有15 intent、190 alias。42例×15 intent×3中文/2英文共3,150问：3,150/3,150 canonical命中，1,370 known错误unknown=0、极性错误=0；1,715 correct unknown不收集；65次医学冲突保持隔离。
+- canonical matcher现优先于旧structured matcher；治理slot与可计分slot分离。未知、双语不一致和待审核事实不会因alias命中而被当成negative或收集；已知事实才返回明确有/没有。
+- 完整行为/安全门禁、TypeScript、ESLint通过；受控外部Next进程下完整Playwright为70 passed/2互斥skip/0 failed（184.1秒）。root与Pages basePath均82/82静态页，bundle各25个JS资产，repository scan为323个tracked/candidate，`data/**`零差异。
+- 安全HEAD `f22dd1a`的Actions run `29541184518`在旧Playwright基础设施中5分钟超时：此前置单元、TypeScript、ESLint和secret scan均通过。当前候选将`next dev`与production static export分离，并让Playwright直接管理Next进程；42个href继续双语全量断言，浏览器direct/refresh覆盖P001/P013/P042，全部物理路由由82页build兜底。尚需新提交/push后的Node 22 run确认。
+- P999在公共路由合同中保持未知且不进入静态参数；本机static server未成功启动，因此当前不声称HTTP 404烟测通过，留给新CI/长期QA复核。
+
+### Patient intent、Preview安全与Node 22远程闭环（2026-07-17）
+
+- Patient canonical首批15项已推送：15 intent、190 aliases；3,150/3,150同义问法命中，1,370个known回答中错误unknown=0、极性错误=0；1,715个真实unknown和65个医学冲突继续保持不确定/隔离。`data/**`、医学事实、审核状态、419条决定、`needs_revision`与360分规则均未修改。
+- Preview输出安全层已在真实受保护部署复核：Automation Bypass仅注入目标origin，跨origin注入0；完整runner先捕获、扫描、脱敏再输出，8/8通过后扫描1个生成文件并删除专用目录。没有输出或保留Cookie、Authorization、token、完整签名或环境变量值。
+- `b46ddd8`对应Actions run `29545158103`的第一条真实失败是72项Playwright在旧5分钟步骤上限被终止；无测试断言失败。新增42例双语七阶段矩阵单项本地约3.3分钟，完整套件本地4 workers为184.1秒，而Actions固定2 workers，因此旧预算与新门禁不匹配。
+- 原子提交`51f9c6f`只将Playwright步骤有界预算由5分钟调整为10分钟，并增加静态合同，禁止通过CLI retries或额外test timeout掩盖失败。Actions run `29546344990`在Node 22.14下success：Playwright 8分06秒success，随后82页build、bundle scan、repository secret scan与clean gate均success；Pages upload/deploy按Draft规则skipped。
+- Vercel对`51f9c6fc8543ac0b6a5907fc65974cd72027f67b`部署success，Preview health精确返回该SHA、Training State与Durable Attempt Store均configured。黑盒8/8通过：P003零轮、P001中英文真实DeepSeek、history-log、双向切换、刷新、快速双击与进入第二阶段；10次session 10/10，P95 1304ms；中文5/5回答P95 1560ms，英文5/5回答P95 1662ms。云TTS 403继续按设计降级浏览器语音，不影响问诊与计分。
+- PR #1保持Open/Draft；Vercel Preview Comments与Vercel deployment success，Pages继续为`main@5a3ad119`的部署基线差异。下一长期QA起始HEAD为`51f9c6fc8543ac0b6a5907fc65974cd72027f67b`。

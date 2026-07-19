@@ -1033,3 +1033,90 @@ Actions：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/294
 | Node 22远程 | PASS：Actions run `29499921918`；Vercel与Preview Comments PASS，Pages deploy skipped |
 
 完整`pnpm run test:e2e:preview`在真实Preview导航层出现间歇性连接关闭/超时；失败请求没有进入应用API。未增加自动retry或放宽业务断言，改以同一SHA的零retry逐场景运行补齐缺失场景。所有专用生成物随后按实际凭据字节及Cookie/Authorization标记扫描并清理。
+
+## Preview 10次session、中文5次、英文5次与P95（2026-07-17）
+
+| 命令/范围 | 结果 | 关键指标 |
+|---|---|---|
+| Playwright `--grep 'initializes 10 fresh training sessions'` | exit 0，1 passed，13.3s | P001–P010=10/10；端到端P95 2504ms；server session P95 100ms |
+| Playwright `--grep '5 live AI zh answers'` | exit 0，1 passed，14.4s | 5/5 live_ai/DeepSeek/非fallback；answer P95 1623ms；provider 1210ms；firsttoken 878ms；history 6ms |
+| Playwright `--grep '5 live AI en answers'` | exit 0，1 passed，16.8s | 5/5 live_ai/DeepSeek/非fallback；answer P95 1377ms；provider 1060ms；firsttoken 877ms；history 11ms；UI dispatch 43ms |
+| `test-performance-timing.ts`、`test-agent-api-security.ts`、`test-training-api.ts`、Preview配置合同 | exit 0 | 标准/平台兼容头同值且仅允许指标；CORS与非泄露合同通过 |
+| TypeScript、ESLint、82页build、repository scan | exit 0 | 82/82；311 tracked/candidate；`data/**`零差异 |
+| Actions run `29532192980` | success | Node 22.14、完整Playwright 68/68、构建、bundle、scanner、clean gate通过 |
+
+测试输出不含问题/回答正文、session/attempt ID、签名、Cookie、Authorization或环境变量值。Preview专用目录最终仅1个`.last-run.json`，实际Automation Bypass字节及敏感header标记扫描命中0。
+
+失败证据保留在文字记录中：标准`Server-Timing`在Vercel响应缺失；变体问法的首轮中文为3/5 live AI，P003/P004分别因`compound_question_preserves_all_facts`与`unsafe_deterministic_answer`被安全隔离；英文首轮点击到响应9221ms经分段后确认provider仅802ms，随后精确计时证明UI dispatch P95=43ms。未删除断言或把这些基线改写成通过。
+
+## 2026-07-17 42例双语七阶段工程验收
+
+| 命令/场景 | 结果 | 关键证据 |
+|---|---|---|
+| `pnpm run test:42-stage-flow` | PASS，exit 0，0.9秒 | 42 cases、84 journeys、588 stage submissions、84 score reports、maxScore 360 |
+| `playwright ... 42-bilingual-stage-flow.spec.mjs --project=desktop-chromium`（外部受控Next server） | PASS，exit 0，3.3分钟 | 42例×中文/英文共84条完整UI七阶段旅程；1 passed、1按项目skip |
+| `playwright ... 42-bilingual-stage-flow.spec.mjs --project=mobile-chromium`（外部受控Next server） | PASS，exit 0，3.1秒 | P001英文移动端完整七阶段；1 passed、1按项目skip |
+| 完整`playwright test`（外部受控Next server） | PASS，exit 0，3.4分钟 | 72项：70 passed、2个互斥项目skip、0 failed；desktop/mobile、axe、会话/重连、日志同步、双击、刷新及七阶段矩阵 |
+| `pnpm run test` | PASS，exit 0，33.5秒 | 完整行为/安全/医学治理；新42×双语阶段handler矩阵纳入默认链 |
+| `pnpm run typecheck` | PASS，exit 0 | 沙箱内首次因现有`xlsx`目录联接不可见exit 2；沙箱外同命令2.0秒通过 |
+| `pnpm run lint` | PASS，exit 0，3.6秒 | 新脚本、Playwright及Preview稳定性测试无lint错误 |
+
+测试运行器证据边界：两次由Playwright自管`next dev`的运行均已完成目标断言，但Windows子进程未退出导致外层exit 124；改为显式受控Next进程与`PLAYWRIGHT_EXTERNAL_SERVER=1`后专项和全量均正常exit 0。此前一次`pnpm run test:e2e -- ...`把`--`当字面参数并误启动全套，不作为门禁通过证据。未增加retry、timeout断言或放宽安全检查来制造通过。
+
+该矩阵验证路由、签名attempt、阶段顺序、UI解锁和360分报告生成；不验证训练占位文本的医学正确性，也不改变或批准任何医学事实。
+
+## 2026-07-17 Patient intent normalization首批
+
+| 命令/场景 | 退出码 | 结果 |
+|---|---:|---|
+| 修复前`test-patient-intent-normalization.ts` | 1 | 74问：命中8、错误unknown 37、极性错误67、245条聚合断言失败 |
+| `pnpm run test:patient-intents` | 0 | 86/86专项；42例840/840矩阵；595 known零错误unknown；230 correct unknown；15 quarantine；0极性错误 |
+| bilingual/conflict/history/pain/safe projection/session/agent/history-matrix/scoring-v3 | 0 | 42例双语复合、18冲突、42×7、42×6、126安全投影、42×17及360分均通过 |
+
+首轮相关回归曾稳定失败“compound English question silently dropped pain”；共享normalizer新增独立general pain检测后原测试通过。没有删除断言或把unknown当negative。4 intent、66 alias；`data/**`和医学治理状态零修改。
+
+## 2026-07-17 Preview输出安全合同
+
+| 命令/场景 | 退出码 | 结果 |
+|---|---:|---|
+| `node scripts/test-preview-blackbox-config.mjs` | 0 | 缺凭据明确阻塞；bypass不进入URL；仅目标Preview origin允许注入 |
+| `node scripts/test-preview-output-security.mjs` | 0 | 10类合成错误路径、5类artifact通道均检测并拒绝；输出不含动态canary |
+| 缺凭据运行`node scripts/run-preview-blackbox.mjs` | 非0（预期） | 明确`BLOCKED_PREVIEW_AUTH`，未启动浏览器或生成凭据证据 |
+| `node scripts/run-lint.mjs` | 0 | runner、安全模块和canary测试通过ESLint |
+| `node scripts/scan-repository-secrets.mjs` | 0 | 322个tracked/candidate文件、可达文本历史及有界归档元数据无凭据命中 |
+
+首轮canary测试曾发现已脱敏Cookie行被正则回溯误判；修复为先解析值再判断`[REDACTED]`后重复运行通过，证明脱敏器具有幂等性。真实环境变量未用于合成测试，真实Preview在该原子提交进入Production Goal并完成远程部署前保持`SECURITY_BLOCKED`。
+
+## 2026-07-17 15-intent与CI恢复候选门禁
+
+| 命令/场景 | 退出码 | 结果 |
+|---|---:|---|
+| `test-patient-intent-normalization.ts` | 0 | 86/86；错误unknown=0；极性错误=0；复合完整 |
+| `test-patient-paraphrase-matrix.ts` | 0 | 42例×15 intent×5问法=3,150/3,150；known 1,370；correct unknown 1,715；quarantine 65；failures 0 |
+| 完整行为/安全链 | 0 | 42例、572事实、419 pending、18冲突、42×17、360分、训练签名和attempt隔离全部通过 |
+| TypeScript / ESLint | 0 / 0 | 无类型或lint错误 |
+| 目录E2E desktop/mobile | 0 | 2/2，4.4秒；42 href双语全量，P001/P013/P042 direct+refresh |
+| 完整Playwright | 0 | 72项：70 passed、2互斥skip、0 failed，184.1秒 |
+| root production build | 0 | 82/82静态页；bundle 25个JS资产 |
+| GitHub Pages basePath build | 0 | 82/82静态页；bundle 25个JS资产 |
+| repository secret scan | 0 | 323个tracked/candidate文件、历史和有界归档元数据通过 |
+| `git diff -- data` | 0 | 零差异；医学事实及审核状态未修改 |
+
+Actions run `29541184518`（HEAD `f22dd1a`）为失败证据：Node22前置门禁全部通过，Playwright步骤在旧dev/static-export与server生命周期下达到5分钟上限，后续build被跳过。当前修复尚未push，不能用上述本地结果覆盖该远程失败；需新HEAD的Actions和Vercel重新验收。P999本机静态HTTP smoke未启动成功，保持待验证。
+
+## 2026-07-17 Node 22 CI与当前Preview最终补证
+
+| 命令/检查 | 结果 | 可审计证据 |
+|---|---:|---|
+| `node scripts/test-next-runtime-config.mjs` | exit 0 | dev保持动态路由、production保持static export；CI E2E有界预算不少于10分钟；无CLI retry/额外timeout |
+| `node scripts/run-lint.mjs` | exit 0 | CI合同测试与workflow改动无lint错误 |
+| `node scripts/scan-repository-secrets.mjs` | exit 0 | 323个tracked/candidate文件、可达文本历史及有界归档元数据通过；未打印secret值 |
+| `git diff -- data` | exit 0 | 医学数据零差异 |
+| Actions run `29545158103` / HEAD `b46ddd8` | failure | 前置门禁全绿；72 tests / 2 workers；Playwright步骤在5分12秒由旧5分钟workflow上限终止；无断言失败输出 |
+| Actions run `29546344990` / HEAD `51f9c6f` | success | Node 22.14；Playwright步骤8分06秒success；行为、医学合同、TypeScript、ESLint、secret scan、82页build、bundle和clean gate全部success；Pages deploy skipped |
+| Vercel deployment / HEAD `51f9c6f` | success | commit status success；Preview Comments success；health返回完整deployment SHA `51f9c6fc8543ac0b6a5907fc65974cd72027f67b` |
+| `node scripts/run-preview-blackbox.mjs` | exit 0 | 8/8，约1.3分钟；P003零轮、P001中英文live AI/history-log、双向切换、刷新、双击、第二阶段均通过 |
+| Preview稳定性 | pass | session 10/10，P95 1304ms；中文live AI 5/5、回答P95 1560ms、provider P95 1191ms、first token P95 976ms、history P95 8ms；英文5/5、1662/1279/1028/6ms |
+| Preview输出安全收尾 | pass | 同源保护注入、跨origin 0；1个生成文件扫描通过；专用目录删除；未保留trace/video/screenshot/HTML或凭据上下文 |
+
+远程Playwright日志页面未用于推断单项医学正确性；Actions只登记步骤success和精确耗时，本地72项明细仍为70 passed/2互斥skip。当前证据不替代Production正式alias、真机软键盘、具名医学专家裁决或人工自然度验收。

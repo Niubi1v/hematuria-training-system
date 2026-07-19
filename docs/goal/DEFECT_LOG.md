@@ -407,3 +407,81 @@
 - **严重度/状态**：P2观察项；OPEN_EXTERNAL_NETWORK，不阻断已取得的应用层逐场景证据。
 - **证据**：同一`3fe409f`部署在串行黑盒中偶发`ERR_TIMED_OUT`或`ERR_CONNECTION_CLOSED`，对应场景同源请求计数1、应用API响应0；立即以零retry单场景运行可通过。未观察到HTTP应用错误或失败provider调用。
 - **处置**：未增加Playwright retry、延长timeout或放宽断言。长期QA应继续记录发生频率、地区与时间；若稳定复现再按网络/CDN层调查。
+
+### HEM-P0-018 / HEM-P1-019 / HEM-P1-020 / HEM-P1-021关闭补证（2026-07-17）
+
+- **状态**：工程与Preview配置阻塞已解除；不等同于Production发布或医学验收。
+- **证据**：`8e7d148` Preview health两项配置为true；session 10/10；中文/英文live DeepSeek各5/5；history-log 10/10；回答来源均非fallback；session/回答/provider/firsttoken/history/UI dispatch P95均有白名单响应头证据且满足当前门槛。
+- **安全边界**：未读取或输出任何Vercel、Redis、LLM或签名凭据；没有将时间写入JSON；没有关闭Vercel保护、签名、attempt、session、预算、熔断或日志验证。
+- **剩余项**：Production 10+5+5和正式live alias需要生产权限；自然度仍需人工样本终验；`EXT-PREVIEW-NETWORK-20260716-02`继续作为P2网络观察；HEM-P0-001/023仍需具名医学裁决。
+
+### HEM-P1-044 Vercel未透传标准Server-Timing（已解除）
+
+- **失败基线**：Preview `/api/session/init/` HTTP 200，但全部响应头名称中没有`server-timing`，导致线上首Token/P95不可审计；本地handler合同通过。
+- **修复**：保留标准`Server-Timing`并增加同值`X-Hematuria-Timing`，两者都由同一白名单格式化器生成；CORS只额外暴露该非敏感头。
+- **验证**：真实Preview成功读取session/provider/firsttoken/history指标；TypeScript、ESLint、性能/Agent/training合同、Node22 CI、bundle和repository扫描通过。
+
+### ACC-P1-045 42例双语完整七阶段缺少可执行证据（本地工程关闭）
+
+- **原状态**：强制验收矩阵只有局部阶段、单病例和API合同，没有42例×中英文从初始化到最终360分报告的完整可重复证据。
+- **补证**：新增服务端真实handler矩阵和桌面浏览器84条完整旅程；移动端补一条完整代表旅程。服务端共588次阶段提交和84份报告，浏览器共84条桌面旅程，均未跳过token、stage、case、language、mode或幂等校验。
+- **结果**：专项与完整Playwright均exit 0；完整行为链将该矩阵纳入默认门禁。该关闭仅针对工程流程证据，医学正确性、真实AI自然度、Production服务与真实设备软键盘不在关闭范围。
+- **远程状态**：当前为本地候选，Node 22 CI及新Preview构建待普通push后记录；在新HEAD绿灯前不写成远程通过。
+
+### HEM-P1-046 已知Patient事实因口语/同义词返回unknown
+
+- **严重度/状态**：P1发布体验；首批15 intent本地工程关闭候选，待普通push、Node 22 CI、真实Preview及长期QA。
+- **失败基线**：74问canonical命中8、错误unknown 37、极性错误67；典型“小便痛不痛、排尿疼、撒尿痛、从头到尾都红、整个排尿过程都红”未命中。
+- **根因**：server与TS平铺正则各自维护；未建立问题级whole/initial/terminal intent和fact value；英文未命中不走profile fallback。
+- **修复**：共享NFKC/alias catalog；15项先映射canonical intent，再从既有source slot读取并双语一致分类；query-relative自然模板明确有/没有、是/不是；unknown治理与收集分离，旧structured matcher不再抢答已识别canonical问题。
+- **治理**：P001等HEM-P0-023 dysuria仍在后置quarantine返回pending-review reason；模糊/双语不一致保持unknown；没有修改事实或审核状态。
+- **证据**：86问核心专项和42例3,150问矩阵均0失败；15 intent、190 alias；known错误unknown=0、极性错误=0；相关Patient/安全/评分及完整工程门禁通过。远程Node 22与真实Preview尚待新HEAD，故不标记生产关闭。
+
+### QA-SEC-P1-001 Preview失败输出可能回显受保护请求头
+
+- **严重度/状态**：P1安全发布阻塞；本地安全合同已修复，真实Preview在新HEAD部署前保持`SECURITY_BLOCKED`。
+- **证据**：QA在Production `8e7d148`的Preview路由试跑中观察到Playwright失败日志可能把受保护request header写入stdout；该批专用输出已删除，QA磁盘扫描命中0，不能作为Preview验收通过。
+- **根因**：旧runner使用`stdio: inherit`，Playwright/Node/fetch的异常在凭据扫描前就可直接写终端；旧artifact扫描也没有覆盖stdout、stderr、Error cause/stack、文件名、HTML/report或扫描器异常。
+- **修复**：子进程输出先进入受控内存；对动态canary、凭据字段、URL查询参数和递归错误对象做统一检测与脱敏；生成物统一fail-closed扫描。任何泄露或扫描失败只输出无值的`SECURITY_BLOCKED`并删除专用目录。
+- **安全边界**：不读取除运行所需Automation Bypass之外的环境凭据，不输出值、长度、前后缀或哈希；不关闭Vercel Authentication；不改变本地、Pages、Production、Patient Agent、session或医学数据逻辑。
+- **本地证据**：10类合成异常与5类artifact通道全部拒绝；配置测试、ESLint和repository secret scan通过。真实Preview长跑必须等待新HEAD远程部署并再次扫描后执行。
+
+### HEM-P2-043 GitHub Pages部署基线不匹配
+
+- **严重度/状态**：P2部署观察；`BLOCKED_DEPLOYMENT_MISMATCH`，不是当前源码路由回归。
+- **部署证据**：Pages由`main` workflow发布；公开deployment `5410354110`为`5a3ad1199ae5e591160f12e410260287f0051875`，早于当前Production Goal `221b22e237ec3e142baea5ac760c21e1a14decfd`。
+- **30个旧路由来源**：`5a3ad119`的目录直接使用`item.id`生成`/cases/<id>/index.html`；P013–P042显示ID背后的内部ID仍为`HX-ADD-001`–`HX-ADD-030`，因此公开站点只有前12张卡使用当前P编号路由。
+- **处理**：不转Ready、不合并main、不手工部署Production、不硬编码Pages域名，也不改动已通过本地/basePath/Vercel合同的路由。正式合并后的新Pages deployment必须重新执行42卡目录、直接URL、刷新和双语验证。
+
+### HEM-P1-046 扩展里程碑更新
+
+- **状态**：15-intent本地工程关闭候选；待新HEAD Node 22 CI、真实Preview和长期QA。
+- **范围**：dysuria、三类血尿时相及urinary frequency/urgency、clots、flank pain、fever、foamy urine、edema、weak stream、incomplete emptying、retention、nocturia。
+- **证据**：3,150/3,150命中；1,370 known零错误unknown/零极性错误；1,715 correct unknown不收集；65 conflict quarantine。完整行为链、70/72 Playwright、82页双构建和扫描通过。
+- **剩余边界**：未覆盖全部37个历史slot和任意自由改写；医学冲突复合问题仍保守整答隔离；真实DeepSeek自然度和人工抽查需长期QA。不得据本地rule结果关闭医学审核。
+
+### CI-P1-20260717 Playwright步骤达到5分钟硬上限
+
+- **失败证据**：Actions run `29541184518`，Node 22.14；步骤1–20全部通过，Playwright启动72项后在5分钟被workflow终止，后续build/bundle/clean gate skipped。首条真实server错误为dev模式错误应用static export并处理P999未知参数，最后失败为步骤超时。
+- **根因**：新增42例双语七阶段矩阵后套件由68增至72；Playwright通过`pnpm run dev`管理孙进程，生命周期不稳定；dev同时继承`output: export`，P999未知参数会触发静态参数错误/挂起；目录测试还重复执行42×2 HTTP探针。
+- **修复候选**：dev阶段不启用static export，production build仍强制`output: export`；Playwright直接启动Node/Next；42 href保持中英文全量，浏览器direct/refresh改为P001/P013/P042代表，82页build继续覆盖所有静态参数。
+- **本地证据**：受控外部server的目录desktop/mobile 2/2（4.4秒）；完整Playwright 70 passed/2 skip（184.1秒）；两个82页build通过。新Node 22 CI前状态为`LOCAL_PASS_REMOTE_PENDING`，不写成远程已恢复。
+
+### CI-P1-20260717远程关闭补证
+
+- **状态**：`RESOLVED_REMOTE_CI`；不等同于PR可转Ready或Production完成。
+- **新增证据**：HEAD `b46ddd8`的run `29545158103`仍在Playwright步骤精确达到5分钟硬上限，步骤日志仅显示`Running 72 tests using 2 workers`和workflow timeout，没有断言失败。该结果排除了旧dev/static-export错误后，确认剩余根因是步骤预算低于扩展矩阵实际耗时。
+- **最小修复**：`51f9c6f`仅把Actions Playwright步骤预算调整为10分钟；静态测试要求预算不低于10分钟、命令仍为完整`pnpm run test:e2e`，且不得添加`--retries`或`--timeout`。未修改Playwright断言、业务代码、session/token安全或医学数据。
+- **远程结果**：run `29546344990` completed/success；Node 22.14前置行为/医学/TypeScript/ESLint/secret门禁全部通过，Playwright用时8分06秒success，82页build、bundle与clean gate继续success。Pages deploy按Draft规则skipped。
+
+### QA-SEC-P1-001远程关闭补证
+
+- **状态**：当前安全runner与当前Preview为`RESOLVED_CURRENT_HEAD`；若未来runner重新启用trace/video/screenshot/HTML报告，必须重新打开审计。
+- **真实Preview证据**：HEAD `51f9c6f`上安全runner 8/8、输出凭据扫描通过、专用目录删除；同源保护注入有效且跨origin为0。Preview health报告签名与持久化attempt store均configured；真实中英文回答均为`live_ai`/DeepSeek而非fallback。
+- **保留边界**：P003零轮提交成功进入第二阶段后，一个较晚完成的AI session init被服务端以409 `stale_attempt_token`拒绝；该拒绝没有覆盖已成功的阶段提交，也未重复计分，属于fail-closed晚响应证据，不登记为发布失败。
+
+### HEM-P1-046远程工程结论
+
+- **状态**：15-intent确定性工程门禁`REMOTE_PASS_LONG_TERM_QA_PENDING`。
+- **证据**：本地3,150/3,150矩阵、治理隔离和完整回归通过；Node 22 run `29546344990`完整行为及Playwright success；同一HEAD真实Preview 10次session和中英文各5次live AI/history-log均成功。
+- **剩余验收**：190 aliases不等同于任意自由改写全覆盖；真实自然度、复合已知/冲突问题的保守整答体验及更多37-slot覆盖仍交长期QA。161个来源修订、HEM-P0-001/023与医学审批继续阻塞人工，不得自动修改。

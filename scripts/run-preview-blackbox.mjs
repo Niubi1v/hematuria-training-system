@@ -3,7 +3,12 @@ import { createRequire } from "node:module";
 import fs from "node:fs";
 import path from "node:path";
 
-import { previewOutputHasSensitiveData, resolvePreviewBlackboxConfig } from "./preview-blackbox-config.mjs";
+import { resolvePreviewBlackboxConfig } from "./preview-blackbox-config.mjs";
+import {
+  assessCapturedPreviewRun,
+  redactSensitiveText,
+  removePreviewOutputDirectories
+} from "./preview-output-security.mjs";
 
 const config = resolvePreviewBlackboxConfig(process.env);
 if (config.blocked) {
@@ -27,43 +32,23 @@ const result = spawnSync(process.execPath, playwrightArgs, {
   stdio: ["ignore", "pipe", "pipe"]
 });
 
-function filesUnder(directory) {
-  if (!fs.existsSync(directory)) return [];
-  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-    const candidate = path.join(directory, entry.name);
-    return entry.isDirectory() ? filesUnder(candidate) : [candidate];
-  });
-}
-
-const secretBytes = Buffer.from(config.bypassSecret);
-const generatedFiles = filesUnder(outputDir);
-const runnerOutput = `${result.stdout || ""}${result.stderr || ""}`;
-const unsafeRunnerOutput = previewOutputHasSensitiveData(runnerOutput, config.bypassSecret);
-const leaked = generatedFiles.filter((file) => {
-  const bytes = fs.readFileSync(file);
-  if (bytes.includes(secretBytes)) return true;
-  const text = bytes.toString("utf8").toLowerCase();
-  return [
-    '"authorization":', "authorization:",
-    '"cookie":', "cookie:",
-    '"set-cookie":', "set-cookie:"
-  ].some((marker) => text.includes(marker));
+const assessment = assessCapturedPreviewRun({
+  stdout: result.stdout || "",
+  stderr: result.stderr || "",
+  error: result.error || null,
+  outputDirectories: [outputDir],
+  secrets: [config.bypassSecret]
 });
-if (leaked.length > 0 || unsafeRunnerOutput) {
-  fs.rmSync(outputDir, { recursive: true, force: true });
-  console.error("SECURITY_BLOCKED: Preview test output contained credential bytes or sensitive request headers and was removed without being printed.");
+if (!assessment.safe) {
+  removePreviewOutputDirectories([outputDir]);
+  console.error("SECURITY_BLOCKED: Preview output failed credential redaction checks and dedicated output was removed.");
   process.exit(1);
 }
 
-if (result.stdout) process.stdout.write(result.stdout);
-if (result.stderr) process.stderr.write(result.stderr);
+if (result.stdout) process.stdout.write(redactSensitiveText(result.stdout, [config.bypassSecret]));
+if (result.stderr) process.stderr.write(redactSensitiveText(result.stderr, [config.bypassSecret]));
 
-for (const file of generatedFiles) {
-  if (path.basename(file) === "error-context.md" || /\.(png|jpe?g|webp|webm|zip)$/i.test(file)) {
-    fs.rmSync(file, { force: true });
-  }
-}
-
-console.log("Preview artifact credential scan passed.");
+removePreviewOutputDirectories([outputDir]);
+console.log(`Preview output credential scan passed: ${assessment.artifactScan.filesScanned} generated files checked.`);
 
 process.exit(result.status ?? 1);

@@ -566,8 +566,11 @@ function preservesAllowedAnswer(reply, allowedAnswer) {
 async function generatePatientAnswer({ sessionId, caseId, studentInput, conversationHistory = [], language = "zh", completedPatientFacingProfile }) {
   const session = getSession(sessionId, caseId, completedPatientFacingProfile);
   const caseData = getCaseById(caseId);
-  const structured = matchStructuredFacts(caseData, studentInput, language);
-  const canonical = structured ? null : matchCanonicalPatientFacts(caseId, studentInput, language);
+  // Priority canonical intents own their fact projection and governance checks.
+  // The legacy structured matcher remains the fallback for every other slot,
+  // but must not preempt a recognized canonical question with a broader slot.
+  const canonical = matchCanonicalPatientFacts(caseId, studentInput, language);
+  const structured = canonical ? null : matchStructuredFacts(caseData, studentInput, language);
   const matched = canonical || structured;
   const matchedSlotIds = matched?.matchedSlotIds || [];
   const isExplicitHistoryQuestion = explicitHistoryContext.test(String(studentInput || ""))
@@ -585,7 +588,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   const authoritativeProfile = caseData ? localCompleteProfile(buildRawPatientFacingProfile(caseData)) : null;
   const runtimeProfile = authoritativeProfile || session?.completedPatientFacingProfile || completedPatientFacingProfile;
   const genericFallback = safeFallbackForQuestion(studentInput, runtimeProfile, language);
-  const quarantine = quarantineForMatchedSlots(caseId, matched?.matchedSlotIds || []);
+  const quarantine = quarantineForMatchedSlots(caseId, matched?.governanceSlotIds || matched?.matchedSlotIds || []);
   if (quarantine.conflictingSlotIds.length) {
     console.warn("patient_fact_quarantined", { caseId, slotIds: quarantine.conflictingSlotIds, reason: BILINGUAL_CONFLICT_REASON });
     return {
@@ -604,10 +607,24 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     };
   }
   const fallback = conciseDeterministicReply(canonical
-    ? { ...canonical, provider: "rule", model: "local-rule", isFallback: true }
+    ? { ...canonical, matchedSlotIds: canonical.collectableSlotIds || canonical.matchedSlotIds, matchedFacts: canonical.collectableFacts || canonical.matchedFacts, provider: "rule", model: "local-rule", isFallback: true }
     : structured
       ? { ...structured, provider: "rule", model: "local-rule", isFallback: true }
       : genericFallback, language);
+  if (canonical?.unresolvedReason && !(canonical.collectableSlotIds || []).length) {
+    return {
+      ...fallback,
+      matchedSlotIds: [],
+      matchedFacts: [],
+      answerSource: "unknown",
+      confidence: 0,
+      fallbackReason: canonical.unresolvedReason,
+      provider: "rule",
+      model: "local-rule",
+      isFallback: true,
+      filter: { ok: true, hits: [] }
+    };
+  }
   if (fallback.safetyFlags?.[0]?.startsWith("blocked_")) return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] } };
   const deterministicFilter = filterPatientOutput(fallback.replyText);
   if (!deterministicFilter.ok) {
