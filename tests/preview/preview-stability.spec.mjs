@@ -45,9 +45,14 @@ function timingHeader(headers) {
 async function installProtection(page) {
   const headers = createPreviewProtectionHeaders(preview);
   let cookieBootstrapSent = false;
-  const audit = { sameOriginRequests: 0, cookieBootstrapRequests: 0, crossOriginRequests: 0 };
+  const audit = { sameOriginRequests: 0, cookieBootstrapRequests: 0, crossOriginRequests: 0, crossOriginProtectionRequests: 0 };
   page.on("request", (request) => {
-    if (!shouldAttachPreviewProtection(request.url(), preview.baseURL)) audit.crossOriginRequests += 1;
+    if (shouldAttachPreviewProtection(request.url(), preview.baseURL)) return;
+    audit.crossOriginRequests += 1;
+    const requestHeaders = request.headers();
+    if (requestHeaders["x-vercel-protection-bypass"] || requestHeaders["x-vercel-set-bypass-cookie"]) {
+      audit.crossOriginProtectionRequests += 1;
+    }
   });
   await page.route((url) => shouldAttachPreviewProtection(url.toString(), preview.baseURL), async (route) => {
     audit.sameOriginRequests += 1;
@@ -429,6 +434,92 @@ test("@preview-history-navigation preserves one logged turn across back and forw
     await testInfo.attach("preview-history-navigation-one-turn", { body: JSON.stringify(summary, null, 2), contentType: "application/json" });
     console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
   } finally {
+    await opened?.page.close().catch(() => undefined);
+    await context.close().catch(() => undefined);
+  }
+});
+
+test("@preview-background-recovery continues one session after a frozen lifecycle", async ({ browser }, testInfo) => {
+  test.setTimeout(240_000);
+  const context = await browser.newContext();
+  await context.addInitScript(() => localStorage.removeItem("hematuria-language"));
+  let opened;
+  let cdp;
+  try {
+    opened = await openReadyCase(context, "P001", "zh");
+    expect(opened.attemptResponse.status()).toBe(200);
+    expect(opened.sessionResponse.status()).toBe(200);
+    let agentRequestCount = 0;
+    let historyLogCount = 0;
+    let attemptReinitCount = 0;
+    let sessionReinitCount = 0;
+    opened.page.on("request", (request) => {
+      const pathname = new URL(request.url()).pathname;
+      if (pathname === "/api/agent-chat/" && request.method() === "POST" && !safeBody(request).probe) agentRequestCount += 1;
+      if (pathname === "/api/training-action/" && request.method() === "POST") {
+        const action = safeBody(request).action;
+        if (action === "history-log") historyLogCount += 1;
+        if (action === "init-attempt") attemptReinitCount += 1;
+      }
+      if (pathname === "/api/session/init/" && request.method() === "POST") sessionReinitCount += 1;
+    });
+
+    const firstAnswer = await askLiveQuestion(opened.page, "zh", "请问是什么时候开始的？");
+    expect(firstAnswer.patientStatus).toBe(200);
+    expect(firstAnswer.historyStatus).toBe(200);
+    expect(firstAnswer.generationSource).toBe("live_ai");
+    expect(firstAnswer.isFallback).toBe(false);
+    expect(String(firstAnswer.provider || "").toLowerCase()).toBe("deepseek");
+
+    const conversation = opened.page.getByRole("log", { name: "模拟问诊对话" }).locator(".space-y-3 > *");
+    const beforeFreeze = await conversation.count();
+    expect(beforeFreeze).toBeGreaterThanOrEqual(4);
+    cdp = await context.newCDPSession(opened.page);
+    await cdp.send("Page.setWebLifecycleState", { state: "frozen" });
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
+    await cdp.send("Page.setWebLifecycleState", { state: "active" });
+    await opened.page.bringToFront();
+
+    await expect(opened.page.getByRole("textbox", { name: "输入问诊问题" })).toBeVisible();
+    const visibilityStateAfterRecovery = await opened.page.evaluate(() => document.visibilityState);
+    expect(visibilityStateAfterRecovery).toBe("visible");
+    await expect.poll(() => conversation.count(), { message: "lifecycle recovery must preserve the first turn", timeout: 10_000 }).toBe(beforeFreeze);
+    const secondAnswer = await askLiveQuestion(opened.page, "zh", "这段时间是反复出现还是一直都有？");
+    expect(secondAnswer.patientStatus).toBe(200);
+    expect(secondAnswer.historyStatus).toBe(200);
+    expect(secondAnswer.generationSource).toBe("live_ai");
+    expect(secondAnswer.isFallback).toBe(false);
+    expect(String(secondAnswer.provider || "").toLowerCase()).toBe("deepseek");
+    await expect.poll(() => conversation.count(), { message: "recovered page must append exactly one new turn", timeout: 10_000 }).toBe(beforeFreeze + 2);
+    expect({ agentRequestCount, historyLogCount, attemptReinitCount, sessionReinitCount }).toEqual({
+      agentRequestCount: 2,
+      historyLogCount: 2,
+      attemptReinitCount: 0,
+      sessionReinitCount: 0
+    });
+    expect(opened.protection.crossOriginProtectionRequests).toBe(0);
+
+    const summary = {
+      scenario: "preview-background-recovery-two-turn",
+      lifecycleEmulation: "chromium-frozen-active",
+      firstGenerationSource: firstAnswer.generationSource,
+      secondGenerationSource: secondAnswer.generationSource,
+      provider: secondAnswer.provider,
+      agentRequestCount,
+      historyLogCount,
+      attemptReinitCount,
+      sessionReinitCount,
+      visibilityStateAfterRecovery,
+      crossOriginRequests: opened.protection.crossOriginRequests,
+      crossOriginProtectionRequests: opened.protection.crossOriginProtectionRequests,
+      domItemsBeforeFreeze: beforeFreeze,
+      domItemsAfterRecovery: await conversation.count(),
+      preservedWithoutDuplication: true
+    };
+    await testInfo.attach("preview-background-recovery-two-turn", { body: JSON.stringify(summary, null, 2), contentType: "application/json" });
+    console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
+  } finally {
+    await cdp?.detach().catch(() => undefined);
     await opened?.page.close().catch(() => undefined);
     await context.close().catch(() => undefined);
   }

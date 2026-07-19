@@ -76,3 +76,4 @@
 - 当前 Vercel Preview 的 P001–P042 目录/直接 URL/刷新为 42/42，P999 受控 404；GitHub Pages 仍显示 42 卡片但仅 12 个显示 ID 路由、30 个旧内部 ID，继续 `BLOCKED_DEPLOYMENT_MISMATCH`。两个环境不互相替代。
 - Preview 单 session 20 轮刷新后 DOM 对话项由 42 保持 42，证明最终渲染恢复；前两次即时 DOM/折叠状态断言失败属于测试同步，不登记视觉或数据丢失产品缺陷。
 - 精确 `657ba5d` Preview 的浏览器history专项通过：P001一轮真实AI后，前进到病例库、后退、再次前进/后退，DOM对话项始终为4，agent/history请求保持1/1；没有旧页面覆盖、重复消息或重复日志。
+- Chromium后台生命周期仿真也通过：`frozen → active` 后页面恢复visible，原4项对话保留，第二轮后精确增加到6项；输入框可继续操作且没有session/attempt重建。此项不覆盖真实手机操作系统回收、软键盘或safe-area，后者仍`BLOCKED_REAL_DEVICE`。

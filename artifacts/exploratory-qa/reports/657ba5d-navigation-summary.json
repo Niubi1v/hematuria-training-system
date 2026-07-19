@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-19T04:35:22.713Z",
+  "generatedAt": "2026-07-19T04:47:14.916Z",
   "productionSha": "657ba5da8fc6460ad7d0deea882a010c40938b40",
   "previewHealth": {
     "status": 200,
@@ -21,6 +21,25 @@
     "historyLogs": 1,
     "domItemsBeforeNavigation": 4,
     "domItemsAfterSecondBack": 4,
+    "preservedWithoutDuplication": true
+  },
+  "backgroundRecovery": {
+    "status": "PASS_PREVIEW",
+    "caseId": "P001",
+    "language": "zh",
+    "lifecycleEmulation": "chromium-frozen-active",
+    "firstGenerationSource": "live_ai",
+    "secondGenerationSource": "live_ai",
+    "provider": "deepseek",
+    "agentRequests": 2,
+    "historyLogs": 2,
+    "attemptReinitializations": 0,
+    "sessionReinitializations": 0,
+    "visibilityStateAfterRecovery": "visible",
+    "crossOriginRequests": 3,
+    "crossOriginProtectionRequests": 0,
+    "domItemsBeforeFreeze": 4,
+    "domItemsAfterRecovery": 6,
     "preservedWithoutDuplication": true
   },
   "security": {
