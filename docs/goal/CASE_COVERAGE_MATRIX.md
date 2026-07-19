@@ -104,3 +104,4 @@
 - P001新增真实Preview双语内容滥用边界：2/2为safety boundary、provider timing 0、agent/history 2/2、内部/教师/诊断/代码泄露0。只更新P001安全输入列，不替代P002–P042或高频限流/故障注入。
 - P001新增真实Preview公开API会话能力拒绝矩阵：11/11缺失或不匹配state/capability/case/language/mode/attempt/stage请求按合同拒绝，公开error envelope 11/11、provider timing 0、跨源保护头0。该系统边界结论不扩张为P002–P042真实AI或医学内容通过，过期墙钟/限流/故障注入仍单列。
 - 数据Agent结构矩阵覆盖42例/257条配置结果：归属、医嘱、唯一性、前置条件、空结果与非终态显式性均0失败；含数值final检验结果28条全部缺结构化`unit`与`referenceRange`，涉及P001–P012及P019，登记HEM-P1-046。其余29例没有此类结果样本，不能据此写为单位/参考范围通过；医学值未由QA裁决。
+- 数据Agent呈现系统级合同新增HEM-P1-047：42例共257条结构结果的三种内部状态分布为`final=74/not_available=182/not_performed=1`；Production报告卡在四固定viewport的中英文最小复现中4/4裸显全部三个token，并4/4把带异常标志的final卡片标为普通reported。该系统级失败适用于所有病例的状态呈现风险，但不把每例所有医嘱写成已逐项UI复现，也不评价医学标志真值。

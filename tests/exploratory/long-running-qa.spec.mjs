@@ -583,6 +583,124 @@ test("HEM-P1-046 numeric lab result exposes unit and reference range metadata", 
   }, { videoOnFailure: true });
 });
 
+test("HEM-P1-047 structured report statuses are localized and preserve abnormal presentation", async ({ browser }, testInfo) => {
+  const language = ["qa-1280x720", "qa-360x800"].includes(testInfo.project.name) ? "en" : "zh";
+  const copy = language === "en"
+    ? {
+        historySummary: "History summary",
+        submitStage: "Submit stage",
+        nextStage: "Next Agent",
+        orderPlaceholder: "Example: urinalysis and sediment, CTU, cystoscopy",
+        orderAndReturn: "Order and return results"
+      }
+    : {
+        historySummary: "病史小结",
+        submitStage: "提交本阶段",
+        nextStage: "进入下一阶段",
+        orderPlaceholder: "例如：尿常规+尿沉渣、CTU、膀胱镜",
+        orderAndReturn: "开立并返回结果"
+      };
+  const statusValues = ["final", "not_available", "not_performed"];
+  const representatives = statusValues.map((status) => ORDER_RESULTS.find((item) => item.status === status));
+  expect(representatives.every(Boolean)).toBe(true);
+
+  await withEvidence(browser, testInfo, "hem-p1-047-data-agent-status", async ({ page }) => {
+    await page.addInitScript((selectedLanguage) => localStorage.setItem("hematuria-language", selectedLanguage), language);
+    await installFullWorkflowApi(page);
+    await page.route("**/api/training-action/**", async (route) => {
+      const body = route.request().postDataJSON();
+      if (body?.action !== "order") return route.fallback();
+      const results = representatives.map((representative, index) => ({
+        caseId: "P001",
+        orderId: `QA-STATUS-${index + 1}`,
+        resultId: `qa-status-${index + 1}`,
+        status: representative.status,
+        value: "",
+        unit: "",
+        referenceRange: "",
+        impression: "",
+        abnormalFlags: representative.status === "final" ? ["positive"] : [],
+        orderCategory: language === "en" ? "QA status contract" : "QA 状态合同",
+        synonyms: [],
+        result: `QA non-medical status fixture ${index + 1}`,
+        abnormalLevel: representative.status === "final" ? "positive" : representative.status,
+        teachingExplanation: language === "en"
+          ? "QA-only presentation fixture; not a medical result."
+          : "仅用于 QA 呈现复现，不是医学结果。",
+        isKey: false,
+        prerequisite: ""
+      }));
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers: { "X-Training-State": "qa-fixture-state" },
+        body: JSON.stringify({
+          id: "qa-data-agent-status-presentation",
+          input: body.input,
+          matched: true,
+          matchedOrders: results.map((item) => ({ orderId: item.orderId, displayName: item.orderCategory })),
+          results,
+          message: language === "en" ? "QA status fixtures returned." : "已返回 QA 状态复现数据。",
+          at: "2026-07-19T09:00:00.000Z",
+          placedAt: "2026-07-19T09:00:00.000Z",
+          stageNo: 2,
+          status: "reported"
+        })
+      });
+    });
+
+    await page.goto("/cases/P001/");
+    await page.getByLabel(copy.historySummary).fill(language === "en"
+      ? "QA status presentation reproduction; no medical judgment."
+      : "QA 状态呈现复现，不作医学判断。");
+    await page.getByRole("button", { name: copy.submitStage, exact: true }).click();
+    await page.getByRole("button", { name: copy.nextStage, exact: true }).click();
+    await page.context().tracing.stop();
+    await page.context().tracing.start({ screenshots: true, snapshots: true, sources: false });
+    await page.getByPlaceholder(copy.orderPlaceholder).fill("QA status contract");
+    await page.getByRole("button", { name: copy.orderAndReturn, exact: true }).click();
+
+    const cards = page.getByTestId("report-card");
+    await expect(cards).toHaveCount(3);
+    await cards.first().scrollIntoViewIfNeeded();
+    const observedStatusLabels = [];
+    const cardDataStatuses = [];
+    for (let index = 0; index < 3; index += 1) {
+      observedStatusLabels.push((await cards.nth(index).locator(".ui-status").innerText()).trim());
+      cardDataStatuses.push(await cards.nth(index).getAttribute("data-status"));
+    }
+    const statusCounts = Object.fromEntries(statusValues.map((status) => [
+      status,
+      ORDER_RESULTS.filter((item) => item.status === status).length
+    ]));
+    const rawStatusLeakCount = observedStatusLabels.filter((label) => statusValues.includes(label)).length;
+    const summary = {
+      schemaVersion: 1,
+      productionSha: "657ba5da8fc6460ad7d0deea882a010c40938b40",
+      runtimeEquivalentSha: "3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8",
+      status: rawStatusLeakCount || cardDataStatuses[0] !== "abnormal" ? "FAIL_LOCAL_QA" : "PASS_LOCAL",
+      defectId: rawStatusLeakCount || cardDataStatuses[0] !== "abnormal" ? "HEM-P1-047" : null,
+      language,
+      viewport: testInfo.project.use.viewport,
+      source: "deterministic_fixture_not_real_ai",
+      providerCalls: 0,
+      productionStructuredResultCount: ORDER_RESULTS.length,
+      productionStructuredStatusCounts: statusCounts,
+      observedStatusLabels,
+      cardDataStatuses,
+      rawStatusLeakCount,
+      governedAbnormalFlagPresented: cardDataStatuses[0] === "abnormal",
+      medicalValuesRetained: false
+    };
+    await writeFile(path.join(DIRS.reports, `hem-p1-047-data-agent-status-${viewportSlug(testInfo)}.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    await saveShot(page, testInfo, `hem-p1-047-data-agent-status-${language}`, false);
+    expect({ rawStatusLeakCount, governedAbnormalState: cardDataStatuses[0] }).toEqual({
+      rawStatusLeakCount: 0,
+      governedAbnormalState: "abnormal"
+    });
+  }, { videoOnFailure: true });
+});
+
 test("rapid double stage submission creates one feedback request and one timeline event", async ({ browser }, testInfo) => {
   test.skip(testInfo.project.name !== "qa-1440x900", "Single desktop project is sufficient for the submission idempotency probe.");
   await withEvidence(browser, testInfo, "stage-submit-double-click", async ({ page }) => {

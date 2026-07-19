@@ -187,6 +187,22 @@
 - 建议方向：把多分析物检验结果拆成逐项`value/unit/referenceRange`，或为当前结构提供可验证的显式元数据；在全42例结构审计与代表UI中要求0缺口。不得由QA猜测、补写或统一套用医学参考范围。
 - 医学专家裁决：缺陷是否存在不需要医学裁决；实际单位、参考范围和数值语义必须依据权威来源或具名医学专家审核，且不得解除HEM-P0-001/023或来源修订阻塞。
 
+## HEM-P1-047：结构化检查状态裸显内部枚举且遮蔽异常标志
+
+- 级别/状态：P1，OPEN / FAIL_LOCAL_QA；Production文档基线`657ba5da8fc6460ad7d0deea882a010c40938b40`，运行时代码等价基线`3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`。
+- 页面/路径：训练工作台`/cases/P001/`第2阶段的Production报告卡；结构化输入审计覆盖P001–P042。中文用于`1440×900`、`390×844`，英文用于`1280×720`、`360×800`。
+- 前置条件：本地Next与脱敏training/session fixture只用于进入第2阶段；QA用非医学文本构造三个报告卡，但状态值取自Production数据实际使用的`final/not_available/not_performed`集合，渲染器为Production组件。该证据不记作Preview或真机通过/失败。
+- 操作步骤：读取257条Production结构化结果并统计状态 → 打开P001、提交脱敏病史小结并进入第2阶段 → 返回三个不含医学值的QA报告卡 → 第一张同时设置`status=final`与`abnormalLevel=positive` → 读取可见状态文案和卡片`data-status`。
+- 预期：内部枚举不直接暴露给学生，应按当前语言显示可理解状态；既有受控异常标志不应被`final`覆盖，第一张卡片应呈现异常状态。QA不指定具体翻译，也不判断异常标志的医学正确性。
+- 实际：四个viewport均裸显`final`、`not_available`、`not_performed`，中文页面也显示英文snake_case；12/12状态文案观测失败。三张卡片在每个viewport均为`data-status=reported`，带异常标志的`final`卡片4/4没有异常呈现。Production数据中三状态分别为74、182、1条，覆盖42例；另有1条真实`final`结果携带非空`abnormalFlags`，受相同优先级路径影响。
+- 复现：有效浏览器运行4/4（四固定viewport、中文/英文均覆盖）。首轮4次失败来自QA误点“返回已选项目结果”而没有发出order请求，已更正并不计产品复现；最终聚合均在断言前落盘。Playwright CLI完成证据后保留开放句柄由外层终止，列为QA runner行为，不计入产品缺陷。
+- AI来源：`deterministic_fixture_not_real_ai`，`providerCalls=0`；没有真实DeepSeek、fallback或医学回答。
+- 状态变化时间线：document/session/attempt 200 → 第1阶段反馈200 → 进入第2阶段 → order 200 → 三张Production报告卡出现 → raw状态与普通`reported`属性被读取 → 失败断言触发。
+- HTTP/console/network：四次运行合计12个`POST /api/training-action/`均200，最大脱敏摘要耗时15ms；console共12条info、0 warning/error。network不保存body/header/request ID/token/session或医学值。
+- 最小证据：`reports/hem-p1-047-data-agent-status-1440x900.json`、`screenshots/hem-p1-047-data-agent-status-zh-1440x900.png`、`traces/hem-p1-047-data-agent-status-1440x900.zip`；其余viewport聚合、截图、trace、失败全页图、录像、console/network与test-results仅本机保留。
+- 建议方向：把结构状态映射为中英文学生文案；计算展示状态时让受治理异常/阳性/高低/危急标志优先于`final`完成态，同时为`not_available/not_performed/needs_review`保留明确且可访问的视觉语义。增加三状态×中英文×四viewport报告卡门禁，不要放宽当前失败断言。
+- 医学专家裁决：确认本工程呈现缺陷不需要医学裁决；具体异常标志、结果内容和医学值是否正确仍遵循既有来源/医学审批，不由QA修改或批准。
+
 ## HEM-P2-043：本地 Next 开发环境病例目录链接对 42 个 `.html` 路由全部返回 404
 
 - 级别/状态：P2，RESOLVED_ENGINEERING_PREVIEW / PAGES_DEPLOYMENT_PENDING；本地 Next、root build、GitHub Pages basePath 仿真与当前 Vercel Preview 已通过，真实 Pages 仍部署不匹配。
