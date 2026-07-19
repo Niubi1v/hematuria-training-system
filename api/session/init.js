@@ -10,6 +10,7 @@ const idempotentSessions = globalThis.__hematuriaSessionInitIdempotency || new M
 globalThis.__hematuriaSessionInitIdempotency = idempotentSessions;
 const IDEMPOTENCY_TTL_MS = 30 * 60 * 1000;
 const MAX_IDEMPOTENT_SESSIONS = 5000;
+const PUBLIC_REQUEST_FIELDS = new Set(["caseId", "attemptId", "mode", "language", "debug", "forceRefresh"]);
 
 function requestHeader(req, name) {
   const value = req.headers?.[name] ?? req.headers?.[name.toLowerCase()];
@@ -38,6 +39,12 @@ module.exports = async function handler(req, res) {
 
   try {
     const body = parseJsonBody(req, 16 * 1024);
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("invalid_json_body");
+    if (Object.keys(body).some((field) => !PUBLIC_REQUEST_FIELDS.has(field))) throw new Error("unexpected_request_field");
+    if (body.language !== undefined && body.language !== "zh" && body.language !== "en") throw new Error("invalid_language");
+    if (body.mode !== undefined && typeof body.mode !== "string") throw new Error("invalid_mode");
+    if (body.debug !== undefined && typeof body.debug !== "boolean") throw new Error("invalid_debug");
+    if (body.forceRefresh !== undefined && typeof body.forceRefresh !== "boolean") throw new Error("invalid_force_refresh");
     if (!body.caseId) return res.status(400).json({ error: "caseId is required" });
     if (!body.attemptId) return res.status(400).json({ error: "attemptId is required" });
     const trainingToken = requestHeader(req, "x-training-state");
@@ -50,7 +57,9 @@ module.exports = async function handler(req, res) {
     }
     if (language !== state.language) throw new Error("attempt_language_mismatch");
     if (mode !== state.mode) throw new Error("attempt_mode_mismatch");
-    const idempotencyKey = requestHeader(req, "x-idempotency-key").slice(0, 200);
+    const rawIdempotencyKey = requestHeader(req, "x-idempotency-key");
+    if (rawIdempotencyKey.length > 200) throw new Error("idempotency_key_too_long");
+    const idempotencyKey = rawIdempotencyKey;
     if (!idempotencyKey) return res.status(400).json({ error: "idempotency_key_required" });
     const scope = idempotencyKey
       ? `${idempotencyKey}:${body.attemptId}:${body.caseId}:${body.mode || "training"}:${body.language || "zh"}:${Boolean(body.forceRefresh)}`
@@ -83,7 +92,7 @@ module.exports = async function handler(req, res) {
   } catch (error) {
     const code = error instanceof Error ? error.message : "session_init_failed";
     const status = /request_body_too_large/.test(code) ? 413
-      : /invalid_json_body/.test(code) ? 400
+      : /invalid_json_body|unexpected_request_field|invalid_(?:language|mode|debug|force_refresh)|idempotency_key_too_long/.test(code) ? 400
         : /store_unavailable|secret/.test(code) ? 503
       : /stale|completed|attempt_(?:language|mode)_mismatch/.test(code) ? 409
         : /token|mismatch|not_found/.test(code) ? 401 : 500;
