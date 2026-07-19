@@ -11,7 +11,7 @@
 | HEM-P0-018 | P0 | RESOLVED_PREVIEW_QA | Preview AI、日志同步与来源体验 | `3a16f931` 上中英各 10/10、单 session 20/20 与 history-log 200 已验证；完整问答不落盘 |
 | HEM-P1-019 | P1 | RESOLVED_PREVIEW_QA | Preview 变量作用域 | health 仅以非敏感布尔状态确认 Training State / Durable Store 均配置；未读取值 |
 | HEM-P1-020 | P1 | RESOLVED_PREVIEW_QA | 受保护 Preview API 可审计性 | fail-closed runner 15/15；同源注入、脱敏摘要及凭据字节扫描通过，专用输出安全删除 |
-| HEM-P1-021 | P1 | BLOCKED_MEASUREMENT | 浏览器真实首个可见文字 | 当前非流式 UI 只能得到完整回答与服务端 firsttoken 计时，二者不得冒充浏览器首个可见文字 |
+| HEM-P1-021 | P1 | BLOCKED_MEASUREMENT（DOM子项已测） | 非流式provider真正首Token | 精确Preview 5/5已得到完整患者回答DOM首现P50/P95，但该指标不是provider TTFT；真正首Token继续阻塞，不以DOM计时关闭 |
 
 ## 新发现缺陷模板
 
