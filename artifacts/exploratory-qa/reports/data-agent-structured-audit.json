@@ -1,0 +1,256 @@
+{
+  "schemaVersion": 1,
+  "productionSha": "657ba5da8fc6460ad7d0deea882a010c40938b40",
+  "runtimeEquivalentSha": "3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8",
+  "status": "FAIL_LOCAL_QA",
+  "defectId": "HEM-P1-046",
+  "caseCount": 42,
+  "catalogOrderCount": 60,
+  "resultCount": 257,
+  "statusCounts": {
+    "final": 74,
+    "not_available": 182,
+    "not_performed": 1
+  },
+  "minimumResultsPerCase": 2,
+  "maximumResultsPerCase": 16,
+  "structuralFailureCount": 0,
+  "duplicateResultIdCount": 0,
+  "unknownCaseCount": 0,
+  "unknownOrderCount": 0,
+  "emptyResultCount": 0,
+  "unknownPrerequisiteCount": 0,
+  "nonFinalEmptyCount": 0,
+  "finalNumericLabCount": 28,
+  "numericLabMetadataGapCount": 28,
+  "affectedCaseCount": 13,
+  "missingUnitCount": 28,
+  "missingReferenceRangeCount": 28,
+  "metadataGaps": [
+    {
+      "caseId": "P019",
+      "orderId": "LAB-UR-008",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P001",
+      "orderId": "LAB-BL-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P001",
+      "orderId": "LAB-UR-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P002",
+      "orderId": "LAB-BL-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P002",
+      "orderId": "LAB-UR-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P002",
+      "orderId": "LAB-UR-006",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P003",
+      "orderId": "LAB-BL-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P003",
+      "orderId": "LAB-UR-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P003",
+      "orderId": "LAB-UR-006",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P004",
+      "orderId": "LAB-BL-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P004",
+      "orderId": "LAB-UR-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P005",
+      "orderId": "LAB-BL-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P005",
+      "orderId": "LAB-UR-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P006",
+      "orderId": "LAB-BL-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P006",
+      "orderId": "LAB-UR-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P007",
+      "orderId": "LAB-BL-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P007",
+      "orderId": "LAB-UR-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P008",
+      "orderId": "LAB-UR-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P009",
+      "orderId": "LAB-BL-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P009",
+      "orderId": "LAB-UR-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P010",
+      "orderId": "LAB-BL-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P010",
+      "orderId": "LAB-UR-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P011",
+      "orderId": "LAB-BL-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P011",
+      "orderId": "LAB-UR-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P011",
+      "orderId": "LAB-UR-003",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P012",
+      "orderId": "LAB-UR-001",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P012",
+      "orderId": "LAB-UR-003",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    },
+    {
+      "caseId": "P012",
+      "orderId": "LAB-UR-004",
+      "missingFields": [
+        "unit",
+        "referenceRange"
+      ]
+    }
+  ],
+  "medicalValuesRetained": false
+}

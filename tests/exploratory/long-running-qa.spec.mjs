@@ -6,6 +6,7 @@ import path from "node:path";
 const ROOT = path.resolve("artifacts/exploratory-qa");
 const CASE_ROUTES = JSON.parse(await readFile(path.resolve("data/cases_public.json"), "utf8"))
   .map(({ id, displayCaseId }) => ({ routeId: id, displayCaseId }));
+const ORDER_RESULTS = JSON.parse(await readFile(path.resolve("data/order_results_structured.json"), "utf8"));
 const DIRS = {
   screenshots: path.join(ROOT, "screenshots"),
   traces: path.join(ROOT, "traces"),
@@ -517,6 +518,67 @@ test("fixture completes all seven stages and renders a 360-point report after re
       stageKeys: ["history", "orders", "diagnosis", "consult", "treatment", "perioperative", "debrief"],
       languages: expect.arrayContaining(["zh"]),
       uniqueStageRequestIds: 7
+    });
+  }, { videoOnFailure: true });
+});
+
+test("HEM-P1-046 numeric lab result exposes unit and reference range metadata", async ({ browser }, testInfo) => {
+  test.skip(testInfo.project.name !== "qa-1440x900", "One representative desktop trace is sufficient for the data metadata defect.");
+  await withEvidence(browser, testInfo, "hem-p1-046-data-agent-metadata", async ({ page }) => {
+    await installFullWorkflowApi(page);
+    const representative = ORDER_RESULTS.find((item) => item.caseId === "P001" && item.orderId === "LAB-BL-001" && item.status === "final");
+    expect(representative).toBeDefined();
+    await page.route("**/api/training-action/**", async (route) => {
+      const body = route.request().postDataJSON();
+      if (body?.action !== "order") return route.fallback();
+      const result = {
+        ...representative,
+        orderCategory: "检验/血液",
+        synonyms: ["血常规"],
+        result: representative.value || representative.impression,
+        abnormalLevel: representative.abnormalFlags.join("、") || representative.status,
+        teachingExplanation: "当前病例、当前阶段已开医嘱的结构化结果。",
+        isKey: true,
+        prerequisite: representative.prerequisites.join("、")
+      };
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers: { "X-Training-State": "qa-fixture-state" },
+        body: JSON.stringify({
+          id: "qa-data-agent-metadata",
+          input: body.input,
+          matched: true,
+          matchedOrders: [{ orderId: representative.orderId, displayName: "血常规" }],
+          results: [result],
+          message: "已返回结构化检验结果。",
+          at: "2026-07-19T07:40:00.000Z",
+          placedAt: "2026-07-19T07:40:00.000Z",
+          stageNo: 2,
+          status: "reported"
+        })
+      });
+    });
+
+    await page.goto("/cases/P001/");
+    await page.getByRole("button", { name: "中文" }).click();
+    await page.getByLabel("病史小结").fill("QA数据Agent元数据复现，不作医学判断。");
+    await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
+    await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
+    await page.context().tracing.stop();
+    await page.context().tracing.start({ screenshots: true, snapshots: true, sources: false });
+    await page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜").fill("血常规");
+    await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
+    const card = page.getByTestId("report-card").first();
+    await expect(card).toBeVisible();
+    await card.scrollIntoViewIfNeeded();
+    await saveShot(page, testInfo, "hem-p1-046-data-agent-metadata", false);
+    const unit = card.getByText("单位", { exact: true }).locator("..").locator("dd");
+    const referenceRange = card.getByText("参考范围", { exact: true }).locator("..").locator("dd");
+    const observed = { unit: await unit.innerText(), referenceRange: await referenceRange.innerText() };
+    expect(observed, "final numeric laboratory results must not render missing metadata as em dashes").toEqual({
+      unit: expect.not.stringMatching(/^—$/),
+      referenceRange: expect.not.stringMatching(/^—$/)
     });
   }, { videoOnFailure: true });
 });

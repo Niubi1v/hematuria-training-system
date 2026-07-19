@@ -171,6 +171,22 @@
 - 建议方向：刷新恢复消息时同步恢复/重新签发与attempt绑定的session capability，或在启用发送前重新执行安全的session初始化；必须继续拒绝伪造、过期、跨病例/语言/mode/attempt能力，不能通过放宽服务端401门禁修复。补充中英文“2轮→刷新→继续发送→history幂等”的门禁。
 - 医学专家裁决：否；纯客户端会话能力恢复与日志完整性缺陷，不修改病例事实。
 
+## HEM-P1-046：含数值检验结果缺少结构化单位与参考范围
+
+- 级别/状态：P1，OPEN / FAIL_LOCAL_QA；Production文档基线`657ba5da8fc6460ad7d0deea882a010c40938b40`，运行时代码等价基线`3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`。
+- 页面/路径：训练工作台`/cases/P001/`第2阶段“查体、检验、影像、内镜、病理及围术期评估”；代表病例P001、中文、viewport `1440×900`。全量结构审计另覆盖P001–P042。
+- 前置条件：本地Next与脱敏training/session fixture用于进入第2阶段；返回的代表结果直接取自Production `order_results_structured.json`，报告卡使用Production渲染器。该浏览器证据为fixture/local，不记作Preview或真实设备通过/失败。
+- 操作步骤：运行`data-agent-structured-audit.mjs`读取42例、60个医嘱和257条结构化结果 → 筛选`status=final`、`orderId=LAB-*`且value含数值的结果 → 检查`unit/referenceRange` → 打开P001 → 提交脱敏病史小结进入第2阶段 → 开立代表检验 → 等待报告卡 → 读取“单位/参考范围”。
+- 预期：含数值的final检验结果必须提供可解释的结构化单位与参考范围，或使用逐分析物结构明确表达；生产UI不应把两项都显示为“—”。
+- 实际：基础结构合同为0失败（case/order归属、resultId唯一性、前置医嘱、结果非空、非终态显式内容均完整）；但28/28条含数值final检验结果的`unit`和`referenceRange`均为空，涉及13例：P001–P012、P019。P001报告卡实际显示“单位—/参考范围—”。
+- 复现：结构审计正式脚本2/2；代表浏览器有效运行7/7均得到相同断言差异。若Playwright CLI在本桌面沙箱完成报告后保留开放句柄，外层命令需终止；截图、trace和失败摘要均已在终止前完整落盘，该QA基础设施现象不计入产品复现。
+- AI来源：数据Agent本地确定性结构结果，`providerCalls=0`；没有真实DeepSeek、fallback或mock回答被记为真实AI。
+- 状态变化时间线：document/session/attempt fixture 200 → 第1阶段提交200 → 进入第2阶段 → 开立代表检验200 → 报告卡`status=final`可见 → 单位/参考范围均渲染“—” → 失败断言触发。
+- HTTP/console/network：最终代表运行3个`POST /api/training-action/`均200，耗时约17/2/2ms；console仅3条info、0 warning/error。network摘要不保存body/header/request ID/token/session或医学值。
+- 最小证据：`reports/data-agent-structured-audit.json`（仅病例/医嘱ID和缺失字段）、`screenshots/hem-p1-046-data-agent-metadata-1440x900.png`、`traces/hem-p1-046-data-agent-metadata-1440x900.zip`；失败全页截图、console/network、录像、test-results与重复trace仅本机保留。
+- 建议方向：把多分析物检验结果拆成逐项`value/unit/referenceRange`，或为当前结构提供可验证的显式元数据；在全42例结构审计与代表UI中要求0缺口。不得由QA猜测、补写或统一套用医学参考范围。
+- 医学专家裁决：缺陷是否存在不需要医学裁决；实际单位、参考范围和数值语义必须依据权威来源或具名医学专家审核，且不得解除HEM-P0-001/023或来源修订阻塞。
+
 ## HEM-P2-043：本地 Next 开发环境病例目录链接对 42 个 `.html` 路由全部返回 404
 
 - 级别/状态：P2，RESOLVED_ENGINEERING_PREVIEW / PAGES_DEPLOYMENT_PENDING；本地 Next、root build、GitHub Pages basePath 仿真与当前 Vercel Preview 已通过，真实 Pages 仍部署不匹配。

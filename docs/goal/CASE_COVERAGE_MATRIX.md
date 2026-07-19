@@ -103,3 +103,4 @@
 - 系统级AI接口防滥用四脚本本地通过：Origin/CORS、capability、角色/字段/输入、幂等并发、预算限流、训练状态和恢复合同适用于公共边界，但不把该系统级结果逐行扩张为42例真实AI或医学通过；真实Preview限流/故障注入仍未执行。
 - P001新增真实Preview双语内容滥用边界：2/2为safety boundary、provider timing 0、agent/history 2/2、内部/教师/诊断/代码泄露0。只更新P001安全输入列，不替代P002–P042或高频限流/故障注入。
 - P001新增真实Preview公开API会话能力拒绝矩阵：11/11缺失或不匹配state/capability/case/language/mode/attempt/stage请求按合同拒绝，公开error envelope 11/11、provider timing 0、跨源保护头0。该系统边界结论不扩张为P002–P042真实AI或医学内容通过，过期墙钟/限流/故障注入仍单列。
+- 数据Agent结构矩阵覆盖42例/257条配置结果：归属、医嘱、唯一性、前置条件、空结果与非终态显式性均0失败；含数值final检验结果28条全部缺结构化`unit`与`referenceRange`，涉及P001–P012及P019，登记HEM-P1-046。其余29例没有此类结果样本，不能据此写为单位/参考范围通过；医学值未由QA裁决。
