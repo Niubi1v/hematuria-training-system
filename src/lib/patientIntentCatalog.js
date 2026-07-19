@@ -191,18 +191,18 @@ function matchesNaturalPattern(question, intentKey, language) {
   }
   if (intentKey === "urinary_frequency") {
     return language === "zh"
-      ? /(?:小便|尿|厕所).*(?:次数多|次数增多|尿得勤|老想|总想|经常|频繁)|(?:老是|总是|一会儿就).*(?:小便|尿|厕所)/.test(compacted)
+      ? /(?:小便|尿|厕所).*(?:次数多|次数增多|尿得勤|老想|总想|经常|频繁)|(?:老是|总是|总|一会儿就).*(?:小便|尿|厕所)/.test(compacted)
       : /(?:urinate|urinating|pee|passurine).*(?:moreoften|frequently|alot)|(?:frequent|often).*(?:urination|urinate|pee)/i.test(compacted);
   }
   if (intentKey === "urinary_urgency") {
     return language === "zh"
-      ? /(?:尿意|想尿).*(?:很急|突然|憋不住)|(?:突然|马上|来不及).*(?:想尿|厕所)|有尿.*憋不住/.test(compacted)
-      : /(?:sudden|urgent).*(?:urge|need).*(?:urinate|pee)|(?:cannot|can't).*(?:hold|wait).*(?:urine|pee)/i.test(compacted);
+      ? /(?:尿意|想尿|尿来了).*(?:很急|突然|憋不住|等不了)|(?:突然|马上|来不及).*(?:想尿|厕所)|有尿.*憋不住/.test(compacted)
+      : /(?:sudden|urgent).*(?:urge|need).*(?:urinate|pee)|(?:cannot|can't).*(?:hold|wait).*(?:urine|pee)|rush.*(?:bathroom|toilet)/i.test(compacted);
   }
   if (intentKey === "blood_clots") {
     return language === "zh"
       ? /(?:尿|小便).*(?:血块|血凝块|凝血块|血疙瘩)|(?:血块|血凝块|凝血块|血疙瘩).*(?:尿|小便)/.test(compacted)
-      : /(?:blood)?clots?.*(?:urine|pee)|(?:urine|pee).*(?:blood)?clots?/i.test(compacted);
+      : /(?:blood)?clots?.*(?:urine|pee)|(?:urine|pee).*(?:blood)?clots?|lumps?ofblood.*(?:urine|pee)/i.test(compacted);
   }
   if (intentKey === "flank_pain") {
     return language === "zh"
@@ -217,32 +217,32 @@ function matchesNaturalPattern(question, intentKey, language) {
   if (intentKey === "foamy_urine") {
     return language === "zh"
       ? /(?:尿|小便).*(?:泡沫|起泡|很多泡|泡泡)|(?:泡沫|起泡|很多泡|泡泡).*(?:尿|小便)/.test(compacted)
-      : /(?:foamy|frothy|bubbles).*(?:urine|pee)|(?:urine|pee).*(?:foamy|frothy|bubbles)/i.test(compacted);
+      : /(?:foamy|frothy|bubbles|bubbly).*(?:urine|pee)|(?:urine|pee).*(?:foamy|frothy|bubbles|bubbly)/i.test(compacted);
   }
   if (intentKey === "edema") {
     return language === "zh"
       ? /(?:眼皮|眼睑|脸|腿脚|腿|下肢|脚|脚踝).*(?:肿|水肿)|(?:肿|水肿).*(?:眼皮|眼睑|脸|腿脚|腿|下肢|脚|脚踝)/.test(compacted)
-      : /(?:swollen|swelling|puffy).*(?:eyes?|eyelids?|legs?|feet|ankles?)|(?:eyes?|eyelids?|legs?|feet|ankles?).*(?:swollen|swelling|puffy)|\b(?:edema|oedema)\b/i.test(normalized);
+      : /(?:swollen|swelling|puffy|puffiness).*(?:eyes?|eyelids?|legs?|feet|ankles?)|(?:eyes?|eyelids?|legs?|feet|ankles?).*(?:swollen|swelling|puffy|puffiness)|\b(?:edema|oedema)\b/i.test(normalized);
   }
   if (intentKey === "weak_stream") {
     return language === "zh"
       ? /(?:尿线|尿流|尿柱|小便流).*(?:细|弱|没劲|变弱)|(?:尿得|小便).*(?:没劲|无力)/.test(compacted)
-      : /(?:urine|urinary).*(?:stream|flow).*(?:weak|thin|poor)|(?:weak|thin|poor).*(?:urine|urinary).*(?:stream|flow)/i.test(compacted);
+      : /(?:urine|urinary).*(?:stream|flow).*(?:weak|thin|poor)|(?:stream|flow).*(?:of)?(?:urine|urinary).*(?:weak|thin|poor)|(?:weak|thin|poor).*(?:urine|urinary).*(?:stream|flow)/i.test(compacted);
   }
   if (intentKey === "incomplete_emptying") {
     return language === "zh"
-      ? /(?:尿完|小便后).*(?:还有尿|还觉得有尿|还想尿|没排干净|尿不尽)|(?:小便|尿).*(?:排不干净|不能排干净)|尿不尽/.test(compacted)
-      : /(?:bladder).*(?:still|doesn't|doesnot).*(?:full|empty).*(?:after|finish)|(?:incomplete|notcompletely).*(?:empty|emptying)|stillfeel.*urineleft/i.test(compacted);
+      ? /(?:尿完|小便后).*(?:还有尿|还觉得有尿|还想尿|没排干净|没排空|尿不尽)|(?:小便|尿|膀胱).*(?:排不干净|不能排干净|没排空)|尿不尽/.test(compacted)
+      : /(?:bladder).*(?:still|doesn't|doesnot).*(?:full|empty).*(?:after|finish)|(?:incomplete|notcompletely).*(?:empty|emptying)|stillfeel.*urineleft|stillfeel.*(?:need|have)to(?:go|pee).*(?:after|finish)/i.test(compacted);
   }
   if (intentKey === "urinary_retention") {
     return language === "zh"
-      ? /(?:完全|一点|憋着|想尿).*(?:尿不出来|排不出尿)|尿潴留/.test(compacted)
+      ? /(?:完全|一点|憋着|憋得|想尿).*(?:尿不出来|尿不出|排不出尿)|尿潴留/.test(compacted)
       : /(?:unable|cannot|can't).*(?:passurine|urinate|pee)|urinaryretention/i.test(compacted);
   }
   if (intentKey === "nocturia") {
     return language === "zh"
-      ? /(?:晚上|夜里|夜间|一晚上).*(?:起夜|起来尿|小便|尿几次)|夜尿/.test(compacted)
-      : /(?:getup|wakeup).*(?:atnight|duringthenight).*(?:urinate|pee)|(?:urinate|pee).*(?:atnight|duringthenight)|nocturia/i.test(compacted);
+      ? /(?:晚上|夜里|夜间|一晚上).*(?:起夜|起来尿|小便|尿几次|尿几回)|夜尿/.test(compacted)
+      : /(?:getup|wakeup|wake).*(?:atnight|duringthenight|overnight).*(?:urinate|pee)|(?:urinate|pee).*(?:atnight|duringthenight|overnight)|nocturia/i.test(compacted);
   }
   return false;
 }
