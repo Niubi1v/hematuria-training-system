@@ -522,3 +522,11 @@
 - `363aa17`远程Node 22门禁和Vercel部署已通过，但真实Preview UI仍准确复现P001首问401 `session_capability_required`；因此没有把该SHA标记为教师验收完成。P003零轮提交成功，且同SHA的API级session 10/10和中英文live AI各5/5只说明服务配置正常。
 - 最小候选将agent-chat发送与服务端session capability就绪绑定，并增加不泄值的`sessionCapabilityPresent`证据。延迟初始化期间按钮/Enter不发请求，签发后只发一次；完整本地Playwright 74 passed/2 skipped、两种82页build、TypeScript、ESLint、bundle与secret scan通过，`data/**`零差异。
 - 新候选仍须原子提交、普通push和新SHA真实Preview 8场景复测；PR继续Draft，不合并main、不部署Production。回滚使用普通`git revert <capability-race-commit>`，不得reset或force push。
+
+### 2026-07-20 Preview能力会话竞态最终结论
+
+- 修复`1aa79c1`与证据提交`296bf7e`已普通push；远程Production Goal HEAD为`296bf7e6f2e797c634c762b67488b279dfe59a37`。Actions run `29719580921`完成并success，Vercel Deployment和Preview Comments success，PR #1仍Open/Draft，Pages发布按规则跳过。
+- 新部署的受保护Preview黑盒8/8通过。P001中文与英文首问均在服务端session capability就绪后只发出合法agent-chat，DeepSeek来源为`live_ai`，history-log与阶段提交均200；P003零轮、双向切换、刷新、快速双击和进入第二阶段均成功。此前401 `session_capability_required`不再复现。
+- 稳定性补证为session 10/10、中文live AI/history-log 5/5、英文5/5；回答P95分别1534ms和1327ms。Preview输出扫描通过且未跨origin注入保护头。云TTS 403继续安全降级浏览器语音，未登记为真实云TTS通过。
+- HEM-P1-049现为ENGINEERING CLOSED / REMOTE PREVIEW VERIFIED。当前推荐长期QA从`296bf7e6f2e797c634c762b67488b279dfe59a37`复测；教师应使用受控Vercel审阅入口，不再使用`main@5a3ad119`旧GitHub Pages作为完整AI验收入口。
+- 回滚顺序为普通`git revert 296bf7e`（文档）后`git revert 1aa79c1`（能力门槛）；任何回滚仍需重新通过Node 22、Preview安全与阶段提交流程，不得reset、force push或修改医学审批状态。

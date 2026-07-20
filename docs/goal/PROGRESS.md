@@ -625,3 +625,11 @@
 - 同一SHA真实Preview黑盒首先通过health、P003零轮提交及进入第二阶段，随后P001中文UI在`init-attempt=200`、`session/init=200`后把首个`agent-chat`发成401 `session_capability_required`。该失败没有被稳定性API样本掩盖；同部署随后中文5/5、英文5/5 live DeepSeek/history-log证明provider、Training State和Redis均已配置。
 - 根因是session初始化effect尚未进入loading的短窗口内发送按钮可用，而`aiSessionId`仍为空。最小修复要求能力会话存在后才允许按钮、Enter或语音提交；规则模式也先取得同一安全能力，不关闭/放宽session、attempt、origin或签名校验。
 - 新增延迟session浏览器测试：能力签发前按钮禁用且agent-chat请求0，签发后只发1个带能力的请求；desktop/mobile均通过。完整本地Playwright为74 passed/2 skipped，TypeScript、ESLint、Preview输出canary、两种82页build、两次25 JS bundle、336文件/历史secret scan及`data/**`零差异通过。待原子提交、普通push及新SHA Preview复测。
+
+### 教师验收整改：能力会话竞态远程闭环（2026-07-20）
+
+- 修复提交`1aa79c1`及证据提交`296bf7e`已普通push；本地与远程`codex/hematuria-production-goal`均为`296bf7e6f2e797c634c762b67488b279dfe59a37`，ahead/behind为`0/0`，工作树干净。
+- Actions run `29719580921`在Node 22门禁完整成功：行为/医学/安全、TypeScript、ESLint、repository secret scan、Playwright、82页build、bundle scan及clean gate全部通过；Pages artifact按Draft规则跳过。Vercel Deployment与Preview Comments均success，PR #1继续Open/Draft。
+- 同一SHA的受保护Preview黑盒`8/8`通过：health精确返回`296bf7e`，Training State与Durable Attempt Store均configured；P003零轮提交进入第二阶段；P001中英文首问均携带服务端能力并取得DeepSeek `live_ai`、`history-log=200`，刷新、快速双击和中英双向切换后提交成功。
+- Preview稳定性为session 10/10（端到端P95 1699ms）；中文live AI/history-log 5/5（回答P95 1534ms、provider P95 1139ms、首Token P95 864ms）；英文5/5（回答P95 1327ms、provider P95 933ms、首Token P95 727ms）。输出凭据扫描通过，跨origin保护头注入0。
+- 英文场景云TTS仍返回403并按既有浏览器语音降级处理，不影响问诊、history-log或阶段提交；该外部语音配置项未被本次竞态修复冒充关闭。HEM-P1-049工程项已关闭，长期QA准确起始HEAD为`296bf7e6f2e797c634c762b67488b279dfe59a37`。

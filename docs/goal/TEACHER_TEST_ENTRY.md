@@ -2,7 +2,7 @@
 
 ## 当前入口职责
 
-- 完整审阅入口：`https://hematuria-training-system-git-codex-he-a06e54-niubi1vs-projects.vercel.app/`。该入口可能要求 Vercel 授权；本轮 push 后必须以页面/health 显示的新部署 SHA 为准。
+- 完整审阅入口：`https://hematuria-training-system-git-codex-he-a06e54-niubi1vs-projects.vercel.app/`。该入口可能要求 Vercel 授权；已验证应用代码基线为 `296bf7e6f2e797c634c762b67488b279dfe59a37`，允许页面显示仅追加证据文档的更晚后代SHA。
 - `https://niubi1v.github.io/hematuria-training-system/` 当前仍是 `main@5a3ad11` 的历史静态版本，不是最新完整 AI 训练验收入口。
 - 不再使用 `HX-ADD-*` 旧内部路径作为当前病例验收依据。当前病例入口使用 `/cases/P001/` 至 `/cases/P042/`。
 
@@ -17,3 +17,5 @@
 5. 若失败，截图应同时记录病例 ID、语言、北京时间、问题原文、页面提示；开发团队再从脱敏 network 证据记录请求路径、HTTP 状态和非敏感错误码。
 
 请勿在截图中包含 Cookie、Authorization、训练 token、签名、环境变量或真实个人信息。
+
+自动化验收已在上述SHA通过P003零轮、P001中英文真实AI、双向语言切换、刷新、快速双击及进入第二阶段。教师复测仍是独立的人机体验验收，不应使用旧GitHub Pages结果替代当前Vercel版本，也不应获得Automation Bypass凭据。

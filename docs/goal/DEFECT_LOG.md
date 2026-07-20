@@ -537,11 +537,11 @@
 
 ## HEM-P1-049 Patient首问早于能力会话落地
 
-- **状态**：RESOLVED_LOCAL_CANDIDATE / REMOTE_PREVIEW_RECHECK_PENDING。
+- **状态**：ENGINEERING CLOSED / REMOTE PREVIEW VERIFIED（`296bf7e`）。
 - **真实证据**：`363aa17` Preview的P001中文UI先取得`init-attempt=200`和`session/init=200`，但首个`agent-chat`返回401 `session_capability_required`；同部署session 10/10和中英文live AI各5/5通过，排除provider、Redis或Training State整体故障。
 - **根因**：自动session effect尚未把`sessionInitLoading`置true前，发送按钮只按loading判断，存在`aiSessionId`为空却可点击的窗口。
 - **修复**：按钮、Enter和提交函数均以非空服务端session capability为硬门槛；规则模式同样先初始化安全会话。没有关闭校验、伪造成功或引入客户端token。
-- **门禁**：新增延迟session测试在desktop/mobile下均证明签发前0请求、签发后1请求；完整Playwright 74/2、两种82页build、secret scan与`data/**`零差异通过。待新HEAD Actions/Vercel/Preview完整8场景复测后关闭。
+- **门禁**：新增延迟session测试在desktop/mobile下均证明签发前0请求、签发后1请求；完整本地Playwright 74/2、两种82页build、secret scan与`data/**`零差异通过。Actions run `29719580921`成功；同SHA Preview黑盒8/8、session 10/10、中英文live AI/history-log各5/5通过，首问不再出现`session_capability_required`。
 
 ## HEM-P2-048 Prompt/错误日志可能暴露调试上下文
 
