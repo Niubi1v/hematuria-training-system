@@ -527,6 +527,14 @@
 - **安全**：known错误unknown=0、极性错误=0；1715个真实unknown与65个冲突/隔离回答保持不确定。分类器输入不含caseId、诊断、评分、答案或review状态；provider失败、低置信度、非法JSON均安全unknown。
 - **门禁**：3150/3150、1008/1008、86/86、42例双语七阶段与18冲突隔离均通过；Node22/Preview仍待新HEAD。
 
+## CI-P1-20260720 教师验收候选生成基线漂移
+
+- **状态**：RESOLVED_LOCAL / REMOTE_RECHECK_PENDING。
+- **失败证据**：Actions run `29712230950`，HEAD `4ff2d04`，Node 22.14；首个真实失败为Conversion idempotency，列出`cases_en.json`、`cases_public.json`和`patient_slots_bilingual.json`。
+- **根因**：UI专用自然主诉格式化器被数据生成器直接复用，使展示层改动改变已审计生成基线；不是医学数据源变化，也不是测试基础设施误报。
+- **修复**：`0b5acb7`新增独立稳定生成格式化器并让normalize脚本使用；UI继续使用自然文案。没有提交生成数据，没有放宽幂等断言。
+- **证据**：75个受控输出隔离worktree幂等通过；42例资料/路由、TypeScript、ESLint、两种82页build、两次bundle、secret scan及`data/**`零差异通过。等待新HEAD Node 22远程门禁。
+
 ## HEM-P2-048 Prompt/错误日志可能暴露调试上下文
 
 - **状态**：RESOLVED_LOCAL_CANDIDATE / CI_PENDING。

@@ -510,3 +510,9 @@
 - 国内部署建议为同一受控域名内的前端、API、Redis和AI代理，不是教师访问localhost。具体比较见`DEPLOYMENT_FEASIBILITY_REPORT.md`；本轮没有迁移、部署或修改环境变量。
 - 教师后续入口和复测步骤见`TEACHER_TEST_ENTRY.md`。在新Preview完成前，不把当前branch alias写成已部署本候选。
 - 本轮代码/测试提交为`0a9a85c`；回滚应使用普通`git revert 0a9a85c`并重新运行安全门禁，不得reset或force push。
+
+### 2026-07-20 教师验收候选CI恢复补充
+
+- 首次推送候选`4ff2d04`的Actions run `29712230950`在Node 22.14失败；第一条真实错误是自然主诉UI格式化改动使3个英文生成物不再幂等，不是Playwright、医学门禁或部署失败。
+- `0b5acb7`以独立稳定生成格式化器隔离UI展示演进和生成基线，未接受/提交任何`data/**`变化。提交后75输出隔离幂等性、42例资料与路由、TypeScript、ESLint、两种82页build、bundle与secret scan均通过。
+- 该修复可单独普通`git revert 0b5acb7`回滚，但回滚会重新暴露Conversion idempotency失败；不得以重生成并提交待复核主诉的方式替代。新HEAD的Actions、Vercel和真实Preview结果仍待发布链补证，PR继续Draft。

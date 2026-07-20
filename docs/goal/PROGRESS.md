@@ -611,3 +611,10 @@
 - 本地完整行为链exit0；TypeScript（沙箱外只读，解决xlsx junction访问限制）和ESLint exit0；Playwright受控外部Next服务器下72 passed/2互斥skip/0 failed，209.6秒，exit0。首次Playwright自管服务器的断言同样72/2，但Windows子进程未退出导致10分钟exit124，不作为门禁通过。
 - Vercel同源等价与GitHub Pages basePath均生成82/82页面，25个JS bundle扫描通过；repository secret scan覆盖336个tracked/candidate及历史，`data/**`零差异。Node22、Actions、Vercel部署SHA和真实Preview需提交/push后重新验收；PR继续Draft。
 - 本轮代码与专项测试已保存为原子提交`0a9a85c`；文档证据单独提交。推送前仍须fetch并确认远端领先0。
+
+### 教师验收整改：Node 22生成基线CI恢复（2026-07-20）
+
+- 新HEAD `4ff2d04`的Actions run `29712230950`在Node 22.14的首个真实失败为`Conversion idempotency`：`data/cases_en.json`、`data/cases_public.json`和`data/patient_slots_bilingual.json`会被重新生成。后续步骤均被跳过，不能登记为测试失败或通过。
+- 根因是自然主诉UI改进后的`simplifiedChiefComplaintEn`同时被数据生成器复用，导致展示文案演进意外改变已审计的生成序列化合同；诊断生成还会让P019/P020待复核主诉落入不合适的英文兜底。没有提交这些生成差异，也没有修改任何医学事实或审核状态。
+- 原子修复`0b5acb7`将运行时自然展示与稳定生成格式分离；生成器继续复现既有英文基线，UI保留新自然文案。新增P013、红色小便及P019/P020生成合同断言。
+- 提交后隔离worktree幂等性门禁为75个受控输出首轮/次轮均通过；主诉、42例资料完整性、42例公开路由、TypeScript、ESLint、Vercel与Pages两种82页构建、两次25 JS bundle和336文件/历史secret scan均通过，`data/**`零差异。新HEAD仍须普通push并由新的Actions/Vercel复核；PR保持Draft。
