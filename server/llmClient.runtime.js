@@ -1,4 +1,5 @@
 const { enterProviderCircuit, recordProviderFailure, recordProviderSuccess } = require("./providerCircuitStore.js");
+const safeLogger = require("./safeLogger.js");
 
 function getLLMProviderConfig() {
   const endpointType = process.env.LLM_ENDPOINT_TYPE || "chat_completions";
@@ -121,7 +122,7 @@ async function callLLM({ systemPrompt, userPayload, temperature, maxTokens, maxR
     circuitAdmission = await enterProviderCircuit(config, { minimumProbeSeconds });
   } catch (error) {
     const code = String(error?.code || error?.message || error);
-    console.warn("llm_circuit_rejected", { requestId, code, retryAfterSeconds: Number(error?.retryAfterSeconds || 0), deploymentSha: String(process.env.VERCEL_GIT_COMMIT_SHA || "local").slice(0, 12) });
+    safeLogger.warn("llm_circuit_rejected", { requestId, code, retryAfterSeconds: Number(error?.retryAfterSeconds || 0), deploymentSha: String(process.env.VERCEL_GIT_COMMIT_SHA || "local").slice(0, 12) });
     throw error;
   }
   const effectiveRetryLimit = circuitAdmission.probe ? 0 : retryLimit;
@@ -147,8 +148,8 @@ async function callLLM({ systemPrompt, userPayload, temperature, maxTokens, maxR
         signal: controller.signal
       });
       if (!response.ok) {
-        const body = await response.text().catch(() => "");
-        const error = new Error(`LLM provider returned ${response.status}: ${body.slice(0, 120)}`);
+        if (response.body) await response.body.cancel().catch(() => {});
+        const error = new Error(`LLM provider returned HTTP ${response.status}`);
         error.status = response.status;
         if (!transientStatus(response.status) || attempt === effectiveRetryLimit) throw error;
         lastError = error;
@@ -170,7 +171,7 @@ async function callLLM({ systemPrompt, userPayload, temperature, maxTokens, maxR
         throw error;
       }
       await recordProviderSuccess(circuitAdmission).catch(() => {
-        console.warn("llm_circuit_update_failed", { requestId, action: "success", deploymentSha: String(process.env.VERCEL_GIT_COMMIT_SHA || "local").slice(0, 12) });
+        safeLogger.warn("llm_circuit_update_failed", { requestId, action: "success", deploymentSha: String(process.env.VERCEL_GIT_COMMIT_SHA || "local").slice(0, 12) });
       });
       return { text, provider: config.provider, model: config.model, requestId, retryCount: attempt, durationMs: Date.now() - startedAt, firstTokenMs };
     } catch (error) {
@@ -184,11 +185,11 @@ async function callLLM({ systemPrompt, userPayload, temperature, maxTokens, maxR
         const countsTowardCircuit = timedOut || networkFailure || providerContractFailure || status === 401 || status === 403 || transientStatus(status);
         if (countsTowardCircuit) {
           await recordProviderFailure(circuitAdmission).catch(() => {
-            console.warn("llm_circuit_update_failed", { requestId, action: "failure", deploymentSha: String(process.env.VERCEL_GIT_COMMIT_SHA || "local").slice(0, 12) });
+            safeLogger.warn("llm_circuit_update_failed", { requestId, action: "failure", deploymentSha: String(process.env.VERCEL_GIT_COMMIT_SHA || "local").slice(0, 12) });
           });
         }
         const fallbackReason = timedOut ? "provider_timeout" : status === 429 ? "provider_rate_limit" : "provider_unavailable";
-        console.warn("llm_request_failed", { requestId, endpoint: "chat_completions", status, durationMs: Date.now() - startedAt, retryCount: attempt, fallbackReason, deploymentSha: String(process.env.VERCEL_GIT_COMMIT_SHA || "local").slice(0, 12) });
+        safeLogger.warn("llm_request_failed", { requestId, endpoint: "chat_completions", status, durationMs: Date.now() - startedAt, retryCount: attempt, fallbackReason, deploymentSha: String(process.env.VERCEL_GIT_COMMIT_SHA || "local").slice(0, 12) });
         throw error;
       }
       await new Promise((resolve) => setTimeout(resolve, retryDelay(attempt)));

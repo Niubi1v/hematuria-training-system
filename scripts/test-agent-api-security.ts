@@ -147,9 +147,12 @@ async function verifyRateLimit(handler: ApiHandler, label: string) {
 
 async function verifyProviderFailureNonDisclosure(session: AuthorizedSession) {
   const originalFetch = globalThis.fetch;
+  const originalWarn = console.warn;
+  const warnings: string[] = [];
   process.env.LLM_ENABLE_AI_PATIENT = "true";
   process.env.LLM_API_BASE_URL = "https://api.example.test";
   process.env.LLM_MODEL = "test-model";
+  console.warn = (...items: unknown[]) => { warnings.push(JSON.stringify(items)); };
   globalThis.fetch = async () => { throw new Error("unit-test-secret-must-not-appear private-patient-content"); };
   try {
     const response = await call(agentHandler, {
@@ -161,8 +164,10 @@ async function verifyProviderFailureNonDisclosure(session: AuthorizedSession) {
     assert.equal(response.statusCode, 200, "provider failure should use the safe rule fallback");
     assert.doesNotMatch(JSON.stringify(response.payload), /private-patient-content|unit-test-secret/);
     assert.doesNotMatch(JSON.stringify(response.payload), /allowedAnswer|responseFilter|"error"/);
+    assert.doesNotMatch(warnings.join("\n"), /private-patient-content|unit-test-secret/, "provider failures must be redacted before logger output");
   } finally {
     globalThis.fetch = originalFetch;
+    console.warn = originalWarn;
     delete process.env.LLM_ENABLE_AI_PATIENT;
     delete process.env.LLM_API_BASE_URL;
     delete process.env.LLM_MODEL;

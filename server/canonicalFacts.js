@@ -1,5 +1,5 @@
 const bilingualSlots = require("../data/patient_slots_bilingual.json");
-const { asksIndependentGeneralPain, matchPriorityCanonicalIntents } = require("../src/lib/patientIntentCatalog.js");
+const { asksIndependentGeneralPain, matchPriorityCanonicalIntents, priorityIntentDefinitions } = require("../src/lib/patientIntentCatalog.js");
 
 const matchers = [
   ["chief_complaint", /哪里不舒服|为什么来|主诉|怎么回事|what brings you|what is wrong|main complaint/i],
@@ -213,12 +213,19 @@ function factValueForIntent(intentKey, classification) {
   return "unknown";
 }
 
-function matchCanonicalPatientFacts(caseId, question, language = "zh") {
+function projectCanonicalPatientFacts(caseId, intentKeys, language = "zh", question = "") {
   const caseSlots = bilingualSlots[caseId];
   if (!caseSlots) return null;
-  const priorityMatches = matchPriorityCanonicalIntents(question, language);
+  const allowedKeys = new Set(Array.isArray(intentKeys) ? intentKeys : []);
+  const priorityMatches = priorityIntentDefinitions
+    .filter((definition) => allowedKeys.has(definition.key))
+    .map((definition) => ({ intentKey: definition.key, sourceSlotId: definition.sourceSlotId, confidence: 1, matchedAlias: "", matcherType: "semantic_classifier" }));
+  if (!priorityMatches.length) return null;
+  return buildCanonicalPatientFacts(caseSlots, priorityMatches, [], language, question);
+}
+
+function buildCanonicalPatientFacts(caseSlots, priorityMatches, legacyMatchedSlotIds, language, question) {
   const prioritySourceSlots = new Set(priorityMatches.map((item) => item.sourceSlotId));
-  const legacyMatchedSlotIds = matchers.filter(([, pattern]) => pattern.test(question)).map(([slotId]) => slotId);
   const matchedSlotIds = [...new Set([...prioritySourceSlots, ...legacyMatchedSlotIds])];
   if (prioritySourceSlots.has("urinary_frequency")) {
     const hematuriaFrequencyIndex = matchedSlotIds.indexOf("hematuria_frequency");
@@ -276,6 +283,8 @@ function matchCanonicalPatientFacts(caseId, question, language = "zh") {
     ...slotIds.filter((slotId) => !prioritySourceSlots.has(slotId))
   ])];
   const unresolvedReasons = Object.values(factValueReasons).filter((reason) => reason !== "known");
+  const provenances = [...new Set(slotIds.map((slotId) => caseSlots[slotId]?.provenance).filter(Boolean))];
+  const teacherReviewRequired = slotIds.some((slotId) => caseSlots[slotId]?.teacherReviewRequired === true);
   return {
     replyText: [...new Set(answers)].join("\n"),
     matchedSlotIds: slotIds,
@@ -285,6 +294,14 @@ function matchCanonicalPatientFacts(caseId, question, language = "zh") {
     collectableFacts: [...new Set(collectableFacts)],
     factValues,
     factValueReasons,
+    matchedAliases: [...new Set(priorityMatches.map((item) => item.matchedAlias).filter(Boolean))],
+    matcherLayer: priorityMatches.some((item) => item.matcherType === "semantic_classifier")
+      ? "semantic_classifier"
+      : priorityMatches.length > 1
+        ? "compound_canonical"
+        : priorityMatches[0]?.matcherType || "legacy_canonical",
+    provenance: provenances.join("+") || "unknown",
+    reviewerStatus: teacherReviewRequired ? "teacher_review_required" : "not_required",
     unresolvedReason: unresolvedReasons.includes("unsafe_deterministic_answer") ? "unsafe_deterministic_answer" : unresolvedReasons.length ? "canonical_fact_unknown" : "",
     answerSource: "case_bilingual_slot",
     confidence: Object.values(factValues).some((value) => value === "unknown") ? 0.5 : 0.99,
@@ -293,4 +310,12 @@ function matchCanonicalPatientFacts(caseId, question, language = "zh") {
   };
 }
 
-module.exports = { matchCanonicalPatientFacts };
+function matchCanonicalPatientFacts(caseId, question, language = "zh") {
+  const caseSlots = bilingualSlots[caseId];
+  if (!caseSlots) return null;
+  const priorityMatches = matchPriorityCanonicalIntents(question, language);
+  const legacyMatchedSlotIds = matchers.filter(([, pattern]) => pattern.test(question)).map(([slotId]) => slotId);
+  return buildCanonicalPatientFacts(caseSlots, priorityMatches, legacyMatchedSlotIds, language, question);
+}
+
+module.exports = { matchCanonicalPatientFacts, projectCanonicalPatientFacts };

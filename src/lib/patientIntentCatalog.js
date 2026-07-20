@@ -248,15 +248,18 @@ function matchesNaturalPattern(question, intentKey, language) {
 }
 
 function matchPriorityCanonicalIntents(question, language = "zh") {
-  const candidates = priorityIntentDefinitions.filter((definition) =>
-    definition.aliases[language].some((alias) => flexibleAliasMatch(question, alias, language))
-      || matchesNaturalPattern(question, definition.key, language)
-  );
-  return candidates.map((definition) => ({
-    intentKey: definition.key,
-    sourceSlotId: definition.sourceSlotId,
-    confidence: 1
-  }));
+  return priorityIntentDefinitions.flatMap((definition) => {
+    const matchedAlias = definition.aliases[language].find((alias) => flexibleAliasMatch(question, alias, language));
+    const naturalPatternMatched = !matchedAlias && matchesNaturalPattern(question, definition.key, language);
+    if (!matchedAlias && !naturalPatternMatched) return [];
+    return [{
+      intentKey: definition.key,
+      sourceSlotId: definition.sourceSlotId,
+      confidence: 1,
+      matchedAlias: matchedAlias || "",
+      matcherType: matchedAlias ? "canonical_alias" : "natural_pattern"
+    }];
+  });
 }
 
 function asksIndependentGeneralPain(question, language = "zh") {
