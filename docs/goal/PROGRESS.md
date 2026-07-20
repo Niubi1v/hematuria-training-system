@@ -618,3 +618,10 @@
 - 根因是自然主诉UI改进后的`simplifiedChiefComplaintEn`同时被数据生成器复用，导致展示文案演进意外改变已审计的生成序列化合同；诊断生成还会让P019/P020待复核主诉落入不合适的英文兜底。没有提交这些生成差异，也没有修改任何医学事实或审核状态。
 - 原子修复`0b5acb7`将运行时自然展示与稳定生成格式分离；生成器继续复现既有英文基线，UI保留新自然文案。新增P013、红色小便及P019/P020生成合同断言。
 - 提交后隔离worktree幂等性门禁为75个受控输出首轮/次轮均通过；主诉、42例资料完整性、42例公开路由、TypeScript、ESLint、Vercel与Pages两种82页构建、两次25 JS bundle和336文件/历史secret scan均通过，`data/**`零差异。新HEAD仍须普通push并由新的Actions/Vercel复核；PR保持Draft。
+
+### 教师验收整改：真实Preview能力会话竞态（2026-07-20）
+
+- `363aa17`的Actions run `29712640050`在Node 22.14完整通过：Conversion idempotency、行为/医学/安全门禁、Playwright 72 passed/2 skipped、82页构建、23 JS bundle与clean gate均成功；Vercel Deployment和Preview Comments成功，PR继续Draft。
+- 同一SHA真实Preview黑盒首先通过health、P003零轮提交及进入第二阶段，随后P001中文UI在`init-attempt=200`、`session/init=200`后把首个`agent-chat`发成401 `session_capability_required`。该失败没有被稳定性API样本掩盖；同部署随后中文5/5、英文5/5 live DeepSeek/history-log证明provider、Training State和Redis均已配置。
+- 根因是session初始化effect尚未进入loading的短窗口内发送按钮可用，而`aiSessionId`仍为空。最小修复要求能力会话存在后才允许按钮、Enter或语音提交；规则模式也先取得同一安全能力，不关闭/放宽session、attempt、origin或签名校验。
+- 新增延迟session浏览器测试：能力签发前按钮禁用且agent-chat请求0，签发后只发1个带能力的请求；desktop/mobile均通过。完整本地Playwright为74 passed/2 skipped，TypeScript、ESLint、Preview输出canary、两种82页build、两次25 JS bundle、336文件/历史secret scan及`data/**`零差异通过。待原子提交、普通push及新SHA Preview复测。

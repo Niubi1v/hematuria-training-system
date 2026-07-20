@@ -516,3 +516,9 @@
 - 首次推送候选`4ff2d04`的Actions run `29712230950`在Node 22.14失败；第一条真实错误是自然主诉UI格式化改动使3个英文生成物不再幂等，不是Playwright、医学门禁或部署失败。
 - `0b5acb7`以独立稳定生成格式化器隔离UI展示演进和生成基线，未接受/提交任何`data/**`变化。提交后75输出隔离幂等性、42例资料与路由、TypeScript、ESLint、两种82页build、bundle与secret scan均通过。
 - 该修复可单独普通`git revert 0b5acb7`回滚，但回滚会重新暴露Conversion idempotency失败；不得以重生成并提交待复核主诉的方式替代。新HEAD的Actions、Vercel和真实Preview结果仍待发布链补证，PR继续Draft。
+
+### 2026-07-20 Preview能力会话竞态补充
+
+- `363aa17`远程Node 22门禁和Vercel部署已通过，但真实Preview UI仍准确复现P001首问401 `session_capability_required`；因此没有把该SHA标记为教师验收完成。P003零轮提交成功，且同SHA的API级session 10/10和中英文live AI各5/5只说明服务配置正常。
+- 最小候选将agent-chat发送与服务端session capability就绪绑定，并增加不泄值的`sessionCapabilityPresent`证据。延迟初始化期间按钮/Enter不发请求，签发后只发一次；完整本地Playwright 74 passed/2 skipped、两种82页build、TypeScript、ESLint、bundle与secret scan通过，`data/**`零差异。
+- 新候选仍须原子提交、普通push和新SHA真实Preview 8场景复测；PR继续Draft，不合并main、不部署Production。回滚使用普通`git revert <capability-race-commit>`，不得reset或force push。
