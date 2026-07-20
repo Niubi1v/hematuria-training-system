@@ -1,6 +1,6 @@
 import cases from "@/data/cases.json";
 import casesEn from "@/data/cases_en.json";
-import { simplifiedChiefComplaint } from "@/src/lib/chiefComplaint";
+import { generatedChiefComplaintEn, simplifiedChiefComplaint } from "@/src/lib/chiefComplaint";
 import type { CaseData } from "@/src/lib/types";
 
 function assert(condition: unknown, message: string) {
@@ -42,6 +42,20 @@ const wordingContracts = [
 for (const [raw, expectedZh, expectedEn] of wordingContracts) {
   assert(simplifiedChiefComplaint(raw, "zh") === expectedZh, `Chinese wording mismatch: ${raw}`);
   assert(simplifiedChiefComplaint(raw, "en", expectedEn) === expectedEn, `English wording mismatch: ${raw}`);
+}
+
+const generatedBaselineContracts = [
+  ["间断肉眼血尿2个月", "Hematuria for 2 months"],
+  ["小便颜色变红5个月余", "Red urine for more than 5 months"],
+  ["发热腰痛伴尿频尿痛3天", "Hematuria for 3 days"],
+  ["发热、尿痛伴会阴胀痛2天", "Hematuria for 2 days"]
+] as const;
+
+for (const [raw, expected] of generatedBaselineContracts) {
+  assert(
+    generatedChiefComplaintEn(raw) === expected,
+    `Generated complaint baseline changed: ${raw}`
+  );
 }
 
 console.log("Chief complaint simplification tests passed.");

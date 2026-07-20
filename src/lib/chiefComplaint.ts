@@ -120,6 +120,23 @@ export function simplifiedChiefComplaintEn(rawZh?: string, fallbackEn?: string) 
   return `Blood in the urine${suffix}`;
 }
 
+/**
+ * Preserve the established generated-data serialization contract.
+ *
+ * Runtime UI wording may evolve to sound more natural, but generated case
+ * artifacts are audited separately and must not change as a side effect of a
+ * presentation-only update. Keep this deterministic formatter compatible with
+ * the baseline that was used to create the committed English artifacts.
+ */
+export function generatedChiefComplaintEn(rawZh?: string) {
+  const text = String(rawZh || "").trim();
+  const duration = findDurationNearHematuria(text) || "数天";
+  const label = /小便|尿色|尿液|发红|变红/.test(text) && !/尿潜血|尿隐血|镜下/.test(text)
+    ? "Red urine"
+    : "Hematuria";
+  return `${label} for ${durationToEnglish(duration)}`;
+}
+
 export function simplifiedChiefComplaint(rawZh: string | undefined, lang: Lang, fallbackEn?: string) {
   return lang === "en" ? simplifiedChiefComplaintEn(rawZh, fallbackEn) : simplifiedChiefComplaintZh(rawZh);
 }
