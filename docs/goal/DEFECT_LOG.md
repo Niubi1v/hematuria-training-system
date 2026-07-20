@@ -511,3 +511,24 @@
 - 正式教师鉴权、RCT数据库、正式OSCE、合并后Pages与Production发布均需要权限、approved病例或具名签署。
 
 **当前工程结论**：没有仍待实现、待push或待CI的可重复P0/P1工程缺陷；项目仍因上述医学P0和外部验收项保持Draft/执行中，不得标记生产完成。
+
+## HEM-P1-045 教师公开Pages旧构建与CORS合同不一致
+
+- **状态**：CURRENT_CODE_RESOLVED_LOCAL / PUBLIC_PAGES_BLOCKED_DEPLOYMENT_MISMATCH。
+- **证据**：导师入口与GitHub deployment均为`main@5a3ad119`；旧`/cases/HX-ADD-004/`显示P016。旧training-action只允许`Content-Type, X-Training-State`，浏览器实际发送`X-Request-Id`，故预检失败。
+- **当前修复**：当前Production Goal的Vercel浏览器请求使用相对同源`/api/**`；静态Pages仅精确允许`https://niubi1v.github.io`及实际方法/头，无wildcard。新增`test-teacher-cors-contract.ts`覆盖training/session/agent、同源Preview和恶意origin。
+- **未关闭项**：公开Pages仍服务旧main，Draft PR按规则不部署Pages；本轮外部OPTIONS因网络超时未取得线上响应。禁止为旧站改坏当前路由、合并main或手工部署Production。
+
+## HEM-P1-047 教师自然问法与最后一级语义分类边界
+
+- **状态**：RESOLVED_LOCAL_CANDIDATE / CI_PENDING。
+- **基线**：Production已有15 intent/190 alias与3150问矩阵；自主优化专项增加24×42优先自然问法。专项引入前等价探针为0/1008，引入后1008/1008。
+- **修复**：四个自主优化提交逐个cherry-pick；canonical matcher增加命中alias和层级追踪。只有确定性层完全未命中时，服务端可选白名单分类器才调用provider；它只返回intent/confidence/needsClarification，阈值0.92，不能生成病例答案。
+- **安全**：known错误unknown=0、极性错误=0；1715个真实unknown与65个冲突/隔离回答保持不确定。分类器输入不含caseId、诊断、评分、答案或review状态；provider失败、低置信度、非法JSON均安全unknown。
+- **门禁**：3150/3150、1008/1008、86/86、42例双语七阶段与18冲突隔离均通过；Node22/Preview仍待新HEAD。
+
+## HEM-P2-048 Prompt/错误日志可能暴露调试上下文
+
+- **状态**：RESOLVED_LOCAL_CANDIDATE / CI_PENDING。
+- **修复**：新增server-only白名单Prompt审计和递归脱敏logger；Production/Vercel强制关闭debug。LLM HTTP错误不再包含provider响应正文，Patient fallback不再把原始error放进返回值。
+- **门禁**：随机合成canary覆盖嵌套Error/cause、Authorization、Cookie、token/signature URL；输出命中0。Agent API provider失败日志也断言不含合成secret或patient content。repository scan 336文件/历史通过。

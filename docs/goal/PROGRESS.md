@@ -600,3 +600,14 @@
 - 对`DEFECT_LOG.md`逐ID读取最后状态时发现，部分早期条目仍保留“待CI/待push”历史措辞，虽然后续总括及最终run已经关闭。这会让自动完成度审计产生假开放项。
 - 新增文件末尾权威索引：医学P0保持OPEN/HUMAN；已修复工程P0/P1集中标记ENGINEERING CLOSED；Production、真机、自然度和正式系统能力单列EXTERNAL/HUMAN。历史失败证据不删除、不重写。
 - 状态索引引用此前验收证据HEAD `270c20b`的run `29672230597`及现有Preview证据；不把文档整理冒充新的应用测试，也不改变任何业务或医学数据。
+
+### 教师验收整改候选（2026-07-20）
+
+- 已确认导师访问的是公开GitHub Pages `main@5a3ad119`，不是当前Production Goal。Pages deployment `5410354110`创建于2026-07-12；页脚同样显示`5a3ad11`。旧`HX-ADD-004`路径实际映射到当前显示病例P016，且旧training-action预检未允许`X-Request-Id`，所以截图为可解释的旧版本CORS失败，不是网络速度问题。
+- 自主优化分支`02ac499`的四个提交经逐项diff审查后选择性cherry-pick：`79fd6fa`、`db28ef8`、`f9976f1`、`b116dc0`。没有整体merge分支，没有覆盖当前session/attempt/history-log/Redis/安全修复，也没有修改`data/**`、医学事实、审核状态或360分算法。
+- 保留15个canonical intent与自然问法门禁：3150/3150、1008/1008，known错误unknown=0、极性错误=0。新增第4层白名单语义分类器仅在前三层和structured matcher均未命中后工作；strict JSON、阈值0.92、2.5秒、0 retry、缓存、singleflight与30/分钟有界限流。分类器不接收病例数据、不生成答案，最终值仍由canonical投影和治理隔离决定；默认需服务端显式启用，不改Preview/Production环境。
+- 新增本地专用Prompt审计和统一server logger。`PATIENT_PROMPT_AUDIT_ENABLED=true`在Production或任何Vercel环境均强制无效；只记录白名单元数据，完整Prompt、payload、问答和凭据不进入日志。Provider错误正文不再拼入异常；Error message/stack在logger中不原样输出。
+- 新增教师CORS合同：Pages精确origin及同源Preview的OPTIONS均为204，明确允许Content-Type、X-Request-Id、X-Training-State、X-Idempotency-Key，拒绝未知origin且无wildcard。外部Vercel OPTIONS本轮连接超时，故只登记本地合同通过，线上须由新部署复测。
+- 本地完整行为链exit0；TypeScript（沙箱外只读，解决xlsx junction访问限制）和ESLint exit0；Playwright受控外部Next服务器下72 passed/2互斥skip/0 failed，209.6秒，exit0。首次Playwright自管服务器的断言同样72/2，但Windows子进程未退出导致10分钟exit124，不作为门禁通过。
+- Vercel同源等价与GitHub Pages basePath均生成82/82页面，25个JS bundle扫描通过；repository secret scan覆盖336个tracked/candidate及历史，`data/**`零差异。Node22、Actions、Vercel部署SHA和真实Preview需提交/push后重新验收；PR继续Draft。
+- 本轮代码与专项测试已保存为原子提交`0a9a85c`；文档证据单独提交。推送前仍须fetch并确认远端领先0。

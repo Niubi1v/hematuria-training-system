@@ -499,3 +499,14 @@
 
 - `DEFECT_LOG.md`末尾的“P0/P1权威状态索引”是当前状态入口；前文的待push、待CI和旧Preview描述保留为时间点证据，不再被解释为当前开放工程缺陷。
 - 当前无待实现或待CI的可重复P0/P1工程问题。HEM-P0-001/023仍为OPEN/HUMAN，Production、真机、人工自然度、正式教师/RCT/OSCE及合并后Pages仍为外部验收，故整个Production Goal继续执行中。
+
+### 2026-07-20 教师验收整改本地候选
+
+- 导师实测版本已确认是公开GitHub Pages `main@5a3ad119`，而非当前Production Goal。旧站使用`HX-ADD-*`内部路由和跨域Production API；training-action预检漏允许`X-Request-Id`是截图CORS失败的准确根因。
+- 当前完整站继续采用Vercel前端/API同源；Pages保留精确origin CORS但只作为静态发布。公开Pages在Draft PR期间不会更新，不能用手工部署或合并main解决。版本、路由和API差异见`TEACHER_ACCEPTANCE_VERSION_MATRIX.md`。
+- 自主优化四项均逐提交引入，当前候选保留3150/3150和1008/1008，错误unknown及极性错误均为0。新增受限语义分类仅选白名单intent；事实值、治理、HEM-P0-023隔离和计分边界完全复用现有canonical投影。
+- Prompt审计只在本地显式启用，Production/Vercel强制关闭；完整Prompt、payload、问答、凭据及Error正文不进入日志。合成canary、Agent provider失败日志和repository scanner均通过。
+- 本地完整行为、TypeScript、ESLint、72/2 Playwright、两种82页构建、两次25 JS bundle、336文件/历史secret scan及`data/**`零差异均通过。Node22、Actions、Vercel新SHA和真实Preview冒烟仍待push后验收；PR继续Draft。
+- 国内部署建议为同一受控域名内的前端、API、Redis和AI代理，不是教师访问localhost。具体比较见`DEPLOYMENT_FEASIBILITY_REPORT.md`；本轮没有迁移、部署或修改环境变量。
+- 教师后续入口和复测步骤见`TEACHER_TEST_ENTRY.md`。在新Preview完成前，不把当前branch alias写成已部署本候选。
+- 本轮代码/测试提交为`0a9a85c`；回滚应使用普通`git revert 0a9a85c`并重新运行安全门禁，不得reset或force push。
