@@ -806,6 +806,50 @@ test("session initialization failure shows one specific connection notice", asyn
   await expect(page.getByText("暂时无法确认后端健康状态，仍可继续文字练习。")).toHaveCount(0);
 });
 
+test("patient send waits for a session capability before issuing agent-chat", async ({ page }) => {
+  let releaseSession;
+  let sessionRequestStarted;
+  let patientCalls = 0;
+  const sessionGate = new Promise((resolve) => { releaseSession = resolve; });
+  const sessionStarted = new Promise((resolve) => { sessionRequestStarted = resolve; });
+  await mockTrainingState(page);
+  await page.route("**/api/health/**", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" })
+  }));
+  await page.route("**/api/session/init/**", async (route) => {
+    sessionRequestStarted();
+    await sessionGate;
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ sessionId: "delayed-capability", caseId: "P001", language: "zh", mode: "free", patientOpeningStatement: "医生您好。", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false })
+    });
+  });
+  await page.route("**/api/agent-chat/**", (route) => {
+    patientCalls += 1;
+    const body = route.request().postDataJSON();
+    expect(body.sessionId).toBe("delayed-capability");
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "今天早上开始的。", matchedSlotIds: ["hematuria_onset"], matchedFacts: ["onset=today"], provider: "deepseek", generationSource: "live_ai", isFallback: false }) });
+  });
+
+  await page.goto("/cases/P001/");
+  await sessionStarted;
+  const input = page.getByRole("textbox", { name: "输入问诊问题" });
+  const send = page.getByRole("button", { name: "发送", exact: true });
+  await input.fill("什么时候开始的？");
+  await expect(send).toBeDisabled();
+  await input.press("Enter");
+  expect(patientCalls).toBe(0);
+
+  releaseSession();
+  await expect(send).toBeEnabled();
+  await send.click();
+  await expect(page.getByRole("log", { name: "模拟问诊对话" }).getByText("今天早上开始的。", { exact: true })).toBeVisible();
+  expect(patientCalls).toBe(1);
+});
+
 test("offline reconnect sends no request and can recover after the online event", async ({ page, context }) => {
   let healthCalls = 0;
   let sessionCalls = 0;

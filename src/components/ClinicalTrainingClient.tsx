@@ -996,7 +996,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }, [attemptReady, caseData, lang]);
 
   useEffect(() => {
-    if (!attemptReady || aiMode === "rule" || !healthResolved) return;
+    if (!attemptReady || !healthResolved) return;
     let cancelled = false;
     const generation = ++aiGenerationRef.current;
     const cacheKey = aiSessionCacheKey(attempt.attemptId, caseData.id, lang, runtimeMode);
@@ -1440,6 +1440,10 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     if (osceLocked) return;
     const text = (textOverride ?? question).trim();
     if (!text || patientReplyLoading || patientSubmitLockRef.current) return;
+    if (!aiSessionId) {
+      setReconnectNotice(t(lang, "aiPreparing"));
+      return;
+    }
     patientSubmitLockRef.current = true;
     stopSpeech();
     setPatientReplyLoading(true);
@@ -1838,8 +1842,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     : (serviceHealth?.patientServiceConfigured === false || serviceHealth?.trainingStateConfigured === false)
       ? (lang === "en" ? "Some online functions are unavailable. Text practice remains available." : "部分在线功能暂不可用，仍可继续文字练习。")
       : "";
-  const connectionMessage = reconnectNotice || sessionInitError || (sessionInitLoading ? t(lang, "aiPreparing") : "") || healthNotice;
-  const connectionIsBusy = sessionInitLoading || aiStatus === "reconnecting";
+  const connectionMessage = reconnectNotice || sessionInitError || ((sessionInitLoading || !aiSessionId) ? t(lang, "aiPreparing") : "") || healthNotice;
+  const connectionIsBusy = sessionInitLoading || !aiSessionId || aiStatus === "reconnecting";
   const showReconnect = aiMode !== "rule" && (["degraded", "offline", "error", "reconnecting"].includes(aiStatus) || /reconnect|重新连接/i.test(reconnectNotice));
 
   function scrollChatToBottom() {
@@ -2118,7 +2122,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 <button type="button" aria-label={t(lang, "voiceAsk")} title={t(lang, "voiceAsk")} onClick={startVoiceInput} disabled={!speechInputSupported || listening} className="ui-button-secondary px-3">
                   {listening ? <MicOff size={17} /> : <Mic size={17} />} <span className="hidden sm:inline">{t(lang, "voiceAsk")}</span>
                 </button>
-                <button onClick={() => void submitQuestion()} disabled={patientReplyLoading || sessionInitLoading || !question.trim()} className="ui-button-primary min-w-[88px]">
+                <button onClick={() => void submitQuestion()} disabled={patientReplyLoading || sessionInitLoading || !aiSessionId || !question.trim()} className="ui-button-primary min-w-[88px]">
                   <Send size={16} /> {patientReplyLoading ? t(lang, "generating") : t(lang, "send")}
                 </button>
                   </div>
