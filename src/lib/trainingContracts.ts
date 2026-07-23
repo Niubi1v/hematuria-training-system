@@ -41,7 +41,7 @@ export type OrderResultLog = {
   id: string;
   input: string;
   matched: boolean;
-  matchedOrders: Array<{ orderId: string; displayName: string }>;
+  matchedOrders: Array<{ orderId: string; displayName: string; translationAvailable?: boolean }>;
   results: Array<{
     caseId: string;
     orderId: string;
@@ -56,6 +56,8 @@ export type OrderResultLog = {
     abnormalFlags?: string[];
     abnormalLevel: string;
     teachingExplanation: string;
+    metadataStatus?: "complete" | "awaiting_reviewed_metadata";
+    translationStatus?: string;
   }>;
   pendingResults?: OrderResultLog["results"];
   message: string;
@@ -71,7 +73,7 @@ export type OrderResultLog = {
   returnedReportCount?: number;
 };
 
-export type ExamResultLog = { input: string; result: string; at: string; examId?: string };
+export type ExamResultLog = { input: string; result: string; at: string; examId?: string; translationStatus?: string };
 
 export type MdtOpinion = {
   department: string;

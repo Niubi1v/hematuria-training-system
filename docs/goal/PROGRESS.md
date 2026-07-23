@@ -633,3 +633,26 @@
 - 同一SHA的受保护Preview黑盒`8/8`通过：health精确返回`296bf7e`，Training State与Durable Attempt Store均configured；P003零轮提交进入第二阶段；P001中英文首问均携带服务端能力并取得DeepSeek `live_ai`、`history-log=200`，刷新、快速双击和中英双向切换后提交成功。
 - Preview稳定性为session 10/10（端到端P95 1699ms）；中文live AI/history-log 5/5（回答P95 1534ms、provider P95 1139ms、首Token P95 864ms）；英文5/5（回答P95 1327ms、provider P95 933ms、首Token P95 727ms）。输出凭据扫描通过，跨origin保护头注入0。
 - 英文场景云TTS仍返回403并按既有浏览器语音降级处理，不影响问诊、history-log或阶段提交；该外部语音配置项未被本次竞态修复冒充关闭。HEM-P1-049工程项已关闭，长期QA准确起始HEAD为`296bf7e6f2e797c634c762b67488b279dfe59a37`。
+
+### QA c83c7d5 P1整改本地里程碑（2026-07-23）
+
+- 选择性读取`origin/codex/hematuria-exploratory-qa@c83c7d5db73cb821b8912770dd07927c6807ee14`的四份QA报告和最小复现；其Production基线与本轮起点均为`70ea9b3c7b31e11a84878de5c277cac60f35481c`。没有merge QA分支，也没有引入QA业务代码或大体积证据。
+- `HEM-P1-050`：将缺失英文时相、尿急复合表达和否定选择问法纳入共享canonical规则，并把generic pain限定为独立症状。QA自然问法由630/840提升到840/840；canonical intent由1134/1428提升到1428/1428；错误unknown由4降为0，极性错误保持0。完整门禁又发现“Do you have pain, …”被过度收窄，已恢复独立pain且继续排除flank pain、dysuria等特异疼痛的generic扩张。
+- `HEM-P1-051`：纠错、澄清和合法上下文追问不再被semantic reject抢先送入rule fallback；P037病程从既有双语主诉作最小投影，P038合法上下文可进入受控provider。合成provider覆盖P001中英文纠错/澄清、P037/P038连续追问、一次401安全fallback及下一轮live恢复；report detail仍不进入provider。真实Preview的live AI来源仍须新部署后复测。
+- 最新QA中的Data Agent P1按报告原义处理：28个数值型final检验缺单位/参考范围时显示“等待审核元数据”，不显示正常横线；`final/not_available/not_performed`改为中英文标签，异常信号优先于final；英文查体、目录、匹配医嘱与报告使用已有非CJK别名或明确待审核占位fail-closed。60个医嘱、257个结果和16个查体项保持ID、状态、绑定和数量；23个缺英文别名的医嘱继续阻塞来源修订，没有自动翻译或猜测医学内容。
+- 本地完整门禁：`pnpm run test` exit 0；Playwright 80 passed/2按项目互斥skip/0 failed；Vercel同源与Pages basePath各82/82页；两次25 JS bundle扫描、TypeScript、ESLint、repository secret scan均通过；`data/**`零差异。当前本地业务HEAD为`86f5ad9`，Node 22、Actions、Vercel与真实Preview仍待普通push后的精确新HEAD补证。
+- 代码提交依次为`871cc70`、`3fb6e00`、`04d572f`、`86f5ad9`。PR必须继续Draft；不得因工程展示层fail-closed而填写28个缺失元数据、23个英文名称、161个来源问题或任何医学审批状态。
+
+### QA P1整改后的依赖审计CI恢复候选（2026-07-23）
+
+- 业务与证据提交推送至`141f5bb`后，Actions run `30008877764`在Node 22.14的第一条真实失败为`Full dependency audit`；后续测试均被跳过。高危项来自Next `<15.5.21`、Sharp `<0.35.0`及两段`brace-expansion`版本范围，不是Patient、Data Agent或Playwright断言失败。
+- `pnpm 11`明确忽略`package.json#pnpm.overrides`，因此覆盖规则已迁移到项目级`pnpm-workspace.yaml`。锁文件现固定Next/ESLint Next `15.5.21`、Sharp `0.35.0`、brace-expansion `1.1.16/5.0.7`；没有放宽审计等级或删除审计步骤。
+- 本地`pnpm audit --audit-level high` exit 0，仅余1项moderate；依赖安全提交为`6c1d42c`。该提交只包含`package.json`、`pnpm-lock.yaml`、`pnpm-workspace.yaml`，不含业务、医学或`data/**`变化。
+- 依赖升级后完整行为exit 0；TypeScript、ESLint、受控外部Next下Playwright 80 passed/2互斥skip/0 failed、Vercel同源与Pages basePath各82/82页、两次25 JS bundle、repository secret scan、75受控输出幂等性和`data/**`零差异均通过。Node 22、Actions、Vercel及真实Preview仍须新HEAD推送后补证。
+
+### QA c83c7d5 P1整改远程闭环（2026-07-23）
+
+- 依赖与证据HEAD `c9f780795c2c7ca52c94e0be944a8824e7c5034c`已普通push。Actions run `30011651645`在Node 22.14完整success：高危审计、75输出幂等性、行为/医学/安全、TypeScript、ESLint、repository secret scan、Playwright 80 passed/2 skip、82页build、23 JS bundle及clean gate全部通过；Pages deploy按Draft规则skipped。
+- Vercel Deployment与Preview Comments均success；受保护branch alias的health精确返回`c9f7807`，Patient Service、Training State及Durable Attempt Store均configured。基础Preview黑盒8/8通过；扩展后的11/11又直接验证P001英文纠错/澄清三轮、P037两轮和P038两轮均为DeepSeek `live_ai`、非fallback、history-log 200。
+- Preview session初始化10/10，P95 1263ms；中文5/5回答P95 1413ms、英文5/5回答P95 1858ms，均低于3秒目标。保护头只注入目标origin，跨origin为0，输出凭据扫描通过。
+- HEM-P1-050工程与远程门禁关闭；HEM-P1-051的真实Preview来源缺口关闭。新增黑盒门禁提交`77df23d`只修改测试，不改业务、医学事实或环境。PR #1继续Open/Draft。

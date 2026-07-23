@@ -122,6 +122,14 @@ async function submitFirstStage(page, language) {
   await expect(page.getByRole("button", { name: nextLabel, exact: true })).toBeVisible();
 }
 
+async function enterInvestigationStage(page, language) {
+  await page.getByRole("textbox", { name: language === "en" ? "History summary" : "病史小结" })
+    .fill(language === "en" ? "Focused history completed." : "已完成重点病史采集。");
+  await submitFirstStage(page, language);
+  await page.getByRole("button", { name: language === "en" ? "Next Agent" : "进入下一阶段", exact: true }).click();
+  await expect(page.getByText(language === "en" ? "Investigation Agent: orders and reports" : "检查决策智能体：医嘱与报告", { exact: true })).toBeVisible();
+}
+
 async function mockTrainingState(page) {
   await page.route("**/api/training-action/**", async (route) => {
     const body = route.request().postDataJSON();
@@ -364,6 +372,96 @@ test("one fallback patient round submits through the same ready training attempt
   await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
   expect(observations.filter((item) => item.action === "init-attempt")).toHaveLength(1);
   expect(observations.filter((item) => item.action === "stage-feedback")).toHaveLength(1);
+});
+
+test("English investigation presentation fails closed without exposing untranslated CJK", async ({ page }) => {
+  const observations = [];
+  await page.addInitScript(() => localStorage.setItem("hematuria-language", "en"));
+  await routeTrainingApiThroughHandler(page, observations);
+  await page.goto("/cases/P008/");
+  await enterInvestigationStage(page, "en");
+
+  const investigation = page.getByText("Investigation Agent: orders and reports", { exact: true }).locator("..");
+  const visibleControls = await investigation.locator("h3, h4, label, input[placeholder]").allTextContents();
+  expect(visibleControls.join(" ")).not.toMatch(/[\u3400-\u9fff]/u);
+  const untranslatedOrders = page.getByText("Awaiting reviewed order-name translation", { exact: true });
+  await expect(untranslatedOrders.first()).toBeVisible();
+  await expect(untranslatedOrders.first().locator("xpath=ancestor::label[1]").getByRole("checkbox")).toBeDisabled();
+
+  await page.getByPlaceholder("Example: urinalysis and sediment, CTU, cystoscopy").fill("CBC");
+  await page.getByRole("button", { name: "Order and return results", exact: true }).click();
+  const report = page.getByTestId("report-card");
+  await expect(report).toBeVisible();
+  await expect(report).not.toContainText(/[\u3400-\u9fff]/u);
+  expect(observations.filter((item) => item.action === "order")).toEqual([
+    expect.objectContaining({ status: 200, tokenPresent: true })
+  ]);
+});
+
+test("numeric laboratory reports expose missing reviewed metadata instead of a normal-looking dash", async ({ page }) => {
+  await routeTrainingApiThroughHandler(page, []);
+  await page.goto("/cases/P001/");
+  await enterInvestigationStage(page, "zh");
+
+  await page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜").fill("血常规");
+  await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
+  const report = page.getByTestId("report-card");
+  await expect(report).toBeVisible();
+  await expect(report.getByText("等待审核元数据", { exact: true })).toHaveCount(2);
+});
+
+test("report status labels are localized and abnormal evidence takes priority over final", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("hematuria-language", "en"));
+  await routeTrainingApiThroughHandler(page, []);
+  await page.route("**/api/training-action/**", async (route) => {
+    const body = route.request().postDataJSON();
+    if (body.action !== "order") return route.fallback();
+    const stateToken = route.request().headers()["x-training-state"];
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers: { "Access-Control-Expose-Headers": "X-Training-State", "X-Training-State": stateToken },
+      body: JSON.stringify({
+        id: "localized-status-fixture",
+        input: body.input,
+        matched: true,
+        matchedOrders: [{ orderId: "TEST-STATUS", displayName: "Status presentation test", translationAvailable: true }],
+        results: [
+          {
+            caseId: "P008", orderId: "TEST-STATUS", resultId: "status-abnormal",
+            status: "final", orderCategory: "Laboratory tests/Status presentation",
+            result: "A reviewed abnormal signal is present.", value: "positive",
+            unit: "", referenceRange: "", impression: "",
+            abnormalFlags: ["abnormal"], abnormalLevel: "abnormal",
+            teachingExplanation: "", metadataStatus: "complete", translationStatus: "source_text_no_cjk"
+          },
+          {
+            caseId: "P008", orderId: "TEST-STATUS", resultId: "status-unavailable",
+            status: "not_available", orderCategory: "Laboratory tests/Status presentation",
+            result: "No configured result is available.", value: "",
+            unit: "", referenceRange: "", impression: "",
+            abnormalFlags: [], abnormalLevel: "not_available",
+            teachingExplanation: "", metadataStatus: "complete", translationStatus: "source_text_no_cjk"
+          }
+        ],
+        duplicateOrderIds: [], unmetPrerequisites: [], selectedOrderCount: 1,
+        recognizedOrderCount: 1, returnedReportCount: 2,
+        at: new Date().toISOString(), placedAt: new Date().toISOString(),
+        stageNo: 2, status: "reported", message: "Status fixtures returned."
+      })
+    });
+  });
+  await page.goto("/cases/P008/");
+  await enterInvestigationStage(page, "en");
+
+  await page.getByPlaceholder("Example: urinalysis and sediment, CTU, cystoscopy").fill("status presentation");
+  await page.getByRole("button", { name: "Order and return results", exact: true }).click();
+  const reports = page.getByTestId("report-card");
+  await expect(reports).toHaveCount(2);
+  await expect(reports.nth(0)).toHaveAttribute("data-status", "abnormal");
+  await expect(reports.nth(0)).toContainText("Abnormal");
+  await expect(reports.nth(1)).toContainText("Not available in this case");
+  expect((await reports.allTextContents()).join(" ")).not.toMatch(/\b(final|not_available|not_performed)\b/);
 });
 
 test("restart removes the prior browser token and initializes exactly one new attempt", async ({ page }) => {

@@ -70,11 +70,13 @@
     "test:patient-pain-routing": "tsx scripts/test-patient-pain-routing.ts",
     "test:patient-safe-projection": "tsx scripts/test-patient-safe-projection.ts",
     "test:patient-intents": "tsx scripts/test-patient-intent-normalization.ts && tsx scripts/test-patient-paraphrase-matrix.ts && tsx scripts/test-patient-priority-paraphrases.ts",
+    "test:patient-context": "tsx scripts/test-patient-contextual-followup.ts",
     "test:patient-semantic-classifier": "tsx scripts/test-patient-semantic-classifier.ts",
     "test:patient-prompt-audit": "tsx scripts/test-patient-prompt-audit.ts",
     "test:teacher-cors": "tsx scripts/test-teacher-cors-contract.ts",
+    "test:data-agent-presentation": "tsx scripts/test-data-agent-presentation.ts",
     "smoke:production": "node scripts/smoke-production.mjs",
-    "test": "node scripts/test-preview-blackbox-config.mjs && node scripts/test-preview-output-security.mjs && node scripts/test-next-runtime-config.mjs && tsx scripts/test-public-api-config.ts && tsx scripts/test-public-routes.ts && tsx scripts/test-patient-history-routing.ts && tsx scripts/test-patient-pain-routing.ts && tsx scripts/test-patient-safe-projection.ts && tsx scripts/test-patient-intent-normalization.ts && tsx scripts/test-patient-paraphrase-matrix.ts && tsx scripts/test-patient-priority-paraphrases.ts && tsx scripts/test-patient-semantic-classifier.ts && tsx scripts/test-patient-prompt-audit.ts && tsx scripts/test-teacher-cors-contract.ts && tsx scripts/test-patient-agent.ts && tsx scripts/test-llm-adapter.ts && tsx scripts/test-bilingual-conflict-quarantine.ts && tsx scripts/test-agent-chat.ts && tsx scripts/test-history-rubric.ts && tsx scripts/test-dynamic-patient-session.ts && tsx scripts/test-chief-complaint.ts && tsx scripts/test-product-audit.ts && tsx scripts/test-structured-history-matrix.ts && tsx scripts/test-representative-e2e.ts && tsx scripts/test-physical-exam-qc.ts && tsx scripts/test-patient-facing-profile.ts && tsx scripts/test-stage-567-flow.ts && tsx scripts/test-42-bilingual-stage-flow.ts && tsx scripts/test-language-purity.ts && tsx scripts/test-tts.ts && tsx scripts/test-tts-api.ts && tsx scripts/test-health-api.ts && tsx scripts/test-training-attempt-store-config.ts && tsx scripts/test-api-recovery.ts && tsx scripts/test-agent-api-security.ts && tsx scripts/test-ai-recovery.ts && tsx scripts/test-performance-timing.ts && tsx scripts/test-llm-streaming.ts && node scripts/test-secret-scanner.mjs && tsx scripts/test-workbook-security.ts && tsx scripts/test-medical-review-workbook.ts && tsx scripts/test-medical-review-queue.ts && tsx scripts/test-medical-review-import.ts && tsx scripts/test-release-v14-import.ts && tsx scripts/test-bilingual-patient.ts && tsx scripts/test-order-mapping.ts && tsx scripts/test-clinical-contradictions.ts && tsx scripts/test-event-scoring.ts && tsx scripts/test-attempt-isolation.ts && tsx scripts/test-training-api.ts && tsx scripts/test-training-security.ts && tsx scripts/test-adversarial-scoring.ts",
+    "test": "node scripts/test-preview-blackbox-config.mjs && node scripts/test-preview-output-security.mjs && node scripts/test-next-runtime-config.mjs && tsx scripts/test-public-api-config.ts && tsx scripts/test-public-routes.ts && tsx scripts/test-patient-history-routing.ts && tsx scripts/test-patient-pain-routing.ts && tsx scripts/test-patient-safe-projection.ts && tsx scripts/test-patient-intent-normalization.ts && tsx scripts/test-patient-paraphrase-matrix.ts && tsx scripts/test-patient-priority-paraphrases.ts && tsx scripts/test-patient-contextual-followup.ts && tsx scripts/test-patient-semantic-classifier.ts && tsx scripts/test-patient-prompt-audit.ts && tsx scripts/test-teacher-cors-contract.ts && tsx scripts/test-data-agent-presentation.ts && tsx scripts/test-patient-agent.ts && tsx scripts/test-llm-adapter.ts && tsx scripts/test-bilingual-conflict-quarantine.ts && tsx scripts/test-agent-chat.ts && tsx scripts/test-history-rubric.ts && tsx scripts/test-dynamic-patient-session.ts && tsx scripts/test-chief-complaint.ts && tsx scripts/test-product-audit.ts && tsx scripts/test-structured-history-matrix.ts && tsx scripts/test-representative-e2e.ts && tsx scripts/test-physical-exam-qc.ts && tsx scripts/test-patient-facing-profile.ts && tsx scripts/test-stage-567-flow.ts && tsx scripts/test-42-bilingual-stage-flow.ts && tsx scripts/test-language-purity.ts && tsx scripts/test-tts.ts && tsx scripts/test-tts-api.ts && tsx scripts/test-health-api.ts && tsx scripts/test-training-attempt-store-config.ts && tsx scripts/test-api-recovery.ts && tsx scripts/test-agent-api-security.ts && tsx scripts/test-ai-recovery.ts && tsx scripts/test-performance-timing.ts && tsx scripts/test-llm-streaming.ts && node scripts/test-secret-scanner.mjs && tsx scripts/test-workbook-security.ts && tsx scripts/test-medical-review-workbook.ts && tsx scripts/test-medical-review-queue.ts && tsx scripts/test-medical-review-import.ts && tsx scripts/test-release-v14-import.ts && tsx scripts/test-bilingual-patient.ts && tsx scripts/test-order-mapping.ts && tsx scripts/test-clinical-contradictions.ts && tsx scripts/test-event-scoring.ts && tsx scripts/test-attempt-isolation.ts && tsx scripts/test-training-api.ts && tsx scripts/test-training-security.ts && tsx scripts/test-adversarial-scoring.ts",
     "dev:api": "tsx scripts/dev-patient-api.ts",
     "start": "next dev",
     "lint": "node scripts/run-lint.mjs",
@@ -87,7 +89,7 @@
   "dependencies": {
     "clsx": "^2.1.1",
     "lucide-react": "^0.468.0",
-    "next": "^15.0.0",
+    "next": "15.5.21",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
@@ -95,7 +97,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
     "@eslint/eslintrc": "3.3.1",
-    "@next/eslint-plugin-next": "15.5.19",
+    "@next/eslint-plugin-next": "15.5.21",
     "@playwright/test": "^1.61.1",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
@@ -104,7 +106,7 @@
     "@typescript-eslint/parser": "8.62.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.0.0",
-    "eslint-config-next": "^15.0.0",
+    "eslint-config-next": "15.5.21",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-jsx-a11y": "6.10.2",
     "eslint-plugin-react": "7.37.5",
@@ -113,12 +115,5 @@
     "tailwindcss": "^3.4.17",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
-  },
-  "pnpm": {
-    "ignoredBuiltDependencies": [
-      "esbuild",
-      "sharp",
-      "unrs-resolver"
-    ]
   }
 }

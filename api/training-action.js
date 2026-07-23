@@ -14,6 +14,11 @@ const { commitAttempt, digest, loadAttempt, registerAttempt } = require("../serv
 const { BILINGUAL_CONFLICT_REASON, filterQuarantinedEvents } = require("../server/bilingualConflictQuarantine.js");
 const { setServerTiming } = require("../server/performanceTiming.js");
 const { parseJsonBody } = require("../server/requestSecurity.js");
+const {
+  presentExamResult,
+  presentMatchedOrder,
+  presentOrderResult
+} = require("../shared/dataAgentPresentation.js");
 
 const catalog = [...labs, ...imaging, ...procedures, ...perioperative];
 const allowedActions = new Set(["init-attempt", "validate-attempt", "history-log", "exam", "order", "mdt", "stage-feedback", "score"]);
@@ -157,9 +162,13 @@ function handleExam(caseId, input, language) {
   const exact = normalize(input);
   const item = examItems.find((candidate) => [candidate.displayName, ...(candidate.synonyms || [])].some((name) => normalize(name) === exact));
   const configured = item && examResults.find((result) => result.caseId === caseId && result.examId === item.examId && result.studentVisibleAfterSelection);
+  const presented = presentExamResult(configured?.result || "", language);
   return {
     input, examId: item?.examId, at: new Date().toISOString(),
-    result: configured?.result || (language === "en" ? "No configured result is available for this examination." : "当前查体项目暂无可返回结果。")
+    result: configured
+      ? presented.text
+      : (language === "en" ? "No configured result is available for this examination." : "当前查体项目暂无可返回结果。"),
+    translationStatus: configured ? presented.translationStatus : "not_available"
   };
 }
 
@@ -175,16 +184,17 @@ function handleOrder(caseId, input, previousOrderIds, language) {
   const unmetPrerequisites = [...new Set(configured.flatMap(({ result }) => (result.prerequisites || []).filter((id) => !available.has(id))))];
   const results = configured.filter(({ order, result }) => !duplicateOrderIds.includes(order.orderId)
     && (result.prerequisites || []).every((id) => available.has(id))).map(({ order, result }) => ({
-      caseId, orderId: order.orderId, resultId: result.resultId, status: result.status,
-      orderCategory: `${order.primaryCategory}/${order.secondaryCategory}`, result: result.value || result.impression,
-      value: result.value, unit: result.unit, referenceRange: result.referenceRange, impression: result.impression,
-      abnormalFlags: result.abnormalFlags || [], abnormalLevel: (result.abnormalFlags || []).join("、") || result.status,
+      caseId,
+      orderId: order.orderId,
+      resultId: result.resultId,
+      status: result.status,
+      ...presentOrderResult(order, result, language),
       teachingExplanation: language === "en" ? "Released only for this exact case and placed order." : "仅按当前病例与已开立医嘱精确释放。"
     }));
   const at = new Date().toISOString();
   return {
     id: `${caseId}-${Date.now()}`, input, matched: orders.length > 0,
-    matchedOrders: orders.map((item) => ({ orderId: item.orderId, displayName: item.displayName })), results,
+    matchedOrders: orders.map((item) => presentMatchedOrder(item, language)), results,
     duplicateOrderIds, unmetPrerequisites, selectedOrderCount: splitOrders(input).length,
     recognizedOrderCount: orders.length, returnedReportCount: results.length, at, placedAt: at, stageNo: 2,
     status: results.length ? "reported" : "no-result",

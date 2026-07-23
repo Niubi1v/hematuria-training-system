@@ -311,6 +311,8 @@ export type OrderResultItem = {
   referenceRange?: string;
   impression?: string;
   abnormalFlags?: string[];
+  metadataStatus?: "complete" | "awaiting_reviewed_metadata";
+  translationStatus?: string;
   availableAt?: "immediate" | "delayed";
   prerequisites?: string[];
   sourceVersion?: string;

@@ -36,6 +36,17 @@ import orderCatalogLabsJson from "@/data/order_catalog_labs.json";
 import orderCatalogPerioperativeJson from "@/data/order_catalog_perioperative.json";
 import orderCatalogProceduresJson from "@/data/order_catalog_procedures.json";
 import physicalExamItemsJson from "@/data/physical_exam_items.json";
+import {
+  ENGLISH_CATEGORY_PLACEHOLDER,
+  ENGLISH_EXAM_PLACEHOLDER,
+  ENGLISH_METADATA_PLACEHOLDER,
+  ENGLISH_ORDER_PLACEHOLDER,
+  ENGLISH_RESULT_PLACEHOLDER,
+  presentOrderCatalogItem,
+  presentPhysicalExamItem,
+  reportStatusPresentation,
+  safeStudentFacingText
+} from "@/shared/dataAgentPresentation.js";
 import { simplifiedChiefComplaint } from "@/src/lib/chiefComplaint";
 import { ApiRequestError, createIdempotencyKey, createRequestId, fetchWithRecovery, requestJson, studentFacingApiMessage } from "@/src/lib/apiClient";
 import { publicApiConfig } from "@/src/lib/apiConfig";
@@ -401,10 +412,25 @@ function caseDisplay(caseData: StudentVisibleCase, lang: LanguageCode) {
   };
 }
 
-function groupPhysicalExamItems() {
+type PresentedPhysicalExamItem = PhysicalExamItem & { translationAvailable: boolean };
+type PresentedOrderCatalogItem = OrderCatalogItem & {
+  primaryCategoryLabel?: string;
+  secondaryCategoryLabel?: string;
+  priorityLabel?: string;
+  studentDisplayHintLabel?: string;
+  translationAvailable: boolean;
+};
+
+function groupPhysicalExamItems(language: LanguageCode) {
   const grouped = new Map<string, PhysicalExamItem[]>();
   physicalExamItems.forEach((item) => grouped.set(item.category, [...(grouped.get(item.category) ?? []), item]));
-  return Array.from(grouped.entries()).map(([category, items]) => ({ category, items }));
+  return Array.from(grouped.entries()).map(([category, items]) => {
+    const presented = items.map((item) => presentPhysicalExamItem(item, language) as PresentedPhysicalExamItem);
+    return {
+      category: language === "en" ? safeStudentFacingText(category, language, "Physical examination") : category,
+      items: presented
+    };
+  });
 }
 
 function stageAnswerText(stageNo: AgentStageNo, answers: FullProcessAnswers, messages: ChatMessage[], examLogs: ExamResultLog[], orderLogs: OrderResultLog[], mdtOpinions: MdtOpinion[]) {
@@ -500,28 +526,31 @@ function formatReportLines(text: string) {
 }
 
 function ReportCard({ item, lang }: { item: OrderResultLog["results"][number]; lang: LanguageCode }) {
-  const lines = formatReportLines(item.result);
-  const rawStatus = item.status || item.abnormalLevel || "";
-  const statusKey = rawStatus.toLowerCase();
-  const needsReview = /待审核|需审核|needs.review|review/.test(statusKey);
-  const abnormal = /异常|阳性|升高|降低|abnormal|positive|high|low|critical/.test(statusKey);
-  const normal = /正常|阴性|normal|negative/.test(statusKey);
-  const statusLabel = rawStatus || t(lang, "simulatedReport");
-  const statusClass = needsReview ? "ui-status-warning" : abnormal ? "ui-status-danger" : normal ? "ui-status-success" : "ui-status-info";
+  const resultText = safeStudentFacingText(item.result, lang, ENGLISH_RESULT_PLACEHOLDER);
+  const impression = safeStudentFacingText(item.impression, lang, ENGLISH_RESULT_PLACEHOLDER);
+  const orderCategory = safeStudentFacingText(item.orderCategory, lang, ENGLISH_CATEGORY_PLACEHOLDER);
+  const teachingExplanation = safeStudentFacingText(item.teachingExplanation, lang, ENGLISH_RESULT_PLACEHOLDER);
+  const lines = formatReportLines(resultText);
+  const status = reportStatusPresentation(item, lang);
+  const statusClass = status.state === "needs-review" ? "ui-status-warning" : status.state === "abnormal" ? "ui-status-danger" : status.state === "normal" ? "ui-status-success" : "ui-status-info";
+  const missingReviewedMetadata = item.metadataStatus === "awaiting_reviewed_metadata"
+    || (item.status === "final" && /\d/.test(String(item.value || "")) && (!item.unit || !item.referenceRange));
+  const unit = item.unit || (missingReviewedMetadata ? (lang === "en" ? ENGLISH_METADATA_PLACEHOLDER : "等待审核元数据") : "—");
+  const referenceRange = item.referenceRange || (missingReviewedMetadata ? (lang === "en" ? ENGLISH_METADATA_PLACEHOLDER : "等待审核元数据") : "—");
   return (
-    <article data-testid="report-card" data-status={needsReview ? "needs-review" : abnormal ? "abnormal" : normal ? "normal" : "reported"} className="mt-3 rounded-xl border border-clinic-line bg-white p-4 text-sm leading-6 shadow-soft">
+    <article data-testid="report-card" data-status={status.state} className="mt-3 rounded-xl border border-clinic-line bg-white p-4 text-sm leading-6 shadow-soft">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="font-semibold text-clinic-blue">{item.orderCategory}</p>
+        <p className="font-semibold text-clinic-blue">{orderCategory}</p>
         <span className={`ui-status ${statusClass}`}>
-          {needsReview ? <AlertTriangle size={14} aria-hidden="true" /> : abnormal ? <CircleAlert size={14} aria-hidden="true" /> : normal ? <CircleCheck size={14} aria-hidden="true" /> : <FileText size={14} aria-hidden="true" />}
-          {statusLabel}
+          {status.state === "needs-review" ? <AlertTriangle size={14} aria-hidden="true" /> : status.state === "abnormal" ? <CircleAlert size={14} aria-hidden="true" /> : status.state === "normal" ? <CircleCheck size={14} aria-hidden="true" /> : <FileText size={14} aria-hidden="true" />}
+          {status.label}
         </span>
       </div>
       {(item.value || item.unit || item.referenceRange) && (
         <dl className="mt-3 grid gap-2 rounded-lg bg-clinic-paper p-3 sm:grid-cols-3">
-          <div><dt className="text-xs text-clinic-muted">{lang === "en" ? "Value" : "结果"}</dt><dd className="mt-0.5 font-semibold text-clinic-ink">{item.value || "—"}</dd></div>
-          <div><dt className="text-xs text-clinic-muted">{lang === "en" ? "Unit" : "单位"}</dt><dd className="mt-0.5 text-clinic-ink">{item.unit || "—"}</dd></div>
-          <div><dt className="text-xs text-clinic-muted">{lang === "en" ? "Reference range" : "参考范围"}</dt><dd className="mt-0.5 text-clinic-ink">{item.referenceRange || "—"}</dd></div>
+          <div><dt className="text-xs text-clinic-muted">{lang === "en" ? "Value" : "结果"}</dt><dd className="mt-0.5 font-semibold text-clinic-ink">{safeStudentFacingText(item.value, lang, ENGLISH_RESULT_PLACEHOLDER) || "—"}</dd></div>
+          <div><dt className="text-xs text-clinic-muted">{lang === "en" ? "Unit" : "单位"}</dt><dd className="mt-0.5 text-clinic-ink">{unit}</dd></div>
+          <div><dt className="text-xs text-clinic-muted">{lang === "en" ? "Reference range" : "参考范围"}</dt><dd className="mt-0.5 text-clinic-ink">{referenceRange}</dd></div>
         </dl>
       )}
       <div className="mt-3 grid gap-2">
@@ -529,8 +558,8 @@ function ReportCard({ item, lang }: { item: OrderResultLog["results"][number]; l
           <p key={line} className="rounded-lg bg-clinic-paper px-3 py-2">{line}</p>
         ))}
       </div>
-      {item.impression && <p className="mt-3 border-l-2 border-clinic-blue pl-3"><span className="font-semibold">{lang === "en" ? "Impression" : "印象"}：</span>{item.impression}</p>}
-      {item.teachingExplanation && <p className="mt-3 text-xs leading-5 text-clinic-muted">{t(lang, "releaseRule")}：{item.teachingExplanation}</p>}
+      {item.impression && <p className="mt-3 border-l-2 border-clinic-blue pl-3"><span className="font-semibold">{lang === "en" ? "Impression" : "印象"}：</span>{impression}</p>}
+      {item.teachingExplanation && <p className="mt-3 text-xs leading-5 text-clinic-muted">{t(lang, "releaseRule")}：{teachingExplanation}</p>}
     </article>
   );
 }
@@ -759,7 +788,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     () => selectBestVoice(speechVoices, { ...voiceProfile, manualOverride: manualVoiceOverrides[voiceKey] }),
     [manualVoiceOverrides, speechVoices, voiceKey, voiceProfile]
   );
-  const physicalGroups = useMemo(() => groupPhysicalExamItems(), []);
+  const physicalGroups = useMemo(() => groupPhysicalExamItems(lang), [lang]);
 
   const orderGroups = useMemo(() => {
     const keyword = orderSearch.trim().toLowerCase();
@@ -775,8 +804,17 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       grouped.set(key, [...(grouped.get(key) ?? []), item]);
     });
     const categories = unique([...categoryOrder, ...Array.from(grouped.keys())]).filter((key) => grouped.has(key));
-    return categories.map((category) => ({ category, items: grouped.get(category) ?? [] }));
-  }, [activeOrderTab, orderSearch]);
+    return categories.map((category) => {
+      const items = (grouped.get(category) ?? []).map((item) => presentOrderCatalogItem(item, lang) as PresentedOrderCatalogItem);
+      return {
+        category,
+        categoryLabel: lang === "en"
+          ? items[0]?.secondaryCategoryLabel || ENGLISH_CATEGORY_PLACEHOLDER
+          : category,
+        items
+      };
+    });
+  }, [activeOrderTab, lang, orderSearch]);
 
   const consultGroups = useMemo(() => consultGroupOrder.map((group) => ({
     group,
@@ -2145,7 +2183,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                       <h4 className="font-semibold text-clinic-blue">{group.category}</h4>
                       <div className="mt-3 flex flex-wrap gap-2">
                         {group.items.map((item) => (
-                          <button key={item.examId} type="button" onClick={() => submitExam(item.displayName)} className="ui-button-secondary">
+                          <button key={item.examId} type="button" onClick={() => submitExam(item.displayName)} disabled={!item.translationAvailable} className="ui-button-secondary">
                             {item.displayName}
                           </button>
                         ))}
@@ -2160,8 +2198,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 <div className="mt-4 space-y-3">
                   {examLogs.map((log) => (
                     <article key={`${log.at}-${log.input}`} className="rounded-lg border border-clinic-line bg-clinic-paper p-3 text-sm leading-6">
-                      <div className="mb-1 flex flex-wrap items-center justify-between gap-2"><span className="font-semibold text-clinic-blue">{log.input}</span><span className="ui-status-info"><FileText size={14} aria-hidden="true" />{lang === "en" ? "Returned" : "已返回"}</span></div>
-                      <p>{log.result}</p>
+                      <div className="mb-1 flex flex-wrap items-center justify-between gap-2"><span className="font-semibold text-clinic-blue">{safeStudentFacingText(log.input, lang, ENGLISH_EXAM_PLACEHOLDER)}</span><span className="ui-status-info"><FileText size={14} aria-hidden="true" />{lang === "en" ? "Returned" : "已返回"}</span></div>
+                      <p>{safeStudentFacingText(log.result, lang, ENGLISH_RESULT_PLACEHOLDER)}</p>
                     </article>
                   ))}
                 </div>
@@ -2180,18 +2218,18 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 <div className="mt-4 space-y-5">
                   {orderGroups.map((group) => (
                     <section key={group.category} className="rounded-xl border border-clinic-line p-4">
-                      <h4 className="font-semibold text-clinic-blue">{group.category}</h4>
+                      <h4 className="font-semibold text-clinic-blue">{group.categoryLabel}</h4>
                       <div className="mt-3 grid gap-2 md:grid-cols-2">
                         {group.items.map((item) => (
                           <label key={item.orderId} className="flex min-h-[72px] items-start justify-between gap-3 rounded-lg border border-clinic-line px-3 py-2 text-sm transition-colors hover:border-clinic-blue">
                             <span className="flex items-start gap-2">
-                              <input className="mt-1" type="checkbox" checked={answers.selectedOrders.includes(item.displayName)} onChange={() => toggleOrder(item.displayName)} />
+                              <input className="mt-1" type="checkbox" disabled={!item.translationAvailable} checked={answers.selectedOrders.includes(item.displayName)} onChange={() => toggleOrder(item.displayName)} />
                               <span>
-                                <span className="block font-medium">{item.displayName}</span>
-                                {item.studentDisplayHint && <span className="mt-1 block text-xs leading-5 text-clinic-muted">{item.studentDisplayHint}</span>}
+                                <span className="block font-medium">{item.displayName || (lang === "en" ? ENGLISH_ORDER_PLACEHOLDER : "")}</span>
+                                {(item.studentDisplayHintLabel || item.studentDisplayHint) && <span className="mt-1 block text-xs leading-5 text-clinic-muted">{item.studentDisplayHintLabel || item.studentDisplayHint}</span>}
                               </span>
                             </span>
-                            <span className="shrink-0 rounded-full bg-clinic-paper px-2 py-1 text-xs text-clinic-muted">{item.priority || "按需"}</span>
+                            <span className="shrink-0 rounded-full bg-clinic-paper px-2 py-1 text-xs text-clinic-muted">{item.priorityLabel || item.priority || (lang === "en" ? "As needed" : "按需")}</span>
                           </label>
                         ))}
                       </div>
@@ -2213,7 +2251,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                         {log.returnedAt ? ` · ${t(lang, "returnedAt")}：${shortTime(log.returnedAt, lang)}` : ""}
                         {` · ${t(lang, "stageLabel").replace("{stage}", String(log.stageNo || 2))}`}
                       </p>
-                      {log.matchedOrders.length > 0 && <p className="mt-1 text-xs text-clinic-muted">{t(lang, "recognizedOrders")}：{log.matchedOrders.map((item) => item.displayName).join("；")}</p>}
+                      {log.matchedOrders.length > 0 && <p className="mt-1 text-xs text-clinic-muted">{t(lang, "recognizedOrders")}：{log.matchedOrders.map((item) => safeStudentFacingText(item.displayName, lang, ENGLISH_ORDER_PLACEHOLDER)).join("；")}</p>}
                       {log.duplicateOrderIds && log.duplicateOrderIds.length > 0 && <p className="mt-1 text-xs text-amber-800">{t(lang, "duplicateOrder")}</p>}
                       <p className="mt-1 text-sm text-clinic-muted">{log.message}</p>
                       {log.status === "ordered" && <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-clinic-paper"><div className="h-full w-1/2 animate-pulse rounded-full bg-clinic-teal" /></div>}
