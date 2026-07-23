@@ -79,3 +79,4 @@
 - Chromium后台生命周期仿真也通过：`frozen → active` 后页面恢复visible，原4项对话保留，第二轮后精确增加到6项；输入框可继续操作且没有session/attempt重建。此项不覆盖真实手机操作系统回收、软键盘或safe-area，后者仍`BLOCKED_REAL_DEVICE`。
 - P001中文5个样本的患者回答DOM均在完整响应后稳定新增，无重复消息；点击至DOM首现P50 `1315.9ms`、P95 `1527.4ms`。这是headless Chromium DOM可见性计时，不等于真实屏幕绘制或真机感知时间。
 - HEM-P1-047在`1440×900`中文、`1280×720`英文、`390×844`中文、`360×800`英文共4/4复现：三张报告卡的状态徽标直接显示`final/not_available/not_performed`，且带受控异常标志的final卡片仍使用普通info图标与`data-status=reported`。focused截图在桌面和移动端均清楚可见；自动viewport仅标`FAIL_LOCAL_QA`，不替代Preview或真实手机。
+- HEM-P1-048在四固定viewport的英文P008第2阶段4/4复现：英文标题、导航、占位符与按钮之间，查体分组/按钮、医嘱分组/卡片以及真实本地CBC报告卡仍显示中文；每个viewport自动计得44个CJK控件。`1280×720`全页代表帧同时展示英文壳、中文目录和中文报告，属于`FAIL_LOCAL_QA`，不冒充Preview或真机。

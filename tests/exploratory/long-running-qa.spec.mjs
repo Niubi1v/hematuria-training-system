@@ -1,7 +1,17 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import path from "node:path";
+
+process.env.TRAINING_STATE_SECRET = "qa-data-agent-ui-secret-with-adequate-length";
+process.env.TRAINING_ATTEMPT_STORE_MODE = "memory";
+process.env.TRAINING_DEPLOYMENT_TIER = "practice";
+process.env.TRAINING_API_RATE_LIMIT_PER_MINUTE = "10000";
+
+const require = createRequire(import.meta.url);
+const trainingHandler = require("../../api/training-action.js");
+const { resetMemoryAttemptStore } = require("../../server/trainingAttemptStore.js");
 
 const ROOT = path.resolve("artifacts/exploratory-qa");
 const CASE_ROUTES = JSON.parse(await readFile(path.resolve("data/cases_public.json"), "utf8"))
@@ -24,6 +34,33 @@ const redact = (value) => String(value)
 
 async function ensureDirs() {
   await Promise.all(Object.values(DIRS).map((dir) => mkdir(dir, { recursive: true })));
+}
+
+async function invokeLocalTrainingAction(body, token = "", remoteAddress = "qa-local-training-action") {
+  let statusCode = 200;
+  let payload = {};
+  const responseHeaders = {};
+  const req = {
+    method: "POST",
+    body: {
+      ...body,
+      requestId: `qa-ui-${body.action}-${body.caseId}-${String(body.attemptId || "attempt").slice(-24)}`
+    },
+    headers: token ? { "x-training-state": token } : {},
+    socket: { remoteAddress }
+  };
+  const res = {
+    setHeader(name, value) { responseHeaders[String(name).toLowerCase()] = String(value); },
+    status(code) { statusCode = code; return this; },
+    json(value) { payload = value; return this; },
+    end() { return this; }
+  };
+  await trainingHandler(req, res);
+  return {
+    statusCode,
+    payload,
+    token: responseHeaders["x-training-state"] || token
+  };
 }
 
 async function withEvidence(browser, testInfo, scenario, run, { videoOnFailure = true } = {}) {
@@ -697,6 +734,126 @@ test("HEM-P1-047 structured report statuses are localized and preserve abnormal 
     expect({ rawStatusLeakCount, governedAbnormalState: cardDataStatuses[0] }).toEqual({
       rawStatusLeakCount: 0,
       governedAbnormalState: "abnormal"
+    });
+  }, { videoOnFailure: true });
+});
+
+test("HEM-P1-048 English Data Agent UI does not expose Chinese catalog or report content", async ({ browser }, testInfo) => {
+  resetMemoryAttemptStore();
+  const attemptId = `qa-data-agent-ui-${viewportSlug(testInfo)}`;
+  const remoteAddress = `qa-data-agent-ui-${viewportSlug(testInfo)}`;
+  let handlerResponse = await invokeLocalTrainingAction({
+    action: "init-attempt",
+    caseId: "P008",
+    attemptId,
+    mode: "free",
+    language: "en"
+  }, "", remoteAddress);
+  const handlerStatusCodes = [handlerResponse.statusCode];
+  handlerResponse = await invokeLocalTrainingAction({
+    action: "stage-feedback",
+    caseId: "P008",
+    attemptId,
+    mode: "free",
+    language: "en",
+    stageKey: "history",
+    submission: {}
+  }, handlerResponse.token, remoteAddress);
+  handlerStatusCodes.push(handlerResponse.statusCode);
+  handlerResponse = await invokeLocalTrainingAction({
+    action: "order",
+    caseId: "P008",
+    attemptId,
+    mode: "free",
+    language: "en",
+    input: "CBC"
+  }, handlerResponse.token, remoteAddress);
+  handlerStatusCodes.push(handlerResponse.statusCode);
+  expect(handlerStatusCodes).toEqual([200, 200, 200]);
+  expect(handlerResponse.payload.results).toHaveLength(1);
+  const productionOrderPayload = handlerResponse.payload;
+
+  await withEvidence(browser, testInfo, "hem-p1-048-data-agent-english", async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem("hematuria-language", "en"));
+    await installFullWorkflowApi(page);
+    await page.route("**/api/session/init/**", (route) => {
+      const body = route.request().postDataJSON();
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          sessionId: "qa-data-agent-english-session",
+          caseId: body.caseId,
+          language: body.language,
+          mode: body.runtimeMode || "free",
+          patientOpeningStatement: "Hello doctor.",
+          sessionCreatedAt: "2026-07-19T09:30:00.000Z",
+          sessionExpiresAt: "2026-07-19T10:30:00.000Z",
+          deploymentSha: "fixture-only",
+          apiVersion: "qa-fixture",
+          aiStatus: "available",
+          profileSource: "local-simulation",
+          cacheHit: false
+        })
+      });
+    });
+    await page.route("**/api/training-action/**", (route) => {
+      const body = route.request().postDataJSON();
+      if (body?.action !== "order") return route.fallback();
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers: { "X-Training-State": "qa-fixture-state" },
+        body: JSON.stringify(productionOrderPayload)
+      });
+    });
+
+    await page.goto("/cases/P008/");
+    await page.getByLabel("History summary").fill("QA bilingual Data Agent reproduction; no medical judgment.");
+    await page.getByRole("button", { name: "Submit stage", exact: true }).click();
+    await page.getByRole("button", { name: "Next Agent", exact: true }).click();
+    const cjkControlCount = await page.locator("main button, main label").evaluateAll((nodes) => nodes
+      .filter((node) => /[\u3400-\u9fff]/u.test(node.textContent || "")).length);
+    await page.context().tracing.stop();
+    await page.context().tracing.start({ screenshots: true, snapshots: true, sources: false });
+    await page.getByPlaceholder("Example: urinalysis and sediment, CTU, cystoscopy").fill("CBC");
+    await page.getByRole("button", { name: "Order and return results", exact: true }).click();
+    const card = page.getByTestId("report-card").first();
+    await expect(card).toBeVisible();
+    await card.scrollIntoViewIfNeeded();
+    const cjk = /[\u3400-\u9fff]/u;
+    const reportCardContainsCjk = cjk.test(await card.innerText());
+    const matchedOrderDisplayNameContainsCjk = (productionOrderPayload.matchedOrders || [])
+      .some((item) => cjk.test(String(item.displayName || "")));
+    const visibleFields = ["orderCategory", "result", "value", "unit", "referenceRange", "impression", "abnormalLevel", "teachingExplanation"];
+    const returnedVisibleFieldCjkCount = productionOrderPayload.results.reduce((sum, item) => sum
+      + visibleFields.filter((field) => cjk.test(String(item[field] || ""))).length, 0);
+    const summary = {
+      schemaVersion: 1,
+      productionSha: "657ba5da8fc6460ad7d0deea882a010c40938b40",
+      runtimeEquivalentSha: "3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8",
+      status: cjkControlCount || reportCardContainsCjk ? "FAIL_LOCAL_QA" : "PASS_LOCAL",
+      defectId: cjkControlCount || reportCardContainsCjk ? "HEM-P1-048" : null,
+      language: "en",
+      viewport: testInfo.project.use.viewport,
+      source: "production_training_action_local_contract",
+      providerCalls: 0,
+      handlerStatusCodes,
+      cjkControlCount,
+      reportCardContainsCjk,
+      matchedOrderDisplayNameContainsCjk,
+      returnedVisibleFieldCjkCount,
+      requestBodiesRetained: false,
+      responseBodiesRetained: false,
+      medicalValuesRetained: false
+    };
+    await writeFile(path.join(DIRS.reports, `hem-p1-048-data-agent-english-${viewportSlug(testInfo)}.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    await saveShot(page, testInfo, "hem-p1-048-data-agent-english", true);
+    expect({ cjkControlCount, reportCardContainsCjk, matchedOrderDisplayNameContainsCjk, returnedVisibleFieldCjkCount }).toEqual({
+      cjkControlCount: 0,
+      reportCardContainsCjk: false,
+      matchedOrderDisplayNameContainsCjk: false,
+      returnedVisibleFieldCjkCount: 0
     });
   }, { videoOnFailure: true });
 });

@@ -1,0 +1,800 @@
+{
+  "schemaVersion": 1,
+  "productionSha": "657ba5da8fc6460ad7d0deea882a010c40938b40",
+  "runtimeEquivalentSha": "3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8",
+  "status": "FAIL_LOCAL_QA",
+  "defectId": "HEM-P1-048",
+  "language": "en",
+  "source": "production_training_action_local_contract",
+  "providerCalls": 0,
+  "caseCount": 42,
+  "catalogOrderCount": 60,
+  "configuredResultCount": 257,
+  "returnedResultCount": 257,
+  "handlerFailureCount": 0,
+  "affectedCaseCount": 42,
+  "statusCounts": {
+    "not_available": 182,
+    "final": 74,
+    "not_performed": 1
+  },
+  "catalogDisplayNameCjkCount": 57,
+  "catalogPrimaryCategoryCjkCount": 60,
+  "catalogSecondaryCategoryCjkCount": 49,
+  "catalogWithoutCjkFreeAliasCount": 23,
+  "matchedOrderDisplayNameCjkCount": 274,
+  "handlerMessageCjkCount": 0,
+  "visibleResultFieldCjkCounts": {
+    "orderCategory": 257,
+    "result": 257,
+    "value": 74,
+    "unit": 0,
+    "referenceRange": 0,
+    "impression": 257,
+    "abnormalLevel": 0,
+    "teachingExplanation": 0
+  },
+  "visibleResultCjkCount": 845,
+  "cjkFailureCount": 1285,
+  "caseSummaries": [
+    {
+      "caseId": "P001",
+      "statusCode": 200,
+      "configuredResultCount": 16,
+      "returnedResultCount": 16,
+      "matchedOrderDisplayNameCjkCount": 17,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 16,
+        "result": 16,
+        "value": 5,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 16,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P002",
+      "statusCode": 200,
+      "configuredResultCount": 16,
+      "returnedResultCount": 16,
+      "matchedOrderDisplayNameCjkCount": 17,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 16,
+        "result": 16,
+        "value": 5,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 16,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P003",
+      "statusCode": 200,
+      "configuredResultCount": 16,
+      "returnedResultCount": 16,
+      "matchedOrderDisplayNameCjkCount": 17,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 16,
+        "result": 16,
+        "value": 5,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 16,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P004",
+      "statusCode": 200,
+      "configuredResultCount": 16,
+      "returnedResultCount": 16,
+      "matchedOrderDisplayNameCjkCount": 17,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 16,
+        "result": 16,
+        "value": 3,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 16,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P005",
+      "statusCode": 200,
+      "configuredResultCount": 16,
+      "returnedResultCount": 16,
+      "matchedOrderDisplayNameCjkCount": 17,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 16,
+        "result": 16,
+        "value": 4,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 16,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P006",
+      "statusCode": 200,
+      "configuredResultCount": 16,
+      "returnedResultCount": 16,
+      "matchedOrderDisplayNameCjkCount": 17,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 16,
+        "result": 16,
+        "value": 4,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 16,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P007",
+      "statusCode": 200,
+      "configuredResultCount": 16,
+      "returnedResultCount": 16,
+      "matchedOrderDisplayNameCjkCount": 17,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 16,
+        "result": 16,
+        "value": 4,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 16,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P008",
+      "statusCode": 200,
+      "configuredResultCount": 16,
+      "returnedResultCount": 16,
+      "matchedOrderDisplayNameCjkCount": 17,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 16,
+        "result": 16,
+        "value": 3,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 16,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P009",
+      "statusCode": 200,
+      "configuredResultCount": 16,
+      "returnedResultCount": 16,
+      "matchedOrderDisplayNameCjkCount": 17,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 16,
+        "result": 16,
+        "value": 3,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 16,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P010",
+      "statusCode": 200,
+      "configuredResultCount": 16,
+      "returnedResultCount": 16,
+      "matchedOrderDisplayNameCjkCount": 17,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 16,
+        "result": 16,
+        "value": 4,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 16,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P011",
+      "statusCode": 200,
+      "configuredResultCount": 16,
+      "returnedResultCount": 16,
+      "matchedOrderDisplayNameCjkCount": 17,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 16,
+        "result": 16,
+        "value": 5,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 16,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P012",
+      "statusCode": 200,
+      "configuredResultCount": 16,
+      "returnedResultCount": 16,
+      "matchedOrderDisplayNameCjkCount": 17,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 16,
+        "result": 16,
+        "value": 6,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 16,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P013",
+      "statusCode": 200,
+      "configuredResultCount": 3,
+      "returnedResultCount": 3,
+      "matchedOrderDisplayNameCjkCount": 4,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 3,
+        "result": 3,
+        "value": 1,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 3,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P014",
+      "statusCode": 200,
+      "configuredResultCount": 3,
+      "returnedResultCount": 3,
+      "matchedOrderDisplayNameCjkCount": 4,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 3,
+        "result": 3,
+        "value": 1,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 3,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P015",
+      "statusCode": 200,
+      "configuredResultCount": 3,
+      "returnedResultCount": 3,
+      "matchedOrderDisplayNameCjkCount": 4,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 3,
+        "result": 3,
+        "value": 2,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 3,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P016",
+      "statusCode": 200,
+      "configuredResultCount": 3,
+      "returnedResultCount": 3,
+      "matchedOrderDisplayNameCjkCount": 4,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 3,
+        "result": 3,
+        "value": 1,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 3,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P017",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 0,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P018",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 1,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P019",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 1,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P020",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 1,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P021",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 1,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P022",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 1,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P023",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 0,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P024",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 1,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P025",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 1,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P026",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 1,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P027",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 1,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P028",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 1,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P029",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 1,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P030",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 0,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P031",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 1,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P032",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 1,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P033",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 1,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P034",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 0,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P035",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 1,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P036",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 0,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P037",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 0,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P038",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 0,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P039",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 0,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P040",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 1,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P041",
+      "statusCode": 200,
+      "configuredResultCount": 2,
+      "returnedResultCount": 2,
+      "matchedOrderDisplayNameCjkCount": 2,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 2,
+        "result": 2,
+        "value": 1,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 2,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    },
+    {
+      "caseId": "P042",
+      "statusCode": 200,
+      "configuredResultCount": 3,
+      "returnedResultCount": 3,
+      "matchedOrderDisplayNameCjkCount": 4,
+      "handlerMessageContainsCjk": false,
+      "visibleResultFieldCjkCounts": {
+        "orderCategory": 3,
+        "result": 3,
+        "value": 1,
+        "unit": 0,
+        "referenceRange": 0,
+        "impression": 3,
+        "abnormalLevel": 0,
+        "teachingExplanation": 0
+      }
+    }
+  ],
+  "requestBodiesRetained": false,
+  "responseBodiesRetained": false,
+  "medicalValuesRetained": false
+}

@@ -203,6 +203,22 @@
 - 建议方向：把结构状态映射为中英文学生文案；计算展示状态时让受治理异常/阳性/高低/危急标志优先于`final`完成态，同时为`not_available/not_performed/needs_review`保留明确且可访问的视觉语义。增加三状态×中英文×四viewport报告卡门禁，不要放宽当前失败断言。
 - 医学专家裁决：确认本工程呈现缺陷不需要医学裁决；具体异常标志、结果内容和医学值是否正确仍遵循既有来源/医学审批，不由QA修改或批准。
 
+## HEM-P1-048：英文数据Agent目录与报告仍大量显示中文
+
+- 级别/状态：P1，OPEN / FAIL_LOCAL_QA；Production文档基线`657ba5da8fc6460ad7d0deea882a010c40938b40`，运行时代码等价基线`3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`。
+- 页面/路径：训练工作台`/cases/P008/`英文第2阶段；浏览器覆盖`1440×900`、`1280×720`、`390×844`、`360×800`，Production handler只读审计覆盖P001–P042。
+- 前置条件：本地Next；脱敏session/stage fixture只负责进入第2阶段，浏览器order payload来自Production本地`training-action`的英文P008 `CBC`真实响应。全量脚本以英文attempt逐例开立全部配置医嘱及其前置医嘱，只保存CJK计数与病例ID，不保存请求/响应正文或医学值。
+- 操作步骤：运行`data-agent-bilingual-audit.mjs`对42例依次init英文attempt → 提交history进入第2阶段 → 一次开立该例全部配置医嘱与prerequisite → 对学生可见字段做CJK计数；浏览器打开P008英文页 → 进入第2阶段 → 输入`CBC` → 使用同一Production handler响应渲染报告卡 → 读取控件和报告卡语言。
+- 预期：英文工作台的查体/医嘱目录、已识别医嘱、分类、结果与印象应使用经审核的英文内容；无英文安全内容时应明确受控阻塞，不能把中文或内部ID当作英文通过。结果仍须精确绑定当前病例/医嘱且不得因翻译重复或丢失。
+- 实际：全量审计42/42病例受影响、257/257结果返回且handler失败0；共1,285个CJK信号：目录displayName 57/60、主分类60/60、次分类49/60、handler matched displayName 274次、结果orderCategory/result/impression各257/257、value 74次。23/60医嘱连无CJK别名也没有。浏览器每个viewport均测得44个中文button/label，真实报告卡含中文，matched order名含中文且该返回结果有3个学生可见字段含CJK。
+- 复现：全量审计有效配置连续2/2；四viewport浏览器4/4。开发首轮审计漏开前置医嘱只返回240/257，修正后257/257，不计产品失败；浏览器首轮单开有prerequisite的CTU正确返回0条，改为可直接开立的CBC后形成有效4/4，不把前置条件正确拒绝计入缺陷。
+- AI来源：`production_training_action_local_contract`，`providerCalls=0`；不是真实DeepSeek、fallback或mock患者回答。
+- 状态变化时间线：英文attempt init 200 → history反馈200 → 第2阶段 → 英文别名开单200 → 当前病例结构结果返回 → Production英文工作台目录与报告卡出现CJK → 失败断言触发。
+- HTTP/console/network：四个有效浏览器运行中本地handler `init/history/order`为12/12 200；浏览器fixture的12个training-action也均200、最大脱敏摘要耗时16ms；console共12条info、0 warning/error。network不保存header、body、request ID、token、session或医学值。
+- 最小证据：`reports/data-agent-bilingual-audit.json`、`screenshots/hem-p1-048-data-agent-english-1280x720.png`、`traces/hem-p1-048-data-agent-english-1280x720.zip`；其余viewport聚合/截图/trace、失败全页图、录像、console/network与test-results仅本机保留。
+- 建议方向：为医嘱目录、查体项、结果分类及结构化结果增加显式受控`zh/en`字段并按attempt language选择；英文缺失时fail closed或显示明确“awaiting reviewed translation”，不要运行时猜译。回归需覆盖42例257条结果、60医嘱、前置条件、四viewport和切换/刷新，保持case/order/stage绑定及结果数量不变。
+- 医学专家裁决：确认中文串线工程缺陷不需要医学裁决；具体医学结果、单位、参考范围与英文译文必须由权威双语来源或具名医学专家审核，QA不翻译、不修改`data/**`、不解除HEM-P0-023或来源修订状态。
+
 ## HEM-P2-043：本地 Next 开发环境病例目录链接对 42 个 `.html` 路由全部返回 404
 
 - 级别/状态：P2，RESOLVED_ENGINEERING_PREVIEW / PAGES_DEPLOYMENT_PENDING；本地 Next、root build、GitHub Pages basePath 仿真与当前 Vercel Preview 已通过，真实 Pages 仍部署不匹配。
