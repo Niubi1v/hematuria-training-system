@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "productionSha": "c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2",
+  "source": "production_patient_session_local_deterministic_contract",
+  "cases": 42,
+  "probesPerLanguage": 10,
+  "scenarioCount": 840,
+  "expectedIntentChecks": 1428,
+  "canonicalIntentHits": 1428,
+  "canonicalIntentHitRate": 1,
+  "canonicalScenarioHits": 840,
+  "canonicalScenarioHitRate": 1,
+  "knownFactCount": 914,
+  "erroneousUnknownCount": 0,
+  "erroneousUnknownRate": 0,
+  "polarityEligibleCount": 598,
+  "polarityErrorCount": 0,
+  "polarityErrorRate": 0,
+  "expectedUnknownCount": 436,
+  "correctUnknownCount": 436,
+  "medicalConflictScenarioCount": 42,
+  "medicalConflictIsolationCount": 42,
+  "uniqueMedicalConflictItemsIsolated": 13,
+  "bilingualPairCount": 420,
+  "bilingualMeaningPassCount": 420,
+  "extraHistoryLeakCount": 0,
+  "providerCalls": 0,
+  "fullQuestionsRetained": false,
+  "fullAnswersRetained": false,
+  "medicalValuesRetained": false,
+  "failureCount": 0,
+  "failureGroupCount": 0,
+  "failureGroups": [],
+  "bilingualProbeSummary": [
+    {
+      "probeId": "dysuria-colloquial",
+      "pairs": 42,
+      "meaningPass": 42,
+      "conflictIsolated": 3
+    },
+    {
+      "probeId": "dysuria-formal",
+      "pairs": 42,
+      "meaningPass": 42,
+      "conflictIsolated": 3
+    },
+    {
+      "probeId": "dysuria-natural",
+      "pairs": 42,
+      "meaningPass": 42,
+      "conflictIsolated": 3
+    },
+    {
+      "probeId": "dysuria-negated",
+      "pairs": 42,
+      "meaningPass": 42,
+      "conflictIsolated": 3
+    },
+    {
+      "probeId": "phase-whole",
+      "pairs": 42,
+      "meaningPass": 42,
+      "conflictIsolated": 0
+    },
+    {
+      "probeId": "phase-start-to-finish",
+      "pairs": 42,
+      "meaningPass": 42,
+      "conflictIsolated": 0
+    },
+    {
+      "probeId": "phase-choice",
+      "pairs": 42,
+      "meaningPass": 42,
+      "conflictIsolated": 0
+    },
+    {
+      "probeId": "phase-negated-terminal",
+      "pairs": 42,
+      "meaningPass": 42,
+      "conflictIsolated": 0
+    },
+    {
+      "probeId": "lower-urinary-compound",
+      "pairs": 42,
+      "meaningPass": 42,
+      "conflictIsolated": 9
+    },
+    {
+      "probeId": "red-flag-compound",
+      "pairs": 42,
+      "meaningPass": 42,
+      "conflictIsolated": 0
+    }
+  ]
+}

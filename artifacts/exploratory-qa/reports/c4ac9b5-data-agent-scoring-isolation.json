@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "productionSha": "c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2",
+  "source": "public_training_handler_local_blackbox",
+  "medicalTruthAdjudicated": false,
+  "medicalValuesRetained": false,
+  "orderNamesRetained": false,
+  "credentialsRetained": false,
+  "unreviewedEnglishOrderNames": 23,
+  "untranslatedOrdersExercised": 23,
+  "untranslatedOrdersMatchedByApi": 23,
+  "untranslatedOrdersReturnedResults": 6,
+  "scoringRelevantOrderCount": 4,
+  "scoringRuleLinksExercised": 29,
+  "scoringRuleLinksEarned": 29,
+  "scoringPointsEarned": 641,
+  "expected": {
+    "untranslatedOrdersMatchedByApi": 0,
+    "untranslatedOrdersReturnedResults": 0,
+    "scoringRuleLinksEarned": 0,
+    "scoringPointsEarned": 0
+  }
+}

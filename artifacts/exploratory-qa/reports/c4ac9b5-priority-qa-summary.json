@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "productionBaseline": "c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2",
+  "qaMergeCommit": "706a758",
+  "executionDate": "2026-07-23",
+  "medicalTruthAdjudicated": false,
+  "sensitiveValuesRecorded": false,
+  "patientNaturalPhrasing": {
+    "scenarios": 840,
+    "canonicalScenarioHits": 840,
+    "canonicalChecks": 1428,
+    "canonicalCheckHits": 1428,
+    "paraphraseMatrixQuestions": 3150,
+    "paraphraseMatrixHits": 3150,
+    "erroneousUnknowns": 0,
+    "polarityErrors": 0,
+    "correctUnknowns": 436,
+    "medicalConflictScenariosIsolated": 42,
+    "bilingualPairs": 420,
+    "bilingualMeaningPasses": 420,
+    "extraHistoryLeaks": 0,
+    "providerCalls": 0,
+    "status": "PASS_LOCAL_CONTRACT",
+    "defect": "HEM-P1-050 RESOLVED_LOCAL_QA"
+  },
+  "dataAgent": {
+    "orders": 60,
+    "results": 257,
+    "pendingReviewedMetadata": 28,
+    "unreviewedEnglishOrderNames": 23,
+    "physicalExamItems": 16,
+    "englishApiCjkSignals": 0,
+    "browserPresentationPassed": 6,
+    "browserPresentationFailed": 0,
+    "unreviewedOrdersMatchedByInternalId": 23,
+    "unreviewedOrdersReturningResults": 6,
+    "scoringRelevantOrders": 4,
+    "scoringRuleLinksExercised": 29,
+    "scoringRuleLinksEarned": 29,
+    "scoringPointsEarned": 641,
+    "reproductions": "2/2",
+    "status": "FAIL",
+    "defect": "HEM-P1-052"
+  },
+  "preview": {
+    "deploymentSha": "c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2",
+    "coreBlackbox": "9/9",
+    "routes": {
+      "catalogZh": 42,
+      "catalogEn": 42,
+      "direct200": 42,
+      "refresh200": 42,
+      "invalid404": true
+    },
+    "hemP1051": {
+      "p001EnglishLiveAi": "3/3",
+      "p037EnglishLiveAi": "2/2",
+      "p038EnglishLiveAi": "2/2",
+      "historyLogs": "7/7",
+      "fallbacks": 0,
+      "status": "PASS_PREVIEW",
+      "defect": "HEM-P1-051 RESOLVED_PREVIEW"
+    },
+    "sessions": {
+      "success": "10/10",
+      "totalP50Ms": 1132,
+      "totalP95Ms": 1871,
+      "serverP50Ms": 6,
+      "serverP95Ms": 14
+    },
+    "chineseAnswers": {
+      "liveAi": "5/5",
+      "fallbacks": 0,
+      "answerP50Ms": 1292,
+      "answerP95Ms": 1315,
+      "providerCalls": 5,
+      "historyLogs": 5
+    },
+    "englishAnswers": {
+      "liveAi": "5/5",
+      "fallbacks": 0,
+      "answerP50Ms": 1423,
+      "answerP95Ms": 1971,
+      "providerCalls": 5,
+      "historyLogs": 5
+    },
+    "twentyTurns": {
+      "liveAi": "20/20",
+      "fallbacks": 0,
+      "providerCalls": 20,
+      "agentRequests": 20,
+      "historyLogs": 20,
+      "distinctSessions": 1,
+      "sessionReinitializations": 0,
+      "answerP95Ms": 1630,
+      "refreshPreservedMessages": true
+    },
+    "backgroundRecoveryEmulation": {
+      "liveAi": "2/2",
+      "agentRequests": 2,
+      "historyLogs": 2,
+      "attemptReinitializations": 0,
+      "sessionReinitializations": 0,
+      "messageDuplication": false
+    },
+    "unexpectedAgentOrTrainingStatus": {
+      "401": 0,
+      "403": 0,
+      "429": 0,
+      "5xx": 0
+    },
+    "previewArtifactsRetained": false,
+    "credentialScan": "PASS"
+  },
+  "localRegression": {
+    "practiceDesktopMobile": "78/78",
+    "bilingualSevenStage": {
+      "executedTestsPassed": 2,
+      "designedProjectExclusivitySkips": 2,
+      "journeys": 84,
+      "stageSubmissions": 588,
+      "scoreReports": 84,
+      "maxScore": 360,
+      "mobileRepresentativeJourney": "1/1"
+    },
+    "deterministicContractScripts": "14/14",
+    "rootStaticBuildPages": "82/82",
+    "pagesBasePathStaticBuildPages": "82/82",
+    "pagesBasePathHttpRoutes": "42/42",
+    "pagesBasePathInvalidRoute": 404,
+    "bundleJavaScriptAssetsScanned": 25
+  },
+  "statusBoundary": {
+    "engineering": "FAIL_HEM_P1_052",
+    "medical": "BLOCKED_MEDICAL",
+    "realDevice": "BLOCKED_REAL_DEVICE",
+    "sourceRevision": "BLOCKED_SOURCE_REVISION",
+    "controlledFaultInjection": "BLOCKED_PREVIEW_FAULT_INJECTION"
+  },
+  "newDefects": {
+    "p0": 0,
+    "p1": 1,
+    "p2": 0
+  }
+}

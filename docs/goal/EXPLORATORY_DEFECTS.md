@@ -296,3 +296,29 @@
 - 医学专家裁决：确认 source 路由和刷新连续性工程缺陷不需要医学裁决；患者自然语言质量与医学回答内容仍需教师/医学专家后续人工审阅。
 
 当前基线说明：Production 与 Preview 均为 `70ea9b3c7b31e11a84878de5c277cac60f35481c`，QA 合入基线的 merge 为 `b94d7803507df3da52379f83ab05fef2afc45c87`。本地、Preview、GitHub Pages 与真机状态分别记录，互不替代。
+
+## `c4ac9b5` 既有缺陷复测状态
+
+- HEM-P1-050：`RESOLVED_LOCAL_QA`。840/840自然场景、1,428/1,428 canonical checks、3,150/3,150扩展问法；错误unknown 0、极性错误0、generic pain额外扩张0。
+- HEM-P1-051：`RESOLVED_PREVIEW`。P001英文纠错/澄清3/3、P037英文上下文2/2、P038英文上下文2/2均`live_ai/deepseek/non-fallback`，history7/7，rule fallback 0。
+- HEM-P1-046：工程呈现更新为安全文案，但28项真实单位/参考范围仍为 `BLOCKED_MEDICAL`，不得写成医学元数据通过。
+- HEM-P1-047：`RESOLVED_LOCAL_QA`。desktop/mobile状态本地化和异常优先2/2项目、4次实际执行全部通过。
+- HEM-P1-048：CJK呈现风险 `RESOLVED_LOCAL_QA`，但23个审核英文名称保持 `BLOCKED_SOURCE_REVISION`；新增评分隔离缺口转为HEM-P1-052。
+
+## HEM-P1-052：未审核英文医嘱可通过内部ID释放结果并进入确定性360分评分
+
+- 级别/状态：P1，OPEN / FAIL；Production与精确Preview基线 `c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2`。
+- 页面/路径：英文训练工作台第2阶段与公开 `POST /api/training-action/`；42例评分规则；无viewport依赖的本地公开handler黑盒。
+- 前置条件：合法free-mode英文attempt、有效签名training state、当前阶段已推进到orders。探针只使用Production中已有的内部order ID，不修改目录、医学结果、审核状态或环境值。
+- 操作步骤：读取60项目录并用Production呈现器筛出23个`translationAvailable=false`项目 → 每项建立独立英文attempt并提交第一阶段 → 以内部ID调用order → 记录是否matched/返回result → 对与评分rubric相交的4项遍历29条病例-医嘱规则链 → 完成其余六阶段 → 请求360分报告 → 检查对应rubric item是否earned。
+- 预期：缺审核英文名称的23项必须在服务端fail closed；内部ID不得绕过UI禁用形成validated order/result事件，更不得进入确定性评分。可返回明确“等待审核名称”错误，但不得猜译或修改医学数据。
+- 实际：23/23均被公开handler匹配，6项返回确定性结果；4个评分相关医嘱覆盖29条规则链，29/29对应rubric item均为earned，累计641分。
+- 复现：独立Node进程2/2，计数完全一致；首轮开发探针因错误假设“23项均有配置结果”在准备断言处停止，未计产品复现，修正为无结果项目只测API匹配后得到正式2/2。
+- AI来源：`public_training_handler_local_blackbox`，providerCalls=0；不是DeepSeek、fallback或fixture评分。
+- 状态变化时间线：init-attempt 200 → history stage-feedback 200 → order内部ID 200且matched → 部分项目返回result → orders至debrief六次stage-feedback均200 → score 200 → 对应未审核医嘱rubric item=`earned`。
+- HTTP/console/network：每个正式进程共执行23个目录探针与29条完整评分链，handler操作均为本机内存调用；request ID逐次唯一。报告不保存token、签名、内部医嘱名、结果正文或医学值。
+- 最小证据：`tests/exploratory/data-agent-scoring-isolation.mjs`、`artifacts/exploratory-qa/reports/c4ac9b5-data-agent-scoring-isolation.json`和本缺陷记录；第二份同内容原始JSON仅本机保留。
+- 建议方向：在服务端order验证和事件写入前检查当前语言的审核名称可用性；英文`translationAvailable=false`时返回安全阻塞，不释放结果、不追加`validated=true`订单/结果事件。评分器继续只信服务端事件，不在客户端伪造过滤；增加23项内部ID、4项/29规则链和中文不受影响的回归。
+- 医学专家裁决：确认绕过与得分缺陷不需要医学裁决；23个英文名称的实际译文仍需来源/具名专家审核，QA不得自行补写或解除 `BLOCKED_SOURCE_REVISION`。
+
+当前基线说明：Production与Preview均精确为 `c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2`，QA合入基线merge为`706a758`。本地、Preview、Pages仿真、真实Pages与真机状态继续分别记录。

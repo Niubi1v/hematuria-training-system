@@ -114,3 +114,10 @@
 - P001 第一阶段、双语切换、刷新、快速双击和 P003 零轮提交已覆盖；代表性 P001 七阶段在桌面与移动模拟 2/2，7 次 stage feedback 与 7 个 request ID 一一对应，最终报告为 360 分制且无重复计分。
 - P019/P020 的医学待审核状态未被 QA 修改。病例患者化主诉、镜下血尿不改写为肉眼发红、特殊尿色与事实漂移仍以现有 governed 数据/Preview代表抽样为工程合同；最终医学批准继续依赖 HEM-P0-001/023。
 - 基线切换前补充重跑全 42 例×双语七阶段 UI：84/84 完整旅程、588/588 阶段提交、84/84 份 360 分报告通过；移动 viewport 另有 1/1 代表旅程。Production 浏览器全套 72/72，10 个评分/安全/恢复/隔离服务端合同 10/10，capability 19 项矩阵连续 2/2 轮通过。以上均为 `PASS_EMULATION`/`PASS_LOCAL_CONTRACT`，不扩张为真实设备、真实 provider 或医学批准。
+
+## Production `c4ac9b5` 增量覆盖
+
+- P001–P042 精确Preview目录中英文、直接URL与刷新均42/42，P999为404；本地Pages basePath静态产物也为42/42与受控404。全42例×双语七阶段UI为84/84旅程、588/588阶段提交、84/84份360分报告；mobile代表旅程1/1。路由/阶段标记 `PASS_PREVIEW` / `PASS_EMULATION`，不替代真实Pages或真机。
+- Patient Agent 840/840场景、1,428/1,428 canonical checks、3,150/3,150大矩阵；错误unknown 0、极性错误0、正确unknown436、冲突隔离42/42、双语420/420、额外病史0。所有病例的该工程列更新为 `PASS_LOCAL_CONTRACT / HEM-P1-050 RESOLVED_LOCAL_QA`，医学审批列不变。
+- HEM-P1-051代表真实AI覆盖为P001英文3/3、P037英文2/2、P038英文2/2全部live_ai且history7/7；系统稳定样本另为中文5/5、英文5/5、单session20/20。未抽样的其余病例不由此扩张为逐例真实AI医学通过。
+- Data Agent学生呈现对42例257结果为英文CJK=0，28个元数据缺口显示待审核，23个未审核英文名称在UI禁用；但服务端内部ID探针23/23匹配，4个评分相关医嘱的29/29规则链得分，故所有病例的Data Agent评分隔离列为 `FAIL / HEM-P1-052`。28项元数据和23个名称仍分别为 `BLOCKED_MEDICAL` / `BLOCKED_SOURCE_REVISION`。

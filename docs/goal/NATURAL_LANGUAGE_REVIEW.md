@@ -91,3 +91,10 @@
 - 精确 Preview 的 P001 英文错误总结与无指代澄清在全套和隔离复跑均落入 `rule_fallback`。P038 双语五轮中 4/10 为 rule fallback，P037 刷新双语中英文首个上下文问法 1/8 为 rule fallback；请求与 history 均完整，说明是 source 路由而非会话丢失，登记 HEM-P1-051。
 - 核心低歧义样本仍通过：中文 5/5、英文 5/5 为 DeepSeek `live_ai` 且 fallback 0；连续 20/20 为 live_ai。该成功率不能覆盖 HEM-P1-050/051 的自然问法缺口，安全边界与规则 fallback 均不冒充真实 AI。
 - 报告只保留 case ID、intent、布尔值和聚合计数；完整问题/回答、医学值、token、session 和 Preview 凭据不落盘。进入教师审阅前应先修复两个工程 P1；医学内容最终仍需具名专家审核。
+
+## 2026-07-23 `c4ac9b5` 自然问法与 Preview 复核
+
+- 42例×10问法×双语840/840场景完整命中，canonical intent 1,428/1,428；3,150问扩展矩阵同为3,150/3,150。已知事实错误unknown 0/914、可评价极性错误0/598，正确unknown 436/436，冲突隔离42/42（13个唯一项），双语等义420/420，额外病史0。
+- 指定真实问法覆盖“小便痛不痛/排尿时疼吗/没有尿痛吧/小便全程红/从头到尾红/初始终末全程选择/尿频尿急尿痛/腰痛发热血块”；特异dysuria、flank pain不再扩张generic pain，独立通用pain仍可回答。HEM-P1-050更新为 `RESOLVED_LOCAL_QA`。
+- 精确Preview中P001英文纠错与澄清3/3、P037英文连续追问2/2、P038英文连续追问2/2均为DeepSeek `live_ai`、非fallback，history7/7。HEM-P1-051更新为 `RESOLVED_PREVIEW`；provider成功没有被后续rule fallback覆盖。
+- 低歧义稳定样本中文5/5、英文5/5和单session连续20/20均live_ai，fallback为0。完整回答不落盘；这些工程/来源结果仍不裁决医学内容，不解除HEM-P0-001/023、P019/P020或来源修订状态。

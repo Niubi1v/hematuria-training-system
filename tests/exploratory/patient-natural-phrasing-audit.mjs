@@ -19,8 +19,11 @@ const {
   priorityIntentDefinitions
 } = require("../../src/lib/patientIntentCatalog.js");
 
-const PRODUCTION_SHA = "70ea9b3c7b31e11a84878de5c277cac60f35481c";
-const REPORT_PATH = path.resolve("artifacts/exploratory-qa/reports/70ea9b3-patient-natural-phrasing-audit.json");
+const PRODUCTION_SHA = process.env.QA_PRODUCTION_SHA || "70ea9b3c7b31e11a84878de5c277cac60f35481c";
+const REPORT_PATH = path.resolve(
+  process.env.QA_NATURAL_PHRASING_REPORT
+    || "artifacts/exploratory-qa/reports/70ea9b3-patient-natural-phrasing-audit.json"
+);
 
 process.env.LLM_ENABLE_AI_AGENTS = "false";
 process.env.LLM_ENABLE_AI_PATIENT = "false";
@@ -59,7 +62,7 @@ const probes = [
   },
   {
     id: "phase-start-to-finish",
-    zh: "从开始尿到最后都红吗？",
+    zh: "从头到尾都红吗？",
     en: "Is it red from the start to the end of urination?",
     expectedIntents: ["whole_stream_hematuria"]
   },
@@ -83,7 +86,7 @@ const probes = [
   },
   {
     id: "red-flag-compound",
-    zh: "有没有腰痛、发烧和血块？",
+    zh: "有没有腰痛、发热和血块？",
     en: "Do you have flank pain, fever, or blood clots?",
     expectedIntents: ["flank_pain", "fever", "blood_clots"]
   }
