@@ -649,3 +649,10 @@
 - `pnpm 11`明确忽略`package.json#pnpm.overrides`，因此覆盖规则已迁移到项目级`pnpm-workspace.yaml`。锁文件现固定Next/ESLint Next `15.5.21`、Sharp `0.35.0`、brace-expansion `1.1.16/5.0.7`；没有放宽审计等级或删除审计步骤。
 - 本地`pnpm audit --audit-level high` exit 0，仅余1项moderate；依赖安全提交为`6c1d42c`。该提交只包含`package.json`、`pnpm-lock.yaml`、`pnpm-workspace.yaml`，不含业务、医学或`data/**`变化。
 - 依赖升级后完整行为exit 0；TypeScript、ESLint、受控外部Next下Playwright 80 passed/2互斥skip/0 failed、Vercel同源与Pages basePath各82/82页、两次25 JS bundle、repository secret scan、75受控输出幂等性和`data/**`零差异均通过。Node 22、Actions、Vercel及真实Preview仍须新HEAD推送后补证。
+
+### QA c83c7d5 P1整改远程闭环（2026-07-23）
+
+- 依赖与证据HEAD `c9f780795c2c7ca52c94e0be944a8824e7c5034c`已普通push。Actions run `30011651645`在Node 22.14完整success：高危审计、75输出幂等性、行为/医学/安全、TypeScript、ESLint、repository secret scan、Playwright 80 passed/2 skip、82页build、23 JS bundle及clean gate全部通过；Pages deploy按Draft规则skipped。
+- Vercel Deployment与Preview Comments均success；受保护branch alias的health精确返回`c9f7807`，Patient Service、Training State及Durable Attempt Store均configured。基础Preview黑盒8/8通过；扩展后的11/11又直接验证P001英文纠错/澄清三轮、P037两轮和P038两轮均为DeepSeek `live_ai`、非fallback、history-log 200。
+- Preview session初始化10/10，P95 1263ms；中文5/5回答P95 1413ms、英文5/5回答P95 1858ms，均低于3秒目标。保护头只注入目标origin，跨origin为0，输出凭据扫描通过。
+- HEM-P1-050工程与远程门禁关闭；HEM-P1-051的真实Preview来源缺口关闭。新增黑盒门禁提交`77df23d`只修改测试，不改业务、医学事实或环境。PR #1继续Open/Draft。

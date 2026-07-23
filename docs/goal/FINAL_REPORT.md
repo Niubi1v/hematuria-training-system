@@ -548,3 +548,12 @@
 - 依赖升级后的完整本地门禁通过：行为exit 0、TypeScript/ESLint 0、Playwright 80/2/0、Vercel与Pages各82页、两次25 JS bundle、repository secret scan、75输出幂等性和`data/**`零差异。
 - 本候选仍须提交证据文档、fetch确认远端领先0、普通push，并等待精确新HEAD的Node 22 Actions、Vercel和真实Preview。PR继续Open/Draft，不转Ready、不合并main、不部署Production。
 - 依赖修复可用普通`git revert 6c1d42c`回滚，但会重新暴露高危审计失败；不得reset、rebase或force push。业务修复仍按`86f5ad9`、`04d572f`、`3fb6e00`、`871cc70`独立回滚。
+
+### QA c83c7d5 P1整改最终远程结论（2026-07-23）
+
+- 应用验收HEAD `c9f780795c2c7ca52c94e0be944a8824e7c5034c`已通过Actions run `30011651645`和Vercel。Node 22.14下依赖审计、幂等性、行为、医学、安全、TypeScript、ESLint、Playwright 80/2/0、82页build、bundle、secret及clean gate全部成功；PR #1保持Open/Draft，Pages发布跳过。
+- HEM-P1-050关闭：840/840自然场景、1428/1428 canonical checks、3150/3150矩阵；错误unknown=0、极性错误=0，generic pain不再扩张到flank pain或dysuria，独立pain仍保留。
+- HEM-P1-051关闭工程与真实Preview来源缺口：P001英文纠错/澄清、P037和P038多轮均由DeepSeek `live_ai`回答且history-log 200，没有被rule fallback接管。provider失败后的安全fallback及下一轮恢复仍由本地受控测试覆盖。
+- Data Agent工程展示边界通过远程门禁；28项元数据、23个英文名称及161个来源修订仍为人工来源阻塞，不因UI fail-closed而视为医学内容完成。
+- 新增测试提交`77df23d`把上述P001/P037/P038真实来源检查纳入安全Preview runner；它不修改业务或医学数据。回滚该门禁可普通`git revert 77df23d`，应用依赖修复回滚为`git revert 6c1d42c`，均不得reset或force push。
+- 长期QA应从包含`77df23d`的最终远程HEAD复测：840/1428/3150、generic/特异pain、P001纠错澄清、P037/P038多轮、Data Agent 28/23 fail-closed、42例双语七阶段及医学冲突隔离。Production、真机与具名医学裁决仍不在本轮自动关闭范围。
