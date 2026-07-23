@@ -548,3 +548,36 @@
 - **状态**：RESOLVED_LOCAL_CANDIDATE / CI_PENDING。
 - **修复**：新增server-only白名单Prompt审计和递归脱敏logger；Production/Vercel强制关闭debug。LLM HTTP错误不再包含provider响应正文，Patient fallback不再把原始error放进返回值。
 - **门禁**：随机合成canary覆盖嵌套Error/cause、Authorization、Cookie、token/signature URL；输出命中0。Agent API provider失败日志也断言不含合成secret或patient content。repository scan 336文件/历史通过。
+
+## QA c83c7d5 新增P1状态（2026-07-23）
+
+### HEM-P1-050 更广自然问法与复合intent路由缺口
+
+- **状态**：`RESOLVED_LOCAL / REMOTE_RECHECK_PENDING`。
+- **基线**：840个自然问法仅630个完整；1134/1428 canonical intent命中；4/914错误unknown；英文复合场景额外扩张generic pain 42次。
+- **根因与修复**：英文血尿时相、尿急复合表达和否定选择问法alias/pattern不完整；generic pain独立性边界先过宽后过窄。共享canonical规则现只在明确独立询问时保留pain，flank pain、排尿痛等特异疼痛不扩张。
+- **证据**：840/840、1428/1428、3150/3150；错误unknown 0、极性错误0；42×6 pain specificity与5例冲突隔离通过。
+
+### HEM-P1-051 合法英文纠错/澄清及P037/P038追问误入rule fallback
+
+- **状态**：`RESOLVED_LOCAL_SYNTHETIC_PROVIDER / PREVIEW_LIVE_AI_PENDING`。
+- **根因与修复**：未命中canonical的纠错/澄清被semantic reject提前返回fallback，合法多事实上下文不能到provider，P037 onset投影过度泛化。现仅对合法自然澄清和context recap开放受控provider；报告详情继续安全阻断；病程仅从已治理双语主诉提取。
+- **证据**：P001中英文纠错/澄清、P037/P038中英文多轮、provider 401后恢复、单次provider call和report detail零provider专项通过。尚未用新部署真实DeepSeek验证来源。
+
+### QA c83c7d5 / Data Agent HEM-P1-046 数值检验缺少单位和参考范围
+
+- **状态**：`ENGINEERING_FAIL_CLOSED_LOCAL / BLOCKED_SOURCE_METADATA`。
+- **基线与修复**：13例中的28/28个数值型final检验缺unit/referenceRange。服务端和UI共享合同标记`awaiting_reviewed_metadata`，学生端明确显示等待审核元数据，不再用“—”制造完整错觉。
+- **人工阻塞**：单位和参考范围必须来自原始资料或具名审核；工程不得猜测或回写`data/**`。
+
+### QA c83c7d5 / Data Agent HEM-P1-047 原始状态与异常优先级展示错误
+
+- **状态**：`RESOLVED_LOCAL / REMOTE_RECHECK_PENDING`。
+- **基线与修复**：UI曾暴露`final/not_available/not_performed`且`final`掩盖异常。现中英文状态标签统一，needs_review、abnormal、normal、reported按安全优先级显示，异常信号高于final。
+- **证据**：共享合同全量257结果通过；desktop/mobile浏览器证明异常卡`data-status=abnormal`且原始枚举不外露。
+
+### QA c83c7d5 / Data Agent HEM-P1-048 英文Data Agent泄露CJK来源文本
+
+- **状态**：`ENGINEERING_FAIL_CLOSED_LOCAL / BLOCKED_SOURCE_TRANSLATION`。
+- **基线与修复**：42例257结果共1285个CJK信号，23/60医嘱无非CJK别名。现优先已有英文别名；缺别名、分类、提示、查体或结果翻译时显示待审核英文占位并禁用不可安全选择项。API P008英文CBC和desktop/mobile UI报告均0 CJK。
+- **人工阻塞**：23个名称及其余翻译须来源/专家审核；没有自动翻译、改极性、改事实或更改审核状态。
