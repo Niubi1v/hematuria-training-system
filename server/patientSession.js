@@ -520,6 +520,29 @@ function safeFallbackForQuestion(question, profile, language = "zh") {
   return { replyText: oneBullet(matched, language), safetyFlags: ["llm_error_fallback"] };
 }
 
+function isNaturalClarificationRequest(question, language = "zh") {
+  const text = String(question || "");
+  return language === "en"
+    ? /\b(?:clarify|explain)\b.*\b(?:other|that|this|part|point)\b|\b(?:what|which) (?:part|point) (?:do you mean|are you referring to)\b/i.test(text)
+    : /(?:解释|说明|说清楚).*(?:另一|其他|刚才|这个|那个|部分)|(?:哪一|哪个).*(?:部分|方面|意思)/.test(text);
+}
+
+function isContextualRecap(question, language = "zh") {
+  const text = String(question || "");
+  return language === "en"
+    ? /(?:\bso\b|\bjust to confirm\b|\bcorrect\??$|\bright\??$)/i.test(text)
+    : /(?:确认一下|再确认|也就是说|对吗|是吗)[？?]?$/.test(text);
+}
+
+function clarificationReply(language = "zh") {
+  return {
+    replyText: language === "en"
+      ? "Could you clarify which part you mean?"
+      : "您具体是想问哪一方面？",
+    safetyFlags: []
+  };
+}
+
 const patientPrompt = `
 你是血尿临床思维训练系统中的标准化病人，不是医生、教师或病历摘要器。
 你只能根据 currentAllowedAnswer 回答问题。currentAllowedAnswer 是本轮唯一允许使用的医学事实，必须保持它的肯定、否定、数量和时间含义，不得改成“不清楚”。
@@ -580,10 +603,13 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     && !boundaryDetailIntent.test(String(studentInput || ""))
     && matchedSlotIds.length > 0
     && matchedSlotIds.every((slotId) => historyBoundarySlotIds.has(slotId));
+  const isTemporalFindingQuestion = matchedSlotIds.includes("hematuria_onset")
+    && /什么时候|多久|几天|几周|几个月|何时|when|how long/i.test(String(studentInput || ""))
+    && !/结果|数值|多少个|显示|提示|报告内容|what.*result|result.*(?:show|value)|report.*(?:show|say)/i.test(String(studentInput || ""));
   if (!isExplicitHistoryQuestion && hasAny(studentInput, language === "en" ? diagnosisWordsEn : diagnosisWords)) {
     return { replyText: language === "en" ? "I do not know the diagnosis. The doctor will need to decide." : "这个我不清楚，需要医生判断。", provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, safetyFlags: ["blocked_diagnosis_request"], matchedSlotIds: [], matchedFacts: [], answerSource: "rule", confidence: 1, fallbackReason: "diagnosis_boundary" };
   }
-  if (!isExplicitHistoryQuestion && hasAny(studentInput, language === "en" ? reportWordsEn : reportWords)) {
+  if (!isExplicitHistoryQuestion && !isTemporalFindingQuestion && hasAny(studentInput, language === "en" ? reportWordsEn : reportWords)) {
     return { replyText: language === "en" ? "I cannot explain the exact results. Please check the formal report." : "我说不清楚，得看检查报告。", provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, safetyFlags: ["blocked_report_request"], matchedSlotIds: [], matchedFacts: [], answerSource: "rule", confidence: 1, fallbackReason: "report_boundary" };
   }
   let semanticDecision = null;
@@ -603,7 +629,11 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   // 不依赖另一个实例的内存缓存，也不信任客户端传回的数据完整性。
   const authoritativeProfile = caseData ? localCompleteProfile(buildRawPatientFacingProfile(caseData)) : null;
   const runtimeProfile = authoritativeProfile || session?.completedPatientFacingProfile || completedPatientFacingProfile;
-  const genericFallback = safeFallbackForQuestion(studentInput, runtimeProfile, language);
+  const naturalClarification = !matched && isNaturalClarificationRequest(studentInput, language);
+  const contextualRecap = Boolean(matched) && isContextualRecap(studentInput, language);
+  const genericFallback = naturalClarification
+    ? clarificationReply(language)
+    : safeFallbackForQuestion(studentInput, runtimeProfile, language);
   const quarantine = quarantineForMatchedSlots(caseId, matched?.governanceSlotIds || matched?.matchedSlotIds || []);
   if (quarantine.conflictingSlotIds.length) {
     safeLogger.warn("patient_fact_quarantined", { caseId, slotIds: quarantine.conflictingSlotIds, reason: BILINGUAL_CONFLICT_REASON });
@@ -663,7 +693,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
       fallbackReason: "unsafe_deterministic_answer"
     };
   }
-  if (semanticDecision && !semanticDecision.accepted) {
+  if (semanticDecision && !semanticDecision.accepted && !naturalClarification) {
     if (promptAuditEnabled()) {
       auditPatientPrompt({
         caseId, language, canonicalIntents: [], matcherLayer: "semantic_classifier", matcherConfidence: semanticDecision.confidence || 0,
@@ -674,7 +704,9 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     }
     return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, answerSource: "unknown", confidence: 0, fallbackReason: semanticDecision.reason };
   }
-  if ((fallback.matchedSlotIds || []).length > 1) return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, fallbackReason: "compound_question_preserves_all_facts" };
+  if ((fallback.matchedSlotIds || []).length > 1 && !contextualRecap) {
+    return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, fallbackReason: "compound_question_preserves_all_facts" };
+  }
   if (!runtimeProfile) return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] } };
 
   const config = getLLMProviderConfig();

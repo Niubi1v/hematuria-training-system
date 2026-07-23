@@ -2,9 +2,9 @@ const bilingualSlots = require("../data/patient_slots_bilingual.json");
 const { asksIndependentGeneralPain, matchPriorityCanonicalIntents, priorityIntentDefinitions } = require("../src/lib/patientIntentCatalog.js");
 
 const matchers = [
-  ["chief_complaint", /哪里不舒服|为什么来|主诉|怎么回事|what brings you|what is wrong|main complaint/i],
+  ["chief_complaint", /哪里不舒服|为什么来|主诉|怎么回事|用自己的话.*(?:不舒服|经过|为什么)|what brings you|what is wrong|main complaint|in your own words.*(?:why|what happened)|describe what happened.*in your own words|why you came/i],
   ["hematuria_visibility", /肉眼|镜下|看得见|尿潜血|visible blood|gross hematuria|microscopic|urine test.*blood/i],
-  ["hematuria_onset", /什么时候|多久|几天|几周|几个月|起病|when did|how long|when.*start|onset/i],
+  ["hematuria_onset", /什么时候|多久|几天|几周|几个月|起病|今天才.*(?:出现|开始)|血尿.*外伤后|when did|how long|when.*start|onset|(?:only )?started today|blood.*after.*injur/i],
   ["hematuria_frequency", /间断|持续|每次|频率|反复|intermittent|continuous|every time|how often|frequency/i],
   ["hematuria_phase", /全程|开始红|起始|终末|快尿完|最后几滴|一直红|throughout|whole stream|beginning.*(?:red|end)|from beginning to end|terminal|end of urination|last drops/i],
   ["urine_color", /鲜红|暗红|洗肉水|茶色|酱油色|什么颜色|什么色|尿色|小便.*(?:颜色|色)|bright red|dark red|tea.colou?r|cola.colou?r|(?:urine|pee).*colou?r|what colou?r.*(?:urine|pee)/i],
@@ -213,6 +213,31 @@ function factValueForIntent(intentKey, classification) {
   return "unknown";
 }
 
+function conciseLegacySlotAnswer(caseSlots, slotId, language, question) {
+  const slot = caseSlots[slotId];
+  if (slotId !== "hematuria_onset") return slot?.[language === "en" ? "patientAnswerEn" : "patientAnswerZh"];
+
+  const answerZh = String(slot?.patientAnswerZh || "");
+  const questionText = String(question || "");
+  const injuryRelationQuestion = /血尿.*外伤后|blood.*after.*injur/i.test(questionText);
+  const injuryRelationConfirmed = /(?:外伤|事故|撞击)[^。；]{0,50}(?:随后|之后|后)[^。；]{0,30}(?:血尿|尿.*红)|(?:随后|之后|后)[^。；]{0,30}(?:血尿|尿.*红)/.test(answerZh);
+  if (injuryRelationQuestion && injuryRelationConfirmed) {
+    return language === "en"
+      ? "Yes, I noticed the blood in my urine after the injury."
+      : "是的，血尿是在受伤以后才出现的。";
+  }
+
+  const chiefZh = String(caseSlots.chief_complaint?.patientAnswerZh || "");
+  const durationZh = chiefZh.match(/([半\d一二两三四五六七八九十]+(?:小时|天|日|周|月|个月|年)(?:余|多|左右)?)/)?.[1];
+  if (language === "zh" && durationZh) return `大约${durationZh}前开始的。`;
+
+  const chiefEn = String(caseSlots.chief_complaint?.patientAnswerEn || "");
+  const durationEn = chiefEn.match(/\bfor\s+([^.,;]+)$/i)?.[1]?.trim();
+  if (language === "en" && durationEn) return `I first noticed it ${durationEn} ago.`;
+
+  return slot?.[language === "en" ? "patientAnswerEn" : "patientAnswerZh"];
+}
+
 function projectCanonicalPatientFacts(caseId, intentKeys, language = "zh", question = "") {
   const caseSlots = bilingualSlots[caseId];
   if (!caseSlots) return null;
@@ -267,7 +292,7 @@ function buildCanonicalPatientFacts(caseSlots, priorityMatches, legacyMatchedSlo
         .map((item) => naturalBooleanAnswer(item.intentKey, factValues[item.intentKey], language))
         .join("\n");
     }
-    return caseSlots[slotId]?.[language === "en" ? "patientAnswerEn" : "patientAnswerZh"];
+    return conciseLegacySlotAnswer(caseSlots, slotId, language, question);
   }).filter(Boolean);
   if (!answers.length) return null;
   const matchedFacts = [
@@ -314,7 +339,11 @@ function matchCanonicalPatientFacts(caseId, question, language = "zh") {
   const caseSlots = bilingualSlots[caseId];
   if (!caseSlots) return null;
   const priorityMatches = matchPriorityCanonicalIntents(question, language);
-  const legacyMatchedSlotIds = matchers.filter(([, pattern]) => pattern.test(question)).map(([slotId]) => slotId);
+  let legacyMatchedSlotIds = matchers.filter(([, pattern]) => pattern.test(question)).map(([slotId]) => slotId);
+  if (/血尿.*外伤后|blood.*after.*injur/i.test(String(question || ""))
+      && legacyMatchedSlotIds.includes("hematuria_onset")) {
+    legacyMatchedSlotIds = legacyMatchedSlotIds.filter((slotId) => slotId !== "triggers");
+  }
   return buildCanonicalPatientFacts(caseSlots, priorityMatches, legacyMatchedSlotIds, language, question);
 }
 
