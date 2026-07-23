@@ -1,7 +1,8 @@
 # POC 选择性移植矩阵
 
 来源 POC：`b753dca077881e5692fc44c7665b88fdb5054579`
-Production 来源：`141f5bb64dc7a74e83f9bc1d9615197eb543d970`
+初始 Production 来源：`141f5bb64dc7a74e83f9bc1d9615197eb543d970`
+当前绿色 Production 基线：`c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2`
 merge-base：`70ea9b3c7b31e11a84878de5c277cac60f35481c`
 
 | POC 内容 | 状态 | 本分支处理 |
@@ -28,7 +29,7 @@ merge-base：`70ea9b3c7b31e11a84878de5c277cac60f35481c`
 | 地域性能对照 | PORTED | 新增相同窗口双目标脚本与三地执行合同，不预设结论。 |
 | POC 对 `api/agent-chat.js` 的旧上下文整体变更 | REJECTED | 只手工加入生成来源元数据，保留 5 个 Production 后续修复。 |
 | POC 对 `server/patientSession.js` 的旧版本覆盖 | REJECTED | 未移植旧文件；只在当前 Production 行上增加 safe_mock 元数据和 SESSION_TTL_SECONDS 别名。 |
-| POC 对 canonical intent/session capability/attempt token/第一阶段/360 分/医学治理/日志脱敏/安全拒绝的任何旧实现 | ALREADY_SUPERSEDED | 以 `141f5bb` Production 实现为准，无 POC 覆盖。 |
+| POC 对 canonical intent/session capability/attempt token/第一阶段/360 分/医学治理/日志脱敏/安全拒绝的任何旧实现 | ALREADY_SUPERSEDED | 以 `c4ac9b5` Production 应用树为准，无 POC 覆盖。 |
 | POC 分支整体 merge/cherry-pick | REJECTED | 未执行。 |
 
 ## Production 自 merge-base 的保留修复
@@ -38,5 +39,9 @@ merge-base：`70ea9b3c7b31e11a84878de5c277cac60f35481c`
 - `04d572f`：未审核 Data Agent 输出 fail-closed。
 - `86f5ad9`：复合问句中的独立疼痛意图。
 - `141f5bb`：QA P1 修复证据。
+- `6c1d42c`：精确依赖审计修复。
+- `c9f7807`：依赖审计恢复证据。
+- `77df23d`：Preview 英文纠错与上下文追问黑盒回归。
+- `c4ac9b5`：QA P1 远端验证收口。
 
 上述提交全部位于专项分支祖先链中。

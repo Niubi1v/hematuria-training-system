@@ -4,7 +4,8 @@
 
 ## 来源与 Git 边界
 
-- Production 来源 HEAD：`141f5bb64dc7a74e83f9bc1d9615197eb543d970`
+- 初始 Production 来源 HEAD：`141f5bb64dc7a74e83f9bc1d9615197eb543d970`
+- 更新后的绿色 Production 基线：`c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2`
 - POC 来源 HEAD：`b753dca077881e5692fc44c7665b88fdb5054579`
 - merge-base：`70ea9b3c7b31e11a84878de5c277cac60f35481c`
 - 专项分支：`codex/hematuria-mainland-staging-integration`
@@ -14,7 +15,9 @@
 
 ## 基线核验
 
-2026-07-23 拉取远程后，Production HEAD 的 Vercel 状态为成功；GitHub Actions run `30008877764` 失败在 `pnpm audit --audit-level high`，因此不能宣称来源 HEAD 全绿。失败发生在业务测试、Playwright 与构建之前，涉及当日新披露的 Next.js、Sharp、brace-expansion advisories。专项分支将 Next.js、相关 ESLint 包精确固定为 `15.5.21`，新增标准 Redis 客户端 `redis@6.1.0`，并用 workspace overrides 固定 `sharp@0.35.0`、`brace-expansion@1.1.16`/`5.0.7`。高危审计由 3 high + 1 moderate 降为 0 high/critical + 1 moderate，`pnpm audit --audit-level high` 退出码为 0。
+2026-07-23 初始 Production HEAD 的 Vercel 状态为成功，但 GitHub Actions run `30008877764` 失败在 `pnpm audit --audit-level high`。随后 Production 更新到绿色基线 `c4ac9b5`，包含精确依赖修复、审计证据、Preview 上下文追问黑盒测试和 QA P1 远端验证收口；专项分支已用普通 merge 合入，没有整体 merge 旧 POC。专项保留 `redis@6.1.0`，并与 Production 一致固定 Next.js/相关 ESLint 包 `15.5.21`、`sharp@0.35.0`、`brace-expansion@1.1.16`/`5.0.7`。
+
+合入后 `pnpm audit --audit-level high` 退出码为 0，当前为 0 high、0 critical、1 moderate。剩余项是 Next.js 内嵌 `postcss@8.4.31` 的 `GHSA-qx2v-qp2m-jg93`；风险场景需要攻击者控制传入 PostCSS stringify 的 CSS 并构造未转义 `</style>`。本系统运行时不接收、解析或 stringify 用户 CSS，CSS 仅来自受控仓库构建输入，因此当前应用路径不可达。直接覆盖 Next 内嵌构建依赖可能破坏 Production 兼容性，本专项不为追求 audit 全零进行无依据替换；继续跟随 Next.js 官方兼容升级。
 
 依赖下载只使用 `registry.npmjs.org` 与 `cdn.sheetjs.com`。SheetJS 继续使用既有固定 tarball `xlsx-0.20.3.tgz`，完整性仍为 `sha512-oLDq3jw7AcLqKWH2AhCpVTZl8mf6X2YReP+Neh0SJUzV/BdZYjth94tG5toiMB1PPrYtxOCfaoUCkvtuH+3AJA==`；没有改用 `latest`，也没有改变其锁文件完整性。
 
@@ -32,6 +35,8 @@
 ## 当前本地证据
 
 - PASS：`pnpm install --frozen-lockfile`、高危 audit、TypeScript、ESLint、全量行为与医学治理测试。
+- PASS：最新 Patient Agent 为 840/840 自然问法、1428/1428 canonical checks、3150/3150 矩阵；HEM-P1-051 英文纠错、澄清、P037/P038 多轮、provider fallback 与下一轮恢复通过。
+- PASS：Data Agent 新展示合同为 28 个待审 metadata、23 个英文不可用 order name、英文 API CJK 信号 0，且 `dataChanged=false`。
 - PASS：标准构建生成 82 个静态页面；bundle 扫描覆盖 25 个 JavaScript 资产；repository secret scan 通过。
 - PASS：Playwright 共 82 项，80 passed、2 个预期矩阵跳过；42 例中英文七阶段流程通过。
 - PASS：Docker 多阶段 Node 22.14 镜像、Compose、HTTP Nginx、应用、Redis、safe_mock 均健康；只有 Nginx 绑定 `127.0.0.1:8080`，Node、Redis、mock 未暴露公网端口。
@@ -41,6 +46,8 @@
 - PASS：仓库 secret scan；`data/**` 零差异；`git diff --check`。
 - PARTIAL：HTTPS Nginx 模板具备 TLS/CSP 配置，但真实证书链、自动续期与公网域名只能在用户购买资源并完成备案后验收。
 - NOT RUN：真实 DeepSeek、三地域公网对照、云 Redis 备份恢复；这些需要用户后续提供资源和授权，不能由 safe_mock 代替。
+
+本地 Windows 工具链当前由受管 Node 24 提供，因此本地行为/Playwright结果不能单独声称为 Node 22 完整门禁；Docker 构建、82 页生成与 Redis adapter 已在固定 `node:22.14.0` 镜像内通过。最终 Node 22 完整门禁以专项分支 push 后的 GitHub Actions 为准。
 
 ## 规格
 
