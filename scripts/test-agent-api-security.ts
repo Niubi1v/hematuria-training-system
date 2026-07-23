@@ -147,9 +147,12 @@ async function verifyRateLimit(handler: ApiHandler, label: string) {
 
 async function verifyProviderFailureNonDisclosure(session: AuthorizedSession) {
   const originalFetch = globalThis.fetch;
+  const originalWarn = console.warn;
+  const warnings: string[] = [];
   process.env.LLM_ENABLE_AI_PATIENT = "true";
   process.env.LLM_API_BASE_URL = "https://api.example.test";
   process.env.LLM_MODEL = "test-model";
+  console.warn = (...items: unknown[]) => { warnings.push(JSON.stringify(items)); };
   globalThis.fetch = async () => { throw new Error("unit-test-secret-must-not-appear private-patient-content"); };
   try {
     const response = await call(agentHandler, {
@@ -161,8 +164,10 @@ async function verifyProviderFailureNonDisclosure(session: AuthorizedSession) {
     assert.equal(response.statusCode, 200, "provider failure should use the safe rule fallback");
     assert.doesNotMatch(JSON.stringify(response.payload), /private-patient-content|unit-test-secret/);
     assert.doesNotMatch(JSON.stringify(response.payload), /allowedAnswer|responseFilter|"error"/);
+    assert.doesNotMatch(warnings.join("\n"), /private-patient-content|unit-test-secret/, "provider failures must be redacted before logger output");
   } finally {
     globalThis.fetch = originalFetch;
+    console.warn = originalWarn;
     delete process.env.LLM_ENABLE_AI_PATIENT;
     delete process.env.LLM_API_BASE_URL;
     delete process.env.LLM_MODEL;
@@ -251,6 +256,44 @@ async function verifySessionClaimBinding() {
   });
   assert.equal(wrongMode.statusCode, 409, "session mode must be derived from the authoritative attempt");
   assert.deepEqual(wrongMode.payload, { error: "attempt_mode_mismatch" });
+}
+
+async function verifySessionRequestBoundary() {
+  const attemptId = `session-request-boundary-${Date.now()}`;
+  const trainingRequestId = `${attemptId}:training-init`;
+  const training = await call(trainingHandler, {
+    origin: "https://allowed.example", ip: "session-boundary-training",
+    headers: { "x-idempotency-key": trainingRequestId },
+    body: { action: "init-attempt", caseId: "P001", attemptId, mode: "free", language: "zh", requestId: trainingRequestId }
+  });
+  assert.equal(training.statusCode, 200);
+  const authorizedHeaders = { "x-training-state": training.headers["x-training-state"] };
+
+  for (const field of ["model", "systemPrompt", "tools", "apiKey"] as const) {
+    const response = await call(sessionHandler, {
+      origin: "https://allowed.example", ip: `session-field-${field}`,
+      headers: { ...authorizedHeaders, "x-idempotency-key": `session-field-${field}` },
+      body: { caseId: "P001", attemptId, mode: "free", language: "zh", [field]: "attacker-controlled" }
+    });
+    assert.equal(response.statusCode, 400, `${field} must not be accepted by the session endpoint`);
+    assert.deepEqual(response.payload, { error: "unexpected_request_field" });
+  }
+
+  const invalidLanguage = await call(sessionHandler, {
+    origin: "https://allowed.example", ip: "session-invalid-language",
+    headers: { ...authorizedHeaders, "x-idempotency-key": "session-invalid-language" },
+    body: { caseId: "P001", attemptId, mode: "free", language: "fr" }
+  });
+  assert.equal(invalidLanguage.statusCode, 400, "unsupported languages must not silently normalize to Chinese");
+  assert.deepEqual(invalidLanguage.payload, { error: "invalid_language" });
+
+  const longIdempotencyKey = await call(sessionHandler, {
+    origin: "https://allowed.example", ip: "session-long-idempotency",
+    headers: { ...authorizedHeaders, "x-idempotency-key": "x".repeat(201) },
+    body: { caseId: "P001", attemptId, mode: "free", language: "zh" }
+  });
+  assert.equal(longIdempotencyKey.statusCode, 400, "oversized idempotency keys must be rejected instead of truncated");
+  assert.deepEqual(longIdempotencyKey.payload, { error: "idempotency_key_too_long" });
 }
 
 async function verifyGenerationSourceClassification(session: AuthorizedSession) {
@@ -722,6 +765,7 @@ async function main() {
   await verifyOptionalServerToken(sessionHandler);
   await verifySessionIdempotency();
   await verifySessionClaimBinding();
+  await verifySessionRequestBoundary();
   const session = await createAuthorizedSession("shared-agent");
   await verifySessionCapabilityBoundary(session);
   await verifyGenerationSourceClassification(session);

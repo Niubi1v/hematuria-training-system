@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Circle, Clock3, Filter, Languages, Search, Shuffle, X } from "lucide-react";
 import { publicCaseHref, publicPageHref } from "@/src/lib/publicRoutes";
+import { simplifiedChiefComplaint } from "@/src/lib/chiefComplaint";
 
 export type PublicCase = {
   id: string;
@@ -55,7 +56,7 @@ export default function CaseCatalogClient({ cases }: { cases: PublicCase[] }) {
     ageLabel: item.age,
     sexLabel: lang === "en" ? item.sexEn : item.sex,
     difficultyLabel: lang === "en" ? item.difficultyEn || item.difficulty : item.difficulty,
-    complaint: lang === "en" ? item.chiefComplaintEn : item.studentChiefComplaint,
+    complaint: simplifiedChiefComplaint(item.studentChiefComplaint, lang, item.chiefComplaintEn),
     sourceLabel: item.sourceGroup === "supplementary"
       ? (lang === "en" ? "Supplementary" : "补充病例")
       : (lang === "en" ? "V2 core" : "V2核心")

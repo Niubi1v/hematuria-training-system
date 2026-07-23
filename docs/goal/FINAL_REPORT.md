@@ -499,3 +499,34 @@
 
 - `DEFECT_LOG.md`末尾的“P0/P1权威状态索引”是当前状态入口；前文的待push、待CI和旧Preview描述保留为时间点证据，不再被解释为当前开放工程缺陷。
 - 当前无待实现或待CI的可重复P0/P1工程问题。HEM-P0-001/023仍为OPEN/HUMAN，Production、真机、人工自然度、正式教师/RCT/OSCE及合并后Pages仍为外部验收，故整个Production Goal继续执行中。
+
+### 2026-07-20 教师验收整改本地候选
+
+- 导师实测版本已确认是公开GitHub Pages `main@5a3ad119`，而非当前Production Goal。旧站使用`HX-ADD-*`内部路由和跨域Production API；training-action预检漏允许`X-Request-Id`是截图CORS失败的准确根因。
+- 当前完整站继续采用Vercel前端/API同源；Pages保留精确origin CORS但只作为静态发布。公开Pages在Draft PR期间不会更新，不能用手工部署或合并main解决。版本、路由和API差异见`TEACHER_ACCEPTANCE_VERSION_MATRIX.md`。
+- 自主优化四项均逐提交引入，当前候选保留3150/3150和1008/1008，错误unknown及极性错误均为0。新增受限语义分类仅选白名单intent；事实值、治理、HEM-P0-023隔离和计分边界完全复用现有canonical投影。
+- Prompt审计只在本地显式启用，Production/Vercel强制关闭；完整Prompt、payload、问答、凭据及Error正文不进入日志。合成canary、Agent provider失败日志和repository scanner均通过。
+- 本地完整行为、TypeScript、ESLint、72/2 Playwright、两种82页构建、两次25 JS bundle、336文件/历史secret scan及`data/**`零差异均通过。Node22、Actions、Vercel新SHA和真实Preview冒烟仍待push后验收；PR继续Draft。
+- 国内部署建议为同一受控域名内的前端、API、Redis和AI代理，不是教师访问localhost。具体比较见`DEPLOYMENT_FEASIBILITY_REPORT.md`；本轮没有迁移、部署或修改环境变量。
+- 教师后续入口和复测步骤见`TEACHER_TEST_ENTRY.md`。在新Preview完成前，不把当前branch alias写成已部署本候选。
+- 本轮代码/测试提交为`0a9a85c`；回滚应使用普通`git revert 0a9a85c`并重新运行安全门禁，不得reset或force push。
+
+### 2026-07-20 教师验收候选CI恢复补充
+
+- 首次推送候选`4ff2d04`的Actions run `29712230950`在Node 22.14失败；第一条真实错误是自然主诉UI格式化改动使3个英文生成物不再幂等，不是Playwright、医学门禁或部署失败。
+- `0b5acb7`以独立稳定生成格式化器隔离UI展示演进和生成基线，未接受/提交任何`data/**`变化。提交后75输出隔离幂等性、42例资料与路由、TypeScript、ESLint、两种82页build、bundle与secret scan均通过。
+- 该修复可单独普通`git revert 0b5acb7`回滚，但回滚会重新暴露Conversion idempotency失败；不得以重生成并提交待复核主诉的方式替代。新HEAD的Actions、Vercel和真实Preview结果仍待发布链补证，PR继续Draft。
+
+### 2026-07-20 Preview能力会话竞态补充
+
+- `363aa17`远程Node 22门禁和Vercel部署已通过，但真实Preview UI仍准确复现P001首问401 `session_capability_required`；因此没有把该SHA标记为教师验收完成。P003零轮提交成功，且同SHA的API级session 10/10和中英文live AI各5/5只说明服务配置正常。
+- 最小候选将agent-chat发送与服务端session capability就绪绑定，并增加不泄值的`sessionCapabilityPresent`证据。延迟初始化期间按钮/Enter不发请求，签发后只发一次；完整本地Playwright 74 passed/2 skipped、两种82页build、TypeScript、ESLint、bundle与secret scan通过，`data/**`零差异。
+- 新候选仍须原子提交、普通push和新SHA真实Preview 8场景复测；PR继续Draft，不合并main、不部署Production。回滚使用普通`git revert <capability-race-commit>`，不得reset或force push。
+
+### 2026-07-20 Preview能力会话竞态最终结论
+
+- 修复`1aa79c1`与证据提交`296bf7e`已普通push；远程Production Goal HEAD为`296bf7e6f2e797c634c762b67488b279dfe59a37`。Actions run `29719580921`完成并success，Vercel Deployment和Preview Comments success，PR #1仍Open/Draft，Pages发布按规则跳过。
+- 新部署的受保护Preview黑盒8/8通过。P001中文与英文首问均在服务端session capability就绪后只发出合法agent-chat，DeepSeek来源为`live_ai`，history-log与阶段提交均200；P003零轮、双向切换、刷新、快速双击和进入第二阶段均成功。此前401 `session_capability_required`不再复现。
+- 稳定性补证为session 10/10、中文live AI/history-log 5/5、英文5/5；回答P95分别1534ms和1327ms。Preview输出扫描通过且未跨origin注入保护头。云TTS 403继续安全降级浏览器语音，未登记为真实云TTS通过。
+- HEM-P1-049现为ENGINEERING CLOSED / REMOTE PREVIEW VERIFIED。当前推荐长期QA从`296bf7e6f2e797c634c762b67488b279dfe59a37`复测；教师应使用受控Vercel审阅入口，不再使用`main@5a3ad119`旧GitHub Pages作为完整AI验收入口。
+- 回滚顺序为普通`git revert 296bf7e`（文档）后`git revert 1aa79c1`（能力门槛）；任何回滚仍需重新通过Node 22、Preview安全与阶段提交流程，不得reset、force push或修改医学审批状态。

@@ -1,5 +1,5 @@
 const bilingualSlots = require("../data/patient_slots_bilingual.json");
-const { asksIndependentGeneralPain, matchPriorityCanonicalIntents } = require("../src/lib/patientIntentCatalog.js");
+const { asksIndependentGeneralPain, matchPriorityCanonicalIntents, priorityIntentDefinitions } = require("../src/lib/patientIntentCatalog.js");
 
 const matchers = [
   ["chief_complaint", /哪里不舒服|为什么来|主诉|怎么回事|what brings you|what is wrong|main complaint/i],
@@ -7,7 +7,7 @@ const matchers = [
   ["hematuria_onset", /什么时候|多久|几天|几周|几个月|起病|when did|how long|when.*start|onset/i],
   ["hematuria_frequency", /间断|持续|每次|频率|反复|intermittent|continuous|every time|how often|frequency/i],
   ["hematuria_phase", /全程|开始红|起始|终末|快尿完|最后几滴|一直红|throughout|whole stream|beginning.*(?:red|end)|from beginning to end|terminal|end of urination|last drops/i],
-  ["urine_color", /鲜红|暗红|洗肉水|茶色|酱油色|什么颜色|尿色|bright red|dark red|tea.colou?r|cola.colou?r|urine colou?r/i],
+  ["urine_color", /鲜红|暗红|洗肉水|茶色|酱油色|什么颜色|什么色|尿色|小便.*(?:颜色|色)|bright red|dark red|tea.colou?r|cola.colou?r|(?:urine|pee).*colou?r|what colou?r.*(?:urine|pee)/i],
   ["clots", /血块|血凝块|凝血块|blood clots?/i],
   ["dysuria", /尿痛|小便疼|排尿痛|烧灼|dysuria|burning.*urina|painful urination|hurt.*urinate/i],
   ["flank_pain", /腰痛|肾区痛|flank pain|loin pain/i],
@@ -16,10 +16,10 @@ const matchers = [
   ["pain", /疼不疼|有没有痛|疼痛|\bpain\b|does it hurt|any pain/i],
   ["urinary_frequency", /尿频|小便次数多|urinary frequency|frequent urination|urinate often|urinat(?:e|ing) more often/i],
   ["urinary_urgency", /尿急|憋不住|\burgency\b|urgent need|cannot hold urine/i],
-  ["voiding_difficulty", /排尿困难|尿线细|尿流中断|尿不尽|排尿费力|difficulty urinating|weak stream|incomplete emptying|straining/i],
+  ["voiding_difficulty", /排尿困难|尿线细|尿流中断|尿不尽|排尿费力|排尿费不费劲|膀胱.*没排空|difficulty urinating|weak stream|incomplete emptying|straining/i],
   ["retention", /尿潴留|尿不出来|urinary retention|cannot pass urine|unable to pass urine/i],
-  ["fever_chills", /发热|发烧|寒战|畏寒|体温|fever|chills?|rigors?|temperature/i],
-  ["glomerular_features", /泡沫尿|水肿|眼睑肿|下肢肿|foamy urine|frothy urine|edema|oedema|swelling/i],
+  ["fever_chills", /发热|发烧|有没有烧|寒战|畏寒|体温|fever|chills?|rigors?|temperature/i],
+  ["glomerular_features", /泡沫尿|水肿|眼睑肿|下肢肿|foamy urine|frothy urine|bubbly.*(?:urine|pee)|edema|oedema|swelling|puffiness/i],
   ["recent_uri", /感冒|咽痛|扁桃体炎|cold|sore throat|tonsillitis|upper respiratory/i],
   ["triggers", /运动|劳累|受凉|外伤|性生活|导尿|尿路操作|exercise|exertion|trauma|sexual activity|catheter|urinary procedure/i],
   ["prior_care", /以前看过医生|之前看过医生|之前治疗过|接受过治疗|seen a doctor before|previous treatment|treated for this before/i],
@@ -213,12 +213,19 @@ function factValueForIntent(intentKey, classification) {
   return "unknown";
 }
 
-function matchCanonicalPatientFacts(caseId, question, language = "zh") {
+function projectCanonicalPatientFacts(caseId, intentKeys, language = "zh", question = "") {
   const caseSlots = bilingualSlots[caseId];
   if (!caseSlots) return null;
-  const priorityMatches = matchPriorityCanonicalIntents(question, language);
+  const allowedKeys = new Set(Array.isArray(intentKeys) ? intentKeys : []);
+  const priorityMatches = priorityIntentDefinitions
+    .filter((definition) => allowedKeys.has(definition.key))
+    .map((definition) => ({ intentKey: definition.key, sourceSlotId: definition.sourceSlotId, confidence: 1, matchedAlias: "", matcherType: "semantic_classifier" }));
+  if (!priorityMatches.length) return null;
+  return buildCanonicalPatientFacts(caseSlots, priorityMatches, [], language, question);
+}
+
+function buildCanonicalPatientFacts(caseSlots, priorityMatches, legacyMatchedSlotIds, language, question) {
   const prioritySourceSlots = new Set(priorityMatches.map((item) => item.sourceSlotId));
-  const legacyMatchedSlotIds = matchers.filter(([, pattern]) => pattern.test(question)).map(([slotId]) => slotId);
   const matchedSlotIds = [...new Set([...prioritySourceSlots, ...legacyMatchedSlotIds])];
   if (prioritySourceSlots.has("urinary_frequency")) {
     const hematuriaFrequencyIndex = matchedSlotIds.indexOf("hematuria_frequency");
@@ -276,6 +283,8 @@ function matchCanonicalPatientFacts(caseId, question, language = "zh") {
     ...slotIds.filter((slotId) => !prioritySourceSlots.has(slotId))
   ])];
   const unresolvedReasons = Object.values(factValueReasons).filter((reason) => reason !== "known");
+  const provenances = [...new Set(slotIds.map((slotId) => caseSlots[slotId]?.provenance).filter(Boolean))];
+  const teacherReviewRequired = slotIds.some((slotId) => caseSlots[slotId]?.teacherReviewRequired === true);
   return {
     replyText: [...new Set(answers)].join("\n"),
     matchedSlotIds: slotIds,
@@ -285,6 +294,14 @@ function matchCanonicalPatientFacts(caseId, question, language = "zh") {
     collectableFacts: [...new Set(collectableFacts)],
     factValues,
     factValueReasons,
+    matchedAliases: [...new Set(priorityMatches.map((item) => item.matchedAlias).filter(Boolean))],
+    matcherLayer: priorityMatches.some((item) => item.matcherType === "semantic_classifier")
+      ? "semantic_classifier"
+      : priorityMatches.length > 1
+        ? "compound_canonical"
+        : priorityMatches[0]?.matcherType || "legacy_canonical",
+    provenance: provenances.join("+") || "unknown",
+    reviewerStatus: teacherReviewRequired ? "teacher_review_required" : "not_required",
     unresolvedReason: unresolvedReasons.includes("unsafe_deterministic_answer") ? "unsafe_deterministic_answer" : unresolvedReasons.length ? "canonical_fact_unknown" : "",
     answerSource: "case_bilingual_slot",
     confidence: Object.values(factValues).some((value) => value === "unknown") ? 0.5 : 0.99,
@@ -293,4 +310,12 @@ function matchCanonicalPatientFacts(caseId, question, language = "zh") {
   };
 }
 
-module.exports = { matchCanonicalPatientFacts };
+function matchCanonicalPatientFacts(caseId, question, language = "zh") {
+  const caseSlots = bilingualSlots[caseId];
+  if (!caseSlots) return null;
+  const priorityMatches = matchPriorityCanonicalIntents(question, language);
+  const legacyMatchedSlotIds = matchers.filter(([, pattern]) => pattern.test(question)).map(([slotId]) => slotId);
+  return buildCanonicalPatientFacts(caseSlots, priorityMatches, legacyMatchedSlotIds, language, question);
+}
+
+module.exports = { matchCanonicalPatientFacts, projectCanonicalPatientFacts };

@@ -600,3 +600,36 @@
 - 对`DEFECT_LOG.md`逐ID读取最后状态时发现，部分早期条目仍保留“待CI/待push”历史措辞，虽然后续总括及最终run已经关闭。这会让自动完成度审计产生假开放项。
 - 新增文件末尾权威索引：医学P0保持OPEN/HUMAN；已修复工程P0/P1集中标记ENGINEERING CLOSED；Production、真机、自然度和正式系统能力单列EXTERNAL/HUMAN。历史失败证据不删除、不重写。
 - 状态索引引用此前验收证据HEAD `270c20b`的run `29672230597`及现有Preview证据；不把文档整理冒充新的应用测试，也不改变任何业务或医学数据。
+
+### 教师验收整改候选（2026-07-20）
+
+- 已确认导师访问的是公开GitHub Pages `main@5a3ad119`，不是当前Production Goal。Pages deployment `5410354110`创建于2026-07-12；页脚同样显示`5a3ad11`。旧`HX-ADD-004`路径实际映射到当前显示病例P016，且旧training-action预检未允许`X-Request-Id`，所以截图为可解释的旧版本CORS失败，不是网络速度问题。
+- 自主优化分支`02ac499`的四个提交经逐项diff审查后选择性cherry-pick：`79fd6fa`、`db28ef8`、`f9976f1`、`b116dc0`。没有整体merge分支，没有覆盖当前session/attempt/history-log/Redis/安全修复，也没有修改`data/**`、医学事实、审核状态或360分算法。
+- 保留15个canonical intent与自然问法门禁：3150/3150、1008/1008，known错误unknown=0、极性错误=0。新增第4层白名单语义分类器仅在前三层和structured matcher均未命中后工作；strict JSON、阈值0.92、2.5秒、0 retry、缓存、singleflight与30/分钟有界限流。分类器不接收病例数据、不生成答案，最终值仍由canonical投影和治理隔离决定；默认需服务端显式启用，不改Preview/Production环境。
+- 新增本地专用Prompt审计和统一server logger。`PATIENT_PROMPT_AUDIT_ENABLED=true`在Production或任何Vercel环境均强制无效；只记录白名单元数据，完整Prompt、payload、问答和凭据不进入日志。Provider错误正文不再拼入异常；Error message/stack在logger中不原样输出。
+- 新增教师CORS合同：Pages精确origin及同源Preview的OPTIONS均为204，明确允许Content-Type、X-Request-Id、X-Training-State、X-Idempotency-Key，拒绝未知origin且无wildcard。外部Vercel OPTIONS本轮连接超时，故只登记本地合同通过，线上须由新部署复测。
+- 本地完整行为链exit0；TypeScript（沙箱外只读，解决xlsx junction访问限制）和ESLint exit0；Playwright受控外部Next服务器下72 passed/2互斥skip/0 failed，209.6秒，exit0。首次Playwright自管服务器的断言同样72/2，但Windows子进程未退出导致10分钟exit124，不作为门禁通过。
+- Vercel同源等价与GitHub Pages basePath均生成82/82页面，25个JS bundle扫描通过；repository secret scan覆盖336个tracked/candidate及历史，`data/**`零差异。Node22、Actions、Vercel部署SHA和真实Preview需提交/push后重新验收；PR继续Draft。
+- 本轮代码与专项测试已保存为原子提交`0a9a85c`；文档证据单独提交。推送前仍须fetch并确认远端领先0。
+
+### 教师验收整改：Node 22生成基线CI恢复（2026-07-20）
+
+- 新HEAD `4ff2d04`的Actions run `29712230950`在Node 22.14的首个真实失败为`Conversion idempotency`：`data/cases_en.json`、`data/cases_public.json`和`data/patient_slots_bilingual.json`会被重新生成。后续步骤均被跳过，不能登记为测试失败或通过。
+- 根因是自然主诉UI改进后的`simplifiedChiefComplaintEn`同时被数据生成器复用，导致展示文案演进意外改变已审计的生成序列化合同；诊断生成还会让P019/P020待复核主诉落入不合适的英文兜底。没有提交这些生成差异，也没有修改任何医学事实或审核状态。
+- 原子修复`0b5acb7`将运行时自然展示与稳定生成格式分离；生成器继续复现既有英文基线，UI保留新自然文案。新增P013、红色小便及P019/P020生成合同断言。
+- 提交后隔离worktree幂等性门禁为75个受控输出首轮/次轮均通过；主诉、42例资料完整性、42例公开路由、TypeScript、ESLint、Vercel与Pages两种82页构建、两次25 JS bundle和336文件/历史secret scan均通过，`data/**`零差异。新HEAD仍须普通push并由新的Actions/Vercel复核；PR保持Draft。
+
+### 教师验收整改：真实Preview能力会话竞态（2026-07-20）
+
+- `363aa17`的Actions run `29712640050`在Node 22.14完整通过：Conversion idempotency、行为/医学/安全门禁、Playwright 72 passed/2 skipped、82页构建、23 JS bundle与clean gate均成功；Vercel Deployment和Preview Comments成功，PR继续Draft。
+- 同一SHA真实Preview黑盒首先通过health、P003零轮提交及进入第二阶段，随后P001中文UI在`init-attempt=200`、`session/init=200`后把首个`agent-chat`发成401 `session_capability_required`。该失败没有被稳定性API样本掩盖；同部署随后中文5/5、英文5/5 live DeepSeek/history-log证明provider、Training State和Redis均已配置。
+- 根因是session初始化effect尚未进入loading的短窗口内发送按钮可用，而`aiSessionId`仍为空。最小修复要求能力会话存在后才允许按钮、Enter或语音提交；规则模式也先取得同一安全能力，不关闭/放宽session、attempt、origin或签名校验。
+- 新增延迟session浏览器测试：能力签发前按钮禁用且agent-chat请求0，签发后只发1个带能力的请求；desktop/mobile均通过。完整本地Playwright为74 passed/2 skipped，TypeScript、ESLint、Preview输出canary、两种82页build、两次25 JS bundle、336文件/历史secret scan及`data/**`零差异通过。待原子提交、普通push及新SHA Preview复测。
+
+### 教师验收整改：能力会话竞态远程闭环（2026-07-20）
+
+- 修复提交`1aa79c1`及证据提交`296bf7e`已普通push；本地与远程`codex/hematuria-production-goal`均为`296bf7e6f2e797c634c762b67488b279dfe59a37`，ahead/behind为`0/0`，工作树干净。
+- Actions run `29719580921`在Node 22门禁完整成功：行为/医学/安全、TypeScript、ESLint、repository secret scan、Playwright、82页build、bundle scan及clean gate全部通过；Pages artifact按Draft规则跳过。Vercel Deployment与Preview Comments均success，PR #1继续Open/Draft。
+- 同一SHA的受保护Preview黑盒`8/8`通过：health精确返回`296bf7e`，Training State与Durable Attempt Store均configured；P003零轮提交进入第二阶段；P001中英文首问均携带服务端能力并取得DeepSeek `live_ai`、`history-log=200`，刷新、快速双击和中英双向切换后提交成功。
+- Preview稳定性为session 10/10（端到端P95 1699ms）；中文live AI/history-log 5/5（回答P95 1534ms、provider P95 1139ms、首Token P95 864ms）；英文5/5（回答P95 1327ms、provider P95 933ms、首Token P95 727ms）。输出凭据扫描通过，跨origin保护头注入0。
+- 英文场景云TTS仍返回403并按既有浏览器语音降级处理，不影响问诊、history-log或阶段提交；该外部语音配置项未被本次竞态修复冒充关闭。HEM-P1-049工程项已关闭，长期QA准确起始HEAD为`296bf7e6f2e797c634c762b67488b279dfe59a37`。

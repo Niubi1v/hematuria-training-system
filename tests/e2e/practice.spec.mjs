@@ -150,6 +150,24 @@ test("case catalog switches public complaint language", async ({ page }) => {
   await page.getByRole("button", { name: "English" }).click();
   await expect(page.getByRole("heading", { name: "Case selection" })).toBeVisible();
   await expect(page.getByText(/Hematuria/i).first()).toBeVisible();
+  await expect(page.locator('a[href="/cases/P013/"]')).toContainText("Intermittent red urine for 2 months");
+  await expect(page.locator('a[href="/cases/P019/"]')).toContainText("Chief complaint pending medical review");
+  await expect(page.locator('a[href="/cases/P020/"]')).toContainText("Chief complaint pending medical review");
+});
+
+test("saved English preference initializes one English patient session and opening", async ({ page }) => {
+  const observations = [];
+  await page.addInitScript(() => localStorage.setItem("hematuria-language", "en"));
+  await routeTrainingApiThroughHandler(page, observations);
+  await page.goto("/cases/P034/");
+
+  const conversation = page.getByRole("log", { name: "Simulated patient conversation" });
+  await expect(conversation).toContainText("Hello doctor. My urine has looked red.");
+  await expect(conversation).not.toContainText("医生您好");
+  await expect.poll(() => observations.filter((item) => item.action === "session-init").length).toBe(1);
+  expect(observations.filter((item) => item.action === "session-init")).toEqual([
+    expect.objectContaining({ caseId: "HX-ADD-022", language: "en", status: 200 })
+  ]);
 });
 
 test("P001 stage one submission advances across language switches and refresh", async ({ page }) => {
@@ -786,6 +804,50 @@ test("session initialization failure shows one specific connection notice", asyn
 
   await expect(page.getByText("网络连接失败，请检查网络后重试。")).toBeVisible();
   await expect(page.getByText("暂时无法确认后端健康状态，仍可继续文字练习。")).toHaveCount(0);
+});
+
+test("patient send waits for a session capability before issuing agent-chat", async ({ page }) => {
+  let releaseSession;
+  let sessionRequestStarted;
+  let patientCalls = 0;
+  const sessionGate = new Promise((resolve) => { releaseSession = resolve; });
+  const sessionStarted = new Promise((resolve) => { sessionRequestStarted = resolve; });
+  await mockTrainingState(page);
+  await page.route("**/api/health/**", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" })
+  }));
+  await page.route("**/api/session/init/**", async (route) => {
+    sessionRequestStarted();
+    await sessionGate;
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ sessionId: "delayed-capability", caseId: "P001", language: "zh", mode: "free", patientOpeningStatement: "医生您好。", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false })
+    });
+  });
+  await page.route("**/api/agent-chat/**", (route) => {
+    patientCalls += 1;
+    const body = route.request().postDataJSON();
+    expect(body.sessionId).toBe("delayed-capability");
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "今天早上开始的。", matchedSlotIds: ["hematuria_onset"], matchedFacts: ["onset=today"], provider: "deepseek", generationSource: "live_ai", isFallback: false }) });
+  });
+
+  await page.goto("/cases/P001/");
+  await sessionStarted;
+  const input = page.getByRole("textbox", { name: "输入问诊问题" });
+  const send = page.getByRole("button", { name: "发送", exact: true });
+  await input.fill("什么时候开始的？");
+  await expect(send).toBeDisabled();
+  await input.press("Enter");
+  expect(patientCalls).toBe(0);
+
+  releaseSession();
+  await expect(send).toBeEnabled();
+  await send.click();
+  await expect(page.getByRole("log", { name: "模拟问诊对话" }).getByText("今天早上开始的。", { exact: true })).toBeVisible();
+  expect(patientCalls).toBe(1);
 });
 
 test("offline reconnect sends no request and can recover after the online event", async ({ page, context }) => {

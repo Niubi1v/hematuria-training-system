@@ -51,10 +51,11 @@ async function main() {
     });
     console.error(JSON.stringify({ reportPath, staleRows: staleRows.slice(0, 42), staleRowCount: staleRows.length }));
   }
-  assert(existingTable === table, "patient-facing profile report table is stale; review differences before using UPDATE_PATIENT_PROFILE_REPORT=1");
   if (process.env.UPDATE_PATIENT_PROFILE_REPORT === "1") {
     const report = ["# 42病例患者可见资料完整性报告", "", `生成时间：${new Date().toISOString()}`, "", table].join("\n");
     fs.writeFileSync(reportPath, `${report}\n`, "utf8");
+  } else {
+    assert(existingTable === table, "patient-facing profile report table is stale; review differences before using UPDATE_PATIENT_PROFILE_REPORT=1");
   }
   console.log("Patient-facing profile completeness passed for 42 cases.");
 }

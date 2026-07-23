@@ -17,7 +17,8 @@ function safeRequestMetadata(request) {
     action: typeof body.action === "string" ? body.action : undefined,
     caseId: typeof body.caseId === "string" ? body.caseId : undefined,
     language: typeof body.language === "string" ? body.language : undefined,
-    stageKey: typeof body.stageKey === "string" ? body.stageKey : undefined
+    stageKey: typeof body.stageKey === "string" ? body.stageKey : undefined,
+    sessionCapabilityPresent: body.sessionId === undefined ? undefined : Boolean(body.sessionId)
   };
 }
 
