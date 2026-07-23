@@ -171,6 +171,7 @@ SHA-256：
 4. 真实Preview只通过安全wrapper执行。每次专用输出都在实际凭据字节/header扫描通过后删除；Git与本机证据根均不保留Preview trace、截图、完整回答或原始test-results。缺陷HEM-P1-051以脱敏source/request/history计数复现。
 5. HEM-P1-027当前轮更新两张360×800中文手动上翻/回到底部代表帧；快速双击阶段提交更新10,401字节最小trace。其余双语×四视口证据因重复或体积大不提交。
 6. `.pnpm-store/`是本地依赖缓存，不属于证据根、未纳入索引和Git；浏览器用户数据目录、密钥文件与环境转储均未创建或提交。
+7. `70ea9b3-completion-regression-summary.json` 补录 42 例双语七阶段 84 条 UI 旅程、72 项 Production 浏览器回归、10 个确定性服务端合同和 capability 两次 19/19；仅含计数、脚本名、状态与完整 Production SHA，不含医学值、回答正文、凭据、请求标识或环境变量值。两份逐项 capability 原始 JSON 因内容重复而仅本机保留。
 
 ## 敏感信息复核
 

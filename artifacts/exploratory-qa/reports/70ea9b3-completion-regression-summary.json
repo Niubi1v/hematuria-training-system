@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "productionBaseline": "70ea9b3c7b31e11a84878de5c277cac60f35481c",
+  "executionDate": "2026-07-23",
+  "medicalTruthAdjudicated": false,
+  "realProviderUsed": false,
+  "realDeviceUsed": false,
+  "sensitiveValuesRecorded": false,
+  "uiBilingualSevenStage": {
+    "cases": 42,
+    "languages": 2,
+    "journeys": 84,
+    "stageSubmissions": 588,
+    "scoreReports": 84,
+    "maxScore": 360,
+    "desktopExecutionsPassed": 2,
+    "designedProjectExclusivitySkips": 2,
+    "mobileRepresentativeJourneys": 1,
+    "mobileRepresentativeStageSubmissions": 7,
+    "mobileRepresentativeScoreReports": 1,
+    "result": "PASS_EMULATION"
+  },
+  "productionBrowserRegression": {
+    "testFile": "tests/e2e/practice.spec.mjs",
+    "passed": 72,
+    "failed": 0,
+    "result": "PASS_EMULATION"
+  },
+  "deterministicContractRegression": {
+    "scriptsPassed": 10,
+    "scriptsFailed": 0,
+    "scripts": [
+      "test-stage-567-flow",
+      "test-42-bilingual-stage-flow",
+      "test-event-scoring",
+      "test-adversarial-scoring",
+      "test-attempt-isolation",
+      "test-training-api",
+      "test-training-security",
+      "test-api-recovery",
+      "test-ai-recovery",
+      "test-agent-api-security"
+    ],
+    "result": "PASS_LOCAL_CONTRACT"
+  },
+  "sessionCapabilityRepeat": {
+    "runs": 2,
+    "checksPerRun": 19,
+    "passedChecks": 38,
+    "failedChecks": 0,
+    "providerCalls": 0,
+    "result": "PASS_LOCAL_CONTRACT"
+  },
+  "scopeBoundary": {
+    "medicalReview": "BLOCKED_MEDICAL",
+    "realDevice": "BLOCKED_REAL_DEVICE",
+    "previewProvider": "NOT_RETESTED_IN_THIS_CONTINUATION",
+    "sourceRevision": "BLOCKED_SOURCE_REVISION"
+  }
+}
