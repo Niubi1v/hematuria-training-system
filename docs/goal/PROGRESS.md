@@ -642,3 +642,10 @@
 - 最新QA中的Data Agent P1按报告原义处理：28个数值型final检验缺单位/参考范围时显示“等待审核元数据”，不显示正常横线；`final/not_available/not_performed`改为中英文标签，异常信号优先于final；英文查体、目录、匹配医嘱与报告使用已有非CJK别名或明确待审核占位fail-closed。60个医嘱、257个结果和16个查体项保持ID、状态、绑定和数量；23个缺英文别名的医嘱继续阻塞来源修订，没有自动翻译或猜测医学内容。
 - 本地完整门禁：`pnpm run test` exit 0；Playwright 80 passed/2按项目互斥skip/0 failed；Vercel同源与Pages basePath各82/82页；两次25 JS bundle扫描、TypeScript、ESLint、repository secret scan均通过；`data/**`零差异。当前本地业务HEAD为`86f5ad9`，Node 22、Actions、Vercel与真实Preview仍待普通push后的精确新HEAD补证。
 - 代码提交依次为`871cc70`、`3fb6e00`、`04d572f`、`86f5ad9`。PR必须继续Draft；不得因工程展示层fail-closed而填写28个缺失元数据、23个英文名称、161个来源问题或任何医学审批状态。
+
+### QA P1整改后的依赖审计CI恢复候选（2026-07-23）
+
+- 业务与证据提交推送至`141f5bb`后，Actions run `30008877764`在Node 22.14的第一条真实失败为`Full dependency audit`；后续测试均被跳过。高危项来自Next `<15.5.21`、Sharp `<0.35.0`及两段`brace-expansion`版本范围，不是Patient、Data Agent或Playwright断言失败。
+- `pnpm 11`明确忽略`package.json#pnpm.overrides`，因此覆盖规则已迁移到项目级`pnpm-workspace.yaml`。锁文件现固定Next/ESLint Next `15.5.21`、Sharp `0.35.0`、brace-expansion `1.1.16/5.0.7`；没有放宽审计等级或删除审计步骤。
+- 本地`pnpm audit --audit-level high` exit 0，仅余1项moderate；依赖安全提交为`6c1d42c`。该提交只包含`package.json`、`pnpm-lock.yaml`、`pnpm-workspace.yaml`，不含业务、医学或`data/**`变化。
+- 依赖升级后完整行为exit 0；TypeScript、ESLint、受控外部Next下Playwright 80 passed/2互斥skip/0 failed、Vercel同源与Pages basePath各82/82页、两次25 JS bundle、repository secret scan、75受控输出幂等性和`data/**`零差异均通过。Node 22、Actions、Vercel及真实Preview仍须新HEAD推送后补证。

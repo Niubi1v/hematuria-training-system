@@ -540,3 +540,11 @@
 - 完整本地门禁为行为套件exit 0、Playwright 80/2/0、两种82页构建、两次25 JS bundle、TypeScript、ESLint、secret scan和`data/**`零差异。没有修改42例事实、419条审核、18条冲突、161个来源问题、`needs_revision`或360分算法。
 - 当前下一步仅为文档原子提交、fetch远端冲突门禁、普通push、精确新HEAD Node 22 Actions/Vercel/Preview复测。PR继续Draft；不得转Ready、合并main或部署Production。
 - 回滚按影响范围普通执行：`git revert 86f5ad9`、`git revert 04d572f`、`git revert 3fb6e00`、`git revert 871cc70`。不得reset、rebase或force push；任何回滚仍须保持医学治理冻结。
+
+### QA P1整改依赖审计恢复候选（2026-07-23）
+
+- `141f5bb`的Actions run `30008877764`在Node 22.14首先失败于高危依赖审计，后续门禁没有运行；不能把该run写成Patient、Data Agent或Playwright失败。
+- 原子提交`6c1d42c`将Next及ESLint Next固定到`15.5.21`，并按pnpm 11项目格式将Sharp与brace-expansion安全覆盖放入`pnpm-workspace.yaml`。高危审计本地exit 0，仅余1 moderate；没有放宽审计、token/session安全或医学边界。
+- 依赖升级后的完整本地门禁通过：行为exit 0、TypeScript/ESLint 0、Playwright 80/2/0、Vercel与Pages各82页、两次25 JS bundle、repository secret scan、75输出幂等性和`data/**`零差异。
+- 本候选仍须提交证据文档、fetch确认远端领先0、普通push，并等待精确新HEAD的Node 22 Actions、Vercel和真实Preview。PR继续Open/Draft，不转Ready、不合并main、不部署Production。
+- 依赖修复可用普通`git revert 6c1d42c`回滚，但会重新暴露高危审计失败；不得reset、rebase或force push。业务修复仍按`86f5ad9`、`04d572f`、`3fb6e00`、`871cc70`独立回滚。
