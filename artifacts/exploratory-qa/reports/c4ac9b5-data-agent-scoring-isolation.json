@@ -10,6 +10,11 @@
   "untranslatedOrdersExercised": 23,
   "untranslatedOrdersMatchedByApi": 23,
   "untranslatedOrdersReturnedResults": 6,
+  "untranslatedMatchedOrdersMarkedUnavailable": 23,
+  "reviewedChineseOrdersExercised": 23,
+  "reviewedChineseOrdersMatchedByApi": 23,
+  "reviewedChineseConfiguredResultCount": 8,
+  "reviewedChineseOrdersReturnedAtSamePrerequisiteState": 6,
   "scoringRelevantOrderCount": 4,
   "scoringRuleLinksExercised": 29,
   "scoringRuleLinksEarned": 29,
@@ -18,6 +23,8 @@
     "untranslatedOrdersMatchedByApi": 0,
     "untranslatedOrdersReturnedResults": 0,
     "scoringRuleLinksEarned": 0,
-    "scoringPointsEarned": 0
+    "scoringPointsEarned": 0,
+    "reviewedChineseOrdersMatchedByApi": 23,
+    "reviewedChineseOrdersReturnedAtSamePrerequisiteState": 6
   }
 }

@@ -46,14 +46,14 @@ async function call(body, token = "") {
   return { statusCode, payload, token: headers["x-training-state"] || token };
 }
 
-async function openAttempt(caseId, suffix) {
-  const attemptId = `qa-data-score-${caseId}-${suffix}-${Date.now()}-${requestCounter}`;
+async function openAttempt(caseId, suffix, language = "en") {
+  const attemptId = `qa-data-score-${caseId}-${language}-${suffix}-${Date.now()}-${requestCounter}`;
   const initialized = await call({
     action: "init-attempt",
     caseId,
     attemptId,
     mode: "free",
-    language: "en"
+    language
   });
   assert.equal(initialized.statusCode, 200);
   const history = await call({
@@ -61,7 +61,7 @@ async function openAttempt(caseId, suffix) {
     caseId,
     attemptId,
     mode: "free",
-    language: "en",
+    language,
     stageKey: "history",
     submission: {}
   }, initialized.token);
@@ -69,14 +69,14 @@ async function openAttempt(caseId, suffix) {
   return { attemptId, token: history.token };
 }
 
-async function placeUnreviewedOrder(caseId, orderId, suffix) {
-  const attempt = await openAttempt(caseId, suffix);
+async function placeUnreviewedOrder(caseId, orderId, suffix, language = "en") {
+  const attempt = await openAttempt(caseId, suffix, language);
   const ordered = await call({
     action: "order",
     caseId,
     attemptId: attempt.attemptId,
     mode: "free",
-    language: "en",
+    language,
     input: orderId
   }, attempt.token);
   assert.equal(ordered.statusCode, 200);
@@ -87,19 +87,42 @@ const unreviewedOrders = catalogs.filter(
   (item) => presentOrderCatalogItem(item, "en").translationAvailable === false
 );
 assert.equal(unreviewedOrders.length, 23);
+assert.equal(
+  unreviewedOrders.filter((item) => presentOrderCatalogItem(item, "zh").translationAvailable === true).length,
+  unreviewedOrders.length,
+  "the English-only review gate must not suppress the reviewed Chinese catalog"
+);
 
 let untranslatedOrdersExercised = 0;
 let untranslatedOrdersMatchedByApi = 0;
 let untranslatedOrdersReturnedResults = 0;
+let untranslatedMatchedOrdersMarkedUnavailable = 0;
 for (const order of unreviewedOrders) {
   const configured = results.find((item) => item.orderId === order.orderId);
   const placed = await placeUnreviewedOrder(configured?.caseId || "P001", order.orderId, "catalog");
   untranslatedOrdersExercised += 1;
-  if ((placed.payload?.matchedOrders || []).some((item) => item.orderId === order.orderId)) {
+  const matched = (placed.payload?.matchedOrders || []).find((item) => item.orderId === order.orderId);
+  if (matched) {
     untranslatedOrdersMatchedByApi += 1;
+    if (matched.translationAvailable === false) untranslatedMatchedOrdersMarkedUnavailable += 1;
   }
   if ((placed.payload?.results || []).some((item) => item.orderId === order.orderId)) {
     untranslatedOrdersReturnedResults += 1;
+  }
+}
+
+let reviewedChineseOrdersMatchedByApi = 0;
+let reviewedChineseOrdersReturnedConfiguredResults = 0;
+let reviewedChineseConfiguredResultCount = 0;
+for (const order of unreviewedOrders) {
+  const configured = results.find((item) => item.orderId === order.orderId);
+  if (configured) reviewedChineseConfiguredResultCount += 1;
+  const placed = await placeUnreviewedOrder(configured?.caseId || "P001", order.orderId, "zh-nonregression", "zh");
+  if ((placed.payload?.matchedOrders || []).some((item) => item.orderId === order.orderId)) {
+    reviewedChineseOrdersMatchedByApi += 1;
+  }
+  if ((placed.payload?.results || []).some((item) => item.orderId === order.orderId)) {
+    reviewedChineseOrdersReturnedConfiguredResults += 1;
   }
 }
 
@@ -166,6 +189,11 @@ const summary = {
   untranslatedOrdersExercised,
   untranslatedOrdersMatchedByApi,
   untranslatedOrdersReturnedResults,
+  untranslatedMatchedOrdersMarkedUnavailable,
+  reviewedChineseOrdersExercised: unreviewedOrders.length,
+  reviewedChineseOrdersMatchedByApi,
+  reviewedChineseConfiguredResultCount,
+  reviewedChineseOrdersReturnedAtSamePrerequisiteState: reviewedChineseOrdersReturnedConfiguredResults,
   scoringRelevantOrderCount: new Set(scoringLinks.map((item) => item.orderId)).size,
   scoringRuleLinksExercised: scoringLinks.length,
   scoringRuleLinksEarned: scoredLinks,
@@ -174,7 +202,9 @@ const summary = {
     untranslatedOrdersMatchedByApi: 0,
     untranslatedOrdersReturnedResults: 0,
     scoringRuleLinksEarned: 0,
-    scoringPointsEarned: 0
+    scoringPointsEarned: 0,
+    reviewedChineseOrdersMatchedByApi: unreviewedOrders.length,
+    reviewedChineseOrdersReturnedAtSamePrerequisiteState: untranslatedOrdersReturnedResults
   }
 };
 
@@ -182,6 +212,12 @@ await mkdir(path.dirname(REPORT_PATH), { recursive: true });
 await writeFile(REPORT_PATH, `${JSON.stringify(summary, null, 2)}\n`, "utf8");
 console.log(`Data Agent scoring isolation: unreviewed=${unreviewedOrders.length} matched=${untranslatedOrdersMatchedByApi} results=${untranslatedOrdersReturnedResults} scoringLinks=${scoredLinks}/${scoringLinks.length} scoredPoints=${scoredPoints}.`);
 
+assert.equal(reviewedChineseOrdersMatchedByApi, unreviewedOrders.length, "reviewed Chinese orders must remain callable");
+assert.equal(
+  reviewedChineseOrdersReturnedConfiguredResults,
+  untranslatedOrdersReturnedResults,
+  "reviewed Chinese orders must preserve the same prerequisite-gated result availability"
+);
 assert.equal(untranslatedOrdersMatchedByApi, 0, "an unreviewed English order name remained callable by internal ID");
 assert.equal(untranslatedOrdersReturnedResults, 0, "an unreviewed English order returned a deterministic report");
 assert.equal(scoredLinks, 0, "an unreviewed English order entered deterministic scoring");

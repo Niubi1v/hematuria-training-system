@@ -322,3 +322,12 @@
 - 医学专家裁决：确认绕过与得分缺陷不需要医学裁决；23个英文名称的实际译文仍需来源/具名专家审核，QA不得自行补写或解除 `BLOCKED_SOURCE_REVISION`。
 
 当前基线说明：Production与Preview均精确为 `c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2`，QA合入基线merge为`706a758`。本地、Preview、Pages仿真、真实Pages与真机状态继续分别记录。
+
+## `c4ac9b5` 第 10 轮开放缺陷复测
+
+- HEM-P1-045：`RESOLVED_PREVIEW`。P037中文/英文共8/8 live_ai、8/8 history；刷新后401、缺history、attempt/session重初始化均为0，病程连续性2/2。安全wrapper扫描1个生成文件后删除原始输出。
+- HEM-P1-030：继续`REGRESSED_LOCAL_QA / OPEN`。完整矩阵连续2/2均为42个失败实例/1组；公开agent-chat合法路径2/2同样把英文泌尿操作史问法命中`triggers`而非`PAST_URINARY_PROCEDURE`，每轮其余17项通过，providerCalls=0。
+- HEM-P2-028：继续`RESOLVED_LOCAL_QA`。当前SHA桌面重复6/6及桌面/移动代表2/2均为`1 request / 1 unique request ID / 1 timeline event`。
+- HEM-P2-044：继续`OPEN / FAIL_EMULATION`。两个移动viewport 2/2仍为四个相同不足44px目标；没有真机证据。
+- HEM-P1-052：继续`OPEN / FAIL`。扩展2/2除原英文23/23绕过、29/29得分外，证明同一23项中文路径23/23可用且相同前置状态返回6项结果；建议修复必须以attempt language和审核状态为边界，不得全局拒绝医嘱。
+- 本续轮没有新增P0/P1/P2；最小聚合证据为`reports/c4ac9b5-open-defect-regression-summary.json`。原始矩阵、公开handler、Playwright和Preview回答均不进入Git。

@@ -98,3 +98,9 @@
 - 指定真实问法覆盖“小便痛不痛/排尿时疼吗/没有尿痛吧/小便全程红/从头到尾红/初始终末全程选择/尿频尿急尿痛/腰痛发热血块”；特异dysuria、flank pain不再扩张generic pain，独立通用pain仍可回答。HEM-P1-050更新为 `RESOLVED_LOCAL_QA`。
 - 精确Preview中P001英文纠错与澄清3/3、P037英文连续追问2/2、P038英文连续追问2/2均为DeepSeek `live_ai`、非fallback，history7/7。HEM-P1-051更新为 `RESOLVED_PREVIEW`；provider成功没有被后续rule fallback覆盖。
 - 低歧义稳定样本中文5/5、英文5/5和单session连续20/20均live_ai，fallback为0。完整回答不落盘；这些工程/来源结果仍不裁决医学内容，不解除HEM-P0-001/023、P019/P020或来源修订状态。
+
+## 2026-07-24 `c4ac9b5` 刷新连续性与路由边界
+
+- P037中英文刷新链共8/8为DeepSeek live_ai，刷新后history完整、病程时长前后2/2一致，未见语言串线、教师元语言、结构字段或最终诊断泄露；HEM-P1-045关闭为`RESOLVED_PREVIEW`。完整回答仍由安全wrapper扫描后删除。
+- HEM-P1-030不因真实AI链通过而关闭：本地确定性37槽位矩阵中英文泌尿操作史问法仍在42/42病例命中`triggers`，公开handler最小合法请求也2/2返回同一错误slot和rule fallback。该判断仅评价工程路由，不裁决病例是否存在泌尿操作史。
+- HEM-P1-050的840/840自然问法门禁与HEM-P1-030的37槽位门禁覆盖集合不同；前者通过不能替代后者单一遗漏问法失败。修复后需同时保持generic pain、unknown、冲突隔离和最小披露合同。

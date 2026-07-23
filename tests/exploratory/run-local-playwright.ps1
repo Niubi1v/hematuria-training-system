@@ -2,7 +2,9 @@ param(
   [string]$TestFile = "tests/e2e/practice.spec.mjs",
   [string]$Config = "playwright.config.mjs",
   [string]$Grep = "",
-  [int]$Port = 3010
+  [int]$Port = 3010,
+  [ValidateRange(1, 20)]
+  [int]$RepeatEach = 1
 )
 
 $ErrorActionPreference = "Stop"
@@ -63,6 +65,7 @@ try {
   $arguments = @($playwright, "test", $TestFile, "--config=$Config")
   if ($Config -eq "playwright.config.mjs") { $arguments += "--reporter=line" }
   if ($Grep.Trim()) { $arguments += @("--grep", $Grep.Trim()) }
+  if ($RepeatEach -gt 1) { $arguments += "--repeat-each=$RepeatEach" }
   & $node @arguments
   $exitCode = $LASTEXITCODE
 } finally {
@@ -72,8 +75,18 @@ try {
   }
   if (!$process.HasExited) { Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue }
   try { $process.WaitForExit(5000) | Out-Null } catch { }
-  [IO.File]::WriteAllText($stdoutPath, $stdoutTask.GetAwaiter().GetResult())
-  [IO.File]::WriteAllText($stderrPath, $stderrTask.GetAwaiter().GetResult())
+  $stdoutText = if ($stdoutTask.Wait(5000)) {
+    $stdoutTask.GetAwaiter().GetResult()
+  } else {
+    "[QA runner] Next stdout drain timed out after process cleanup; no runtime output retained."
+  }
+  $stderrText = if ($stderrTask.Wait(5000)) {
+    $stderrTask.GetAwaiter().GetResult()
+  } else {
+    "[QA runner] Next stderr drain timed out after process cleanup; no runtime output retained."
+  }
+  [IO.File]::WriteAllText($stdoutPath, $stdoutText)
+  [IO.File]::WriteAllText($stderrPath, $stderrText)
 }
 
 exit $exitCode

@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "productionBaseline": "c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2",
+  "qaHeadBeforeCommit": "cb26dcf352e5d0b7d68f66e4021a148053f423ff",
+  "executionDate": "2026-07-24",
+  "medicalTruthAdjudicated": false,
+  "sensitiveValuesRecorded": false,
+  "hemP1045": {
+    "status": "RESOLVED_PREVIEW",
+    "caseId": "P037",
+    "languages": 2,
+    "answers": 8,
+    "liveAiAnswers": 8,
+    "agentRequests": 8,
+    "historyLogs": 8,
+    "postRefreshUnauthorized": 0,
+    "postRefreshHistoryMissing": 0,
+    "attemptReinitializations": 0,
+    "sessionReinitializations": 0,
+    "durationContinuity": "2/2",
+    "responseTextRetained": false
+  },
+  "hemP1030": {
+    "status": "FAIL",
+    "matrixReproductions": "2/2",
+    "casesAffected": 42,
+    "routeChecksPerRun": 6216,
+    "repeatChecksPerRun": 6216,
+    "failureInstancesPerRun": 42,
+    "failureGroupsPerRun": 1,
+    "expectedSlotCategory": "past_urinary_procedure",
+    "actualSlotCategory": "triggers",
+    "publicHandlerReproductions": "2/2",
+    "publicHandlerChecksPerRun": 18,
+    "publicHandlerFailuresPerRun": 1,
+    "providerCalls": 0,
+    "fullAnswersRetained": false
+  },
+  "hemP2028": {
+    "status": "RESOLVED_LOCAL_QA",
+    "desktopRepeatBatch": "6/6",
+    "desktopMobileRepresentativeBatch": "2/2",
+    "observedPerAction": {
+      "feedbackRequests": 1,
+      "uniqueRequestIds": 1,
+      "timelineEvents": 1
+    },
+    "providerCalls": 0
+  },
+  "hemP2044": {
+    "status": "FAIL_EMULATION",
+    "mobileViewportsFailed": "2/2",
+    "measurementsCssPixels": {
+      "voiceSettings": [106, 38],
+      "dialogClose": [26, 28],
+      "voiceTest": [75, 38],
+      "voiceStop": [34, 38]
+    },
+    "desktopKeyboardAndFocusPassed": "2/2",
+    "realDeviceStatus": "BLOCKED_REAL_DEVICE"
+  },
+  "hemP1052": {
+    "status": "FAIL",
+    "extendedReproductions": "2/2",
+    "unreviewedEnglishOrders": 23,
+    "matchedByInternalId": 23,
+    "matchedResponsesMarkedTranslationUnavailable": 23,
+    "ordersReturningResults": 6,
+    "scoringRuleLinksEarned": 29,
+    "scoringPointsEarned": 641,
+    "reviewedChineseOrdersMatched": 23,
+    "reviewedChineseResultsAtSamePrerequisiteState": 6,
+    "languageSpecificFailClosedRequired": true
+  },
+  "qaInfrastructure": {
+    "localRunnerRepeatEachAdded": true,
+    "localRunnerLogDrainBounded": true,
+    "postChangeRunnerValidation": "PASS"
+  },
+  "newDefectsThisContinuation": {
+    "p0": 0,
+    "p1": 0,
+    "p2": 0
+  }
+}

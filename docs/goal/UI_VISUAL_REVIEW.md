@@ -96,3 +96,9 @@
 - 全42例双语七阶段长测为2个实际项目通过、2个项目互斥skip：desktop完成84条中英文旅程与84份360分报告，mobile完成1条代表七阶段旅程。没有以单一代表截图替代全量协议计数。
 - Data Agent英文无CJK、未审核名称禁用、28项元数据安全文案和异常优先级在desktop/mobile共6/6；但服务端评分绕过登记HEM-P1-052，不能因UI禁用而写成完整通过。
 - Preview P001刷新/双击、P003零轮和Chromium后台恢复通过；真实手机软键盘、动态地址栏、物理safe-area及后台策略仍为 `BLOCKED_REAL_DEVICE`。本轮没有新增视觉P0/P1；既有HEM-P2-044触控尺寸未由这些流程断言自动关闭。
+
+## 2026-07-24 `c4ac9b5` 幂等与触控目标复核
+
+- HEM-P2-028桌面同一测试进程重复6/6，另在`1440×900`和`390×844`代表批2/2通过；每次同步双击在150ms延迟下均满足1 request、1 request ID、1 timeline event。状态继续`RESOLVED_LOCAL_QA`。
+- HEM-P2-044在`390×844`与`360×800`仍2/2失败，四个尺寸与历史完全一致：106×38、26×28、75×38、34×38 CSS px。未生成新的Git代表截图，既有最小帧足以证明相同几何；本轮原始报告和HTML仅本机保留。
+- 同一可访问性用例的两个桌面viewport均通过Shift+Enter、Enter、正反向Tab、可见焦点、Escape和reduced-motion。移动自动结果只标`FAIL_EMULATION`，真实触摸准确性、软键盘与safe-area继续`BLOCKED_REAL_DEVICE`。

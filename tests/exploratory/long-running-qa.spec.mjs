@@ -857,7 +857,10 @@ test("HEM-P1-048 English Data Agent UI does not expose Chinese catalog or report
 });
 
 test("rapid double stage submission creates one feedback request and one timeline event", async ({ browser }, testInfo) => {
-  test.skip(testInfo.project.name !== "qa-1440x900", "Single desktop project is sufficient for the submission idempotency probe.");
+  test.skip(
+    !["qa-1440x900", "qa-390x844"].includes(testInfo.project.name),
+    "One desktop and one mobile project cover the submission idempotency probe."
+  );
   await withEvidence(browser, testInfo, "stage-submit-double-click", async ({ page }) => {
     const api = await installFullWorkflowApi(page, { stageFeedbackDelayMs: 150 });
     await page.goto("/cases/P001/");
