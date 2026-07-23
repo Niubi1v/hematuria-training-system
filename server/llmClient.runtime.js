@@ -16,7 +16,8 @@ function getLLMProviderConfig() {
     maxTokens: Number(process.env.LLM_MAX_TOKENS || 500),
     timeoutMs: Number(process.env.LLM_REQUEST_TIMEOUT_MS || 15000),
     thinkingMode: process.env.LLM_THINKING_MODE || "disabled",
-    enabled: process.env.LLM_ENABLE_AI_AGENTS === "true" || process.env.LLM_ENABLE_AI_PATIENT === "true"
+    enabled: process.env.LLM_ENABLE_AI_AGENTS === "true" || process.env.LLM_ENABLE_AI_PATIENT === "true",
+    safeMock: process.env.MAINLAND_SAFE_MOCK_LLM === "true"
   };
 }
 
@@ -173,7 +174,7 @@ async function callLLM({ systemPrompt, userPayload, temperature, maxTokens, maxR
       await recordProviderSuccess(circuitAdmission).catch(() => {
         safeLogger.warn("llm_circuit_update_failed", { requestId, action: "success", deploymentSha: String(process.env.VERCEL_GIT_COMMIT_SHA || "local").slice(0, 12) });
       });
-      return { text, provider: config.provider, model: config.model, requestId, retryCount: attempt, durationMs: Date.now() - startedAt, firstTokenMs };
+      return { text, provider: config.provider, model: config.model, requestId, retryCount: attempt, durationMs: Date.now() - startedAt, firstTokenMs, safeMock: config.safeMock };
     } catch (error) {
       lastError = error;
       const timedOut = error?.name === "AbortError";

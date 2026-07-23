@@ -2,7 +2,7 @@ export type ApiEndpointName = "sessionInit" | "patientAgent" | "trainingAction" 
 
 export type PublicApiConfig = Readonly<Record<ApiEndpointName, string> & { baseUrl: string }>;
 
-type PublicApiEnvironment = Partial<Pick<NodeJS.ProcessEnv, "NODE_ENV" | "VERCEL" | "VERCEL_ENV" | "NEXT_PUBLIC_VERCEL_ENV">>;
+type PublicApiEnvironment = Partial<Pick<NodeJS.ProcessEnv, "NODE_ENV" | "VERCEL" | "VERCEL_ENV" | "NEXT_PUBLIC_VERCEL_ENV" | "NEXT_PUBLIC_MAINLAND_RUNTIME" | "MAINLAND_RUNTIME">>;
 
 export function resolvePublicApiBaseUrl(raw: string | undefined, env: PublicApiEnvironment = process.env): string {
   const isProduction = env.NODE_ENV === "production";
@@ -12,7 +12,7 @@ export function resolvePublicApiBaseUrl(raw: string | undefined, env: PublicApiE
   // public variables may point at another deployment, which would split CORS, signing
   // secrets and the durable attempt-store namespace. Local browser clients use the same
   // relative contract by default; an explicit development origin remains opt-in.
-  if (isVercelBuild) return "";
+  if (isVercelBuild || env.MAINLAND_RUNTIME === "1" || env.NEXT_PUBLIC_MAINLAND_RUNTIME === "1") return "";
   const candidate = String(raw || "").trim().replace(/\/+$/, "");
   if (!candidate && !isProduction) return "";
   if (!candidate) throw new Error("NEXT_PUBLIC_API_BASE_URL is required for production builds.");
@@ -27,7 +27,9 @@ const baseUrl = resolvePublicApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL, {
   NODE_ENV: process.env.NODE_ENV,
   VERCEL: process.env.VERCEL,
   VERCEL_ENV: process.env.VERCEL_ENV,
-  NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV
+  NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
+  NEXT_PUBLIC_MAINLAND_RUNTIME: process.env.NEXT_PUBLIC_MAINLAND_RUNTIME,
+  MAINLAND_RUNTIME: process.env.MAINLAND_RUNTIME
 });
 
 export const publicApiConfig: PublicApiConfig = Object.freeze({

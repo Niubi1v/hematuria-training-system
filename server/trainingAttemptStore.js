@@ -1,7 +1,16 @@
 const crypto = require("node:crypto");
 const { resolveRedisRestCredentials } = require("./redisRestCredentials.js");
+const {
+  redisNamespace,
+  standardRedis,
+  standardRedisConfigured,
+  standardRedisCredentialSource
+} = require("./standardRedisClient.js");
 
-const ATTEMPT_TTL_SECONDS = 24 * 60 * 60;
+const ATTEMPT_TTL_SECONDS = Math.min(
+  Math.max(Number(process.env.TRAINING_ATTEMPT_TTL_SECONDS || 24 * 60 * 60), 60),
+  7 * 24 * 60 * 60
+);
 const MAX_IDEMPOTENCY_RECORDS = 64;
 const memoryAttempts = globalThis.__hematuriaTrainingAttemptStore || new Map();
 globalThis.__hematuriaTrainingAttemptStore = memoryAttempts;
@@ -12,6 +21,7 @@ function digest(value) {
 
 function attemptKey(caseId, attemptId) {
   const scope = `${String(caseId || "").toLowerCase()}:${String(attemptId || "")}`;
+  if (storeMode() === "redis") return `hematuria:${redisNamespace()}:attempt:v1:${digest(scope)}`;
   return `hematuria:attempt:v1:${digest(scope)}`;
 }
 
@@ -37,13 +47,18 @@ function pruneIdempotency(record) {
 }
 
 function attemptStoreCredentialSource() {
-  return storeMode() === "upstash" ? resolveRedisRestCredentials().source : "none";
+  const mode = storeMode();
+  if (mode === "upstash") return resolveRedisRestCredentials().source;
+  if (mode === "redis") return standardRedisCredentialSource();
+  return "none";
 }
 
 function storeMode() {
   const configured = String(process.env.TRAINING_ATTEMPT_STORE_MODE || "").toLowerCase();
   if (configured === "memory") return "memory";
   if (configured === "upstash") return "upstash";
+  if (configured === "redis") return "redis";
+  if (configured) return "unavailable";
   const credentials = resolveRedisRestCredentials();
   if (credentials.url && credentials.token) return "upstash";
   if (process.env.VERCEL || process.env.NODE_ENV === "production") return "unavailable";
@@ -57,12 +72,15 @@ function assertStoreConfigured() {
   if (mode === "upstash" && (!credentials.url || !credentials.token)) {
     throw new Error("training_attempt_store_unavailable");
   }
+  if (mode === "redis" && !standardRedisConfigured()) throw new Error("training_attempt_store_unavailable");
   return mode;
 }
 
 function durableAttemptStoreConfigured() {
   const credentials = resolveRedisRestCredentials();
-  return storeMode() === "upstash" && Boolean(credentials.url && credentials.token);
+  const mode = storeMode();
+  return (mode === "upstash" && Boolean(credentials.url && credentials.token))
+    || (mode === "redis" && standardRedisConfigured());
 }
 
 async function upstash(command) {
@@ -85,6 +103,11 @@ async function upstash(command) {
   const payload = await response.json();
   if (payload.error) throw new Error("training_attempt_store_unavailable");
   return payload.result;
+}
+
+async function durableCommand(mode, command) {
+  if (mode === "redis") return standardRedis(command);
+  return upstash(command);
 }
 
 const REGISTER_SCRIPT = `
@@ -112,7 +135,7 @@ if cached then
   return cjson.encode({kind='duplicate', cached=cached})
 end
 if record.currentTokenHash ~= ARGV[3] then return cjson.encode({kind='stale'}) end
-return cjson.encode({kind='active', state=record.state})
+return cjson.encode({kind='active', state=record.state, stateJson=record.stateJson})
 `;
 
 const COMMIT_SCRIPT = `
@@ -126,6 +149,7 @@ if cached then
 end
 if record.currentTokenHash ~= ARGV[3] then return cjson.encode({kind='stale'}) end
 record.state = cjson.decode(ARGV[4])
+record.stateJson = ARGV[4]
 record.currentTokenHash = ARGV[5]
 record.idempotency = record.idempotency or {}
 record.idempotency[ARGV[1]] = cjson.decode(ARGV[6])
@@ -134,7 +158,13 @@ return cjson.encode({kind='committed'})
 `;
 
 function cachedResult(entry) {
-  return { duplicate: true, statusCode: Number(entry.statusCode || 200), payload: clone(entry.payload), token: String(entry.token || "") };
+  const payload = entry.payloadJson ? JSON.parse(entry.payloadJson) : clone(entry.payload);
+  return { duplicate: true, statusCode: Number(entry.statusCode || 200), payload, token: String(entry.token || "") };
+}
+
+function storedState(record) {
+  if (record?.stateJson) return JSON.parse(record.stateJson);
+  return clone(record?.state);
 }
 
 function resultError(kind) {
@@ -149,8 +179,8 @@ async function registerAttempt({ state, token, requestId, requestDigest, payload
   assertRequest(requestId, requestDigest);
   const mode = assertStoreConfigured();
   const id = normalizedRequestId(requestId);
-  const cached = { requestDigest, statusCode, payload: clone(payload), token, at: Date.now() };
-  const record = { state: clone(state), currentTokenHash: digest(token), idempotency: { [id]: cached } };
+  const cached = { requestDigest, statusCode, payload: clone(payload), payloadJson: JSON.stringify(payload), token, at: Date.now() };
+  const record = { state: clone(state), stateJson: JSON.stringify(state), currentTokenHash: digest(token), idempotency: { [id]: cached } };
   const key = attemptKey(state.caseId, state.attemptId);
   if (mode === "memory") {
     const existing = memoryAttempts.get(key);
@@ -165,7 +195,7 @@ async function registerAttempt({ state, token, requestId, requestDigest, payload
     memoryAttempts.set(key, record);
     return { duplicate: false, statusCode, payload: clone(payload), token };
   }
-  const raw = await upstash(["EVAL", REGISTER_SCRIPT, 1, key, id, requestDigest, JSON.stringify(record), ATTEMPT_TTL_SECONDS]);
+  const raw = await durableCommand(mode, ["EVAL", REGISTER_SCRIPT, 1, key, id, requestDigest, JSON.stringify(record), ATTEMPT_TTL_SECONDS]);
   const result = JSON.parse(raw);
   if (result.kind === "created") return { duplicate: false, statusCode, payload: clone(payload), token };
   if (result.kind === "duplicate") return cachedResult(result.cached);
@@ -187,11 +217,11 @@ async function loadAttempt({ caseId, attemptId, token, requestId, requestDigest 
       return cachedResult(previous);
     }
     if (record.currentTokenHash !== tokenHash) return resultError("stale");
-    return { duplicate: false, state: clone(record.state) };
+    return { duplicate: false, state: storedState(record) };
   }
-  const raw = await upstash(["EVAL", LOAD_SCRIPT, 1, key, id, requestDigest, tokenHash]);
+  const raw = await durableCommand(mode, ["EVAL", LOAD_SCRIPT, 1, key, id, requestDigest, tokenHash]);
   const result = JSON.parse(raw);
-  if (result.kind === "active") return { duplicate: false, state: result.state };
+  if (result.kind === "active") return { duplicate: false, state: result.stateJson ? JSON.parse(result.stateJson) : result.state };
   if (result.kind === "duplicate") return cachedResult(result.cached);
   return resultError(result.kind);
 }
@@ -203,20 +233,21 @@ async function validateCurrentAttempt({ caseId, attemptId, token }) {
   if (mode === "memory") {
     record = memoryAttempts.get(key);
   } else {
-    const raw = await upstash(["GET", key]);
+    const raw = await durableCommand(mode, ["GET", key]);
     record = raw ? JSON.parse(raw) : null;
   }
   if (!record) throw new Error("attempt_not_found");
   if (record.currentTokenHash !== digest(token)) throw new Error("stale_attempt_token");
-  if (record.state?.status !== "active") throw new Error("attempt_already_completed");
-  return clone(record.state);
+  const state = storedState(record);
+  if (state?.status !== "active") throw new Error("attempt_already_completed");
+  return state;
 }
 
 async function commitAttempt({ state, previousToken, nextToken, requestId, requestDigest, payload, statusCode = 200 }) {
   assertRequest(requestId, requestDigest);
   const mode = assertStoreConfigured();
   const id = normalizedRequestId(requestId);
-  const cached = { requestDigest, statusCode, payload: clone(payload), token: nextToken, at: Date.now() };
+  const cached = { requestDigest, statusCode, payload: clone(payload), payloadJson: JSON.stringify(payload), token: nextToken, at: Date.now() };
   const key = attemptKey(state.caseId, state.attemptId);
   if (mode === "memory") {
     const record = memoryAttempts.get(key);
@@ -228,12 +259,13 @@ async function commitAttempt({ state, previousToken, nextToken, requestId, reque
     }
     if (record.currentTokenHash !== digest(previousToken)) return resultError("stale");
     record.state = clone(state);
+    record.stateJson = JSON.stringify(state);
     record.currentTokenHash = digest(nextToken);
     record.idempotency[id] = cached;
     pruneIdempotency(record);
     return { duplicate: false, statusCode, payload: clone(payload), token: nextToken };
   }
-  const raw = await upstash(["EVAL", COMMIT_SCRIPT, 1, key, id, requestDigest, digest(previousToken), JSON.stringify(state), digest(nextToken), JSON.stringify(cached), ATTEMPT_TTL_SECONDS]);
+  const raw = await durableCommand(mode, ["EVAL", COMMIT_SCRIPT, 1, key, id, requestDigest, digest(previousToken), JSON.stringify(state), digest(nextToken), JSON.stringify(cached), ATTEMPT_TTL_SECONDS]);
   const result = JSON.parse(raw);
   if (result.kind === "committed") return { duplicate: false, statusCode, payload: clone(payload), token: nextToken };
   if (result.kind === "duplicate") return cachedResult(result.cached);

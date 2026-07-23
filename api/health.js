@@ -4,9 +4,10 @@ function allowedOrigins() {
 }
 
 const { signingSecretConfigured } = require("../server/trainingState.js");
-const { attemptStoreCredentialSource, durableAttemptStoreConfigured } = require("../server/trainingAttemptStore.js");
+const { attemptStoreCredentialSource, durableAttemptStoreConfigured, storeMode } = require("../server/trainingAttemptStore.js");
+const { standardRedis } = require("../server/standardRedisClient.js");
 
-module.exports = function handler(req, res) {
+module.exports = async function handler(req, res) {
   const origin = String(req.headers?.origin || "");
   const allowed = allowedOrigins();
   if (origin && allowed.includes(origin)) res.setHeader("Access-Control-Allow-Origin", origin);
@@ -15,15 +16,37 @@ module.exports = function handler(req, res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Request-Id");
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "GET") return res.status(405).json({ error: "method_not_allowed" });
-  return res.status(200).json({
-    status: "ok",
+  const mode = storeMode();
+  const durableConfigured = durableAttemptStoreConfigured();
+  let durableReachable = durableConfigured;
+  if (mode === "redis" && durableConfigured) {
+    try {
+      durableReachable = await standardRedis(["PING"]) === "PONG";
+    } catch {
+      durableReachable = false;
+    }
+  }
+  const productionStateReady = signingSecretConfigured() && durableConfigured && durableReachable;
+  const developmentMemoryReady = process.env.NODE_ENV !== "production" && mode === "memory" && signingSecretConfigured();
+  const patientServiceConfigured = Boolean(process.env.LLM_API_KEY && process.env.LLM_API_BASE_URL && process.env.LLM_MODEL);
+  const patientRequired = process.env.LLM_ENABLE_AI_PATIENT === "true" || process.env.LLM_ENABLE_AI_AGENTS === "true";
+  const productionReady = productionStateReady && (!patientRequired || patientServiceConfigured);
+  const statusCode = process.env.NODE_ENV === "production"
+    ? (productionReady ? 200 : 503)
+    : (mode === "redis" && !durableReachable ? 503 : 200);
+  return res.status(statusCode).json({
+    status: statusCode === 200 ? "ok" : "degraded",
     deploymentTier: process.env.TRAINING_DEPLOYMENT_TIER || "practice",
     gitSha: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || process.env.NEXT_PUBLIC_GIT_SHA || "unknown",
     deploymentSha: process.env.VERCEL_GIT_COMMIT_SHA || process.env.NEXT_PUBLIC_GIT_SHA || "unknown",
     buildTime: process.env.NEXT_PUBLIC_BUILD_TIME || "unknown",
-    patientServiceConfigured: Boolean(process.env.LLM_API_KEY && process.env.LLM_API_BASE_URL && process.env.LLM_MODEL),
-    trainingStateConfigured: signingSecretConfigured() && (!process.env.VERCEL || durableAttemptStoreConfigured()),
-    durableAttemptStoreConfigured: durableAttemptStoreConfigured(),
+    patientServiceConfigured,
+    patientServiceMode: process.env.MAINLAND_SAFE_MOCK_LLM === "true"
+      ? "safe_mock"
+      : (process.env.LLM_API_KEY && process.env.LLM_API_BASE_URL && process.env.LLM_MODEL ? "live" : "disabled"),
+    trainingStateConfigured: productionStateReady || developmentMemoryReady,
+    durableAttemptStoreConfigured: durableConfigured,
+    durableAttemptStoreReachable: durableReachable,
     durableAttemptStoreCredentialSource: attemptStoreCredentialSource(),
     cloudTtsConfigured: Boolean(process.env.AZURE_SPEECH_KEY && process.env.AZURE_SPEECH_REGION),
     allowedOriginConfigured: allowed.length > 0,
