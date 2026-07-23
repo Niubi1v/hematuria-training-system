@@ -17,7 +17,9 @@
 
 2026-07-23 初始 Production HEAD 的 Vercel 状态为成功，但 GitHub Actions run `30008877764` 失败在 `pnpm audit --audit-level high`。随后 Production 更新到绿色基线 `c4ac9b5`，包含精确依赖修复、审计证据、Preview 上下文追问黑盒测试和 QA P1 远端验证收口；专项分支已用普通 merge 合入，没有整体 merge 旧 POC。专项保留 `redis@6.1.0`，并与 Production 一致固定 Next.js/相关 ESLint 包 `15.5.21`、`sharp@0.35.0`、`brace-expansion@1.1.16`/`5.0.7`。
 
-合入后 `pnpm audit --audit-level high` 退出码为 0，当前为 0 high、0 critical、1 moderate。剩余项是 Next.js 内嵌 `postcss@8.4.31` 的 `GHSA-qx2v-qp2m-jg93`；风险场景需要攻击者控制传入 PostCSS stringify 的 CSS 并构造未转义 `</style>`。本系统运行时不接收、解析或 stringify 用户 CSS，CSS 仅来自受控仓库构建输入，因此当前应用路径不可达。直接覆盖 Next 内嵌构建依赖可能破坏 Production 兼容性，本专项不为追求 audit 全零进行无依据替换；继续跟随 Next.js 官方兼容升级。
+合入后的第一次本地审计为 0 high、0 critical、1 moderate：Next.js 内嵌 `postcss@8.4.31` 的 `GHSA-qx2v-qp2m-jg93`。其风险场景需要攻击者控制传入 PostCSS stringify 的 CSS；本系统运行时不接收、解析或 stringify 用户 CSS，因此应用路径不可达。
+
+随后 Node 22/pnpm 11.7 Actions 识别到新披露的 `GHSA-6g55-p6wh-862q` high，同一路径可由攻击者控制 CSS `sourceMappingURL` 触发任意文件读取。专项没有忽略该 high，而是将 `postcss@<=8.5.11` 精确覆盖为仓库已使用的兼容版本 `8.5.15`。独立安全提交后，固定 Node 22.14/pnpm 11.7 容器审计为 `No known vulnerabilities found`；当前为 0 moderate、0 high、0 critical。
 
 依赖下载只使用 `registry.npmjs.org` 与 `cdn.sheetjs.com`。SheetJS 继续使用既有固定 tarball `xlsx-0.20.3.tgz`，完整性仍为 `sha512-oLDq3jw7AcLqKWH2AhCpVTZl8mf6X2YReP+Neh0SJUzV/BdZYjth94tG5toiMB1PPrYtxOCfaoUCkvtuH+3AJA==`；没有改用 `latest`，也没有改变其锁文件完整性。
 
@@ -66,7 +68,7 @@
 - [x] bundle/secret scan 通过，`data/**` 零差异。
 - [x] Docker Compose safe_mock：Nginx、Redis、同域、20 轮、双击、刷新通过。
 - [x] Redis stop/restart：health 503 -> 200，已有 session/attempt 继续。
-- [ ] 当前分支普通推送，并以 workflow_dispatch 取得绿色 Actions。
+- [x] 当前分支已普通推送；最终 workflow_dispatch 结果以任务回执中的 Actions run 为准。
 - [ ] 购买后真实 DeepSeek 与三地域对照按计划执行。
 
 当前购买结论：**本地工程条件已具备，须等待专项分支普通 push 后的 GitHub Actions 绿色结果，再由用户决定是否购买最小受控预发布资源**。即使 Actions 绿色，真实 DeepSeek、三地域公网对照、证书、备案和云 Redis 恢复仍是购买后的上线前门禁；不得用 safe_mock 的 `live_ai=0` 结果替代。
