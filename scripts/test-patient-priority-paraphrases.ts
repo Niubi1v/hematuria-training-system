@@ -2,13 +2,28 @@ import assert from "node:assert/strict";
 
 const cases = require("../data/cases.json") as Array<{ id: string; structuredHistory?: unknown }>;
 const { matchCanonicalPatientFacts } = require("../server/canonicalFacts.js") as {
-  matchCanonicalPatientFacts(caseId: string, question: string, language: "zh" | "en"): { matchedSlotIds?: string[] } | null;
+  matchCanonicalPatientFacts(caseId: string, question: string, language: "zh" | "en"): {
+    matchedSlotIds?: string[];
+    matchedFacts?: string[];
+  } | null;
 };
 const { matchStructuredFacts } = require("../server/structuredFacts.js") as {
   matchStructuredFacts(caseData: unknown, question: string, language: "zh" | "en"): { matchedSlotIds?: string[] } | null;
 };
+const { matchPriorityCanonicalIntents } = require("../src/lib/patientIntentCatalog.js") as {
+  matchPriorityCanonicalIntents(question: string, language: "zh" | "en"): Array<{ intentKey: string }>;
+};
 
-type Probe = { id: string; language: "zh" | "en"; question: string; expectedSlot: string };
+type Probe = {
+  id: string;
+  language: "zh" | "en";
+  question: string;
+  expectedSlot?: string;
+  expectedSlots?: string[];
+  expectedFacts?: string[];
+  forbiddenSlots?: string[];
+  qaNatural?: boolean;
+};
 
 // Natural paraphrases intentionally avoid exact catalog labels. They exercise
 // colloquial wording without changing, inferring, or defaulting any case fact.
@@ -36,21 +51,142 @@ const probes: Probe[] = [
   { id: "occupation-colloquial-en", language: "en", question: "What do you do for a living?", expectedSlot: "LIFE_OCCUPATION" },
   { id: "exposure-rubber-en", language: "en", question: "Did you work around rubber or leather?", expectedSlot: "LIFE_EXPOSURE" },
   { id: "anticoagulant-colloquial-en", language: "en", question: "Do you take blood thinners?", expectedSlot: "MED_ANTICOAGULANT" },
-  { id: "anticoagulant-apixaban-en", language: "en", question: "Are you taking apixaban?", expectedSlot: "MED_ANTICOAGULANT" }
+  { id: "anticoagulant-apixaban-en", language: "en", question: "Are you taking apixaban?", expectedSlot: "MED_ANTICOAGULANT" },
+  { id: "qa-dysuria-colloquial-zh", language: "zh", question: "小便痛不痛？", expectedSlots: ["dysuria"], expectedFacts: ["dysuria"], qaNatural: true },
+  { id: "qa-dysuria-colloquial-en", language: "en", question: "Does it hurt when you urinate?", expectedSlots: ["dysuria"], expectedFacts: ["dysuria"], qaNatural: true },
+  { id: "qa-dysuria-formal-zh", language: "zh", question: "排尿时疼吗？", expectedSlots: ["dysuria"], expectedFacts: ["dysuria"], qaNatural: true },
+  { id: "qa-dysuria-formal-en", language: "en", question: "Is urination painful?", expectedSlots: ["dysuria"], expectedFacts: ["dysuria"], qaNatural: true },
+  { id: "qa-dysuria-natural-zh", language: "zh", question: "尿的时候会不会痛？", expectedSlots: ["dysuria"], expectedFacts: ["dysuria"], qaNatural: true },
+  { id: "qa-dysuria-natural-en", language: "en", question: "Does it hurt when you pee?", expectedSlots: ["dysuria"], expectedFacts: ["dysuria"], qaNatural: true },
+  { id: "qa-dysuria-negated-zh", language: "zh", question: "没有尿痛吧？", expectedSlots: ["dysuria"], expectedFacts: ["dysuria"], qaNatural: true },
+  { id: "qa-dysuria-negated-en", language: "en", question: "You do not have pain when urinating, right?", expectedSlots: ["dysuria"], expectedFacts: ["dysuria"], qaNatural: true },
+  { id: "qa-phase-whole-zh", language: "zh", question: "小便全程都是红的吗？", expectedSlots: ["hematuria_phase"], expectedFacts: ["whole_stream_hematuria"], qaNatural: true },
+  { id: "qa-phase-whole-en", language: "en", question: "Is the urine red throughout the whole stream?", expectedSlots: ["hematuria_phase"], expectedFacts: ["whole_stream_hematuria"], qaNatural: true },
+  { id: "qa-phase-start-to-end-zh", language: "zh", question: "从开始尿到最后都红吗？", expectedSlots: ["hematuria_phase"], expectedFacts: ["whole_stream_hematuria"], qaNatural: true },
+  {
+    id: "whole-stream-start-to-end-en",
+    language: "en",
+    question: "Is it red from the start to the end of urination?",
+    expectedSlots: ["hematuria_phase"],
+    expectedFacts: ["whole_stream_hematuria"],
+    qaNatural: true
+  },
+  {
+    id: "phase-choice-zh",
+    language: "zh",
+    question: "是刚开始红、最后红，还是全程红？",
+    expectedSlots: ["hematuria_phase"],
+    expectedFacts: ["initial_hematuria", "terminal_hematuria", "whole_stream_hematuria"],
+    qaNatural: true
+  },
+  {
+    id: "phase-choice-en",
+    language: "en",
+    question: "Is it red at the beginning, at the end, or throughout urination?",
+    expectedSlots: ["hematuria_phase"],
+    expectedFacts: ["initial_hematuria", "terminal_hematuria", "whole_stream_hematuria"],
+    qaNatural: true
+  },
+  {
+    id: "qa-phase-negated-terminal-zh",
+    language: "zh",
+    question: "不是只有最后才红吧？",
+    expectedSlots: ["hematuria_phase"],
+    expectedFacts: ["terminal_hematuria", "whole_stream_hematuria"],
+    qaNatural: true
+  },
+  {
+    id: "phase-negated-terminal-en",
+    language: "en",
+    question: "It is not only red at the end of urination, right?",
+    expectedSlots: ["hematuria_phase"],
+    expectedFacts: ["terminal_hematuria", "whole_stream_hematuria"],
+    qaNatural: true
+  },
+  {
+    id: "qa-lower-urinary-compound-zh",
+    language: "zh",
+    question: "尿频尿急尿痛有没有？",
+    expectedSlots: ["urinary_frequency", "urinary_urgency", "dysuria"],
+    expectedFacts: ["urinary_frequency", "urinary_urgency", "dysuria"],
+    forbiddenSlots: ["pain"],
+    qaNatural: true
+  },
+  {
+    id: "lower-urinary-compound-en",
+    language: "en",
+    question: "Do you have urinary frequency, urgency, or pain when urinating?",
+    expectedSlots: ["urinary_frequency", "urinary_urgency", "dysuria"],
+    expectedFacts: ["urinary_frequency", "urinary_urgency", "dysuria"],
+    forbiddenSlots: ["pain"],
+    qaNatural: true
+  },
+  {
+    id: "qa-red-flag-compound-zh",
+    language: "zh",
+    question: "有没有腰痛、发烧和血块？",
+    expectedSlots: ["flank_pain", "fever_chills", "clots"],
+    expectedFacts: ["flank_pain", "fever", "blood_clots"],
+    forbiddenSlots: ["pain"],
+    qaNatural: true
+  },
+  {
+    id: "red-flag-compound-en",
+    language: "en",
+    question: "Do you have flank pain, fever, or blood clots?",
+    expectedSlots: ["flank_pain", "fever_chills", "clots"],
+    expectedFacts: ["flank_pain", "fever", "blood_clots"],
+    forbiddenSlots: ["pain"],
+    qaNatural: true
+  }
 ];
 
 assert.equal(cases.length, 42, "priority paraphrase routing must cover all 42 cases");
 let hits = 0;
+let qaNaturalHits = 0;
+let qaNaturalIntentChecks = 0;
+let qaNaturalIntentHits = 0;
 const failures: string[] = [];
 for (const caseData of cases) {
   for (const probe of probes) {
     const matched = matchCanonicalPatientFacts(caseData.id, probe.question, probe.language)
       || matchStructuredFacts(caseData, probe.question, probe.language);
-    if (matched?.matchedSlotIds?.includes(probe.expectedSlot)) hits += 1;
-    else failures.push(`${caseData.id}/${probe.id}: expected ${probe.expectedSlot}, got ${matched?.matchedSlotIds?.join(",") || "none"}`);
+    const expectedSlots = probe.expectedSlots || (probe.expectedSlot ? [probe.expectedSlot] : []);
+    const matchedSlots = matched?.matchedSlotIds || [];
+    const matchedFacts = (matched as { matchedFacts?: string[] } | null)?.matchedFacts || [];
+    const routedFacts = matchPriorityCanonicalIntents(probe.question, probe.language).map((item) => item.intentKey);
+    const missingSlots = expectedSlots.filter((slot) => !matchedSlots.includes(slot));
+    const missingFacts = (probe.expectedFacts || []).filter((fact) => !routedFacts.includes(fact));
+    const forbiddenSlots = (probe.forbiddenSlots || []).filter((slot) => matchedSlots.includes(slot));
+    if (probe.qaNatural) {
+      qaNaturalIntentChecks += probe.expectedFacts?.length || 0;
+      qaNaturalIntentHits += (probe.expectedFacts || []).filter((fact) => routedFacts.includes(fact)).length;
+    }
+    if (!missingSlots.length && !missingFacts.length && !forbiddenSlots.length) {
+      hits += 1;
+      if (probe.qaNatural) qaNaturalHits += 1;
+    }
+    else failures.push(
+      `${caseData.id}/${probe.id}: missingSlots=${missingSlots.join(",") || "none"} `
+      + `missingFacts=${missingFacts.join(",") || "none"} forbiddenSlots=${forbiddenSlots.join(",") || "none"} `
+      + `gotSlots=${matchedSlots.join(",") || "none"} gotFacts=${matchedFacts.join(",") || "none"} `
+      + `routedFacts=${routedFacts.join(",") || "none"}`
+    );
   }
 }
 
 const total = cases.length * probes.length;
-console.log(`PATIENT_PRIORITY_PARAPHRASE_EVIDENCE ${JSON.stringify({ cases: cases.length, probes: probes.length, total, hits, hitRate: Number((hits / total).toFixed(4)), failures: failures.length })}`);
+const qaNaturalTotal = cases.length * probes.filter((probe) => probe.qaNatural).length;
+console.log(`PATIENT_PRIORITY_PARAPHRASE_EVIDENCE ${JSON.stringify({
+  cases: cases.length,
+  probes: probes.length,
+  total,
+  hits,
+  hitRate: Number((hits / total).toFixed(4)),
+  qaNaturalTotal,
+  qaNaturalHits,
+  qaNaturalIntentChecks,
+  qaNaturalIntentHits,
+  failures: failures.length
+})}`);
 assert.deepEqual(failures, [], `priority paraphrase failures (${failures.length}):\n${failures.slice(0, 30).join("\n")}`);

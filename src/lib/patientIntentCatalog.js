@@ -29,7 +29,7 @@ const priorityIntentDefinitions = Object.freeze([
     key: "urinary_urgency", sourceSlotId: "urinary_urgency", labelZh: "尿急", labelEn: "Urinary urgency",
     aliases: Object.freeze({
       zh: Object.freeze(["尿急", "一有尿意就憋不住", "突然特别想尿", "来不及上厕所", "尿意很急", "突然就要尿", "有尿就憋不住"]),
-      en: Object.freeze(["urinary urgency", "urgent need to urinate", "sudden urge to pee", "cannot hold urine", "can't hold my urine", "need to rush to the toilet"])
+      en: Object.freeze(["urinary urgency", "urgency", "urgent need to urinate", "sudden urge to pee", "cannot hold urine", "can't hold my urine", "need to rush to the toilet"])
     }),
     confusableWith: Object.freeze(["urinary_frequency", "urinary_incontinence"])
   }),
@@ -118,7 +118,8 @@ const priorityIntentDefinitions = Object.freeze([
       ]),
       en: Object.freeze([
         "blood throughout urination", "red from start to finish", "red during the whole stream",
-        "all of the urine red", "blood throughout the entire stream", "red throughout", "whole stream red"
+        "all of the urine red", "blood throughout the entire stream", "red throughout", "whole stream red",
+        "red from the start to the end of urination", "not only red at the end"
       ])
     }),
     confusableWith: Object.freeze(["initial_hematuria", "terminal_hematuria"])
@@ -130,7 +131,7 @@ const priorityIntentDefinitions = Object.freeze([
     labelEn: "Initial hematuria",
     aliases: Object.freeze({
       zh: Object.freeze(["起始血尿", "刚开始尿的时候红", "只有一开始红", "刚尿出来就红", "刚开始红"]),
-      en: Object.freeze(["initial hematuria", "blood only at the beginning", "red only at the beginning", "start red and then clear"])
+      en: Object.freeze(["initial hematuria", "blood only at the beginning", "red only at the beginning", "red at the beginning", "start red and then clear"])
     }),
     confusableWith: Object.freeze(["whole_stream_hematuria", "terminal_hematuria"])
   }),
@@ -140,8 +141,8 @@ const priorityIntentDefinitions = Object.freeze([
     labelZh: "终末血尿",
     labelEn: "Terminal hematuria",
     aliases: Object.freeze({
-      zh: Object.freeze(["终末血尿", "快尿完的时候红", "最后才红", "最后一段红", "最后几滴红", "只有最后红"]),
-      en: Object.freeze(["terminal hematuria", "red only at the end", "blood only at the end", "turn red near the end", "last drops red"])
+      zh: Object.freeze(["终末血尿", "快尿完的时候红", "最后才红", "最后红", "最后一段红", "最后几滴红", "只有最后红"]),
+      en: Object.freeze(["terminal hematuria", "red only at the end", "blood only at the end", "red at the end", "only red at the end", "turn red near the end", "last drops red"])
     }),
     confusableWith: Object.freeze(["whole_stream_hematuria", "initial_hematuria"])
   })
@@ -177,17 +178,17 @@ function matchesNaturalPattern(question, intentKey, language) {
   if (intentKey === "whole_stream_hematuria") {
     return language === "zh"
       ? /(?:全程|从头到尾|从开始(?:尿)?到最后|整个(?:小便|排尿|尿尿)?过程|一开始到尿完|整泡尿).*(?:红|血)/.test(compacted)
-      : /(?:red|blood).*(?:throughout|starttofinish|wholestream|entirestream)|(?:throughout|wholestream|entirestream).*(?:red|blood)/i.test(compacted);
+      : /(?:red|blood).*(?:throughout|starttofinish|starttotheend|wholestream|entirestream)|(?:throughout|wholestream|entirestream).*(?:red|blood)|notonlyred.*(?:end|last)/i.test(compacted);
   }
   if (intentKey === "initial_hematuria") {
     return language === "zh"
       ? /(?:起始血尿|刚开始(?:尿)?(?:时|的时候)?红|只有一开始红|刚尿出来就红)/.test(compacted)
-      : /(?:initialhematuria|(?:blood|red).*onlyatthebeginning|startred.*clear)/i.test(compacted);
+      : /(?:initialhematuria|(?:blood|red).*(?:only)?atthebeginning|startred.*clear)/i.test(compacted);
   }
   if (intentKey === "terminal_hematuria") {
     return language === "zh"
       ? /(?:终末血尿|快尿完(?:的时候)?红|最后(?:才|一段|几滴)红|只有最后红)/.test(compacted)
-      : /(?:terminalhematuria|(?:blood|red).*onlyattheend|turnred.*neartheend|lastdrops.*red)/i.test(compacted);
+      : /(?:terminalhematuria|(?:blood|red).*(?:only)?attheend|onlyred.*attheend|turnred.*neartheend|lastdrops.*red)/i.test(compacted);
   }
   if (intentKey === "urinary_frequency") {
     return language === "zh"
@@ -197,7 +198,7 @@ function matchesNaturalPattern(question, intentKey, language) {
   if (intentKey === "urinary_urgency") {
     return language === "zh"
       ? /(?:尿意|想尿|尿来了).*(?:很急|突然|憋不住|等不了)|(?:突然|马上|来不及).*(?:想尿|厕所)|有尿.*憋不住/.test(compacted)
-      : /(?:sudden|urgent).*(?:urge|need).*(?:urinate|pee)|(?:cannot|can't).*(?:hold|wait).*(?:urine|pee)|rush.*(?:bathroom|toilet)/i.test(compacted);
+      : /(?:sudden|urgent).*(?:urge|need).*(?:urinate|pee)|(?:cannot|can't).*(?:hold|wait).*(?:urine|pee)|rush.*(?:bathroom|toilet)|(?:urinaryfrequency|dysuria|painwhenurinating).*urgency|urgency.*(?:urinaryfrequency|dysuria|painwhenurinating)/i.test(compacted);
   }
   if (intentKey === "blood_clots") {
     return language === "zh"
@@ -265,7 +266,7 @@ function matchPriorityCanonicalIntents(question, language = "zh") {
 function asksIndependentGeneralPain(question, language = "zh") {
   const normalized = normalizeIntentQuestion(question);
   if (language === "en") {
-    return /\bpain\s+(?:and|or|urinary|frequency|urgency|dysuria|fever|weight)\b|\bany (?:other )?pain\b|\bother pain\b|\bpain elsewhere\b/i.test(normalized);
+    return /\bany (?:other )?pain\b|\bother pain\b|\bpain elsewhere\b|\bgeneral pain\b/i.test(normalized);
   }
   const compacted = normalized.replace(/\s+/g, "");
   return /(?:其他|别的|平时|全身|别处|哪里)[^，。；?？]*(?:痛|疼)|(?:有没有|有无)疼痛(?:、|和|或|还有)/.test(compacted);
