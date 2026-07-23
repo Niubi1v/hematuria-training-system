@@ -121,12 +121,12 @@ async function switchLanguage(page, label, textboxName) {
   await expect(page.getByRole("textbox", { name: textboxName })).toBeVisible();
 }
 
-async function askOneLiveAiQuestion(page, language) {
+async function askLiveAiQuestion(page, language, question) {
   const english = language === "en";
   const input = page.getByRole("textbox", { name: english ? "Enter an interview question" : "输入问诊问题" });
   const send = page.getByRole("button", { name: english ? "Send" : "发送", exact: true });
   await expect(input).toBeVisible();
-  await input.fill(english ? "When did you first notice blood in your urine?" : "您最早什么时候发现尿里有血？");
+  await input.fill(question);
   await expect(send).toBeEnabled();
 
   const patientResponse = page.waitForResponse((response) => new URL(response.url()).pathname === "/api/agent-chat/" && response.request().method() === "POST");
@@ -144,6 +144,21 @@ async function askOneLiveAiQuestion(page, language) {
   expect(history.status()).toBe(200);
   await expect(page.getByText(english ? "Scoring synced" : "评分已同步", { exact: true })).toBeVisible();
   await expect(page.locator(".ui-status").filter({ hasText: english ? "AI service connected" : "人工智能服务已连接" })).toBeVisible();
+  return patientPayload;
+}
+
+async function askOneLiveAiQuestion(page, language) {
+  return askLiveAiQuestion(
+    page,
+    language,
+    language === "en" ? "When did you first notice blood in your urine?" : "您最早什么时候发现尿里有血？"
+  );
+}
+
+async function ensureEnglishInterview(page) {
+  const input = page.getByRole("textbox", { name: "Enter an interview question" });
+  if (await input.isVisible()) return;
+  await switchLanguage(page, "English", "Enter an interview question");
 }
 
 async function submitFirstStage(page, language, doubleClick = false) {
@@ -254,6 +269,43 @@ test("P001 switches Chinese to English and back without reusing an invalid attem
     await switchLanguage(page, "中文", "输入问诊问题");
     await submitFirstStage(page, "zh");
     await enterSecondStage(page, "zh");
+  } finally {
+    await attachSanitizedEvidence(testInfo, collector);
+  }
+});
+
+test("P001 English correction and clarification retain live AI", async ({ page }, testInfo) => {
+  const collector = createSanitizedEvidence(page, "P001-en-correction-clarification");
+  try {
+    await gotoCaseWithReadyAttempt(page, "P001");
+    await ensureEnglishInterview(page);
+    await askLiveAiQuestion(page, "en", "When did you first notice the red urine?");
+    await askLiveAiQuestion(page, "en", "So this only started today and it has never happened before, correct?");
+    await askLiveAiQuestion(page, "en", "Could you explain the other part?");
+  } finally {
+    await attachSanitizedEvidence(testInfo, collector);
+  }
+});
+
+test("P037 English contextual follow-up retains live AI", async ({ page }, testInfo) => {
+  const collector = createSanitizedEvidence(page, "P037-en-contextual-follow-up");
+  try {
+    await gotoCaseWithReadyAttempt(page, "P037");
+    await ensureEnglishInterview(page);
+    await askLiveAiQuestion(page, "en", "Please tell me in your own words why you came today.");
+    await askLiveAiQuestion(page, "en", "How long ago was the urine test abnormality first found?");
+  } finally {
+    await attachSanitizedEvidence(testInfo, collector);
+  }
+});
+
+test("P038 English contextual follow-up retains live AI", async ({ page }, testInfo) => {
+  const collector = createSanitizedEvidence(page, "P038-en-contextual-follow-up");
+  try {
+    await gotoCaseWithReadyAttempt(page, "P038");
+    await ensureEnglishInterview(page);
+    await askLiveAiQuestion(page, "en", "Please describe what happened after the injury in your own words.");
+    await askLiveAiQuestion(page, "en", "About how long ago did the injury happen?");
   } finally {
     await attachSanitizedEvidence(testInfo, collector);
   }
