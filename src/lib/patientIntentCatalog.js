@@ -266,7 +266,11 @@ function matchPriorityCanonicalIntents(question, language = "zh") {
 function asksIndependentGeneralPain(question, language = "zh") {
   const normalized = normalizeIntentQuestion(question);
   if (language === "en") {
-    return /\bany (?:other )?pain\b|\bother pain\b|\bpain elsewhere\b|\bgeneral pain\b/i.test(normalized);
+    const standalonePainInList = /\b(?:have|with)\s+pain(?:\s+(?:and|or|urinary|frequency|urgency|dysuria|fever|weight)|$)/i.test(normalized);
+    const unqualifiedAnyPain = /\bany pain\b(?!\s+(?:passing|when|while|during|on)\b)/i.test(normalized);
+    return standalonePainInList
+      || unqualifiedAnyPain
+      || /\bany other pain\b|\bother pain\b|\bpain elsewhere\b|\bgeneral pain\b/i.test(normalized);
   }
   const compacted = normalized.replace(/\s+/g, "");
   return /(?:其他|别的|平时|全身|别处|哪里)[^，。；?？]*(?:痛|疼)|(?:有没有|有无)疼痛(?:、|和|或|还有)/.test(compacted);

@@ -10,7 +10,8 @@ const { matchCanonicalPatientFacts } = require("../server/canonicalFacts.js") as
 const { matchStructuredFacts } = require("../server/structuredFacts.js") as {
   matchStructuredFacts(caseData: unknown, question: string, language: "zh" | "en"): { matchedSlotIds?: string[] } | null;
 };
-const { matchPriorityCanonicalIntents } = require("../src/lib/patientIntentCatalog.js") as {
+const { asksIndependentGeneralPain, matchPriorityCanonicalIntents } = require("../src/lib/patientIntentCatalog.js") as {
+  asksIndependentGeneralPain(question: string, language: "zh" | "en"): boolean;
   matchPriorityCanonicalIntents(question: string, language: "zh" | "en"): Array<{ intentKey: string }>;
 };
 
@@ -177,6 +178,22 @@ for (const caseData of cases) {
 
 const total = cases.length * probes.length;
 const qaNaturalTotal = cases.length * probes.filter((probe) => probe.qaNatural).length;
+assert.equal(
+  asksIndependentGeneralPain("Do you have pain, urinary frequency, urgency, dysuria, fever, or weight loss?", "en"),
+  true,
+  "standalone pain in a compound symptom list must remain independently answerable"
+);
+for (const specificPainQuestion of [
+  "Do you have flank pain, fever, or blood clots?",
+  "Do you have pain when urinating?",
+  "Any pain passing urine?"
+]) {
+  assert.equal(
+    asksIndependentGeneralPain(specificPainQuestion, "en"),
+    false,
+    `specific pain must not expand to generic pain: ${specificPainQuestion}`
+  );
+}
 console.log(`PATIENT_PRIORITY_PARAPHRASE_EVIDENCE ${JSON.stringify({
   cases: cases.length,
   probes: probes.length,
