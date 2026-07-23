@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "productionSha": "70ea9b3c7b31e11a84878de5c277cac60f35481c",
+  "qaMergeSha": "b94d7803507df3da52379f83ab05fef2afc45c87",
+  "scope": "sanitized aggregate only",
+  "firstStageAndCapability": {
+    "localBrowserPassed": 12,
+    "localBrowserFailed": 0,
+    "capabilityMatrixRuns": 2,
+    "capabilityMatrixPassedPerRun": 19,
+    "capabilityMatrixFailed": 0,
+    "rapidStageSubmitRequests": 1,
+    "rapidStageSubmitRequestIds": 1,
+    "rapidStageSubmitTimelineEvents": 1,
+    "previewP003ZeroRoundReachedStageTwo": true,
+    "previewP001Chinese": "PASS_PREVIEW",
+    "previewP001English": "PASS_PREVIEW",
+    "previewLanguageSwitch": "PASS_PREVIEW",
+    "previewRefreshRecovery": "PASS_PREVIEW",
+    "previewRapidDoubleSubmit": "PASS_PREVIEW"
+  },
+  "patientNaturalPhrasing": {
+    "cases": 42,
+    "probesPerLanguage": 10,
+    "scenarios": 840,
+    "canonicalIntentHits": 1134,
+    "canonicalIntentChecks": 1428,
+    "canonicalIntentHitRate": 0.7941,
+    "canonicalScenarioHits": 630,
+    "canonicalScenarioHitRate": 0.75,
+    "knownFactChecks": 914,
+    "erroneousUnknown": 4,
+    "erroneousUnknownRate": 0.0044,
+    "polarityEligibleChecks": 439,
+    "polarityErrors": 0,
+    "polarityErrorRate": 0,
+    "expectedUnknown": 436,
+    "correctUnknown": 436,
+    "medicalConflictScenarios": 42,
+    "medicalConflictScenariosIsolated": 42,
+    "uniqueMedicalConflictItemsIsolated": 13,
+    "bilingualPairs": 420,
+    "bilingualMeaningPass": 247,
+    "extraHistoryLeakScenarios": 42,
+    "providerCalls": 0,
+    "fullQuestionsRetained": false,
+    "fullAnswersRetained": false,
+    "medicalValuesRetained": false,
+    "status": "FAIL_LOCAL_QA",
+    "defectId": "HEM-P1-050"
+  },
+  "preview": {
+    "deploymentShaVerified": true,
+    "healthStatus": 200,
+    "sessionSuccess": {
+      "passed": 10,
+      "attempted": 10,
+      "p50TotalMs": 855,
+      "p95TotalMs": 1364,
+      "p50ServerSessionMs": 6,
+      "p95ServerSessionMs": 17
+    },
+    "chineseLiveAi": {
+      "passed": 5,
+      "attempted": 5,
+      "fallback": 0,
+      "p50AnswerMs": 1363,
+      "p95AnswerMs": 1443,
+      "providerCalls": 5
+    },
+    "englishLiveAi": {
+      "passed": 5,
+      "attempted": 5,
+      "fallback": 0,
+      "p50AnswerMs": 1349,
+      "p95AnswerMs": 1462,
+      "providerCalls": 5
+    },
+    "longSession": {
+      "liveAiPassed": 20,
+      "attempted": 20,
+      "agentRequests": 20,
+      "historyLogs": 20,
+      "distinctSessions": 1,
+      "sessionReinitializations": 0,
+      "p95AnswerMs": 1383,
+      "p95ProviderMs": 1033,
+      "p95HistoryMs": 7
+    },
+    "backgroundRecovery": {
+      "liveAiPassed": 2,
+      "attempted": 2,
+      "agentRequests": 2,
+      "historyLogs": 2,
+      "attemptReinitializations": 0,
+      "sessionReinitializations": 0,
+      "messageDuplication": false
+    },
+    "p038FiveTurnBilingual": {
+      "answers": 10,
+      "agentRequests": 10,
+      "historyLogs": 10,
+      "liveAi": 4,
+      "safetyBoundary": 2,
+      "ruleFallback": 4,
+      "sourceContractFailures": 2,
+      "unauthorized": 0
+    },
+    "p037RefreshBilingual": {
+      "answers": 8,
+      "agentRequests": 8,
+      "historyLogs": 8,
+      "refreshRestorationFailures": 0,
+      "liveAi": 5,
+      "safetyBoundary": 2,
+      "ruleFallback": 1,
+      "sourceContractFailures": 1,
+      "durationContinuityFailures": 1,
+      "unauthorized": 0
+    },
+    "coreUnexpectedHttp": {
+      "401": 0,
+      "403": 0,
+      "429": 0,
+      "5xx": 0
+    },
+    "batchInterference": {
+      "fullSuiteUnexpected429": 2,
+      "isolatedSessionAbusePassed": 11,
+      "isolatedSessionAbuseAttempted": 11
+    },
+    "serverTimingFirstTokenIsTrueStreamingTtft": false,
+    "responseTextRetained": false,
+    "credentialArtifactsRetained": false,
+    "status": "FAIL_PREVIEW",
+    "defectId": "HEM-P1-051"
+  },
+  "routesAndStages": {
+    "localCasesValid": 42,
+    "localCasesAttempted": 42,
+    "previewCasesValid": 42,
+    "previewCasesAttempted": 42,
+    "previewInvalidCaseControlled404": true,
+    "sevenStageDesktopPassed": 1,
+    "sevenStageMobileEmulationPassed": 1,
+    "stageFeedbackEvents": 7,
+    "uniqueStageRequestIds": 7,
+    "scoreScale": 360,
+    "observedScore": 220,
+    "duplicateScoringRequests": 0
+  },
+  "ui": {
+    "viewports": [
+      "1440x900",
+      "1280x720",
+      "390x844",
+      "360x800"
+    ],
+    "openingLayoutPassed": 8,
+    "openingLayoutAttempted": 8,
+    "manualScrollAndLatestPassed": 8,
+    "manualScrollAndLatestAttempted": 8,
+    "productionComposerGeometryPassed": 4,
+    "productionComposerGeometryAttempted": 4,
+    "status": "PASS_EMULATION",
+    "realDeviceStatus": "BLOCKED_REAL_DEVICE"
+  },
+  "existingOpenDefectsRetested": {
+    "HEM-P1-046": "FAIL_LOCAL_QA",
+    "HEM-P1-047": "FAIL_LOCAL_QA",
+    "HEM-P1-048": "FAIL_LOCAL_QA"
+  },
+  "newDefects": [
+    "HEM-P1-050",
+    "HEM-P1-051"
+  ],
+  "secretsRetained": false
+}

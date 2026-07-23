@@ -1,6 +1,6 @@
 # 探索式 QA 证据索引
 
-当前 Production 文档基线：`657ba5da8fc6460ad7d0deea882a010c40938b40`；运行时证据代码基线：`3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`
+当前 Production 与运行时证据基线：`70ea9b3c7b31e11a84878de5c277cac60f35481c`
 QA 分支：`codex/hematuria-exploratory-qa`
 本机证据根目录：`<QA_WORKTREE>\artifacts\exploratory-qa\`
 
@@ -12,7 +12,7 @@ QA 分支：`codex/hematuria-exploratory-qa`
 | 390×844 无遮挡对照帧 | HEM-P1-027 / 同一几何断言 | `screenshots/mobile-opening-composer-no-overlap-390x844.png` | 52,142 | 是 | — | 证据根目录下同路径 |
 | 360×800 最小失败 trace | HEM-P1-027 / 同一几何断言 | `traces/mobile-opening-composer-overlap-360x800.zip` | 6,773 | 是 | — | 证据根目录下同路径 |
 | 阶段提交双击失败帧 | HEM-P2-028 / `rapid double stage submission...` | `screenshots/stage-submit-double-click-1440x900-failure.png` | 162,293 | 是 | — | 证据根目录下同路径 |
-| 阶段提交双击最小 trace | HEM-P2-028 / 同一幂等断言 | `traces/stage-submit-double-click-1440x900.zip` | 11,564 | 是 | — | 证据根目录下同路径 |
+| 阶段提交双击最小 trace | HEM-P2-028 / 同一幂等断言 | `traces/stage-submit-double-click-1440x900.zip` | 10,401 | 是 | — | 证据根目录下同路径 |
 | 英文开场语言失败代表帧 | HEM-P1-029 / live session UI | `screenshots/live-english-opening-language-1440x900-failure.png` | 148,732 | 是 | — | 证据根目录下同路径 |
 | 患者元语言失败代表帧 | HEM-P1-033 / P004 live API/UI | `screenshots/live-p004-clots-teacher-meta-390x844-failure.png` | 71,371 | 是 | — | 证据根目录下同路径 |
 | 语言切换授权失败代表帧 | HEM-P1-034 / 中文→英文 live session | `screenshots/live-language-switch-authorization-1440x900-failure.png` | 145,682 | 是 | — | 证据根目录下同路径 |
@@ -41,11 +41,13 @@ QA 分支：`codex/hematuria-exploratory-qa`
 | 360×800 英文开场修复帧 | HEM-P1-027 / 开场完整可见 | `screenshots/hem-p1-027-en-opening-layout-360x800-en-opening-pass-emulation.png` | 70,515 | 是 | — | 证据根目录下同路径 |
 | 390×844 中文开场对照帧 | HEM-P1-027 / 开场完整可见 | `screenshots/hem-p1-027-zh-opening-layout-390x844-zh-opening-pass-emulation.png` | 66,973 | 是 | — | 证据根目录下同路径 |
 | 390×844 英文开场对照帧 | HEM-P1-027 / 开场完整可见 | `screenshots/hem-p1-027-en-opening-layout-390x844-en-opening-pass-emulation.png` | 70,692 | 是 | — | 证据根目录下同路径 |
-| 360×800 手动上翻帧 | HEM-P1-027 / 不强制回底与新消息入口 | `screenshots/hem-p1-027-zh-manual-scroll-360x800-zh-manual-scroll-pass-emulation.png` | 73,057 | 是 | — | 证据根目录下同路径 |
-| 360×800 回到底部帧 | HEM-P1-027 / 最后一条不被遮挡 | `screenshots/hem-p1-027-zh-manual-scroll-360x800-zh-latest-pass-emulation.png` | 68,951 | 是 | — | 证据根目录下同路径 |
+| 360×800 手动上翻帧 | HEM-P1-027 / 不强制回底与新消息入口 | `screenshots/hem-p1-027-zh-manual-scroll-360x800-zh-manual-scroll-pass-emulation.png` | 72,894 | 是 | — | 证据根目录下同路径 |
+| 360×800 回到底部帧 | HEM-P1-027 / 最后一条不被遮挡 | `screenshots/hem-p1-027-zh-manual-scroll-360x800-zh-latest-pass-emulation.png` | 68,785 | 是 | — | 证据根目录下同路径 |
 | 英文开场修复代表帧 | HEM-P1-029 / live session UI | `screenshots/live-english-opening-language-1440x900-pass-emulation.png` | 148,082 | 是 | — | 证据根目录下同路径 |
 | 语言切换修复代表帧 | HEM-P1-034 / 中文→英文 live session | `screenshots/live-language-switch-authorization-1440x900-pass-emulation.png` | 146,285 | 是 | — | 证据根目录下同路径 |
 | 患者元语言隔离修复帧 | HEM-P1-033 / P004 live API/UI | `screenshots/live-p004-clots-teacher-meta-390x844-pass-emulation.png` | 74,460 | 是 | — | 证据根目录下同路径 |
+| 70ea9b3 自然问法聚合 | HEM-P1-050 / 42例×10问法×双语 | `reports/70ea9b3-patient-natural-phrasing-audit.json` | 8,948 | 是 | —；只含分组case ID、intent、布尔值和计数，不含问题/回答/医学值 | 证据根目录下同路径 |
+| 70ea9b3 优先复测摘要 | 第一阶段、Preview、42例、七阶段、UI、HEM-P1-050/051 | `reports/70ea9b3-priority-qa-summary.json` | 4,882 | 是 | —；只含状态、计数、耗时和公开SHA，不含凭据或问答 | 证据根目录下同路径 |
 
 SHA-256：
 
@@ -53,7 +55,7 @@ SHA-256：
 - `mobile-opening-composer-no-overlap-390x844.png`：`192EE283E8ACEFD216A7B7038E12FB5F015E8FEFED90D05DCEB686BD07B4D019`
 - `mobile-opening-composer-overlap-360x800.zip`：`42AF297C8AFABF3697018B723887C6A4A0D858478BA21145931AD0AE34C06966`
 - `stage-submit-double-click-1440x900-failure.png`：`8205F568199065CF678E0699917971C541746AF4AC0902F30264D83D5471D20D`
-- `stage-submit-double-click-1440x900.zip`：`64EC19AF1842E99CD1F3071965A4FC49040B5EB73850931813AB8412986AD8FF`
+- `stage-submit-double-click-1440x900.zip`：`E95BA41F88BED08E3A6563F427AFA565EB289BA7FE994529DCFBB9FFA7E731D9`
 - `live-english-opening-language-1440x900-failure.png`：`E34944EACF827D09BBA4A6891E8F4485E3A3B5C445266EDDCF8D9B5FD99ADC63`
 - `live-p004-clots-teacher-meta-390x844-failure.png`：`B8DA10D5F28C5C5B10DF5ACA04B06363F5A0D539072CB50DEEAA7C9D02518E93`
 - `live-language-switch-authorization-1440x900-failure.png`：`7F3E7DFB5D694729FB4A0FB30910228992CBEF7ACF1EF0CA825130E377565D69`
@@ -68,8 +70,8 @@ SHA-256：
 - `hem-p1-027-en-opening-layout-360x800-en-opening-pass-emulation.png`：`DBA3FDEDD66FACA33C74BDBEDE3FCF4FEFD98B6DCBD071EA1F2894F81198F700`
 - `hem-p1-027-zh-opening-layout-390x844-zh-opening-pass-emulation.png`：`577DF68AAB8F181F2BA49A96D00EE42CCCCB812649F196BA25CD5C37CA17A375`
 - `hem-p1-027-en-opening-layout-390x844-en-opening-pass-emulation.png`：`FBF798420DF78FE59D15B3C398AB8FC8393338D9A625E7653EC0C50787AE8C86`
-- `hem-p1-027-zh-manual-scroll-360x800-zh-manual-scroll-pass-emulation.png`：`8D00769F79530E49A210D44D635A9D08180FD5F94DE2531059E9F5366CCAD73D`
-- `hem-p1-027-zh-manual-scroll-360x800-zh-latest-pass-emulation.png`：`CF60C49C89C7CDB208CBBFBD945091BCD2169748F1848A52F62B833EEBFA4EBE`
+- `hem-p1-027-zh-manual-scroll-360x800-zh-manual-scroll-pass-emulation.png`：`42BA7998D2988F77E2014B97392227F628B01A0527ADD402061DF062D3DADCF1`
+- `hem-p1-027-zh-manual-scroll-360x800-zh-latest-pass-emulation.png`：`C9944751024F82F460A6BA0FC30229CE3824C119E62E1B1A42DDB084D5D15999`
 - `live-english-opening-language-1440x900-pass-emulation.png`：`42C009FD257F309E8FCD0C9820448DDCFF0ED506848440C4F30C49A2A14FC40C`
 - `live-language-switch-authorization-1440x900-pass-emulation.png`：`D686843AE6DB9F1A6A472D74A79EF95F0A3B35FBAB787BBDFD06749DF4194A59`
 - `live-p004-clots-teacher-meta-390x844-pass-emulation.png`：`B60A4014AC55BE0611249FE7BD5D7DB219527A52D2D48EBE729222E30FA0B591`
@@ -89,18 +91,20 @@ SHA-256：
 - `data-agent-bilingual-audit.json`：`F6356AD7A1EEEE1ED4BBC81BE22A715A9F2183DF593B163FB9F37B9503C6594F`
 - `hem-p1-048-data-agent-english-1280x720.png`：`848F5D8A8D907A77E60C4507AC0148EF49879142C540BF26F5492C6EBFF65A51`
 - `hem-p1-048-data-agent-english-1280x720.zip`：`4C243925F9E83C118CE44D510B12D36ACA78BABF915E3E609AE33E81427E162B`
+- `70ea9b3-patient-natural-phrasing-audit.json`：`3C78C8FC28C5FD7F75342D1A6920988D05CA58B3CF43BE717A56AA30025F9959`
+- `70ea9b3-priority-qa-summary.json`：`B6DF36702B09DF8D0F7745AF7862467B2F484BAE5D18534A55A82125C9E0EF60`
 
 ## 仅本机保留、不提交 Git
 
 | 证据名称 | 对应测试或缺陷 | 文件路径 | 文件数 | 大小（字节） | 提交 Git | 未提交原因 | 本机保留位置 |
 | --- | --- | --- | ---: | ---: | --- | --- | --- |
-| HTML/JSON/JUnit、console/network、test-results 和本地服务日志 | 七轮汇总、fixture E2E、HEM-P1-027–034/044/046/047/048、HEM-P2-043、Pages/Preview 分层 | `reports/**`（排除上表最小聚合/预检 JSON） | 225 | 3,886,759 | 否 | 可重建；部分报告含本机绝对路径；整个 HTML/report 目录不进 Git | 证据根目录下同路径 |
-| 通过、重复及非最小失败截图 | 四 viewport、42 页面壳、20 轮、七阶段/360、a11y、live API、Pages/HEM-P2-044、HEM-P1-046/047/048非代表帧 | `screenshots/**`（排除上表代表帧） | 100 | 16,259,473 | 否 | 通过、重复或非代表视觉证据；无新增最小失败价值 | 证据根目录下同路径 |
-| 通过、重复及大体积 trace | 公共页、42 页面壳、20 轮、七阶段/360、a11y、live API、路由矩阵及HEM-P1-047/048其余viewport | `traces/**`（排除上表 5 个） | 52 | 428,316,458 | 否 | 通过场景、重复复跑或大体积失败 trace；可由测试重建 | 证据根目录下同路径 |
+| HTML/JSON/JUnit、console/network、test-results 和本地服务日志 | 八轮汇总、fixture E2E、HEM-P1-027–051、HEM-P2-043、Pages/Preview 分层 | `reports/**`（排除上表最小聚合/预检 JSON） | 218 | 3,681,722 | 否 | 可重建；部分报告含本机绝对路径；整个 HTML/report 目录不进 Git | 证据根目录下同路径 |
+| 通过、重复及非最小失败截图 | 四 viewport、42 页面壳、20 轮、七阶段/360、a11y、live API、Pages/数据Agent非代表帧 | `screenshots/**`（排除上表代表帧） | 100 | 16,210,080 | 否 | 通过、重复或非代表视觉证据；无新增最小失败价值 | 证据根目录下同路径 |
+| 通过、重复及大体积 trace | 公共页、42 页面壳、20 轮、七阶段/360、a11y、live API、路由矩阵及其余viewport | `traces/**`（排除上表最小 trace） | 52 | 507,788,618 | 否 | 通过场景、重复复跑或大体积失败 trace；可由测试重建 | 证据根目录下同路径 |
 | 脱敏 fixture transcript | P001 中文 20 轮 | `transcripts/fixture-20-turn-interview-390x844.json` | 1 | 3,295 | 否 | 非真实 AI，且不是缺陷最小证据 | 证据根目录下同路径 |
-| 失败录像 | HEM-P1-027–034/046/047/048、HEM-P2-028/043及旧静态history环境尝试 | `videos/**` | 32 | 19,076,675 | 否 | 截图与最小 trace 已足够；按规则视频不进 Git | 证据根目录下同路径 |
+| 失败录像 | HEM-P1-027–051、HEM-P2-028/043及旧静态history环境尝试 | `videos/**` | 36 | 33,090,075 | 否 | 截图与最小 trace 已足够；按规则视频不进 Git | 证据根目录下同路径 |
 
-当前本机共有 441 个证据文件（含本索引）、483,558,942 字节。拟提交/已有 Git 最小证据集共 39 个文件（含本索引）、16,016,282 字节；其余 402 个文件、467,542,660 字节仅本机保留。定向 Playwright 复跑按 reporter 设计重建 HTML/JUnit/test-results；聚合 JSON、代表截图与历史最小 trace进入Git，大量重复截图、完整报告、长trace、录像与transcript不整体提交。没有浏览器用户目录进入证据根目录；`.pnpm-store`、`node_modules`与`.next`不进入证据或提交。
+当前本机共有 448 个证据文件（含本索引）、576,806,570 字节。拟提交/已有 Git 最小证据集共 41 个文件（含本索引）、16,032,780 字节；其余 407 个文件、560,773,790 字节仅本机保留。定向 Playwright 复跑按 reporter 设计重建 HTML/JUnit/test-results；聚合 JSON、代表截图与历史最小 trace进入Git，大量重复截图、完整报告、长trace、录像与transcript不整体提交。没有浏览器用户目录进入证据根目录；`.pnpm-store`、`node_modules`与`.next`不进入证据或提交。
 
 ## HEM-P1-027 复现与测量
 
@@ -159,15 +163,24 @@ SHA-256：
 20. HEM-P1-047使用非医学fixture隔离Production报告卡呈现：四固定viewport按中英文分配4/4均裸显三种内部状态，带异常标志的final卡片4/4仍为普通reported。Git只保留1440×900聚合、focused截图和阶段后重置的最小trace；其余3份聚合、7张截图、3份trace、4份录像、console/network和test-results仅本机保留。首轮选择器误点未发order请求，不计产品复现，其覆盖产物已被最终同名证据覆盖或保持本机。
 21. HEM-P1-048全量handler审计连续2/2一致：42/42病例、257/257结果均返回，`handlerFailures=0`，但英文目录/报告累计1,285个CJK可见字段命中；60个目录医嘱中57个英文显示名、60个主分类和49个次分类含中文，23个医嘱无无中文别名；257份结果的`orderCategory/result/impression`各257/257含中文，`value`为74/257。浏览器四viewport按英文P008合法CBC链路4/4复现，handler 12/12为200、provider调用0；Git只保留全量计数、1280×720代表帧和最小trace，其余12份报告、7张截图、3份trace、4份录像与test-results仅本机保留。一次CTU前置医嘱遗漏和首轮QA prerequisite遗漏均属于测试输入错误，不计产品失败。
 
+## `70ea9b3` 第八轮证据摘要
+
+1. `70ea9b3-priority-qa-summary.json` 汇总第一阶段/capability、Preview session/live_ai/fallback/性能、42例路由、七阶段、UI和缺陷状态；不含完整问答、token、session、Cookie、Authorization、bypass secret、Redis凭据或环境变量值。
+2. `70ea9b3-patient-natural-phrasing-audit.json` 只保留42例×10问法×双语按失败模式分组后的case ID、intent、布尔值和聚合计数；没有完整问题、回答或医学值。可重建脚本为`tests/exploratory/patient-natural-phrasing-audit.mjs`，840个内存场景与失败断言保持启用。
+3. 本地42例逐项路由报告`reports/local-p001-p042-route-matrix.json`、两张七阶段最终报告截图、四视口HEM-P1-027其余截图/trace、console/network、HTML/JUnit和录像全部本机保留；聚合摘要已足以支持提交结论，不把约500MB可重建证据加入Git。
+4. 真实Preview只通过安全wrapper执行。每次专用输出都在实际凭据字节/header扫描通过后删除；Git与本机证据根均不保留Preview trace、截图、完整回答或原始test-results。缺陷HEM-P1-051以脱敏source/request/history计数复现。
+5. HEM-P1-027当前轮更新两张360×800中文手动上翻/回到底部代表帧；快速双击阶段提交更新10,401字节最小trace。其余双语×四视口证据因重复或体积大不提交。
+6. `.pnpm-store/`是本地依赖缓存，不属于证据根、未纳入索引和Git；浏览器用户数据目录、密钥文件与环境转储均未创建或提交。
+
 ## 敏感信息复核
 
 提交前状态：`PASS`（2026-07-23，全证据树复扫）。
 
 - 已提交和拟提交截图均经视觉复核，只含公开合成病例界面、fixture 文本和本地构建元数据；没有 Cookie、Authorization、签名、环境变量值、浏览器用户数据或直接身份信息。
 - Production `ff1a932` 的 `test-secret-scanner.mjs` 通过文本、二进制元数据、压缩 workbook、占位符、非泄露输出、完整历史与浅克隆 fail-closed 合同。
-- 对本轮最终拟提交集执行 `tests/exploratory/scan-staged-secrets.mjs`：12 个 staged 文件、完整可达文本历史，敏感值命中 0；只输出路径/规则/计数，不输出值。
-- 只读 `tests/exploratory/scan-evidence-secrets.ps1` 对刷新后的证据根目录 443 个物理文件（包括两个随后删除的0字节临时scanner日志；最终索引为441个）及 ZIP 内 7,807 个条目执行流式扫描，累计读取 1,106,212,298 字节；同时逐字检查当前进程可见的 Preview/training/KV/Upstash 运行时值，私钥、Bearer/JWT、provider/API key、AWS/Google/Azure key、非占位敏感环境赋值、Authorization/Cookie/Set-Cookie 和运行时精确值命中均为 0，扫描过程不输出值。
-- 本轮 12 个 staged 路径严格为6份Goal QA文档、EVIDENCE_INDEX、2个QA测试脚本、1个脱敏聚合JSON、1张代表截图和1份最小trace；没有录像、完整报告目录、完整问答或凭据上下文进入本提交。
+- 对本轮最终拟提交集执行 `tests/exploratory/scan-staged-secrets.mjs`：15 个 staged 文件、完整可达文本历史，敏感值命中 0；只输出路径/规则/计数，不输出值。
+- 只读 `tests/exploratory/scan-evidence-secrets.ps1` 对刷新后的证据根目录 448 个物理文件及 ZIP 内 8,698 个条目执行流式扫描，累计读取 1,302,557,461 字节；随后仅删除聚合摘要中一行手填时间戳（46字节），未增加任何内容；其余 Preview/training/KV/Upstash 运行时值、私钥、Bearer/JWT、provider/API key、AWS/Google/Azure key、非占位敏感环境赋值、Authorization/Cookie/Set-Cookie 和运行时精确值命中均为 0，扫描过程不输出值。
+- 本轮 15 个 staged 路径严格为6份Goal QA文档、EVIDENCE_INDEX、3个QA测试脚本、2个脱敏聚合JSON、2张代表截图和1份最小trace；没有录像、完整报告目录、完整问答或凭据上下文进入本提交。
 - 通用 candidate scanner 对 5 个本机不提交的大 trace 按大小上限 fail-closed（4 个 ZIP 内 trace entry 过大、1 个 ZIP 文件过大）；这些文件未 staged，且已由上面的全证据树流式/解包扫描覆盖并得到 0 命中。未删除或放宽 scanner 断言。
 - 绝对用户路径只出现在不提交的 `reports/junit.xml`（36）、`local-dev-3010d.stdout.log`（16）、`local-dev-3010e.log`（34）和 `local-dev-3010f.log`（1），全部保持本机未跟踪。1,551 个邮箱样式全部是 Playwright `page@hash` 内部 ID；504 个身份证样式均无有效生日；8 个手机号样式嵌在哈希中，另 1 个来自 network 浮点耗时，均为误报。
 - `reports/results.json` 等其余本机报告也可能含 `<QA_WORKTREE>` 的实际绝对路径，因此整类报告保持不提交；本索引使用占位符，不暴露用户目录。

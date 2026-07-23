@@ -155,6 +155,7 @@ async function installScrollFixture(page) {
 }
 
 async function verifyOpeningLayout(page, testInfo, language, screenshot) {
+  await installScrollFixture(page);
   await page.evaluate((value) => localStorage.setItem("hematuria-language", value), language);
   const responsePromise = page.waitForResponse((response) => response.url().includes("/api/session/init/")
     && response.request().postDataJSON()?.language === language);

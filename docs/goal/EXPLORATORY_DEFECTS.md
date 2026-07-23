@@ -263,4 +263,36 @@
 - `3a16f931` 复核：10 条失败路径与 5 类产物通道安全 canary 15/15；真实 Preview health、9 项黑盒、两批中英稳定性及20轮长会话均经 wrapper 执行，扫描后专用输出删除，未发现运行时凭据字节或敏感 header 名。该 QA 基础设施事件关闭，不改变业务缺陷状态。
 - 医学专家裁决：否。
 
-基线说明：当前 Production 文档基线为 `657ba5da8fc6460ad7d0deea882a010c40938b40`，运行时与黑盒证据基线为代码等价的 `3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`；QA 普通 merge HEAD 为 `bd08566ddb91806abc9c1cc2123138b0ac29a2b4`。Vercel Preview 精确运行时 SHA 为 `PASS_PREVIEW`；GitHub Pages 公开产物仍有 30 个旧内部路由，标记 `BLOCKED_DEPLOYMENT_MISMATCH`；两者分别记录，不互相替代。
+基线说明（历史第7轮）：Production 文档基线为 `657ba5da8fc6460ad7d0deea882a010c40938b40`，运行时与黑盒证据基线为代码等价的 `3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`；QA 普通 merge HEAD 为 `bd08566ddb91806abc9c1cc2123138b0ac29a2b4`。Vercel Preview 精确运行时 SHA 为 `PASS_PREVIEW`；GitHub Pages 公开产物仍有 30 个旧内部路由，标记 `BLOCKED_DEPLOYMENT_MISMATCH`；两者分别记录，不互相替代。
+
+## HEM-P1-050：用户指定自然问法未稳定路由到 canonical 病史且英文复合问句扩张通用 pain
+
+- 级别/状态：P1，OPEN / FAIL_LOCAL_QA；Production `70ea9b3c7b31e11a84878de5c277cac60f35481c`。
+- 页面/路径：Patient Agent 问诊链路 `/cases/P001/`–`/cases/P042/` / `/api/agent-chat/`；中文和英文；无 viewport 依赖的本地 deterministic handler 审计。
+- 操作步骤：对每例依次发送用户指定的 10 类问法及英文等价问法，包括尿痛四种表达、全程/分段/终末否定、尿频尿急尿痛复合问法及腰痛/发热/血块复合问法；记录 canonical intent、known/unknown、极性、冲突隔离、双语等义和额外 slot，只保存计数与 case ID。
+- 预期：已知 true/false 保持病例极性；否定词不反转事实；复合/选择问题逐项路由；missing 可自然不确定；needs_review/冲突继续隔离；中英文医学含义一致；不扩张未问病史。
+- 实际：840 场景中 canonical 完整命中 630（75.00%），intent 命中 1,134/1,428（79.41%）；错误 unknown 4/914（0.44%）；可评价极性错误 0/439；正确 unknown 436/436；42/42 冲突场景、13 个唯一冲突项均隔离。双语工程等义 247/420，额外病史 slot 42/840。六个稳定失败组分别为英文全程、中文时相选择、英文时相选择、英文终末否定、英文尿频/尿急/尿痛复合，以及英文腰痛/发热/血块额外命中通用 pain；后者使 P004 发热及 P013/P017/P028 血块四个已知事实走 unknown 路径。
+- 复现次数：全量 deterministic 矩阵 1/1；每个失败组跨 42 例稳定出现，失败断言保留。既有较窄 intent/paraphrase 门禁仍通过，说明这是未覆盖自然问法缺口，不是全局 Patient Agent 崩溃。
+- AI来源：Production Patient Session 本地规则/安全路由；`providerCalls=0`，不是 DeepSeek 或 Preview，不保存回复正文。
+- 状态变化时间线：加载 governed profile → 规范化自然问法 → canonical matcher/复合拆分 → 生成安全答复元数据 → 聚合 canonical/unknown/极性/泄露计数 → 252 个场景失败断言触发。
+- HTTP/console/network：直接调用本地 handler，无浏览器 HTTP；没有 401/403/429/5xx。报告不含 request body、回答、token、session、签名或医学值。
+- 最小证据：`tests/exploratory/patient-natural-phrasing-audit.mjs`、`reports/70ea9b3-patient-natural-phrasing-audit.json`、`reports/70ea9b3-priority-qa-summary.json`。逐问答正文未生成或保留。
+- 建议方向：扩展 canonical alias/复合拆分，优先覆盖全程与初始/终末选择、否定终末问法、尿频尿急尿痛三联和腰痛/发热/血块；特异 `flank_pain` 不应同时扩张通用 `pain`。将本 840 场景矩阵作为 fail-closed 门禁，不得放宽 unknown、冲突或额外病史断言。
+- 医学专家裁决：确认路由、极性和额外披露工程缺陷不需要医学裁决；事实值、needs_review 与双语医学表述最终批准仍依赖现有来源治理和 HEM-P0-001/023。
+
+## HEM-P1-051：Preview 自然纠错、澄清和多轮复合追问被 rule fallback 接管
+
+- 级别/状态：P1，OPEN / FAIL_PREVIEW；精确部署 `70ea9b3c7b31e11a84878de5c277cac60f35481c`。
+- 页面/路径：受保护 Vercel Preview 的 P001 英文错误总结/模糊澄清、P038 中英文五轮追问、P037 刷新后中英文追问；桌面 Chromium。
+- 操作步骤：使用安全 Automation Bypass wrapper 创建新 attempt/session → P001 英文确认后给出错误总结或无指代问题 → P038 中英文各连续 5 轮复合/重复追问 → P037 每语言 2 轮后刷新并继续 2 轮 → 逐操作核对 generation source、agent request、history-log、401 与泄露布尔值。
+- 预期：合法自然追问继续 `live_ai`，医学冲突可明确 `safety_boundary`；不能因为 matcher 未命中就用通用 `rule_fallback` 替代本应理解上下文的纠错/澄清，刷新后事实连续性应保持。
+- 实际：P001 两个英文场景在全套及隔离复跑均为 `rule_fallback`（4/4 场景运行失败 source contract）。P038 独立复跑 10/10 agent/history、0 unauthorized，但只有 4 live_ai、2 safety boundary、4 rule fallback，中英文 source contract 均失败。P037 独立复跑 DOM 6→6、8/8 agent/history、0 unauthorized；中文为 2 live_ai+2 safety boundary，英文为 3 live_ai+1 rule fallback，英文时长连续性随 source 路径失败。
+- 复现次数：P001 纠错/澄清两轮批次 2/2；P038 全套与隔离 2/2；P037 全套与隔离 2/2。最初全套的 history wait timeout 在隔离复跑中未复现，故不登记日志丢失；稳定失败限定为 source/fact continuity。
+- AI来源：真实 Preview；成功样本 provider=`deepseek`、`generationSource=live_ai`，受治理样本=`safety_boundary`，失败样本=`rule_fallback`。不把 fallback/safety boundary 记为真实 AI 通过。
+- 状态变化时间线：session/attempt 200 → 合法 agent request 200 → 部分自然问题 semantic matcher 未进入 provider → rule fallback 200 → history-log 200 → source/连续性断言失败；刷新恢复本身保持通过。
+- HTTP/console/network：P038 agent/history 10/10，P037 8/8，P001 隔离场景均为成功 HTTP；unexpected 401/403/5xx 为0。批量 session-abuse 尾部曾有2个429，低频隔离11/11通过，判为批量干扰而非本缺陷。专用输出扫描通过后删除。
+- 最小证据：`reports/70ea9b3-priority-qa-summary.json` 与本文脱敏计数；出于凭据边界不提交 Preview trace、截图、完整问答或原始 test-results。
+- 建议方向：把未命中的合法上下文纠错/澄清/复合追问送入受能力约束的 patient provider，只有可安全确定的 canonical 问法使用 deterministic reply；保持医学冲突的 safety boundary 和全部 capability/history 幂等门禁。新增 P001纠错/澄清、P037刷新、P038多轮 source contract 回归。
+- 医学专家裁决：确认 source 路由和刷新连续性工程缺陷不需要医学裁决；患者自然语言质量与医学回答内容仍需教师/医学专家后续人工审阅。
+
+当前基线说明：Production 与 Preview 均为 `70ea9b3c7b31e11a84878de5c277cac60f35481c`，QA 合入基线的 merge 为 `b94d7803507df3da52379f83ab05fef2afc45c87`。本地、Preview、GitHub Pages 与真机状态分别记录，互不替代。

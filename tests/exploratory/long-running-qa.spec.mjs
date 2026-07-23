@@ -440,7 +440,7 @@ test("local P001-P042 catalog, direct URL, refresh, and bilingual display routes
       const catalogResponse = await page.goto("/cases/");
       expect(catalogResponse?.status(), `${displayCaseId} catalog`).toBeLessThan(400);
       await page.getByRole("button", { name: "中文" }).click();
-      const link = page.locator(`a[href$="/cases/${displayCaseId}/index.html"]`);
+      const link = page.locator(`a[href$="/cases/${displayCaseId}/"]`);
       await expect(link).toHaveCount(1);
       const navigation = page.waitForNavigation({ waitUntil: "domcontentloaded" });
       await link.click();
@@ -477,7 +477,7 @@ test("local P001-P042 catalog, direct URL, refresh, and bilingual display routes
       if (!refreshVisible) issues.push({ caseId: displayCaseId, check: "refresh_heading", status: refreshStatus });
       results.push({ caseId: displayCaseId, catalogClickStatus: clickStatus, refreshStatus, directStatus, englishStatus, languages: { zh: zhVisible, en: enVisible }, valid: clickStatus < 400 && directStatus < 400 && englishStatus < 400 && refreshStatus < 400 && zhVisible && enVisible && refreshVisible });
     }
-    await writeFile(path.join(DIRS.reports, "local-p001-p042-route-matrix.json"), `${JSON.stringify({ environment: "local-next-dev", productionSha: "ff1a932785d891749ae8e73130bde8857062e194", source: "deterministic_fixture_not_real_ai", cases: results, issues }, null, 2)}\n`, "utf8");
+    await writeFile(path.join(DIRS.reports, "local-p001-p042-route-matrix.json"), `${JSON.stringify({ environment: "local-next-dev", productionSha: "70ea9b3c7b31e11a84878de5c277cac60f35481c", source: "deterministic_fixture_not_real_ai", cases: results, issues }, null, 2)}\n`, "utf8");
     await saveShot(page, testInfo, "local-route-matrix-p042-zh", false);
     expect(issues, JSON.stringify(issues)).toEqual([]);
   }, { videoOnFailure: true });
@@ -713,8 +713,7 @@ test("HEM-P1-047 structured report statuses are localized and preserve abnormal 
     const rawStatusLeakCount = observedStatusLabels.filter((label) => statusValues.includes(label)).length;
     const summary = {
       schemaVersion: 1,
-      productionSha: "657ba5da8fc6460ad7d0deea882a010c40938b40",
-      runtimeEquivalentSha: "3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8",
+      productionSha: "70ea9b3c7b31e11a84878de5c277cac60f35481c",
       status: rawStatusLeakCount || cardDataStatuses[0] !== "abnormal" ? "FAIL_LOCAL_QA" : "PASS_LOCAL",
       defectId: rawStatusLeakCount || cardDataStatuses[0] !== "abnormal" ? "HEM-P1-047" : null,
       language,
@@ -830,8 +829,7 @@ test("HEM-P1-048 English Data Agent UI does not expose Chinese catalog or report
       + visibleFields.filter((field) => cjk.test(String(item[field] || ""))).length, 0);
     const summary = {
       schemaVersion: 1,
-      productionSha: "657ba5da8fc6460ad7d0deea882a010c40938b40",
-      runtimeEquivalentSha: "3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8",
+      productionSha: "70ea9b3c7b31e11a84878de5c277cac60f35481c",
       status: cjkControlCount || reportCardContainsCjk ? "FAIL_LOCAL_QA" : "PASS_LOCAL",
       defectId: cjkControlCount || reportCardContainsCjk ? "HEM-P1-048" : null,
       language: "en",
