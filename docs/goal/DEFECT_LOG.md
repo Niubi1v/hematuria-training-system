@@ -581,3 +581,18 @@
 - **状态**：`ENGINEERING_FAIL_CLOSED_LOCAL / BLOCKED_SOURCE_TRANSLATION`。
 - **基线与修复**：42例257结果共1285个CJK信号，23/60医嘱无非CJK别名。现优先已有英文别名；缺别名、分类、提示、查体或结果翻译时显示待审核英文占位并禁用不可安全选择项。API P008英文CBC和desktop/mobile UI报告均0 CJK。
 - **人工阻塞**：23个名称及其余翻译须来源/专家审核；没有自动翻译、改极性、改事实或更改审核状态。
+
+### CI-P1-20260723 QA P1候选被高危依赖审计阻断
+
+- **状态**：`LOCAL_FIXED / REMOTE_NODE22_PENDING`。
+- **失败证据**：Actions run `30008877764`、HEAD `141f5bb`在Node 22.14的`Full dependency audit`失败；Next、Sharp与brace-expansion共6项high，所有后续工程门禁被跳过。
+- **根因**：Next/ESLint Next仍解析为`15.5.19`，Sharp为`0.34.5`，brace-expansion为`1.1.15/5.0.6`；同时pnpm 11不读取`package.json#pnpm.overrides`，初始覆盖声明未生效。
+- **修复**：`6c1d42c`固定Next与ESLint Next `15.5.21`，并在`pnpm-workspace.yaml`应用Sharp `0.35.0`和brace-expansion `1.1.16/5.0.7`覆盖。未放宽`--audit-level high`，未跳过或删除任何测试。
+- **本地证据**：高危审计exit 0、完整行为、TypeScript、ESLint、Playwright 80/2/0、双82页构建、bundle、repository secret scan、75输出幂等性和`data/**`零差异通过。最终关闭条件为该提交之后精确新HEAD的Node 22 Actions成功。
+
+### QA c83c7d5 P1远程状态更新
+
+- **CI-P1-20260723**：`ENGINEERING CLOSED`。HEAD `c9f7807`、Actions run `30011651645`在Node 22.14 success；高危审计只余1 moderate并以exit 0通过，Playwright 80/2/0，82页build、bundle与clean gate通过。
+- **HEM-P1-050**：`ENGINEERING CLOSED / REMOTE GATES PASS`。自然840/840、canonical checks 1428/1428、3150/3150；错误unknown和极性错误为0，generic pain无额外扩张。
+- **HEM-P1-051**：`ENGINEERING CLOSED / REAL PREVIEW VERIFIED`。部署`c9f7807`上P001英文纠错/澄清、P037和P038多轮共7次目标agent-chat均HTTP 200、DeepSeek `live_ai`、非fallback；7次history-log均200。测试只验证来源和同步，不将自由文本样本冒充医学人工自然度终签。
+- **仍阻塞**：28项检验元数据、23个英文医嘱名称、161个来源修订及既有医学裁决继续由来源/专家处理；本轮没有自动填值、翻译、批准或解除`needs_revision`。
