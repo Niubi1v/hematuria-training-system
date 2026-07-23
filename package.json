@@ -88,15 +88,16 @@
   "dependencies": {
     "clsx": "^2.1.1",
     "lucide-react": "^0.468.0",
-    "next": "^15.0.0",
+    "next": "15.5.21",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "redis": "6.1.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
     "@eslint/eslintrc": "3.3.1",
-    "@next/eslint-plugin-next": "15.5.19",
+    "@next/eslint-plugin-next": "15.5.21",
     "@playwright/test": "^1.61.1",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
@@ -105,7 +106,7 @@
     "@typescript-eslint/parser": "8.62.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.0.0",
-    "eslint-config-next": "^15.0.0",
+    "eslint-config-next": "15.5.21",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-jsx-a11y": "6.10.2",
     "eslint-plugin-react": "7.37.5",
