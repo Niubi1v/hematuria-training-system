@@ -12,6 +12,13 @@ const ENV_NAMES = [
   "KV_REST_API_READ_ONLY_TOKEN",
   "KV_URL",
   "REDIS_URL",
+  "REDIS_HOST",
+  "REDIS_PORT",
+  "REDIS_USERNAME",
+  "REDIS_PASSWORD",
+  "REDIS_TLS",
+  "REDIS_CA_FILE",
+  "REDIS_NAMESPACE",
   "VERCEL"
 ] as const;
 
@@ -85,6 +92,29 @@ async function main() {
   process.env.TRAINING_ATTEMPT_STORE_MODE = "memory";
   assert.equal(store.durableAttemptStoreConfigured(), false);
   assert.equal(store.attemptStoreCredentialSource(), "none", "health must describe the credential type actually in use");
+
+  clearStoreEnv();
+  process.env.TRAINING_ATTEMPT_STORE_MODE = "redis";
+  process.env.REDIS_URL = "rediss://redis-private.example.test:6379";
+  process.env.REDIS_NAMESPACE = "mainland-test";
+  assert.equal(store.assertStoreConfigured(), "redis");
+  assert.equal(store.durableAttemptStoreConfigured(), true);
+  assert.equal(store.attemptStoreCredentialSource(), "standard_redis_url");
+
+  clearStoreEnv();
+  process.env.TRAINING_ATTEMPT_STORE_MODE = "redis";
+  process.env.REDIS_HOST = "redis.internal.example.test";
+  process.env.REDIS_PORT = "6380";
+  process.env.REDIS_PASSWORD = "unit-test-password";
+  process.env.REDIS_TLS = "true";
+  process.env.REDIS_NAMESPACE = "mainland-fields";
+  assert.equal(store.assertStoreConfigured(), "redis");
+  assert.equal(store.attemptStoreCredentialSource(), "standard_redis_fields");
+
+  clearStoreEnv();
+  process.env.TRAINING_ATTEMPT_STORE_MODE = "redis";
+  process.env.REDIS_URL = "redis://redis-private.example.test:6379";
+  assert.throws(() => store.assertStoreConfigured(), /training_attempt_store_unavailable/, "Redis mode must fail closed without an environment namespace");
 
   for (const configure of [
     () => { process.env.KV_REST_API_TOKEN = "unit-test-kv-write-token"; },

@@ -40,6 +40,16 @@ assert.equal(
   "",
   "Vercel production must use relative same-origin API routes even when a public origin is injected"
 );
+assert.equal(
+  resolvePublicApiBaseUrl(undefined, { NODE_ENV: "production", MAINLAND_RUNTIME: "1" }),
+  "",
+  "mainland Node production must use same-origin relative API routes"
+);
+assert.equal(
+  resolvePublicApiBaseUrl(undefined, { NODE_ENV: "production", NEXT_PUBLIC_MAINLAND_RUNTIME: "1" }),
+  "",
+  "mainland client bundles must use the explicit non-secret same-origin runtime flag"
+);
 assert.throws(
   () => resolvePublicApiBaseUrl(undefined, { NODE_ENV: "production" }),
   /NEXT_PUBLIC_API_BASE_URL is required/,

@@ -1,5 +1,6 @@
 const crypto = require("node:crypto");
 const { resolveRedisRestCredentials } = require("./redisRestCredentials.js");
+const { redisNamespace, standardRedis, standardRedisConfigured } = require("./standardRedisClient.js");
 
 const MAX_MEMORY_CIRCUITS = 100;
 const memoryCircuits = globalThis.__hematuriaProviderCircuits || new Map();
@@ -34,6 +35,7 @@ function storeMode() {
   const configured = String(process.env.LLM_PROVIDER_CIRCUIT_STORE_MODE || process.env.AGENT_REQUEST_STORE_MODE || process.env.TRAINING_ATTEMPT_STORE_MODE || "").toLowerCase();
   if (configured === "memory") return process.env.VERCEL || process.env.NODE_ENV === "production" ? "unavailable" : "memory";
   if (configured === "upstash") return "upstash";
+  if (configured === "redis") return standardRedisConfigured() ? "redis" : "unavailable";
   const credentials = resolveRedisRestCredentials();
   if (credentials.url && credentials.token) return "upstash";
   if (process.env.VERCEL || process.env.NODE_ENV === "production") return "unavailable";
@@ -46,9 +48,10 @@ function digest(value) {
 
 function circuitKeys(config) {
   const scope = digest(JSON.stringify([config.provider, config.baseUrl, config.model, config.endpointType]));
+  const prefix = storeMode() === "redis" ? `hematuria:${redisNamespace()}` : "hematuria";
   return {
-    state: `hematuria:llm-circuit:v1:${scope}`,
-    probe: `hematuria:llm-circuit-probe:v1:${scope}`
+    state: `${prefix}:llm-circuit:v1:${scope}`,
+    probe: `${prefix}:llm-circuit-probe:v1:${scope}`
   };
 }
 
@@ -79,6 +82,17 @@ async function upstash(command) {
   const payload = await response.json();
   if (payload.error) throw new Error("provider_circuit_store_unavailable");
   return payload.result;
+}
+
+async function durableCommand(mode, command) {
+  if (mode === "redis") {
+    try {
+      return await standardRedis(command);
+    } catch {
+      throw new Error("provider_circuit_store_unavailable");
+    }
+  }
+  return upstash(command);
 }
 
 const ENTER_SCRIPT = `
@@ -142,7 +156,7 @@ async function enterProviderCircuit(config, { minimumProbeSeconds = 0 } = {}) {
     }
     return { mode, keys, probeId: "", hadFailures: state.failures > 0, probe: false };
   }
-  const raw = await upstash(["EVAL", ENTER_SCRIPT, 2, keys.state, keys.probe, Date.now(), probeId, configured.probeSeconds]);
+  const raw = await durableCommand(mode, ["EVAL", ENTER_SCRIPT, 2, keys.state, keys.probe, Date.now(), probeId, configured.probeSeconds]);
   const result = JSON.parse(raw);
   if (result.kind === "open") throw circuitError(result.retryAfter);
   return { mode, keys, probeId: result.kind === "probe" ? probeId : "", hadFailures: Number(result.failures) > 0, probe: result.kind === "probe" };
@@ -155,7 +169,7 @@ async function recordProviderSuccess(admission) {
     if (memoryProbes.get(admission.keys.probe)?.probeId === admission.probeId) memoryProbes.delete(admission.keys.probe);
     return;
   }
-  await upstash(["EVAL", SUCCESS_SCRIPT, 2, admission.keys.state, admission.keys.probe, admission.probeId || ""]);
+  await durableCommand(admission.mode, ["EVAL", SUCCESS_SCRIPT, 2, admission.keys.state, admission.keys.probe, admission.probeId || ""]);
 }
 
 async function recordProviderFailure(admission) {
@@ -174,7 +188,7 @@ async function recordProviderFailure(admission) {
     if (memoryProbes.get(admission.keys.probe)?.probeId === admission.probeId) memoryProbes.delete(admission.keys.probe);
     return;
   }
-  await upstash([
+  await durableCommand(admission.mode, [
     "EVAL", FAILURE_SCRIPT, 2, admission.keys.state, admission.keys.probe,
     configured.threshold, openUntil, configured.failureTtlSeconds, admission.probeId || ""
   ]);

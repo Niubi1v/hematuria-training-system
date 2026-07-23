@@ -39,6 +39,10 @@
     "test:training-security": "tsx scripts/test-training-security.ts",
     "test:attempt-store-config": "tsx scripts/test-training-attempt-store-config.ts",
     "test:health": "tsx scripts/test-health-api.ts",
+    "test:mainland-redis": "node scripts/test-mainland-redis-adapter.mjs",
+    "healthcheck:mainland": "node scripts/healthcheck-mainland.mjs",
+    "test:mainland-20-rounds": "node scripts/test-mainland-20-rounds.mjs",
+    "test:mainland-browser": "node scripts/test-mainland-browser.mjs",
     "test:api-recovery": "tsx scripts/test-api-recovery.ts",
     "test:agent-api-security": "tsx scripts/test-agent-api-security.ts",
     "test:ai-recovery": "tsx scripts/test-ai-recovery.ts",
@@ -89,6 +93,7 @@
     "next": "^15.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "redis": "^6.1.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {

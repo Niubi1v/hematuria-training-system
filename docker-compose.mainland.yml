@@ -1,0 +1,100 @@
+name: hematuria-mainland
+
+services:
+  nginx:
+    image: nginx:1.28-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "${MAINLAND_HTTP_PORT:-8080}:80"
+      - "${MAINLAND_HTTPS_PORT:-0}:443"
+    environment:
+      MAINLAND_DOMAIN: "${MAINLAND_DOMAIN:-localhost}"
+    volumes:
+      - "${NGINX_TEMPLATE_PATH:-./nginx.local.conf}:/etc/nginx/templates/default.conf.template:ro"
+      - "${TLS_CERT_DIR:-./work/mainland-certs}:/etc/nginx/certs:ro"
+    networks:
+      - edge
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/nginx-health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_GIT_SHA: "${NEXT_PUBLIC_GIT_SHA:-local-poc}"
+        NEXT_PUBLIC_BUILD_TIME: "${NEXT_PUBLIC_BUILD_TIME:-local}"
+    image: "hematuria-mainland:${MAINLAND_IMAGE_TAG:-poc}"
+    restart: unless-stopped
+    env_file:
+      - "${MAINLAND_ENV_FILE:-.env.mainland}"
+    environment:
+      NODE_ENV: production
+      MAINLAND_RUNTIME: "1"
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+    volumes:
+      - "${REDIS_CA_DIR:-./work/mainland-certs}:/app/redis-ca:ro"
+    expose:
+      - "3000"
+    networks:
+      - edge
+      - data
+    healthcheck:
+      test: ["CMD", "node", "scripts/healthcheck-mainland.mjs", "--base-url=http://127.0.0.1:3000", "--shallow"]
+      interval: 20s
+      timeout: 8s
+      retries: 5
+      start_period: 40s
+
+  redis:
+    image: redis:7.4-alpine
+    profiles: ["local"]
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec", "--requirepass", "${REDIS_PASSWORD:?set REDIS_PASSWORD in the Compose environment}"]
+    environment:
+      REDISCLI_AUTH: "${REDIS_PASSWORD:?set REDIS_PASSWORD in the Compose environment}"
+    volumes:
+      - redis-data:/data
+    networks:
+      - data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  llm-mock:
+    image: "hematuria-mainland:${MAINLAND_IMAGE_TAG:-poc}"
+    profiles: ["local"]
+    restart: unless-stopped
+    command: ["node", "scripts/mainland-safe-llm-mock.mjs"]
+    environment:
+      PORT: "8787"
+      HOSTNAME: "0.0.0.0"
+    expose:
+      - "8787"
+    networks:
+      - data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8787/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+networks:
+  edge:
+  data:
+    internal: true
+
+volumes:
+  redis-data:

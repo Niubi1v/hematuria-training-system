@@ -7,9 +7,13 @@ import createNextConfig from "../next.config.mjs";
 
 const development = createNextConfig(PHASE_DEVELOPMENT_SERVER);
 const production = createNextConfig(PHASE_PRODUCTION_BUILD);
+process.env.MAINLAND_RUNTIME = "1";
+const mainlandProduction = createNextConfig(PHASE_PRODUCTION_BUILD);
+delete process.env.MAINLAND_RUNTIME;
 
 assert.equal(development.output, undefined, "next dev must not apply the static-export route lock");
 assert.equal(production.output, "export", "production and Pages builds must remain static exports");
+assert.equal(mainlandProduction.output, undefined, "mainland Node production must retain runtime pages and APIs");
 assert.equal(development.trailingSlash, true);
 assert.equal(production.trailingSlash, true);
 assert.equal(development.reactStrictMode, true);

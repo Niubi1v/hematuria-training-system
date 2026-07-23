@@ -186,9 +186,11 @@ async function buildAgentResponse(body, agentId, caseData, startedAt) {
       conversationHistory: body.conversationHistory || [],
       language: body.language || "zh"
     });
-    const generationSource = patient.isFallback
-      ? (safetyBoundaryFallback(patient) ? "safety_boundary" : "rule_fallback")
-      : patient.cacheHit ? "ai_cache" : "live_ai";
+    const generationSource = patient.isSafeMock
+      ? "safe_mock"
+      : patient.isFallback
+        ? (safetyBoundaryFallback(patient) ? "safety_boundary" : "rule_fallback")
+        : patient.cacheHit ? "ai_cache" : "live_ai";
     return {
       statusCode: 200,
       timings: { app: Date.now() - startedAt, provider: patient.providerDurationMs, firsttoken: patient.providerFirstTokenMs },
@@ -202,6 +204,7 @@ async function buildAgentResponse(body, agentId, caseData, startedAt) {
         blockedDataKeys: blockedTeacherKeys,
         safetyFlags: patient.safetyFlags || [],
         isFallback: Boolean(patient.isFallback),
+        isSafeMock: Boolean(patient.isSafeMock),
         generationSource,
         matchedSlotIds: patient.matchedSlotIds || [],
         matchedFacts: patient.matchedFacts || [],
@@ -262,7 +265,9 @@ async function buildAgentResponse(body, agentId, caseData, startedAt) {
         revealedDataKeys: [],
         blockedDataKeys: blockedTeacherKeys,
         safetyFlags: [],
-        isFallback: false
+        isFallback: false,
+        isSafeMock: Boolean(llm.safeMock),
+        generationSource: llm.safeMock ? "safe_mock" : "live_ai"
       }
     };
   } catch {

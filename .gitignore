@@ -9,6 +9,7 @@ playwright-report/
 .env
 .env.local
 .env.*.local
+.env.mainland
 .vercel/
 npm-debug.log*
 pnpm-debug.log*
@@ -16,5 +17,6 @@ yarn-debug.log*
 yarn-error.log*
 work/dev.log
 work/dev.err.log
+work/mainland-certs/
 work/teacher-package-*/
 outputs/*.zip
