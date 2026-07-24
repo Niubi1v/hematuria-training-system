@@ -223,6 +223,14 @@ async function askLiveQuestion(page, language, question, options = {}) {
       responseAccepted: payload.debug?.responseAccepted === true,
       rewriteTriggered: payload.debug?.rewriteTriggered === true,
       cacheHit: payload.debug?.cacheHit === true
+    } : undefined,
+    matchMetadata: options.includeMatchMetadata ? {
+      slotIds: Array.isArray(payload.matchedSlotIds)
+        ? payload.matchedSlotIds.filter((item) => typeof item === "string" && /^[A-Za-z0-9_]{1,64}$/.test(item))
+        : [],
+      factIds: Array.isArray(payload.matchedFacts)
+        ? payload.matchedFacts.filter((item) => typeof item === "string" && /^[A-Za-z0-9_]{1,64}$/.test(item))
+        : []
     } : undefined
   };
 }
@@ -518,6 +526,143 @@ test("@preview-long-session returns 20 sequential live AI answers without reinit
     await opened?.page.close().catch(() => undefined);
     await context.close().catch(() => undefined);
   }
+});
+
+test("@preview-compound-history-batch-1 preserves symptom and structured history clauses for P001-P007", async ({ browser }, testInfo) => {
+  test.setTimeout(900_000);
+  const caseIds = ["P001", "P002", "P003", "P004", "P005", "P006", "P007"];
+  const probes = [
+    {
+      id: "hematuria-and-stones",
+      question: "血尿是什么时候开始的，反复吗，以前得过结石吗？",
+      expectedSlots: ["hematuria_onset", "hematuria_frequency", "PAST_STONE"]
+    },
+    {
+      id: "glomerular-and-medical-history",
+      question: "有没有泡沫尿或水肿，过去有高血压、糖尿病或肾病吗？",
+      expectedSlots: ["glomerular_features", "PAST_HYPERTENSION", "PAST_DIABETES"]
+    },
+    {
+      id: "fever-and-uti-tumor-history",
+      question: "有没有发热寒战，以前得过尿路感染或肿瘤吗？",
+      expectedSlots: ["fever_chills", "PAST_UTI", "PAST_MALIGNANCY"]
+    },
+    {
+      id: "color-exposure-and-family",
+      question: "尿是什么颜色，抽烟吗，工作接触过染料或化工品吗，家里有人有类似情况吗？",
+      expectedSlots: ["urine_color", "LIFE_SMOKING", "LIFE_EXPOSURE", "FAMILY_HISTORY"]
+    },
+    {
+      id: "retention-and-allergy",
+      question: "有没有尿不出来，平时有什么药物过敏吗？",
+      expectedSlots: ["retention", "PAST_ALLERGY"]
+    }
+  ];
+  const samples = [];
+  const sourceCounts = {};
+  const fallbackReasonCounts = {};
+  let agentRequestCount = 0;
+  let historyLogCount = 0;
+  let crossOriginProtectionRequestCount = 0;
+
+  for (const caseId of caseIds) {
+    const context = await browser.newContext();
+    await context.addInitScript(() => localStorage.removeItem("hematuria-language"));
+    let opened;
+    try {
+      opened = await openReadyCase(context, caseId, "zh");
+      expect(opened.attemptResponse.status()).toBe(200);
+      expect(opened.sessionResponse.status()).toBe(200);
+      opened.page.on("request", (request) => {
+        const pathname = new URL(request.url()).pathname;
+        if (pathname === "/api/agent-chat/" && request.method() === "POST" && !safeBody(request).probe) agentRequestCount += 1;
+        if (pathname === "/api/training-action/" && request.method() === "POST" && safeBody(request).action === "history-log") historyLogCount += 1;
+      });
+      for (const probe of probes) {
+        const answer = await askLiveQuestion(opened.page, "zh", probe.question, {
+          includeReplyText: true,
+          includeMatchMetadata: true
+        });
+        const actualSlots = answer.matchMetadata?.slotIds || [];
+        const missingSlots = probe.expectedSlots.filter((slotId) => !actualSlots.includes(slotId));
+        const unexpectedSlots = actualSlots.filter((slotId) => !probe.expectedSlots.includes(slotId));
+        const source = ["live_ai", "ai_cache", "rule_fallback", "safety_boundary"].includes(answer.generationSource)
+          ? answer.generationSource
+          : "unknown";
+        const fallbackReason = /^[a-z][a-z0-9_]{0,63}$/.test(String(answer.fallbackReason || ""))
+          ? String(answer.fallbackReason)
+          : "";
+        sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+        if (fallbackReason) fallbackReasonCounts[fallbackReason] = (fallbackReasonCounts[fallbackReason] || 0) + 1;
+        const replyText = String(answer.replyText || "");
+        samples.push({
+          caseId,
+          probeId: probe.id,
+          patientStatus: answer.patientStatus,
+          historyStatus: answer.historyStatus,
+          source,
+          fallbackReason,
+          expectedSlotCount: probe.expectedSlots.length,
+          actualSlotCount: actualSlots.length,
+          missingSlotCount: missingSlots.length,
+          unexpectedSlotCount: unexpectedSlots.length,
+          falseBoundary: ["diagnosis_boundary", "report_boundary"].includes(fallbackReason),
+          genericUnknown: new Set(["这项情况我现在不太清楚。", "这个我不太清楚。"]).has(replyText.trim()),
+          languageLeakDetected: answer.patientStatus === 200 && !/[\u3400-\u9fff]/u.test(replyText),
+          teacherMetaLeakageDetected: /评分|得分点|教师|标准答案|scor(?:e|ing)|rubric|teacher|standard answer|JSON|system\s*prompt/i.test(replyText),
+          structuredPayloadLeakageDetected: /matchedSlotIds?|matchedFacts?|generationSource|isFallback|caseId|slotId/i.test(replyText),
+          responseTextRetained: false
+        });
+        await opened.page.waitForTimeout(1_500);
+      }
+      crossOriginProtectionRequestCount += opened.protection.crossOriginProtectionRequests;
+    } finally {
+      await opened?.page.close().catch(() => undefined);
+      await context.close().catch(() => undefined);
+    }
+  }
+
+  const summary = {
+    scenario: "preview-compound-history-batch-1",
+    cases: caseIds,
+    languages: ["zh"],
+    probes: probes.map((probe) => probe.id),
+    operations: samples.length,
+    sourceCounts,
+    fallbackReasonCounts,
+    httpContractFailures: samples.filter((sample) => sample.patientStatus !== 200 || sample.historyStatus !== 200).length,
+    requestContractFailures: Math.abs(agentRequestCount - samples.length) + Math.abs(historyLogCount - samples.length),
+    slotContractFailures: samples.filter((sample) => sample.missingSlotCount > 0 || sample.unexpectedSlotCount > 0).length,
+    falseBoundaryCount: samples.filter((sample) => sample.falseBoundary).length,
+    genericUnknownCount: samples.filter((sample) => sample.genericUnknown).length,
+    leakageFailures: samples.filter((sample) =>
+      sample.languageLeakDetected || sample.teacherMetaLeakageDetected || sample.structuredPayloadLeakageDetected
+    ).length,
+    agentRequestCount,
+    historyLogCount,
+    crossOriginProtectionRequestCount,
+    responseTextRetained: false,
+    samples
+  };
+  await testInfo.attach("preview-compound-history-batch-1", {
+    body: JSON.stringify(summary, null, 2),
+    contentType: "application/json"
+  });
+  console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify({
+    ...summary,
+    samples: undefined
+  })}`);
+
+  expect(samples).toHaveLength(caseIds.length * probes.length);
+  expect(summary.httpContractFailures).toBe(0);
+  expect(summary.requestContractFailures).toBe(0);
+  expect(summary.slotContractFailures).toBe(0);
+  expect(summary.falseBoundaryCount).toBe(0);
+  expect(summary.genericUnknownCount).toBe(0);
+  expect(summary.leakageFailures).toBe(0);
+  expect(summary.agentRequestCount).toBe(samples.length);
+  expect(summary.historyLogCount).toBe(samples.length);
+  expect(summary.crossOriginProtectionRequestCount).toBe(0);
 });
 
 test("@preview-history-navigation preserves one logged turn across back and forward", async ({ browser }, testInfo) => {

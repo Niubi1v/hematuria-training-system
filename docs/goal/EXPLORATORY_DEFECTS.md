@@ -363,3 +363,19 @@
 - 最小证据：`tests/preview/preview-blackbox.spec.mjs`中的`@preview-seven-stage`强断言，以及`artifacts/exploratory-qa/reports/c4ac9b5-preview-seven-stage-summary.json`。安全wrapper扫描并删除原始Playwright输出和失败上下文，不提交真实Preview trace、截图、录像或回答。
 - 建议方向：把终末完成动作纳入与阶段1–6相同的同步in-flight锁；一个UI动作生成并复用稳定幂等键；只由当前动作的主请求决定失败提示，已成功score/完成态不得被并发409覆盖。增加阶段7同步双击、score一次性、错误提示与刷新完成态回归。
 - 医学专家裁决：否；这是并发、幂等和UI状态归并问题。
+
+## HEM-P1-054：跨 canonical/structured 的复合病史问句静默丢失子句并误触诊断边界
+
+- 级别/状态：P1，`OPEN / FAIL_LOCAL_QA / FAIL_PREVIEW`；Production与精确Preview基线`c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2`。
+- 页面/路径：本地Patient Session生产规则链与受保护Preview `/cases/P001/`–`/cases/P007/`；本地中文/英文，Preview中文；桌面Chromium`1440×900`。
+- 操作步骤：对42例分别初始化中英文合法session → 发送同时包含症状canonical槽位及既往史/用药/暴露structured槽位的自然复合问句 → 重放同一问题 → 比较公开`matchedSlotIds`与每个明确子句 → 单独核对医学冲突隔离、诊断/报告边界、输出语言与教师/结构泄露 → 在Preview按P001–P007逐例低频复跑5组。
+- 预期：每个子句均被识别并分别回答；缺失事实可自然不确定，医学冲突继续隔离；“以前得过肿瘤吗”是既往史，不应因同句还问发热而变成诊断请求；不得附加未问的当前诱因或generic pain；单次操作保持1 agent/1 history。
+- 实际：本地786场景中689个失败，跨层场景613/618失败。canonical一旦命中即不再执行structured matcher，导致既往结石、感染/肿瘤、高血压/糖尿病、用药/过敏、吸烟/暴露/家族、手术/输血/外伤/泌尿操作和妇科子句被静默丢弃；42/42中文既往肿瘤复合问句返回`diagnosis_boundary`。英文另有84个canonical alias遗漏，structured内部126个matcher遗漏，历史上下文还会错误命中`triggers`/`dysuria`等当前症状槽位。
+- 复现：本地完整矩阵2/2逐字节一致；scenario failure 689/786、cross-layer 613/618。Preview降速正式运行35/35槽位不完整、7/7假诊断边界；首轮唯一429样本排除后HTTP与请求合同均为35/35。
+- AI来源：本地为`local-rule-no-provider`、providerCalls=0。Preview为7次`live_ai`、13次`rule_fallback`、15次`safety_boundary`；不把任一fallback或安全边界冒充真实AI通过。即使7次live_ai，公开匹配元数据仍只含canonical前半句。
+- 状态变化时间线：session ready → 复合问题进入canonical matcher → structured matcher被短路 → 部分问题直接规则回答或进入provider，但允许事实集合只含前半句 → history-log 200 → 学员时间线只收集部分已问病史；中文“肿瘤”路径则在canonical命中后因历史边界判定失败进入诊断阻断。
+- HTTP/耗时：Preview正式35个agent与35个history均200，agent/history一一对应；批次约101秒。首轮高频尾部1个429触发1次客户端重试，降速后未复现，不计本缺陷HTTP失败。
+- console/network：跨origin保护头请求0，教师元语言、结构字段和语言泄露0。证据只保存病例范围、probe类别、source/fallback枚举、槽位计数和错误分组，不保存回答、请求正文、request ID、token、Cookie、Authorization或签名。
+- 最小证据：`tests/exploratory/patient-compound-history-matrix.mjs`、`tests/preview/preview-stability.spec.mjs`中的`@preview-compound-history-batch-1`，以及`artifacts/exploratory-qa/reports/c4ac9b5-patient-compound-history-summary.json`。两份完整本地分组报告仅本机保留；Preview原始输出经安全wrapper扫描后删除。
+- 建议方向：合并canonical与structured matcher结果后再统一做治理/冲突检查；区分当前诱因与“以前/既往”历史上下文；使MED_ALL可与抗凝/抗血小板并存；先识别明确既往肿瘤上下文再应用诊断边界；长复合回答应按子句安全压缩或分段，不能整体降为unknown。新增42例双语跨层矩阵和Preview代表批，保持56个冲突隔离强断言。
+- 医学专家裁决：确认路由合并、边界误判和子句完整性属于工程问题，不需要医学裁决；具体事实值、冲突与来源修订仍由现有具名专家流程处理。

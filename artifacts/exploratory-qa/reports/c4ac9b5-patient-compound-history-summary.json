@@ -1,0 +1,66 @@
+{
+  "productionBaseline": "c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2",
+  "status": "FAIL",
+  "defectId": "HEM-P1-054",
+  "localDeterministicMatrix": {
+    "runs": 2,
+    "byteIdentical": true,
+    "cases": 42,
+    "languages": 2,
+    "probes": 10,
+    "scenarioChecks": 786,
+    "repeatChecks": 786,
+    "crossLayerChecks": 618,
+    "crossLayerFailedScenarios": 613,
+    "canonicalControlChecks": 168,
+    "canonicalControlFailedScenarios": 76,
+    "totalFailedScenarios": 689,
+    "failureInstances": 983,
+    "failureGroups": 39,
+    "canonicalMatcherMissing": 84,
+    "structuredMatcherMissing": 126,
+    "compoundSlotDropped": 657,
+    "compoundUnexpectedSlot": 74,
+    "historyCompoundFalseBoundary": 42,
+    "conflictBearingChecks": 56,
+    "conflictIsolatedChecks": 56,
+    "providerCalls": 0
+  },
+  "previewBatch": {
+    "environment": "protected_vercel_preview",
+    "caseRange": "P001-P007",
+    "language": "zh",
+    "viewport": "1440x900",
+    "probes": 5,
+    "operations": 35,
+    "agentRequests": 35,
+    "historyLogs": 35,
+    "httpContractFailures": 0,
+    "requestContractFailures": 0,
+    "slotContractFailures": 35,
+    "falseDiagnosisBoundary": 7,
+    "genericUnknown": 0,
+    "leakageFailures": 0,
+    "sourceCounts": {
+      "live_ai": 7,
+      "rule_fallback": 13,
+      "safety_boundary": 15
+    },
+    "fallbackReasonCounts": {
+      "compound_question_preserves_all_facts": 7,
+      "canonical_fact_unknown": 13,
+      "diagnosis_boundary": 7,
+      "ai_unavailable_or_rule_mode": 1
+    },
+    "excludedDiagnosticRuns": 1,
+    "excludedReason": "one rate-limited operation before paced rerun"
+  },
+  "safety": {
+    "medicalTruthAdjudicated": false,
+    "medicalConflictIsolationPassed": true,
+    "responseTextRetained": false,
+    "requestBodiesRetained": false,
+    "requestIdsRetained": false,
+    "credentialsRetained": false
+  }
+}

@@ -56,6 +56,7 @@ QA 分支：`codex/hematuria-exploratory-qa`
 | c4ac9b5 P006–P012 Preview主诉聚合 | HEM-P1-053 / 三轮双语自然主诉与英文canonical控制 | `reports/c4ac9b5-unsampled-preview-batch-1-summary.json` | 1,564 | 是 | —；只含病例ID、source/provider、安全布尔值和计数，不含完整问答、request body、token、header或凭据 | 证据根目录下同路径 |
 | c4ac9b5 P001–P042 Preview主诉聚合 | HEM-P1-053 / 全42例自然主诉与英文canonical控制 | `reports/c4ac9b5-preview-chief-complaint-p001-p042-summary.json` | 1,992 | 是 | —；只含聚合source、过滤失败病例ID、计数和安全策略，不含完整问答、request body、token、header或凭据 | 证据根目录下同路径 |
 | c4ac9b5 P003 Preview七阶段聚合 | HEM-P2-028 / 终末双击、360报告与刷新完成态 | `reports/c4ac9b5-preview-seven-stage-summary.json` | 1,425 | 是 | —；只含公开SHA、状态/计数、request ID存在性和公开错误枚举，不含输入正文、request body、标识或凭据 | 证据根目录下同路径 |
+| c4ac9b5 复合详细病史聚合 | HEM-P1-054 / 42例双语跨层矩阵与P001–P007真实Preview | `reports/c4ac9b5-patient-compound-history-summary.json` | 1,863 | 是 | —；只含计数、slot类别、source/fallback枚举和公开SHA，不含回答、医学值、request body、标识或凭据 | 证据根目录下同路径 |
 
 SHA-256：
 
@@ -109,18 +110,20 @@ SHA-256：
 - `c4ac9b5-unsampled-preview-batch-1-summary.json`：`10DAE327FE4C7F8E795D16EB3088A975059BB7C18F90D175D6D572D5DB53E017`
 - `c4ac9b5-preview-chief-complaint-p001-p042-summary.json`：`25B90BF0261A393712E28928E71D254C4A5A8FF03DCA31949103890E116BE93A`
 - `c4ac9b5-preview-seven-stage-summary.json`：`6009ABFEBD0D1D21CA06E02316A2AFCFBBBF3471D81E39170C78B9CD382EF900`
+- `c4ac9b5-patient-compound-history-summary.json`：`1165CFDB4F74A53D2644FB4B4710ABAB3BE4709A4EBB9E74624AC92BFCD5452B`
 
 ## 仅本机保留、不提交 Git
 
 | 证据名称 | 对应测试或缺陷 | 文件路径 | 文件数 | 大小（字节） | 提交 Git | 未提交原因 | 本机保留位置 |
 | --- | --- | --- | ---: | ---: | --- | --- | --- |
-| HTML/JSON/JUnit、console/network、test-results 和本地服务日志 | 十一轮汇总、fixture E2E、HEM-P1-027–053、HEM-P2-028/043/044、Pages/Preview 分层 | `reports/**`（排除上表最小聚合/预检 JSON） | 236 | 2,609,706 | 否 | 可重建；含重复矩阵/handler/HEM-P1-052聚合、完整运行日志及部分本机绝对路径；整个 HTML/report 目录不进 Git | 证据根目录下同路径 |
+| HTML/JSON/JUnit、console/network、test-results 和本地服务日志 | 十三轮汇总、fixture E2E、HEM-P1-027–054、HEM-P2-028/043/044、Pages/Preview 分层 | `reports/**`（排除上表最小聚合/预检 JSON及下列复合病史明细） | 236 | 2,609,706 | 否 | 可重建；含重复矩阵/handler/HEM-P1-052聚合、完整运行日志及部分本机绝对路径；整个 HTML/report 目录不进 Git | 证据根目录下同路径 |
+| 复合详细病史完整分组 | HEM-P1-054 / 初始诊断矩阵及两次逐字节一致正式运行 | `reports/c4ac9b5-patient-compound-history-matrix*.json` | 3 | 101,473 | 否 | 含39组完整病例ID/slot失败分组，聚合计数已足以验收；避免重复提交可重建明细 | 证据根目录下同路径 |
 | 通过、重复及非最小失败截图 | 四 viewport、42 页面壳、20 轮、七阶段/360、a11y、live API、Pages/数据Agent非代表帧 | `screenshots/**`（排除上表代表帧） | 100 | 16,209,715 | 否 | 通过、重复或非代表视觉证据；HEM-P2-044几何未变化，不重复提交代表帧 | 证据根目录下同路径 |
 | 通过、重复及大体积 trace | 公共页、42 页面壳、20 轮、七阶段/360、a11y、live API、路由矩阵及其余viewport | `traces/**`（排除上表最小 trace） | 53 | 507,799,000 | 否 | 通过场景、重复复跑或大体积失败 trace；可由测试重建 | 证据根目录下同路径 |
 | 脱敏 fixture transcript | P001 中文 20 轮 | `transcripts/fixture-20-turn-interview-390x844.json` | 1 | 3,295 | 否 | 非真实 AI，且不是缺陷最小证据 | 证据根目录下同路径 |
 | 失败录像 | HEM-P1-027–051、HEM-P2-028/043及旧静态history环境尝试 | `videos/**` | 36 | 33,090,075 | 否 | 截图与最小 trace 已足够；按规则视频不进 Git | 证据根目录下同路径 |
 
-第12轮索引更新后清点本机共有475个证据文件、575,767,423字节；Git最小证据集为49个文件（含本索引）、16,055,632字节，其余426个文件、559,711,791字节仅本机保留。定向Playwright复跑按reporter设计重建HTML/JUnit/test-results；聚合JSON、代表截图与历史最小trace进入Git，大量重复截图、完整报告、长trace、录像与transcript不整体提交。没有浏览器用户目录进入证据根目录；`.pnpm-store`、`node_modules`、`.next`与根目录`test-results/**`不进入证据或提交。
+第13轮索引更新后清点本机共有479个证据文件、575,872,803字节；Git最小证据集为50个文件（含本索引）、16,059,539字节，其余429个文件、559,813,264字节仅本机保留。定向Playwright复跑按reporter设计重建HTML/JUnit/test-results；聚合JSON、代表截图与历史最小trace进入Git，大量重复截图、完整报告、长trace、录像与transcript不整体提交。没有浏览器用户目录进入证据根目录；`.pnpm-store`、`node_modules`、`.next`与根目录`test-results/**`不进入证据或提交。
 
 ## HEM-P1-027 复现与测量
 
@@ -197,6 +200,13 @@ SHA-256：
 4. 本批没有新增本机大体积证据；总证据文件仅增加1份1,564字节聚合，既有426个未提交文件及559,711,791字节清单保持不变。
 5. 后续使用同一可重建用例补齐P001–P005、P013–P042，形成全42例诊断批：自然中文42/42 live_ai、自然英文42/42规则fallback、canonical英文31/42 live_ai及11/42 safety boundary。新增1份1,992字节全量聚合，不保留各批原始附件。
 
+## `c4ac9b5` 第 13 轮 HEM-P1-054 证据摘要
+
+1. `c4ac9b5-patient-compound-history-summary.json`只保存42例双语矩阵计数、失败类别、医学隔离计数、P001–P007 Preview source/fallback分布和请求合同；不含完整问题/回答、医学事实值、request body、session/token/header或凭据。
+2. 两次正式本地矩阵各覆盖786场景并逐字节一致；完整30,781字节分组报告各1份，另有39,911字节QA口径修正前诊断报告，三份均仅本机保留。提交的脚本保持失败断言，不删除或放宽689个失败场景。
+3. Preview首次运行在第35个操作遇到429并触发一次客户端恢复，仅用于识别速率噪声；1.5秒节流正式运行35/35 agent/history均200且单请求。两次原始输出均由wrapper扫描2个生成文件后删除。
+4. Preview测试只在内存读取回答用于语言/教师/结构泄露布尔检查，附件只含case ID、probe ID、slot计数和source枚举；聚合证据不保留回答。没有新增截图、trace或录像。
+
 ## 敏感信息复核
 
 提交前状态：`PASS`（2026-07-24，全证据树复扫）。
@@ -210,6 +220,7 @@ SHA-256：
 - 第11轮拟提交范围严格为6份Goal QA文档、EVIDENCE_INDEX、1个Preview QA测试和1份脱敏聚合；`scan-staged-secrets.mjs`复核9个staged文件及完整可达文本历史，敏感值命中0。不含业务代码、医学数据、截图、trace、录像、HTML、完整问答或浏览器用户数据。
 - 第12轮Preview七阶段原始Playwright输出、失败上下文和临时test-results由安全wrapper扫描2个生成文件后删除；Git只保留可重建强断言与1份脱敏聚合，不保留输入正文、request body、request ID、token、header、Cookie、Authorization、签名或环境值。
 - 第12轮最终全证据树扫描覆盖475个物理文件、ZIP内8,703个条目和1,301,557,366字节，敏感值命中0；9个staged文件及完整可达文本历史的独立扫描同为0命中。
+- 第13轮最终全证据树扫描覆盖479个物理文件、ZIP内8,703个条目和1,301,662,705字节，敏感值命中0；10个staged文件及完整可达文本历史的独立扫描同为0命中。
 - 通用 candidate scanner 对 5 个本机不提交的大 trace 按大小上限 fail-closed（4 个 ZIP 内 trace entry 过大、1 个 ZIP 文件过大）；这些文件未 staged，且已由上面的全证据树流式/解包扫描覆盖并得到 0 命中。未删除或放宽 scanner 断言。
 - 绝对用户路径只出现在不提交的 `reports/junit.xml`（36）、`local-dev-3010d.stdout.log`（16）、`local-dev-3010e.log`（34）和 `local-dev-3010f.log`（1），全部保持本机未跟踪。1,551 个邮箱样式全部是 Playwright `page@hash` 内部 ID；504 个身份证样式均无有效生日；8 个手机号样式嵌在哈希中，另 1 个来自 network 浮点耗时，均为误报。
 - `reports/results.json` 等其余本机报告也可能含 `<QA_WORKTREE>` 的实际绝对路径，因此整类报告保持不提交；本索引使用占位符，不暴露用户目录。
