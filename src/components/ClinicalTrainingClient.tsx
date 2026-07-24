@@ -553,11 +553,11 @@ function ReportCard({ item, lang }: { item: OrderResultLog["results"][number]; l
           <div><dt className="text-xs text-clinic-muted">{lang === "en" ? "Reference range" : "参考范围"}</dt><dd className="mt-0.5 text-clinic-ink">{referenceRange}</dd></div>
         </dl>
       )}
-      <div className="mt-3 grid gap-2">
-        {(lines.length ? lines : [item.result]).map((line) => (
-          <p key={line} className="rounded-lg bg-clinic-paper px-3 py-2">{line}</p>
+      {lines.length > 0 && <div className="mt-3 grid gap-2">
+        {lines.map((line, lineIndex) => (
+          <p data-testid="report-result-line" key={`${item.resultId || item.orderId}:result-line:${lineIndex}:${line}`} className="rounded-lg bg-clinic-paper px-3 py-2">{line}</p>
         ))}
-      </div>
+      </div>}
       {item.impression && <p className="mt-3 border-l-2 border-clinic-blue pl-3"><span className="font-semibold">{lang === "en" ? "Impression" : "印象"}：</span>{impression}</p>}
       {item.teachingExplanation && <p className="mt-3 text-xs leading-5 text-clinic-muted">{t(lang, "releaseRule")}：{teachingExplanation}</p>}
     </article>
@@ -2255,7 +2255,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                       {log.duplicateOrderIds && log.duplicateOrderIds.length > 0 && <p className="mt-1 text-xs text-amber-800">{t(lang, "duplicateOrder")}</p>}
                       <p className="mt-1 text-sm text-clinic-muted">{log.message}</p>
                       {log.status === "ordered" && <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-clinic-paper"><div className="h-full w-1/2 animate-pulse rounded-full bg-clinic-teal" /></div>}
-                      {log.results.map((item, index) => <ReportCard key={`${log.id}-${index}`} item={item} lang={lang} />)}
+                      {log.results.map((item, index) => <ReportCard key={`${log.id}-${item.resultId || `${item.orderId}-${index}`}`} item={item} lang={lang} />)}
                     </div>
                   ))}
                 </div>

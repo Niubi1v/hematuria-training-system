@@ -439,7 +439,7 @@ test("report status labels are localized and abnormal evidence takes priority ov
             caseId: "P008", orderId: "TEST-STATUS", resultId: "status-unavailable",
             status: "not_available", orderCategory: "Laboratory tests/Status presentation",
             result: "No configured result is available.", value: "",
-            unit: "", referenceRange: "", impression: "",
+            unit: "", referenceRange: "", impression: "No configured result is available.",
             abnormalFlags: [], abnormalLevel: "not_available",
             teachingExplanation: "", metadataStatus: "complete", translationStatus: "source_text_no_cjk"
           }
@@ -462,6 +462,54 @@ test("report status labels are localized and abnormal evidence takes priority ov
   await expect(reports.nth(0)).toContainText("Abnormal");
   await expect(reports.nth(1)).toContainText("Not available in this case");
   expect((await reports.allTextContents()).join(" ")).not.toMatch(/\b(final|not_available|not_performed)\b/);
+});
+
+test("nonterminal report with an empty result renders no blank keyed row", async ({ page }) => {
+  const reactKeyErrors = [];
+  page.on("console", (message) => {
+    if (message.type() === "error" && /unique "key" prop/i.test(message.text())) {
+      reactKeyErrors.push(message.text());
+    }
+  });
+  await routeTrainingApiThroughHandler(page, []);
+  await page.route("**/api/training-action/**", async (route) => {
+    const body = route.request().postDataJSON();
+    if (body.action !== "order") return route.fallback();
+    const stateToken = route.request().headers()["x-training-state"];
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers: { "Access-Control-Expose-Headers": "X-Training-State", "X-Training-State": stateToken },
+      body: JSON.stringify({
+        id: "nonterminal-empty-result-fixture",
+        input: body.input,
+        matched: true,
+        matchedOrders: [{ orderId: "TEST-NONTERMINAL", displayName: "非终态报告", translationAvailable: true }],
+        results: [{
+          caseId: "P001", orderId: "TEST-NONTERMINAL", resultId: "status-not-available-empty-result",
+          status: "not_available", orderCategory: "检验/非终态",
+          result: "", value: "", unit: "", referenceRange: "",
+          impression: "当前病例尚无可释放结果。",
+          abnormalFlags: [], abnormalLevel: "not_available",
+          teachingExplanation: "", metadataStatus: "complete"
+        }],
+        duplicateOrderIds: [], unmetPrerequisites: [], selectedOrderCount: 1,
+        recognizedOrderCount: 1, returnedReportCount: 1,
+        at: new Date().toISOString(), placedAt: new Date().toISOString(),
+        stageNo: 2, status: "reported", message: "已返回非终态报告。"
+      })
+    });
+  });
+  await page.goto("/cases/P001/");
+  await enterInvestigationStage(page, "zh");
+  await page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜").fill("非终态报告");
+  await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
+
+  const report = page.getByTestId("report-card");
+  await expect(report).toBeVisible();
+  await expect(report).toContainText("当前病例尚无可释放结果。");
+  await expect(report.getByTestId("report-result-line")).toHaveCount(0);
+  expect(reactKeyErrors).toEqual([]);
 });
 
 test("restart removes the prior browser token and initializes exactly one new attempt", async ({ page }) => {
