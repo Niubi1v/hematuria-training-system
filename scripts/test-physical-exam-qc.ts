@@ -31,7 +31,6 @@ assert(!p012.some((item) => /妇科|阴道|输尿管走行区/.test(item.display
 const report = [
   "# 查体数据库质控报告",
   "",
-  `生成时间：${new Date().toISOString()}`,
   `病例数：${cases.length}`,
   `病例级查体结果：${exams.length}`,
   "",
@@ -41,5 +40,12 @@ const report = [
   "- 症状/操作提示/诊断提示禁入查体结果：通过",
   "- P001腹部查体、P011女性、P012 IgA肾病专项回归：通过"
 ].join("\n");
-fs.writeFileSync("PHYSICAL_EXAM_QC_REPORT.md", `${report}\n`, "utf8");
+const reportPath = "PHYSICAL_EXAM_QC_REPORT.md";
+const existing = fs.readFileSync(reportPath, "utf8").replace(/\r\n/g, "\n");
+const existingWithoutTimestamp = existing.replace(/^# 查体数据库质控报告\n\n生成时间：[^\n]+\n/, "# 查体数据库质控报告\n\n").trim();
+if (existingWithoutTimestamp !== report.trim()) throw new Error("physical examination QC report is stale; review differences before using UPDATE_PHYSICAL_EXAM_QC_REPORT=1");
+if (process.env.UPDATE_PHYSICAL_EXAM_QC_REPORT === "1") {
+  const updated = report.replace("# 查体数据库质控报告\n\n", `# 查体数据库质控报告\n\n生成时间：${new Date().toISOString()}\n`);
+  fs.writeFileSync(reportPath, `${updated}\n`, "utf8");
+}
 console.log(`Physical examination QC passed: ${cases.length} cases, ${exams.length} results.`);

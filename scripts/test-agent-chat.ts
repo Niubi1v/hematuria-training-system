@@ -65,9 +65,11 @@ async function main() {
     "api/patient-reply.js",
     "src/components/ClinicalTrainingClient.tsx"
   ].map((file) => fs.readFileSync(file, "utf8")).join("\n");
+  const apiConfigSource = fs.readFileSync("src/lib/apiConfig.ts", "utf8");
   assert(!/sk-[A-Za-z0-9_-]{12,}/.test(source), "source should not contain real API keys");
   assert(source.includes("LLM_ENABLE_AI_AGENTS"), "source should document or read LLM_ENABLE_AI_AGENTS");
-  assert(source.includes("/api/agent-chat"), "frontend/backend should include the unified agent-chat endpoint");
+  assert(apiConfigSource.includes("/api/agent-chat/"), "public API configuration must use the unified agent-chat endpoint");
+  assert(source.includes("publicApiConfig.patientAgent"), "frontend must call the configured unified Patient Agent endpoint");
 
   console.log("Agent Chat API tests passed.");
 }

@@ -1,9 +1,40 @@
 import type { CollectedMap, KeyPointId } from "./types";
 
 export type AiConnectionStatus = "unknown" | "checking" | "connected" | "degraded" | "reconnecting" | "offline" | "error";
+export type PublicConnectionState = "idle" | "initializing" | "ready" | "degraded" | "reconnecting" | "offline" | "failed";
+export type ConnectionTransition = {
+  at: string;
+  from: PublicConnectionState;
+  to: PublicConnectionState;
+};
+
+export function publicConnectionState(status: AiConnectionStatus): PublicConnectionState {
+  return ({
+    unknown: "idle",
+    checking: "initializing",
+    connected: "ready",
+    degraded: "degraded",
+    reconnecting: "reconnecting",
+    offline: "offline",
+    error: "failed"
+  } as const)[status];
+}
+
+export function recordConnectionTransition(
+  history: ConnectionTransition[],
+  from: AiConnectionStatus,
+  to: AiConnectionStatus,
+  at = new Date().toISOString(),
+  limit = 50
+) {
+  const event = { at, from: publicConnectionState(from), to: publicConnectionState(to) };
+  if (event.from === event.to) return history;
+  return [...history, event].slice(-limit);
+}
 
 export type CachedPatientSession = {
   sessionId: string;
+  attemptId: string;
   caseId: string;
   language: "zh" | "en";
   mode: string;
@@ -22,7 +53,7 @@ const connectionFailureReasons = new Set([
 ]);
 
 const safetyFallbackReasons = new Set([
-  "diagnosis_boundary", "report_boundary", "compound_question_preserves_all_facts", "ai_response_blocked", "safety_filter"
+  "diagnosis_boundary", "report_boundary", "compound_question_preserves_all_facts", "ai_response_blocked", "medical_bilingual_conflict_pending_review", "safety_filter", "unsafe_deterministic_answer"
 ]);
 
 export function isConnectionFailureFallback(reason = "") {
@@ -37,6 +68,7 @@ export function isSafetyFallback(reason = "") {
 }
 
 export function validCachedSession(session: CachedPatientSession | null, expected: {
+  attemptId: string;
   caseId: string;
   language: "zh" | "en";
   mode: string;
@@ -44,7 +76,7 @@ export function validCachedSession(session: CachedPatientSession | null, expecte
   apiVersion?: string;
   now?: number;
 }): session is CachedPatientSession {
-  if (!session?.sessionId || session.caseId !== expected.caseId || session.language !== expected.language || session.mode !== expected.mode) return false;
+  if (!session?.sessionId || session.attemptId !== expected.attemptId || session.caseId !== expected.caseId || session.language !== expected.language || session.mode !== expected.mode) return false;
   const now = expected.now ?? Date.now();
   if (!Number.isFinite(Date.parse(session.sessionExpiresAt)) || Date.parse(session.sessionExpiresAt) <= now) return false;
   if (expected.deploymentSha && session.deploymentSha && session.deploymentSha !== expected.deploymentSha) return false;

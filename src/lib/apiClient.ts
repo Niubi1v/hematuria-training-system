@@ -35,6 +35,7 @@ function classify(status: number, code: string): ApiFailureKind {
   const normalized = code.toLowerCase();
   if (status === 404) return "not-deployed";
   if (/backend_outdated|version_mismatch/.test(normalized)) return "backend-outdated";
+  if (/training_attempt_store_unavailable|training_state_secret_(?:missing|weak|placeholder|reused)/.test(normalized)) return "not-configured";
   if (/provider_not_configured|llm_not_configured|missing_llm/.test(normalized)) return "not-configured";
   if (/provider_timeout|upstream_timeout/.test(normalized)) return "provider-timeout";
   if (/provider_rate_limit|upstream_rate_limit/.test(normalized) || status === 429) return "provider-rate-limited";
@@ -68,6 +69,24 @@ export function recoveryDelayMs(attempt: number, retryAfter = 0) {
   return Math.max(retryAfter, base + jitter);
 }
 
+export function waitForRecoveryDelay(delayMs: number, signal?: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException("Aborted", "AbortError"));
+      return;
+    }
+    const abort = () => {
+      globalThis.clearTimeout(timeout);
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+    const timeout = globalThis.setTimeout(() => {
+      signal?.removeEventListener("abort", abort);
+      resolve();
+    }, delayMs);
+    signal?.addEventListener("abort", abort, { once: true });
+  });
+}
+
 type RecoveryOptions = RequestInit & {
   timeoutMs?: number;
   retries?: number;
@@ -75,8 +94,14 @@ type RecoveryOptions = RequestInit & {
   endpointName?: string;
 };
 
+function endpointPath(url: string) {
+  // Client fetch accepts same-origin relative URLs. Supply a non-routable base
+  // only for parsing/log labels so no absolute origin is required or contacted.
+  return new URL(url, "http://same-origin.invalid").pathname;
+}
+
 export async function fetchWithRecovery(url: string, init: RecoveryOptions = {}) {
-  const { timeoutMs = 15_000, retries = 2, requestId = createRequestId(init.endpointName || "api"), endpointName = new URL(url).pathname, ...requestInit } = init;
+  const { timeoutMs = 15_000, retries = 2, requestId = createRequestId(init.endpointName || "api"), endpointName = endpointPath(url), ...requestInit } = init;
   let lastError: ApiRequestError | null = null;
   const startedAt = Date.now();
   for (let attempt = 0; attempt <= retries; attempt += 1) {
@@ -100,18 +125,19 @@ export async function fetchWithRecovery(url: string, init: RecoveryOptions = {})
       const retryableFailure = transientStatuses.has(response.status) && !["not-configured", "backend-outdated", "not-deployed", "safety-filter"].includes(error.kind);
       if (!retryableFailure || attempt === retries) throw error;
       lastError = error;
-      await new Promise((resolve) => globalThis.setTimeout(resolve, recoveryDelayMs(attempt, retryAfterMs(response))));
+      await waitForRecoveryDelay(recoveryDelayMs(attempt, retryAfterMs(response)), externalSignal || undefined);
     } catch (error) {
       const normalized = error instanceof ApiRequestError
         ? error
         : new ApiRequestError(error instanceof DOMException && error.name === "AbortError" ? "timeout" : "network", undefined, "", requestId);
       if (externalSignal?.aborted) throw normalized;
-      if ((normalized.status && !transientStatuses.has(normalized.status)) || attempt === retries) {
+      const nonRetryableKind = ["not-configured", "backend-outdated", "not-deployed", "safety-filter"].includes(normalized.kind);
+      if (nonRetryableKind || (normalized.status && !transientStatuses.has(normalized.status)) || attempt === retries) {
         console.warn("api_request_failed", { requestId, endpoint: endpointName, status: normalized.status || 0, durationMs: Date.now() - startedAt, retryCount: attempt, fallbackReason: normalized.code || normalized.kind });
         throw normalized;
       }
       lastError = normalized;
-      await new Promise((resolve) => globalThis.setTimeout(resolve, recoveryDelayMs(attempt)));
+      await waitForRecoveryDelay(recoveryDelayMs(attempt), externalSignal || undefined);
     } finally {
       globalThis.clearTimeout(timeout);
       externalSignal?.removeEventListener("abort", abortFromExternal);
@@ -120,13 +146,14 @@ export async function fetchWithRecovery(url: string, init: RecoveryOptions = {})
   throw lastError || new ApiRequestError("network", undefined, "", requestId);
 }
 
-export async function requestJson<T>(url: string, body?: unknown, options: { timeoutMs?: number; retries?: number; idempotencyKey?: string; method?: "GET" | "POST"; signal?: AbortSignal; requestId?: string; endpointName?: string } = {}): Promise<T> {
+export async function requestJson<T>(url: string, body?: unknown, options: { timeoutMs?: number; retries?: number; idempotencyKey?: string; method?: "GET" | "POST"; signal?: AbortSignal; requestId?: string; endpointName?: string; headers?: Record<string, string> } = {}): Promise<T> {
   const method = options.method || (body === undefined ? "GET" : "POST");
   const response = await fetchWithRecovery(url, {
     method,
     headers: {
       ...(body === undefined ? {} : { "Content-Type": "application/json" }),
-      ...(options.idempotencyKey ? { "X-Idempotency-Key": options.idempotencyKey } : {})
+      ...(options.idempotencyKey ? { "X-Idempotency-Key": options.idempotencyKey } : {}),
+      ...(options.headers || {})
     },
     body: body === undefined ? undefined : JSON.stringify(body),
     signal: options.signal,

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { validateCaseLibrary } from "../src/lib/caseSchema";
-import { simplifiedChiefComplaintEn } from "../src/lib/chiefComplaint";
+import { generatedChiefComplaintEn } from "../src/lib/chiefComplaint";
 import type { CaseData, MdtTrigger, OrderResultItem, PhysicalExamResult } from "../src/lib/types";
 
 type MutableCase = CaseData & Record<string, unknown>;
@@ -346,8 +346,8 @@ for (const item of activeCases.filter((caseData) => caseData.id.startsWith("HX-A
     sex: item.sex === "女" ? "Female" : "Male",
     difficulty: difficultyEn[item.difficulty || ""] || "Standard",
     diseaseCategory: categoryEn[item.diseaseCategory || ""] || item.diseaseCategory,
-    chiefComplaint: simplifiedChiefComplaintEn(item.studentChiefComplaint || item.chiefComplaint),
-    studentChiefComplaint: simplifiedChiefComplaintEn(item.studentChiefComplaint || item.chiefComplaint),
+    chiefComplaint: generatedChiefComplaintEn(item.studentChiefComplaint || item.chiefComplaint),
+    studentChiefComplaint: generatedChiefComplaintEn(item.studentChiefComplaint || item.chiefComplaint),
     initialDiagnosis: supplementTitlesEn[item.id] || item.diagnosis,
     admissionLabs: "Select laboratory tests according to hematuria localization, severity, infection risk, renal function and bleeding risk.",
     admissionImaging: "Order only the imaging, endoscopy or pathology studies justified by the current differential diagnosis.",

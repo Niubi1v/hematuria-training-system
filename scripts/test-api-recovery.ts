@@ -23,6 +23,16 @@ async function main() {
     assert.equal(calls, 3, "transient failures should retry at most twice");
 
     calls = 0;
+    globalThis.fetch = async (input) => {
+      calls += 1;
+      assert.equal(input, "/api/training-action/", "same-origin API routes must remain relative");
+      return Response.json({ ok: true });
+    };
+    const sameOrigin = await fetchWithRecovery("/api/training-action/", { retries: 0 });
+    assert.equal(sameOrigin.status, 200, "same-origin Preview APIs must be callable before an absolute origin exists");
+    assert.equal(calls, 1, "relative API routes must issue exactly one request");
+
+    calls = 0;
     globalThis.fetch = async () => {
       calls += 1;
       return new Response(JSON.stringify({ error: "forbidden" }), { status: 403 });
@@ -43,6 +53,19 @@ async function main() {
       (error: unknown) => error instanceof ApiRequestError && error.kind === "not-configured" && error.code === "provider_not_configured"
     );
     assert.equal(calls, 1, "503 JSON code should classify the actual provider failure");
+
+    calls = 0;
+    globalThis.fetch = async () => {
+      calls += 1;
+      return new Response(JSON.stringify({ error: "training_attempt_store_unavailable" }), { status: 503 });
+    };
+    await assert.rejects(
+      fetchWithRecovery("https://api.example.test/api/training-action/", { retries: 2 }),
+      (error: unknown) => error instanceof ApiRequestError
+        && error.kind === "not-configured"
+        && error.code === "training_attempt_store_unavailable"
+    );
+    assert.equal(calls, 1, "a missing authoritative attempt store is permanent configuration failure and must not retry");
 
     calls = 0;
     globalThis.fetch = async () => {
@@ -75,6 +98,19 @@ async function main() {
     externalController.abort();
     await assert.rejects(cancelled, (error: unknown) => error instanceof ApiRequestError && error.kind === "timeout");
     assert.equal(calls, 1, "an explicitly cancelled obsolete request must not retry");
+
+    calls = 0;
+    const backoffController = new AbortController();
+    globalThis.fetch = async () => {
+      calls += 1;
+      return new Response(JSON.stringify({ error: "temporary" }), { status: 503 });
+    };
+    const startedAt = Date.now();
+    const backoffRequest = fetchWithRecovery("https://api.example.test/api/health/", { retries: 2, signal: backoffController.signal });
+    globalThis.setTimeout(() => backoffController.abort(), 20);
+    await assert.rejects(backoffRequest, (error: unknown) => error instanceof ApiRequestError);
+    assert.equal(calls, 1, "aborting during recovery backoff must prevent a stale retry");
+    assert.ok(Date.now() - startedAt < 250, "aborting recovery backoff must settle promptly");
   } finally {
     globalThis.fetch = originalFetch;
   }

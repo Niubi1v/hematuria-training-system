@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import * as XLSX from "xlsx";
+import { readWorkbookFile } from "./lib/safe-workbook";
 
 const input = process.argv[2] ?? "work/source/v2_bilingual.xlsx";
 const outputDir = process.argv[3] ?? "data";
@@ -311,7 +312,7 @@ function rubric(name: string) {
 }
 
 function main() {
-  const workbook = XLSX.readFile(input);
+  const workbook = readWorkbookFile(input);
   const agents = makeAgents(rows(workbook, "7_Agent_UI_Bilingual"));
   const casesEn = filterCases(rows(workbook, "EN_Case_Master")).map(makeEnglishCase);
   const casesZh = filterCases(rows(workbook, "Case_Master_Bilingual")).map(makeChineseCase);
