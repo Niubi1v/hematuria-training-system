@@ -596,3 +596,14 @@
 - **HEM-P1-050**：`ENGINEERING CLOSED / REMOTE GATES PASS`。自然840/840、canonical checks 1428/1428、3150/3150；错误unknown和极性错误为0，generic pain无额外扩张。
 - **HEM-P1-051**：`ENGINEERING CLOSED / REAL PREVIEW VERIFIED`。部署`c9f7807`上P001英文纠错/澄清、P037和P038多轮共7次目标agent-chat均HTTP 200、DeepSeek `live_ai`、非fallback；7次history-log均200。测试只验证来源和同步，不将自由文本样本冒充医学人工自然度终签。
 - **仍阻塞**：28项检验元数据、23个英文医嘱名称、161个来源修订及既有医学裁决继续由来源/专家处理；本轮没有自动填值、翻译、批准或解除`needs_revision`。
+
+### QA 2107b7b P1/P2本地状态更新（2026-07-24）
+
+- **HEM-P1-052**：`ENGINEERING CLOSED LOCAL / REMOTE PENDING`。23/23未审核英文内部ID被服务端拒绝，同23项中文保持可用；4个相关医嘱的29/29评分链接得分为0。23个英文名称仍为`BLOCKED_SOURCE_TRANSLATION`，未自动翻译或批准。
+- **HEM-P1-055**：`ENGINEERING CLOSED LOCAL / REMOTE PENDING`。58/58“目标失败→前置→目标重试”与58/58正序控制均释放一致报告；失败目标不提前进入orders/event/scoring，合法重试不重复计分。
+- **HEM-P1-054**：`ENGINEERING CLOSED LOCAL / REMOTE PENDING`。786/786复合病史、618/618 canonical+structured跨层、42/42既往肿瘤边界和56/56冲突隔离通过；已知子句静默丢弃为0。
+- **HEM-P1-053**：`ENGINEERING CLOSED LOCAL / REMOTE PREVIEW PENDING`。42例中英文主诉路由84/84、受控live provider 42/42、普通症状词5/5允许、诊断/Prompt/评分/JSON 4/4阻断。真实DeepSeek来源须新部署复测。
+- **HEM-P2-056**：`ENGINEERING CLOSED LOCAL / REMOTE PENDING`。空result、仅impression的合法非终态报告不再生成空列表行；desktop/mobile console key错误为0。
+- **HEM-P2-044**：`ENGINEERING CLOSED EMULATION / BLOCKED_REAL_DEVICE`。360×800和390×844模拟中指定触控目标均至少44×44 CSS px；真实手机仍未由自动化替代。
+- **HEM-P2-028**：`ENGINEERING CLOSED LOCAL / REMOTE PREVIEW PENDING`。第7阶段同步双击从2个debrief请求收敛为1个；score、request ID和timeline均为1，成功报告不再被第二个409的错误提示覆盖。
+- **医学/来源冻结**：HEM-P0-001、HEM-P0-023、28项元数据、23个英文名称、161个来源、419条模拟事实、42例`needs_revision`保持原状态；`data/**`相对`c4ac9b5`零差异。

@@ -656,3 +656,16 @@
 - Vercel Deployment与Preview Comments均success；受保护branch alias的health精确返回`c9f7807`，Patient Service、Training State及Durable Attempt Store均configured。基础Preview黑盒8/8通过；扩展后的11/11又直接验证P001英文纠错/澄清三轮、P037两轮和P038两轮均为DeepSeek `live_ai`、非fallback、history-log 200。
 - Preview session初始化10/10，P95 1263ms；中文5/5回答P95 1413ms、英文5/5回答P95 1858ms，均低于3秒目标。保护头只注入目标origin，跨origin为0，输出凭据扫描通过。
 - HEM-P1-050工程与远程门禁关闭；HEM-P1-051的真实Preview来源缺口关闭。新增黑盒门禁提交`77df23d`只修改测试，不改业务、医学事实或环境。PR #1继续Open/Draft。
+
+### QA 2107b7b P1/P2整改本地里程碑（2026-07-24）
+
+- 选择性读取`origin/codex/hematuria-exploratory-qa@2107b7b5849acbb586c8f715d2b95b05cda27a8f`的052–056报告、最小测试和脱敏聚合；起点为QA使用的Production基线`c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2`。没有整体merge QA分支，没有引入大体积证据或QA业务代码。
+- `HEM-P1-052`：英文未审核医嘱在服务端权威层按既有reviewed alias策略拒绝，不能用内部ID绕过；23/23英文项目被阻断、同23项中文仍可匹配，关联29条评分链均不得分。未审核英文名称仍保持来源修订阻塞，没有自动翻译或批准。
+- `HEM-P1-055`：未满足前置条件的目标医嘱不再写入“已开立”状态或事件；补齐前置后同一会话可重新计算并释放一次。58个“先失败后补齐”和58个“先补齐后请求”场景均通过，不重复结果或评分。
+- `HEM-P1-054`：canonical与structured病史改为逐子句、按原顺序合并治理投影；786/786复合病史、618/618跨层、42/42既往肿瘤史诊断边界和56/56医学冲突隔离通过。`Have you had a urinary procedure?`继续命中既往尿路操作，当前外伤诱因不再误归既往外伤。
+- `HEM-P1-053`：中英文自然主诉均进入canonical；受控provider 42/42保留live来源，普通blood/red urine/pain/burning/clot不触发安全边界，诊断泄露、Prompt、评分点和JSON仍阻断。80字符格式化不再因补标点生成81字符并误杀合法回答。
+- `HEM-P2-056`：非终态空result报告不再渲染空段落；结果行和报告卡使用包含`resultId/orderId`的稳定复合key。桌面/移动精确回归4/4、React key错误0。
+- `HEM-P2-044`：360×800与390×844的语音设置入口、关闭、试听、暂停/继续、停止和重播均满足至少44×44 CSS px；相邻语音配置和浏览器语音降级回归通过。真机仍为独立人工验收。
+- `HEM-P2-028`：第7阶段完成动作增加同步singleflight锁；同步双击仅产生1个debrief request、1个request ID、1个score和1条stage-7 timeline，不再由较晚409覆盖已成功报告。阶段1–6原双击门禁继续通过。
+- 五个业务提交为`fe93b0e`、`ad49132`、`d492cea`、`f6c5269`、`cda359e`。本地完整行为门禁exit 0；Playwright 85 passed/3互斥skip/0 failed；TypeScript、ESLint、两种82页构建、两次25资源bundle、343文件/历史secret scan、clean gate和`data/**`零差异均通过。
+- 本机使用Node 24.14；权威Node 22、Actions、Vercel及真实Preview仍须本候选普通push后的精确新HEAD补证。PR继续Draft，不合并main、不部署Production。

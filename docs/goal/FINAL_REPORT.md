@@ -557,3 +557,14 @@
 - Data Agent工程展示边界通过远程门禁；28项元数据、23个英文名称及161个来源修订仍为人工来源阻塞，不因UI fail-closed而视为医学内容完成。
 - 新增测试提交`77df23d`把上述P001/P037/P038真实来源检查纳入安全Preview runner；它不修改业务或医学数据。回滚该门禁可普通`git revert 77df23d`，应用依赖修复回滚为`git revert 6c1d42c`，均不得reset或force push。
 - 长期QA应从包含`77df23d`的最终远程HEAD复测：840/1428/3150、generic/特异pain、P001纠错澄清、P037/P038多轮、Data Agent 28/23 fail-closed、42例双语七阶段及医学冲突隔离。Production、真机与具名医学裁决仍不在本轮自动关闭范围。
+
+### QA 2107b7b P1/P2整改本地结论（2026-07-24）
+
+- 起点为`c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2`；仅选择性读取QA HEAD `2107b7b5849acbb586c8f715d2b95b05cda27a8f`的052–056报告和最小证据，没有整体merge。
+- HEM-P1-052/055在服务端权威Data Agent状态机关闭：未审核英文ID不能进入UI/API事件、阶段状态或评分；未满足前置的目标不被永久记成已完成，补齐后可幂等释放。证据为23/23、29/29、58/58两种顺序。
+- HEM-P1-054关闭：复合问句的canonical与structured子句分别归一化并按顺序合并；786/786、618/618、42/42和56/56通过，医学冲突继续整体隔离。
+- HEM-P1-053本地工程关闭：自然英文主诉可进入受控provider，普通血尿/疼痛词不再误触安全边界，真正的诊断、Prompt、评分和结构化泄露继续阻断。真实Preview DeepSeek来源仍须新部署确认。
+- HEM-P2-056、044、028本地关闭：非终态报告无空key行；移动语音控件达到44px；第7阶段同步双击收敛为一次debrief/score/timeline。真机触控和真实Preview第7阶段仍分别为人工/远程复测项。
+- 完整本地门禁通过：行为链exit 0、Playwright 85/3/0、TypeScript/ESLint、Vercel与Pages各82页、两次25资源bundle、343文件/历史secret scan、clean gate及`data/**`零差异。当前代码HEAD为`cda359e6eb233761245e6490f4cc54de1495d594`，Node 22与远程部署尚待push后补证。
+- 提交与回滚边界：`fe93b0e`（052/055）、`ad49132`（054/053）、`d492cea`（056）、`f6c5269`（044）、`cda359e`（028）。如需回滚，按影响范围使用普通`git revert <sha>`并重新执行门禁；不得reset、rebase或force push。
+- 仍需人工/权限处理：HEM-P0-001/023、28项元数据、23个英文名称、161个来源、419条模拟事实、42例`needs_revision`、真机和医学/自然度终验。PR保持Draft，不合并main、不部署Production。
