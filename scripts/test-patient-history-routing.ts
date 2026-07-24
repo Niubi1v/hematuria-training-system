@@ -44,6 +44,7 @@ const historyProbes: Probe[] = [
   { id: "tumor-history-en", language: "en", question: "Have you had a previous cancer?", expectedSlots: ["PAST_MALIGNANCY"] },
   { id: "cystoscopy-history-zh", language: "zh", question: "以前做过膀胱镜吗？", expectedSlots: ["PAST_URINARY_PROCEDURE"] },
   { id: "catheter-history-zh", language: "zh", question: "以前导过尿吗？", expectedSlots: ["PAST_URINARY_PROCEDURE"] },
+  { id: "urinary-procedure-history-en", language: "en", question: "Have you had a urinary procedure?", expectedSlots: ["PAST_URINARY_PROCEDURE"] },
   { id: "retention-en", language: "en", question: "Have you been unable to pass urine?", expectedSlots: ["retention"] }
 ];
 
@@ -125,7 +126,7 @@ async function main() {
   assert.equal(historicalDiagnosis.fallbackReason, "diagnosis_boundary");
   assert.deepEqual(historicalDiagnosis.matchedSlotIds || [], []);
 
-  console.log("Patient history routing preserved 42 cases x 7 natural questions plus 4 public safety boundaries.");
+  console.log("Patient history routing preserved 42 cases x 8 natural questions plus 4 public safety boundaries.");
 }
 
 main().catch((error) => {

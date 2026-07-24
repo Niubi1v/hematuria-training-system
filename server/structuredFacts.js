@@ -12,7 +12,11 @@ const factMatchers = [
   ["stoneHistory", "PAST_STONE", /结石史|以前.*结石|得过.*结石|stone history|stones before/i],
   ["urinaryInfectionHistory", "PAST_UTI", /感染史|以前.*尿路感染|反复.*感染|UTI history|urinary infection/i],
   ["malignancyHistory", "PAST_MALIGNANCY", /肿瘤史|以前.*肿瘤|得过.*癌|cancer history|previous cancer|cancer before/i],
-  ["traumaHistory", "PAST_TRAUMA", /外伤史|受过伤|撞伤|跌伤|trauma/i],
+  [
+    "traumaHistory",
+    "PAST_TRAUMA",
+    /外伤史|受过(?:外)?伤|以前[^，。！？?]*外伤|既往[^，。！？?]*外伤|撞伤|跌伤|trauma history|have you had[^?.!]*trauma|previous trauma/i
+  ],
   ["urinaryProcedureHistory", "PAST_URINARY_PROCEDURE", /导尿|导过尿|膀胱镜|尿路操作|泌尿.*手术|catheter|cystoscopy|urinary procedure/i],
   ["surgeryHistory", "PAST_SURGERY", /手术史|做过.*手术|开过刀|surgery|operation/i],
   ["transfusionHistory", "PAST_TRANSFUSION", /输血史|输过血|blood transfusion/i],
@@ -28,19 +32,39 @@ const broadMedication = /长期.*(?:吃|服|用).*药|平时.*(?:吃|服|用).*�
 function matchStructuredFacts(caseData, question, language = "zh") {
   const history = caseData?.structuredHistory;
   if (!history) return null;
-  const matches = factMatchers.filter(([, , trigger]) => trigger.test(question));
-  const wantsAllMedication = broadMedication.test(question) && !matches.some(([key]) => key === "anticoagulantUse" || key === "antiplateletUse");
+  const text = String(question || "");
+  const matches = factMatchers
+    .map((entry, sourceOrder) => ({ entry, sourceOrder, index: text.search(entry[2]) }))
+    .filter((item) => item.index >= 0);
+  const medicationIndex = text.search(broadMedication);
+  const wantsAllMedication = medicationIndex >= 0;
   const answers = [];
   const matchedFacts = [];
   const matchedSlotIds = [];
   const sources = [];
-  if (wantsAllMedication) {
-    answers.push(language === "en" ? history.medicationAnswerEn : history.medicationAnswerZh);
-    matchedFacts.push("medicationList");
-    matchedSlotIds.push("MED_ALL");
-    sources.push(...(history.medicationList || []));
-  }
-  for (const [key, slotId] of matches) {
+  const clauses = [
+    ...matches.map((item) => ({
+      kind: "fact",
+      index: item.index,
+      sourceOrder: item.sourceOrder,
+      entry: item.entry
+    })),
+    ...(wantsAllMedication ? [{
+      kind: "allMedication",
+      index: medicationIndex,
+      sourceOrder: factMatchers.length,
+      entry: null
+    }] : [])
+  ].sort((left, right) => left.index - right.index || left.sourceOrder - right.sourceOrder);
+  for (const clause of clauses) {
+    if (clause.kind === "allMedication") {
+      answers.push(language === "en" ? history.medicationAnswerEn : history.medicationAnswerZh);
+      matchedFacts.push("medicationList");
+      matchedSlotIds.push("MED_ALL");
+      sources.push(...(history.medicationList || []));
+      continue;
+    }
+    const [key, slotId] = clause.entry;
     const fact = history[key];
     if (!fact) continue;
     answers.push(language === "en" ? fact.patientAnswerEn : fact.patientAnswerZh);
@@ -54,6 +78,9 @@ function matchStructuredFacts(caseData, question, language = "zh") {
     replyText: [...new Set(answers)].join("\n"),
     matchedSlotIds: [...new Set(matchedSlotIds)],
     matchedFacts: [...new Set(matchedFacts)],
+    governanceSlotIds: [...new Set(matchedSlotIds)],
+    collectableSlotIds: [...new Set(matchedSlotIds)],
+    collectableFacts: [...new Set(matchedFacts)],
     answerSource: provenance.size > 1 ? "mixed" : ([...provenance][0] || "source"),
     confidence: sources.some((item) => item.provenance === "author_added_for_simulation") ? 0.82 : 0.99,
     safetyFlags: [],

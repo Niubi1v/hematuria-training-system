@@ -173,7 +173,7 @@ function matchesNaturalPattern(question, intentKey, language) {
   if (intentKey === "dysuria") {
     return language === "zh"
       ? /(?:小便|排尿|尿尿|撒尿|解小便|尿)(?:的?时候|时)?(?:会不会|有没有|有无|是不是|会|有)?(?:痛不痛|疼不疼|烧不烧|不痛|不疼|痛|疼|刺痛|烧灼|烧得慌|不舒服)/.test(compacted)
-      : /(?:hurt|pain|painful|burn|burning|sting).*(?:pee|urina|passingurine)|(?:pee|urina|passingurine).*(?:hurt|pain|painful|burn|burning|sting)/i.test(compacted);
+      : /(?:hurt|pain|painful|burn|burning|sting)(?:\s+\w+){0,4}\s+(?:to\s+pee|when\s+(?:you\s+)?(?:urinate|pee)|during\s+urination|passing\s+urine)|(?:pee|urinating|urination|passing\s+urine)(?:\s+\w+){0,4}\s+(?:hurt|pain|painful|burn|burning|sting)/i.test(normalized);
   }
   if (intentKey === "whole_stream_hematuria") {
     return language === "zh"
@@ -238,7 +238,7 @@ function matchesNaturalPattern(question, intentKey, language) {
   if (intentKey === "urinary_retention") {
     return language === "zh"
       ? /(?:完全|一点|憋着|憋得|想尿).*(?:尿不出来|尿不出|排不出尿)|尿潴留/.test(compacted)
-      : /(?:unable|cannot|can't).*(?:passurine|urinate|pee)|urinaryretention/i.test(compacted);
+      : /(?:unable|cannot|can't|inabilityto).*(?:passurine|urinate|pee)|urinaryretention/i.test(compacted);
   }
   if (intentKey === "nocturia") {
     return language === "zh"
