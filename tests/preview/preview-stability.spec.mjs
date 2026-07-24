@@ -1035,9 +1035,18 @@ test("@preview-representative-chief-complaint samples ten clinical categories bi
   expect(sourceCounts.unknown).toBe(0);
 });
 
-test("@preview-unsampled-chief-complaint-batch-1 covers P006-P012 bilingually", async ({ browser }, testInfo) => {
+for (const chiefComplaintBatch of [
+  { id: "unsampled-chief-complaint-batch-0", caseIds: ["P001", "P002", "P003", "P004", "P005"] },
+  { id: "unsampled-chief-complaint-batch-1", caseIds: ["P006", "P007", "P008", "P009", "P010", "P011", "P012"] },
+  { id: "unsampled-chief-complaint-batch-2", caseIds: ["P013", "P014", "P015", "P016", "P017", "P018", "P019"] },
+  { id: "unsampled-chief-complaint-batch-3", caseIds: ["P020", "P021", "P022", "P023", "P024", "P025", "P026"] },
+  { id: "unsampled-chief-complaint-batch-4", caseIds: ["P027", "P028", "P029", "P030", "P031", "P032", "P033"] },
+  { id: "unsampled-chief-complaint-batch-5", caseIds: ["P034", "P035", "P036", "P037", "P038", "P039", "P040"] },
+  { id: "unsampled-chief-complaint-batch-6", caseIds: ["P041", "P042"] }
+]) {
+test(`@preview-${chiefComplaintBatch.id} covers ${chiefComplaintBatch.caseIds[0]}-${chiefComplaintBatch.caseIds.at(-1)} bilingually`, async ({ browser }, testInfo) => {
   test.setTimeout(600_000);
-  const caseIds = ["P006", "P007", "P008", "P009", "P010", "P011", "P012"];
+  const caseIds = chiefComplaintBatch.caseIds;
   const samples = [];
   for (const caseId of caseIds) {
     for (const language of ["zh", "en"]) {
@@ -1120,7 +1129,7 @@ test("@preview-unsampled-chief-complaint-batch-1 covers P006-P012 bilingually", 
   }
 
   const summary = {
-    scenario: "preview-unsampled-chief-complaint-batch-1",
+    scenario: `preview-${chiefComplaintBatch.id}`,
     caseIds,
     caseCount: caseIds.length,
     sampleCount: samples.length,
@@ -1145,17 +1154,33 @@ test("@preview-unsampled-chief-complaint-batch-1 covers P006-P012 bilingually", 
     teacherMetaLeakCount: samples.filter((sample) => sample.teacherMetaLeakageDetected).length,
     structuredPayloadLeakCount: samples.filter((sample) => sample.structuredPayloadLeakageDetected).length,
     crossOriginProtectionRequestCount: samples.reduce((sum, sample) => sum + sample.crossOriginProtectionRequests, 0),
+    caseOutcomes: caseIds.map((caseId) => {
+      const find = (language, probeVariant) => samples.find((sample) =>
+        sample.caseId === caseId && sample.language === language && sample.probeVariant === probeVariant);
+      const zhNatural = find("zh", "natural-open-complaint");
+      const enNatural = find("en", "natural-open-complaint");
+      const enControl = find("en", "canonical-control");
+      return {
+        caseId,
+        zhNaturalSource: zhNatural?.generationSource || "missing",
+        enNaturalSource: enNatural?.generationSource || "missing",
+        enNaturalFallbackReason: enNatural?.fallbackReason || "",
+        enControlSource: enControl?.generationSource || "missing",
+        enControlRewriteTriggered: enControl?.rewriteTriggered === true,
+        enControlResponseAccepted: enControl?.responseAccepted === true
+      };
+    }),
     responseTextRetained: false,
     samples
   };
-  await testInfo.attach("preview-unsampled-chief-complaint-batch-1", { body: JSON.stringify(summary, null, 2), contentType: "application/json" });
-  console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
-  expect(summary.sampleCount).toBe(21);
-  expect(summary.canonicalControlSampleCount).toBe(7);
-  expect(summary.canonicalControlLiveAiCount).toBe(7);
-  expect(summary.naturalSampleCount).toBe(14);
-  expect(summary.naturalLiveAiCount).toBe(14);
-  expect(summary.liveAiCount).toBe(21);
+  await testInfo.attach(`preview-${chiefComplaintBatch.id}`, { body: JSON.stringify(summary, null, 2), contentType: "application/json" });
+  console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify({ ...summary, samples: undefined })}`);
+  expect(summary.sampleCount).toBe(caseIds.length * 3);
+  expect(summary.canonicalControlSampleCount).toBe(caseIds.length);
+  expect(summary.canonicalControlLiveAiCount).toBe(caseIds.length);
+  expect(summary.naturalSampleCount).toBe(caseIds.length * 2);
+  expect(summary.naturalLiveAiCount).toBe(caseIds.length * 2);
+  expect(summary.liveAiCount).toBe(caseIds.length * 3);
   expect(summary.fallbackCount).toBe(0);
   expect(summary.httpContractFailures).toBe(0);
   expect(summary.providerContractFailures).toBe(0);
@@ -1165,6 +1190,7 @@ test("@preview-unsampled-chief-complaint-batch-1 covers P006-P012 bilingually", 
   expect(summary.structuredPayloadLeakCount).toBe(0);
   expect(summary.crossOriginProtectionRequestCount).toBe(0);
 });
+}
 
 test("@preview-paraphrase-consistency preserves onset duration across bilingual rephrasing", async ({ browser }, testInfo) => {
   test.setTimeout(900_000);

@@ -1,0 +1,78 @@
+{
+  "productionBaseline": "c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2",
+  "environment": "vercel_preview",
+  "scenario": "chief-complaint-p001-p042",
+  "caseRange": "P001-P042",
+  "fullDiagnosticSweep": {
+    "caseCount": 42,
+    "operations": 126,
+    "chineseNatural": {
+      "samples": 42,
+      "liveAi": 42,
+      "fallback": 0
+    },
+    "englishNatural": {
+      "samples": 42,
+      "liveAi": 0,
+      "fallback": 42,
+      "generationSource": "rule_fallback",
+      "provider": "rule",
+      "fallbackReason": "classifier_disabled"
+    },
+    "englishCanonicalControl": {
+      "samples": 42,
+      "liveAi": 31,
+      "safetyBoundary": 11,
+      "provider": "deepseek",
+      "responseFilterRejectedCaseIds": [
+        "P001",
+        "P002",
+        "P003",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012"
+      ]
+    }
+  },
+  "repeatEvidence": {
+    "repeatedCaseRange": "P006-P012",
+    "additionalNaturalBilingualRuns": 2,
+    "cumulativeNaturalChineseLiveAi": "56/56",
+    "cumulativeNaturalEnglishRuleFallback": "56/56",
+    "cumulativeOperations": 154
+  },
+  "contracts": {
+    "agentRequests": 154,
+    "historyLogs": 154,
+    "httpFailures": 0,
+    "requestOrHistoryMultiplicityFailures": 0,
+    "languageLeaks": 0,
+    "teacherMetaLeaks": 0,
+    "structuredPayloadLeaks": 0,
+    "crossOriginProtectionRequests": 0
+  },
+  "nonProductRun": {
+    "count": 1,
+    "reason": "sandbox_network_access_denied_before_navigation",
+    "includedInProductResults": false
+  },
+  "defect": {
+    "id": "HEM-P1-053",
+    "severity": "P1",
+    "status": "FAIL_PREVIEW",
+    "naturalEnglishScope": "P001-P042",
+    "responseFilterScope": "P001-P003,P005-P012",
+    "medicalAdjudicationRequiredForEngineeringFailure": false
+  },
+  "evidencePolicy": {
+    "responseTextRetained": false,
+    "requestBodiesRetained": false,
+    "credentialsRetained": false,
+    "rawPlaywrightOutputScannedThenDeleted": true
+  }
+}

@@ -332,18 +332,18 @@
 - HEM-P1-052：继续`OPEN / FAIL`。扩展2/2除原英文23/23绕过、29/29得分外，证明同一23项中文路径23/23可用且相同前置状态返回6项结果；建议修复必须以attempt language和审核状态为边界，不得全局拒绝医嘱。
 - 本续轮没有新增P0/P1/P2；最小聚合证据为`reports/c4ac9b5-open-defect-regression-summary.json`。原始矩阵、公开handler、Playwright和Preview回答均不进入Git。
 
-## HEM-P1-053：P006–P012 英文开放式主诉被规则fallback或患者输出过滤接管
+## HEM-P1-053：P001–P042 英文自然开放式主诉被规则fallback，11例canonical回答被输出过滤
 
 - 级别/状态：P1，OPEN / FAIL_PREVIEW；Production与精确Preview基线 `c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2`。
-- 页面/路径：真实Vercel Preview `/cases/P006/`–`/cases/P012/`，英文与中文对照；桌面Chromium自动黑盒。
-- 操作步骤：逐例建立全新合法session并等待capability → 中文询问自然开放式主诉 → 英文询问语义等价但不照抄canonical的开放式主诉 → 记录公开source/provider/fallback、单次request/history和安全泄露布尔值 → 第三轮在同一英文session追加本地canonical matcher可识别的控制问法，并启用只返回布尔值的安全debug。
-- 预期：中英文合法开放式主诉都由已配置的DeepSeek `live_ai`回答；自然改写不应因semantic classifier关闭而直接进入rule fallback；provider成功生成时，患者化安全过滤应保留合规回答或产生可诊断的受控结果，不应把全部7例稳定覆盖为fallback。
-- 实际路径A：自然英文问法21/21为`generationSource=rule_fallback`、`provider=rule`、`fallbackReason=classifier_disabled`；同轮中文21/21为DeepSeek `live_ai`。本地只读canonical matcher对自然英文问法返回0个slot，而对控制问法命中`chief_complaint`。
-- 实际路径B：控制问法7/7进入`provider=deepseek`，但均为`generationSource=safety_boundary`、`responseAccepted=false`、`rewriteTriggered=true`、`live_ai=0`。公开fallback原因是泛化值`ai_unavailable_or_rule_mode`；依据provider与debug布尔值，不能把这7次归因于未调用provider。
-- 复现次数：自然双语完整批3/3；P006–P012每例自然英文共3/3，累计21/21失败。canonical控制仅在诊断批执行一次，7/7失败。中文对照累计21/21成功。
-- AI来源：路径A为`rule_fallback/rule`且provider未进入；路径B为`safety_boundary/deepseek`且发生重写过滤。不得把任一路径计为`live_ai`。
-- 状态变化时间线：session/capability ready → 单次agent-chat 200 → 单次history-log 200 → 自然英文返回classifier-disabled规则fallback；控制英文进入DeepSeek后首答未接受、触发重写、最终安全边界。
-- HTTP/console/network：49/49 agent request、49/49 history-log；HTTP、请求/日志倍增、401/403/429/5xx、语言串线、教师/结构化泄露和跨origin保护头请求均为0。未保存完整问答、request body、token、Cookie、Authorization、签名或环境值。
-- 最小证据：`tests/preview/preview-stability.spec.mjs`中的`@preview-unsampled-chief-complaint-batch-1`，以及`artifacts/exploratory-qa/reports/c4ac9b5-unsampled-preview-batch-1-summary.json`。原始Playwright输出经安全wrapper扫描后删除，不提交trace、截图或完整回答。
-- 建议方向：为合法英文开放主诉补充不依赖semantic classifier的canonical/alias路由；分别保留“未命中”“provider失败”“首答被拒”“重写被拒”的安全枚举诊断；检查chief complaint输出过滤为何对P006–P012 7/7拒绝，增加短/长主诉和双语回归。修复不得放宽教师元语言、结构化泄露或事实保持边界。
+- 页面/路径：真实Vercel Preview `/cases/P001/`–`/cases/P042/`，英文与中文对照；桌面Chromium自动黑盒。
+- 操作步骤：逐例建立全新合法session并等待capability → 中文询问自然开放式主诉 → 英文询问语义等价但不照抄canonical的开放式主诉 → 记录公开source/provider/fallback、单次request/history和安全泄露布尔值 → 在同一英文session追加本地canonical matcher可识别的控制问法，并启用只返回布尔值的安全debug。
+- 预期：中英文合法开放式主诉都由已配置的DeepSeek `live_ai`回答；自然改写不应因semantic classifier关闭而直接进入rule fallback；provider成功生成时，患者化安全过滤应保留合规回答或产生可诊断的受控结果，不应对11例稳定覆盖为fallback。
+- 实际路径A：全42例诊断批的自然英文42/42为`generationSource=rule_fallback`、`provider=rule`、`fallbackReason=classifier_disabled`；同轮中文42/42为DeepSeek `live_ai`。P006–P012另有两轮相同自然问法，因此累计自然中文56/56 live_ai、自然英文56/56规则fallback。本地只读canonical matcher对自然英文问法返回0个slot，而对控制问法命中`chief_complaint`。
+- 实际路径B：英文canonical控制42次均进入`provider=deepseek`；31/42为`live_ai`，11/42为`safety_boundary`。过滤失败病例为P001–P003、P005–P012，均`responseAccepted=false`、`rewriteTriggered=true`；公开fallback原因是泛化值`ai_unavailable_or_rule_mode`，不能据此归因于未调用provider。
+- 复现次数：P001–P042全量诊断批1/1；其中自然英文42/42失败。P006–P012自然双语另重复2轮，每例累计3/3，故自然英文总计56/56失败、中文56/56成功。canonical控制各例1次，31/42 live_ai、11/42过滤失败。
+- AI来源：路径A为`rule_fallback/rule`且provider未进入；路径B全部由DeepSeek处理，其中31次`live_ai`、11次`safety_boundary/deepseek`且发生重写过滤。不得把42次自然英文fallback或11次安全边界计为`live_ai`。
+- 状态变化时间线：session/capability ready → 单次agent-chat 200 → 单次history-log 200 → 自然英文返回classifier-disabled规则fallback；控制英文进入DeepSeek后31例live_ai，另11例首答未接受、触发重写并最终进入安全边界。
+- HTTP/console/network：154/154 agent request、154/154 history-log；HTTP、请求/日志倍增、401/403/429/5xx、语言串线、教师/结构化泄露和跨origin保护头请求均为0。一次未授权沙箱导航在到达应用前被`ERR_NETWORK_ACCESS_DENIED`阻止，经授权重跑成功，未计产品结果。未保存完整问答、request body、token、Cookie、Authorization、签名或环境值。
+- 最小证据：`tests/preview/preview-stability.spec.mjs`中的7个`@preview-unsampled-chief-complaint-batch-*`用例、`artifacts/exploratory-qa/reports/c4ac9b5-preview-chief-complaint-p001-p042-summary.json`和首批复现摘要。原始Playwright输出经安全wrapper扫描后删除，不提交trace、截图或完整回答。
+- 建议方向：为合法英文开放主诉补充不依赖semantic classifier的canonical/alias路由；分别保留“未命中”“provider失败”“首答被拒”“重写被拒”的安全枚举诊断；检查P001–P003、P005–P012为何在canonical控制下首答和重写均被拒绝，并以其余31例live_ai作为非回归对照。修复不得放宽教师元语言、结构化泄露或事实保持边界。
 - 医学专家裁决：确认路由和过滤接管的工程失败不需要医学裁决；修复后患者化措辞和医学含义仍需教师/医学专家人工审阅，QA不修改slot事实或审核状态。
