@@ -102,3 +102,9 @@
 - HEM-P2-028桌面同一测试进程重复6/6，另在`1440×900`和`390×844`代表批2/2通过；每次同步双击在150ms延迟下均满足1 request、1 request ID、1 timeline event。状态继续`RESOLVED_LOCAL_QA`。
 - HEM-P2-044在`390×844`与`360×800`仍2/2失败，四个尺寸与历史完全一致：106×38、26×28、75×38、34×38 CSS px。未生成新的Git代表截图，既有最小帧足以证明相同几何；本轮原始报告和HTML仅本机保留。
 - 同一可访问性用例的两个桌面viewport均通过Shift+Enter、Enter、正反向Tab、可见焦点、Escape和reduced-motion。移动自动结果只标`FAIL_EMULATION`，真实触摸准确性、软键盘与safe-area继续`BLOCKED_REAL_DEVICE`。
+
+## 2026-07-24 `c4ac9b5` P006–P012 Preview 抽样界面边界
+
+- 本批使用桌面Chromium操作真实Preview训练界面，49个问答操作均完成单次发送、单次history-log和受控患者消息呈现；没有观察到状态提示堆叠、语言串线、教师/结构化字段裸显或请求倍增。
+- HEM-P1-053属于英文主诉路由/输出过滤，不是新增视觉缺陷；为避免保存完整真实AI回答，本批不提交截图、trace或录像，只提交脱敏聚合和可重建测试。
+- 四固定viewport的既有`PASS_EMULATION`结论不因本批桌面抽样扩大；真实软键盘、safe-area和物理触控继续`BLOCKED_REAL_DEVICE`。

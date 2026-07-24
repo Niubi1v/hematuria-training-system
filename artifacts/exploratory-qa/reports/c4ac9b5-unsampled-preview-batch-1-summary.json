@@ -1,0 +1,66 @@
+{
+  "productionBaseline": "c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2",
+  "environment": "vercel_preview",
+  "scenario": "unsampled-chief-complaint-batch-1",
+  "caseIds": [
+    "P006",
+    "P007",
+    "P008",
+    "P009",
+    "P010",
+    "P011",
+    "P012"
+  ],
+  "executions": {
+    "naturalBilingualRuns": 3,
+    "canonicalControlRuns": 1,
+    "totalOperations": 49
+  },
+  "naturalOpenComplaint": {
+    "chinese": {
+      "samples": 21,
+      "liveAi": 21,
+      "fallback": 0
+    },
+    "english": {
+      "samples": 21,
+      "liveAi": 0,
+      "fallback": 21,
+      "generationSource": "rule_fallback",
+      "provider": "rule",
+      "fallbackReason": "classifier_disabled"
+    }
+  },
+  "englishCanonicalControl": {
+    "samples": 7,
+    "liveAi": 0,
+    "fallback": 7,
+    "generationSource": "safety_boundary",
+    "provider": "deepseek",
+    "responseAccepted": 0,
+    "rewriteTriggered": 7,
+    "publicFallbackReason": "ai_unavailable_or_rule_mode"
+  },
+  "contracts": {
+    "agentRequests": 49,
+    "historyLogs": 49,
+    "httpFailures": 0,
+    "requestOrHistoryMultiplicityFailures": 0,
+    "languageLeaks": 0,
+    "teacherMetaLeaks": 0,
+    "structuredPayloadLeaks": 0,
+    "crossOriginProtectionRequests": 0
+  },
+  "defect": {
+    "id": "HEM-P1-053",
+    "severity": "P1",
+    "status": "FAIL_PREVIEW",
+    "medicalAdjudicationRequiredForEngineeringFailure": false
+  },
+  "evidencePolicy": {
+    "responseTextRetained": false,
+    "requestBodiesRetained": false,
+    "credentialsRetained": false,
+    "rawPlaywrightOutputScannedThenDeleted": true
+  }
+}

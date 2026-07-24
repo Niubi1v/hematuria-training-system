@@ -218,7 +218,12 @@ async function askLiveQuestion(page, language, question, options = {}) {
     answerMs,
     clickToAnswerMs,
     patientTiming: parseServerTiming(timingHeader(await patient.allHeaders())),
-    historyTiming: history ? parseServerTiming(timingHeader(await history.allHeaders())) : {}
+    historyTiming: history ? parseServerTiming(timingHeader(await history.allHeaders())) : {},
+    debug: options.includeDebug ? {
+      responseAccepted: payload.debug?.responseAccepted === true,
+      rewriteTriggered: payload.debug?.rewriteTriggered === true,
+      cacheHit: payload.debug?.cacheHit === true
+    } : undefined
   };
 }
 
@@ -1028,6 +1033,137 @@ test("@preview-representative-chief-complaint samples ten clinical categories bi
   expect(summary.diagnosisHeuristicCount).toBe(0);
   expect(summary.crossOriginProtectionRequestCount).toBe(0);
   expect(sourceCounts.unknown).toBe(0);
+});
+
+test("@preview-unsampled-chief-complaint-batch-1 covers P006-P012 bilingually", async ({ browser }, testInfo) => {
+  test.setTimeout(600_000);
+  const caseIds = ["P006", "P007", "P008", "P009", "P010", "P011", "P012"];
+  const samples = [];
+  for (const caseId of caseIds) {
+    for (const language of ["zh", "en"]) {
+      const context = await browser.newContext();
+      await context.addInitScript(() => localStorage.removeItem("hematuria-language"));
+      let opened;
+      try {
+        opened = await openReadyCase(context, caseId, language);
+        await opened.page.route("**/api/agent-chat/**", async (route) => {
+          const request = route.request();
+          if (request.method() !== "POST") return route.continue();
+          const body = safeBody(request);
+          if (body.probe) return route.continue();
+          await route.continue({
+            postData: JSON.stringify({ ...body, debug: true }),
+            headers: { ...request.headers(), "content-type": "application/json" }
+          });
+        });
+        let agentRequestCount = 0;
+        let historyLogCount = 0;
+        opened.page.on("request", (request) => {
+          const pathname = new URL(request.url()).pathname;
+          if (pathname === "/api/agent-chat/" && request.method() === "POST" && !safeBody(request).probe) agentRequestCount += 1;
+          if (pathname === "/api/training-action/" && request.method() === "POST" && safeBody(request).action === "history-log") historyLogCount += 1;
+        });
+        const summarizeAnswer = (answer, probeVariant, requestCount, historyCount) => {
+          const chinesePresent = /[\u3400-\u9fff]/u.test(answer.replyText);
+          const fallbackReason = /^[a-z][a-z0-9_]{0,63}$/.test(String(answer.fallbackReason || ""))
+            ? String(answer.fallbackReason)
+            : "";
+          return {
+            caseId,
+            language,
+            probeVariant,
+            generationSource: answer.generationSource,
+            provider: String(answer.provider || "").toLowerCase(),
+            isFallback: answer.isFallback === true,
+            fallbackReason,
+            providerTimingPresent: answer.patientTiming?.provider !== undefined || answer.patientTiming?.firsttoken !== undefined,
+            responseAccepted: answer.debug?.responseAccepted === true,
+            rewriteTriggered: answer.debug?.rewriteTriggered === true,
+            cacheHit: answer.debug?.cacheHit === true,
+            patientStatus: answer.patientStatus,
+            historyStatus: answer.historyStatus,
+            languageLeakDetected: language === "en" ? chinesePresent : !chinesePresent,
+            teacherMetaLeakageDetected: /评分|得分点|教师|标准答案|scor(?:e|ing)|rubric|teacher|standard answer|JSON|system\s*prompt/i.test(answer.replyText),
+            structuredPayloadLeakageDetected: /matchedSlotIds?|matchedFacts?|generationSource|isFallback|caseId|slotId/i.test(answer.replyText),
+            agentRequestCount: requestCount,
+            historyLogCount: historyCount,
+            crossOriginProtectionRequests: opened.protection.crossOriginProtectionRequests,
+            responseTextRetained: false
+          };
+        };
+        const question = language === "en"
+          ? "Please describe the main problem that brought you here in your own words."
+          : "请用自己的话说说这次最主要的不舒服是什么？";
+        const answer = await askLiveQuestion(opened.page, language, question, { includeReplyText: true, includeDebug: true });
+        samples.push(summarizeAnswer(answer, "natural-open-complaint", agentRequestCount, historyLogCount));
+        if (language === "en") {
+          const requestsBeforeControl = agentRequestCount;
+          const historyBeforeControl = historyLogCount;
+          const control = await askLiveQuestion(
+            opened.page,
+            language,
+            "Please tell me in your own words why you came today.",
+            { includeReplyText: true, includeDebug: true }
+          );
+          samples.push(summarizeAnswer(
+            control,
+            "canonical-control",
+            agentRequestCount - requestsBeforeControl,
+            historyLogCount - historyBeforeControl
+          ));
+        }
+      } finally {
+        await opened?.page.close().catch(() => undefined);
+        await context.close().catch(() => undefined);
+      }
+    }
+  }
+
+  const summary = {
+    scenario: "preview-unsampled-chief-complaint-batch-1",
+    caseIds,
+    caseCount: caseIds.length,
+    sampleCount: samples.length,
+    naturalSampleCount: samples.filter((sample) => sample.probeVariant === "natural-open-complaint").length,
+    naturalLiveAiCount: samples.filter((sample) => sample.probeVariant === "natural-open-complaint" && sample.generationSource === "live_ai").length,
+    canonicalControlSampleCount: samples.filter((sample) => sample.probeVariant === "canonical-control").length,
+    canonicalControlLiveAiCount: samples.filter((sample) => sample.probeVariant === "canonical-control" && sample.generationSource === "live_ai").length,
+    liveAiCount: samples.filter((sample) => sample.generationSource === "live_ai").length,
+    fallbackCount: samples.filter((sample) => sample.isFallback).length,
+    fallbackReasonCounts: Object.fromEntries([...new Set(samples.filter((sample) => sample.isFallback).map((sample) => sample.fallbackReason || "none"))]
+      .sort()
+      .map((reason) => [reason, samples.filter((sample) => sample.isFallback && (sample.fallbackReason || "none") === reason).length])),
+    fallbackProviderCounts: Object.fromEntries([...new Set(samples.filter((sample) => sample.isFallback).map((sample) => sample.provider || "none"))]
+      .sort()
+      .map((provider) => [provider, samples.filter((sample) => sample.isFallback && (sample.provider || "none") === provider).length])),
+    providerTimingPresentCount: samples.filter((sample) => sample.providerTimingPresent).length,
+    responseFilterRejectedCount: samples.filter((sample) => sample.isFallback && !sample.responseAccepted && sample.rewriteTriggered).length,
+    httpContractFailures: samples.filter((sample) => sample.patientStatus !== 200 || sample.historyStatus !== 200).length,
+    providerContractFailures: samples.filter((sample) => sample.generationSource !== "live_ai" || sample.provider !== "deepseek" || sample.isFallback).length,
+    requestContractFailures: samples.filter((sample) => sample.agentRequestCount !== 1 || sample.historyLogCount !== 1).length,
+    languageLeakCount: samples.filter((sample) => sample.languageLeakDetected).length,
+    teacherMetaLeakCount: samples.filter((sample) => sample.teacherMetaLeakageDetected).length,
+    structuredPayloadLeakCount: samples.filter((sample) => sample.structuredPayloadLeakageDetected).length,
+    crossOriginProtectionRequestCount: samples.reduce((sum, sample) => sum + sample.crossOriginProtectionRequests, 0),
+    responseTextRetained: false,
+    samples
+  };
+  await testInfo.attach("preview-unsampled-chief-complaint-batch-1", { body: JSON.stringify(summary, null, 2), contentType: "application/json" });
+  console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
+  expect(summary.sampleCount).toBe(21);
+  expect(summary.canonicalControlSampleCount).toBe(7);
+  expect(summary.canonicalControlLiveAiCount).toBe(7);
+  expect(summary.naturalSampleCount).toBe(14);
+  expect(summary.naturalLiveAiCount).toBe(14);
+  expect(summary.liveAiCount).toBe(21);
+  expect(summary.fallbackCount).toBe(0);
+  expect(summary.httpContractFailures).toBe(0);
+  expect(summary.providerContractFailures).toBe(0);
+  expect(summary.requestContractFailures).toBe(0);
+  expect(summary.languageLeakCount).toBe(0);
+  expect(summary.teacherMetaLeakCount).toBe(0);
+  expect(summary.structuredPayloadLeakCount).toBe(0);
+  expect(summary.crossOriginProtectionRequestCount).toBe(0);
 });
 
 test("@preview-paraphrase-consistency preserves onset duration across bilingual rephrasing", async ({ browser }, testInfo) => {

@@ -104,3 +104,10 @@
 - P037中英文刷新链共8/8为DeepSeek live_ai，刷新后history完整、病程时长前后2/2一致，未见语言串线、教师元语言、结构字段或最终诊断泄露；HEM-P1-045关闭为`RESOLVED_PREVIEW`。完整回答仍由安全wrapper扫描后删除。
 - HEM-P1-030不因真实AI链通过而关闭：本地确定性37槽位矩阵中英文泌尿操作史问法仍在42/42病例命中`triggers`，公开handler最小合法请求也2/2返回同一错误slot和rule fallback。该判断仅评价工程路由，不裁决病例是否存在泌尿操作史。
 - HEM-P1-050的840/840自然问法门禁与HEM-P1-030的37槽位门禁覆盖集合不同；前者通过不能替代后者单一遗漏问法失败。修复后需同时保持generic pain、unknown、冲突隔离和最小披露合同。
+
+## 2026-07-24 `c4ac9b5` P006–P012 开放式主诉抽样
+
+- P006–P012中文自然开放主诉三轮累计21/21由DeepSeek `live_ai`回答；英文语义等价自然问法21/21在provider前被`classifier_disabled`路径接管为rule fallback。该结果是问法覆盖/路由质量失败，不是医学事实裁决。
+- 本地只读matcher比较显示，自然英文句未命中slot，而canonical控制句命中`chief_complaint`。因此HEM-P1-053至少包含一个可直接修复的英文alias/canonical覆盖缺口。
+- canonical控制问法在7例均进入DeepSeek，但首答未被接受并触发重写，最终7/7为`safety_boundary`。QA只保留`responseAccepted=false`与`rewriteTriggered=true`等布尔诊断，不保留回答正文；无法仅凭安全聚合进一步判断是长度、禁词还是其他患者输出规则，修复时需在不记录患者正文的前提下增加安全原因枚举。
+- 两条失败路径均未出现中文串线、教师元语言、结构化payload或最终诊断启发式泄露。最终患者措辞是否自然、是否完全忠实于病例仍需具名教师/医学专家审阅，本轮不据工程source结果批准医学内容。
