@@ -347,3 +347,19 @@
 - 最小证据：`tests/preview/preview-stability.spec.mjs`中的7个`@preview-unsampled-chief-complaint-batch-*`用例、`artifacts/exploratory-qa/reports/c4ac9b5-preview-chief-complaint-p001-p042-summary.json`和首批复现摘要。原始Playwright输出经安全wrapper扫描后删除，不提交trace、截图或完整回答。
 - 建议方向：为合法英文开放主诉补充不依赖semantic classifier的canonical/alias路由；分别保留“未命中”“provider失败”“首答被拒”“重写被拒”的安全枚举诊断；检查P001–P003、P005–P012为何在canonical控制下首答和重写均被拒绝，并以其余31例live_ai作为非回归对照。修复不得放宽教师元语言、结构化泄露或事实保持边界。
 - 医学专家裁决：确认路由和过滤接管的工程失败不需要医学裁决；修复后患者化措辞和医学含义仍需教师/医学专家人工审阅，QA不修改slot事实或审核状态。
+
+## `c4ac9b5` 第 12 轮 HEM-P2-028 阶段 7 Preview 回归
+
+- 级别/状态：P2，`OPEN / FAIL_PREVIEW_STAGE_7`。阶段1–6在本地延迟双击场景仍为`RESOLVED_LOCAL_QA`，但真实Preview终末按钮不满足同一幂等合同。
+- 页面/路径：受保护Vercel Preview `/cases/P003/`；中文；桌面Chromium `1440×900`。
+- 操作步骤：建立全新合法attempt并零轮提交第一阶段 → 依次完成orders、diagnosis、consult、treatment、perioperative、debrief输入 → 对“完成训练并生成最终报告”在同一事件循环同步调用两次click → 记录终末training-action → 等待360报告 → 刷新并复核报告与新增评分请求。
+- 预期：单次用户动作只产生1个debrief request、1个request ID、1个score request；成功评分后不得显示失败提示；刷新不得重复评分。
+- 实际：3/3完整旅程均产生2个不同request ID的debrief请求，状态依次为200与409 `stage_not_unlocked`，随后1个score请求为200。最新带UI诊断的2/2均显示“终末评分服务暂时不可用”，但最终报告实际可见；刷新后报告2/2保持且新增评分请求为0。
+- 复现：完整七阶段3/3；错误终末提示2/2带诊断运行；最终报告3/3；刷新恢复2/2。
+- AI来源：N/A；training-action与确定性评分流程，不调用Patient Agent或裁决医学内容。
+- 状态变化时间线：七个阶段反馈200 → 首个debrief完成并解锁评分 → 第二个并发debrief以409拒绝 → score 200 → 最终报告可见，同时第二条异常路径写入失败提示 → 刷新以完成态恢复。
+- HTTP/耗时：终末每轮固定3个请求，`stage-feedback/debrief`为200+409、`score`为200；刷新验证为401 `attempt_already_completed`且未破坏完成态。原始耗时与请求标识不保留。
+- console/network：安全聚合仅保留pathname、action、stageKey、状态、request ID存在性布尔值和公开错误枚举；不保存header、body、Cookie、Authorization、session/attempt token或完整签名。
+- 最小证据：`tests/preview/preview-blackbox.spec.mjs`中的`@preview-seven-stage`强断言，以及`artifacts/exploratory-qa/reports/c4ac9b5-preview-seven-stage-summary.json`。安全wrapper扫描并删除原始Playwright输出和失败上下文，不提交真实Preview trace、截图、录像或回答。
+- 建议方向：把终末完成动作纳入与阶段1–6相同的同步in-flight锁；一个UI动作生成并复用稳定幂等键；只由当前动作的主请求决定失败提示，已成功score/完成态不得被并发409覆盖。增加阶段7同步双击、score一次性、错误提示与刷新完成态回归。
+- 医学专家裁决：否；这是并发、幂等和UI状态归并问题。

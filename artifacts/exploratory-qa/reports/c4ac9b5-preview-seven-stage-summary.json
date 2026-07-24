@@ -1,0 +1,49 @@
+{
+  "productionBaseline": "c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2",
+  "environment": "protected_vercel_preview",
+  "status": "FAIL_PREVIEW",
+  "caseId": "P003",
+  "language": "zh",
+  "viewport": "1440x900",
+  "diagnosticIterations": 4,
+  "completeJourneyRuns": 3,
+  "successfulStageFeedbackPerCompleteRun": 7,
+  "scoreRequestsPerCompleteRun": 1,
+  "finalReportVisibleRuns": 3,
+  "stageSevenDoubleClick": {
+    "reproductions": "3/3",
+    "terminalRequestsPerRun": 3,
+    "debriefRequestsPerRun": 2,
+    "debriefStatuses": [
+      200,
+      409
+    ],
+    "duplicateError": "stage_not_unlocked",
+    "scoreRequestsPerRun": 1,
+    "scoreStatus": 200,
+    "requestIdPresentOnAllTerminalRequests": true,
+    "falseTerminalWarningInstrumentedRuns": "2/2"
+  },
+  "refreshRecovery": {
+    "instrumentedRuns": 2,
+    "finalReportVisibleAfterRefresh": "2/2",
+    "newStageFeedbackOrScoreRequests": 0,
+    "validationStatus": 401,
+    "validationError": "attempt_already_completed"
+  },
+  "initialSessionObservation": {
+    "allDiagnosticIterations": 4,
+    "status200": 2,
+    "status409": 2,
+    "errorOn409": "stale_attempt_token",
+    "latestConsecutiveStatus200": 2,
+    "disposition": "INTERMITTENT_OBSERVATION_NOT_NEW_DEFECT"
+  },
+  "safety": {
+    "responseTextRetained": false,
+    "requestBodiesRetained": false,
+    "requestIdsRetained": false,
+    "credentialsRetained": false,
+    "medicalContentAssessed": false
+  }
+}

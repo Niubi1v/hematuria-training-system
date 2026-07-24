@@ -18,6 +18,7 @@ function safeRequestMetadata(request) {
     caseId: typeof body.caseId === "string" ? body.caseId : undefined,
     language: typeof body.language === "string" ? body.language : undefined,
     stageKey: typeof body.stageKey === "string" ? body.stageKey : undefined,
+    requestIdPresent: typeof body.requestId === "string" && body.requestId.length > 0,
     sessionCapabilityPresent: body.sessionId === undefined ? undefined : Boolean(body.sessionId)
   };
 }
@@ -186,6 +187,47 @@ async function enterSecondStage(page, language) {
   await expect(page.getByText(english ? "Investigation Agent" : "第2阶段·检查决策", { exact: true }).first()).toBeVisible();
 }
 
+const fullStageLabels = {
+  zh: {
+    submit: "提交本阶段",
+    next: "进入下一阶段",
+    finish: "完成训练并生成最终报告",
+    noConsult: "暂不需要会诊",
+    diagnosis: "最可能诊断",
+    evidence: "诊断依据",
+    differentials: "至少 3 个鉴别诊断",
+    analysis: "各鉴别诊断的支持点与反对点",
+    reflection: "学习反思"
+  },
+  en: {
+    submit: "Submit stage",
+    next: "Next Agent",
+    finish: "Finish training and generate final report",
+    noConsult: "No consultation for now",
+    diagnosis: "Most likely diagnosis",
+    evidence: "Diagnostic evidence",
+    differentials: "At least 3 differential diagnoses",
+    analysis: "Supportive and opposing points for each differential",
+    reflection: "Reflection"
+  }
+};
+
+async function submitAndAdvanceFullStage(page, language, stageKey) {
+  const labels = fullStageLabels[language];
+  const responsePromise = page.waitForResponse((response) =>
+    isTrainingAction(response, "stage-feedback")
+      && safeRequestMetadata(response.request()).stageKey === stageKey
+  );
+  const submit = page.getByRole("button", { name: labels.submit, exact: true });
+  await expect(submit).toBeEnabled({ timeout: 15_000 });
+  await submit.click();
+  const response = await responsePromise;
+  expect(response.status(), `${stageKey} stage-feedback`).toBe(200);
+  const next = page.getByRole("button", { name: labels.next, exact: true });
+  await expect(next).toBeVisible({ timeout: 15_000 });
+  await next.click();
+}
+
 test.describe.configure({ mode: "serial" });
 
 test.beforeEach(async ({ page }) => {
@@ -278,6 +320,125 @@ test("P003 zero-round Chinese submission enters stage two", async ({ page }, tes
     await submitFirstStage(page, "zh");
     await enterSecondStage(page, "zh");
   } finally {
+    await attachSanitizedEvidence(testInfo, collector);
+  }
+});
+
+test("@preview-seven-stage P003 completes seven stages once and survives final refresh", async ({ page }, testInfo) => {
+  test.setTimeout(240_000);
+  const collector = createSanitizedEvidence(page, "P003-seven-stage-final-double-click-refresh");
+  const actions = [];
+  const listener = (response) => {
+    if (new URL(response.url()).pathname !== "/api/training-action/" || response.request().method() !== "POST") return;
+    const metadata = safeRequestMetadata(response.request());
+    actions.push({
+      action: metadata.action,
+      stageKey: metadata.stageKey || "",
+      requestIdPresent: metadata.requestIdPresent,
+      status: response.status()
+    });
+  };
+  page.on("response", listener);
+  try {
+    const labels = fullStageLabels.zh;
+    const initialSessionResponse = page.waitForResponse((response) =>
+      new URL(response.url()).pathname === "/api/session/init/" && response.request().method() === "POST"
+    );
+    await gotoCaseWithReadyAttempt(page, "P003");
+
+    await submitAndAdvanceFullStage(page, "zh", "history");
+    const session = await initialSessionResponse;
+    let sessionError = "";
+    try { sessionError = String((await session.json()).error || ""); } catch { /* Status is authoritative. */ }
+    await page.waitForTimeout(250);
+    const sessionRaceMessageVisible = await page.getByText("请求未被服务接受，请刷新后重试。", { exact: true }).isVisible().catch(() => false);
+    await submitAndAdvanceFullStage(page, "zh", "orders");
+
+    await page.getByLabel(labels.diagnosis, { exact: true }).fill("训练流程诊断占位");
+    await page.getByLabel(labels.evidence, { exact: true }).fill("仅用于验证阶段提交与恢复的足够长度训练依据。");
+    await page.getByLabel(labels.differentials, { exact: true }).fill("训练选项一；训练选项二；训练选项三");
+    await page.getByLabel(labels.analysis, { exact: true }).fill("每个训练选项均填写支持点与反对点，不作为医学结论。");
+    await submitAndAdvanceFullStage(page, "zh", "diagnosis");
+
+    await page.getByRole("radio", { name: labels.noConsult, exact: true }).check();
+    await submitAndAdvanceFullStage(page, "zh", "consult");
+    await submitAndAdvanceFullStage(page, "zh", "treatment");
+    await submitAndAdvanceFullStage(page, "zh", "perioperative");
+
+    await page.getByLabel(labels.reflection, { exact: true }).fill("下一次训练我会继续改进信息收集结构和复核步骤。");
+    const debriefResponse = page.waitForResponse((response) =>
+      isTrainingAction(response, "stage-feedback")
+        && safeRequestMetadata(response.request()).stageKey === "debrief"
+    );
+    const scoreResponse = page.waitForResponse((response) => isTrainingAction(response, "score"));
+    const finish = page.getByRole("button", { name: labels.finish, exact: true });
+    await expect(finish).toBeEnabled();
+    await finish.evaluate((button) => { button.click(); button.click(); });
+    expect((await debriefResponse).status()).toBe(200);
+    expect((await scoreResponse).status()).toBe(200);
+    await expect(page.getByTestId("final-report")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("final-report")).toContainText("/ 360");
+    await page.waitForTimeout(1_000);
+
+    const terminalBeforeRefresh = actions.filter((item) =>
+      (item.action === "stage-feedback" && item.stageKey === "debrief") || item.action === "score"
+    );
+    const terminalWarningVisible = await page.getByText("终末评分服务暂时不可用。", { exact: true }).isVisible().catch(() => false);
+
+    const actionCountBeforeRefresh = actions.length;
+    const navigation = await page.reload({ waitUntil: "domcontentloaded" });
+    await assertApplicationReached(page, navigation);
+    await expect(page.getByTestId("final-report")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("final-report")).toContainText("/ 360");
+    await page.waitForTimeout(750);
+    const newScoringActions = actions.slice(actionCountBeforeRefresh).filter((item) =>
+      item.action === "stage-feedback" || item.action === "score"
+    );
+
+    const stageFeedback = actions.filter((item) => item.action === "stage-feedback");
+    await Promise.allSettled(collector.pending);
+    collector.evidence.sevenStage = {
+      caseId: "P003",
+      language: "zh",
+      stageFeedbackCount: stageFeedback.length,
+      stageFeedbackStatusCounts: Object.fromEntries([...new Set(stageFeedback.map((item) => item.status))]
+        .sort((left, right) => left - right)
+        .map((status) => [status, stageFeedback.filter((item) => item.status === status).length])),
+      scoreCount: actions.filter((item) => item.action === "score").length,
+      initialSessionStatus: session.status(),
+      initialSessionError: /^[a-z][a-z0-9_]{0,63}$/.test(sessionError) ? sessionError : "",
+      initialSessionFailureVisible: sessionRaceMessageVisible,
+      finalDoubleClickTerminalActionCount: terminalBeforeRefresh.length,
+      finalDoubleClickDebriefCount: terminalBeforeRefresh.filter((item) => item.action === "stage-feedback").length,
+      finalDoubleClickScoreCount: terminalBeforeRefresh.filter((item) => item.action === "score").length,
+      finalWarningVisible: terminalWarningVisible,
+      refreshScoringActionCount: newScoringActions.length,
+      finalReportVisibleAfterRefresh: true,
+      responseTextRetained: false
+    };
+
+    expect(terminalBeforeRefresh).toHaveLength(2);
+    expect(terminalBeforeRefresh.filter((item) => item.action === "stage-feedback")).toHaveLength(1);
+    expect(terminalBeforeRefresh.filter((item) => item.action === "score")).toHaveLength(1);
+    expect(terminalBeforeRefresh.every((item) => item.status === 200 && item.requestIdPresent)).toBe(true);
+    expect(terminalWarningVisible).toBe(false);
+    expect(newScoringActions).toEqual([]);
+    expect(stageFeedback.map((item) => item.stageKey)).toEqual([
+      "history",
+      "orders",
+      "diagnosis",
+      "consult",
+      "treatment",
+      "perioperative",
+      "debrief"
+    ]);
+    expect(stageFeedback.every((item) => item.status === 200 && item.requestIdPresent)).toBe(true);
+    expect(actions.filter((item) => item.action === "score")).toHaveLength(1);
+    expect(session.status()).toBe(200);
+    expect(sessionRaceMessageVisible).toBe(false);
+    expect(collector.evidence.responses.filter((item) => item.status >= 400)).toEqual([]);
+  } finally {
+    page.off("response", listener);
     await attachSanitizedEvidence(testInfo, collector);
   }
 });

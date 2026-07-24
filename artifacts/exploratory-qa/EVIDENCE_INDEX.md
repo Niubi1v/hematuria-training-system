@@ -55,6 +55,7 @@ QA 分支：`codex/hematuria-exploratory-qa`
 | c4ac9b5开放缺陷回归摘要 | HEM-P1-030/045/052、HEM-P2-028/044及QA运行器 | `reports/c4ac9b5-open-defect-regression-summary.json` | 2,438 | 是 | —；只含状态、slot类别、计数、CSS几何和公开SHA，不含完整问答、医嘱名、医学值或凭据 | 证据根目录下同路径 |
 | c4ac9b5 P006–P012 Preview主诉聚合 | HEM-P1-053 / 三轮双语自然主诉与英文canonical控制 | `reports/c4ac9b5-unsampled-preview-batch-1-summary.json` | 1,564 | 是 | —；只含病例ID、source/provider、安全布尔值和计数，不含完整问答、request body、token、header或凭据 | 证据根目录下同路径 |
 | c4ac9b5 P001–P042 Preview主诉聚合 | HEM-P1-053 / 全42例自然主诉与英文canonical控制 | `reports/c4ac9b5-preview-chief-complaint-p001-p042-summary.json` | 1,992 | 是 | —；只含聚合source、过滤失败病例ID、计数和安全策略，不含完整问答、request body、token、header或凭据 | 证据根目录下同路径 |
+| c4ac9b5 P003 Preview七阶段聚合 | HEM-P2-028 / 终末双击、360报告与刷新完成态 | `reports/c4ac9b5-preview-seven-stage-summary.json` | 1,425 | 是 | —；只含公开SHA、状态/计数、request ID存在性和公开错误枚举，不含输入正文、request body、标识或凭据 | 证据根目录下同路径 |
 
 SHA-256：
 
@@ -107,6 +108,7 @@ SHA-256：
 - `c4ac9b5-open-defect-regression-summary.json`：`8768B5178059CE241A2966958494E1AA74621C6B9937F6816D76C7C0FF401D07`
 - `c4ac9b5-unsampled-preview-batch-1-summary.json`：`10DAE327FE4C7F8E795D16EB3088A975059BB7C18F90D175D6D572D5DB53E017`
 - `c4ac9b5-preview-chief-complaint-p001-p042-summary.json`：`25B90BF0261A393712E28928E71D254C4A5A8FF03DCA31949103890E116BE93A`
+- `c4ac9b5-preview-seven-stage-summary.json`：`6009ABFEBD0D1D21CA06E02316A2AFCFBBBF3471D81E39170C78B9CD382EF900`
 
 ## 仅本机保留、不提交 Git
 
@@ -118,7 +120,7 @@ SHA-256：
 | 脱敏 fixture transcript | P001 中文 20 轮 | `transcripts/fixture-20-turn-interview-390x844.json` | 1 | 3,295 | 否 | 非真实 AI，且不是缺陷最小证据 | 证据根目录下同路径 |
 | 失败录像 | HEM-P1-027–051、HEM-P2-028/043及旧静态history环境尝试 | `videos/**` | 36 | 33,090,075 | 否 | 截图与最小 trace 已足够；按规则视频不进 Git | 证据根目录下同路径 |
 
-第11轮索引更新后清点本机共有474个证据文件、575,765,087字节；纳入HEM-P1-053两份脱敏聚合后，Git最小证据集为48个文件（含本索引）、16,053,296字节，其余426个文件、559,711,791字节仅本机保留。定向Playwright复跑按reporter设计重建HTML/JUnit/test-results；聚合JSON、代表截图与历史最小trace进入Git，大量重复截图、完整报告、长trace、录像与transcript不整体提交。没有浏览器用户目录进入证据根目录；`.pnpm-store`、`node_modules`、`.next`与根目录`test-results/**`不进入证据或提交。
+第12轮索引更新后清点本机共有475个证据文件、575,767,423字节；Git最小证据集为49个文件（含本索引）、16,055,632字节，其余426个文件、559,711,791字节仅本机保留。定向Playwright复跑按reporter设计重建HTML/JUnit/test-results；聚合JSON、代表截图与历史最小trace进入Git，大量重复截图、完整报告、长trace、录像与transcript不整体提交。没有浏览器用户目录进入证据根目录；`.pnpm-store`、`node_modules`、`.next`与根目录`test-results/**`不进入证据或提交。
 
 ## HEM-P1-027 复现与测量
 
@@ -206,6 +208,8 @@ SHA-256：
 - 第10轮的13个staged路径严格为6份Goal QA文档、EVIDENCE_INDEX、4个QA测试/运行器脚本、1份更新的评分隔离聚合和1份新增开放缺陷聚合；没有截图、trace、录像、完整报告目录、完整问答或凭据上下文进入本提交。上一里程碑已提交的代表截图和最小trace保持不变。
 - 第11轮最终全证据树扫描覆盖474个物理文件、ZIP内8,703个条目和1,301,555,181字节，敏感值命中0；两份HEM-P1-053聚合均未保存问答、request body、token、header、签名、Cookie或环境值。
 - 第11轮拟提交范围严格为6份Goal QA文档、EVIDENCE_INDEX、1个Preview QA测试和1份脱敏聚合；`scan-staged-secrets.mjs`复核9个staged文件及完整可达文本历史，敏感值命中0。不含业务代码、医学数据、截图、trace、录像、HTML、完整问答或浏览器用户数据。
+- 第12轮Preview七阶段原始Playwright输出、失败上下文和临时test-results由安全wrapper扫描2个生成文件后删除；Git只保留可重建强断言与1份脱敏聚合，不保留输入正文、request body、request ID、token、header、Cookie、Authorization、签名或环境值。
+- 第12轮最终全证据树扫描覆盖475个物理文件、ZIP内8,703个条目和1,301,557,366字节，敏感值命中0；9个staged文件及完整可达文本历史的独立扫描同为0命中。
 - 通用 candidate scanner 对 5 个本机不提交的大 trace 按大小上限 fail-closed（4 个 ZIP 内 trace entry 过大、1 个 ZIP 文件过大）；这些文件未 staged，且已由上面的全证据树流式/解包扫描覆盖并得到 0 命中。未删除或放宽 scanner 断言。
 - 绝对用户路径只出现在不提交的 `reports/junit.xml`（36）、`local-dev-3010d.stdout.log`（16）、`local-dev-3010e.log`（34）和 `local-dev-3010f.log`（1），全部保持本机未跟踪。1,551 个邮箱样式全部是 Playwright `page@hash` 内部 ID；504 个身份证样式均无有效生日；8 个手机号样式嵌在哈希中，另 1 个来自 network 浮点耗时，均为误报。
 - `reports/results.json` 等其余本机报告也可能含 `<QA_WORKTREE>` 的实际绝对路径，因此整类报告保持不提交；本索引使用占位符，不暴露用户目录。
