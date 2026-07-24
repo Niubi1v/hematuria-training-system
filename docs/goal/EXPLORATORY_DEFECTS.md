@@ -379,3 +379,32 @@
 - 最小证据：`tests/exploratory/patient-compound-history-matrix.mjs`、`tests/preview/preview-stability.spec.mjs`中的`@preview-compound-history-batch-1`，以及`artifacts/exploratory-qa/reports/c4ac9b5-patient-compound-history-summary.json`。两份完整本地分组报告仅本机保留；Preview原始输出经安全wrapper扫描后删除。
 - 建议方向：合并canonical与structured matcher结果后再统一做治理/冲突检查；区分当前诱因与“以前/既往”历史上下文；使MED_ALL可与抗凝/抗血小板并存；先识别明确既往肿瘤上下文再应用诊断边界；长复合回答应按子句安全压缩或分段，不能整体降为unknown。新增42例双语跨层矩阵和Preview代表批，保持56个冲突隔离强断言。
 - 医学专家裁决：确认路由合并、边界误判和子句完整性属于工程问题，不需要医学裁决；具体事实值、冲突与来源修订仍由现有具名专家流程处理。
+
+## HEM-P1-055：补齐检查前置条件后重试仍被当作重复医嘱且永久不释放报告
+
+- 级别/状态：P1，`OPEN / FAIL_LOCAL_QA / FAIL_EMULATION`；Production基线`c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2`。
+- 页面/路径：本地公开`POST /api/training-action/`与`/cases/P001/`第2阶段；42例生产数据矩阵；中文/英文；UI为`1440×900`与`390×844`。
+- 病例范围：CTU链路影响P001–P016及P042共17例；两类病理链路影响P001–P012共12例。英文病理名称仍为来源审核阻塞，未冒充英文工程通过。
+- 操作步骤：建立合法attempt并提交history进入第2阶段 → 先开带前置条件的目标医嘱 → 确认系统提示缺少前置且未返回报告 → 开立所需前置医嘱 → 再次开立原目标 → 与全新attempt中“先前置、后目标”顺序对照。
+- 预期：补齐前置后重试应释放一次当前病例已配置的目标报告；重复保护只应防止已经成功释放的结果重复计分，不应永久锁死首次未满足条件的目标。
+- 实际：恢复顺序58/58均返回`duplicateOrderIds`且目标结果为0；对照顺序58/58返回目标结果。根因表现为首次未满足前置时目标已进入已开立集合，后续结果过滤先按duplicate排除。
+- 复现：本地矩阵连续2/2逐字节一致；中文41/41、英文17/17；UI桌面/移动模拟2/2，报告卡均为1→1而不是1→2。
+- AI来源：N/A；生产`training-action`本地黑盒，`providerCalls=0`。
+- 状态变化时间线：stage1拒绝过早开单 → history提交200 → 目标医嘱200、缺前置、0报告 → 前置医嘱200、1报告 → 目标重试200、duplicate=1、0报告 → UI保留旧报告且无法取得目标报告。
+- HTTP/console/network：两次UI运行的`init/history/order×3`均200，HTTP错误和request failure为0；第三个order的业务payload稳定为`returnedReportCount=0`。同路径console另有HEM-P2-056，不作为本P1因果条件。
+- 最小证据：`tests/exploratory/data-agent-stage-visibility-matrix.mjs`、`tests/exploratory/long-running-qa.spec.mjs`、`artifacts/exploratory-qa/reports/c4ac9b5-data-agent-stage-visibility-summary.json`及`artifacts/exploratory-qa/screenshots/hem-p1-055-prerequisite-retry-1440x900.png`。两份完整矩阵、两视口console/network、trace、录像和重复截图仅本机保留。
+- 建议方向：未满足前置时不要把目标标记为已完成开立，或区分“已请求/待前置”与“已释放结果”；补齐前置后允许同一目标幂等地释放一次结果，同时继续阻止已释放结果重复事件和重复评分。增加三种顺序（目标→前置→重试、前置→目标、同请求目标+前置）和17例/41条数据回归。
+- 医学专家裁决：否；只评价已配置结果的状态机可达性和幂等，不评价结果医学内容。
+
+## HEM-P2-056：合法非终态报告卡渲染产生React列表key console error
+
+- 级别/状态：P2，`OPEN / FAIL_EMULATION`；Production基线`c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2`。
+- 页面/路径：本地`/cases/P001/`第2阶段报告卡；`1440×900`与`390×844`。
+- 操作步骤：进入检查阶段 → 开立P001已有合法`not_available`结构报告的前置医嘱 → 等待报告卡出现 → 采集browser console。
+- 预期：合法报告卡渲染不产生React error；各列表元素具有稳定唯一key。
+- 实际：桌面和移动模拟2/2出现`Each child in a list should have a unique "key" prop`，组件定位为`ReportCard`；页面仍可见，没有崩溃。
+- 复现：2/2；每次1条console error。相同运行所有HTTP请求均200。
+- AI来源：N/A，生产Data Agent报告卡。
+- 最小证据：HEM-P1-055同一UI最小复现、两份本机console摘要及脱敏聚合；不额外提交重复截图或大trace。
+- 建议方向：对结果行使用不依赖空文本的稳定复合key（如resultId+索引），并避免在`result`为空而仅有impression时生成空key段落；新增合法非终态/空result报告卡的console零错误回归。
+- 医学专家裁决：否；纯渲染稳定性问题。

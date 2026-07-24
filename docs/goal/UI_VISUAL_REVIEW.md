@@ -120,3 +120,9 @@
 - 桌面Chromium在真实Preview完成35个中文复合问答，35条患者消息和35条history-log均呈现/写入；未观察状态提示堆叠、横向滚动、教师/结构字段裸显或语言串线。
 - HEM-P1-054是回复内容收集完整性缺陷，不是新增布局缺陷。为避免保存真实患者回答，本批不提交截图、trace或录像，只提交脱敏聚合和可重建测试。
 - 初次未节流运行尾部出现1个429并触发一次客户端重试；1.5秒节流正式批为35/35单请求。该事实不改变既有四viewport`PASS_EMULATION`或真机`BLOCKED_REAL_DEVICE`状态。
+
+## 2026-07-24 `c4ac9b5` Data Agent前置条件恢复界面
+
+- P001第2阶段在`1440×900`与`390×844` 2/2执行“CTU→补肾功能→重试CTU”。三次order均200，但报告数固定0/1/0，重试被标为重复医嘱，报告卡数量保持1→1；HEM-P1-055为用户可见流程失败。
+- 两个viewport页面均无横向滚动或崩溃，桌面/移动全页截图可读；自动viewport只标`FAIL_EMULATION`，不替代真机。
+- 合法非终态报告卡在两个viewport各产生1条React列表key console error，登记HEM-P2-056。其余network request failure和HTTP错误为0。

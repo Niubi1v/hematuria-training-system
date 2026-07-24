@@ -44,7 +44,7 @@ async function invokeLocalTrainingAction(body, token = "", remoteAddress = "qa-l
     method: "POST",
     body: {
       ...body,
-      requestId: `qa-ui-${body.action}-${body.caseId}-${String(body.attemptId || "attempt").slice(-24)}`
+      requestId: body.requestId || `qa-ui-${body.action}-${body.caseId}-${String(body.attemptId || "attempt").slice(-24)}`
     },
     headers: token ? { "x-training-state": token } : {},
     socket: { remoteAddress }
@@ -61,6 +61,83 @@ async function invokeLocalTrainingAction(body, token = "", remoteAddress = "qa-l
     payload,
     token: responseHeaders["x-training-state"] || token
   };
+}
+
+async function installProductionTrainingApi(page, observations = []) {
+  resetMemoryAttemptStore();
+  await page.route("**/api/health/**", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({
+      status: "ok",
+      patientServiceConfigured: true,
+      trainingStateConfigured: true,
+      durableAttemptStoreConfigured: true,
+      deploymentTier: "practice",
+      apiVersion: "qa-production-handler"
+    })
+  }));
+  await page.route("**/api/session/init/**", (route) => {
+    const body = route.request().postDataJSON();
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        sessionId: `qa-data-stage-${body.attemptId}`,
+        caseId: body.caseId,
+        language: body.language,
+        mode: body.runtimeMode || "free",
+        patientOpeningStatement: body.language === "en" ? "Hello doctor." : "您好，医生。",
+        sessionCreatedAt: "2026-07-24T00:00:00.000Z",
+        sessionExpiresAt: "2026-07-24T01:00:00.000Z",
+        deploymentSha: "local-production-handler",
+        apiVersion: "qa-production-handler",
+        aiStatus: "available",
+        profileSource: "local-simulation",
+        cacheHit: false
+      })
+    });
+  });
+  await page.route("**/api/agent-chat/**", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({
+      replyText: "",
+      matchedSlotIds: [],
+      matchedFacts: [],
+      provider: "fixture",
+      generationSource: "fixture",
+      isFallback: false
+    })
+  }));
+  await page.route("**/api/training-action/**", async (route) => {
+    const request = route.request();
+    const body = request.postDataJSON();
+    const result = await invokeLocalTrainingAction(
+      body,
+      request.headers()["x-training-state"] || "",
+      "qa-production-handler-ui"
+    );
+    if (body.action === "order") {
+      observations.push({
+        action: "order",
+        status: result.statusCode,
+        recognizedOrderCount: Number(result.payload?.recognizedOrderCount || 0),
+        returnedReportCount: Number(result.payload?.returnedReportCount || 0),
+        duplicateOrderCount: (result.payload?.duplicateOrderIds || []).length,
+        unmetPrerequisiteCount: (result.payload?.unmetPrerequisites || []).length
+      });
+    }
+    await route.fulfill({
+      status: result.statusCode,
+      contentType: "application/json",
+      headers: {
+        "Access-Control-Expose-Headers": "X-Training-State",
+        "X-Training-State": result.token
+      },
+      body: JSON.stringify(result.payload)
+    });
+  });
 }
 
 async function withEvidence(browser, testInfo, scenario, run, { videoOnFailure = true } = {}) {
@@ -106,7 +183,7 @@ async function withEvidence(browser, testInfo, scenario, run, { videoOnFailure =
 
   await context.tracing.start({ screenshots: true, snapshots: true, sources: false });
   try {
-    await run({ page, slug });
+    await run({ page, slug, consoleEvents, networkEvents });
   } catch (error) {
     failed = true;
     const failurePath = path.join(DIRS.screenshots, `${slug}-failure.png`);
@@ -852,6 +929,93 @@ test("HEM-P1-048 English Data Agent UI does not expose Chinese catalog or report
       reportCardContainsCjk: false,
       matchedOrderDisplayNameContainsCjk: false,
       returnedVisibleFieldCjkCount: 0
+    });
+  }, { videoOnFailure: true });
+});
+
+test("HEM-P1-055 retry after satisfying an order prerequisite releases the configured report", async ({ browser }, testInfo) => {
+  test.skip(
+    !["qa-1440x900", "qa-390x844"].includes(testInfo.project.name),
+    "One desktop and one mobile viewport provide representative UI evidence."
+  );
+  await withEvidence(browser, testInfo, "hem-p1-055-prerequisite-retry", async ({ page, consoleEvents }) => {
+    const observations = [];
+    await installProductionTrainingApi(page, observations);
+    await page.goto("/cases/P001/");
+    await page.getByLabel("病史小结").fill("QA阶段权限与检查前置条件恢复探针。");
+    await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
+    await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
+
+    const orderInput = page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜");
+    const submitOrder = page.getByRole("button", { name: "开立并返回结果", exact: true });
+    await orderInput.fill("CTU");
+    await submitOrder.click();
+    await expect(page.getByText(/缺少前置条件：LAB-BL-003/)).toBeVisible();
+
+    await orderInput.fill("肾功能");
+    await submitOrder.click();
+    await expect(page.getByTestId("report-card")).toHaveCount(1);
+    const reportCardsBeforeRetry = await page.getByTestId("report-card").count();
+
+    await orderInput.fill("CTU");
+    await submitOrder.click();
+    await expect(page.getByText("重复医嘱不会重复计入效率得分。", { exact: true })).toBeVisible();
+    await page.waitForTimeout(700);
+    const reportCardsAfterRetry = await page.getByTestId("report-card").count();
+    const retryObservation = observations[2] || {};
+    const consoleErrorCount = consoleEvents.filter((item) => item.type === "error").length;
+    const reportCardKeyWarningCount = consoleEvents.filter((item) => item.type === "error"
+      && /unique "key" prop/i.test(item.text)
+      && /ReportCard/.test(item.text)).length;
+    const summary = {
+      schemaVersion: 1,
+      productionSha: "c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2",
+      status: retryObservation.returnedReportCount === 1 && reportCardsAfterRetry > reportCardsBeforeRetry
+        ? "PASS_LOCAL"
+        : "FAIL_LOCAL_QA",
+      defectIds: [
+        "HEM-P1-055",
+        ...(reportCardKeyWarningCount ? ["HEM-P2-056"] : [])
+      ],
+      viewport: testInfo.project.use.viewport,
+      source: "production_training_action_local_ui_blackbox",
+      providerCalls: 0,
+      orderRequestCount: observations.length,
+      orderObservations: observations,
+      reportCardsBeforeRetry,
+      reportCardsAfterRetry,
+      expectedRetryReportCount: 1,
+      consoleErrorCount,
+      reportCardKeyWarningCount,
+      requestBodiesRetained: false,
+      responseBodiesRetained: false,
+      medicalValuesRetained: false,
+      credentialsRetained: false
+    };
+    await writeFile(
+      path.join(DIRS.reports, `hem-p1-055-prerequisite-retry-${viewportSlug(testInfo)}.json`),
+      `${JSON.stringify(summary, null, 2)}\n`,
+      "utf8"
+    );
+    await saveShot(page, testInfo, "hem-p1-055-prerequisite-retry", true);
+    expect({
+      orderRequestCount: observations.length,
+      firstUnmetPrerequisiteCount: observations[0]?.unmetPrerequisiteCount,
+      controlReturnedReportCount: observations[1]?.returnedReportCount,
+      retryDuplicateOrderCount: retryObservation.duplicateOrderCount,
+      retryReturnedReportCount: retryObservation.returnedReportCount,
+      reportCardsBeforeRetry,
+      reportCardsAfterRetry,
+      reportCardKeyWarningCount
+    }).toEqual({
+      orderRequestCount: 3,
+      firstUnmetPrerequisiteCount: 1,
+      controlReturnedReportCount: 1,
+      retryDuplicateOrderCount: 1,
+      retryReturnedReportCount: 1,
+      reportCardsBeforeRetry: 1,
+      reportCardsAfterRetry: 2,
+      reportCardKeyWarningCount: 0
     });
   }, { videoOnFailure: true });
 });

@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "productionSha": "c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2",
+  "status": "FAIL_LOCAL_QA",
+  "source": "production_training_action_local_blackbox",
+  "providerCalls": 0,
+  "defects": [
+    {
+      "id": "HEM-P1-055",
+      "severity": "P1",
+      "status": "OPEN",
+      "summary": "A configured report remains unavailable when its missing prerequisite is satisfied after the target order and the target is retried."
+    },
+    {
+      "id": "HEM-P2-056",
+      "severity": "P2",
+      "status": "OPEN",
+      "summary": "A valid non-final report card emits a React unique-key console error."
+    }
+  ],
+  "matrix": {
+    "cases": 42,
+    "languages": 2,
+    "caseLanguageSessions": 84,
+    "stagePermissionProbes": 336,
+    "stageValidationChecks": 252,
+    "examSelectionChecks": 1344,
+    "configuredExamChecks": 752,
+    "unavailableExamChecks": 592,
+    "orderBatchChecks": 84,
+    "expectedResultChecks": 392,
+    "nonRecoveryFailures": 0,
+    "prerequisiteRows": 41,
+    "prerequisiteCases": 17,
+    "prerequisiteScenarios": 58,
+    "prerequisiteRecoveryFailures": 58,
+    "prerequisiteFirstControlsPassed": 58,
+    "failureGroups": {
+      "ctuChinese": 17,
+      "ctuEnglish": 17,
+      "pathologyChinese": 24
+    },
+    "twoRunByteIdentical": true,
+    "runSha256": "E305FEAA4012E711C6F1A694FFA31F087FA36311CB46F81C3F8FF3EDD432118E"
+  },
+  "ui": {
+    "viewports": [
+      "1440x900",
+      "390x844"
+    ],
+    "status": "FAIL_EMULATION",
+    "reproductions": 2,
+    "orderRequestsPerRun": 3,
+    "firstTargetReturnedReports": 0,
+    "prerequisiteReturnedReports": 1,
+    "retriedTargetReturnedReports": 0,
+    "reportCardsBeforeRetry": 1,
+    "reportCardsAfterRetry": 1,
+    "reportCardKeyConsoleErrors": 2,
+    "httpFailures": 0,
+    "requestFailures": 0
+  },
+  "coverage": {
+    "physicalExamRows": 376,
+    "structuredResultRows": 257,
+    "chineseResultChecks": {
+      "laboratory": 129,
+      "imaging": 87,
+      "endoscopy": 17,
+      "pathology": 24
+    },
+    "reviewedEnglishResultChecks": {
+      "laboratory": 77,
+      "imaging": 58,
+      "endoscopy": 0,
+      "pathology": 0
+    }
+  },
+  "relatedRegression": {
+    "dataAgentPresentation": {
+      "orders": 60,
+      "results": 257,
+      "englishApiCjkSignals": 0,
+      "dataChanged": false
+    },
+    "physicalExamQualityControl": {
+      "cases": 42,
+      "results": 376,
+      "passed": true
+    },
+    "p008ExactOrderAndPrerequisiteContract": "PASS"
+  },
+  "governance": {
+    "medicalMetadata": {
+      "status": "BLOCKED_MEDICAL",
+      "count": 28
+    },
+    "englishNamesAndResultText": {
+      "status": "BLOCKED_SOURCE_REVISION",
+      "catalogCount": 23,
+      "blockedResultRowCount": 122,
+      "pendingExamRowCount": 376
+    }
+  },
+  "safeguards": {
+    "requestBodiesRetained": false,
+    "responseBodiesRetained": false,
+    "medicalValuesRetained": false,
+    "teacherContentRetained": false,
+    "credentialsRetained": false
+  }
+}
