@@ -17,6 +17,7 @@ const { parseJsonBody } = require("../server/requestSecurity.js");
 const {
   presentExamResult,
   presentMatchedOrder,
+  presentOrderCatalogItem,
   presentOrderResult
 } = require("../shared/dataAgentPresentation.js");
 
@@ -173,7 +174,11 @@ function handleExam(caseId, input, language) {
 }
 
 function handleOrder(caseId, input, previousOrderIds, language) {
-  const orders = findOrders(input);
+  const resolvedOrders = findOrders(input);
+  const unavailableOrders = language === "en"
+    ? resolvedOrders.filter((item) => !presentOrderCatalogItem(item, language).translationAvailable)
+    : [];
+  const orders = resolvedOrders.filter((item) => !unavailableOrders.includes(item));
   const previous = new Set(previousOrderIds);
   const duplicateOrderIds = orders.map((item) => item.orderId).filter((id) => previous.has(id));
   const available = new Set([...previous, ...orders.map((item) => item.orderId)]);
@@ -181,9 +186,18 @@ function handleOrder(caseId, input, previousOrderIds, language) {
     const result = structuredResults.find((item) => item.caseId === caseId && item.orderId === order.orderId);
     return result ? [{ order, result }] : [];
   });
+  const configuredByOrderId = new Map(configured.map((item) => [item.order.orderId, item.result]));
   const unmetPrerequisites = [...new Set(configured.flatMap(({ result }) => (result.prerequisites || []).filter((id) => !available.has(id))))];
-  const results = configured.filter(({ order, result }) => !duplicateOrderIds.includes(order.orderId)
-    && (result.prerequisites || []).every((id) => available.has(id))).map(({ order, result }) => ({
+  const acceptedOrderIds = orders.filter((order) => {
+    if (duplicateOrderIds.includes(order.orderId)) return false;
+    const result = configuredByOrderId.get(order.orderId);
+    return !result || (result.prerequisites || []).every((id) => available.has(id));
+  }).map((order) => order.orderId);
+  const pendingPrerequisiteOrderIds = orders
+    .filter((order) => !duplicateOrderIds.includes(order.orderId)
+      && !acceptedOrderIds.includes(order.orderId))
+    .map((order) => order.orderId);
+  const results = configured.filter(({ order }) => acceptedOrderIds.includes(order.orderId)).map(({ order, result }) => ({
       caseId,
       orderId: order.orderId,
       resultId: result.resultId,
@@ -195,10 +209,14 @@ function handleOrder(caseId, input, previousOrderIds, language) {
   return {
     id: `${caseId}-${Date.now()}`, input, matched: orders.length > 0,
     matchedOrders: orders.map((item) => presentMatchedOrder(item, language)), results,
-    duplicateOrderIds, unmetPrerequisites, selectedOrderCount: splitOrders(input).length,
+    duplicateOrderIds, acceptedOrderIds, pendingPrerequisiteOrderIds, unmetPrerequisites,
+    unavailableOrderCount: unavailableOrders.length,
+    selectedOrderCount: splitOrders(input).length,
     recognizedOrderCount: orders.length, returnedReportCount: results.length, at, placedAt: at, stageNo: 2,
     status: results.length ? "reported" : "no-result",
-    message: unmetPrerequisites.length
+    message: unavailableOrders.length && !orders.length
+      ? "This order is unavailable until its English name has been reviewed."
+      : unmetPrerequisites.length
       ? (language === "en" ? `Prerequisites missing: ${unmetPrerequisites.join(", ")}. No report was released.` : `缺少前置条件：${unmetPrerequisites.join("、")}，未返回报告。`)
       : orders.length ? (language === "en" ? "Order recognized; only configured reports were returned." : "医嘱已识别，仅返回已配置的对应报告。")
         : (language === "en" ? "No exact order match was found." : "未精确匹配到规范医嘱。")
@@ -369,9 +387,12 @@ module.exports = async function handler(req, res) {
     }
     if (body.action === "order") {
       const result = handleOrder(caseData.id, body.input, state.orders, language);
-      const newOrderIds = result.matchedOrders.map((item) => item.orderId).filter((id) => !state.orders.includes(id));
+      const newOrderIds = result.acceptedOrderIds.filter((id) => !state.orders.includes(id));
       state.orders = [...new Set([...state.orders, ...newOrderIds])];
-      const orderEvents = result.matchedOrders.map((order) => ({ eventId: `srv-${state.sequence + 1}-order-${order.orderId}`, type: "order_placed", actionId: order.orderId, stageNo: 2, at, text: order.displayName, metadata: { validated: true, duplicate: result.duplicateOrderIds.includes(order.orderId) } }));
+      const orderEvents = result.matchedOrders
+        .filter((order) => result.acceptedOrderIds.includes(order.orderId)
+          || result.duplicateOrderIds.includes(order.orderId))
+        .map((order) => ({ eventId: `srv-${state.sequence + 1}-order-${order.orderId}`, type: "order_placed", actionId: order.orderId, stageNo: 2, at, text: order.displayName, metadata: { validated: true, duplicate: result.duplicateOrderIds.includes(order.orderId) } }));
       const resultEvents = result.results.map((item) => ({ eventId: `srv-${state.sequence + 1}-result-${item.resultId}`, type: "result_returned", actionId: item.orderId, stageNo: 2, at, text: item.impression || item.result, metadata: { validated: true } }));
       appendEvents(state, [...orderEvents, ...resultEvents]);
       return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: result });
