@@ -1807,7 +1807,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }
 
   async function completeTraining() {
-    if (finalReport) return;
+    if (finalReport || stageSubmitLockRef.current || trainingAttemptStatus !== "ready") return;
     for (let stage = 1 as AgentStageNo; stage <= 6; stage = (stage + 1) as AgentStageNo) {
       if (!submitted[stage]) { alert(lang === "en" ? "Complete stages 1-6 first." : "请先完成并提交第1至第6阶段。"); return; }
     }
@@ -1815,6 +1815,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       alert(t(lang, "finalReflectionRequired"));
       return;
     }
+    stageSubmitLockRef.current = true;
+    setStageSubmitting(true);
     try {
       const evaluation = await trainingAction<StageEvaluation>({ action: "stage-feedback", stageKey: "debrief", submission: { ...answers } });
       const report = await generateReport();
@@ -1827,8 +1829,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         writeJsonStorage("hematuria-practice-attempt-summaries-v1", [...summaries, { attemptId: attempt.attemptId, caseId: caseData.id, language: lang, total: report.total, completedAt: new Date().toISOString() }]);
       }
       addTimeline("submit", lang === "en" ? "Final report generated" : "完成训练并生成最终报告", `${report.total}/${report.max}`, 7);
+      setStorageWarning("");
     } catch {
       setStorageWarning(lang === "en" ? "Final scoring is temporarily unavailable." : "终末评分服务暂时不可用。" );
+    } finally {
+      stageSubmitLockRef.current = false;
+      setStageSubmitting(false);
     }
   }
 
@@ -2390,7 +2396,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
 
           <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-clinic-line pt-4">
             {activeStageNo === 7 ? (
-              <button disabled={Boolean(finalReport)} onClick={completeTraining} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white hover:bg-clinic-teal disabled:cursor-not-allowed disabled:opacity-50">
+              <button disabled={Boolean(finalReport) || stageSubmitting || trainingAttemptStatus !== "ready"} onClick={completeTraining} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white hover:bg-clinic-teal disabled:cursor-not-allowed disabled:opacity-50">
                 <CheckCircle2 size={16} /> {t(lang, "finishTraining")}
               </button>
             ) : (

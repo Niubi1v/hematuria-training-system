@@ -238,6 +238,97 @@ test("rapid stage submission is accepted only once", async ({ page }) => {
   })).toBe(1);
 });
 
+test("rapid final-stage completion creates one debrief request and one report", async ({ page }) => {
+  const attemptId = "e2e-final-stage-singleflight";
+  await page.addInitScript(({ seededAttemptId }) => {
+    const attempt = {
+      attemptId: seededAttemptId,
+      caseId: "P001",
+      mode: "free",
+      language: "zh",
+      participantId: "practice-user",
+      schemaVersion: "attempt-v3",
+      createdAt: "2026-07-24T00:00:00.000Z"
+    };
+    const evaluation = {
+      stageKey: "history",
+      max: 50,
+      score: 0,
+      hits: [],
+      misses: [],
+      warnings: [],
+      standardAnswer: "",
+      comment: "E2E stage completed.",
+      practiceOnly: true
+    };
+    localStorage.setItem("hematuria-language", "zh");
+    localStorage.setItem("hematuria-attempt-pointer-v3:P001:free:zh", JSON.stringify(attempt));
+    localStorage.setItem(`hematuria-attempt-v3:P001:free:zh:${seededAttemptId}`, JSON.stringify({
+      activeStageNo: 7,
+      answers: { debriefReflection: "这是一段满足长度要求的复盘内容。" },
+      submitted: Object.fromEntries([1, 2, 3, 4, 5, 6].map((stage) => [stage, { ...evaluation, stageKey: `stage-${stage}` }]))
+    }));
+  }, { seededAttemptId: attemptId });
+  await routeTrainingApiThroughHandler(page, []);
+
+  const debriefRequests = [];
+  const scoreRequests = [];
+  await page.route("**/api/training-action/**", async (route) => {
+    const body = route.request().postDataJSON();
+    const headers = { "Access-Control-Expose-Headers": "X-Training-State", "X-Training-State": `e2e-${body.attemptId}` };
+    if (body.action === "init-attempt") {
+      return route.fulfill({ status: 200, contentType: "application/json", headers, body: JSON.stringify({ attemptId: body.attemptId, practiceOnly: true }) });
+    }
+    if (body.action === "stage-feedback" && body.stageKey === "debrief") {
+      debriefRequests.push(body.requestId);
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      if (debriefRequests.length > 1) {
+        return route.fulfill({ status: 409, contentType: "application/json", headers, body: JSON.stringify({ error: "stage_not_unlocked" }) });
+      }
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers,
+        body: JSON.stringify({
+          stageKey: "debrief", max: 30, score: 0, hits: [], misses: [], warnings: [],
+          standardAnswer: "", comment: "Debrief accepted.", practiceOnly: true
+        })
+      });
+    }
+    if (body.action === "score") {
+      scoreRequests.push(body.requestId);
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers,
+        body: JSON.stringify({
+          total: 0, max: 360, items: [], redFlags: [], ragGuardrails: [],
+          scoringVersion: "e2e", caseVersion: "e2e", generatedAt: new Date().toISOString(), reportVersion: 1
+        })
+      });
+    }
+    return route.fulfill({ status: 200, contentType: "application/json", headers, body: JSON.stringify({ recorded: true }) });
+  });
+
+  await page.goto("/cases/P001/");
+  const finish = page.getByRole("button", { name: "完成训练并生成最终报告", exact: true });
+  await expect(finish).toBeEnabled();
+  await finish.evaluate((button) => {
+    button.click();
+    button.click();
+  });
+
+  await expect(page.getByTestId("final-report")).toBeVisible();
+  expect(debriefRequests).toHaveLength(1);
+  expect(new Set(debriefRequests).size).toBe(1);
+  expect(scoreRequests).toHaveLength(1);
+  await expect(page.getByRole("alert").filter({ hasText: "终末评分服务暂时不可用" })).toHaveCount(0);
+  await expect.poll(() => page.evaluate(({ seededAttemptId }) => {
+    const saved = JSON.parse(localStorage.getItem(`hematuria-attempt-v3:P001:free:zh:${seededAttemptId}`) || "null");
+    return saved?.timeline?.filter((item) => item.type === "submit" && item.stageNo === 7).length ?? 0;
+  }, { seededAttemptId: attemptId })).toBe(1);
+});
+
 test("stage submission waits for the training attempt while the AI patient is preparing", async ({ page }) => {
   const observations = [];
   await routeTrainingApiThroughHandler(page, observations, { initAttemptDelayMs: 800, sessionInitDelayMs: 1800 });
