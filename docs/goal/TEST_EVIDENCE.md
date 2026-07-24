@@ -1290,3 +1290,17 @@ P001新增三轮及P037/P038各两轮的每次`/api/agent-chat/`均200、`genera
 | clean gate / `git diff c4ac9b5..HEAD -- data` | 0 / 空 | 工作树干净；医学数据零差异 |
 
 代码候选HEAD为`cda359e6eb233761245e6490f4cc54de1495d594`；远程Actions、Vercel和Preview当前仍标记待验证，旧HEAD绿灯不得替代。
+
+## PostCSS CI恢复证据（2026-07-24）
+
+| 项目 | 结果 |
+|---|---|
+| Actions run `30084158980` / `2e42d64` | failure；Node setup/install通过，首个失败为Full dependency audit，后续门禁skipped |
+| 失败公告 | `GHSA-6g55-p6wh-862q`；Next嵌套PostCSS 8.4.31，patched `>=8.5.12` |
+| 修复 | `postcss@<=8.5.11: 8.5.15`项目级override；lockfile移除8.4.31 |
+| `pnpm audit --audit-level high` | 修复前exit 1（1 high）；修复后exit 0（No known vulnerabilities found） |
+| 冻结安装 / TypeScript / ESLint | exit 0 / 0 / 0 |
+| 同源生产build / bundle / secret | 82/82页；25个JS资产；343文件/历史扫描通过 |
+| 相关Playwright | 11 passed、1互斥skip、0 failed；报告、44px触控、stage1/7双击、axe覆盖 |
+
+业务代码没有因依赖审计修复而变化，因此没有重复完整行为链和85/3 Playwright；新HEAD远程Node 22仍为待验证。

@@ -607,3 +607,10 @@
 - **HEM-P2-044**：`ENGINEERING CLOSED EMULATION / BLOCKED_REAL_DEVICE`。360×800和390×844模拟中指定触控目标均至少44×44 CSS px；真实手机仍未由自动化替代。
 - **HEM-P2-028**：`ENGINEERING CLOSED LOCAL / REMOTE PREVIEW PENDING`。第7阶段同步双击从2个debrief请求收敛为1个；score、request ID和timeline均为1，成功报告不再被第二个409的错误提示覆盖。
 - **医学/来源冻结**：HEM-P0-001、HEM-P0-023、28项元数据、23个英文名称、161个来源、419条模拟事实、42例`needs_revision`保持原状态；`data/**`相对`c4ac9b5`零差异。
+
+### CI-P1-20260724 PostCSS新增高危公告
+
+- **状态**：`LOCAL FIXED / REMOTE NODE22 PENDING`。
+- **失败证据**：Actions run `30084158980`、HEAD `2e42d64`的第一条真实失败为`pnpm audit --audit-level high`；`GHSA-6g55-p6wh-862q`命中`.>next>postcss@8.4.31`。后续行为、Playwright、build和clean gate均被跳过。
+- **最小修复**：在既有`pnpm-workspace.yaml`安全覆盖层将`postcss <=8.5.11`统一为锁定的8.5.15；只修改workspace override与lockfile，不改业务、医学数据或测试断言。
+- **本地证据**：高危审计0已知漏洞；TypeScript/ESLint、82页build、bundle、secret scan及相关Playwright 11/1/0通过。最终关闭条件为新HEAD的Node 22 Actions完整成功。

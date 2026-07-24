@@ -669,3 +669,10 @@
 - `HEM-P2-028`：第7阶段完成动作增加同步singleflight锁；同步双击仅产生1个debrief request、1个request ID、1个score和1条stage-7 timeline，不再由较晚409覆盖已成功报告。阶段1–6原双击门禁继续通过。
 - 五个业务提交为`fe93b0e`、`ad49132`、`d492cea`、`f6c5269`、`cda359e`。本地完整行为门禁exit 0；Playwright 85 passed/3互斥skip/0 failed；TypeScript、ESLint、两种82页构建、两次25资源bundle、343文件/历史secret scan、clean gate和`data/**`零差异均通过。
 - 本机使用Node 24.14；权威Node 22、Actions、Vercel及真实Preview仍须本候选普通push后的精确新HEAD补证。PR继续Draft，不合并main、不部署Production。
+
+### 2026-07-24 新PostCSS公告导致的CI恢复候选
+
+- 首次推送HEAD `2e42d64`对应Actions run `30084158980`，在Node setup和frozen install成功后首先失败于`Full dependency audit`；其余测试均被跳过。准确根因是新高危公告`GHSA-6g55-p6wh-862q`命中Next嵌套的PostCSS 8.4.31（受影响`<=8.5.11`），不是Patient/Data Agent/Playwright失败。
+- 项目级override新增`postcss@<=8.5.11: 8.5.15`并更新锁文件；没有放宽审计等级或删除步骤。本地同命令由1 high失败恢复为`No known vulnerabilities found`。
+- 受影响回归通过：TypeScript、ESLint、82页同源生产构建、25资源bundle、343文件/历史secret scan，以及布局/报告/触控/双击/axe Playwright 11 passed、1互斥skip、0 failed。完整行为与85/3 Playwright因业务代码未变不重复执行。
+- 该依赖候选仍须原子提交、普通push和新HEAD Node 22 Actions复核；run `30084158980`不得作为本轮业务门禁结论。

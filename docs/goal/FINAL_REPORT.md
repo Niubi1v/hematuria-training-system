@@ -568,3 +568,9 @@
 - 完整本地门禁通过：行为链exit 0、Playwright 85/3/0、TypeScript/ESLint、Vercel与Pages各82页、两次25资源bundle、343文件/历史secret scan、clean gate及`data/**`零差异。当前代码HEAD为`cda359e6eb233761245e6490f4cc54de1495d594`，Node 22与远程部署尚待push后补证。
 - 提交与回滚边界：`fe93b0e`（052/055）、`ad49132`（054/053）、`d492cea`（056）、`f6c5269`（044）、`cda359e`（028）。如需回滚，按影响范围使用普通`git revert <sha>`并重新执行门禁；不得reset、rebase或force push。
 - 仍需人工/权限处理：HEM-P0-001/023、28项元数据、23个英文名称、161个来源、419条模拟事实、42例`needs_revision`、真机和医学/自然度终验。PR保持Draft，不合并main、不部署Production。
+
+### 2026-07-24 首次CI失败与依赖恢复候选
+
+- HEAD `2e42d64`的Actions run `30084158980`在业务测试前被新增PostCSS高危公告阻断；只有setup/install执行成功，不能把后续skipped写成测试失败或通过。
+- 最小修复只把Next嵌套的PostCSS 8.4.31提升到项目已使用的8.5.15。高危审计现为0已知漏洞，相关构建、CSS/UI、axe、bundle和secret门禁通过；没有修改医学事实、审批状态、session安全或评分规则。
+- 该恢复候选须普通push并等待精确新HEAD的Node 22 Actions；若远程继续失败，读取第一条真实日志继续修复。PR保持Draft，Vercel/Production职责不变。
