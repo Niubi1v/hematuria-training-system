@@ -765,6 +765,28 @@ test("automatic voice profile follows patient sex, language, and age", async ({ 
   await expect(page.getByTestId("voice-profile")).toHaveAttribute("data-cloud-voice", "en-US-GuyNeural");
 });
 
+test("mobile voice controls meet the 44px touch-target contract", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-chromium", "Touch geometry is a mobile contract.");
+  for (const viewport of [{ width: 360, height: 800 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/cases/P001/");
+    const trigger = page.getByRole("button", { name: /语音设置/ });
+    const triggerBox = await trigger.boundingBox();
+    expect(triggerBox?.height).toBeGreaterThanOrEqual(44);
+    await trigger.click();
+    for (const control of [
+      page.getByRole("button", { name: "关闭" }),
+      page.getByRole("button", { name: "试听" }),
+      page.getByTitle("停止")
+    ]) {
+      const box = await control.boundingBox();
+      expect(box?.width).toBeGreaterThanOrEqual(44);
+      expect(box?.height).toBeGreaterThanOrEqual(44);
+    }
+    await page.getByRole("button", { name: "关闭" }).click();
+  }
+});
+
 test("cloud TTS failure visibly falls back to the matched browser voice", async ({ page }) => {
   await page.addInitScript(() => {
     class MockUtterance {

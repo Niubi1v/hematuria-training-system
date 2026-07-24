@@ -2052,7 +2052,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             <div>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold">{t(lang, "patientAgent")}</h3>
-                <button type="button" onClick={() => setSpeechSettingsOpen(true)} disabled={!speechOutputSupported} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm text-clinic-muted hover:border-clinic-blue disabled:opacity-50">
+                <button type="button" onClick={() => setSpeechSettingsOpen(true)} disabled={!speechOutputSupported} className="inline-flex min-h-11 items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm text-clinic-muted hover:border-clinic-blue disabled:opacity-50">
                   <Settings2 size={16} /> {t(lang, "voiceSettings")}
                   <span className="sr-only">{autoSpeak ? speechStateLabel() : t(lang, "speechOff")}</span>
                 </button>
@@ -2062,7 +2062,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                   <section className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
                     <div className="flex items-center justify-between gap-3">
                       <h4 className="font-semibold text-clinic-blue">{t(lang, "voiceSettings")}</h4>
-                      <button type="button" onClick={() => setSpeechSettingsOpen(false)} className="rounded-md px-2 py-1 text-sm hover:bg-clinic-paper" aria-label={t(lang, "close")}>×</button>
+                      <button type="button" onClick={() => setSpeechSettingsOpen(false)} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md px-2 py-1 text-sm hover:bg-clinic-paper" aria-label={t(lang, "close")}>×</button>
                     </div>
                     <label className="mt-4 flex items-center justify-between gap-3 text-sm"><span>{t(lang, "autoRead")}</span><input type="checkbox" checked={autoSpeak} onChange={(event) => setAutoSpeak(event.target.checked)} /></label>
                     <label className="mt-4 block text-sm"><span>{t(lang, "speechProvider")}</span><select value={speechProvider} onChange={(event) => setSpeechProvider(event.target.value as TtsProviderPreference)} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2"><option value="auto">{lang === "en" ? "Automatic (cloud with browser fallback)" : "自动（云语音，浏览器降级）"}</option><option value="browser">{t(lang, "browserVoice")}</option><option value="disabled">{t(lang, "disabled")}</option></select></label>
@@ -2079,10 +2079,10 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                     <label className="mt-4 block text-sm"><span>{t(lang, "speechRate")} {speechRate.toFixed(2)}</span><input className="mt-2 w-full" type="range" min="0.8" max="1.15" step="0.01" value={speechRate} onChange={(event) => setSpeechRate(Number(event.target.value))} /></label>
                     <label className="mt-4 block text-sm"><span>{t(lang, "speechPitch")} {speechPitch.toFixed(2)}</span><input className="mt-2 w-full" type="range" min="0.85" max="1.1" step="0.01" value={speechPitch} onChange={(event) => setSpeechPitch(Number(event.target.value))} /></label>
                     <div className="mt-5 flex flex-wrap gap-2">
-                      <button type="button" onClick={() => void speak(lang === "en" ? "Hello doctor, I can hear you clearly." : "医生您好，我能听清您的问题。", true)} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-3 py-2 text-sm text-white"><Volume2 size={15} />{t(lang, "testVoice")}</button>
-                      {speechState === "playing" || speechState === "fallback-browser" ? <button type="button" onClick={pauseSpeech} className="rounded-md border border-clinic-line p-2" title={t(lang, "pause")}><Pause size={16} /></button> : <button type="button" onClick={resumeSpeech} disabled={speechState !== "paused"} className="rounded-md border border-clinic-line p-2 disabled:opacity-50" title={t(lang, "resume")}><Play size={16} /></button>}
-                      <button type="button" onClick={() => stopSpeech()} className="rounded-md border border-clinic-line p-2" title={t(lang, "stop")}><Square size={16} /></button>
-                      <button type="button" onClick={() => lastSpokenText && void speak(lastSpokenText, true)} disabled={!lastSpokenText} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm"><RotateCcw size={15} />{t(lang, "replay")}</button>
+                      <button type="button" onClick={() => void speak(lang === "en" ? "Hello doctor, I can hear you clearly." : "医生您好，我能听清您的问题。", true)} className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-md bg-clinic-blue px-3 py-2 text-sm text-white"><Volume2 size={15} />{t(lang, "testVoice")}</button>
+                      {speechState === "playing" || speechState === "fallback-browser" ? <button type="button" onClick={pauseSpeech} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-clinic-line p-2" title={t(lang, "pause")}><Pause size={16} /></button> : <button type="button" onClick={resumeSpeech} disabled={speechState !== "paused"} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-clinic-line p-2 disabled:opacity-50" title={t(lang, "resume")}><Play size={16} /></button>}
+                      <button type="button" onClick={() => stopSpeech()} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-clinic-line p-2" title={t(lang, "stop")}><Square size={16} /></button>
+                      <button type="button" onClick={() => lastSpokenText && void speak(lastSpokenText, true)} disabled={!lastSpokenText} className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm"><RotateCcw size={15} />{t(lang, "replay")}</button>
                     </div>
                     <p
                       data-testid="voice-profile"
