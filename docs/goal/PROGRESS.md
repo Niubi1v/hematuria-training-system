@@ -676,3 +676,11 @@
 - 项目级override新增`postcss@<=8.5.11: 8.5.15`并更新锁文件；没有放宽审计等级或删除步骤。本地同命令由1 high失败恢复为`No known vulnerabilities found`。
 - 受影响回归通过：TypeScript、ESLint、82页同源生产构建、25资源bundle、343文件/历史secret scan，以及布局/报告/触控/双击/axe Playwright 11 passed、1互斥skip、0 failed。完整行为与85/3 Playwright因业务代码未变不重复执行。
 - 该依赖候选仍须原子提交、普通push和新HEAD Node 22 Actions复核；run `30084158980`不得作为本轮业务门禁结论。
+
+### 2026-07-24 QA 052–056远程门禁与Preview结论
+
+- 最终候选`d2dae6ebe8956885764b032314616dd2f59d50cb`已普通push，分支与远端ahead/behind为`0/0`。Actions run `30084546897`在Node 22.14.0完整success：依赖审计、生成幂等性、行为/医学/安全、TypeScript、ESLint、Playwright 85 passed/3互斥skip、82页静态构建、23个JS资产bundle scan及clean gate全部通过；Pages upload/deploy按Draft规则skipped。
+- Vercel Deployment和Preview Comments均success。受保护branch alias的真实黑盒11/11通过，health返回完整部署SHA `d2dae6ebe8956885764b032314616dd2f59d50cb`，Patient Service、Training State和Durable Attempt Store均configured；保护头只注入目标Preview origin，跨origin注入0，生成文件凭据扫描通过。
+- Preview直接验证P003零轮提交、P001中英文问答/双向切换/刷新/快速双击/进入第二阶段，以及P001英文纠错澄清、P037/P038上下文追问均保持DeepSeek `live_ai`且history-log 200。10次fresh session为10/10；中文live AI 5/5（回答P95 1378ms）、英文5/5（回答P95 1297ms），均低于3秒目标。
+- HEM-P1-053的问题级真实Preview来源缺口关闭。HEM-P1-052/055/054和HEM-P2-056的精确问题级Preview场景未被现有11项套件直接重放；它们当前为“本地专项通过 + Node 22完整远程门禁通过”，仍交由长期QA按原始复现矩阵独立复测，不虚报为线上专项通过。
+- PR #1继续Open/Draft，不转Ready、不合并main、不部署Production。`data/**`、医学事实、审核状态、419条模拟事实和42例`needs_revision`均未改变。

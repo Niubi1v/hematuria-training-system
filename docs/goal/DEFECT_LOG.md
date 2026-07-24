@@ -614,3 +614,15 @@
 - **失败证据**：Actions run `30084158980`、HEAD `2e42d64`的第一条真实失败为`pnpm audit --audit-level high`；`GHSA-6g55-p6wh-862q`命中`.>next>postcss@8.4.31`。后续行为、Playwright、build和clean gate均被跳过。
 - **最小修复**：在既有`pnpm-workspace.yaml`安全覆盖层将`postcss <=8.5.11`统一为锁定的8.5.15；只修改workspace override与lockfile，不改业务、医学数据或测试断言。
 - **本地证据**：高危审计0已知漏洞；TypeScript/ESLint、82页build、bundle、secret scan及相关Playwright 11/1/0通过。最终关闭条件为新HEAD的Node 22 Actions完整成功。
+
+### QA 2107b7b远程状态更新（2026-07-24）
+
+- **CI-P1-20260724**：`ENGINEERING CLOSED`。HEAD `d2dae6e`、Actions run `30084546897`在Node 22.14.0完整success；PostCSS高危公告已关闭，Playwright 85/3/0、82页build、bundle、secret和clean gate通过。
+- **HEM-P1-052**：`ENGINEERING CLOSED / REMOTE GATES PASS / QA PREVIEW RETEST REQUIRED`。23/23英文内部ID、29/29评分链由专项验证；标准Preview 11项未直接重放该Data Agent矩阵。
+- **HEM-P1-055**：`ENGINEERING CLOSED / REMOTE GATES PASS / QA PREVIEW RETEST REQUIRED`。58/58两种顺序由专项验证；标准Preview未直接重放“先失败后补齐”报告释放。
+- **HEM-P1-054**：`ENGINEERING CLOSED / REMOTE GATES PASS / QA PREVIEW RETEST REQUIRED`。786/618/42/56专项均通过；标准Preview未直接重放全部复合病史矩阵。
+- **HEM-P1-053**：`ENGINEERING CLOSED / REAL PREVIEW VERIFIED`。P001英文纠错/澄清、P037/P038多轮均为HTTP 200、DeepSeek `live_ai`、非fallback且history-log 200。
+- **HEM-P2-056**：`ENGINEERING CLOSED / REMOTE GATES PASS / QA PREVIEW RETEST REQUIRED`。desktop/mobile React key专项在Node 22全套中通过；标准Preview未直接进入该非终态报告卡场景。
+- **HEM-P2-044**：`ENGINEERING CLOSED EMULATION / BLOCKED_REAL_DEVICE`；真实手机触控与软键盘仍需人工。
+- **HEM-P2-028**：`ENGINEERING CLOSED / REMOTE GATES PASS / STAGE-7 PREVIEW RETEST REQUIRED`。当前Preview验证的是第一阶段快速双击；第7阶段debrief singleflight仍需长期QA在该SHA复测。
+- **冻结边界**：23个英文名称、28项元数据、161个来源、HEM-P0-001/023、419条模拟事实和42例`needs_revision`继续由来源/专家处理。

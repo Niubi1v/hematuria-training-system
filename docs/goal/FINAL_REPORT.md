@@ -574,3 +574,12 @@
 - HEAD `2e42d64`的Actions run `30084158980`在业务测试前被新增PostCSS高危公告阻断；只有setup/install执行成功，不能把后续skipped写成测试失败或通过。
 - 最小修复只把Next嵌套的PostCSS 8.4.31提升到项目已使用的8.5.15。高危审计现为0已知漏洞，相关构建、CSS/UI、axe、bundle和secret门禁通过；没有修改医学事实、审批状态、session安全或评分规则。
 - 该恢复候选须普通push并等待精确新HEAD的Node 22 Actions；若远程继续失败，读取第一条真实日志继续修复。PR保持Draft，Vercel/Production职责不变。
+
+### QA 2107b7b整改最终远程结论（2026-07-24）
+
+- 最终应用/依赖候选`d2dae6ebe8956885764b032314616dd2f59d50cb`已通过Actions run `30084546897`和Vercel。Node 22.14.0下依赖审计、生成幂等性、行为、医学、安全、TypeScript、ESLint、Playwright 85/3/0、82页build、23 JS bundle、repository secret scan及clean gate全部成功；Pages按Draft规则跳过。
+- 真实受保护Preview黑盒11/11通过，health精确返回该SHA且Training State/Durable Attempt Store configured。P003零轮、P001中英文/切换/刷新/双击/第二阶段、P001英文纠错澄清及P037/P038多轮均成功；目标Patient请求为DeepSeek `live_ai`且history-log 200。10次初始化10/10，中文与英文live AI各5/5，回答P95分别1378ms和1297ms。
+- HEM-P1-053现有真实Preview来源缺口关闭。HEM-P1-052、055、054与HEM-P2-056已通过各自专项、本地完整回归和Node 22远程门禁，但现有Preview 11项没有直接重放其完整问题级矩阵；长期QA应从`d2dae6e`复测23/29、58×两种顺序、786/618/42/56及非终态报告卡。
+- HEM-P2-028第7阶段singleflight需在该SHA继续做真实Preview双击复测；HEM-P2-044仍需真机。23个英文名称、28项元数据、161个来源、HEM-P0-001/023、419条模拟事实与42例`needs_revision`均未自动处理。
+- 提交链：`fe93b0e`（052/055）、`ad49132`（054/053）、`d492cea`（056）、`f6c5269`（044）、`cda359e`（028）、`d2dae6e`（PostCSS高危审计恢复）。按影响范围使用普通`git revert <sha>`回滚，不得reset、rebase或force push。
+- PR #1仍为Open/Draft；不转Ready、不合并main、不部署Production。长期QA的准确起始应用HEAD为`d2dae6ebe8956885764b032314616dd2f59d50cb`，若纳入本段证据文档提交，则以包含该应用HEAD的后续文档-only HEAD作为仓库起点，但应用代码基线仍为`d2dae6e`。

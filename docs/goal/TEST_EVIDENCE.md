@@ -1304,3 +1304,22 @@ P001新增三轮及P037/P038各两轮的每次`/api/agent-chat/`均200、`genera
 | 相关Playwright | 11 passed、1互斥skip、0 failed；报告、44px触控、stage1/7双击、axe覆盖 |
 
 业务代码没有因依赖审计修复而变化，因此没有重复完整行为链和85/3 Playwright；新HEAD远程Node 22仍为待验证。
+
+## QA 052–056远程与真实Preview证据（2026-07-24）
+
+| 项目 | 结果 |
+|---|---|
+| 最终候选 | `d2dae6ebe8956885764b032314616dd2f59d50cb`；本地/远端ahead-behind `0/0` |
+| Actions | run `30084546897`，Node 22.14.0，完整success |
+| Node 22 Playwright | 85 passed、3项目互斥skip、0 failed，7.1分钟 |
+| Node 22其余门禁 | dependency audit、生成幂等性、行为/医学/安全、TypeScript、ESLint、secret、82页build、23 JS bundle、clean gate全部success |
+| Pages | artifact与deploy按Draft规则skipped |
+| Vercel | Deployment success；Preview Comments success；部署health SHA=`d2dae6e...` |
+| `pnpm run test:e2e:preview` | exit 0；11/11通过；生成文件凭据扫描通过 |
+| Preview保护 | same-origin注入；跨origin注入0；未输出Cookie、Authorization、token、签名或bypass值 |
+| Preview配置 | `/api/health/` 200；Patient Service、Training State、Durable Attempt Store均configured |
+| 第一阶段流程 | P003零轮；P001中英文、双向切换、刷新、快速双击、进入第二阶段均通过 |
+| Patient来源 | P001纠错/澄清、P037/P038追问均为DeepSeek `live_ai`、非fallback、history-log 200 |
+| Preview稳定性 | fresh session 10/10；中文live AI 5/5，回答P95 1378ms；英文5/5，回答P95 1297ms |
+
+证据边界：标准Preview 11项直接覆盖HEM-P1-053来源与基础阶段流程，但没有直接重放HEM-P1-052的23/29矩阵、HEM-P1-055的58×两种顺序、HEM-P1-054的786/618矩阵、HEM-P2-056非终态报告卡或HEM-P2-028第7阶段双击。上述项目有本地专项和Node 22完整门禁证据，问题级真实Preview复测仍交由长期QA，不登记为已在线专项验证。
