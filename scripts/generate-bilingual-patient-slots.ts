@@ -25,7 +25,7 @@ const blockedCanonicalKeys = new Set(
 );
 const value = (...items: unknown[]) => items.map((item) => String(item || "").trim()).find(Boolean) || "";
 const compact = (text: string) => String(text || "").replace(/\s+/g, "");
-const genericUnknown = (text: string) => /不太清楚|没(?:有)?特别注意|没留意|记不(?:太)?清|记不准确|说不准|一时记不全|未诉|未主动诉|需追问|需主动询问|不详|未提供|无法确认|有没有.+记|可有|可伴|可无/.test(compact(text));
+const genericUnknown = (text: string) => /不太清楚|没(?:有)?特别注意|没留意|记不(?:太)?清|记不准确|说不准|一时记不全|未诉|未主动诉|需追问|需主动询问|不详|未提供|无法确认|有没有.+记|可有|可伴|可无|可能|疑似/.test(compact(text));
 
 type Polarity = "positive" | "negative" | "unknown";
 
@@ -59,7 +59,7 @@ const negativePatterns: Partial<Record<CanonicalSlotId, RegExp>> = {
 
 const positivePatterns: Partial<Record<CanonicalSlotId, RegExp>> = {
   clots: /(?:有|出现|伴)[^。；]*血块|血块/,
-  pain: /(?:疼痛|腰痛|腹痛|憋胀|酸胀痛|胀痛|隐痛|绞痛|刺痛|痛感)/,
+  pain: /(?:疼痛|腰痛|腹痛|不适|憋胀|酸胀痛|胀痛|隐痛|绞痛|刺痛|痛感)/,
   dysuria: /尿痛|小便[^。；]*(?:疼|痛)|排尿[^。；]*(?:疼|痛)|烧灼/,
   flank_pain: /肾绞痛|[左右双侧]*腰[^。；]*(?:痛|疼|酸胀|不适)|肾区痛/,
   renal_colic: /绞痛/,
@@ -92,7 +92,7 @@ function polarity(slot: CanonicalSlotId, text: string): Polarity {
   if (slot === "recent_uri" && /(?:无|没有|否认)[^。；]*(?:感冒|咽痛|扁桃体炎|上呼吸道感染|上感)后[^。；]*(?:茶色尿|血尿)/.test(source)) return "unknown";
   if (negativePatterns[slot]?.test(source)) return "negative";
   if (positivePatterns[slot]?.test(source)) return "positive";
-  if (/^(?:是|有|轻度|中度|重度)$/.test(source)) return "positive";
+  if (/^(?:是|有|少量|轻度|中度|重度)$/.test(source)) return "positive";
   return "unknown";
 }
 
@@ -146,7 +146,7 @@ function naturalBinaryZh(slot: CanonicalSlotId, text: string) {
     recent_uri: "这次情况前后有感冒、咽痛或扁桃体炎。",
     triggers: "发作前有明确诱因。"
   };
-  if (slot === "renal_colic" || /^(?:否|无|是|有|轻度|中度|重度)$/.test(compact(text)) || /(?:尿频|尿急|尿痛|排尿困难)(?:是|否)(?:；|$)/.test(compact(text))) {
+  if (slot === "renal_colic" || slot === "radiating_pain" || /^(?:否|无|是|有|少量|轻度|中度|重度)$/.test(compact(text)) || /(?:尿频|尿急|尿痛|排尿困难)(?:是|否)(?:；|$)/.test(compact(text))) {
     return (state === "negative" ? negative[slot] : positive[slot]) || text;
   }
   return text;
@@ -169,7 +169,7 @@ const medicationNames: Record<string, string> = {
   缬沙坦: "valsartan", 阿司匹林: "aspirin", 氯吡格雷: "clopidogrel", 华法林: "warfarin", 利伐沙班: "rivaroxaban",
   达比加群: "dabigatran", 阿哌沙班: "apixaban", 二甲双胍: "metformin", 胰岛素: "insulin", 非那雄胺: "finasteride", 坦索罗辛: "tamsulosin",
   厄贝沙坦: "irbesartan", 达格列净: "dapagliflozin", 硝苯地平: "nifedipine", 贝那普利: "benazepril", 氨氯地平: "amlodipine",
-  他汀: "a statin", 降压药: "blood-pressure medicine"
+  他汀: "a statin", 别嘌醇: "allopurinol", 降压药: "blood-pressure medicine", 降糖药: "diabetes medication"
 };
 function translateMedication(text: string) {
   let translated = text;
@@ -228,6 +228,8 @@ function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en"
   const rawClots = value(pfp.clots, illness.clots, caseData.patientAnswers?.clots);
   const rawFlankPain = value(pfp.flankPain, illness.flankPain);
   const rawPainDetail = value(caseData.patientAnswers?.pain, illness.pain, pfp.painRelation, illness.flankPain);
+  const rawRadiatingPain = firstMatching(/放射|向[^。；]*(?:下腹|腹股沟|会阴)/, illness.pain, illness.onset, pfp.painRelation)
+    || rawPainDetail;
   const renalMarker = String(pfp.subjectiveHistory || "").match(/肾绞痛([^、，。；]*)/)?.[1]?.trim() || "";
   const rawRenalColic = firstMatching(/绞痛/, illness.pain, pfp.painRelation)
     || (renalMarker ? `肾绞痛${renalMarker}` : "");
@@ -247,7 +249,7 @@ function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en"
     pain: naturalBinaryZh("pain", rawPainDetail), dysuria: naturalBinaryZh("dysuria", dysuriaZh),
     flank_pain: naturalBinaryZh("flank_pain", rawFlankPain),
     renal_colic: naturalBinaryZh("renal_colic", rawRenalColic),
-    radiating_pain: naturalBinaryZh("radiating_pain", rawPainDetail),
+    radiating_pain: naturalBinaryZh("radiating_pain", rawRadiatingPain),
     urinary_frequency: naturalBinaryZh("urinary_frequency", frequencyZh),
     urinary_urgency: naturalBinaryZh("urinary_urgency", urgencyZh),
     voiding_difficulty: naturalBinaryZh("voiding_difficulty", rawVoiding),
@@ -320,7 +322,7 @@ function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en"
     stone_history: sh?.stoneHistory?.patientAnswerEn, uti_history: sh?.urinaryInfectionHistory?.patientAnswerEn, tumor_history: sh?.malignancyHistory?.patientAnswerEn,
     urinary_procedure_history: sh?.urinaryProcedureHistory?.patientAnswerEn, surgery_history: sh?.surgeryHistory?.patientAnswerEn,
     anticoagulant: sh?.anticoagulantUse?.patientAnswerEn, antiplatelet: sh?.antiplateletUse?.patientAnswerEn,
-    medications: translateMedication(sh?.medicationAnswerZh || ""), smoking: sh?.smokingHistory?.patientAnswerEn, alcohol: sh?.alcoholHistory?.patientAnswerEn,
+    medications: sh?.medicationAnswerEn || translateMedication(sh?.medicationAnswerZh || ""), smoking: sh?.smokingHistory?.patientAnswerEn, alcohol: sh?.alcoholHistory?.patientAnswerEn,
     occupation_exposure: sh?.occupationalExposure?.patientAnswerEn, gynecologic_contamination: sh?.menstrualHistory?.patientAnswerEn,
     family_history: genericUnknown(source) ? unknownAnswer(slot, "en") : sh?.familyHistory?.patientAnswerEn,
     bleeding_tendency: unknown ? unknownAnswer(slot, "en") : negative ? "I have not had nosebleeds, gum bleeding, unusual bruising, or purpura." : "I have had bleeding or bruising elsewhere.",

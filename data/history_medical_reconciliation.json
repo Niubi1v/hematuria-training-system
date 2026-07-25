@@ -21,6 +21,48 @@
       "policyReference": "server/bilingualConflictQuarantine.js"
     }
   ],
+  "sourcePrecedenceResolutions": [
+    {
+      "resolutionId": "HISTORY-SOURCE-001",
+      "caseId": "HX-ADD-017",
+      "displayCaseId": "P029",
+      "field": "medication",
+      "disposition": "RESOLVED_BY_SOURCE_PRECEDENCE",
+      "authoritativeSource": "Hematuria_AI_Training_Final_v1.4_RELEASE_P013-P042精细病史扩写版_医学审核修订版.xlsx / 42例临床问诊病例!L32 and P013_P042扩写病例!F18",
+      "originalDerivedValue": "阿司匹林、华法林、利伐沙班、坦索罗辛",
+      "authoritativeValue": "坦索罗辛、阿司匹林；阿司匹林适应证和末次服药时间需核实。否认华法林、利伐沙班等抗凝药。",
+      "patientValueZh": "我长期服用阿司匹林、坦索罗辛。",
+      "patientValueEn": "I regularly take aspirin and tamsulosin.",
+      "riskFactorAnticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我在服用阿司匹林。",
+      "reason": "The revised original workbook explicitly denies warfarin and rivaroxaban; the derived case projection was stale."
+    },
+    {
+      "resolutionId": "HISTORY-SOURCE-002",
+      "caseId": "HX-ADD-014",
+      "displayCaseId": "P026",
+      "field": "medication",
+      "disposition": "RESOLVED_BY_SOURCE_PRECEDENCE",
+      "authoritativeSource": "sourceFacts.medication copied from the revised original workbook",
+      "originalDerivedValue": "无长期用药",
+      "authoritativeValue": "口服降糖药，具体品种和依从性需核实；反复使用过抗菌药，药名与疗程不详。否认抗凝和抗血小板药。",
+      "patientValueZh": "我长期服用降糖药，具体药名记不太清。",
+      "patientValueEn": "I take diabetes medication regularly, but I cannot recall the exact name.",
+      "reason": "The source explicitly records oral diabetes medication; the derived medication list omitted the drug class."
+    },
+    {
+      "resolutionId": "HISTORY-SOURCE-003",
+      "caseId": "HX-ADD-015",
+      "displayCaseId": "P027",
+      "field": "medication",
+      "disposition": "RESOLVED_BY_SOURCE_PRECEDENCE",
+      "authoritativeSource": "sourceFacts.medication copied from the revised original workbook",
+      "originalDerivedValue": "无长期用药",
+      "authoritativeValue": "别嘌醇服用不规律；否认抗凝和抗血小板药。",
+      "patientValueZh": "我在服用别嘌醇，但吃得不规律。",
+      "patientValueEn": "I take allopurinol, but not consistently.",
+      "reason": "The source explicitly records irregular allopurinol use; the derived medication list omitted it."
+    }
+  ],
   "blockedMedicalHistory": [
     {
       "reviewItemId": "HISTORY-MED-001",
