@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { BookOpen, ShieldAlert, Shuffle, Stethoscope } from "lucide-react";
 import { useEffect, useState } from "react";
+import { readStringStorage } from "@/src/lib/safeStorage";
 
 export default function HomePage() {
   const [lang, setLang] = useState<"zh" | "en">("zh");
   useEffect(() => {
-    if (localStorage.getItem("hematuria-language") === "en") setLang("en");
+    if (readStringStorage("hematuria-language").value === "en") setLang("en");
     const listener = (event: Event) => setLang((event as CustomEvent<"zh" | "en">).detail);
     window.addEventListener("hematuria-language-change", listener);
     return () => window.removeEventListener("hematuria-language-change", listener);
