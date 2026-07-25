@@ -156,6 +156,12 @@ function unknownFactReason(slot) {
   return "bilingual_value_mismatch";
 }
 
+function patientSlotIsUnknown(slot) {
+  const zh = String(slot?.patientAnswerZh || "");
+  const en = String(slot?.patientAnswerEn || "");
+  return /没(?:有)?(?:特别)?(?:注意|留意)|未注意|记不太清|不详|not noticed|not sure|do not know|cannot recall/i.test(`${zh} ${en}`);
+}
+
 function naturalDysuriaAnswer(value, language) {
   if (value === true) return language === "en" ? "Yes, it hurts when I urinate." : "有，尿的时候会痛。";
   if (value === false) return language === "en" ? "No, it does not hurt when I urinate." : "没有，小便时不痛。";
@@ -250,7 +256,12 @@ function conciseLegacySlotAnswer(caseSlots, slotId, language, question) {
   if (language === "zh" && durationZh) return `大约${durationZh}前开始的。`;
 
   const chiefEn = String(caseSlots.chief_complaint?.patientAnswerEn || "");
-  const durationEn = chiefEn.match(/\bfor\s+([^.,;]+)$/i)?.[1]?.trim();
+  const durationPatternEn = "((?:(?:about|around|over|more than|nearly|almost)\\s+)?(?:half(?:\\s+a)?|\\d+(?:\\.\\d+)?)\\s+(?:hours?|days?|weeks?|months?|years?))";
+  const durationMatchesEn = [
+    ...Array.from(chiefEn.matchAll(new RegExp(`\\bfor\\s+${durationPatternEn}\\b`, "gi"))),
+    ...Array.from(chiefEn.matchAll(new RegExp(`\\b${durationPatternEn}\\s+ago\\b`, "gi")))
+  ].sort((left, right) => Number(left.index || 0) - Number(right.index || 0));
+  const durationEn = durationMatchesEn.at(-1)?.[1]?.trim();
   if (language === "en" && durationEn) return `I first noticed it ${durationEn} ago.`;
 
   return slot?.[language === "en" ? "patientAnswerEn" : "patientAnswerZh"];
@@ -286,6 +297,9 @@ function buildCanonicalPatientFacts(caseId, caseSlots, priorityMatches, legacyMa
     : matchedSlotIds;
   if (!slotIds.length) return null;
   const blockedSlotIds = new Set(slotIds.filter((slotId) => blockedCanonicalKeys.has(`${caseId}:${slotId}`)));
+  const unknownLegacySlotIds = new Set(
+    slotIds.filter((slotId) => !prioritySourceSlots.has(slotId) && patientSlotIsUnknown(caseSlots[slotId]))
+  );
   const factValues = {};
   const factValueReasons = {};
   const phaseValue = prioritySourceSlots.has("hematuria_phase")
@@ -325,11 +339,11 @@ function buildCanonicalPatientFacts(caseId, caseSlots, priorityMatches, legacyMa
   ];
   const collectableFacts = [
     ...priorityMatches.filter((item) => factValues[item.intentKey] !== "unknown").map((item) => item.intentKey),
-    ...slotIds.filter((slotId) => !prioritySourceSlots.has(slotId) && !blockedSlotIds.has(slotId))
+    ...slotIds.filter((slotId) => !prioritySourceSlots.has(slotId) && !blockedSlotIds.has(slotId) && !unknownLegacySlotIds.has(slotId))
   ];
   const collectableSlotIds = [...new Set([
     ...priorityMatches.filter((item) => factValues[item.intentKey] !== "unknown").map((item) => item.sourceSlotId),
-    ...slotIds.filter((slotId) => !prioritySourceSlots.has(slotId) && !blockedSlotIds.has(slotId))
+    ...slotIds.filter((slotId) => !prioritySourceSlots.has(slotId) && !blockedSlotIds.has(slotId) && !unknownLegacySlotIds.has(slotId))
   ])];
   const unresolvedReasons = Object.values(factValueReasons).filter((reason) => reason !== "known");
   const provenances = [...new Set(slotIds.map((slotId) => caseSlots[slotId]?.provenance).filter(Boolean))];
@@ -353,9 +367,11 @@ function buildCanonicalPatientFacts(caseId, caseSlots, priorityMatches, legacyMa
     reviewerStatus: teacherReviewRequired ? "teacher_review_required" : "not_required",
     unresolvedReason: blockedSlotIds.size
       ? "medical_history_pending_review"
+      : unknownLegacySlotIds.size
+      ? "patient_not_observed"
       : unresolvedReasons.includes("unsafe_deterministic_answer") ? "unsafe_deterministic_answer" : unresolvedReasons.length ? "canonical_fact_unknown" : "",
     answerSource: "case_bilingual_slot",
-    confidence: Object.values(factValues).some((value) => value === "unknown") ? 0.5 : 0.99,
+    confidence: unknownLegacySlotIds.size || Object.values(factValues).some((value) => value === "unknown") ? 0.5 : 0.99,
     safetyFlags: [],
     fallbackReason: ""
   };

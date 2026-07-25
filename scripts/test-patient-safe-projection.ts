@@ -66,7 +66,7 @@ async function main() {
         assert.ok(result.safetyFlags?.includes("deterministic_answer_blocked"));
         continue;
       }
-      if (result.fallbackReason === "canonical_fact_unknown") {
+      if (result.fallbackReason === "canonical_fact_unknown" || result.fallbackReason === "patient_not_observed") {
         canonicalUnknown += 1;
         assert.ok(canonical, `${caseData.id}/${probe.id} unknown must come from canonical governance`);
         assert.ok(Object.values(canonical.factValues || {}).every((value) => value === "unknown"));

@@ -76,7 +76,7 @@ async function main() {
     if (result.fallbackReason === "unsafe_deterministic_answer") {
       assert.deepEqual(result.matchedSlotIds || [], [], `${probe.id} unsafe source must remain uncollected`);
       assert.ok(result.safetyFlags?.includes("deterministic_answer_blocked"), `${probe.id} safety boundary`);
-    } else if (result.fallbackReason === "canonical_fact_unknown") {
+    } else if (result.fallbackReason === "canonical_fact_unknown" || result.fallbackReason === "patient_not_observed") {
       assert.ok(canonical, `${probe.id} unknown must remain under canonical governance`);
       assert.ok(Object.values(canonical.factValues || {}).every((value) => value === "unknown"));
       assert.deepEqual(canonical.collectableSlotIds || [], []);
