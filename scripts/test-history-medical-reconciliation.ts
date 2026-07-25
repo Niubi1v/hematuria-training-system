@@ -5,6 +5,15 @@ const require = createRequire(import.meta.url);
 const cases = require("../data/cases.json") as Array<{
   id: string;
   medicalReview?: { status?: string };
+  medication?: string;
+  sourceFacts?: { medication?: string };
+  structuredHistory?: {
+    anticoagulantUse?: { status?: string; provenance?: string; teacherReviewRequired?: boolean };
+    antiplateletUse?: { status?: string; provenance?: string; teacherReviewRequired?: boolean };
+    medicationList?: Array<{ name: string }>;
+    medicationAnswerZh?: string;
+    medicationAnswerEn?: string;
+  };
 }>;
 const slots = require("../data/patient_slots_bilingual.json") as Record<string, Record<string, {
   patientAnswerZh: string;
@@ -101,6 +110,37 @@ assert.match(slots["HX-ADD-010"].urine_color.patientAnswerEn, /looked normal|onl
 assert.match(slots["HX-ADD-010"].fever_chills.patientAnswerEn, /have had fever/i);
 assertBilingualUnknown("HX-ADD-012", "renal_colic");
 
+assert.match(slots["HX-ADD-013"].hematuria_phase.patientAnswerEn, /near the end/i);
+assert.match(slots["HX-ADD-013"].clots.patientAnswerEn, /noticed blood clots/i);
+assert.match(slots["HX-ADD-013"].pain.patientAnswerEn, /have pain/i);
+assert.match(slots["HX-ADD-014"].medications.patientAnswerEn, /diabetes medication/i);
+assert.match(slots["HX-ADD-014"].medications.patientAnswerEn, /cannot recall the exact name/i);
+assert.match(slots["HX-ADD-015"].renal_colic.patientAnswerEn, /have had severe colicky/i);
+assert.match(slots["HX-ADD-015"].radiating_pain.patientAnswerEn, /radiates.*lower abdomen|radiates.*groin/i);
+assert.match(slots["HX-ADD-015"].medications.patientAnswerEn, /allopurinol/i);
+assert.match(slots["HX-ADD-015"].medications.patientAnswerEn, /not consistently/i);
+assertBilingualUnknown("HX-ADD-016", "clots");
+assertBilingualUnknown("HX-ADD-017", "clots");
+assert.match(slots["HX-ADD-017"].anticoagulant.patientAnswerEn, /do not take anticoagulants/i);
+assert.match(slots["HX-ADD-017"].antiplatelet.patientAnswerEn, /take antiplatelet/i);
+assert.doesNotMatch(slots["HX-ADD-017"].medications.patientAnswerEn, /warfarin|rivaroxaban/i);
+assert.match(slots["HX-ADD-017"].medications.patientAnswerEn, /aspirin/i);
+assert.match(slots["HX-ADD-017"].medications.patientAnswerEn, /tamsulosin/i);
+assertBilingualUnknown("HX-ADD-018", "hematuria_phase");
+assert.match(slots["HX-ADD-018"].urine_color.patientAnswerEn, /looked normal|only on testing/i);
+
+const p026 = cases.find((item) => item.id === "HX-ADD-014");
+assert.deepEqual(p026?.structuredHistory?.medicationList?.map((item) => item.name), ["降糖药"]);
+const p027 = cases.find((item) => item.id === "HX-ADD-015");
+assert.deepEqual(p027?.structuredHistory?.medicationList?.map((item) => item.name), ["别嘌醇"]);
+const p029 = cases.find((item) => item.id === "HX-ADD-017");
+assert.deepEqual(p029?.structuredHistory?.medicationList?.map((item) => item.name), ["阿司匹林", "坦索罗辛"]);
+assert.equal(p029?.structuredHistory?.anticoagulantUse?.status, "absent");
+assert.equal(p029?.structuredHistory?.anticoagulantUse?.provenance, "source");
+assert.equal(p029?.structuredHistory?.anticoagulantUse?.teacherReviewRequired, false);
+assert.equal(p029?.structuredHistory?.antiplateletUse?.status, "present");
+assert.match(p029?.sourceFacts?.medication || "", /否认华法林、利伐沙班/);
+
 for (const probe of [
   { caseId: "HX-ADD-007", zh: "这是肉眼血尿还是镜下血尿？", en: "Was this visible blood or microscopic hematuria?" },
   { caseId: "HX-ADD-012", zh: "这是肾绞痛吗？", en: "Did you have renal colic?" }
@@ -125,4 +165,4 @@ for (const language of ["zh", "en"] as const) {
   assert.match(surgery.replyText, language === "zh" ? /记不(?:太)?清|没特别注意/ : /cannot recall|not sure|did not notice/i);
 }
 
-console.log("History medical reconciliation regression passed for the first 7-case batch and blocked-source governance.");
+console.log("History medical reconciliation regression passed through P030 with blocked-source governance.");

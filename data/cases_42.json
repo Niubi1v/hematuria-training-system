@@ -31726,7 +31726,7 @@
     "pastHistory": "有糖尿病病史，口服降糖药，血糖控制情况需核实；既往反复尿路感染，之前未明确诊断结石，后续影像提示鹿角形结石。否认泌尿操作、肿瘤、放化疗及慢性肝病、结核。无手术、输血史，无已知药物过敏；结石史：结石史：否认已知，但影像发现；尿路感染史：感染史：反复UTI；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
     "personalHistory": "我不吸烟。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "无长期用药",
+    "medication": "降糖药",
     "urineTestResult": "尿WBC+++，RBC++，尿培养阳性；尿pH偏碱可见",
     "investigations": [
       {
@@ -32828,9 +32828,18 @@
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
-      "medicationList": [],
-      "medicationAnswerZh": "我没有长期服药。",
-      "medicationAnswerEn": "I do not take any long-term medication."
+      "medicationList": [
+        {
+          "name": "降糖药",
+          "dose": "",
+          "frequency": "",
+          "indication": "",
+          "provenance": "source",
+          "teacherReviewRequired": false
+        }
+      ],
+      "medicationAnswerZh": "我长期服用降糖药，具体药名记不太清。",
+      "medicationAnswerEn": "I take diabetes medication regularly, but I cannot recall the exact name."
     },
     "schemaVersion": "2.2.0",
     "reproductiveHistory": "未提供（需在问诊中确认）",
@@ -32998,7 +33007,7 @@
     "pastHistory": "有痛风病史，既往曾发现或排出小结石，未做结石成分分析。否认反复尿路感染、泌尿操作、肿瘤及慢性肾病。无高血压、糖尿病、冠心病、脑卒中、肝病、结核；无手术、输血史，无已知过敏。既往肾功能资料不全，无肠道手术、甲状旁腺疾病或长期补钙史；未接受规范结石代谢评估。既往无感染性梗阻或急性肾损伤；结石史：结石史：痛风/既往小结石；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
     "personalHistory": "吸烟，具体每天多少支记不准，累计约15包年。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "家族中没有明确的痛风性结石、早发反复结石或遗传性肾病。",
-    "medication": "无长期用药",
+    "medication": "别嘌醇",
     "urineTestResult": "尿RBC++；尿pH偏酸；尿酸升高",
     "investigations": [
       {
@@ -34089,9 +34098,18 @@
         "provenance": "source",
         "teacherReviewRequired": false
       },
-      "medicationList": [],
-      "medicationAnswerZh": "我没有长期服药。",
-      "medicationAnswerEn": "I do not take any long-term medication."
+      "medicationList": [
+        {
+          "name": "别嘌醇",
+          "dose": "",
+          "frequency": "",
+          "indication": "",
+          "provenance": "source",
+          "teacherReviewRequired": false
+        }
+      ],
+      "medicationAnswerZh": "我在服用别嘌醇，但吃得不规律。",
+      "medicationAnswerEn": "I take allopurinol, but not consistently."
     },
     "schemaVersion": "2.2.0",
     "reproductiveHistory": "不适用",
@@ -35551,14 +35569,14 @@
       "stoneHistory": "以前没有得过泌尿系结石。",
       "infectionHistory": "以前没有反复尿路感染。",
       "trauma": "以前有过相关外伤。",
-      "anticoagulants": "我在服用华法林、利伐沙班。 我在服用阿司匹林。",
+      "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我在服用阿司匹林。",
       "tumorHistory": "以前没有得过肿瘤。",
       "familyHistory": "家里没有人得过类似血尿或遗传性肾病。"
     },
     "pastHistory": "既往诊断或高度怀疑良性前列腺增生，长期服用坦索罗辛。否认高血压、糖尿病、脑卒中、肝病、结核、结石和反复尿路感染。此次为已知导尿操作；此前无泌尿手术或肿瘤史。无手术、输血史，无已知过敏；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：导尿操作；肿瘤史：肿瘤/放化疗：否",
     "personalHistory": "我不吸烟。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "阿司匹林、华法林、利伐沙班、坦索罗辛",
+    "medication": "阿司匹林、坦索罗辛",
     "urineTestResult": "尿RBC大量；注意血红蛋白变化",
     "investigations": [
       {
@@ -36464,7 +36482,7 @@
         "stoneHistory": "结石史：否",
         "infectionHistory": "感染史：否",
         "trauma": "外伤/操作：导尿操作",
-        "anticoagulants": "阿司匹林、坦索罗辛",
+        "anticoagulants": "我没有服用华法林、利伐沙班等抗凝药。 我在服用阿司匹林。",
         "tumorHistory": "肿瘤/放化疗：否",
         "familyHistory": "家族史：无"
       },
@@ -36626,9 +36644,9 @@
         "teacherReviewRequired": true
       },
       "anticoagulantUse": {
-        "status": "present",
-        "patientAnswerZh": "我在服用华法林、利伐沙班。",
-        "patientAnswerEn": "I take an anticoagulant.",
+        "status": "absent",
+        "patientAnswerZh": "我没有服用华法林、利伐沙班等抗凝药。",
+        "patientAnswerEn": "I do not take anticoagulants.",
         "provenance": "source",
         "teacherReviewRequired": false
       },
@@ -36670,22 +36688,6 @@
           "teacherReviewRequired": false
         },
         {
-          "name": "华法林",
-          "dose": "",
-          "frequency": "",
-          "indication": "",
-          "provenance": "source",
-          "teacherReviewRequired": false
-        },
-        {
-          "name": "利伐沙班",
-          "dose": "",
-          "frequency": "",
-          "indication": "",
-          "provenance": "source",
-          "teacherReviewRequired": false
-        },
-        {
           "name": "坦索罗辛",
           "dose": "",
           "frequency": "",
@@ -36694,8 +36696,8 @@
           "teacherReviewRequired": false
         }
       ],
-      "medicationAnswerZh": "我长期服用阿司匹林、华法林、利伐沙班、坦索罗辛。",
-      "medicationAnswerEn": "I regularly take aspirin and warfarin and rivaroxaban and tamsulosin."
+      "medicationAnswerZh": "我长期服用阿司匹林、坦索罗辛。",
+      "medicationAnswerEn": "I regularly take aspirin and tamsulosin."
     },
     "schemaVersion": "2.2.0",
     "reproductiveHistory": "不适用",
