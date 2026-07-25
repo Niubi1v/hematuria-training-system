@@ -26,16 +26,16 @@ type Polarity = "positive" | "negative" | "unknown";
 const negativePatterns: Partial<Record<CanonicalSlotId, RegExp>> = {
   clots: /^(?:否|无)$|(?:无|没有|未见|否认)[^。；]*血块/,
   pain: /无痛性|^(?:否|无)$|(?:无|没有|否认)[^。；]*(?:疼痛|痛|疼)/,
-  dysuria: /无痛性|小便时不痛|^(?:否|无)$|(?:无|没有|否认)[^。；]*(?:尿痛|烧灼|小便疼|排尿疼)/,
+  dysuria: /无痛性|小便时不痛|尿痛否|^(?:否|无)$|(?:无|没有|否认)[^。；]*(?:尿痛|烧灼|小便疼|排尿疼)/,
   flank_pain: /^(?:否|无)$|(?:无|没有|否认)[^。；]*(?:腰痛|腰部疼痛|腰背部.*疼痛|肾区痛)/,
-  renal_colic: /^(?:否|无)$|不是典型[^。；]*绞痛|非典型[^。；]*绞痛|(?:无|没有|否认)[^。；]*(?:绞痛|腰痛|腰部疼痛|腰背部.*疼痛)/,
+  renal_colic: /肾绞痛否|^(?:否|无)$|不呈[^。；]*绞痛|不是典型[^。；]*绞痛|非典型[^。；]*绞痛|(?:无|没有|否认)[^。；]*(?:绞痛|腰痛|腰部疼痛|腰背部.*疼痛)/,
   radiating_pain: /^(?:否|无)$|(?:无|没有|否认)[^。；]*(?:放射|腰痛|腰部疼痛|腰背部.*疼痛)|不向[^。；]*放射/,
-  urinary_frequency: /^(?:否|无)$|(?:无|没有|否认)[^。；]*尿频|次数没有增多/,
-  urinary_urgency: /^(?:否|无)$|(?:无|没有|否认)[^。；]*尿急/,
-  voiding_difficulty: /^(?:否|无)$|(?:无|没有|否认)[^。；]*排尿困难|排尿不费力/,
+  urinary_frequency: /尿频否|^(?:否|无)$|(?:无|没有|否认)[^。；]*尿频|次数没有增多|没有[^。；]*小便次数[^。；]*增多/,
+  urinary_urgency: /尿急否|^(?:否|无)$|(?:无|没有|否认)[^。；]*尿急|没有[^。；]*(?:突然尿急|憋不住尿)/,
+  voiding_difficulty: /排尿困难否|^(?:否|无)$|(?:无|没有|否认)[^。；]*排尿困难|排尿不费力/,
   retention: /^(?:否|无)$|(?:无|没有|否认)[^。；]*(?:尿潴留|尿不出来)/,
   fever_chills: /^(?:否|无)$|(?:无|没有|否认)[^。；]*(?:发热|发烧|寒战)/,
-  recent_uri: /^(?:否|无)$|(?:无|没有|否认)[^。；]*(?:近期感冒|最近感冒|咽痛|扁桃体炎|上呼吸道感染)/,
+  recent_uri: /^(?:否|无)$|(?:近期|最近)(?:无|没有)[^。；]*(?:感冒|咽痛|扁桃体炎|上呼吸道感染)|(?:无|没有|否认)(?:近期|最近)[^。；]*(?:感冒|咽痛|扁桃体炎|上呼吸道感染)/,
   triggers: /^(?:否|无)$|无明显诱因|(?:无|没有|否认)[^。；]*(?:外伤|剧烈运动|性生活|尿路操作|诱因)/,
   stone_history: /(?:无|没有|否认|从未)[^。；]*(?:结石|肾结石|输尿管结石)/,
   uti_history: /(?:无|没有|否认|从未)[^。；]*(?:尿路感染|膀胱炎|肾盂肾炎|反复感染)/,
@@ -53,12 +53,12 @@ const negativePatterns: Partial<Record<CanonicalSlotId, RegExp>> = {
 
 const positivePatterns: Partial<Record<CanonicalSlotId, RegExp>> = {
   clots: /(?:有|出现|伴)[^。；]*血块|血块/,
-  pain: /(?:疼痛|腰痛|腹痛|憋胀|酸胀痛|绞痛|刺痛|痛感)/,
+  pain: /(?:疼痛|腰痛|腹痛|憋胀|酸胀痛|胀痛|隐痛|绞痛|刺痛|痛感)/,
   dysuria: /尿痛|小便[^。；]*(?:疼|痛)|排尿[^。；]*(?:疼|痛)|烧灼/,
   flank_pain: /肾绞痛|[左右双侧]*腰[^。；]*(?:痛|疼|酸胀|不适)|肾区痛/,
   renal_colic: /绞痛/,
   radiating_pain: /放射|腹股沟|会阴/,
-  urinary_frequency: /尿频|次数增多/,
+  urinary_frequency: /尿频|次数增多|小便次数[^。；]*多/,
   urinary_urgency: /尿急|憋不住|急迫性尿失禁/,
   voiding_difficulty: /排尿[^。；]*(?:困难|费力|中断)|尿线变细|尿流中断/,
   retention: /尿潴留|尿不出来/,
@@ -82,8 +82,11 @@ const positivePatterns: Partial<Record<CanonicalSlotId, RegExp>> = {
 function polarity(slot: CanonicalSlotId, text: string): Polarity {
   const source = compact(text);
   if (!source || genericUnknown(source)) return "unknown";
+  if (slot === "pain" && /无痛或[^。；]*痛/.test(source)) return "unknown";
+  if (slot === "recent_uri" && /(?:无|没有|否认)[^。；]*(?:感冒|咽痛|扁桃体炎|上呼吸道感染|上感)后[^。；]*(?:茶色尿|血尿)/.test(source)) return "unknown";
   if (negativePatterns[slot]?.test(source)) return "negative";
   if (positivePatterns[slot]?.test(source)) return "positive";
+  if (/^(?:是|有|轻度|中度|重度)$/.test(source)) return "positive";
   return "unknown";
 }
 
@@ -103,6 +106,45 @@ function unknownAnswer(slot: CanonicalSlotId, language: "zh" | "en") {
     : "这点我记不太清了。";
 }
 
+function naturalBinaryZh(slot: CanonicalSlotId, text: string) {
+  const state = polarity(slot, text);
+  if (state === "unknown") return unknownAnswer(slot, "zh");
+  const negative: Partial<Record<CanonicalSlotId, string>> = {
+    clots: "我没有注意到尿里有血块。",
+    pain: "我没有明显疼痛。",
+    dysuria: "小便时不疼，也没有烧灼感。",
+    flank_pain: "我没有腰部疼痛。",
+    renal_colic: "我没有出现过剧烈的阵发性腰腹绞痛。",
+    radiating_pain: "疼痛没有向下腹、腹股沟或会阴放射。",
+    urinary_frequency: "我没有觉得小便次数比平时明显增多。",
+    urinary_urgency: "我没有突然憋不住尿的感觉。",
+    voiding_difficulty: "我排尿不费力。",
+    retention: "我没有出现过尿不出来。",
+    fever_chills: "我没有发热或寒战。",
+    recent_uri: "最近没有感冒、咽痛或扁桃体炎。",
+    triggers: "发作前没有我能确定的诱因。"
+  };
+  const positive: Partial<Record<CanonicalSlotId, string>> = {
+    clots: "我注意到尿里有血块。",
+    pain: "我有疼痛或不适。",
+    dysuria: "小便时会疼或有烧灼感。",
+    flank_pain: /轻度/.test(text) ? "我有轻度腰部不适。" : "我有腰部疼痛或不适。",
+    renal_colic: "我有过剧烈的阵发性腰腹绞痛。",
+    radiating_pain: "疼痛会向下腹、腹股沟或会阴放射。",
+    urinary_frequency: "我小便次数比平时多。",
+    urinary_urgency: "我会突然尿急、憋不住。",
+    voiding_difficulty: "我排尿有些费力或不顺。",
+    retention: "我有过尿不出来的情况。",
+    fever_chills: "我有发热或寒战。",
+    recent_uri: "这次情况前后有感冒、咽痛或扁桃体炎。",
+    triggers: "发作前有明确诱因。"
+  };
+  if (slot === "renal_colic" || /^(?:否|无|是|有|轻度|中度|重度)$/.test(compact(text)) || /(?:尿频|尿急|尿痛|排尿困难)(?:是|否)(?:；|$)/.test(compact(text))) {
+    return (state === "negative" ? negative[slot] : positive[slot]) || text;
+  }
+  return text;
+}
+
 const durationEn = (text: string) => {
   const match = text.match(/([半\d一二两三四五六七八九十]+)(?:个)?(小时|天|日|周|月|年)(余|多|左右)?/);
   if (!match) return "for some time";
@@ -118,13 +160,19 @@ const durationEn = (text: string) => {
 };
 const medicationNames: Record<string, string> = {
   缬沙坦: "valsartan", 阿司匹林: "aspirin", 氯吡格雷: "clopidogrel", 华法林: "warfarin", 利伐沙班: "rivaroxaban",
-  达比加群: "dabigatran", 阿哌沙班: "apixaban", 二甲双胍: "metformin", 胰岛素: "insulin", 非那雄胺: "finasteride", 坦索罗辛: "tamsulosin"
+  达比加群: "dabigatran", 阿哌沙班: "apixaban", 二甲双胍: "metformin", 胰岛素: "insulin", 非那雄胺: "finasteride", 坦索罗辛: "tamsulosin",
+  厄贝沙坦: "irbesartan", 达格列净: "dapagliflozin", 硝苯地平: "nifedipine", 贝那普利: "benazepril", 氨氯地平: "amlodipine",
+  他汀: "a statin", 降压药: "blood-pressure medicine"
 };
 function translateMedication(text: string) {
   let translated = text;
   for (const [zh, en] of Object.entries(medicationNames)) translated = translated.replaceAll(zh, en);
   const names = Object.values(medicationNames).filter((name) => translated.toLowerCase().includes(name));
   return names.length ? `I regularly take ${[...new Set(names)].join(" and ")}.` : "I am not taking any regular medication that I know of.";
+}
+
+function firstMatching(pattern: RegExp, ...items: unknown[]) {
+  return items.map((item) => String(item || "").trim()).find((item) => pattern.test(item)) || "";
 }
 
 function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en") {
@@ -151,10 +199,10 @@ function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en"
   const urgencyZh = /尿急|憋不住/.test(combined) ? combined : "我没有特别注意到尿急或憋不住尿。";
   const glomerularSource = value(pfp.glomerularClues, caseData.patientAnswers?.glomerularClues);
   const foamyMentioned = /泡沫尿|泡沫增多/.test(glomerularSource);
-  const foamyNegative = /(?:无|否认|没有)[^；，。]{0,12}(?:泡沫尿|泡沫增多)/.test(glomerularSource);
+  const foamyNegative = /(?:无|否认|没有)[^；，。]{0,12}(?:泡沫尿|泡沫增多)|(?:泡沫尿|泡沫增多)否/.test(glomerularSource);
   const foamyPositive = foamyMentioned && !foamyNegative;
   const edemaMentioned = /水肿|眼睑肿|下肢肿/.test(glomerularSource);
-  const edemaNegative = /(?:无|否认|没有)[^；，。]{0,12}(?:水肿|眼睑肿|下肢肿)/.test(glomerularSource);
+  const edemaNegative = /(?:无|否认|没有)[^；，。]{0,12}(?:水肿|眼睑肿|下肢肿)|(?:水肿|眼睑肿|下肢肿)否/.test(glomerularSource);
   const edemaPositive = edemaMentioned && !edemaNegative;
   const glomerularZh = `${
     foamyPositive ? "我有注意到尿里泡沫比较多。" : foamyNegative ? "我没有注意到明显泡沫尿。" : "尿里泡沫多不多，我之前没特别注意。"
@@ -170,11 +218,12 @@ function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en"
   const rawFrequency = value(extended.presentIllness.frequency, illness.duration);
   const rawClots = value(pfp.clots, illness.clots, caseData.patientAnswers?.clots);
   const rawFlankPain = value(pfp.flankPain, illness.flankPain);
-  const rawPainDetail = value(caseData.patientAnswers?.pain, illness.pain, illness.flankPain);
+  const rawPainDetail = value(caseData.patientAnswers?.pain, illness.pain, pfp.painRelation, illness.flankPain);
+  const rawRenalColic = firstMatching(/绞痛/, illness.pain, pfp.painRelation, pfp.subjectiveHistory, illness.onset);
   const rawVoiding = value(illness.voidingDifficulty, pfp.luts);
   const rawFever = value(pfp.fever, illness.fever, caseData.patientAnswers?.fever);
   const rawRecentUri = recentUriZh;
-  const rawTrigger = value(illness.trigger, risk.trauma);
+  const rawTrigger = value(illness.trigger);
   const rawFamily = sh?.familyHistory?.patientAnswerZh || "";
   const familyAnswersSpecificQuestion = /血尿|肾病|肾炎|肿瘤|癌|遗传|类似/.test(rawFamily);
   const zh: Partial<Record<CanonicalSlotId, string>> = {
@@ -183,18 +232,19 @@ function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en"
     hematuria_frequency: /间断|反复|时有时无|持续|每次|一直/.test(rawFrequency) ? rawFrequency : unknownAnswer("hematuria_frequency", "zh"),
     hematuria_phase: /需追问|可伴|可表现|常为|多为|未分清|不详/.test(rawPhase) ? unknownAnswer("hematuria_phase", "zh") : rawPhase,
     urine_color: value(pfp.urineColor, illness.color, caseData.patientAnswers?.color),
-    clots: polarity("clots", rawClots) === "unknown" ? unknownAnswer("clots", "zh") : rawClots,
-    pain: polarity("pain", rawPainDetail) === "unknown" ? unknownAnswer("pain", "zh") : rawPainDetail, dysuria: dysuriaZh,
-    flank_pain: polarity("flank_pain", rawFlankPain) === "unknown" ? unknownAnswer("flank_pain", "zh") : rawFlankPain,
-    renal_colic: polarity("renal_colic", rawFlankPain) === "unknown" ? unknownAnswer("renal_colic", "zh") : rawFlankPain,
-    radiating_pain: polarity("radiating_pain", rawPainDetail) === "unknown" ? unknownAnswer("radiating_pain", "zh") : rawPainDetail,
-    urinary_frequency: frequencyZh, urinary_urgency: urgencyZh,
-    voiding_difficulty: polarity("voiding_difficulty", rawVoiding) === "unknown" ? unknownAnswer("voiding_difficulty", "zh") : rawVoiding,
-    retention: polarity("retention", rawVoiding) === "unknown" ? unknownAnswer("retention", "zh") : rawVoiding,
-    fever_chills: polarity("fever_chills", rawFever) === "unknown" ? unknownAnswer("fever_chills", "zh") : rawFever,
+    clots: naturalBinaryZh("clots", rawClots),
+    pain: naturalBinaryZh("pain", rawPainDetail), dysuria: naturalBinaryZh("dysuria", dysuriaZh),
+    flank_pain: naturalBinaryZh("flank_pain", rawFlankPain),
+    renal_colic: naturalBinaryZh("renal_colic", rawRenalColic),
+    radiating_pain: naturalBinaryZh("radiating_pain", rawPainDetail),
+    urinary_frequency: naturalBinaryZh("urinary_frequency", frequencyZh),
+    urinary_urgency: naturalBinaryZh("urinary_urgency", urgencyZh),
+    voiding_difficulty: naturalBinaryZh("voiding_difficulty", rawVoiding),
+    retention: naturalBinaryZh("retention", rawVoiding),
+    fever_chills: naturalBinaryZh("fever_chills", rawFever),
     glomerular_features: glomerularZh,
-    recent_uri: polarity("recent_uri", rawRecentUri) === "unknown" ? unknownAnswer("recent_uri", "zh") : rawRecentUri,
-    triggers: polarity("triggers", rawTrigger) === "unknown" ? unknownAnswer("triggers", "zh") : rawTrigger,
+    recent_uri: naturalBinaryZh("recent_uri", rawRecentUri),
+    triggers: naturalBinaryZh("triggers", rawTrigger),
     stone_history: sh?.stoneHistory?.patientAnswerZh, uti_history: sh?.urinaryInfectionHistory?.patientAnswerZh, tumor_history: sh?.malignancyHistory?.patientAnswerZh,
     urinary_procedure_history: sh?.urinaryProcedureHistory?.patientAnswerZh, surgery_history: sh?.surgeryHistory?.patientAnswerZh,
     anticoagulant: sh?.anticoagulantUse?.patientAnswerZh, antiplatelet: sh?.antiplateletUse?.patientAnswerZh, medications: sh?.medicationAnswerZh,
