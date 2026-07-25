@@ -1,11 +1,29 @@
 const bilingualSlots = require("../data/patient_slots_bilingual.json");
+const historyMedicalPolicy = require("../data/history_medical_reconciliation.json");
 const { asksIndependentGeneralPain, matchPriorityCanonicalIntents, priorityIntentDefinitions } = require("../src/lib/patientIntentCatalog.js");
+const blockedCanonicalKeys = new Set(
+  historyMedicalPolicy.blockedMedicalHistory
+    .filter((item) => item.canonicalSlotId)
+    .map((item) => `${item.caseId}:${item.canonicalSlotId}`)
+);
+
+function pendingMedicalReply(slotId, language = "zh") {
+  const observed = new Set(["hematuria_visibility", "hematuria_phase", "renal_colic"]);
+  if (language === "en") {
+    return observed.has(slotId)
+      ? "I did not pay close attention to that before."
+      : "I cannot recall that clearly.";
+  }
+  return observed.has(slotId)
+    ? "这个我之前没特别注意。"
+    : "这点我记不太清了。";
+}
 
 const matchers = [
-  ["chief_complaint", /哪里不舒服|为什么来|主诉|怎么回事|用自己的话.*(?:不舒服|经过|为什么)|what brings you|what is wrong|main complaint|in your own words.*(?:why|what happened)|describe what happened.*in your own words|why you came/i],
+  ["chief_complaint", /哪里不舒服|为什么来|主诉|怎么回事|用自己的话.*(?:不舒服|经过|为什么)|what brings you|what is wrong|main complaint|main problem.*brought you|in your own words.*(?:why|what happened)|describe.*(?:main problem|what happened).*(?:brought you|in your own words)|why you came/i],
   ["hematuria_visibility", /肉眼|镜下|看得见|尿潜血|visible blood|gross hematuria|microscopic|urine test.*blood/i],
   ["hematuria_onset", /什么时候|多久|几天|几周|几个月|起病|今天才.*(?:出现|开始)|血尿.*外伤后|when did|how long|when.*start|onset|(?:only )?started today|blood.*after.*injur/i],
-  ["hematuria_frequency", /间断|持续|每次|频率|反复|intermittent|continuous|every time|how often|frequency/i],
+  ["hematuria_frequency", /间断|持续|每次|频率|反复|intermittent|continuous|every time|how often|frequency|keep(?:s)? coming back|come(?:s)? back|recur/i],
   ["hematuria_phase", /全程|开始红|起始|终末|快尿完|最后几滴|一直红|throughout|whole stream|beginning.*(?:red|end)|from beginning to end|terminal|end of urination|last drops/i],
   ["urine_color", /鲜红|暗红|洗肉水|茶色|酱油色|什么颜色|什么色|尿色|小便.*(?:颜色|色)|bright red|dark red|tea.colou?r|cola.colou?r|(?:urine|pee).*colou?r|what colou?r.*(?:urine|pee)/i],
   ["clots", /血块|血凝块|凝血块|blood clots?/i],
@@ -17,7 +35,7 @@ const matchers = [
   ["urinary_frequency", /尿频|小便次数多|urinary frequency|frequent urination|urinate often|urinat(?:e|ing) more often/i],
   ["urinary_urgency", /尿急|憋不住|\burgency\b|urgent need|cannot hold urine/i],
   ["voiding_difficulty", /排尿困难|尿线细|尿流中断|尿不尽|排尿费力|排尿费不费劲|膀胱.*没排空|difficulty urinating|weak stream|incomplete emptying|straining/i],
-  ["retention", /尿潴留|尿不出来|urinary retention|cannot pass urine|unable to pass urine/i],
+  ["retention", /尿潴留|尿不出来|urinary retention|cannot pass urine|unable to pass urine|inability to pass urine/i],
   ["fever_chills", /发热|发烧|有没有烧|寒战|畏寒|体温|fever|chills?|rigors?|temperature/i],
   ["glomerular_features", /泡沫尿|水肿|眼睑肿|下肢肿|foamy urine|frothy urine|bubbly.*(?:urine|pee)|edema|oedema|swelling|puffiness/i],
   ["recent_uri", /感冒|咽痛|扁桃体炎|cold|sore throat|tonsillitis|upper respiratory/i],
@@ -138,6 +156,12 @@ function unknownFactReason(slot) {
   return "bilingual_value_mismatch";
 }
 
+function patientSlotIsUnknown(slot) {
+  const zh = String(slot?.patientAnswerZh || "");
+  const en = String(slot?.patientAnswerEn || "");
+  return /没(?:有)?(?:特别)?(?:注意|留意)|未注意|记不太清|不详|not noticed|not sure|do not know|cannot recall/i.test(`${zh} ${en}`);
+}
+
 function naturalDysuriaAnswer(value, language) {
   if (value === true) return language === "en" ? "Yes, it hurts when I urinate." : "有，尿的时候会痛。";
   if (value === false) return language === "en" ? "No, it does not hurt when I urinate." : "没有，小便时不痛。";
@@ -232,7 +256,12 @@ function conciseLegacySlotAnswer(caseSlots, slotId, language, question) {
   if (language === "zh" && durationZh) return `大约${durationZh}前开始的。`;
 
   const chiefEn = String(caseSlots.chief_complaint?.patientAnswerEn || "");
-  const durationEn = chiefEn.match(/\bfor\s+([^.,;]+)$/i)?.[1]?.trim();
+  const durationPatternEn = "((?:(?:about|around|over|more than|nearly|almost)\\s+)?(?:half(?:\\s+a)?|\\d+(?:\\.\\d+)?)\\s+(?:hours?|days?|weeks?|months?|years?))";
+  const durationMatchesEn = [
+    ...Array.from(chiefEn.matchAll(new RegExp(`\\bfor\\s+${durationPatternEn}\\b`, "gi"))),
+    ...Array.from(chiefEn.matchAll(new RegExp(`\\b${durationPatternEn}\\s+ago\\b`, "gi")))
+  ].sort((left, right) => Number(left.index || 0) - Number(right.index || 0));
+  const durationEn = durationMatchesEn.at(-1)?.[1]?.trim();
   if (language === "en" && durationEn) return `I first noticed it ${durationEn} ago.`;
 
   return slot?.[language === "en" ? "patientAnswerEn" : "patientAnswerZh"];
@@ -246,10 +275,10 @@ function projectCanonicalPatientFacts(caseId, intentKeys, language = "zh", quest
     .filter((definition) => allowedKeys.has(definition.key))
     .map((definition) => ({ intentKey: definition.key, sourceSlotId: definition.sourceSlotId, confidence: 1, matchedAlias: "", matcherType: "semantic_classifier" }));
   if (!priorityMatches.length) return null;
-  return buildCanonicalPatientFacts(caseSlots, priorityMatches, [], language, question);
+  return buildCanonicalPatientFacts(caseId, caseSlots, priorityMatches, [], language, question);
 }
 
-function buildCanonicalPatientFacts(caseSlots, priorityMatches, legacyMatchedSlotIds, language, question) {
+function buildCanonicalPatientFacts(caseId, caseSlots, priorityMatches, legacyMatchedSlotIds, language, question) {
   const prioritySourceSlots = new Set(priorityMatches.map((item) => item.sourceSlotId));
   const matchedSlotIds = [...new Set([...prioritySourceSlots, ...legacyMatchedSlotIds])];
   if (prioritySourceSlots.has("urinary_frequency")) {
@@ -267,21 +296,30 @@ function buildCanonicalPatientFacts(caseSlots, priorityMatches, legacyMatchedSlo
     ? matchedSlotIds.filter((slotId) => slotId !== "pain")
     : matchedSlotIds;
   if (!slotIds.length) return null;
+  const blockedSlotIds = new Set(slotIds.filter((slotId) => blockedCanonicalKeys.has(`${caseId}:${slotId}`)));
+  const unknownLegacySlotIds = new Set(
+    slotIds.filter((slotId) => !prioritySourceSlots.has(slotId) && patientSlotIsUnknown(caseSlots[slotId]))
+  );
   const factValues = {};
   const factValueReasons = {};
   const phaseValue = prioritySourceSlots.has("hematuria_phase")
     ? classifyHematuriaPhase(caseSlots.hematuria_phase?.patientAnswerZh, caseSlots.hematuria_phase?.patientAnswerEn)
     : "unknown";
   for (const item of priorityMatches) {
-    const classification = item.sourceSlotId === "hematuria_phase"
+    const classification = blockedSlotIds.has(item.sourceSlotId)
+      ? "unknown"
+      : item.sourceSlotId === "hematuria_phase"
       ? phaseValue
       : classifyPriorityIntent(item.intentKey, caseSlots[item.sourceSlotId]);
     factValues[item.intentKey] = factValueForIntent(item.intentKey, classification);
-    factValueReasons[item.intentKey] = factValues[item.intentKey] === "unknown"
+    factValueReasons[item.intentKey] = blockedSlotIds.has(item.sourceSlotId)
+      ? "medical_history_pending_review"
+      : factValues[item.intentKey] === "unknown"
       ? unknownFactReason(caseSlots[item.sourceSlotId])
       : "known";
   }
   const answers = slotIds.map((slotId) => {
+    if (blockedSlotIds.has(slotId)) return pendingMedicalReply(slotId, language);
     if (slotId === "dysuria" && prioritySourceSlots.has(slotId)) return naturalDysuriaAnswer(factValues.dysuria, language);
     if (slotId === "hematuria_phase" && prioritySourceSlots.has(slotId)) {
       return naturalPhaseAnswer(phaseValue, language, priorityMatches.map((item) => item.intentKey), question);
@@ -301,11 +339,11 @@ function buildCanonicalPatientFacts(caseSlots, priorityMatches, legacyMatchedSlo
   ];
   const collectableFacts = [
     ...priorityMatches.filter((item) => factValues[item.intentKey] !== "unknown").map((item) => item.intentKey),
-    ...slotIds.filter((slotId) => !prioritySourceSlots.has(slotId))
+    ...slotIds.filter((slotId) => !prioritySourceSlots.has(slotId) && !blockedSlotIds.has(slotId) && !unknownLegacySlotIds.has(slotId))
   ];
   const collectableSlotIds = [...new Set([
     ...priorityMatches.filter((item) => factValues[item.intentKey] !== "unknown").map((item) => item.sourceSlotId),
-    ...slotIds.filter((slotId) => !prioritySourceSlots.has(slotId))
+    ...slotIds.filter((slotId) => !prioritySourceSlots.has(slotId) && !blockedSlotIds.has(slotId) && !unknownLegacySlotIds.has(slotId))
   ])];
   const unresolvedReasons = Object.values(factValueReasons).filter((reason) => reason !== "known");
   const provenances = [...new Set(slotIds.map((slotId) => caseSlots[slotId]?.provenance).filter(Boolean))];
@@ -327,9 +365,13 @@ function buildCanonicalPatientFacts(caseSlots, priorityMatches, legacyMatchedSlo
         : priorityMatches[0]?.matcherType || "legacy_canonical",
     provenance: provenances.join("+") || "unknown",
     reviewerStatus: teacherReviewRequired ? "teacher_review_required" : "not_required",
-    unresolvedReason: unresolvedReasons.includes("unsafe_deterministic_answer") ? "unsafe_deterministic_answer" : unresolvedReasons.length ? "canonical_fact_unknown" : "",
+    unresolvedReason: blockedSlotIds.size
+      ? "medical_history_pending_review"
+      : unknownLegacySlotIds.size
+      ? "patient_not_observed"
+      : unresolvedReasons.includes("unsafe_deterministic_answer") ? "unsafe_deterministic_answer" : unresolvedReasons.length ? "canonical_fact_unknown" : "",
     answerSource: "case_bilingual_slot",
-    confidence: Object.values(factValues).some((value) => value === "unknown") ? 0.5 : 0.99,
+    confidence: unknownLegacySlotIds.size || Object.values(factValues).some((value) => value === "unknown") ? 0.5 : 0.99,
     safetyFlags: [],
     fallbackReason: ""
   };
@@ -344,7 +386,11 @@ function matchCanonicalPatientFacts(caseId, question, language = "zh") {
       && legacyMatchedSlotIds.includes("hematuria_onset")) {
     legacyMatchedSlotIds = legacyMatchedSlotIds.filter((slotId) => slotId !== "triggers");
   }
-  return buildCanonicalPatientFacts(caseSlots, priorityMatches, legacyMatchedSlotIds, language, question);
+  if (/(?:以前|既往|曾经|做过|导过|受过|have you had|did you ever|previous|history|before)/i.test(String(question || ""))
+      && /(?:外伤|导尿|尿路操作|泌尿.*手术|trauma|catheter|urinary procedure)/i.test(String(question || ""))) {
+    legacyMatchedSlotIds = legacyMatchedSlotIds.filter((slotId) => slotId !== "triggers");
+  }
+  return buildCanonicalPatientFacts(caseId, caseSlots, priorityMatches, legacyMatchedSlotIds, language, question);
 }
 
 module.exports = { matchCanonicalPatientFacts, projectCanonicalPatientFacts };

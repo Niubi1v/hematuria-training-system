@@ -1,4 +1,9 @@
+import runtimeWordingJson from "@/data/chief_complaint_wording_runtime.json";
+
 type Lang = "zh" | "en";
+type WordingUpdate = { zh: string; en: string; openingZh: string; openingEn: string };
+
+const wordingUpdates = runtimeWordingJson.updates as Record<string, WordingUpdate>;
 
 const cnDigits: Record<string, number> = {
   一: 1,
@@ -84,12 +89,13 @@ export function simplifiedChiefComplaintZh(raw?: string) {
 export function simplifiedChiefComplaintEn(rawZh?: string, fallbackEn?: string) {
   const text = String(rawZh || "").trim();
   const cleanFallback = String(fallbackEn || "").trim().replace(/\.$/, "");
-  if (!text) return cleanFallback;
+  const safeEnglishFallback = /[\u3400-\u9fff]/.test(cleanFallback) ? "" : cleanFallback;
+  if (!text) return safeEnglishFallback;
   if (!/(?:血尿|尿潜血|尿隐血|小便.*红|尿色.*红|尿液.*红|茶色尿|可乐色尿|酱油色尿)/.test(text)) {
-    if (/(?:hematuria|blood in (?:the )?urine|red urine)/i.test(cleanFallback)) {
+    if (/(?:hematuria|blood in (?:the )?urine|red urine)/i.test(safeEnglishFallback)) {
       return "Chief complaint pending medical review";
     }
-    return cleanFallback || text;
+    return safeEnglishFallback || "Chief complaint pending medical review";
   }
 
   const duration = findDurationNearHematuria(text);
@@ -139,4 +145,19 @@ export function generatedChiefComplaintEn(rawZh?: string) {
 
 export function simplifiedChiefComplaint(rawZh: string | undefined, lang: Lang, fallbackEn?: string) {
   return lang === "en" ? simplifiedChiefComplaintEn(rawZh, fallbackEn) : simplifiedChiefComplaintZh(rawZh);
+}
+
+export function chiefComplaintForCase(caseId: string, rawZh: string | undefined, lang: Lang, fallbackEn?: string) {
+  const update = wordingUpdates[caseId];
+  if (update) return lang === "en" ? update.en : update.zh;
+  return simplifiedChiefComplaint(rawZh, lang, fallbackEn);
+}
+
+export function patientOpeningForCase(caseId: string, rawZh: string | undefined, lang: Lang, fallbackEn?: string) {
+  const update = wordingUpdates[caseId];
+  if (update) return lang === "en" ? update.openingEn : update.openingZh;
+  const complaint = simplifiedChiefComplaint(rawZh, lang, fallbackEn);
+  return lang === "en"
+    ? `Hello doctor. I came because of ${complaint || "abnormal urine color"}.`
+    : `医生您好，我是因为${complaint || "小便颜色异常"}来看病的。`;
 }

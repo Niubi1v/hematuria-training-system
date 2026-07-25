@@ -23,7 +23,20 @@ async function main() {
   assertNotContains(smoking.replyText, ["乙肝", "糖尿病", "饮酒", "输血", "子女", "高血压"], "smoking");
 
   const drinking = await ask("HX-ADD-001", "喝酒吗？");
-  assert(/饮酒|喝酒/.test(drinking.replyText), `drinking answer should mention drinking: ${drinking.replyText}`);
+  assert(
+    drinking.answerSource === "pending_review"
+      && drinking.fallbackReason === "medical_history_pending_review"
+      && drinking.blockedFields.includes("alcoholHistory")
+      && drinking.matchedFacts.length === 0,
+    `unreviewed drinking history must remain quarantined: ${JSON.stringify({
+      answerSource: drinking.answerSource,
+      fallbackReason: drinking.fallbackReason,
+      blockedFields: drinking.blockedFields,
+      matchedFacts: drinking.matchedFacts
+    })}`
+  );
+  assert(/记不太清|没(?:有)?特别注意|不太清楚/.test(drinking.replyText), `unreviewed drinking history should be naturally uncertain: ${drinking.replyText}`);
+  assert(!/不喝酒|没有饮酒|从不喝/.test(drinking.replyText), `unreviewed drinking history must not become a deterministic negative: ${drinking.replyText}`);
   assertNotContains(drinking.replyText, ["吸烟", "包年", "乙肝", "高血压", "糖尿病"], "drinking");
 
   const hypertension = await ask("HX-ADD-001", "有高血压吗？");

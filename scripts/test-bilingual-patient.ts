@@ -24,7 +24,10 @@ for (const caseData of cases) {
   assert(Object.keys(bilingualSlots[caseData.id] || {}).length === canonicalSlotIds.length, `${caseData.id}: incomplete canonical bilingual slot set`);
   for (const question of englishQuestions) {
     const reply = generatePatientReply({ caseData, userQuestion: question, language: "en" });
-    assert(reply.matchedSlotIds.length > 0, `${caseData.id}: English question did not match canonical slots: ${question}`);
+    assert(
+      reply.matchedSlotIds.length > 0 || reply.blockedTeacherFields.length > 0,
+      `${caseData.id}: English question was neither answered nor governance-blocked: ${question}`
+    );
     assert(!/[\u3400-\u9fff]/.test(reply.replyText), `${caseData.id}: English reply contains Chinese: ${reply.replyText}`);
     assert(filterPatientReply(reply.replyText, "en").ok, `${caseData.id}: English reply failed safety/language filter: ${reply.replyText}`);
   }
@@ -37,7 +40,10 @@ const compound = generatePatientReply({
   language: "en"
 });
 for (const slot of ["pain", "urinary_frequency", "urinary_urgency", "dysuria", "fever_chills", "general_condition"]) {
-  assert(compound.matchedSlotIds.includes(slot), `compound English question silently dropped ${slot}`);
+  assert(
+    compound.matchedSlotIds.includes(slot) || compound.blockedTeacherFields.includes(slot),
+    `compound English question silently dropped ${slot}`
+  );
 }
 assert(compound.replyText.split("\n").length >= 5, "compound English answer should return each matched fact separately");
 

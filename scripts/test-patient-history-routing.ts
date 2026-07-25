@@ -44,6 +44,7 @@ const historyProbes: Probe[] = [
   { id: "tumor-history-en", language: "en", question: "Have you had a previous cancer?", expectedSlots: ["PAST_MALIGNANCY"] },
   { id: "cystoscopy-history-zh", language: "zh", question: "以前做过膀胱镜吗？", expectedSlots: ["PAST_URINARY_PROCEDURE"] },
   { id: "catheter-history-zh", language: "zh", question: "以前导过尿吗？", expectedSlots: ["PAST_URINARY_PROCEDURE"] },
+  { id: "urinary-procedure-history-en", language: "en", question: "Have you had a urinary procedure?", expectedSlots: ["PAST_URINARY_PROCEDURE"] },
   { id: "retention-en", language: "en", question: "Have you been unable to pass urine?", expectedSlots: ["retention"] }
 ];
 
@@ -75,11 +76,13 @@ async function main() {
     if (result.fallbackReason === "unsafe_deterministic_answer") {
       assert.deepEqual(result.matchedSlotIds || [], [], `${probe.id} unsafe source must remain uncollected`);
       assert.ok(result.safetyFlags?.includes("deterministic_answer_blocked"), `${probe.id} safety boundary`);
-    } else if (result.fallbackReason === "canonical_fact_unknown") {
+    } else if (result.fallbackReason === "canonical_fact_unknown" || result.fallbackReason === "patient_not_observed") {
       assert.ok(canonical, `${probe.id} unknown must remain under canonical governance`);
       assert.ok(Object.values(canonical.factValues || {}).every((value) => value === "unknown"));
       assert.deepEqual(canonical.collectableSlotIds || [], []);
       assert.deepEqual(result.matchedSlotIds || [], [], `${probe.id} unknown must remain uncollected`);
+    } else if (result.fallbackReason === "medical_history_pending_review") {
+      assert.deepEqual(result.matchedSlotIds || [], [], `${probe.id} unreviewed history must remain uncollected`);
     } else {
       assert.deepEqual(result.matchedSlotIds || [], probe.expectedSlots, probe.id);
     }
@@ -125,7 +128,7 @@ async function main() {
   assert.equal(historicalDiagnosis.fallbackReason, "diagnosis_boundary");
   assert.deepEqual(historicalDiagnosis.matchedSlotIds || [], []);
 
-  console.log("Patient history routing preserved 42 cases x 7 natural questions plus 4 public safety boundaries.");
+  console.log("Patient history routing preserved 42 cases x 8 natural questions plus 4 public safety boundaries.");
 }
 
 main().catch((error) => {

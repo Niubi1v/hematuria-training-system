@@ -1,0 +1,167 @@
+{
+  "version": "chief-complaint-wording-2026-07-15",
+  "updates": {
+    "P005": {
+      "zh": "进行性排尿困难3年余，加重伴小便变红1月",
+      "en": "Progressive difficulty urinating for over 3 years, worsening with red urine for 1 month.",
+      "openingZh": "医生，我排尿越来越费劲，最近一个月小便还会变红。",
+      "openingEn": "Doctor, it has been getting harder to urinate, and my urine has also turned red over the past month."
+    },
+    "P009": {
+      "zh": "突发右侧腰痛伴浓茶色尿半天",
+      "en": "Sudden right flank pain with dark tea-colored urine for half a day.",
+      "openingZh": "医生，我右边腰突然痛得厉害，小便还是浓茶色，已经半天了。",
+      "openingEn": "Doctor, my right side suddenly started hurting badly, and my urine has been dark tea-colored for half a day."
+    },
+    "HX-ADD-002": {
+      "zh": "反复尿频伴小便变红半年",
+      "en": "Recurrent urinary frequency with red urine for half a year.",
+      "openingZh": "医生，我这半年尿频反反复复，小便也会变红。",
+      "openingEn": "Doctor, for the past half year I have repeatedly needed to urinate more often, and my urine has also turned red."
+    },
+    "HX-ADD-003": {
+      "zh": "左腰隐痛伴小便变红1个月",
+      "en": "Red urine with dull left flank pain for 1 month.",
+      "openingZh": "医生，我左边腰一直隐隐作痛，小便变红有一个月了。",
+      "openingEn": "Doctor, I have had a dull ache in my left side and red urine for a month."
+    },
+    "HX-ADD-004": {
+      "zh": "间断小便变红3周",
+      "en": "Intermittent red urine for 3 weeks.",
+      "openingZh": "医生，我这三周小便断断续续变红，但排尿时不疼。",
+      "openingEn": "Doctor, my urine has turned red off and on for three weeks, but it does not hurt when I urinate."
+    },
+    "HX-ADD-006": {
+      "zh": "尿频、尿急、尿痛伴小便发红2天",
+      "en": "Urinary frequency, urgency, and pain with red-tinged urine for 2 days.",
+      "openingZh": "医生，我这两天老想小便，又急又疼，尿也有点发红。",
+      "openingEn": "Doctor, for two days I have needed to urinate often and urgently, it hurts, and my urine looks a little red."
+    },
+    "HX-ADD-007": {
+      "zh": "发热、左腰痛伴尿频、尿痛3天",
+      "en": "Fever, left flank pain, urinary frequency, and painful urination for 3 days.",
+      "openingZh": "医生，我发烧、左腰痛，还尿频尿痛，已经三天了。",
+      "openingEn": "Doctor, I have had a fever, pain in my left side, frequent urination, and pain when urinating for three days."
+    },
+    "HX-ADD-009": {
+      "zh": "尿频、尿痛伴小便发红1周",
+      "en": "Urinary frequency and pain with red-tinged urine for 1 week.",
+      "openingZh": "医生，我这一周尿得频、尿的时候疼，尿色还有点发红。",
+      "openingEn": "Doctor, for a week I have been urinating often, it hurts, and my urine looks a little red."
+    },
+    "HX-ADD-010": {
+      "zh": "反复尿痛伴尿检发现血尿1年",
+      "en": "Recurrent painful urination with microscopic blood detected on urine tests for 1 year.",
+      "openingZh": "医生，我这一年尿痛反反复复，尿检还总能查到血。",
+      "openingEn": "Doctor, the pain when I urinate has kept coming back for a year, and urine tests keep finding blood."
+    },
+    "HX-ADD-011": {
+      "zh": "右腰腹绞痛伴小便发红6小时",
+      "en": "Red-tinged urine with severe right flank and abdominal colic for 6 hours.",
+      "openingZh": "医生，我右边腰和肚子绞着疼，小便有点发红，已经六个小时了。",
+      "openingEn": "Doctor, my right side and abdomen have been cramping badly, and my urine looks a little red; it has been six hours."
+    },
+    "HX-ADD-012": {
+      "zh": "左腰痛伴小便发红1天",
+      "en": "Red-tinged urine with left flank pain for 1 day.",
+      "openingZh": "医生，我左边腰痛了一天，小便看着有点发红。",
+      "openingEn": "Doctor, my left side has hurt for a day, and my urine looks a little red."
+    },
+    "HX-ADD-013": {
+      "zh": "排尿困难伴排尿末小便发红3个月",
+      "en": "Difficulty urinating with red urine at the end of urination for 3 months.",
+      "openingZh": "医生，我这三个月排尿很费劲，快尿完时尿色会发红。",
+      "openingEn": "Doctor, I have had trouble urinating for three months, and the urine turns red near the end."
+    },
+    "HX-ADD-014": {
+      "zh": "反复发热、腰痛伴小便发红半年",
+      "en": "Recurrent fever and flank pain with red-tinged urine for half a year.",
+      "openingZh": "医生，我这半年反复发烧、腰痛，小便也会发红。",
+      "openingEn": "Doctor, for the past half year I have repeatedly had fever and flank pain, and my urine also looks red."
+    },
+    "HX-ADD-015": {
+      "zh": "左侧腰腹痛伴小便发红1天",
+      "en": "Red-tinged urine with left flank and abdominal pain for 1 day.",
+      "openingZh": "医生，我左边腰腹疼了一天，小便有点发红。",
+      "openingEn": "Doctor, my left side and abdomen have hurt for a day, and my urine looks a little red."
+    },
+    "HX-ADD-016": {
+      "zh": "排尿困难伴小便变红3天",
+      "en": "Difficulty urinating with red urine for 3 days.",
+      "openingZh": "医生，我排尿一直费劲，这三天小便还变红了。",
+      "openingEn": "Doctor, I have trouble urinating, and my urine has also turned red over the past three days."
+    },
+    "HX-ADD-017": {
+      "zh": "导尿后小便变红1天",
+      "en": "Red urine for 1 day after catheterization.",
+      "openingZh": "医生，我导尿以后小便变红了，已经一天了。",
+      "openingEn": "Doctor, my urine turned red after the catheter was placed, and it has been one day."
+    },
+    "HX-ADD-018": {
+      "zh": "排尿困难伴尿检发现血尿半年",
+      "en": "Difficulty urinating with microscopic blood detected on urine tests for half a year.",
+      "openingZh": "医生，我排尿费劲有半年了，尿检还发现有血。",
+      "openingEn": "Doctor, I have had difficulty urinating for half a year, and urine tests have also found blood."
+    },
+    "HX-ADD-019": {
+      "zh": "咽痛后尿色呈浓茶色或可乐色2天",
+      "en": "Dark tea- or cola-colored urine for 2 days after a sore throat.",
+      "openingZh": "医生，我咽痛以后尿变成了浓茶色，有两天了。",
+      "openingEn": "Doctor, after my sore throat my urine turned dark tea-colored, and it has been like this for two days."
+    },
+    "HX-ADD-020": {
+      "zh": "皮肤感染后茶色尿伴眼睑水肿1周",
+      "en": "Tea-colored urine with eyelid swelling for 1 week after a skin infection.",
+      "openingZh": "医生，我皮肤感染以后尿呈茶色，眼皮也肿了一个星期。",
+      "openingEn": "Doctor, after a skin infection my urine became tea-colored, and my eyelids have been swollen for a week."
+    },
+    "HX-ADD-021": {
+      "zh": "体检反复发现尿检有血3年",
+      "en": "Microscopic blood repeatedly detected on health-check urine tests for 3 years.",
+      "openingZh": "医生，我这三年体检尿检反复查到有血，但自己看不出来。",
+      "openingEn": "Doctor, health-check urine tests have repeatedly found blood for three years, but I cannot see any color change myself."
+    },
+    "HX-ADD-023": {
+      "zh": "泡沫尿、尿检发现血尿伴面部皮疹2周",
+      "en": "Foamy urine with microscopic blood detected on urine tests and a facial rash for 2 weeks.",
+      "openingZh": "医生，我这两周尿里泡沫多，脸上起了皮疹，尿检还发现有血。",
+      "openingEn": "Doctor, for two weeks my urine has been foamy, I have had a rash on my face, and a urine test also found blood."
+    },
+    "HX-ADD-024": {
+      "zh": "长跑后小便发红1次",
+      "en": "One episode of red-tinged urine after a long-distance run.",
+      "openingZh": "医生，我长跑以后有一次小便发红，休息后就好了。",
+      "openingEn": "Doctor, my urine looked red once after a long-distance run, and it cleared after I rested."
+    },
+    "HX-ADD-025": {
+      "zh": "经期体检发现尿潜血阳性1天",
+      "en": "Urine dipstick positive for blood during menstruation at a health check 1 day ago.",
+      "openingZh": "医生，我经期体检时尿潜血阳性，刚发现一天。",
+      "openingEn": "Doctor, a health-check urine dipstick was positive for blood during my period one day ago."
+    },
+    "HX-ADD-026": {
+      "zh": "车祸后腰痛伴小便变红4小时",
+      "en": "Red urine with flank pain for 4 hours after a traffic accident.",
+      "openingZh": "医生，我车祸撞到腰后小便变红了，已经四个小时。",
+      "openingEn": "Doctor, my urine turned red after my flank was hit in a traffic accident four hours ago."
+    },
+    "HX-ADD-027": {
+      "zh": "反复腰痛伴茶色或淡红色尿半年",
+      "en": "Recurrent flank pain with tea-colored or pale red urine for half a year.",
+      "openingZh": "医生，我这半年腰痛反反复复，尿色有时像茶色、有时偏淡红。",
+      "openingEn": "Doctor, my flank pain has kept coming back for half a year, and my urine sometimes looks tea-colored and sometimes pale red."
+    },
+    "HX-ADD-028": {
+      "zh": "突发左腰痛伴小便变红1天",
+      "en": "Sudden left flank pain with red urine for 1 day.",
+      "openingZh": "医生，我左边腰突然痛起来，小便也变红一天了。",
+      "openingEn": "Doctor, my left side suddenly started hurting, and my urine has been red for one day."
+    },
+    "HX-ADD-030": {
+      "zh": "体检发现尿检有血1个月",
+      "en": "Microscopic blood detected on health-check urine tests for 1 month.",
+      "openingZh": "医生，我体检两次都说尿检有血，已经一个月了。",
+      "openingEn": "Doctor, two health-check urine tests have found blood over the past month."
+    }
+  }
+}

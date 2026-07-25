@@ -67,7 +67,10 @@ export type OrderResultLog = {
   stageNo?: number;
   status?: "ordered" | "reported" | "no-result";
   duplicateOrderIds?: string[];
+  acceptedOrderIds?: string[];
+  pendingPrerequisiteOrderIds?: string[];
   unmetPrerequisites?: string[];
+  unavailableOrderCount?: number;
   selectedOrderCount?: number;
   recognizedOrderCount?: number;
   returnedReportCount?: number;

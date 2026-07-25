@@ -43,6 +43,10 @@ for (const [raw, expectedZh, expectedEn] of wordingContracts) {
   assert(simplifiedChiefComplaint(raw, "zh") === expectedZh, `Chinese wording mismatch: ${raw}`);
   assert(simplifiedChiefComplaint(raw, "en", expectedEn) === expectedEn, `English wording mismatch: ${raw}`);
 }
+assert(
+  simplifiedChiefComplaint("发热、尿痛伴会阴胀痛2天", "en", "发热、尿痛伴会阴胀痛2天") === "Chief complaint pending medical review",
+  "English blocked-medical fallback must not expose a Chinese complaint"
+);
 
 const generatedBaselineContracts = [
   ["间断肉眼血尿2个月", "Hematuria for 2 months"],
