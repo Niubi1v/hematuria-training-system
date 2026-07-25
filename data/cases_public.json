@@ -176,7 +176,7 @@
     "difficulty": "挑战",
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "间断肉眼血尿2个月",
-    "chiefComplaintEn": "Hematuria for 2 months",
+    "chiefComplaintEn": "Intermittent red urine for 2 months",
     "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
@@ -232,7 +232,7 @@
     "difficulty": "挑战",
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "服用抗凝药后肉眼血尿5天",
-    "chiefComplaintEn": "Hematuria for 5 days",
+    "chiefComplaintEn": "Red urine for 5 days",
     "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
@@ -274,7 +274,7 @@
     "difficulty": "标准",
     "difficultyEn": "Standard",
     "studentChiefComplaint": "发热、尿痛伴会阴胀痛2天",
-    "chiefComplaintEn": "Hematuria for 2 days",
+    "chiefComplaintEn": "发热、尿痛伴会阴胀痛2天",
     "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
@@ -470,7 +470,7 @@
     "difficulty": "挑战",
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "反复镜下血尿伴听力下降",
-    "chiefComplaintEn": "Hematuria for several days",
+    "chiefComplaintEn": "Microscopic blood has repeatedly been found on urine testing",
     "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
@@ -568,7 +568,7 @@
     "difficulty": "挑战",
     "difficultyEn": "Challenging",
     "studentChiefComplaint": "反复左腰酸痛伴镜下血尿1年",
-    "chiefComplaintEn": "Hematuria for 1 year",
+    "chiefComplaintEn": "Microscopic blood has repeatedly been found on urine testing for 1 year",
     "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"

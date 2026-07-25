@@ -119,11 +119,11 @@ assert.match(slots["HX-ADD-006"].voiding_difficulty.patientAnswerEn, /do not hav
 assertBilingualUnknown("HX-ADD-007", "hematuria_visibility");
 assertBilingualUnknown("HX-ADD-007", "hematuria_phase");
 assert.match(slots["HX-ADD-007"].urine_color.patientAnswerEn, /looked normal|only on testing/i);
-assert.match(slots["HX-ADD-007"].fever_chills.patientAnswerEn, /have had fever/i);
+assert.match(slots["HX-ADD-007"].fever_chills.patientAnswerEn, /have had (?:a low )?fever/i);
 assertBilingualUnknown("HX-ADD-008", "radiating_pain");
 assertBilingualUnknown("HX-ADD-010", "hematuria_phase");
 assert.match(slots["HX-ADD-010"].urine_color.patientAnswerEn, /looked normal|only on testing/i);
-assert.match(slots["HX-ADD-010"].fever_chills.patientAnswerEn, /have had fever/i);
+assert.match(slots["HX-ADD-010"].fever_chills.patientAnswerEn, /have had (?:a low )?fever/i);
 assertBilingualUnknown("HX-ADD-012", "renal_colic");
 
 assert.match(slots["HX-ADD-013"].hematuria_phase.patientAnswerEn, /near the end/i);
