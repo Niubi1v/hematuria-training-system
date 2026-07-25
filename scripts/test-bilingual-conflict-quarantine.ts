@@ -55,7 +55,7 @@ async function main() {
         language
       });
       assert.equal(result.fallbackReason, BILINGUAL_CONFLICT_REASON, `${item.caseId}.${item.field}.${language} must be quarantined`);
-      assert.equal(result.replyText, uncertainConflictReply(language));
+      assert.equal(result.replyText, uncertainConflictReply(language, [item.field]));
       assert.deepEqual(result.matchedSlotIds, [], "quarantined facts must not enter deterministic Patient Agent coverage");
       assert.deepEqual(result.matchedFacts, [], "quarantined facts must not enter deterministic Patient Agent context");
       assert.equal(result.confidence, 0);
@@ -118,9 +118,9 @@ async function main() {
   assert.deepEqual(filtered.quarantinedSlotIds, ["urinary_urgency"]);
   assert.equal(filtered.reason, BILINGUAL_CONFLICT_REASON);
 
-  assert.equal(uncertainConflictReply("zh"), "这项情况我现在说不准。");
-  assert.equal(uncertainConflictReply("en"), "I'm not sure about that right now.");
-  assert.doesNotMatch(uncertainConflictReply("en"), /[\u3400-\u9fff]/);
+  assert.equal(uncertainConflictReply("zh", ["urinary_urgency"]), "有没有突然憋不住尿，我之前没特别留意。");
+  assert.equal(uncertainConflictReply("en", ["urinary_frequency"]), "I did not pay close attention to whether I was urinating more often.");
+  assert.doesNotMatch(uncertainConflictReply("en", ["pain"]), /[\u3400-\u9fff]/);
   console.log("Bilingual medical conflict quarantine passed: 18 facts isolated without changing medical truth or review state.");
 }
 

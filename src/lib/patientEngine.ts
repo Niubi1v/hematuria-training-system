@@ -12,7 +12,7 @@ export type PatientReplyResult = {
   blockedTeacherFields: string[];
   safetyFlags: string[];
   matchedFacts?: string[];
-  answerSource?: "source" | "author_added_for_simulation" | "mixed" | "rule";
+  answerSource?: "source" | "author_added_for_simulation" | "mixed" | "pending_review" | "rule";
   confidence?: number;
   fallbackReason?: string;
 };
@@ -555,7 +555,15 @@ export function generatePatientReply({
   // Specific structured history questions take precedence over broad canonical slots.
   // This prevents "hypertension?" from returning an entire combined past-history paragraph.
   const structured = matchStructuredPatientQuestion(caseData, question, language);
-  if (structured) return { ...structured, revealedFields: structured.matchedFacts, blockedTeacherFields: [] };
+  if (structured) {
+    return {
+      ...structured,
+      matchedSlotIds: structured.collectableSlotIds,
+      matchedFacts: structured.collectableFacts,
+      revealedFields: structured.collectableFacts,
+      blockedTeacherFields: structured.matchedFacts.filter((fact) => !structured.collectableFacts.includes(fact))
+    };
+  }
 
   const canonicalMatches = matchCanonicalSlots(question, language);
   if (canonicalMatches.length) {

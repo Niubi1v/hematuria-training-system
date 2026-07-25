@@ -1,14 +1,40 @@
 import type { CaseData, StructuredHistory, StructuredPatientFact } from "./types";
+import historyMedicalPolicy from "../../data/history_medical_reconciliation.json";
 
 export type StructuredReply = {
   replyText: string;
   matchedSlotIds: string[];
   matchedFacts: string[];
-  answerSource: "source" | "author_added_for_simulation" | "mixed";
+  governanceSlotIds: string[];
+  collectableSlotIds: string[];
+  collectableFacts: string[];
+  answerSource: "source" | "author_added_for_simulation" | "mixed" | "pending_review";
   confidence: number;
   safetyFlags: string[];
   fallbackReason: string;
 };
+
+const explicitlyBlockedFacts = new Set(
+  historyMedicalPolicy.blockedMedicalHistory.map((item) => `${item.caseId}:${item.field}`)
+);
+
+function unresolvedReply(key: string, language: "zh" | "en") {
+  const observationFacts = new Set(["traumaHistory", "urinaryProcedureHistory"]);
+  if (language === "en") {
+    return observationFacts.has(key)
+      ? "I did not pay close attention to that before."
+      : "I cannot recall that clearly.";
+  }
+  return observationFacts.has(key)
+    ? "这个我之前没特别注意。"
+    : "这点我记不太清了。";
+}
+
+function unresolvedFact(caseId: string, key: string, fact: StructuredPatientFact) {
+  return explicitlyBlockedFacts.has(`${caseId}:${key}`)
+    || fact.provenance === "author_added_for_simulation"
+    || fact.teacherReviewRequired;
+}
 
 type FactMatch = { key: keyof StructuredHistory; slotId: string; triggers: RegExp; targeted?: RegExp };
 
@@ -53,18 +79,30 @@ export function matchStructuredPatientQuestion(caseData: CaseData, question: str
   const matchedFacts = matches.map((item) => String(item.key));
   const matchedSlotIds = matches.map((item) => item.slotId);
   const answers: string[] = [];
+  const collectableFacts: string[] = [];
+  const collectableSlotIds: string[] = [];
   const sources: Array<StructuredPatientFact | { provenance: string }> = [];
+  let hasUnresolved = false;
 
   if (wantsAllMedication) {
     answers.push(language === "en" ? history.medicationAnswerEn : history.medicationAnswerZh);
     matchedFacts.push("medicationList");
     matchedSlotIds.push("MED_ALL");
+    collectableFacts.push("medicationList");
+    collectableSlotIds.push("MED_ALL");
     sources.push(...history.medicationList);
   }
   for (const match of matches) {
     const fact = history[match.key] as StructuredPatientFact;
     if (!fact || typeof fact !== "object" || !("patientAnswerZh" in fact)) continue;
-    answers.push(language === "en" ? fact.patientAnswerEn : fact.patientAnswerZh);
+    if (unresolvedFact(caseData.id, String(match.key), fact)) {
+      answers.push(unresolvedReply(String(match.key), language));
+      hasUnresolved = true;
+    } else {
+      answers.push(language === "en" ? fact.patientAnswerEn : fact.patientAnswerZh);
+      collectableFacts.push(String(match.key));
+      collectableSlotIds.push(match.slotId);
+    }
     sources.push(fact);
   }
   const uniqueAnswers = [...new Set(answers.map((item) => item.trim()).filter(Boolean))];
@@ -73,9 +111,12 @@ export function matchStructuredPatientQuestion(caseData: CaseData, question: str
     replyText: uniqueAnswers.join("\n"),
     matchedSlotIds: [...new Set(matchedSlotIds)],
     matchedFacts: [...new Set(matchedFacts)],
-    answerSource: provenance(sources) as StructuredReply["answerSource"],
-    confidence: sources.some((item) => item.provenance === "author_added_for_simulation") ? 0.82 : 0.99,
+    governanceSlotIds: [...new Set(matchedSlotIds)],
+    collectableSlotIds: [...new Set(collectableSlotIds)],
+    collectableFacts: [...new Set(collectableFacts)],
+    answerSource: hasUnresolved ? "pending_review" : provenance(sources) as StructuredReply["answerSource"],
+    confidence: hasUnresolved ? 0 : 0.99,
     safetyFlags: [],
-    fallbackReason: ""
+    fallbackReason: hasUnresolved ? "medical_history_pending_review" : ""
   };
 }
