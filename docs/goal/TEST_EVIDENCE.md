@@ -1430,3 +1430,19 @@ Actions URL：`https://github.com/Niubi1v/hematuria-training-system/actions/runs
 | PR / Pages | PR #1 Open/Draft；Pages artifact 与 deploy 按 Draft 规则 skipped，未部署 Production |
 
 Actions：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/30166227983`。Preview：`https://hematuria-training-system-fkjmi09rf-niubi1vs-projects.vercel.app`。
+
+## 2026-07-26 — 仓库级 Skill 集成
+
+基线：`df9c35f5c1e1c53e3dbf20b802a6761faee0dc50`；来源提交：`0e4353a722c0505032ef0a088758f37a997849d5`；cherry-pick提交：`f0988dc`。
+
+| 门禁 | 结果 |
+|---|---|
+| 来源范围 | 8/8文件全部位于`.agents/skills/**`；无业务代码、医学数据、审核文档、依赖或临时文件 |
+| 官方Skill校验 | Codex `skill-creator/scripts/quick_validate.py`：4/4 `Skill is valid!` |
+| `openai.yaml` | 4/4 YAML可解析；仅含允许的`interface`字段；名称、描述与`$skill-name`默认提示合同通过 |
+| 引用完整性 | 37/37 pnpm脚本存在；16/16引用文件或目录存在 |
+| repository secret scan | 365个候选/跟踪文件及可达文本历史，exit 0；未输出任何凭据值 |
+| 数据与工作树 | `data/**`零差异；cherry-pick后clean gate通过 |
+| 比例门禁 | Skill仅影响Agent指引，不进入运行时代码；按要求未重复运行无关Playwright和42例矩阵 |
+
+本地校验使用临时目录中的PyYAML运行官方脚本；没有写入`package.json`、锁文件、项目依赖或Git。远程Actions/Vercel必须绑定最终记录提交后再登记。

@@ -732,3 +732,11 @@
 - `df89a91`与证据提交`ee48cc9`已普通推送；精确 HEAD `ee48cc99f0c9613704d89c1742158b13287e58d2`的 Actions run `30166227983`在 Node 22.14 下 success。
 - 远程 Playwright 为`91 passed / 7 intentional skipped / 0 failed`；行为/医学治理、TypeScript、ESLint、repository secret scan、82/82 静态构建、24 个 JavaScript 资产 bundle 扫描及 clean gate 均通过。Pages artifact/deploy 按 Draft 规则跳过。
 - Vercel Preview deployment `5602981833`对应精确 SHA `ee48cc99f0c9613704d89c1742158b13287e58d2`并 success；PR #1保持 Open/Draft。HEM-P1-061/063/064/066 与 HEM-P2-065 更新为`REMOTE_VERIFIED`，长期 QA 可从最终文档记录提交复测既定范围。
+
+### 仓库级 Skill 集成（2026-07-26，本地完成、远程待验）
+
+- 从绿色 Production `df9c35f5c1e1c53e3dbf20b802a6761faee0dc50`审查远程提交`0e4353a722c0505032ef0a088758f37a997849d5`；原提交仅新增`.agents/skills/**`下4份`SKILL.md`与4份`agents/openai.yaml`，不含业务代码、医学数据、审核文档、依赖或临时文件。
+- 已安全 cherry-pick 为`f0988dc`。四个 Skill 分别为 clinical-data-policy、medical-governance、patient-language-qa、release-gate；均保持医学事实、审核状态、`needs_revision`及360分规则只读边界。
+- 4/4 Codex官方`quick_validate.py`通过，4/4`openai.yaml`结构与界面字段校验通过；37个引用pnpm脚本与16个引用文件/目录全部存在。
+- repository secret scan覆盖365个候选/跟踪文件及可达文本历史并通过；`data/**`零差异；clean gate通过。该变更不进入运行时bundle，因此按比例门禁未重复运行Playwright或42例矩阵。
+- 下一步：提交本集成记录，fetch确认远端领先0后普通push；PR #1保持Draft，不合并main、不部署Production。
