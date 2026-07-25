@@ -25,7 +25,7 @@ const blockedCanonicalKeys = new Set(
 );
 const value = (...items: unknown[]) => items.map((item) => String(item || "").trim()).find(Boolean) || "";
 const compact = (text: string) => String(text || "").replace(/\s+/g, "");
-const genericUnknown = (text: string) => /不太清楚|没(?:有)?特别注意|没留意|记不(?:太)?清|记不准确|说不准|一时记不全|未诉|未主动诉|需追问|需主动询问|不详|未提供|无法确认|有没有.+记|可有|可伴|可无|可能|疑似/.test(compact(text));
+const genericUnknown = (text: string) => /不太清楚|没(?:有)?特别注意|没留意|记不(?:太)?清|记不准确|说不准|一时记不全|未诉|未主动诉|需追问|需主动询问|不详|未提供|无法确认|有没有.+记|可有|可伴|可无|无或|可能|疑似/.test(compact(text));
 
 type Polarity = "positive" | "negative" | "unknown";
 
@@ -61,7 +61,7 @@ const positivePatterns: Partial<Record<CanonicalSlotId, RegExp>> = {
   clots: /(?:有|出现|伴)[^。；]*血块|血块/,
   pain: /(?:疼痛|腰痛|腹痛|不适|憋胀|酸胀痛|胀痛|隐痛|绞痛|刺痛|痛感)/,
   dysuria: /尿痛|小便[^。；]*(?:疼|痛)|排尿[^。；]*(?:疼|痛)|烧灼/,
-  flank_pain: /肾绞痛|[左右双侧]*腰[^。；]*(?:痛|疼|酸胀|不适)|肾区痛/,
+  flank_pain: /肾绞痛|[左右双侧]*腰[^。；]*(?:痛|疼|酸|酸胀|不适)|肾区痛/,
   renal_colic: /绞痛/,
   radiating_pain: /放射|向[^。；]*(?:腹股沟|会阴|下腹)/,
   urinary_frequency: /尿频|次数增多|小便次数[^。；]*多/,
@@ -69,8 +69,8 @@ const positivePatterns: Partial<Record<CanonicalSlotId, RegExp>> = {
   voiding_difficulty: /排尿[^。；]*(?:困难|费力|中断)|尿线变细|尿流中断/,
   retention: /尿潴留|尿不出来/,
   fever_chills: /发热|发烧|寒战|高热|低热/,
-  recent_uri: /(?:感冒|咽痛|扁桃体炎|上呼吸道感染|上感)(?:后|之后|相关|伴)/,
-  triggers: /(?:剧烈运动|外伤|性生活|导尿|膀胱镜|尿路操作)(?:后|之后|诱发)/,
+  recent_uri: /(?:感冒|咽痛|扁桃体炎|上呼吸道感染|上感)[^。；]*(?:后|之后|相关|伴|期间|同步|前驱)/,
+  triggers: /(?:长跑|长距离跑步|跑步|运动|剧烈运动|皮肤[^。；]{0,8}感染|感冒|咽痛|上感|外伤|性生活|导尿|膀胱镜|尿路操作)[^。；]{0,12}(?:后|之后|诱发|期间|同步)/,
   stone_history: /(?:有|曾|既往|以前)[^。；]*(?:结石|肾结石|输尿管结石)/,
   uti_history: /(?:有|曾|既往|以前|反复)[^。；]*(?:尿路感染|膀胱炎|肾盂肾炎)/,
   tumor_history: /(?:有|曾|既往|以前)[^。；]*(?:肿瘤|癌|放化疗)/,
@@ -135,18 +135,24 @@ function naturalBinaryZh(slot: CanonicalSlotId, text: string) {
     clots: "我注意到尿里有血块。",
     pain: "我有疼痛或不适。",
     dysuria: "小便时会疼或有烧灼感。",
-    flank_pain: /轻度/.test(text) ? "我有轻度腰部不适。" : "我有腰部疼痛或不适。",
+    flank_pain: /轻度|腰酸/.test(text) ? "我有轻度腰部不适。" : "我有腰部疼痛或不适。",
     renal_colic: "我有过剧烈的阵发性腰腹绞痛。",
     radiating_pain: "疼痛会向下腹、腹股沟或会阴放射。",
     urinary_frequency: "我小便次数比平时多。",
     urinary_urgency: "我会突然尿急、憋不住。",
     voiding_difficulty: "我排尿有些费力或不顺。",
     retention: "我有过尿不出来的情况。",
-    fever_chills: "我有发热或寒战。",
-    recent_uri: "这次情况前后有感冒、咽痛或扁桃体炎。",
-    triggers: "发作前有明确诱因。"
+    fever_chills: /低热/.test(text) ? "我有低热。" : "我有发热或寒战。",
+    recent_uri: "这次情况和感冒、咽痛或扁桃体炎前后发生。",
+    triggers: /长跑|跑步|运动/.test(text)
+      ? "这次是在长跑或运动后出现的。"
+      : /皮肤[^。；]{0,8}感染/.test(text)
+        ? "这次是在皮肤感染后出现的。"
+        : /感冒|咽痛|上感/.test(text)
+          ? "这次和感冒或咽痛前后发生。"
+          : "发作前有明确诱因。"
   };
-  if (slot === "renal_colic" || slot === "radiating_pain" || /^(?:否|无|是|有|少量|轻度|中度|重度)$/.test(compact(text)) || /(?:尿频|尿急|尿痛|排尿困难)(?:是|否)(?:；|$)/.test(compact(text))) {
+  if (slot === "renal_colic" || slot === "radiating_pain" || slot === "recent_uri" || slot === "triggers" || /^(?:否|无|是|有|少量|轻度|中度|重度)$/.test(compact(text)) || /(?:尿频|尿急|尿痛|排尿困难)(?:是|否)(?:；|$)/.test(compact(text))) {
     return (state === "negative" ? negative[slot] : positive[slot]) || text;
   }
   return text;
@@ -204,27 +210,34 @@ function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en"
   const dysuriaZh = [illness.dysuria, caseData.patientAnswers?.pain, illness.pain, combined].map((item) => String(item || "").trim()).find((item) => /尿痛|小便.*(?:疼|痛)|排尿.*(?:疼|痛)|烧灼|无痛/.test(item)) || "我没有特别注意到小便疼痛或烧灼感。";
   const frequencyZh = /尿频/.test(combined) ? combined : "我没有特别注意到小便次数明显增多。";
   const urgencyZh = /尿急|憋不住/.test(combined) ? combined : "我没有特别注意到尿急或憋不住尿。";
-  const glomerularSource = value(pfp.glomerularClues, caseData.patientAnswers?.glomerularClues);
-  const foamyMentioned = /泡沫尿|泡沫增多/.test(glomerularSource);
-  const foamyNegative = /(?:无|否认|没有)[^；，。]{0,12}(?:泡沫尿|泡沫增多)|(?:泡沫尿|泡沫增多)否/.test(glomerularSource);
-  const foamyPositive = foamyMentioned && !foamyNegative;
-  const edemaMentioned = /水肿|眼睑肿|下肢肿/.test(glomerularSource);
-  const edemaNegative = /(?:无|否认|没有)[^；，。]{0,12}(?:水肿|眼睑肿|下肢肿)|(?:水肿|眼睑肿|下肢肿)否/.test(glomerularSource);
-  const edemaPositive = edemaMentioned && !edemaNegative;
+  const glomerularSource = firstMatching(/泡沫尿|泡沫增多|水肿|眼睑肿|下肢肿/, illness.onset)
+    || value(pfp.glomerularClues, caseData.patientAnswers?.glomerularClues);
+  const foamyTerm = "(?:泡沫尿|泡沫(?:明显)?增多)";
+  const foamyMentioned = new RegExp(foamyTerm).test(glomerularSource);
+  const foamyNegative = new RegExp(`(?:无|否认|没有)[^；。]{0,80}${foamyTerm}|${foamyTerm}否`).test(glomerularSource);
+  const foamyUncertain = new RegExp(`可有(?:轻度)?${foamyTerm}|${foamyTerm}(?:可有|可能)`).test(glomerularSource);
+  const foamyPositive = foamyMentioned && !foamyNegative && !foamyUncertain;
+  const edemaTerm = "(?:水肿|眼睑[^；。]{0,8}(?:肿|浮肿)|下肢[^；。]{0,8}(?:肿|浮肿))";
+  const edemaMentioned = new RegExp(edemaTerm).test(glomerularSource);
+  const edemaNegative = new RegExp(`(?:无|否认|没有)[^；。]{0,80}${edemaTerm}|${edemaTerm}否`).test(glomerularSource);
+  const edemaUncertain = new RegExp(`可有(?:轻度)?${edemaTerm}|${edemaTerm}(?:可有|可能)`).test(glomerularSource);
+  const edemaPositive = edemaMentioned && !edemaNegative && !edemaUncertain;
   const glomerularZh = `${
-    foamyPositive ? "我有注意到尿里泡沫比较多。" : foamyNegative ? "我没有注意到明显泡沫尿。" : "尿里泡沫多不多，我之前没特别注意。"
+    foamyUncertain ? "尿里泡沫多不多，我之前没特别注意。" : foamyPositive ? "我有注意到尿里泡沫比较多。" : foamyNegative ? "我没有注意到明显泡沫尿。" : "尿里泡沫多不多，我之前没特别注意。"
   }\n${
-    edemaPositive ? "我有眼睑或下肢水肿。" : edemaNegative ? "我没有注意到眼睑或下肢水肿。" : "眼睑或腿有没有肿，我之前没特别注意。"
+    edemaUncertain ? "眼睑或腿有没有肿，我之前没特别注意。" : edemaPositive ? "我有眼睑或下肢水肿。" : edemaNegative ? "我没有注意到眼睑或下肢水肿。" : "眼睑或腿有没有肿，我之前没特别注意。"
   }`;
-  const uriMatch = [glomerularSource, illness.fever, illness.onset]
-    .flatMap((item) => String(item || "").split(/[；，。\n]/))
+  const uriMatch = [illness.onset, illness.fever, glomerularSource]
+    .flatMap((item) => String(item || "").split(/[；。\n]/))
     .find((item) => /感冒|咽痛|扁桃体炎|上感|上呼吸道感染/.test(item));
   const recentUriZh = uriMatch || unknownAnswer("recent_uri", "zh");
   const englishCase = englishCases.find((item) => item.id === caseData.id);
   const rawPhase = value(pfp.hematuriaPhase, illness.hematuriaPhase, caseData.patientAnswers?.phase);
   const rawVisibility = value(pfp.hematuriaType, illness.hematuriaType);
+  const rawUrineColor = value(pfp.urineColor, illness.color, caseData.patientAnswers?.color);
   const microscopicOnly = /镜下|潜血|隐血/.test(rawVisibility) && !/肉眼/.test(rawVisibility);
-  const rawFrequency = value(extended.presentIllness.frequency, illness.duration);
+  const specialVisibleColor = /茶色|浓茶|可乐|酱油|烟熏/.test(rawUrineColor);
+  const rawFrequency = firstMatching(/间断|反复|多次|持续|每次|一直|始终|仅?一次|1次/, extended.presentIllness.frequency, illness.onset, illness.duration, caseData.chiefComplaint);
   const rawClots = value(pfp.clots, illness.clots, caseData.patientAnswers?.clots);
   const rawFlankPain = value(pfp.flankPain, illness.flankPain);
   const rawPainDetail = value(caseData.patientAnswers?.pain, illness.pain, pfp.painRelation, illness.flankPain);
@@ -236,15 +249,33 @@ function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en"
   const rawVoiding = value(illness.voidingDifficulty, pfp.luts);
   const rawFever = value(pfp.fever, illness.fever, caseData.patientAnswers?.fever);
   const rawRecentUri = recentUriZh;
-  const rawTrigger = value(illness.trigger);
+  const triggerPattern = /(?:长跑|长距离跑步|跑步|运动|剧烈运动|皮肤[^。；]{0,8}感染|感冒|咽痛|上感|外伤|性生活|导尿|膀胱镜|尿路操作)[^。；]{0,12}(?:后|之后|诱发|期间|同步)/;
+  const rawTrigger = value(illness.trigger)
+    || [illness.onset, caseData.chiefComplaint]
+      .map((item) => String(item || "").match(triggerPattern)?.[0] || "")
+      .find(Boolean)
+    || "";
   const rawFamily = sh?.familyHistory?.patientAnswerZh || "";
   const familyAnswersSpecificQuestion = /血尿|肾病|肾炎|肿瘤|癌|遗传|类似/.test(rawFamily);
   const zh: Partial<Record<CanonicalSlotId, string>> = {
     chief_complaint: value(pfp.chiefComplaint, caseData.studentChiefComplaint, caseData.chiefComplaint),
-    hematuria_visibility: rawVisibility, hematuria_onset: value(illness.onset, illness.duration, caseData.studentChiefComplaint),
-    hematuria_frequency: /间断|反复|时有时无|持续|每次|一直/.test(rawFrequency) ? rawFrequency : unknownAnswer("hematuria_frequency", "zh"),
-    hematuria_phase: microscopicOnly || /需追问|可伴|可表现|常为|多为|未分清|不详/.test(rawPhase) ? unknownAnswer("hematuria_phase", "zh") : rawPhase,
-    urine_color: microscopicOnly ? "尿色外观看不出明显发红。" : value(pfp.urineColor, illness.color, caseData.patientAnswers?.color),
+    hematuria_visibility: microscopicOnly && specialVisibleColor
+      ? /正常或茶|多正常或茶/.test(rawUrineColor)
+        ? "尿检发现血尿，尿色平时正常，偶尔呈茶色。"
+        : `尿检发现血尿，尿色偶尔呈${rawUrineColor}。`
+      : /肉眼/.test(rawVisibility) && specialVisibleColor
+        ? `肉眼可见${rawUrineColor}尿。`
+        : rawVisibility,
+    hematuria_onset: value(illness.onset, illness.duration, caseData.studentChiefComplaint),
+    hematuria_frequency: /仅?一次|1次/.test(rawFrequency)
+      ? "只出现过这一次。"
+      : /间断|反复|多次|时有时无/.test(rawFrequency)
+        ? "尿检或尿色异常反复出现过。"
+        : /持续|每次|一直|始终/.test(rawFrequency)
+          ? "这段时间一直都有。"
+          : unknownAnswer("hematuria_frequency", "zh"),
+    hematuria_phase: microscopicOnly || /需追问|可伴|可表现|常为|多为|未分清|未明确|不详/.test(rawPhase) ? unknownAnswer("hematuria_phase", "zh") : rawPhase,
+    urine_color: microscopicOnly && !specialVisibleColor ? "尿色外观看不出明显发红。" : rawUrineColor,
     clots: naturalBinaryZh("clots", rawClots),
     pain: naturalBinaryZh("pain", rawPainDetail), dysuria: naturalBinaryZh("dysuria", dysuriaZh),
     flank_pain: naturalBinaryZh("flank_pain", rawFlankPain),
@@ -276,7 +307,9 @@ function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en"
   const unknown = sourcePolarity === "unknown";
   const en: Partial<Record<CanonicalSlotId, string>> = {
     chief_complaint: englishCase?.chiefComplaint || `My urine has looked red ${durationEn(source)}.`,
-    hematuria_visibility: /肉眼|看得见|尿色.*(?:红|粉)/.test(source) && /镜下|潜血|隐血|红细胞/.test(source)
+    hematuria_visibility: /镜下|潜血|隐血|红细胞|尿检发现/.test(source) && /茶|酱油|可乐|烟熏/.test(source) && !/肉眼/.test(source)
+      ? "Blood was found on testing, and my urine has sometimes looked tea- or cola-colored."
+      : /肉眼|看得见|尿色.*(?:红|粉)/.test(source) && /镜下|潜血|隐血|红细胞/.test(source)
       ? (/擦拭|纸巾|粉红/.test(source)
         ? "I could see pink discoloration when wiping, and red blood cells were also found on a urine test."
         : /茶|酱油|可乐/.test(source)
@@ -290,6 +323,8 @@ function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en"
     hematuria_onset: `It started ${durationEn(source)}.`,
     hematuria_frequency: /间断|反复|时有时无/.test(source)
       ? "It has been intermittent rather than present every time."
+      : /只[^.。；]*一次/.test(source)
+        ? "It happened only once."
       : /持续|一直|每次/.test(source)
         ? "It has been present continuously."
         : unknownAnswer(slot, "en"),
@@ -300,25 +335,35 @@ function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en"
         : /起始|开始/.test(source)
           ? "It is red mainly at the beginning."
           : unknownAnswer(slot, "en"),
-    urine_color: /外观看不出|外观.*正常|看不出明显发红/.test(source) ? "My urine looked normal; the blood was found only on testing." : /茶|酱油|可乐/.test(source) ? "It looks tea- or cola-colored." : /鲜红/.test(source) ? "It looks bright red." : /暗红/.test(source) ? "It looks dark red." : /洗肉水/.test(source) ? "It looks pink-red, like water used to rinse meat." : "It looks reddish.",
+    urine_color: /茶|酱油|可乐|烟熏/.test(source) ? "It sometimes looks tea- or cola-colored." : /外观看不出|外观.*正常|看不出明显发红/.test(source) ? "My urine looked normal; the blood was found only on testing." : /鲜红/.test(source) ? "It looks bright red." : /暗红/.test(source) ? "It looks dark red." : /洗肉水/.test(source) ? "It looks pink-red, like water used to rinse meat." : "It looks reddish.",
     clots: unknown ? unknownAnswer(slot, "en") : negative ? "I have not noticed any blood clots." : "I have noticed blood clots in the urine.",
     pain: unknown ? unknownAnswer(slot, "en") : negative ? "I do not have pain with it." : "I have pain with it.",
     dysuria: unknown ? unknownAnswer(slot, "en") : negative ? "It does not hurt or burn when I urinate." : "It hurts or burns when I urinate.",
-    flank_pain: unknown ? unknownAnswer(slot, "en") : negative ? "I do not have flank pain." : "I have pain in my flank.",
+    flank_pain: unknown ? unknownAnswer(slot, "en") : negative ? "I do not have flank pain." : /腰酸/.test(source) ? "I have mild soreness in my flank." : "I have pain in my flank.",
     renal_colic: unknown ? unknownAnswer(slot, "en") : negative ? "I have not had severe colicky flank pain." : "I have had severe colicky flank pain.",
     radiating_pain: unknown ? unknownAnswer(slot, "en") : negative ? "The pain does not radiate elsewhere." : "The pain radiates toward my lower abdomen or groin.",
     urinary_frequency: unknown ? unknownAnswer(slot, "en") : negative ? "I have not been urinating more often than usual." : "I have been urinating more often.",
     urinary_urgency: unknown ? unknownAnswer(slot, "en") : negative ? "I do not have urinary urgency." : "I often have a sudden urgent need to urinate.",
     voiding_difficulty: unknown ? unknownAnswer(slot, "en") : negative ? "I do not have difficulty urinating." : "I have some difficulty or straining when I urinate.",
     retention: unknown ? unknownAnswer(slot, "en") : negative ? "I have not had urinary retention." : "At times I cannot pass urine.",
-    fever_chills: unknown ? unknownAnswer(slot, "en") : negative ? "I have not had fever or chills." : `I have had fever or chills${source.match(/\d{2}\.\d/) ? `, up to ${source.match(/\d{2}\.\d/)?.[0]} degrees Celsius` : ""}.`,
+    fever_chills: unknown ? unknownAnswer(slot, "en") : negative ? "I have not had fever or chills." : /低热/.test(source) ? "I have had a low fever." : `I have had fever or chills${source.match(/\d{2}\.\d/) ? `, up to ${source.match(/\d{2}\.\d/)?.[0]} degrees Celsius` : ""}.`,
     glomerular_features: `${
-      foamyPositive ? "I have noticed unusually foamy urine." : foamyNegative ? "I have not noticed foamy urine." : "I did not pay close attention to whether my urine was unusually foamy."
+      foamyUncertain ? "I did not pay close attention to whether my urine was unusually foamy." : foamyPositive ? "I have noticed unusually foamy urine." : foamyNegative ? "I have not noticed foamy urine." : "I did not pay close attention to whether my urine was unusually foamy."
     }\n${
-      edemaPositive ? "I have had swelling around my eyes or legs." : edemaNegative ? "I have not noticed swelling around my eyes or legs." : "I did not pay close attention to whether my eyes or legs were swollen."
+      edemaUncertain ? "I did not pay close attention to whether my eyes or legs were swollen." : edemaPositive ? "I have had swelling around my eyes or legs." : edemaNegative ? "I have not noticed swelling around my eyes or legs." : "I did not pay close attention to whether my eyes or legs were swollen."
     }`,
     recent_uri: unknown ? unknownAnswer(slot, "en") : negative ? "I have not had a recent cold or sore throat." : "This followed a recent cold or sore throat.",
-    triggers: unknown ? unknownAnswer(slot, "en") : negative ? "I did not have exercise, trauma, sexual activity, or a urinary procedure before this started." : "There was a trigger before this started.",
+    triggers: unknown
+      ? unknownAnswer(slot, "en")
+      : negative
+        ? "I did not have exercise, trauma, sexual activity, or a urinary procedure before this started."
+        : /长跑|跑步|运动/.test(source)
+          ? "This happened after a long run or other strenuous exercise."
+          : /皮肤[^。；]{0,8}感染/.test(source)
+            ? "This happened after a skin infection."
+            : /感冒|咽痛|上感/.test(source)
+              ? "This happened around the time of a cold or sore throat."
+              : "There was a trigger before this started.",
     stone_history: sh?.stoneHistory?.patientAnswerEn, uti_history: sh?.urinaryInfectionHistory?.patientAnswerEn, tumor_history: sh?.malignancyHistory?.patientAnswerEn,
     urinary_procedure_history: sh?.urinaryProcedureHistory?.patientAnswerEn, surgery_history: sh?.surgeryHistory?.patientAnswerEn,
     anticoagulant: sh?.anticoagulantUse?.patientAnswerEn, antiplatelet: sh?.antiplateletUse?.patientAnswerEn,

@@ -104,6 +104,20 @@
       "basis": "The original narrative describes current dull flank pain that is milder than prior colic, while a derived profile labels current renal colic as mild.",
       "questionZh": "请确认P024本次疼痛是否属于肾绞痛；原始叙述为持续钝痛且较既往绞痛轻，不能由既往绞痛反推本次肾绞痛阳性。",
       "questionEn": "Please confirm whether the current P024 pain qualifies as renal colic; the original narrative describes dull pain milder than prior colic, so prior colic must not be projected onto the current episode."
+    },
+    {
+      "reviewItemId": "HISTORY-MED-004",
+      "caseId": "HX-ADD-022",
+      "displayCaseId": "P034",
+      "field": "hematuria_visibility",
+      "canonicalSlotId": "hematuria_visibility",
+      "conflictType": "SOURCE_VISIBILITY_CONTRADICTION",
+      "disposition": "BLOCKED_MEDICAL",
+      "teacherReviewRequired": true,
+      "reviewStatus": "needs_review",
+      "basis": "The original narrative records recurrent microscopic hematuria with usually normal-looking urine and says childhood gross hematuria still requires inquiry, while the structured marker says gross hematuria and a derived profile says occasional gross hematuria.",
+      "questionZh": "请确认P034是否曾出现患者肉眼可见的血尿；原始叙述为反复镜下血尿、尿液外观多正常，儿童期是否有肉眼血尿仍需追问，在确认前不得回答为确定的肉眼或镜下血尿。",
+      "questionEn": "Please confirm whether P034 ever had patient-visible hematuria; the original narrative documents recurrent microscopic hematuria with usually normal-looking urine and leaves childhood gross hematuria for follow-up."
     }
   ]
 }

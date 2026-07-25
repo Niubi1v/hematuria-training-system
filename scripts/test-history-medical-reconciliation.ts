@@ -129,6 +129,35 @@ assert.match(slots["HX-ADD-017"].medications.patientAnswerEn, /tamsulosin/i);
 assertBilingualUnknown("HX-ADD-018", "hematuria_phase");
 assert.match(slots["HX-ADD-018"].urine_color.patientAnswerEn, /looked normal|only on testing/i);
 
+assert.match(slots["HX-ADD-019"].hematuria_visibility.patientAnswerEn, /tea- or cola-colored/i);
+assert.match(slots["HX-ADD-019"].urine_color.patientAnswerEn, /tea- or cola-colored/i);
+assert.match(slots["HX-ADD-019"].flank_pain.patientAnswerEn, /mild soreness/i);
+assert.match(slots["HX-ADD-019"].glomerular_features.patientAnswerEn, /noticed unusually foamy urine/i);
+assert.match(slots["HX-ADD-019"].glomerular_features.patientAnswerEn, /swelling around my eyes or legs/i);
+assert.match(slots["HX-ADD-019"].recent_uri.patientAnswerEn, /recent cold|sore throat/i);
+assertBilingualUnknown("HX-ADD-020", "fever_chills");
+assert.match(slots["HX-ADD-020"].glomerular_features.patientAnswerEn, /noticed unusually foamy urine/i);
+assert.match(slots["HX-ADD-020"].glomerular_features.patientAnswerEn, /swelling around my eyes or legs/i);
+assert.match(slots["HX-ADD-020"].triggers.patientAnswerEn, /after a skin infection/i);
+assert.match(slots["HX-ADD-021"].hematuria_visibility.patientAnswerEn, /could not see red urine/i);
+assert.match(slots["HX-ADD-021"].hematuria_frequency.patientAnswerEn, /intermittent|present every time/i);
+assertBilingualUnknown("HX-ADD-021", "hematuria_phase");
+assert.match(slots["HX-ADD-021"].urine_color.patientAnswerEn, /looked normal|only on testing/i);
+assertBilingualUnknown("HX-ADD-022", "hematuria_visibility");
+assert.match(slots["HX-ADD-022"].hematuria_frequency.patientAnswerEn, /intermittent|present every time/i);
+assertBilingualUnknown("HX-ADD-022", "hematuria_phase");
+assert.match(slots["HX-ADD-022"].glomerular_features.patientAnswerEn, /did not pay close attention.*foamy/i);
+assert.match(slots["HX-ADD-022"].glomerular_features.patientAnswerEn, /not noticed swelling/i);
+assert.match(slots["HX-ADD-023"].hematuria_visibility.patientAnswerEn, /blood was found on testing/i);
+assert.match(slots["HX-ADD-023"].hematuria_visibility.patientAnswerEn, /tea- or cola-colored/i);
+assertBilingualUnknown("HX-ADD-023", "hematuria_phase");
+assert.match(slots["HX-ADD-023"].urine_color.patientAnswerEn, /tea- or cola-colored/i);
+assert.match(slots["HX-ADD-023"].glomerular_features.patientAnswerEn, /noticed unusually foamy urine/i);
+assert.match(slots["HX-ADD-023"].glomerular_features.patientAnswerEn, /swelling around my eyes or legs/i);
+assert.match(slots["HX-ADD-023"].fever_chills.patientAnswerEn, /low fever/i);
+assert.match(slots["HX-ADD-024"].hematuria_frequency.patientAnswerEn, /only once/i);
+assert.match(slots["HX-ADD-024"].triggers.patientAnswerEn, /after a long run|strenuous exercise/i);
+
 const p026 = cases.find((item) => item.id === "HX-ADD-014");
 assert.deepEqual(p026?.structuredHistory?.medicationList?.map((item) => item.name), ["降糖药"]);
 const p027 = cases.find((item) => item.id === "HX-ADD-015");
@@ -143,7 +172,8 @@ assert.match(p029?.sourceFacts?.medication || "", /否认华法林、利伐沙�
 
 for (const probe of [
   { caseId: "HX-ADD-007", zh: "这是肉眼血尿还是镜下血尿？", en: "Was this visible blood or microscopic hematuria?" },
-  { caseId: "HX-ADD-012", zh: "这是肾绞痛吗？", en: "Did you have renal colic?" }
+  { caseId: "HX-ADD-012", zh: "这是肾绞痛吗？", en: "Did you have renal colic?" },
+  { caseId: "HX-ADD-022", zh: "这是肉眼血尿还是镜下血尿？", en: "Was this visible blood or microscopic hematuria?" }
 ]) {
   for (const language of ["zh", "en"] as const) {
     const governed = matchCanonicalPatientFacts(probe.caseId, probe[language], language);
@@ -165,4 +195,4 @@ for (const language of ["zh", "en"] as const) {
   assert.match(surgery.replyText, language === "zh" ? /记不(?:太)?清|没特别注意/ : /cannot recall|not sure|did not notice/i);
 }
 
-console.log("History medical reconciliation regression passed through P030 with blocked-source governance.");
+console.log("History medical reconciliation regression passed through P036 with blocked-source governance.");
