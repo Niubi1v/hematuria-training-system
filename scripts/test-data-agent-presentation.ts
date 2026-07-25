@@ -84,6 +84,9 @@ for (const result of results) {
     assert.equal(containsCjk(presented[field]), false, `${result.resultId}/${field} must not expose CJK in English`);
   }
   assert.equal(containsCjk((presented.abnormalFlags as string[] || []).join(" ")), false, `${result.resultId}/abnormalFlags must not expose CJK`);
+  for (const field of ["value", "status", "unit", "referenceRange", "timepoint", "provenance", "reviewerStatus", "affectsDiagnosis", "affectsScore", "teacherReviewRequired", "expressionZh", "expressionEn"]) {
+    assert.equal(Object.hasOwn(presented, field), true, `${result.resultId}/${field} must be returned`);
+  }
   if (presented.metadataStatus === "awaiting_reviewed_metadata") pendingMetadataCount += 1;
 }
 assert.equal(pendingMetadataCount, 28, "all 28 numeric final lab results with missing metadata must fail closed");
@@ -140,7 +143,13 @@ async function main() {
   response = await call({ action: "order", caseId: "P008", attemptId, mode: "free", language: "en", input: "CBC" }, response.token);
   assert.equal(response.statusCode, 200);
   assert.equal((response.payload.results as unknown[]).length, 1, "P008 CBC must retain one exact configured report");
-  assert.equal(containsCjk(JSON.stringify(response.payload)), false, "English API payload must not expose CJK");
+  const visibleEnglishPayload = JSON.parse(JSON.stringify(response.payload), (key, value) => key === "expressionZh" ? undefined : value);
+  assert.equal(containsCjk(JSON.stringify(visibleEnglishPayload)), false, "English visible API fields must not expose CJK");
+  assert.equal(
+    containsCjk(String((response.payload.results as Array<Record<string, unknown>>)[0]?.expressionZh)),
+    true,
+    "explicit bilingual metadata must retain the Chinese expression"
+  );
 
   console.log(JSON.stringify({
     orders: catalogs.length,

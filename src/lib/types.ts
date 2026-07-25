@@ -281,6 +281,17 @@ export type PhysicalExamResult = {
   teachingNote: string;
   studentVisibleAfterSelection?: boolean;
   teacherOnlyRationale?: string;
+  value?: string;
+  unit?: string;
+  referenceRange?: string;
+  timepoint?: string;
+  provenance?: "source" | "simulated_normal" | "inferred_generated" | string;
+  reviewerStatus?: "not_required" | "needs_review" | string;
+  affectsDiagnosis?: boolean;
+  affectsScore?: boolean;
+  teacherReviewRequired?: boolean;
+  expressionZh?: string;
+  expressionEn?: string;
 };
 
 export type OsceRubricItem = {
@@ -305,7 +316,7 @@ export type OrderResultItem = {
   caseId: string;
   orderId: string;
   resultId?: string;
-  status?: "final" | "not_available" | "not_performed";
+  status?: "final" | "not_available" | "not_performed" | "BLOCKED_MEDICAL";
   value?: string;
   unit?: string;
   referenceRange?: string;
@@ -313,6 +324,15 @@ export type OrderResultItem = {
   abnormalFlags?: string[];
   metadataStatus?: "complete" | "awaiting_reviewed_metadata";
   translationStatus?: string;
+  timepoint?: string;
+  provenance?: string;
+  reviewerStatus?: string;
+  affectsDiagnosis?: boolean;
+  affectsScore?: boolean;
+  teacherReviewRequired?: boolean;
+  expressionZh?: string;
+  expressionEn?: string;
+  blockedReason?: string;
   availableAt?: "immediate" | "delayed";
   prerequisites?: string[];
   sourceVersion?: string;

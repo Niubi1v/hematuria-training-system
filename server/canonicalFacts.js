@@ -163,8 +163,8 @@ function patientSlotIsUnknown(slot) {
 }
 
 function naturalDysuriaAnswer(value, language) {
-  if (value === true) return language === "en" ? "Yes, it hurts when I urinate." : "有，尿的时候会痛。";
-  if (value === false) return language === "en" ? "No, it does not hurt when I urinate." : "没有，小便时不痛。";
+  if (value === true) return language === "en" ? "Yes, it hurts when I urinate." : "会痛，小便的时候会疼。";
+  if (value === false) return language === "en" ? "No, it does not hurt or burn when I urinate." : "不痛，小便时没有疼痛或烧灼感。";
   return language === "en" ? "I have not been able to say for sure whether urination hurts." : "小便时是否疼，我现在说不准。";
 }
 

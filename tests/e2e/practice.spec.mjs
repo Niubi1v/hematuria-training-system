@@ -663,6 +663,20 @@ test("stage one safely recovers when the signed browser token outlives the serve
   await expect(page.getByText("检查决策智能体", { exact: true }).first()).toBeVisible();
 });
 
+test("missing current temperature is not rendered as a normal measurement", async ({ page }) => {
+  const observations = [];
+  await routeTrainingApiThroughHandler(page, observations);
+  await page.goto("/cases/P001/");
+  await enterInvestigationStage(page, "zh");
+
+  await page.getByRole("button", { name: "体温", exact: true }).click();
+
+  const examResult = page.locator('article[data-provenance="source_history"]').filter({ hasText: "体温" });
+  await expect(examResult).toContainText("未测量");
+  await expect(examResult.getByTestId("medical-data-provenance")).toContainText("病史来源");
+  await expect(examResult).not.toContainText(/36(?:\.\d+)?\s*℃/);
+});
+
 test("missing Preview attempt store reports a configuration blocker", async ({ page }) => {
   const actions = [];
   await page.route("**/api/health/**", (route) => route.fulfill({

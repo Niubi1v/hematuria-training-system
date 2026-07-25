@@ -58,6 +58,15 @@ export type OrderResultLog = {
     teachingExplanation: string;
     metadataStatus?: "complete" | "awaiting_reviewed_metadata";
     translationStatus?: string;
+    timepoint?: string;
+    provenance?: string;
+    reviewerStatus?: string;
+    affectsDiagnosis?: boolean;
+    affectsScore?: boolean;
+    teacherReviewRequired?: boolean;
+    expressionZh?: string;
+    expressionEn?: string;
+    blockedReason?: string;
   }>;
   pendingResults?: OrderResultLog["results"];
   message: string;
@@ -76,7 +85,26 @@ export type OrderResultLog = {
   returnedReportCount?: number;
 };
 
-export type ExamResultLog = { input: string; result: string; at: string; examId?: string; translationStatus?: string };
+export type ExamResultLog = {
+  input: string;
+  result: string;
+  at: string;
+  examId?: string;
+  translationStatus?: string;
+  status?: string;
+  value?: string;
+  unit?: string;
+  referenceRange?: string;
+  timepoint?: string;
+  provenance?: string;
+  reviewerStatus?: string;
+  affectsDiagnosis?: boolean;
+  affectsScore?: boolean;
+  teacherReviewRequired?: boolean;
+  expressionZh?: string;
+  expressionEn?: string;
+  blockedReason?: string;
+};
 
 export type MdtOpinion = {
   department: string;

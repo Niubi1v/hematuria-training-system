@@ -6,6 +6,7 @@ import orderCatalogProceduresJson from "@/data/order_catalog_procedures.json";
 import orderResultsStructuredJson from "@/data/order_results_structured.json";
 import physicalExamItemsJson from "@/data/physical_exam_items.json";
 import physicalExamResultsJson from "@/data/physical_exam_results.json";
+import { governPhysicalExamResult, presentOrderResult } from "@/shared/dataAgentPresentation.js";
 import type { CaseData, MdtTrigger, OrderCatalogItem, OrderResultItem, PhysicalExamItem, PhysicalExamResult } from "./types";
 import { scoreTrainingEvents, type TrainingEvent } from "./eventScoring";
 
@@ -33,6 +34,22 @@ export type ExamResultLog = {
   input: string;
   result: string;
   at: string;
+  examId?: string;
+  status?: string;
+  value?: string;
+  unit?: string;
+  referenceRange?: string;
+  timepoint?: string;
+  provenance?: string;
+  reviewerStatus?: string;
+  affectsDiagnosis?: boolean;
+  affectsScore?: boolean;
+  teacherReviewRequired?: boolean;
+  expressionZh?: string;
+  expressionEn?: string;
+  blockedReason?: string;
+  blockedUnsafeValueCount?: number;
+  blockedIncorrectNormalCount?: number;
 };
 
 export type MdtOpinion = {
@@ -146,15 +163,10 @@ export function matchOrderResults(caseData: CaseData, input: string, context?: {
   });
   const unmetPrerequisites = unique(configured.flatMap(({ result }) => result.prerequisites.filter((prerequisite) => !availableOrderIds.has(prerequisite))));
   const matched = configured.filter(({ order, result }) => !duplicateOrderIds.includes(order.orderId) && result.prerequisites.every((prerequisite) => availableOrderIds.has(prerequisite))).map(({ order, result }) => ({
+    ...presentOrderResult(order, result, "zh"),
     caseId: result.caseId,
     orderId: result.orderId,
     resultId: result.resultId,
-    status: result.status,
-    value: result.value,
-    unit: result.unit,
-    referenceRange: result.referenceRange,
-    impression: result.impression,
-    abnormalFlags: result.abnormalFlags,
     availableAt: result.availableAt,
     prerequisites: result.prerequisites,
     sourceVersion: result.sourceVersion,
@@ -163,7 +175,6 @@ export function matchOrderResults(caseData: CaseData, input: string, context?: {
     orderCategory: `${order.primaryCategory}/${order.secondaryCategory}`,
     synonyms: [order.displayName],
     result: result.value || result.impression,
-    abnormalLevel: result.abnormalFlags.join("、") || result.status,
     teachingExplanation: "仅返回当前caseId与已开orderId的结构化结果。",
     isKey: true,
     prerequisite: result.prerequisites.join("、")
@@ -204,7 +215,14 @@ export function generatePhysicalExamResult(caseData: CaseData, input: string): E
   if (matchedExam) {
     const configured = physicalExamResults.find((item) => item.caseId === caseData.id && item.examId === matchedExam.examId);
     if (configured && configured.studentVisibleAfterSelection) {
-      return { input: text, result: configured.result, at: new Date().toISOString() };
+      const governed = governPhysicalExamResult(caseData, matchedExam, configured);
+      return {
+        input: text,
+        examId: matchedExam.examId,
+        ...governed,
+        result: governed.expressionZh,
+        at: new Date().toISOString()
+      };
     }
   }
   return { input: text, result: "未匹配到适用于当前患者的已配置查体项目。", at: new Date().toISOString() };

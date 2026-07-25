@@ -5,6 +5,7 @@ export const ENGLISH_EXAM_PLACEHOLDER: string;
 export const ENGLISH_METADATA_PLACEHOLDER: string;
 export const ENGLISH_ORDER_PLACEHOLDER: string;
 export const ENGLISH_RESULT_PLACEHOLDER: string;
+export { MEDICAL_DATA_POLICY, detectCaseMedicalDataConflicts, governPhysicalExamResult } from "./medicalDataPolicy";
 
 export function containsCjk(value: unknown): boolean;
 export function firstEnglishAlias(order: { orderId?: string; synonyms?: string[] }): string;
@@ -25,7 +26,8 @@ export function presentPhysicalExamItem<T extends Record<string, unknown>>(item:
 export function presentOrderResult<TOrder extends Record<string, unknown>, TResult extends Record<string, unknown>>(
   order: TOrder,
   result: TResult,
-  language?: DataAgentLanguage
+  language?: DataAgentLanguage,
+  options?: { blockedMedical?: boolean; blockedReason?: string }
 ): TResult & {
   orderCategory: string;
   result?: string;
@@ -33,6 +35,15 @@ export function presentOrderResult<TOrder extends Record<string, unknown>, TResu
   abnormalFlags?: string[];
   metadataStatus: "complete" | "awaiting_reviewed_metadata";
   translationStatus: string;
+  timepoint: string;
+  provenance: string;
+  reviewerStatus: string;
+  affectsDiagnosis: boolean;
+  affectsScore: boolean;
+  teacherReviewRequired: boolean;
+  expressionZh: string;
+  expressionEn: string;
+  blockedReason: string;
 };
 export function presentMatchedOrder(
   order: { orderId: string; displayName?: string; synonyms?: string[] },

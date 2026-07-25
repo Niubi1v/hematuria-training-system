@@ -149,6 +149,45 @@ async function main() {
   }
   if (isUnknown(compound.replyText, "zh")) failures.push("compound known facts incorrectly answered unknown");
 
+  const naturalExamples = [
+    {
+      caseId: "P005",
+      question: "小便痛不痛？",
+      expected: /^会痛，小便的时候会疼。$/,
+      label: "known dysuria true"
+    },
+    {
+      caseId: "P002",
+      question: "没有尿痛吧？",
+      expected: /^不痛，小便时没有疼痛或烧灼感。$/,
+      label: "known dysuria false despite question negation"
+    },
+    {
+      caseId: "P002",
+      question: "小便从头到尾都是红的吗？",
+      expected: /^是的，从开始尿到最后颜色都红。$/,
+      label: "known whole-stream true"
+    },
+    {
+      caseId: "HX-ADD-006",
+      question: "刚开始红、最后红还是全程红？",
+      expected: /^不是全程红，主要是快尿完的时候发红。$/,
+      label: "terminal selection"
+    }
+  ];
+  for (const example of naturalExamples) {
+    const session = await initSession({ caseId: example.caseId, attemptId: `intent-natural-${example.caseId}`, language: "zh" });
+    const answer = await generatePatientAnswer({
+      sessionId: session.sessionId,
+      caseId: example.caseId,
+      studentInput: example.question,
+      language: "zh"
+    });
+    if (!example.expected.test(answer.replyText)) {
+      failures.push(`${example.label} wording mismatch: ${answer.replyText}`);
+    }
+  }
+
   const summary = {
     totalQuestions: probes.length,
     canonicalHits,
@@ -158,6 +197,7 @@ async function main() {
     polarityErrors,
     polarityErrorRate: Number((polarityErrors / probes.length).toFixed(4)),
     compoundComplete: ["urinary_frequency", "urinary_urgency", "dysuria"].every((intent) => compound.matchedFacts?.includes(intent)),
+    naturalExamples: naturalExamples.length,
     failures: failures.length
   };
   console.log(`PATIENT_INTENT_NORMALIZATION_EVIDENCE ${JSON.stringify(summary)}`);

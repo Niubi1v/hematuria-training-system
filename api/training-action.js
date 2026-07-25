@@ -15,6 +15,8 @@ const { BILINGUAL_CONFLICT_REASON, filterQuarantinedEvents } = require("../serve
 const { setServerTiming } = require("../server/performanceTiming.js");
 const { parseJsonBody } = require("../server/requestSecurity.js");
 const {
+  detectCaseMedicalDataConflicts,
+  governPhysicalExamResult,
   presentExamResult,
   presentMatchedOrder,
   presentOrderCatalogItem,
@@ -159,21 +161,24 @@ function findOrders(input) {
   }).filter((item, index, all) => all.findIndex((other) => other.orderId === item.orderId) === index);
 }
 
-function handleExam(caseId, input, language) {
+function handleExam(caseData, input, language) {
   const exact = normalize(input);
   const item = examItems.find((candidate) => [candidate.displayName, ...(candidate.synonyms || [])].some((name) => normalize(name) === exact));
-  const configured = item && examResults.find((result) => result.caseId === caseId && result.examId === item.examId && result.studentVisibleAfterSelection);
-  const presented = presentExamResult(configured?.result || "", language);
+  const configured = item && examResults.find((result) => result.caseId === caseData.id && result.examId === item.examId && result.studentVisibleAfterSelection);
+  const governed = governPhysicalExamResult(caseData, item, configured);
+  const presented = presentExamResult(language === "en" ? governed.expressionEn : governed.expressionZh, language);
   return {
     input, examId: item?.examId, at: new Date().toISOString(),
-    result: configured
+    ...governed,
+    result: item
       ? presented.text
       : (language === "en" ? "No configured result is available for this examination." : "当前查体项目暂无可返回结果。"),
-    translationStatus: configured ? presented.translationStatus : "not_available"
+    translationStatus: item ? presented.translationStatus : "not_available"
   };
 }
 
-function handleOrder(caseId, input, previousOrderIds, language) {
+function handleOrder(caseData, input, previousOrderIds, language) {
+  const caseId = caseData.id;
   const resolvedOrders = findOrders(input);
   const unavailableOrders = language === "en"
     ? resolvedOrders.filter((item) => !presentOrderCatalogItem(item, language).translationAvailable)
@@ -187,6 +192,13 @@ function handleOrder(caseId, input, previousOrderIds, language) {
     return result ? [{ order, result }] : [];
   });
   const configuredByOrderId = new Map(configured.map((item) => [item.order.orderId, item.result]));
+  const medicalConflicts = detectCaseMedicalDataConflicts(
+    caseData,
+    structuredResults.filter((item) => item.caseId === caseId)
+  );
+  const conflictByResultId = new Map(
+    medicalConflicts.flatMap((conflict) => conflict.resultIds.map((resultId) => [resultId, conflict.code]))
+  );
   const unmetPrerequisites = [...new Set(configured.flatMap(({ result }) => (result.prerequisites || []).filter((id) => !available.has(id))))];
   const acceptedOrderIds = orders.filter((order) => {
     if (duplicateOrderIds.includes(order.orderId)) return false;
@@ -202,7 +214,10 @@ function handleOrder(caseId, input, previousOrderIds, language) {
       orderId: order.orderId,
       resultId: result.resultId,
       status: result.status,
-      ...presentOrderResult(order, result, language),
+      ...presentOrderResult(order, result, language, {
+        blockedMedical: conflictByResultId.has(result.resultId),
+        blockedReason: conflictByResultId.get(result.resultId) || ""
+      }),
       teachingExplanation: language === "en" ? "Released only for this exact case and placed order." : "仅按当前病例与已开立医嘱精确释放。"
     }));
   const at = new Date().toISOString();
@@ -381,19 +396,21 @@ module.exports = async function handler(req, res) {
       });
     }
     if (body.action === "exam") {
-      const result = handleExam(caseData.id, body.input, language);
+      const result = handleExam(caseData, body.input, language);
       if (result.examId) appendEvents(state, [{ eventId: `srv-${state.sequence + 1}-exam-${result.examId}`, type: "physical_exam_performed", actionId: result.examId, stageNo: 2, at, text: result.input, metadata: { validated: true } }]);
       return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: result });
     }
     if (body.action === "order") {
-      const result = handleOrder(caseData.id, body.input, state.orders, language);
+      const result = handleOrder(caseData, body.input, state.orders, language);
       const newOrderIds = result.acceptedOrderIds.filter((id) => !state.orders.includes(id));
       state.orders = [...new Set([...state.orders, ...newOrderIds])];
       const orderEvents = result.matchedOrders
         .filter((order) => result.acceptedOrderIds.includes(order.orderId)
           || result.duplicateOrderIds.includes(order.orderId))
         .map((order) => ({ eventId: `srv-${state.sequence + 1}-order-${order.orderId}`, type: "order_placed", actionId: order.orderId, stageNo: 2, at, text: order.displayName, metadata: { validated: true, duplicate: result.duplicateOrderIds.includes(order.orderId) } }));
-      const resultEvents = result.results.map((item) => ({ eventId: `srv-${state.sequence + 1}-result-${item.resultId}`, type: "result_returned", actionId: item.orderId, stageNo: 2, at, text: item.impression || item.result, metadata: { validated: true } }));
+      const resultEvents = result.results
+        .filter((item) => item.status !== "BLOCKED_MEDICAL" && item.reviewerStatus !== "needs_review")
+        .map((item) => ({ eventId: `srv-${state.sequence + 1}-result-${item.resultId}`, type: "result_returned", actionId: item.orderId, stageNo: 2, at, text: item.impression || item.result, metadata: { validated: true } }));
       appendEvents(state, [...orderEvents, ...resultEvents]);
       return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: result });
     }

@@ -523,6 +523,14 @@ function formatReportLines(text: string) {
   return (text || "").split(/\n|；/).map((line) => line.trim()).filter(Boolean);
 }
 
+function medicalDataProvenanceLabel(provenance: string | undefined, lang: LanguageCode) {
+  if (provenance === "source") return lang === "en" ? "Source record" : "来源记录";
+  if (provenance === "source_history") return lang === "en" ? "History source" : "病史来源";
+  if (provenance === "simulated_normal") return lang === "en" ? "Teaching simulation" : "教学模拟";
+  if (provenance === "source_conflict") return lang === "en" ? "Medical conflict" : "医学冲突";
+  return lang === "en" ? "Not measured/recorded" : "未测量/未记录";
+}
+
 function ReportCard({ item, lang }: { item: OrderResultLog["results"][number]; lang: LanguageCode }) {
   const resultText = safeStudentFacingText(item.result, lang, ENGLISH_RESULT_PLACEHOLDER);
   const impression = safeStudentFacingText(item.impression, lang, ENGLISH_RESULT_PLACEHOLDER);
@@ -557,6 +565,10 @@ function ReportCard({ item, lang }: { item: OrderResultLog["results"][number]; l
         ))}
       </div>}
       {item.impression && <p className="mt-3 border-l-2 border-clinic-blue pl-3"><span className="font-semibold">{lang === "en" ? "Impression" : "印象"}：</span>{impression}</p>}
+      <p data-testid="medical-data-provenance" className="mt-3 text-xs leading-5 text-clinic-muted">
+        {lang === "en" ? "Provenance" : "数据来源"}：{medicalDataProvenanceLabel(item.provenance, lang)}
+        {item.timepoint ? ` · ${lang === "en" ? "Timepoint" : "时间点"}：${item.timepoint}` : ""}
+      </p>
       {item.teachingExplanation && <p className="mt-3 text-xs leading-5 text-clinic-muted">{t(lang, "releaseRule")}：{teachingExplanation}</p>}
     </article>
   );
@@ -2201,9 +2213,10 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 </div>
                 <div className="mt-4 space-y-3">
                   {examLogs.map((log) => (
-                    <article key={`${log.at}-${log.input}`} className="rounded-lg border border-clinic-line bg-clinic-paper p-3 text-sm leading-6">
-                      <div className="mb-1 flex flex-wrap items-center justify-between gap-2"><span className="font-semibold text-clinic-blue">{safeStudentFacingText(log.input, lang, ENGLISH_EXAM_PLACEHOLDER)}</span><span className="ui-status-info"><FileText size={14} aria-hidden="true" />{lang === "en" ? "Returned" : "已返回"}</span></div>
+                    <article key={`${log.at}-${log.input}`} data-provenance={log.provenance || "not_recorded"} className="rounded-lg border border-clinic-line bg-clinic-paper p-3 text-sm leading-6">
+                      <div className="mb-1 flex flex-wrap items-center justify-between gap-2"><span className="font-semibold text-clinic-blue">{safeStudentFacingText(log.input, lang, ENGLISH_EXAM_PLACEHOLDER)}</span><span className={log.status === "BLOCKED_MEDICAL" || log.reviewerStatus === "needs_review" ? "ui-status-warning" : "ui-status-info"}><FileText size={14} aria-hidden="true" />{log.status === "BLOCKED_MEDICAL" ? (lang === "en" ? "Awaiting review" : "等待审核") : log.status === "not_measured" || log.status === "not_examined" ? (lang === "en" ? "Not measured" : "未测量") : (lang === "en" ? "Returned" : "已返回")}</span></div>
                       <p>{safeStudentFacingText(log.result, lang, ENGLISH_RESULT_PLACEHOLDER)}</p>
+                      <p data-testid="medical-data-provenance" className="mt-2 text-xs text-clinic-muted">{lang === "en" ? "Provenance" : "数据来源"}：{medicalDataProvenanceLabel(log.provenance, lang)}</p>
                     </article>
                   ))}
                 </div>
