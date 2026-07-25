@@ -102,7 +102,7 @@
     "age": "83",
     "sex": "男",
     "sexEn": "Male",
-    "chiefComplaint": "进行性排尿困难3年余，加重伴血尿1月",
+    "chiefComplaint": "Progressive difficulty urinating for over 3 years, worsening with red urine for 1 month.",
     "chiefComplaintEn": "Progressive dysuria/voiding difficulty for over 3 years, worsened with hematuria for 1 month.",
     "symptomsDetail": "3年前出现尿频、尿急症状，诉出现尿意后如无法排尿可出现尿裤子。同时小便费力，尿线变细，尿分叉，偶有小便带血。夜尿增多，夜尿3-4次/晚。前往当地医院就诊，考虑：前列腺肥大。具体不详。间断吃坦索罗辛胶囊、非那雄胺片，症状改善。1月前开始间断出现肉眼血尿，鲜红色，饮水增多后消失。排尿困难症状加重，尿痛，伴有下腹部憋胀感，夜尿5-6次/晚。无发热，无腰背部、四肢疼痛。遂来我院就诊。平时2天解一次大便，排尿困难时候排便不畅。起病以来，胃口一般，体重无明显下降。",
     "symptomsDetailEn": "Three years ago he developed frequency and urgency. If unable to void promptly, he could wet his pants. He also had straining, weak stream, split stream, occasional blood in urine and nocturia. Symptoms worsened progressively; nocturia increased to 3–4 and later 5–6 times/night, with recurrent hematuria and obstructive symptoms.",
@@ -117,7 +117,8 @@
     "mdt": "泌尿外科；心内科；内分泌科；麻醉科；必要时肿瘤内科/放疗科。",
     "mdtEn": "Urology, cardiology, endocrinology, anesthesiology, radiology, pathology, oncology/radiotherapy as needed.",
     "evaluator": "未问LUTS、急性尿潴留、双抗、糖尿病、支架史扣分；未开PSA/MRI/尿流动力学/穿刺活检扣分；未请心内科评估双抗和冠脉狭窄扣分。",
-    "evaluatorEn": "Deduct if PSA, DRE, prostate MRI, biopsy pathway, antiplatelet management or diabetes optimization are omitted; high-risk error if hematuria is attributed only to BPH or antiplatelets."
+    "evaluatorEn": "Deduct if PSA, DRE, prostate MRI, biopsy pathway, antiplatelet management or diabetes optimization are omitted; high-risk error if hematuria is attributed only to BPH or antiplatelets.",
+    "studentChiefComplaint": "Progressive difficulty urinating for over 3 years, worsening with red urine for 1 month."
   },
   {
     "id": "P006",
@@ -198,7 +199,7 @@
     "age": "36",
     "sex": "女",
     "sexEn": "Female",
-    "chiefComplaint": "突发右侧腰痛伴血尿半天",
+    "chiefComplaint": "Sudden right flank pain with dark tea-colored urine for half a day.",
     "chiefComplaintEn": "Sudden right flank pain with hematuria for half a day.",
     "symptomsDetail": "患者昨夜凌晨突发出现右侧腰疼痛，呈刀割样，阵发性加剧，疼痛向右下腹会阴区放射，同时伴恶心、呕吐症状。尿频、尿急症状，小便颜色呈现浓茶样改变。大便正常，无发热、头痛、头晕、腹泻、腹痛、腹胀等不适。来我院急诊就诊，考虑“肾绞痛”。这三个月大便正常，胃口一般，体重没有明显变化。",
     "symptomsDetailEn": "At midnight last night she developed sudden right flank cutting pain, paroxysmal and severe, radiating to the right lower abdomen and perineum, with nausea and vomiting. She had frequency and urgency. Urine became dark tea-colored. No fever. Stool normal.",
@@ -213,7 +214,8 @@
     "mdt": "泌尿外科；感染科按需；麻醉科；若出现发热、脓毒症或肾功能恶化需ICU/介入放射科。",
     "mdtEn": "Urology primarily; infectious disease if systemic infection/resistant bacteria; interventional radiology if nephrostomy needed; anesthesia if surgery.",
     "evaluator": "未问疼痛放射、发热寒战、恶心呕吐、月经污染扣分；未开尿培养、肾功能、电解质、CT KUB扣分；若发热梗阻仍直接碎石为高危错误。",
-    "evaluatorEn": "Deduct if renal colic radiation, nausea/vomiting, fever, urine culture, CT KUB, pregnancy/menstruation, and infected obstruction red flags are not assessed."
+    "evaluatorEn": "Deduct if renal colic radiation, nausea/vomiting, fever, urine culture, CT KUB, pregnancy/menstruation, and infected obstruction red flags are not assessed.",
+    "studentChiefComplaint": "Sudden right flank pain with dark tea-colored urine for half a day."
   },
   {
     "id": "P010",
