@@ -139,3 +139,9 @@
 - 英文长流程两个viewport各出现12条`Physical examination`重复React key错误；中文对照两个viewport为0。独立最小复现仅执行P001英文阶段1→阶段2，四viewport 4/4各出现4条相同console error及5个同名分类标题，登记HEM-P2-059。
 - 代表性`360×800`全页失败截图显示多个`Physical examination`分组及安全占位文案；截图只证明渲染重复，不证明英文医学来源已审核。
 - 自动viewport仍不替代真实软键盘或safe-area，真机状态继续`BLOCKED_REAL_DEVICE`。
+
+## 2026-07-25 `7781586` 阶段刷新与clean-tab界面
+
+- 四固定viewport均完成阶段3–6逐阶段刷新和最终报告刷新；草稿、选择与终末报告完整可见，阶段1–6在终态刷新后全部禁用。除既有HEM-P2-028/059外没有新增布局、横向滚动或状态堆叠问题。
+- HEM-P1-060在四viewport的可见表现一致：阶段3四字段草稿恢复且页面短暂可提交，单次提交409后切换为“训练会话尚未就绪/Training session unavailable”；代表`390×844`截图保留。页面没有崩溃，用户进度可见但不可继续。
+- 跨语言及P001→P002导航4/4未显示上一作用域草稿。该结论是自动viewport的存储/可见性检查，不替代真实浏览器关闭、软键盘、动态地址栏或safe-area；真机继续`BLOCKED_REAL_DEVICE`。

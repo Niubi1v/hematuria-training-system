@@ -463,3 +463,22 @@
 - 最小复现测试：`tests/exploratory/long-running-qa.spec.mjs`中的`@hem-p2-059`。
 - 建议方向：React key使用未翻译的稳定类别ID/原始类别键或显式索引复合键，展示文案继续走安全占位；补四viewport英文console=0回归。
 - 是否需要医学专家裁决：否。23个英文名称及相关查体来源仍`BLOCKED_SOURCE_REVISION`；修复不得补写或批准医学翻译。
+
+## HEM-P1-060：标签页能力丢失后重新初始化返回可见成功但下一次提交使用陈旧attempt token
+
+- 严重级别 / 状态：P1 / OPEN；`FAIL_EMULATION / CLEAN_TAB_STORAGE_EMULATION`。
+- 基线：`77815862a0abebff67b8d958f66944a0e11b068f`。
+- 页面和路径：P001训练页，阶段3；`POST /api/training-action/`的attempt重新初始化与后续`stage-feedback`。
+- 病例 / 语言 / viewport：P001；中文`1440×900`、`390×844`，英文`1280×720`、`360×800`。
+- 完整操作步骤：新建P001训练 → 提交阶段1与2 → 在阶段3填写满足提交校验的四个QA占位字段并等待自动保存 → 普通刷新并确认草稿与提交能力正常 → 清空当前标签页`sessionStorage`以模拟浏览器关闭/新标签页边界 → 刷新 → 确认四字段草稿恢复 → 等待attempt初始化完成 → 单击一次阶段3提交。
+- 预期：客户端安全恢复或重新签发与服务端当前attempt版本一致的作用域能力；唯一`stage-feedback`为200、唯一request ID，既有进度继续可用。伪造、过期及跨病例/语言/mode/attempt能力仍须拒绝。
+- 实际：四次初始化均返回200，页面一度允许提交；唯一后续`stage-feedback`均返回409 `stale_attempt_token`，随后页面显示训练会话不可用。草稿仍可见但无法继续。
+- 复现：四固定viewport 4/4；每次普通刷新控制通过、清空标签页会话存储后失败。没有使用真实浏览器进程关闭，因此不扩张为真机或真实关闭复现率。
+- AI来源：N/A；本地Production `training-action` handler黑盒，provider调用0。
+- 状态变化时间线：阶段1反馈200 → 阶段2反馈200 → 阶段3草稿落盘 → 普通刷新验证200 → `sessionStorage`清空 → init-attempt 200 → 单次stage-feedback 409 `stale_attempt_token` → UI fail closed。
+- HTTP状态和耗时：每次边界初始化1次200、阶段反馈1次409；request ID 4/4存在；network request failure 0。本轮不把本地耗时扩张为Preview性能结论。
+- console/network摘要：每次仅有与409对应的1条资源console error及结构化warning；意外console error 0。摘要不保存header、body、attempt ID、token、Cookie、签名或环境值。
+- 截图 / trace / 录像：代表截图`artifacts/exploratory-qa/screenshots/clean-tab-capability-recovery-zh-390x844.png`提交Git；四viewport脱敏trace、其余截图、console/network和失败录像仅本机保留并列入证据索引。trace中的训练状态仅为固定QA占位符。
+- 最小复现测试：`tests/exploratory/long-running-qa.spec.mjs`中的`@clean-tab-recovery`；失败断言要求后续stage-feedback为200。
+- 建议方向：提供与当前attempt服务端版本绑定的显式resume/reissue能力，或让重新初始化返回的token携带当前版本而非陈旧版本；成功状态必须由一次真实后续动作验证。不得把长期签名移入`localStorage`，不得自动新建attempt丢弃已保存阶段，也不得放宽现有安全拒绝。
+- 是否需要医学专家裁决：否；纯会话能力恢复、状态版本和客户端可继续性缺陷。

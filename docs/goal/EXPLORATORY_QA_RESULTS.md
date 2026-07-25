@@ -406,3 +406,13 @@ Patient Session 报告记录 295 次 `unsafe_deterministic_answer` source-cell �
 - 四固定viewport实际UI均完成“至阶段7→返回阶段3→重提→阶段5重新锁定→重做阶段4–6→最终360报告”；共44次stage-feedback、44个唯一request ID、4次score，HTTP非200和network失败均为0。中文`1440×900/390×844` console错误0；英文`1280×720/360×800`流程完成但各产生12条同根React重复key错误，因此UI批次为2 PASS_EMULATION / 2 FAIL_EMULATION。
 - 新增HEM-P2-059：P001英文进入第2阶段的最小复现四viewport 4/4失败。5个不同查体类别因未审核英文来源被安全显示为同一个`Physical examination`标题，React每次稳定报告4条重复key错误；network失败0。英文来源仍`BLOCKED_SOURCE_REVISION`，缺陷只要求稳定内部key，不批准或补写翻译。
 - 既有阶段5/6/7、42例双语七阶段、42例360评分及attempt隔离合同全部通过。本轮新增P0/P1/P2为0/0/1；HEM-P1-057/058和其他开放P1状态不变。
+
+## 2026-07-25 第 17 轮：`7781586` 阶段刷新、clean-tab恢复与存储隔离
+
+- 四固定viewport中英交错完成阶段3、4、5、6各一次草稿刷新恢复：阶段3四字段、阶段4会诊选择、阶段5即时处理、阶段6围术期文本均在明确落盘后完整恢复。最终360报告刷新后4/4仍可见，阶段1–6共24个导航按钮全部重新锁定，结果为`PASS_EMULATION`。
+- 终末刷新仍观察既有HEM-P2-028的`attempt_already_completed` 401及对应console资源错误；页面最终报告和锁定状态正确。英文流程仍观察既有HEM-P2-059重复key错误；两者均单独计数，没有被写成新通过或新缺陷。
+- 新增HEM-P1-060：普通刷新对照4/4通过；随后以清空当前标签页`sessionStorage`模拟浏览器关闭/新标签页能力边界。阶段3四字段草稿4/4恢复，重新初始化4/4为200，但唯一后续`stage-feedback`均为409 `stale_attempt_token`，页面进入训练会话不可用。request failure和意外console错误均为0；失败断言保留。该结果只标`FAIL_EMULATION / CLEAN_TAB_STORAGE_EMULATION`，不冒充真实浏览器进程关闭。
+- 跨病例/语言隔离4/4通过：P001切换语言后新attempt为空白，P001两种语言草稿键独立；导航到P002后无任一P001标记，attempt/pointer按病例和语言分域，重复键0。自动viewport结果不替代真机。
+- 相关本地合同`test:attempts`、`test:training-security`、`test:training-api`、`test:stage-flow`均通过；本机Node为v24.14，仅作本地证据，不能替代既有远程Node 22.14门禁。
+- QA测试路由新增内存token代理，浏览器、截图和trace只接触固定`qa-redacted-training-state`占位符；真实QA签名只在Node进程内。旧本批trace删除后全部重跑。业务功能、医学数据和`data/**`未修改。
+- 本轮新增P0/P1/P2为0/1/0。HEM-P1-060、HEM-P1-057/058及其他开放P1存在，仍不建议进入最终教师人工审阅；医学、来源审核、Preview权限和真机阻塞保持原状态。

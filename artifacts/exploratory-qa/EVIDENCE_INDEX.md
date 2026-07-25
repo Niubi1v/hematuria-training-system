@@ -281,3 +281,22 @@ SHA-256：
 - HEM-P2-059最小复现只保存公开P001界面、console计数和network摘要；缺失英文来源继续`BLOCKED_SOURCE_REVISION`，没有把占位文案解释为审核翻译。
 - 第16轮最终全证据树流式/解包扫描覆盖573个物理文件、ZIP内10,232个条目和1,492,358,566字节，敏感值命中0；扫描器只输出计数，不输出候选值。
 - 第16轮11个staged文件及完整可达文本历史的独立扫描敏感值命中0；暂存范围不含业务代码、`data/**`、完整问答、header或本轮大trace/录像。
+
+## `7781586` 第17轮会话持久化与隔离证据
+
+| 证据名称 | 对应测试或缺陷 | 文件路径 | 文件大小 | 提交Git | 未提交原因 | 本机保留位置 |
+| --- | --- | --- | ---: | --- | --- | --- |
+| 四viewport恢复/隔离与HEM-P1-060最小复现 | 阶段3–6刷新、终态锁定、clean-tab、跨病例/语言隔离 | `tests/exploratory/long-running-qa.spec.mjs` | 88,079 B（整文件） | 是 | — | 仓库路径 |
+| 第17轮脱敏聚合 | 本轮验收结论 | `artifacts/exploratory-qa/reports/7781586-session-persistence-isolation-summary.json` | 1,843 B | 是 | — | 仓库路径 |
+| HEM-P1-060代表性移动截图 | 390×844中文会话不可继续 | `artifacts/exploratory-qa/screenshots/clean-tab-capability-recovery-zh-390x844.png` | 30,609 B | 是 | — | 仓库路径 |
+| 四viewport原始摘要 | 3组测试×4 viewport | `artifacts/exploratory-qa/reports/7781586-{stage-3-6-reload-terminal-lock,clean-tab-capability-recovery,client-storage-isolation}-*-summary.json` | 12份/9,278 B | 否 | 聚合已保留必要计数 | 同路径，本机未跟踪 |
+| console/network及重复报告 | 本轮页面诊断 | `artifacts/exploratory-qa/reports/*{stage-3-6-reload-terminal-lock,clean-tab-capability-recovery,client-storage-isolation}*` | 36份/137,914 B | 否 | 与聚合重复，可能含本机运行上下文 | 同路径，本机未跟踪 |
+| 本轮trace | 三组四viewport重建证据 | `artifacts/exploratory-qa/traces/{stage-3-6-reload-terminal-lock,clean-tab-capability-recovery,client-storage-isolation}-*.zip` | 12份/126,525,384 B | 否 | 体积大；仅含固定脱敏训练状态占位符，可由测试重建 | 同路径，本机未跟踪 |
+| 其余本轮截图 | 通过帧、失败帧及重复viewport | `artifacts/exploratory-qa/screenshots/{stage-3-6-reload-terminal-lock,clean-tab-capability-recovery,client-storage-isolation}-*.png` | 23份/2,353,130 B | 否 | 代表性HEM-P1-060截图已足够 | 同路径，本机未跟踪 |
+| HEM-P1-060失败录像 | 四viewport失败过程 | `artifacts/exploratory-qa/videos/clean-tab-capability-recovery-*.webm` | 4份/1,760,103 B | 否 | 体积大；截图、聚合和失败断言足够 | 同路径，本机未跟踪 |
+
+- QA路由以内存映射保存本地Production handler签名，浏览器、trace和报告只看到`qa-redacted-training-state`固定占位符；本批旧trace删除后重跑，完整签名不落盘。
+- HEM-P1-060截图只显示公开QA占位字段和会话不可用状态，不含病例隐私、患者回答、request ID、header、Cookie、token或环境值。
+- 第17轮最终全证据树流式/解包扫描覆盖657个物理文件、ZIP内12,676个条目和1,789,119,103字节，敏感值命中0；扫描器只输出计数，不输出候选值。
+- scanner自测合同通过。通用repository candidate scanner只对历史5个本机未跟踪大trace按大小上限fail-closed（4个ZIP内entry过大、1个ZIP文件过大），没有新增规则或Git历史命中；这5个文件已由上项无大小上限的流式/解包扫描覆盖并得到0命中。
+- 本轮10个staged文件中9个文本文件的独立规则扫描命中0，唯一PNG已包含在全证据树字节扫描中；`git diff --cached --check`通过。暂存范围不含业务代码、`data/**`、完整问答、header或大trace/录像。

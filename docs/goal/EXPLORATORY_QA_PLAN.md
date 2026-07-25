@@ -171,3 +171,11 @@ console 文本对 Authorization、Cookie、签名、token、secret 和 API key �
 - HEM-P2-059修复验收需覆盖四viewport英文第2阶段：不同内部查体类别必须使用稳定唯一React key；在英文名称未审核时仍显示安全占位并保持`BLOCKED_SOURCE_REVISION`，不得通过硬编码医学翻译消除错误。
 - 下一独立范围转向阶段3–6刷新/浏览器关闭恢复后的返回重提，以及跨病例/跨语言本地存储污染和终末报告返回锁定；避免重复已完成的顺序七阶段与API矩阵。
 - Preview速率窗口恢复后再抽查一次阶段3返回重提；本地handler/viewport结论不得冒充Preview。真实设备和医学/来源审核继续独立阻塞。
+
+## 2026-07-25 第 17 轮 `7781586` 会话持久化与隔离后续
+
+- 已完成阶段3–6逐阶段草稿刷新、终末报告刷新/反向锁定及跨病例/跨语言本地存储隔离；四固定viewport继续分别标记`PASS_EMULATION`，不扩张为真实手机或真实浏览器关闭通过。
+- 新增HEM-P1-060修复验收：先完成阶段1–2并在阶段3保存完整草稿，确认普通刷新可继续；再模拟新标签页/浏览器关闭的`sessionStorage`丢失边界。重新初始化后的唯一下一次`stage-feedback`必须为200且request ID唯一，不得返回`stale_attempt_token`，本地草稿和已提交阶段不得丢失或复制。
+- HEM-P1-060修复不得把签名移入`localStorage`、放宽伪造/过期/跨病例/跨语言/mode/attempt拒绝，也不得用自动创建新attempt静默丢弃旧进度。优先采用与服务端当前attempt版本一致的安全resume/reissue合同。
+- 后续独立范围转向多标签页并发同一attempt、关闭/重开后的终末报告只读恢复及HEM-P1-060修复后四viewport定向回归；避免重复已通过的普通刷新和跨病例键隔离。HEM-P1-057/058、HEM-P2-059及既有开放项继续独立跟踪。
+- 真实浏览器进程关闭、真实手机后台/软键盘/safe-area仍没有直接证据；`CLEAN_TAB_STORAGE_EMULATION`不得写成`PASS_REAL_DEVICE`或真实关闭结论。医学和来源审核阻塞状态不变。

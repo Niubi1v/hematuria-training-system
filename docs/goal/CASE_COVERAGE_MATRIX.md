@@ -172,3 +172,17 @@
 | P001英文第2阶段分类key | 四viewport各4条React重复key错误、5个同名占位标题 | FAIL_EMULATION，HEM-P2-059 |
 
 - HEM-P2-059只证明全局查体目录在P001英文界面的渲染缺陷；未把它扩张成P002–P042逐例UI结论。未审核英文分类继续`BLOCKED_SOURCE_REVISION`。
+
+## Production `7781586` 第17轮持久化与隔离增量
+
+| 覆盖 | 结果 | 状态 |
+| --- | --- | --- |
+| P001阶段3–6草稿刷新 | 四viewport、双语；每阶段草稿均恢复 | PASS_EMULATION |
+| P001终末报告刷新 | 4/4报告可见，阶段1–6共24/24重新锁定 | PASS_EMULATION；既有HEM-P2-028终态401单列 |
+| clean-tab能力恢复 | 草稿4/4恢复、init 4/4为200；下一次stage-feedback 4/4为409 `stale_attempt_token` | FAIL_EMULATION，HEM-P1-060 |
+| P001跨语言草稿隔离 | `zh→en`与`en→zh`各2个viewport；泄漏0 | PASS_EMULATION |
+| P001→P002病例隔离 | 四viewport；P001草稿标记泄漏0、重复attempt key 0 | PASS_EMULATION |
+| 真实浏览器关闭/真机 | 本轮只模拟标签页会话存储丢失 | BLOCKED_REAL_BROWSER / BLOCKED_REAL_DEVICE |
+
+- 本批使用P001/P002代表客户端存储命名空间与恢复状态机，不把结果扩张为P003–P042逐病例视觉通过；既有42例路由和服务端attempt隔离矩阵继续作为全量合同。
+- HEM-P1-060不涉及病例事实、评分规则或审批状态；全部病例仍按既有医学/来源状态处理，`data/**`无QA差异。

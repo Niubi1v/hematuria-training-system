@@ -1,10 +1,11 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { randomBytes } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
 
-process.env.TRAINING_STATE_SECRET = "qa-data-agent-ui-secret-with-adequate-length";
+process.env.TRAINING_STATE_SECRET = randomBytes(48).toString("base64url");
 process.env.TRAINING_ATTEMPT_STORE_MODE = "memory";
 process.env.TRAINING_DEPLOYMENT_TIER = "practice";
 process.env.TRAINING_API_RATE_LIMIT_PER_MINUTE = "10000";
@@ -65,6 +66,7 @@ async function invokeLocalTrainingAction(body, token = "", remoteAddress = "qa-l
 
 async function installProductionTrainingApi(page, observations = [], actionObservations = []) {
   resetMemoryAttemptStore();
+  const serverTokens = new Map();
   await page.route("**/api/health/**", (route) => route.fulfill({
     status: 200,
     contentType: "application/json",
@@ -113,11 +115,17 @@ async function installProductionTrainingApi(page, observations = [], actionObser
   await page.route("**/api/training-action/**", async (route) => {
     const request = route.request();
     const body = request.postDataJSON();
+    const attemptId = String(body.attemptId || "unscoped");
+    const browserToken = request.headers()["x-training-state"] || "";
+    const serverToken = body.action === "init-attempt" && !browserToken
+      ? ""
+      : serverTokens.get(attemptId) || (browserToken === "qa-redacted-training-state" ? "" : browserToken);
     const result = await invokeLocalTrainingAction(
       body,
-      request.headers()["x-training-state"] || "",
-      `qa-production-handler-ui-${String(body.attemptId || "unscoped")}`
+      serverToken,
+      `qa-production-handler-ui-${attemptId}`
     );
+    if (result.token) serverTokens.set(attemptId, result.token);
     actionObservations.push({
       action: String(body.action || ""),
       stageKey: String(body.stageKey || ""),
@@ -140,7 +148,7 @@ async function installProductionTrainingApi(page, observations = [], actionObser
       contentType: "application/json",
       headers: {
         "Access-Control-Expose-Headers": "X-Training-State",
-        "X-Training-State": result.token
+        "X-Training-State": "qa-redacted-training-state"
       },
       body: JSON.stringify(result.payload)
     });
@@ -689,7 +697,6 @@ test("stages 3-6 support governed return, relock, rebuild, and stable final scor
       await expect(page.getByRole("button", { name: copy.next, exact: true })).toBeVisible();
       await page.getByRole("button", { name: copy.next, exact: true }).click();
     };
-
     await submitAndAdvance();
     await submitAndAdvance();
     await page.getByLabel(copy.diagnosis, { exact: true }).fill(language === "en" ? "QA-only training diagnosis" : "仅用于QA流程的训练诊断");
@@ -802,6 +809,427 @@ test("HEM-P2-059 English physical-exam category placeholders keep unique React k
     expect(failedNetworkRequestCount).toBe(0);
     expect(placeholderHeadingCount).toBeGreaterThan(1);
     expect(duplicateKeyErrors, "HEM-P2-059 duplicate React keys must be eliminated without approving missing English source labels").toHaveLength(0);
+  }, { videoOnFailure: true });
+});
+
+test("stage 3-6 drafts survive reload and the terminal report relocks prior stages @stage-persistence-governance", async ({ browser }, testInfo) => {
+  const language = ["qa-1440x900", "qa-390x844"].includes(testInfo.project.name) ? "zh" : "en";
+  const copy = language === "en"
+    ? {
+        submit: "Submit stage",
+        next: "Next Agent",
+        diagnosis: "Most likely diagnosis",
+        evidence: "Diagnostic evidence",
+        differentials: "At least 3 differential diagnoses",
+        analysis: "Supportive and opposing points for each differential",
+        noConsult: "No consultation for now",
+        treatment: "Immediate ED/admission management",
+        reflection: "Reflection",
+        finish: "Finish training and generate final report"
+      }
+    : {
+        submit: "提交本阶段",
+        next: "进入下一阶段",
+        diagnosis: "最可能诊断",
+        evidence: "诊断依据",
+        differentials: "至少 3 个鉴别诊断",
+        analysis: "各鉴别诊断的支持点与反对点",
+        noConsult: "暂不需要会诊",
+        treatment: "急诊或入院即时处理",
+        reflection: "学习反思",
+        finish: "完成训练并生成最终报告"
+      };
+  const drafts = language === "en"
+    ? {
+        diagnosis: "QA persistence diagnosis marker",
+        evidence: "QA persistence evidence marker of sufficient length.",
+        differentials: "QA option one; QA option two; QA option three",
+        analysis: "QA support and opposition marker for each option.",
+        treatment: "QA immediate management persistence marker.",
+        perioperative: "QA perioperative persistence marker.",
+        reflection: "QA reflection long enough to verify terminal report persistence and stage relocking."
+      }
+    : {
+        diagnosis: "QA刷新恢复诊断标记",
+        evidence: "QA刷新恢复依据标记，长度满足界面流程要求。",
+        differentials: "QA选项一；QA选项二；QA选项三",
+        analysis: "QA每个选项的支持与反对标记。",
+        treatment: "QA即时处理刷新恢复标记。",
+        perioperative: "QA围术期刷新恢复标记。",
+        reflection: "QA反思文本长度足够，仅验证终态报告恢复与阶段重新锁定。"
+      };
+
+  await withEvidence(browser, testInfo, "stage-3-6-reload-terminal-lock", async ({ page, slug, consoleEvents, networkEvents }) => {
+    const actionObservations = [];
+    await page.addInitScript((selectedLanguage) => localStorage.setItem("hematuria-language", selectedLanguage), language);
+    await installProductionTrainingApi(page, [], actionObservations);
+    await page.goto("/cases/P001/");
+
+    const submitAndAdvance = async () => {
+      await page.getByRole("button", { name: copy.submit, exact: true }).click();
+      await expect(page.getByRole("button", { name: copy.next, exact: true })).toBeVisible();
+      await page.getByRole("button", { name: copy.next, exact: true }).click();
+    };
+    const answerField = (label) => page.getByRole("textbox", { name: label, exact: true });
+    const waitForSaved = async (expected) => {
+      await page.waitForFunction(({ selectedLanguage, expectedValues }) => {
+        const pointer = JSON.parse(localStorage.getItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`) || "null");
+        if (!pointer?.attemptId) return false;
+        const saved = JSON.parse(localStorage.getItem(`hematuria-attempt-v3:P001:free:${selectedLanguage}:${pointer.attemptId}`) || "null");
+        return saved && Object.entries(expectedValues).every(([key, value]) => (
+          key === "finalReport" ? Boolean(saved.finalReport) === value : saved.answers?.[key] === value
+        ));
+      }, { selectedLanguage: language, expectedValues: expected }, { timeout: 8_000 });
+    };
+
+    await submitAndAdvance();
+    await submitAndAdvance();
+
+    await answerField(copy.diagnosis).fill(drafts.diagnosis);
+    await answerField(copy.evidence).fill(drafts.evidence);
+    await answerField(copy.differentials).fill(drafts.differentials);
+    await answerField(copy.analysis).fill(drafts.analysis);
+    await waitForSaved({
+      diagnosis: drafts.diagnosis,
+      diagnosticEvidence: drafts.evidence,
+      differentials: drafts.differentials,
+      differentialAnalysis: drafts.analysis
+    });
+    await page.reload();
+    await expect(page.getByRole("button", { name: copy.submit, exact: true })).toBeEnabled();
+    await expect(answerField(copy.diagnosis)).toHaveValue(drafts.diagnosis);
+    await expect(answerField(copy.evidence)).toHaveValue(drafts.evidence);
+    await expect(answerField(copy.differentials)).toHaveValue(drafts.differentials);
+    await expect(answerField(copy.analysis)).toHaveValue(drafts.analysis);
+    await submitAndAdvance();
+
+    await page.getByRole("radio", { name: copy.noConsult, exact: true }).check();
+    await waitForSaved({ consultNeeded: "暂不需要会诊" });
+    await page.reload();
+    await expect(page.getByRole("button", { name: copy.submit, exact: true })).toBeEnabled();
+    await expect(page.getByRole("radio", { name: copy.noConsult, exact: true })).toBeChecked();
+    await submitAndAdvance();
+
+    await answerField(copy.treatment).fill(drafts.treatment);
+    await waitForSaved({ immediateTreatment: drafts.treatment });
+    await page.reload();
+    await expect(page.getByRole("button", { name: copy.submit, exact: true })).toBeEnabled();
+    await expect(answerField(copy.treatment)).toHaveValue(drafts.treatment);
+    await submitAndAdvance();
+
+    const perioperative = page.locator("main textarea:visible").first();
+    await perioperative.fill(drafts.perioperative);
+    await waitForSaved({ perioperativePreparation: drafts.perioperative });
+    await page.reload();
+    await expect(page.getByRole("button", { name: copy.submit, exact: true })).toBeEnabled();
+    await expect(page.locator("main textarea:visible").first()).toHaveValue(drafts.perioperative);
+    await submitAndAdvance();
+
+    await page.getByLabel(copy.reflection, { exact: true }).fill(drafts.reflection);
+    await page.getByRole("button", { name: copy.finish, exact: true }).click();
+    await expect(page.getByTestId("final-report")).toBeVisible();
+    await expect(page.getByTestId("final-report")).toContainText("/ 360");
+    await waitForSaved({ finalReport: true });
+    await page.reload();
+    await expect(page.getByTestId("final-report")).toBeVisible();
+    await expect(page.getByRole("button", { name: copy.finish, exact: true })).toBeDisabled();
+
+    if (testInfo.project.use.viewport.width < 1024) {
+      await page.locator('button[aria-expanded="false"]').filter({ hasText: "7/7" }).click();
+    }
+    const stageButtons = page.locator("aside").first().locator("section").first().locator("button");
+    await expect(stageButtons).toHaveCount(7);
+    for (let index = 0; index < 6; index += 1) {
+      await expect(stageButtons.nth(index)).toBeDisabled();
+    }
+    await saveShot(page, testInfo, `stage-3-6-reload-terminal-lock-${language}`, false);
+
+    const knownCompletedResponses = actionObservations.filter((item) =>
+      item.status === 401 && item.error === "attempt_already_completed"
+    );
+    const unexpectedActionResponses = actionObservations.filter((item) =>
+      item.status !== 200 && !(item.status === 401 && item.error === "attempt_already_completed")
+    );
+    const knownEnglishKeyErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && /same key|keys should be unique/i.test(item.text)
+      && /Physical examination/i.test(item.text)
+    );
+    const knownCompletedConsoleErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && /status of 401.*Unauthorized/i.test(item.text)
+      && knownCompletedResponses.length > 0
+    );
+    const unexpectedConsoleErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && !knownEnglishKeyErrors.includes(item)
+      && !knownCompletedConsoleErrors.includes(item)
+    );
+    const failedNetworkRequestCount = networkEvents.filter((item) => item.status === "FAILED").length;
+    const summary = {
+      schemaVersion: "exploratory-stage-persistence-v1",
+      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      result: unexpectedActionResponses.length || unexpectedConsoleErrors.length || failedNetworkRequestCount
+        ? "FAIL_EMULATION"
+        : "PASS_EMULATION",
+      language,
+      viewport: testInfo.project.use.viewport,
+      stageDraftReloads: 4,
+      stage3FieldsRecovered: 4,
+      stage4ChoiceRecovered: true,
+      stage5DraftRecovered: true,
+      stage6DraftRecovered: true,
+      terminalReportRecovered: true,
+      priorStagesLockedAfterTerminalReload: 6,
+      completedAttemptResponses: knownCompletedResponses.length,
+      completedAttemptConsoleErrors: knownCompletedConsoleErrors.length,
+      knownDefectsObserved: [
+        ...(knownCompletedResponses.length ? ["HEM-P2-028"] : []),
+        ...(knownEnglishKeyErrors.length ? ["HEM-P2-059"] : [])
+      ],
+      unexpectedActionResponses: unexpectedActionResponses.length,
+      unexpectedConsoleErrors: unexpectedConsoleErrors.length,
+      failedNetworkRequests: failedNetworkRequestCount,
+      responseBodiesRetained: false,
+      credentialsRetained: false
+    };
+    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    expect(unexpectedActionResponses).toEqual([]);
+    expect(unexpectedConsoleErrors).toEqual([]);
+    expect(failedNetworkRequestCount).toBe(0);
+  }, { videoOnFailure: true });
+});
+
+test("saved stage progress can rebuild capability after a clean tab boundary @clean-tab-recovery", async ({ browser }, testInfo) => {
+  const language = ["qa-1440x900", "qa-390x844"].includes(testInfo.project.name) ? "zh" : "en";
+  const copy = language === "en"
+    ? {
+        submit: "Submit stage",
+        next: "Next Agent",
+        diagnosis: "Most likely diagnosis",
+        evidence: "Diagnostic evidence",
+        differentials: "At least 3 differential diagnoses",
+        analysis: "Supportive and opposing points for each differential",
+        unavailable: "Training session unavailable"
+      }
+    : {
+        submit: "提交本阶段",
+        next: "进入下一阶段",
+        diagnosis: "最可能诊断",
+        evidence: "诊断依据",
+        differentials: "至少 3 个鉴别诊断",
+        analysis: "各鉴别诊断的支持点与反对点",
+        unavailable: "训练会话尚未就绪"
+      };
+  const drafts = language === "en"
+    ? {
+        diagnosis: "QA clean-tab recovery marker",
+        evidence: "QA clean-tab evidence marker.",
+        differentials: "QA option one; QA option two; QA option three",
+        analysis: "QA support and opposition details for each option."
+      }
+    : {
+        diagnosis: "QA关闭标签恢复标记",
+        evidence: "QA关闭标签恢复依据标记。",
+        differentials: "QA选项一；QA选项二；QA选项三",
+        analysis: "QA每个选项均有支持和反对点标记。"
+      };
+
+  await withEvidence(browser, testInfo, "clean-tab-capability-recovery", async ({ page, slug, consoleEvents, networkEvents }) => {
+    const actionObservations = [];
+    await page.addInitScript((selectedLanguage) => localStorage.setItem("hematuria-language", selectedLanguage), language);
+    await installProductionTrainingApi(page, [], actionObservations);
+    await page.goto("/cases/P001/");
+
+    for (let stage = 1; stage <= 2; stage += 1) {
+      await page.getByRole("button", { name: copy.submit, exact: true }).click();
+      await page.getByRole("button", { name: copy.next, exact: true }).click();
+    }
+    await page.getByRole("textbox", { name: copy.diagnosis, exact: true }).fill(drafts.diagnosis);
+    await page.getByRole("textbox", { name: copy.evidence, exact: true }).fill(drafts.evidence);
+    await page.getByRole("textbox", { name: copy.differentials, exact: true }).fill(drafts.differentials);
+    await page.getByRole("textbox", { name: copy.analysis, exact: true }).fill(drafts.analysis);
+    await page.waitForFunction(({ selectedLanguage, expected }) => {
+      const pointer = JSON.parse(localStorage.getItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`) || "null");
+      const saved = pointer?.attemptId
+        ? JSON.parse(localStorage.getItem(`hematuria-attempt-v3:P001:free:${selectedLanguage}:${pointer.attemptId}`) || "null")
+        : null;
+      return saved?.answers?.diagnosis === expected.diagnosis
+        && saved?.answers?.diagnosticEvidence === expected.evidence
+        && saved?.answers?.differentials === expected.differentials
+        && saved?.answers?.differentialAnalysis === expected.analysis;
+    }, { selectedLanguage: language, expected: drafts }, { timeout: 8_000 });
+    const beforeNormalReload = actionObservations.length;
+    await page.reload();
+    await expect(page.getByRole("textbox", { name: copy.diagnosis, exact: true })).toHaveValue(drafts.diagnosis);
+    await expect.poll(() => actionObservations.length).toBeGreaterThan(beforeNormalReload);
+    await expect(page.getByRole("button", { name: copy.submit, exact: true })).toBeEnabled();
+
+    const beforeBoundary = actionObservations.length;
+    await page.evaluate(() => sessionStorage.clear());
+    await page.reload();
+    await expect(page.getByRole("textbox", { name: copy.diagnosis, exact: true })).toHaveValue(drafts.diagnosis);
+    await expect(page.getByRole("textbox", { name: copy.evidence, exact: true })).toHaveValue(drafts.evidence);
+    await expect(page.getByRole("textbox", { name: copy.differentials, exact: true })).toHaveValue(drafts.differentials);
+    await expect(page.getByRole("textbox", { name: copy.analysis, exact: true })).toHaveValue(drafts.analysis);
+    await expect.poll(() => actionObservations.length).toBeGreaterThan(beforeBoundary);
+    const initializationActions = actionObservations.slice(beforeBoundary);
+    const initializationFailures = initializationActions.filter((item) => item.status !== 200);
+    const beforeSubmit = actionObservations.length;
+    if (initializationFailures.length === 0) {
+      await expect(page.getByRole("button", { name: copy.submit, exact: true })).toBeEnabled();
+      await page.getByRole("button", { name: copy.submit, exact: true }).click();
+      await expect.poll(() => actionObservations.length).toBeGreaterThan(beforeSubmit);
+    }
+    const boundaryActions = actionObservations.slice(beforeBoundary);
+    const stageFeedbacks = boundaryActions.filter((item) => item.action === "stage-feedback");
+    const capabilityRecovered = initializationFailures.length === 0
+      && stageFeedbacks.length === 1
+      && stageFeedbacks[0].status === 200;
+    if (capabilityRecovered) {
+      await expect(page.getByRole("button", { name: copy.next, exact: true })).toBeVisible();
+    } else {
+      await expect(page.getByRole("button", { name: copy.unavailable, exact: true })).toBeVisible();
+    }
+    await saveShot(page, testInfo, `clean-tab-capability-recovery-${language}`, false);
+
+    const failedNetworkRequestCount = networkEvents.filter((item) => item.status === "FAILED").length;
+    const knownEnglishKeyErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && /same key|keys should be unique/i.test(item.text)
+      && /Physical examination/i.test(item.text)
+    );
+    const knownConflictConsoleErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && /status of 409.*Conflict/i.test(item.text)
+      && boundaryActions.some((action) => action.status === 409)
+    );
+    const unexpectedConsoleErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && !knownEnglishKeyErrors.includes(item)
+      && !knownConflictConsoleErrors.includes(item)
+    );
+    const summary = {
+      schemaVersion: "exploratory-clean-tab-recovery-v1",
+      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      result: capabilityRecovered ? "PASS_EMULATION" : "FAIL_EMULATION",
+      defectId: capabilityRecovered ? null : "HEM-P1-060",
+      language,
+      viewport: testInfo.project.use.viewport,
+      boundary: "CLEAN_TAB_STORAGE_EMULATION",
+      localDraftRecovered: true,
+      capabilityRecovered,
+      initializationActionCount: initializationActions.length,
+      initializationStatuses: initializationActions.map((item) => item.status),
+      initializationErrors: initializationActions.map((item) => item.error).filter(Boolean),
+      stageFeedbackRequestsAfterBoundary: stageFeedbacks.length,
+      stageFeedbackStatuses: stageFeedbacks.map((item) => item.status),
+      stageFeedbackErrors: stageFeedbacks.map((item) => item.error).filter(Boolean),
+      normalReloadControlPassed: true,
+      realBrowserCloseClaimed: false,
+      responseBodiesRetained: false,
+      credentialsRetained: false,
+      failedNetworkRequests: failedNetworkRequestCount,
+      knownDefectsObserved: knownEnglishKeyErrors.length ? ["HEM-P2-059"] : [],
+      expectedConflictConsoleErrors: knownConflictConsoleErrors.length,
+      unexpectedConsoleErrors: unexpectedConsoleErrors.length
+    };
+    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    expect(failedNetworkRequestCount).toBe(0);
+    expect(unexpectedConsoleErrors).toEqual([]);
+    expect(initializationFailures, "saved local progress must regain a scoped capability after tab session storage is lost").toEqual([]);
+    expect(stageFeedbacks).toHaveLength(1);
+    expect(stageFeedbacks[0]?.status).toBe(200);
+    expect(stageFeedbacks[0]?.requestIdPresent).toBe(true);
+  }, { videoOnFailure: true });
+});
+
+test("case and language draft storage remains isolated @client-storage-isolation", async ({ browser }, testInfo) => {
+  const initialLanguage = ["qa-1440x900", "qa-390x844"].includes(testInfo.project.name) ? "zh" : "en";
+  const otherLanguage = initialLanguage === "zh" ? "en" : "zh";
+  const copy = {
+    zh: {
+      summary: "病史小结",
+      languageButton: "English",
+      marker: "QA-P001-ZH-ISOLATION-MARKER"
+    },
+    en: {
+      summary: "History summary",
+      languageButton: "中文",
+      marker: "QA-P001-EN-ISOLATION-MARKER"
+    }
+  };
+
+  await withEvidence(browser, testInfo, "client-storage-isolation", async ({ page, slug, consoleEvents, networkEvents }) => {
+    const actionObservations = [];
+    await page.addInitScript((selectedLanguage) => {
+      if (sessionStorage.getItem("qa-storage-isolation-language-seeded")) return;
+      localStorage.setItem("hematuria-language", selectedLanguage);
+      sessionStorage.setItem("qa-storage-isolation-language-seeded", "1");
+    }, initialLanguage);
+    await installProductionTrainingApi(page, [], actionObservations);
+    await page.goto("/cases/P001/");
+    await page.getByLabel(copy[initialLanguage].summary, { exact: true }).fill(copy[initialLanguage].marker);
+
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.getByRole("button", { name: copy[initialLanguage].languageButton, exact: true }).click();
+    await expect(page.getByLabel(copy[otherLanguage].summary, { exact: true })).toHaveValue("");
+    await page.getByLabel(copy[otherLanguage].summary, { exact: true }).fill(copy[otherLanguage].marker);
+    await page.waitForFunction(({ selectedLanguage, expectedMarker }) => {
+      if (localStorage.getItem("hematuria-language") !== selectedLanguage) return false;
+      const pointer = JSON.parse(localStorage.getItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`) || "null");
+      const saved = pointer?.attemptId
+        ? JSON.parse(localStorage.getItem(`hematuria-attempt-v3:P001:free:${selectedLanguage}:${pointer.attemptId}`) || "null")
+        : null;
+      return saved?.answers?.historySummary === expectedMarker;
+    }, { selectedLanguage: otherLanguage, expectedMarker: copy[otherLanguage].marker }, { timeout: 8_000 });
+
+    await page.goto("/cases/P002/");
+    await expect(page.getByText("P002", { exact: true }).first()).toBeVisible();
+    await expect(page.getByRole("textbox", { name: copy[otherLanguage].summary, exact: true })).toHaveValue("");
+    const visibleText = await page.locator("main").innerText();
+    expect(visibleText).not.toContain(copy.zh.marker);
+    expect(visibleText).not.toContain(copy.en.marker);
+
+    const storageAudit = await page.evaluate(() => {
+      const attemptKeys = Object.keys(localStorage).filter((key) => key.startsWith("hematuria-attempt-v3:"));
+      const pointerKeys = Object.keys(localStorage).filter((key) => key.startsWith("hematuria-attempt-pointer-v3:"));
+      return {
+        attemptKeyCount: attemptKeys.length,
+        pointerKeyCount: pointerKeys.length,
+        p001InitialLanguageKeys: attemptKeys.filter((key) => key.startsWith("hematuria-attempt-v3:P001:free:")).length,
+        p002OtherLanguageKeys: attemptKeys.filter((key) => key.startsWith(`hematuria-attempt-v3:P002:free:${localStorage.getItem("hematuria-language")}:`)).length,
+        distinctAttemptKeyCount: new Set(attemptKeys).size,
+        attemptValuesRetained: false
+      };
+    });
+    await saveShot(page, testInfo, `client-storage-isolation-${initialLanguage}-to-${otherLanguage}`, false);
+
+    const non200 = actionObservations.filter((item) => item.status !== 200);
+    const failedNetworkRequestCount = networkEvents.filter((item) => item.status === "FAILED").length;
+    const summary = {
+      schemaVersion: "exploratory-client-storage-isolation-v1",
+      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      result: non200.length || failedNetworkRequestCount ? "FAIL_EMULATION" : "PASS_EMULATION",
+      viewport: testInfo.project.use.viewport,
+      languageTransition: `${initialLanguage}->${otherLanguage}`,
+      p001DraftAbsentAfterLanguageSwitch: true,
+      p001DraftAbsentInP002: true,
+      ...storageAudit,
+      non200ActionResponses: non200.length,
+      failedNetworkRequests: failedNetworkRequestCount,
+      consoleErrors: consoleEvents.filter((item) => item.type === "error").length,
+      responseBodiesRetained: false,
+      credentialsRetained: false
+    };
+    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    expect(storageAudit.attemptKeyCount).toBeGreaterThanOrEqual(3);
+    expect(storageAudit.pointerKeyCount).toBeGreaterThanOrEqual(3);
+    expect(storageAudit.p001InitialLanguageKeys).toBeGreaterThanOrEqual(2);
+    expect(storageAudit.p002OtherLanguageKeys).toBe(1);
+    expect(storageAudit.distinctAttemptKeyCount).toBe(storageAudit.attemptKeyCount);
+    expect(non200).toEqual([]);
+    expect(failedNetworkRequestCount).toBe(0);
   }, { videoOnFailure: true });
 });
 

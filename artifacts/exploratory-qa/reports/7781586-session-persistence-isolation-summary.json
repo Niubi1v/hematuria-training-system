@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "exploratory-session-persistence-isolation-v1",
+  "productionBaseline": "77815862a0abebff67b8d958f66944a0e11b068f",
+  "environment": "local_production_handler_headless_chromium",
+  "viewports": [
+    "1440x900",
+    "1280x720",
+    "390x844",
+    "360x800"
+  ],
+  "stage3To6ReloadAndTerminalLock": {
+    "result": "PASS_EMULATION",
+    "passed": 4,
+    "failed": 0,
+    "languages": [
+      "zh",
+      "en"
+    ],
+    "draftReloadsPerViewport": 4,
+    "terminalReportsRecovered": 4,
+    "priorStagesLockedAfterTerminalReload": 24,
+    "knownDefectsObserved": [
+      "HEM-P2-028",
+      "HEM-P2-059"
+    ],
+    "unexpectedConsoleErrors": 0,
+    "failedNetworkRequests": 0
+  },
+  "cleanTabCapabilityRecovery": {
+    "result": "FAIL_EMULATION",
+    "defectId": "HEM-P1-060",
+    "reproduced": 4,
+    "attempted": 4,
+    "boundary": "CLEAN_TAB_STORAGE_EMULATION",
+    "normalReloadControlsPassed": 4,
+    "localDraftsRecovered": 4,
+    "initializationStatuses": {
+      "200": 4
+    },
+    "stageFeedbackStatuses": {
+      "409": 4
+    },
+    "stageFeedbackErrors": {
+      "stale_attempt_token": 4
+    },
+    "unexpectedConsoleErrors": 0,
+    "failedNetworkRequests": 0,
+    "realBrowserCloseClaimed": false
+  },
+  "caseAndLanguageStorageIsolation": {
+    "result": "PASS_EMULATION",
+    "passed": 4,
+    "failed": 0,
+    "languageTransitions": [
+      "zh->en",
+      "en->zh"
+    ],
+    "p001DraftLeakIntoOtherLanguage": 0,
+    "p001DraftLeakIntoP002": 0,
+    "duplicateAttemptKeys": 0,
+    "failedNetworkRequests": 0
+  },
+  "relatedLocalContracts": {
+    "nodeVersion": "v24.14.0",
+    "requiredRemoteNodeVersion": "22.14",
+    "testAttempts": "PASS",
+    "testTrainingSecurity": "PASS",
+    "testTrainingApi": "PASS",
+    "testStageFlow": "PASS"
+  },
+  "responseBodiesRetained": false,
+  "credentialsRetained": false
+}
