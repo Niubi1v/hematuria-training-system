@@ -718,3 +718,11 @@
 - 精确HEAD `e70ed19`的Vercel Deployment与Preview Comments均为success；Draft规则下Pages artifact与deploy为skipped，未发布Production。PR #1保持Open/Draft。
 - `CI-P1-20260725-02`与`CI-P1-20260725-03`工程项关闭。P002、14项新增BLOCKED_MEDICAL、18项HEM-P0-023、151项HEM-P0-001、419条模拟事实和42例`needs_revision`仍保持冻结；没有医学审批状态变化。
 - 长期QA起始HEAD为`e70ed19fadd51671602e937565b779154b16522d`，重点复测P026/P027/P029/P039、P002冲突隔离、P037英文时长、P004/P005/P006未留意事实零收集、P001/HX-ADD-001未审核生活史隔离及42×37/42×17双语合同。
+### QA e586508 存储恢复与目录完整性整改（2026-07-26，本地候选）
+
+- 从绿色 Production `77815862a0abebff67b8d958f66944a0e11b068f`开始，只读取远程 QA HEAD `e586508c620f0b9ca72930feb1c93526b35e04c1`中三份已提交报告和最小测试证据；没有读取 QA 工作树未提交文件，也没有整体 merge QA 分支。
+- `df89a91`完成 HEM-P1-061/063/064/066 与 HEM-P2-065 的同一存储合同修复：pointer 恢复要求完整 attempt 身份；attempt state 必须与 pointer 一致；autosave 成功后幂等补写 pointer；目录在 localStorage 异常时以内存状态继续；restart 只有在 attempt、pointer 与会话状态全部清理成功后才 reload；目录不再按 key 名或未验证 summary 显示进度。
+- 专项证据：28/28 畸形身份场景 fail-closed；4/4 viewport 的 pointer 补偿及刷新恢复、目录存储异常、restart 首次删除失败均通过；8/8 假进度场景被拒绝。history-log 保持 3 次 503 后人工重试 1 次 200、同一 request ID、刷新零新增自动请求、pending 最终清零。
+- 本地完整门禁：58 段行为/安全/医学治理链 exit 0；Playwright `91 passed / 7 intentional skipped / 0 failed`；TypeScript、ESLint、两种 `82/82` 构建、两次 26 资产 bundle、357 文件/历史 secret scan、78 个受控输出幂等均通过；`data/**`零差异。
+- 当前本地代码提交为`df89a91f304f867855b6708cab152b70e57fad80`。本机捆绑运行时为 Node 24，因此 Node 22.14、Actions、Vercel 与精确新 HEAD 的远程结果仍为`REMOTE_PENDING`，未用旧绿灯替代。
+- 未修改医学事实、审批状态、`needs_revision`、HEM-P0-001/023、419 条审核决定或 360 分规则。下一步为证据文档原子提交、fetch 冲突门禁、普通 push；PR #1继续保持 Draft，不合并 main、不部署 Production。

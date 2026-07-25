@@ -617,3 +617,13 @@
 - Actions run `30148941887`在Node 22.14.0完整success：Playwright 85/3/0、82/82页面、23个JS资产、行为/医学/安全/类型/lint/secret/clean门禁全部通过。Vercel Deployment及Preview Comments绑定精确HEAD并成功；PR #1仍Open/Draft，Pages按Draft规则跳过，未部署Production。
 - 四项source优先用药投影P026/P027/P029/P039通过；P002手术史、14项新增BLOCKED_MEDICAL、18项HEM-P0-023、151项HEM-P0-001、419条模拟事实及42例`needs_revision`均未自动裁决、批准或解除。
 - 长期QA从`e70ed19fadd51671602e937565b779154b16522d`复测：P026/P027/P029/P039；P002与32项阻塞隔离；P037英文`1 day ago`；P004/P005/P006患者未留意事实零收集；P001/HX-ADD-001未审核生活史；42×37、42×17、Patient开场白、360分及双语七阶段。
+### 存储恢复与目录完整性里程碑（2026-07-26，本地完成、远程待验）
+
+- 起始 Production HEAD：`77815862a0abebff67b8d958f66944a0e11b068f`；选择性 QA HEAD：`e586508c620f0b9ca72930feb1c93526b35e04c1`；没有整体 merge QA。
+- 代码 HEAD：`df89a91f304f867855b6708cab152b70e57fad80`。HEM-P1-061、063、064、066 和 HEM-P2-065 已取得本地可重复关闭证据；history-log 既有恢复合同保持。
+- 完整本地结果：58/58 行为门禁、Playwright 91/7/0、TypeScript、ESLint、双 82/82 build、双 26-asset bundle、357-file/history secret scan、78-output idempotency、`data/**`零差异。
+- 安全语义：终态恢复要求完整身份；pointer 与 attempt 内容一致；浏览器旧 token 只作为已签名状态结构参与本地进度一致性，服务端 stage/attempt 校验未放宽；restart 删除失败不 reload、不伪装成功。
+- 医学治理未变化：未批准事实、未解除`needs_revision`、未裁决 HEM-P0-001/023、未改 419 条审核结论或 360 分规则。
+- 当前仍需：证据提交、fetch 后普通 push、精确新 HEAD 的 Node 22 Actions、Vercel 和 Draft PR检查。PR保持 Draft；不合并 main、不部署 Production。
+- 回滚：按提交逆序普通执行`git revert <evidence-commit>`与`git revert df89a91`，随后重跑 session/attempt、history-log、Playwright、构建和扫描门禁；禁止 reset、rebase 或 force push。
+- 长期 QA 复测范围：28身份场景、4 pointer恢复、localStorage异常四 viewport、restart首次删除失败四 viewport、8假进度、history-log 3×503+1×200、七阶段与360分。准确起始 HEAD 在远程门禁成功后以最终推送 HEAD 为准。

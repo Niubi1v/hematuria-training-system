@@ -666,3 +666,11 @@
 - **本地证据**：完整行为链、42例病史协调、TypeScript、ESLint、Playwright 85/3/0、82页构建、bundle、secret及依赖审计通过；`data/**`零差异。
 - **远程关闭证据**：产品修复`d75655d`、证据提交`e70ed19`；Actions run `30148941887`在Node 22.14.0完整success，Playwright 85/3/0、82页build、bundle、secret与clean gate通过；Vercel两项success，PR仍Open/Draft。
 - **最终状态**：`ENGINEERING CLOSED / REMOTE VERIFIED`。医学冻结项继续由具名医学审核处理，不因工程关闭而改变。
+### 存储恢复与目录完整性缺陷（2026-07-26）
+
+- **HEM-P1-061 — LOCAL_ENGINEERING_CLOSED / REMOTE_PENDING**：旧实现只检查 pointer 的`schemaVersion`，缺失`attemptId/caseId/mode/language/participantId`或身份不匹配时仍可恢复终态。现要求完整身份、合法版本和 pointer/state attemptId 一致；28/28 身份场景及终态浏览器复现通过。
+- **HEM-P1-063 — LOCAL_ENGINEERING_CLOSED / REMOTE_PENDING**：attempt 写入成功而 pointer 写入失败会形成永久孤儿草稿。autosave 现在先写 attempt state，再以同一完整身份幂等写 pointer；四 viewport 均证明存储恢复后 pointer 补偿、刷新找回草稿且不收养跨作用域 orphan。
+- **HEM-P1-064 — LOCAL_ENGINEERING_CLOSED / REMOTE_PENDING**：病例目录与全局页眉/页脚直接读取 localStorage，SecurityError 会导致 Application error。统一安全读写后，四 viewport 均保持 42/42 卡片、搜索、语言切换和进入病例可用；只隐藏未经验证的进度并显示轻量提示，不制造假进度。
+- **HEM-P1-066 — LOCAL_ENGINEERING_CLOSED / REMOTE_PENDING**：restart 首次 remove 失败仍 reload 并伪装成功。当前删除使用可回滚快照并显式返回结果；失败时保留页面、attempt、草稿和阶段并提示重试，成功清理后才 reload；四 viewport 通过且不误删其他作用域。
+- **HEM-P2-065 — LOCAL_ENGINEERING_CLOSED / REMOTE_PENDING**：旧目录仅凭 pointer key 或 v1 summary 显示“进行中/已完成”。新 v2 summary 与完整 pointer、attempt state、签名 token 结构、阶段 1–7、360 report 及总分一致性共同验证；8/8 畸形/未验证场景不显示假进度，孤儿 attempt 不自动收养。
+- **回归控制**：history-log 的 3×503、刷新无重试风暴、同一 request ID、人工重试 200 与 pending=0 合同继续通过。代码提交`df89a91`；远程 Node 22/Actions/Vercel 尚待新 HEAD 验证，不提前登记为远程关闭。

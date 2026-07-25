@@ -1398,3 +1398,22 @@ P001新增三轮及P037/P038各两轮的每次`/api/agent-chat/`均200、`genera
 | 医学边界 | `data/**`零差异；未批准或解除任何BLOCKED、HEM-P0-001/023、simulation或`needs_revision`状态 |
 
 Actions URL：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/30148941887`。Vercel状态页：`https://vercel.com/niubi1vs-projects/hematuria-training-system/BmFSFi24jvwadzzo3Qj7eqFdFMTT`。
+## 2026-07-26 — HEM-P1-061/063/064/066 与 HEM-P2-065
+
+基线：`77815862a0abebff67b8d958f66944a0e11b068f`；代码提交：`df89a91f304f867855b6708cab152b70e57fad80`。QA 证据仅从远程已提交 HEAD `e586508c620f0b9ca72930feb1c93526b35e04c1`选择性读取。
+
+| 门禁 | 精确结果 |
+|---|---|
+| attempt 身份 | `scripts/test-attempt-isolation.ts` exit 0；28/28 缺失或不匹配身份场景 fail-closed |
+| 假进度 | `scripts/test-catalog-progress.ts` exit 0；8/8 畸形 pointer、未验证 summary、孤儿 attempt 被拒绝 |
+| 四 viewport 浏览器专项 | `practice.spec.mjs`专项 5/5；覆盖 360×800、390×844、1280×720、1440×900 的 storage 异常、pointer 补偿/刷新、restart 删除失败与目录假进度 |
+| history-log 控制 | 3×HTTP 503 后人工 1×HTTP 200；唯一 request ID；刷新后自动新增请求 0；pending 归零 |
+| 完整 Playwright | 98 discovered；91 passed、7按项目合同 intentional skipped、0 failed；desktop/mobile、42例双语七阶段代表流程均通过 |
+| 完整行为链 | 58/58 命令 exit 0；含 42例、572事实、153/419治理隔离、18项冲突、七阶段、session/attempt与360分 |
+| TypeScript / ESLint | 均 exit 0 |
+| Production build | Vercel同源合同 `82/82`；GitHub Pages basePath合同 `82/82` |
+| bundle / repository scan | 两次 bundle 均 26 JS 资产通过；repository scanner 357 tracked/candidate及历史通过 |
+| 生成幂等 | 已提交 HEAD 的隔离 worktree：78 个受控输出 baseline 与第二轮一致，exit 0 |
+| 数据边界 | `git diff --exit-code -- data` exit 0；未修改医学事实、审核状态、`needs_revision`或评分规则 |
+
+本地运行使用当前 Codex 捆绑 Node 24.14；仓库要求的 Node 22.14 结果必须由精确新 HEAD 的 GitHub Actions补证。当前不得写成远程或 Preview 已通过。
