@@ -8,8 +8,8 @@ type QcRow = { caseId: string; field: string; before: string; after: string; rea
 
 const dataDir = path.join(process.cwd(), "data");
 const placeholders = /未诉|需主动询问|需追问|不详|没有特别注意|原表未记录|训练中若被问及|未提供/;
-const medicineNames = ["缬沙坦", "阿司匹林", "氯吡格雷", "华法林", "利伐沙班", "达比加群", "阿哌沙班", "达格列净", "二甲双胍", "胰岛素", "氨氯地平", "硝苯地平", "贝那普利", "厄贝沙坦", "氯沙坦", "他汀", "非那雄胺", "坦索罗辛", "别嘌醇", "抗生素", "降压药", "降糖药"];
-const medicationNamesEn: Record<string, string> = { 缬沙坦: "valsartan", 阿司匹林: "aspirin", 氯吡格雷: "clopidogrel", 华法林: "warfarin", 利伐沙班: "rivaroxaban", 达比加群: "dabigatran", 阿哌沙班: "apixaban", 达格列净: "dapagliflozin", 二甲双胍: "metformin", 胰岛素: "insulin", 氨氯地平: "amlodipine", 硝苯地平: "nifedipine", 贝那普利: "benazepril", 厄贝沙坦: "irbesartan", 氯沙坦: "losartan", 他汀: "a statin", 非那雄胺: "finasteride", 坦索罗辛: "tamsulosin", 别嘌醇: "allopurinol", 抗生素: "an antibiotic", 降压药: "an antihypertensive", 降糖药: "diabetes medication" };
+const medicineNames = ["缬沙坦", "阿司匹林", "氯吡格雷", "华法林", "利伐沙班", "达比加群", "阿哌沙班", "达格列净", "二甲双胍", "胰岛素", "氨氯地平", "硝苯地平", "贝那普利", "厄贝沙坦", "氯沙坦", "他汀", "非那雄胺", "坦索罗辛", "别嘌醇", "布洛芬", "复方止痛药", "抗生素", "降压药", "降糖药"];
+const medicationNamesEn: Record<string, string> = { 缬沙坦: "valsartan", 阿司匹林: "aspirin", 氯吡格雷: "clopidogrel", 华法林: "warfarin", 利伐沙班: "rivaroxaban", 达比加群: "dabigatran", 阿哌沙班: "apixaban", 达格列净: "dapagliflozin", 二甲双胍: "metformin", 胰岛素: "insulin", 氨氯地平: "amlodipine", 硝苯地平: "nifedipine", 贝那普利: "benazepril", 厄贝沙坦: "irbesartan", 氯沙坦: "losartan", 他汀: "a statin", 非那雄胺: "finasteride", 坦索罗辛: "tamsulosin", 别嘌醇: "allopurinol", 布洛芬: "ibuprofen", 复方止痛药: "combination painkillers", 抗生素: "an antibiotic", 降压药: "an antihypertensive", 降糖药: "diabetes medication" };
 type MedicationResolution = {
   caseId: string;
   field: string;

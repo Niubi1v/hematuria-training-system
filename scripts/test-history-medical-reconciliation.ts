@@ -21,6 +21,16 @@ const slots = require("../data/patient_slots_bilingual.json") as Record<string, 
   provenance: string;
   teacherReviewRequired: boolean;
 }>>;
+const historyPolicy = require("../data/history_medical_reconciliation.json") as {
+  blockedMedicalHistory: Array<{
+    caseId: string;
+    displayCaseId?: string;
+    canonicalSlotId?: string;
+    disposition: string;
+    teacherReviewRequired: boolean;
+    reviewStatus: string;
+  }>;
+};
 const { matchStructuredFacts } = require("../server/structuredFacts.js") as {
   matchStructuredFacts(caseData: unknown, question: string, language: "zh" | "en"): {
     replyText: string;
@@ -56,6 +66,12 @@ function assertBilingualUnknown(caseId: string, field: string) {
 assert.equal(cases.length, 42, "history reconciliation covers the complete 42-case library");
 assert.equal(bilingualConflictEntries.length, 18, "HEM-P0-023 remains the fixed adjudication set");
 assert.ok(cases.every((item) => item.medicalReview?.status === "needs_revision"), "engineering reconciliation must not approve cases");
+assert.equal(historyPolicy.blockedMedicalHistory.length, 14, "all identified medical-history ambiguities remain explicitly blocked");
+assert.ok(historyPolicy.blockedMedicalHistory.every((item) =>
+  item.disposition === "BLOCKED_MEDICAL"
+  && item.teacherReviewRequired
+  && item.reviewStatus === "needs_review"
+), "blocked medical history must require unresolved teacher review");
 
 assert.equal(slots.P001.pain.patientAnswerEn, "I have pain with it.", "HEM-P0-023 values stay frozen until adjudication");
 assert.match(slots.P003.flank_pain.patientAnswerEn, /do not have flank pain/i);
@@ -158,6 +174,33 @@ assert.match(slots["HX-ADD-023"].fever_chills.patientAnswerEn, /low fever/i);
 assert.match(slots["HX-ADD-024"].hematuria_frequency.patientAnswerEn, /only once/i);
 assert.match(slots["HX-ADD-024"].triggers.patientAnswerEn, /after a long run|strenuous exercise/i);
 
+assertBilingualUnknown("HX-ADD-025", "hematuria_visibility");
+assert.match(slots["HX-ADD-025"].urine_color.patientAnswerEn, /menstruation|menstrual blood/i);
+assert.match(slots["HX-ADD-025"].gynecologic_contamination.patientAnswerEn, /menstruating|contaminated/i);
+assertBilingualUnknown("HX-ADD-026", "hematuria_frequency");
+assertBilingualUnknown("HX-ADD-026", "clots");
+assert.match(slots["HX-ADD-026"].triggers.patientAnswerEn, /traffic accident|direct blow/i);
+assert.match(slots["HX-ADD-026"].urine_color.patientAnswerEn, /bright to dark red/i);
+assert.match(slots["HX-ADD-027"].hematuria_frequency.patientAnswerEn, /intermittent|present every time/i);
+assertBilingualUnknown("HX-ADD-027", "clots");
+assertBilingualUnknown("HX-ADD-027", "renal_colic");
+assert.match(slots["HX-ADD-027"].urine_color.patientAnswerEn, /tea-colored or pale red/i);
+assert.match(slots["HX-ADD-027"].medications.patientAnswerEn, /ibuprofen/i);
+assert.match(slots["HX-ADD-027"].medications.patientAnswerEn, /combination painkillers/i);
+assert.match(slots["HX-ADD-027"].medications.patientAnswerEn, /cannot recall the exact amount or frequency/i);
+assertBilingualUnknown("HX-ADD-028", "hematuria_frequency");
+assertBilingualUnknown("HX-ADD-028", "clots");
+assertBilingualUnknown("HX-ADD-029", "hematuria_visibility");
+assert.match(slots["HX-ADD-029"].hematuria_frequency.patientAnswerEn, /intermittent|present every time/i);
+assert.match(slots["HX-ADD-029"].pain.patientAnswerEn, /have pain/i);
+assertBilingualUnknown("HX-ADD-029", "triggers");
+assert.match(slots["HX-ADD-029"].gynecologic_contamination.patientAnswerEn, /between periods|no abnormal vaginal bleeding/i);
+assert.match(slots["HX-ADD-030"].hematuria_visibility.patientAnswerEn, /could not see red urine/i);
+assert.match(slots["HX-ADD-030"].hematuria_frequency.patientAnswerEn, /intermittent|present every time/i);
+assertBilingualUnknown("HX-ADD-030", "hematuria_phase");
+assert.match(slots["HX-ADD-030"].urine_color.patientAnswerEn, /looked normal|only on testing/i);
+assert.match(slots["HX-ADD-030"].triggers.patientAnswerEn, /did not have exercise|trauma|urinary procedure/i);
+
 const p026 = cases.find((item) => item.id === "HX-ADD-014");
 assert.deepEqual(p026?.structuredHistory?.medicationList?.map((item) => item.name), ["降糖药"]);
 const p027 = cases.find((item) => item.id === "HX-ADD-015");
@@ -169,12 +212,21 @@ assert.equal(p029?.structuredHistory?.anticoagulantUse?.provenance, "source");
 assert.equal(p029?.structuredHistory?.anticoagulantUse?.teacherReviewRequired, false);
 assert.equal(p029?.structuredHistory?.antiplateletUse?.status, "present");
 assert.match(p029?.sourceFacts?.medication || "", /否认华法林、利伐沙班/);
+const p039 = cases.find((item) => item.id === "HX-ADD-027");
+assert.deepEqual(p039?.structuredHistory?.medicationList?.map((item) => item.name), ["布洛芬", "复方止痛药"]);
+assert.match(p039?.sourceFacts?.medication || "", /长期自行服用布洛芬\/复方止痛药/);
 
-for (const probe of [
-  { caseId: "HX-ADD-007", zh: "这是肉眼血尿还是镜下血尿？", en: "Was this visible blood or microscopic hematuria?" },
-  { caseId: "HX-ADD-012", zh: "这是肾绞痛吗？", en: "Did you have renal colic?" },
-  { caseId: "HX-ADD-022", zh: "这是肉眼血尿还是镜下血尿？", en: "Was this visible blood or microscopic hematuria?" }
-]) {
+const blockedQuestions: Record<string, { zh: string; en: string }> = {
+  hematuria_visibility: { zh: "这是肉眼血尿还是镜下血尿？", en: "Was this visible blood or microscopic hematuria?" },
+  renal_colic: { zh: "这是肾绞痛吗？", en: "Did you have renal colic?" },
+  clots: { zh: "尿里有血块吗？", en: "Were there blood clots in the urine?" },
+  flank_pain: { zh: "有没有腰痛或腰酸？", en: "Did you have flank pain or soreness?" },
+  fever_chills: { zh: "有没有发热或寒战？", en: "Did you have fever or chills?" }
+};
+for (const blocked of historyPolicy.blockedMedicalHistory.filter((item) => item.canonicalSlotId)) {
+  const question = blockedQuestions[blocked.canonicalSlotId || ""];
+  assert.ok(question, `question fixture for blocked slot ${blocked.canonicalSlotId}`);
+  const probe = { caseId: blocked.caseId, ...question };
   for (const language of ["zh", "en"] as const) {
     const governed = matchCanonicalPatientFacts(probe.caseId, probe[language], language);
     assert.ok(governed, `${probe.caseId} governed canonical route (${language})`);
@@ -195,4 +247,4 @@ for (const language of ["zh", "en"] as const) {
   assert.match(surgery.replyText, language === "zh" ? /记不(?:太)?清|没特别注意/ : /cannot recall|not sure|did not notice/i);
 }
 
-console.log("History medical reconciliation regression passed through P036 with blocked-source governance.");
+console.log("History medical reconciliation regression passed for all 42 cases with blocked-source governance.");
