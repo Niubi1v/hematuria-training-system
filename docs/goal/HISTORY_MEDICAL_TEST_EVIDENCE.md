@@ -1,7 +1,7 @@
 # P001–P042 病史医学协调测试证据
 
 - 基线：`1566f7c21aabbd30eff2e30abf9924e214d1b7a4`
-- 生成时HEAD：`1f88148bdc055f3d00322360004ebff603d9e261`
+- 生成时HEAD：`d4904c4d619df9af0016b88e3d1385d87c9ba8bc`
 - 运行日期：2026-07-25（Asia/Shanghai）。
 - 运行时提示：仓库声明 Node `>=22.14 <23`；本地Codex bundled runtime为 Node 24.14.0，因此pnpm会给出engine warning，但下列定向测试、TypeScript、ESLint与构建结果以实际退出码为准。
 
@@ -17,7 +17,7 @@
 | 360分 | `pnpm test:scoring-v3` + `pnpm test:adversarial` | PASS — 42例360分、单调性、同义词、反摘要投机及对抗评分 |
 | 工程门禁 | `pnpm typecheck` + `pnpm lint` + `NEXT_PUBLIC_API_BASE_URL=https://api.example.test next build` | PASS — TypeScript、ESLint、82/82静态页production build |
 | bundle／secret | `pnpm test:bundle` + `pnpm test:secrets` + scanner自测试 | PASS — 25个JS资产；359个tracked/candidate文件；无秘密值输出 |
-| data差异 | `pnpm test:idempotency` + `git diff -- data/**` | PENDING — 报告提交后在clean HEAD运行；差异清单已限定为19个授权数据文件 |
+| data差异 | `pnpm test:idempotency` + `git diff -- data/**` | PASS — clean HEAD隔离worktree中78个受控输出首轮与基线一致、第二轮无漂移；差异清单限定为19个授权数据文件 |
 
 ## 核心不变量
 
