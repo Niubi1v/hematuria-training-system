@@ -482,3 +482,12 @@
 - 最小复现测试：`tests/exploratory/long-running-qa.spec.mjs`中的`@clean-tab-recovery`；失败断言要求后续stage-feedback为200。
 - 建议方向：提供与当前attempt服务端版本绑定的显式resume/reissue能力，或让重新初始化返回的token携带当前版本而非陈旧版本；成功状态必须由一次真实后续动作验证。不得把长期签名移入`localStorage`，不得自动新建attempt丢弃已保存阶段，也不得放宽现有安全拒绝。
 - 是否需要医学专家裁决：否；纯会话能力恢复、状态版本和客户端可继续性缺陷。
+
+### 第18轮多标签页扩展复现
+
+- 路径与步骤：在同一浏览器context、同一P001 attempt中，由主标签页打开第二标签页并确认复制1项标签页训练能力；两个页面同时单击阶段1提交；识别被409拒绝的标签页，等待成功标签页把阶段1落盘后刷新失败标签，进入下一阶段并单击一次提交。
+- 并发防重实际结果：四viewport每次均产生2个`stage-feedback`、2个不重复request ID；其中恰好1个200、1个409 `stale_attempt_token`。服务端单写防护有效，没有重复阶段写入。
+- 恢复实际结果：失败标签刷新后每次先得到1个200初始化/验证响应，页面可进入下一阶段；唯一重试4/4仍返回409 `stale_attempt_token`，随后显示会话不可用。结果为`FAIL_EMULATION / MULTI_TAB_SAME_ATTEMPT_EMULATION`，与clean-tab边界同属“成功初始化未取得当前服务端版本能力”，不另建重复缺陷。
+- 复现与环境：中文`1440×900/390×844`、英文`1280×720/360×800`共4/4；失败网络请求0、意外console error 0、provider调用0。自动标签页仿真不冒充真实浏览器进程关闭或真机。
+- 证据：最小复现为同文件`@multi-tab-attempt`；代表截图`artifacts/exploratory-qa/screenshots/multi-tab-attempt-concurrency-zh-390x844.png`。聚合只保存计数、状态码和公开错误码，不保存request ID、attempt ID、token、header、正文或环境值。
+- 修复回归补充要求：并发时仍必须保持恰好一次权威写入；失败标签刷新/重新验证后应取得当前attempt版本，并能提交唯一下一阶段动作。不得通过允许两个陈旧写入、共享跨标签长期签名或静默创建新attempt来“修复”。

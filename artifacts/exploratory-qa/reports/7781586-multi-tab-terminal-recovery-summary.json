@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "exploratory-multi-tab-terminal-recovery-aggregate-v1",
+  "productionBaseline": "77815862a0abebff67b8d958f66944a0e11b068f",
+  "executedAt": "2026-07-25",
+  "viewports": [
+    "1440x900",
+    "1280x720",
+    "390x844",
+    "360x800"
+  ],
+  "languages": [
+    "zh",
+    "en"
+  ],
+  "multiTabSameAttempt": {
+    "result": "FAIL_EMULATION",
+    "defectId": "HEM-P1-060",
+    "runs": 4,
+    "failedRuns": 4,
+    "concurrentStageFeedbackRequestsPerRun": 2,
+    "acceptedMutationsPerRun": 1,
+    "staleMutationsRejectedPerRun": 1,
+    "requestIdCollisions": 0,
+    "losingTabReloadInitializationStatuses": [
+      200,
+      200,
+      200,
+      200
+    ],
+    "losingTabRetryStatuses": [
+      409,
+      409,
+      409,
+      409
+    ],
+    "losingTabRetryErrors": {
+      "stale_attempt_token": 4
+    },
+    "losingTabUnavailableAfterRetry": 4,
+    "losingTabResynchronized": 0,
+    "boundary": "MULTI_TAB_SAME_ATTEMPT_EMULATION",
+    "realBrowserCloseClaimed": false
+  },
+  "terminalReportNewPageRecovery": {
+    "result": "PASS_EMULATION",
+    "runs": 4,
+    "passedRuns": 4,
+    "initialSessionStorageEntries": 0,
+    "finalReportRecovered": 4,
+    "submittedStageCountPerRun": 7,
+    "matchingAttemptSummaryCountPerRun": 1,
+    "lockedPriorStageCountPerRun": 6,
+    "finishDisabled": 4,
+    "duplicateStageFeedbacks": 0,
+    "duplicateScores": 0,
+    "reopenInitializationStatuses": [
+      200,
+      200,
+      200,
+      200
+    ],
+    "boundary": "NEW_PAGE_TERMINAL_STORAGE_EMULATION",
+    "realBrowserCloseClaimed": false
+  },
+  "failedNetworkRequests": 0,
+  "unexpectedConsoleErrors": 0,
+  "responseBodiesRetained": false,
+  "requestIdsRetained": false,
+  "credentialsRetained": false,
+  "medicalFactsEvaluated": false
+}

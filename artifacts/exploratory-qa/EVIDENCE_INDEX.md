@@ -300,3 +300,22 @@ SHA-256：
 - 第17轮最终全证据树流式/解包扫描覆盖657个物理文件、ZIP内12,676个条目和1,789,119,103字节，敏感值命中0；扫描器只输出计数，不输出候选值。
 - scanner自测合同通过。通用repository candidate scanner只对历史5个本机未跟踪大trace按大小上限fail-closed（4个ZIP内entry过大、1个ZIP文件过大），没有新增规则或Git历史命中；这5个文件已由上项无大小上限的流式/解包扫描覆盖并得到0命中。
 - 本轮10个staged文件中9个文本文件的独立规则扫描命中0，唯一PNG已包含在全证据树字节扫描中；`git diff --cached --check`通过。暂存范围不含业务代码、`data/**`、完整问答、header或大trace/录像。
+
+## `7781586` 第18轮多标签页与终态恢复证据
+
+| 证据名称 | 对应测试或缺陷 | 文件路径 | 文件大小 | 提交Git | 未提交原因 | 本机保留位置 |
+| --- | --- | --- | ---: | --- | --- | --- |
+| 多标签/终态新页面四viewport测试 | HEM-P1-060扩展、终态只读恢复 | `tests/exploratory/long-running-qa.spec.mjs` | 106,865 B（整文件） | 是 | — | 仓库路径 |
+| 第18轮脱敏聚合 | 本轮验收结论 | `artifacts/exploratory-qa/reports/7781586-multi-tab-terminal-recovery-summary.json` | 1,749 B | 是 | — | 仓库路径 |
+| HEM-P1-060多标签代表截图 | 390×844中文重试后会话不可用 | `artifacts/exploratory-qa/screenshots/multi-tab-attempt-concurrency-zh-390x844.png` | 38,040 B | 是 | — | 仓库路径 |
+| 四viewport原始摘要 | 多标签4份、终态恢复4份 | `artifacts/exploratory-qa/reports/7781586-{multi-tab-attempt-concurrency,terminal-report-new-page-recovery}-*-summary.json` | 8份/7,544 B | 否 | 聚合已保留必要计数 | 同路径，本机未跟踪 |
+| console/network摘要 | 两组四viewport页面诊断 | `artifacts/exploratory-qa/reports/{multi-tab-attempt-concurrency,terminal-report-new-page-recovery}-*` | 16份/79,114 B | 否 | 与聚合重复，可能含本机运行上下文 | 同路径，本机未跟踪 |
+| 本轮截图与QA诊断失败帧 | 两组四viewport、含首次探针错误帧 | `artifacts/exploratory-qa/screenshots/{multi-tab-attempt-concurrency,terminal-report-new-page-recovery}-*` | 16份/2,665,086 B | 否 | 仅提交一张产品失败代表图；其余重复或为已修正QA探针错误 | 同路径，本机未跟踪 |
+| 本轮trace | 两组四viewport可重建证据 | `artifacts/exploratory-qa/traces/{multi-tab-attempt-concurrency,terminal-report-new-page-recovery}-*.zip` | 8份/78,900,993 B | 否 | 体积大且可由测试重建 | 同路径，本机未跟踪 |
+| 多标签失败录像 | HEM-P1-060四viewport扩展复现 | `artifacts/exploratory-qa/videos/multi-tab-attempt-concurrency-*.webm` | 4份/1,338,776 B | 否 | 体积大；测试、聚合和代表截图足够 | 同路径，本机未跟踪 |
+
+- 多标签测试的浏览器端训练能力仍为固定`qa-redacted-training-state`占位符；每个页面对应的真实本地签名只存在Node内存。聚合不保存request ID、attempt ID、正文、header、Cookie、token、签名或环境值。
+- 终态恢复截图只含公开合成P001界面；首次在`about:blank`读取存储导致的四张QA失败帧不计产品证据，且不提交Git。
+- 第18轮最终全证据树流式/解包扫描覆盖717个物理文件、ZIP内14,312个条目和1,976,549,155字节，敏感值命中0；扫描器只输出计数，不输出候选值。
+- scanner自测合同通过。通用repository candidate scanner仍只对历史5个本机未跟踪大trace按大小上限fail-closed（4个ZIP内entry过大、1个ZIP文件过大），没有新增规则或历史命中；这5个文件已由上项无大小上限扫描覆盖并得到0命中。
+- 第18轮10个staged文件及完整可达文本历史的独立扫描命中0；暂存范围严格为QA文档、测试、1份脱敏聚合和1张代表截图，不含业务代码、`data/**`、完整问答、header或大trace/录像。

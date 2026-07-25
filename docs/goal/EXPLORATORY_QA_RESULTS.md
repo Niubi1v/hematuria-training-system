@@ -416,3 +416,11 @@ Patient Session 报告记录 295 次 `unsafe_deterministic_answer` source-cell �
 - 相关本地合同`test:attempts`、`test:training-security`、`test:training-api`、`test:stage-flow`均通过；本机Node为v24.14，仅作本地证据，不能替代既有远程Node 22.14门禁。
 - QA测试路由新增内存token代理，浏览器、截图和trace只接触固定`qa-redacted-training-state`占位符；真实QA签名只在Node进程内。旧本批trace删除后全部重跑。业务功能、医学数据和`data/**`未修改。
 - 本轮新增P0/P1/P2为0/1/0。HEM-P1-060、HEM-P1-057/058及其他开放P1存在，仍不建议进入最终教师人工审阅；医学、来源审核、Preview权限和真机阻塞保持原状态。
+
+## 2026-07-25 第 18 轮：`7781586` 多标签页并发与终态新页面恢复
+
+- 同一P001 attempt在两个标签页并发提交阶段1，四固定viewport均稳定产生2个阶段请求、2个唯一request ID、恰好1个200和1个409 `stale_attempt_token`；重复权威写入0，说明服务端并发防重合同生效。
+- HEM-P1-060扩展为多标签页4/4复现：失败标签刷新后均先得到200初始化/验证响应且读取到成功标签已保存的阶段1，但进入下一阶段后的唯一提交仍4/4为409 `stale_attempt_token`，随后UI显示训练会话不可用。失败网络请求0、意外console error 0；结果只标`FAIL_EMULATION / MULTI_TAB_SAME_ATTEMPT_EMULATION`。
+- 终态新页面恢复4/4为`PASS_EMULATION`：新页面在目标origin初始化前的sessionStorage条目为0；最终360报告、7个已提交阶段和唯一attempt汇总均恢复，阶段1–6共24/24锁定，终末按钮4/4禁用。新页面没有新增`stage-feedback`或`score`，重复计分0。
+- 两组测试均使用浏览器只见`qa-redacted-training-state`的本地Production handler代理；报告不保存request ID、attempt ID、回答正文、header、Cookie、签名或环境值。没有使用真实浏览器进程关闭，不能写成真实关闭或真机通过。
+- 本轮没有新增缺陷编号；HEM-P1-060复现范围扩大，新增P0/P1/P2为0/0/0。HEM-P1-057/058/060及其他开放P1仍阻止最终教师人工审阅，医学、来源、Preview故障注入和真机阻塞不变。

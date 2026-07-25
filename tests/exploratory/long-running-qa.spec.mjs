@@ -64,9 +64,13 @@ async function invokeLocalTrainingAction(body, token = "", remoteAddress = "qa-l
   };
 }
 
-async function installProductionTrainingApi(page, observations = [], actionObservations = []) {
-  resetMemoryAttemptStore();
-  const serverTokens = new Map();
+async function installProductionTrainingApi(page, observations = [], actionObservations = [], {
+  resetStore = true,
+  serverTokens = new Map(),
+  requestIds = new Set(),
+  pageLabel = "primary"
+} = {}) {
+  if (resetStore) resetMemoryAttemptStore();
   await page.route("**/api/health/**", (route) => route.fulfill({
     status: 200,
     contentType: "application/json",
@@ -126,10 +130,15 @@ async function installProductionTrainingApi(page, observations = [], actionObser
       `qa-production-handler-ui-${attemptId}`
     );
     if (result.token) serverTokens.set(attemptId, result.token);
+    const requestId = String(body.requestId || "");
+    const requestIdDuplicate = requestId ? requestIds.has(requestId) : false;
+    if (requestId) requestIds.add(requestId);
     actionObservations.push({
+      pageLabel,
       action: String(body.action || ""),
       stageKey: String(body.stageKey || ""),
       requestIdPresent: Boolean(body.requestId),
+      requestIdDuplicate,
       status: result.statusCode,
       error: String(result.payload?.error || "")
     });
@@ -198,7 +207,7 @@ async function withEvidence(browser, testInfo, scenario, run, { videoOnFailure =
 
   await context.tracing.start({ screenshots: true, snapshots: true, sources: false });
   try {
-    await run({ page, slug, consoleEvents, networkEvents });
+    await run({ context, page, slug, consoleEvents, networkEvents });
   } catch (error) {
     failed = true;
     const failurePath = path.join(DIRS.screenshots, `${slug}-failure.png`);
@@ -216,6 +225,36 @@ async function withEvidence(browser, testInfo, scenario, run, { videoOnFailure =
     }
     await rm(videoDir, { recursive: true, force: true }).catch(() => {});
   }
+}
+
+function observeAdditionalPage(page, label, consoleEvents, networkEvents) {
+  const requestStart = new Map();
+  page.on("console", (message) => consoleEvents.push({
+    at: new Date().toISOString(),
+    page: label,
+    type: message.type(),
+    text: redact(message.text()).slice(0, 2000)
+  }));
+  page.on("request", (request) => requestStart.set(request, Date.now()));
+  page.on("requestfailed", (request) => networkEvents.push({
+    page: label,
+    method: request.method(),
+    path: new URL(request.url()).pathname,
+    status: "FAILED",
+    durationMs: Date.now() - (requestStart.get(request) ?? Date.now()),
+    failure: redact(request.failure()?.errorText ?? "unknown")
+  }));
+  page.on("response", (response) => {
+    const request = response.request();
+    networkEvents.push({
+      page: label,
+      method: request.method(),
+      path: new URL(response.url()).pathname,
+      status: response.status(),
+      durationMs: Date.now() - (requestStart.get(request) ?? Date.now()),
+      resourceType: request.resourceType()
+    });
+  });
 }
 
 async function saveShot(page, testInfo, name, fullPage = true) {
@@ -1230,6 +1269,326 @@ test("case and language draft storage remains isolated @client-storage-isolation
     expect(storageAudit.distinctAttemptKeyCount).toBe(storageAudit.attemptKeyCount);
     expect(non200).toEqual([]);
     expect(failedNetworkRequestCount).toBe(0);
+  }, { videoOnFailure: true });
+});
+
+test("concurrent tabs keep one authoritative attempt mutation and let the stale tab resynchronize @multi-tab-attempt", async ({ browser }, testInfo) => {
+  const language = ["qa-1440x900", "qa-390x844"].includes(testInfo.project.name) ? "zh" : "en";
+  const copy = language === "en"
+    ? {
+        submit: "Submit stage",
+        next: "Next Agent",
+        unavailable: "Training session unavailable"
+      }
+    : {
+        submit: "提交本阶段",
+        next: "进入下一阶段",
+        unavailable: "训练会话尚未就绪"
+      };
+
+  await withEvidence(browser, testInfo, "multi-tab-attempt-concurrency", async ({ context, page, slug, consoleEvents, networkEvents }) => {
+    const actionObservations = [];
+    const requestIds = new Set();
+    const primaryTokens = new Map();
+    await page.addInitScript((selectedLanguage) => localStorage.setItem("hematuria-language", selectedLanguage), language);
+    await installProductionTrainingApi(page, [], actionObservations, {
+      serverTokens: primaryTokens,
+      requestIds,
+      pageLabel: "primary"
+    });
+    await page.goto("/cases/P001/");
+    await expect(page.getByRole("button", { name: copy.submit, exact: true })).toBeEnabled();
+    const attemptId = await page.evaluate((selectedLanguage) => {
+      const pointer = JSON.parse(localStorage.getItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`) || "null");
+      return String(pointer?.attemptId || "");
+    }, language);
+    expect(attemptId).not.toBe("");
+    await expect.poll(() => primaryTokens.has(attemptId)).toBe(true);
+
+    const [secondaryPage] = await Promise.all([
+      context.waitForEvent("page"),
+      page.evaluate(() => { window.open("about:blank", "_blank"); })
+    ]);
+    observeAdditionalPage(secondaryPage, "secondary", consoleEvents, networkEvents);
+    const copiedSessionEntryCount = await secondaryPage.evaluate(() => Object.keys(sessionStorage).length);
+    const secondaryTokens = new Map(primaryTokens);
+    await installProductionTrainingApi(secondaryPage, [], actionObservations, {
+      resetStore: false,
+      serverTokens: secondaryTokens,
+      requestIds,
+      pageLabel: "secondary"
+    });
+    await secondaryPage.goto(page.url());
+    await expect(secondaryPage.getByRole("button", { name: copy.submit, exact: true })).toBeEnabled();
+
+    const beforeConcurrentSubmit = actionObservations.length;
+    await Promise.all([
+      page.getByRole("button", { name: copy.submit, exact: true }).click(),
+      secondaryPage.getByRole("button", { name: copy.submit, exact: true }).click()
+    ]);
+    await expect.poll(() => actionObservations.slice(beforeConcurrentSubmit)
+      .filter((item) => item.action === "stage-feedback" && item.stageKey === "history").length).toBe(2);
+    const concurrentActions = actionObservations.slice(beforeConcurrentSubmit)
+      .filter((item) => item.action === "stage-feedback" && item.stageKey === "history");
+    const accepted = concurrentActions.filter((item) => item.status === 200);
+    const staleRejected = concurrentActions.filter((item) => item.status === 409 && item.error === "stale_attempt_token");
+    const requestIdCollisions = concurrentActions.filter((item) => item.requestIdDuplicate).length;
+    const winnerLabel = accepted[0]?.pageLabel || "primary";
+    const loserLabel = staleRejected[0]?.pageLabel || (winnerLabel === "primary" ? "secondary" : "primary");
+    const winnerPage = winnerLabel === "primary" ? page : secondaryPage;
+    const loserPage = loserLabel === "primary" ? page : secondaryPage;
+    await expect(winnerPage.getByRole("button", { name: copy.next, exact: true })).toBeVisible();
+    await expect.poll(() => winnerPage.evaluate((selectedLanguage) => {
+      const pointer = JSON.parse(localStorage.getItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`) || "null");
+      const saved = pointer?.attemptId
+        ? JSON.parse(localStorage.getItem(`hematuria-attempt-v3:P001:free:${selectedLanguage}:${pointer.attemptId}`) || "null")
+        : null;
+      return Boolean(saved?.submitted?.["1"]);
+    }, language)).toBe(true);
+
+    const beforeRecovery = actionObservations.length;
+    await loserPage.reload();
+    await expect(loserPage.getByText("P001", { exact: true }).first()).toBeVisible();
+    await loserPage.waitForTimeout(500);
+    const nextVisible = await loserPage.getByRole("button", { name: copy.next, exact: true }).isVisible().catch(() => false);
+    if (nextVisible) await loserPage.getByRole("button", { name: copy.next, exact: true }).click();
+    const unavailableVisible = await loserPage.getByRole("button", { name: copy.unavailable, exact: true }).isVisible().catch(() => false);
+    const submitButton = loserPage.getByRole("button", { name: copy.submit, exact: true });
+    const submitReady = await submitButton.isEnabled().catch(() => false);
+    if (submitReady) {
+      await submitButton.click();
+      await loserPage.waitForTimeout(1_500);
+    }
+    const unavailableAfterRetry = await loserPage.getByRole("button", { name: copy.unavailable, exact: true }).isVisible().catch(() => false);
+    const recoveryActions = actionObservations.slice(beforeRecovery);
+    const recoveryStageActions = recoveryActions.filter((item) => item.action === "stage-feedback");
+    const recoverySucceeded = !unavailableVisible
+      && recoveryStageActions.length === 1
+      && recoveryStageActions[0].status === 200;
+    await saveShot(loserPage, testInfo, `multi-tab-attempt-concurrency-${language}`, false);
+
+    const failedNetworkRequestCount = networkEvents.filter((item) => item.status === "FAILED").length;
+    const knownEnglishKeyErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && /same key|keys should be unique/i.test(item.text)
+      && /Physical examination/i.test(item.text)
+    );
+    const knownConflictConsoleErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && /status of 409.*Conflict/i.test(item.text)
+    );
+    const unexpectedConsoleErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && !knownEnglishKeyErrors.includes(item)
+      && !knownConflictConsoleErrors.includes(item)
+    );
+    const summary = {
+      schemaVersion: "exploratory-multi-tab-attempt-v1",
+      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      result: accepted.length === 1 && staleRejected.length === 1 && requestIdCollisions === 0 && recoverySucceeded
+        ? "PASS_EMULATION"
+        : "FAIL_EMULATION",
+      defectId: recoverySucceeded ? null : "HEM-P1-060",
+      language,
+      viewport: testInfo.project.use.viewport,
+      boundary: "MULTI_TAB_SAME_ATTEMPT_EMULATION",
+      copiedSessionEntryCount,
+      concurrentStageFeedbackRequests: concurrentActions.length,
+      acceptedMutations: accepted.length,
+      staleMutationsRejected: staleRejected.length,
+      requestIdCollisions,
+      losingTabReloadActionStatuses: recoveryActions.map((item) => item.status),
+      losingTabReloadActionErrors: recoveryActions.map((item) => item.error).filter(Boolean),
+      losingTabUnavailableBeforeRetry: unavailableVisible,
+      losingTabUnavailableAfterRetry: unavailableAfterRetry,
+      losingTabAdvancedBeforeRetry: nextVisible,
+      losingTabRecoveryStageRequests: recoveryStageActions.length,
+      losingTabRecoveryStageKeys: recoveryStageActions.map((item) => item.stageKey),
+      losingTabRecoveryStageStatuses: recoveryStageActions.map((item) => item.status),
+      losingTabResynchronized: recoverySucceeded,
+      realBrowserCloseClaimed: false,
+      failedNetworkRequests: failedNetworkRequestCount,
+      expectedConflictConsoleErrors: knownConflictConsoleErrors.length,
+      unexpectedConsoleErrors: unexpectedConsoleErrors.length,
+      responseBodiesRetained: false,
+      credentialsRetained: false
+    };
+    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    expect(concurrentActions).toHaveLength(2);
+    expect(accepted).toHaveLength(1);
+    expect(staleRejected).toHaveLength(1);
+    expect(requestIdCollisions).toBe(0);
+    expect(failedNetworkRequestCount).toBe(0);
+    expect(unexpectedConsoleErrors).toEqual([]);
+    expect(recoverySucceeded, "the stale tab must revalidate the shared attempt and continue from the winning mutation").toBe(true);
+  }, { videoOnFailure: true });
+});
+
+test("a new page restores a completed report as read-only without duplicate scoring @terminal-report-reopen", async ({ browser }, testInfo) => {
+  const language = ["qa-1440x900", "qa-390x844"].includes(testInfo.project.name) ? "zh" : "en";
+  const copy = language === "en"
+    ? {
+        submit: "Submit stage",
+        next: "Next Agent",
+        diagnosis: "Most likely diagnosis",
+        evidence: "Diagnostic evidence",
+        differentials: "At least 3 differential diagnoses",
+        analysis: "Supportive and opposing points for each differential",
+        noConsult: "No consultation for now",
+        treatment: "Immediate ED/admission management",
+        reflection: "Reflection",
+        finish: "Finish training and generate final report"
+      }
+    : {
+        submit: "提交本阶段",
+        next: "进入下一阶段",
+        diagnosis: "最可能诊断",
+        evidence: "诊断依据",
+        differentials: "至少 3 个鉴别诊断",
+        analysis: "各鉴别诊断的支持点与反对点",
+        noConsult: "暂不需要会诊",
+        treatment: "急诊或入院即时处理",
+        reflection: "学习反思",
+        finish: "完成训练并生成最终报告"
+      };
+
+  await withEvidence(browser, testInfo, "terminal-report-new-page-recovery", async ({ context, page, slug, consoleEvents, networkEvents }) => {
+    const actionObservations = [];
+    const requestIds = new Set();
+    const primaryTokens = new Map();
+    await page.addInitScript((selectedLanguage) => localStorage.setItem("hematuria-language", selectedLanguage), language);
+    await installProductionTrainingApi(page, [], actionObservations, {
+      serverTokens: primaryTokens,
+      requestIds,
+      pageLabel: "primary"
+    });
+    await page.goto("/cases/P001/");
+
+    const submitAndAdvance = async () => {
+      await page.getByRole("button", { name: copy.submit, exact: true }).click();
+      await page.getByRole("button", { name: copy.next, exact: true }).click();
+    };
+    await submitAndAdvance();
+    await submitAndAdvance();
+    await page.getByRole("textbox", { name: copy.diagnosis, exact: true }).fill("QA terminal report diagnosis marker");
+    await page.getByRole("textbox", { name: copy.evidence, exact: true }).fill("QA terminal report evidence marker with sufficient length.");
+    await page.getByRole("textbox", { name: copy.differentials, exact: true }).fill("QA option one; QA option two; QA option three");
+    await page.getByRole("textbox", { name: copy.analysis, exact: true }).fill("QA support and opposition marker for every option.");
+    await submitAndAdvance();
+    await page.getByRole("radio", { name: copy.noConsult, exact: true }).check();
+    await submitAndAdvance();
+    await page.getByRole("textbox", { name: copy.treatment, exact: true }).fill("QA immediate management terminal recovery marker.");
+    await submitAndAdvance();
+    await page.locator("main textarea:visible").first().fill("QA perioperative terminal recovery marker.");
+    await submitAndAdvance();
+    await page.getByLabel(copy.reflection, { exact: true }).fill("QA terminal report reflection is long enough for final scoring.");
+    await page.getByRole("button", { name: copy.finish, exact: true }).click();
+    await expect(page.getByTestId("final-report")).toBeVisible();
+    await expect(page.getByTestId("final-report")).toContainText("/ 360");
+    const beforeReopen = actionObservations.length;
+    const beforeStageFeedbackCount = actionObservations.filter((item) => item.action === "stage-feedback").length;
+    const beforeScoreCount = actionObservations.filter((item) => item.action === "score").length;
+
+    const reopenedPage = await context.newPage();
+    observeAdditionalPage(reopenedPage, "reopened", consoleEvents, networkEvents);
+    await reopenedPage.addInitScript(() => {
+      window.__qaInitialSessionEntryCount = Object.keys(sessionStorage).length;
+    });
+    await installProductionTrainingApi(reopenedPage, [], actionObservations, {
+      resetStore: false,
+      serverTokens: new Map(),
+      requestIds,
+      pageLabel: "reopened"
+    });
+    await reopenedPage.goto(page.url());
+    const newPageSessionEntryCount = await reopenedPage.evaluate(() => Number(window.__qaInitialSessionEntryCount || 0));
+    await expect(reopenedPage.getByTestId("final-report")).toBeVisible();
+    await expect(reopenedPage.getByTestId("final-report")).toContainText("/ 360");
+    await reopenedPage.waitForTimeout(500);
+    if (testInfo.project.use.viewport.width < 1024) {
+      await reopenedPage.locator('button[aria-expanded="false"]').filter({ hasText: "7/7" }).click();
+    }
+    const stageButtons = reopenedPage.locator("aside").first().locator("section").first().locator("button");
+    await expect(stageButtons).toHaveCount(7);
+    let lockedPriorStages = 0;
+    for (let index = 0; index < 6; index += 1) {
+      if (await stageButtons.nth(index).isDisabled()) lockedPriorStages += 1;
+    }
+    const finishDisabled = await reopenedPage.getByRole("button", { name: copy.finish, exact: true }).isDisabled();
+    const storageAudit = await reopenedPage.evaluate((selectedLanguage) => {
+      const pointer = JSON.parse(localStorage.getItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`) || "null");
+      const saved = pointer?.attemptId
+        ? JSON.parse(localStorage.getItem(`hematuria-attempt-v3:P001:free:${selectedLanguage}:${pointer.attemptId}`) || "null")
+        : null;
+      const summaries = JSON.parse(localStorage.getItem("hematuria-practice-attempt-summaries-v1") || "[]");
+      return {
+        finalReportPresent: Boolean(saved?.finalReport),
+        submittedStageCount: Object.keys(saved?.submitted || {}).length,
+        matchingSummaryCount: Array.isArray(summaries)
+          ? summaries.filter((item) => item?.attemptId === pointer?.attemptId).length
+          : 0
+      };
+    }, language);
+    const reopenActions = actionObservations.slice(beforeReopen);
+    const afterStageFeedbackCount = actionObservations.filter((item) => item.action === "stage-feedback").length;
+    const afterScoreCount = actionObservations.filter((item) => item.action === "score").length;
+    const duplicateStageFeedbacks = afterStageFeedbackCount - beforeStageFeedbackCount;
+    const duplicateScores = afterScoreCount - beforeScoreCount;
+    await saveShot(reopenedPage, testInfo, `terminal-report-new-page-recovery-${language}`, false);
+
+    const failedNetworkRequestCount = networkEvents.filter((item) => item.status === "FAILED").length;
+    const knownEnglishKeyErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && /same key|keys should be unique/i.test(item.text)
+      && /Physical examination/i.test(item.text)
+    );
+    const knownCompletedConsoleErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && /status of 401.*Unauthorized/i.test(item.text)
+      && reopenActions.some((action) => action.status === 401 && action.error === "attempt_already_completed")
+    );
+    const unexpectedConsoleErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && !knownEnglishKeyErrors.includes(item)
+      && !knownCompletedConsoleErrors.includes(item)
+    );
+    const resultPassed = lockedPriorStages === 6
+      && finishDisabled
+      && storageAudit.finalReportPresent
+      && storageAudit.submittedStageCount === 7
+      && storageAudit.matchingSummaryCount === 1
+      && duplicateStageFeedbacks === 0
+      && duplicateScores === 0;
+    const summary = {
+      schemaVersion: "exploratory-terminal-report-reopen-v1",
+      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
+      language,
+      viewport: testInfo.project.use.viewport,
+      boundary: "NEW_PAGE_TERMINAL_STORAGE_EMULATION",
+      newPageSessionEntryCount,
+      finalReportRecovered: storageAudit.finalReportPresent,
+      submittedStageCount: storageAudit.submittedStageCount,
+      matchingSummaryCount: storageAudit.matchingSummaryCount,
+      lockedPriorStages,
+      finishDisabled,
+      duplicateStageFeedbacks,
+      duplicateScores,
+      reopenActionStatuses: reopenActions.map((item) => item.status),
+      reopenActionErrors: reopenActions.map((item) => item.error).filter(Boolean),
+      realBrowserCloseClaimed: false,
+      failedNetworkRequests: failedNetworkRequestCount,
+      knownDefectsObserved: reopenActions.some((item) => item.status === 401 && item.error === "attempt_already_completed")
+        ? ["HEM-P2-028"]
+        : [],
+      unexpectedConsoleErrors: unexpectedConsoleErrors.length,
+      responseBodiesRetained: false,
+      credentialsRetained: false
+    };
+    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    expect(failedNetworkRequestCount).toBe(0);
+    expect(unexpectedConsoleErrors).toEqual([]);
+    expect(resultPassed).toBe(true);
   }, { videoOnFailure: true });
 });
 
