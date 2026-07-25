@@ -1576,13 +1576,13 @@
     },
     "hematuria_visibility": {
       "patientAnswerZh": "肉眼血尿",
-      "patientAnswerEn": "I could see that my urine was red.",
+      "patientAnswerEn": "I could see that my urine looked red.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
       "patientAnswerZh": "患者因“间断小便变红伴排尿中断1年余”就诊。血尿类型及定位线索：肉眼血尿。现病史关键阳性信息：肉眼血尿；终末血尿为主；淡红色；无血块；排尿时轻微刺痛，体位相关排尿中断；无腰痛；排尿中断、改变体位后可继续排尿；夜尿1-2次/晚；无发热；无肾小球线索。关键阴性信息：原始资料未单列关键阴性病史，需根据问诊继续完善。",
-      "patientAnswerEn": "It started for about 1 years.",
+      "patientAnswerEn": "It started about one year ago.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1606,7 +1606,7 @@
     },
     "clots": {
       "patientAnswerZh": "无血块",
-      "patientAnswerEn": "I have noticed blood clots in the urine.",
+      "patientAnswerEn": "I have not noticed any blood clots.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1624,25 +1624,25 @@
     },
     "flank_pain": {
       "patientAnswerZh": "无腰痛",
-      "patientAnswerEn": "I have pain in my flank.",
+      "patientAnswerEn": "I do not have flank pain.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "renal_colic": {
       "patientAnswerZh": "无腰痛",
-      "patientAnswerEn": "I have had severe colicky flank pain.",
+      "patientAnswerEn": "I have not had severe colicky flank pain.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "radiating_pain": {
-      "patientAnswerZh": "无腰痛",
-      "patientAnswerEn": "The pain does not radiate elsewhere.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "urinary_frequency": {
       "patientAnswerZh": "我没有特别注意到小便次数明显增多。",
-      "patientAnswerEn": "I have not been urinating more often than usual.",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1659,32 +1659,32 @@
       "teacherReviewRequired": true
     },
     "retention": {
-      "patientAnswerZh": "排尿中断、改变体位后可继续排尿；夜尿1-2次/晚",
-      "patientAnswerEn": "I have not had urinary retention.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "fever_chills": {
       "patientAnswerZh": "无发热",
-      "patientAnswerEn": "I have had fever and chills.",
+      "patientAnswerEn": "I have not had fever or chills.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "glomerular_features": {
-      "patientAnswerZh": "我没有注意到明显泡沫尿。\n我没有注意到眼睑或下肢水肿。",
-      "patientAnswerEn": "I have not noticed foamy urine.\nI have not noticed swelling around my eyes or legs.",
+      "patientAnswerZh": "尿里泡沫多不多，我之前没特别注意。\n眼睑或腿有没有肿，我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to whether my urine was unusually foamy.\nI did not pay close attention to whether my eyes or legs were swollen.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "recent_uri": {
-      "patientAnswerZh": "最近没有明显感冒、咽痛或扁桃体炎。",
-      "patientAnswerEn": "I have not had a recent cold or sore throat.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
-      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1761,14 +1761,14 @@
       "teacherReviewRequired": true
     },
     "family_history": {
-      "patientAnswerZh": "子女身体健康。",
-      "patientAnswerEn": "There is a family medical history, but I do not know all the details.",
+      "patientAnswerZh": "这点我记不太清了。",
+      "patientAnswerEn": "I cannot recall that clearly.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "bleeding_tendency": {
-      "patientAnswerZh": "这个我不太清楚。",
-      "patientAnswerEn": "I have had bleeding or bruising elsewhere.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -1779,14 +1779,14 @@
       "teacherReviewRequired": true
     },
     "prior_care": {
-      "patientAnswerZh": "这个我不太清楚。",
-      "patientAnswerEn": "I have already seen a doctor about this, but I do not remember all the details.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "general_condition": {
-      "patientAnswerZh": "这个我不太清楚。",
-      "patientAnswerEn": "My appetite, sleep, bowel movements, and weight have not changed significantly.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     }
@@ -1800,25 +1800,25 @@
     },
     "hematuria_visibility": {
       "patientAnswerZh": "肉眼茶色/镜下大量红细胞",
-      "patientAnswerEn": "I could not see red urine; blood was found on a urine test.",
+      "patientAnswerEn": "I could see that my urine looked tea- or cola-colored, and red blood cells were also found on a urine test.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
       "patientAnswerZh": "患者因“突发右侧腰痛伴小便变红半天”就诊。血尿类型及定位线索：肉眼茶色/镜下大量红细胞。现病史关键阳性信息：肉眼茶色/镜下大量红细胞；血尿与肾绞痛同时出现，非典型起始/终末；多为全程尿色加深；浓茶样；右腰刀割样阵发性疼痛，向右下腹及会阴放射，伴恶心呕吐；右侧肾绞痛明显；尿频尿急；无发热；无泡沫尿、水肿，茶色尿主要与结石血尿相关但需尿沉渣鉴别。关键阴性信息：无明显血块。",
-      "patientAnswerEn": "It started for about half days.",
+      "patientAnswerEn": "It started about half a day ago.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "hematuria_frequency": {
-      "patientAnswerZh": "突发右侧腰痛伴血尿半天",
-      "patientAnswerEn": "It has been present continuously.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "hematuria_phase": {
-      "patientAnswerZh": "血尿与肾绞痛同时出现，非典型起始/终末；多为全程尿色加深",
-      "patientAnswerEn": "It becomes red near the end of urination.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1842,7 +1842,7 @@
     },
     "dysuria": {
       "patientAnswerZh": "我没有特别注意到小便疼痛或烧灼感。",
-      "patientAnswerEn": "It does not hurt or burn when I urinate.",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1859,8 +1859,8 @@
       "teacherReviewRequired": true
     },
     "radiating_pain": {
-      "patientAnswerZh": "右侧肾绞痛明显",
-      "patientAnswerEn": "The pain does not radiate elsewhere.",
+      "patientAnswerZh": "右腰刀割样阵发性疼痛，向右下腹及会阴放射，伴恶心呕吐",
+      "patientAnswerEn": "The pain radiates toward my lower abdomen or groin.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -1877,20 +1877,20 @@
       "teacherReviewRequired": true
     },
     "voiding_difficulty": {
-      "patientAnswerZh": "尿频尿急",
-      "patientAnswerEn": "I have some difficulty or straining when I urinate.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "retention": {
-      "patientAnswerZh": "尿频尿急",
-      "patientAnswerEn": "I have not had urinary retention.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "fever_chills": {
       "patientAnswerZh": "无发热",
-      "patientAnswerEn": "I have had fever and chills.",
+      "patientAnswerEn": "I have not had fever or chills.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1901,14 +1901,14 @@
       "teacherReviewRequired": true
     },
     "recent_uri": {
-      "patientAnswerZh": "最近没有明显感冒、咽痛或扁桃体炎。",
-      "patientAnswerEn": "I have not had a recent cold or sore throat.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
-      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -1985,14 +1985,14 @@
       "teacherReviewRequired": true
     },
     "family_history": {
-      "patientAnswerZh": "父母、配偶、子女均身体健康。",
-      "patientAnswerEn": "There is a family medical history, but I do not know all the details.",
+      "patientAnswerZh": "这点我记不太清了。",
+      "patientAnswerEn": "I cannot recall that clearly.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "bleeding_tendency": {
-      "patientAnswerZh": "这个我不太清楚。",
-      "patientAnswerEn": "I have had bleeding or bruising elsewhere.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -2003,14 +2003,14 @@
       "teacherReviewRequired": true
     },
     "prior_care": {
-      "patientAnswerZh": "这个我不太清楚。",
-      "patientAnswerEn": "I have already seen a doctor about this, but I do not remember all the details.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "general_condition": {
-      "patientAnswerZh": "这个我不太清楚。",
-      "patientAnswerEn": "My appetite, sleep, bowel movements, and weight have not changed significantly.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     }
@@ -2024,13 +2024,13 @@
     },
     "hematuria_visibility": {
       "patientAnswerZh": "肉眼血尿/镜下大量红细胞",
-      "patientAnswerEn": "I could not see red urine; blood was found on a urine test.",
+      "patientAnswerEn": "I could see that my urine looked red, and red blood cells were also found on a urine test.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
       "patientAnswerZh": "患者因“反复左侧腰部隐痛伴运动后小便变红3年余，再发1天”就诊。血尿类型及定位线索：肉眼血尿/镜下大量红细胞。现病史关键阳性信息：肉眼血尿/镜下大量红细胞；运动后全程尿色加深，非典型终末血尿；酱油样/浓茶样；未诉血块；左侧腰部隐痛，非典型肾绞痛；左腰隐痛；无尿频尿急尿痛；无发热；尿色茶/酱油需与肾小球性血尿鉴别；本例影像结石明确。关键阴性信息：原始资料未单列关键阴性病史，需根据问诊继续完善。",
-      "patientAnswerEn": "It started for about 3 years.",
+      "patientAnswerEn": "It started about 3 years ago.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2042,7 +2042,7 @@
     },
     "hematuria_phase": {
       "patientAnswerZh": "运动后全程尿色加深，非典型终末血尿",
-      "patientAnswerEn": "It becomes red near the end of urination.",
+      "patientAnswerEn": "I notice the urine color throughout the whole urinary stream.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2053,8 +2053,8 @@
       "teacherReviewRequired": true
     },
     "clots": {
-      "patientAnswerZh": "未诉血块",
-      "patientAnswerEn": "I have noticed blood clots in the urine.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2066,7 +2066,7 @@
     },
     "dysuria": {
       "patientAnswerZh": "无尿频尿急尿痛",
-      "patientAnswerEn": "It hurts or burns when I urinate.",
+      "patientAnswerEn": "It does not hurt or burn when I urinate.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2077,14 +2077,14 @@
       "teacherReviewRequired": true
     },
     "renal_colic": {
-      "patientAnswerZh": "左腰隐痛",
-      "patientAnswerEn": "I have had severe colicky flank pain.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "radiating_pain": {
-      "patientAnswerZh": "左腰隐痛",
-      "patientAnswerEn": "The pain does not radiate elsewhere.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -2101,38 +2101,38 @@
       "teacherReviewRequired": true
     },
     "voiding_difficulty": {
-      "patientAnswerZh": "无尿频尿急尿痛",
-      "patientAnswerEn": "I have some difficulty or straining when I urinate.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "retention": {
-      "patientAnswerZh": "无尿频尿急尿痛",
-      "patientAnswerEn": "I have not had urinary retention.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "fever_chills": {
       "patientAnswerZh": "无发热",
-      "patientAnswerEn": "I have had fever and chills.",
+      "patientAnswerEn": "I have not had fever or chills.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "glomerular_features": {
-      "patientAnswerZh": "我没有注意到明显泡沫尿。\n我没有注意到眼睑或下肢水肿。",
-      "patientAnswerEn": "I have not noticed foamy urine.\nI have not noticed swelling around my eyes or legs.",
+      "patientAnswerZh": "尿里泡沫多不多，我之前没特别注意。\n眼睑或腿有没有肿，我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to whether my urine was unusually foamy.\nI did not pay close attention to whether my eyes or legs were swollen.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "recent_uri": {
-      "patientAnswerZh": "最近没有明显感冒、咽痛或扁桃体炎。",
-      "patientAnswerEn": "I have not had a recent cold or sore throat.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
-      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2209,14 +2209,14 @@
       "teacherReviewRequired": true
     },
     "family_history": {
-      "patientAnswerZh": "父母、配偶、子女均身体健康。",
-      "patientAnswerEn": "There is a family medical history, but I do not know all the details.",
+      "patientAnswerZh": "这点我记不太清了。",
+      "patientAnswerEn": "I cannot recall that clearly.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "bleeding_tendency": {
-      "patientAnswerZh": "这个我不太清楚。",
-      "patientAnswerEn": "I have had bleeding or bruising elsewhere.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -2227,14 +2227,14 @@
       "teacherReviewRequired": true
     },
     "prior_care": {
-      "patientAnswerZh": "这个我不太清楚。",
-      "patientAnswerEn": "I have already seen a doctor about this, but I do not remember all the details.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "general_condition": {
-      "patientAnswerZh": "这个我不太清楚。",
-      "patientAnswerEn": "My appetite, sleep, bowel movements, and weight have not changed significantly.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     }
@@ -2248,25 +2248,25 @@
     },
     "hematuria_visibility": {
       "patientAnswerZh": "肉眼血尿+肾小球性镜下证据",
-      "patientAnswerEn": "I could not see red urine; blood was found on a urine test.",
+      "patientAnswerEn": "I could see that my urine looked red, and red blood cells were also found on a urine test.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
       "patientAnswerZh": "患者因“咽痛3周，小便变红1周”就诊。血尿类型及定位线索：肉眼血尿+肾小球性镜下证据。现病史关键阳性信息：肉眼血尿+肾小球性镜下证据；感染后数日出现肉眼血尿，不按起始/终末定位；可表现为全程淡红或洗肉水样；淡红色或洗肉水样；无血块；无尿痛；可有双腰酸胀；双侧腰部酸胀痛，不是典型肾绞痛；无尿频尿急尿痛；有咽痛/扁桃体炎伴发热，最高38℃；眼睑水肿、尿蛋白+、病理管型+、畸形红细胞显著升高，上感后血尿，提示肾小球性血尿。关键阴性信息：原始资料未单列关键阴性病史，需根据问诊继续完善。",
-      "patientAnswerEn": "It started for about 3 weeks.",
+      "patientAnswerEn": "It started about 3 weeks ago.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "hematuria_frequency": {
-      "patientAnswerZh": "咽痛3周，血尿1周",
-      "patientAnswerEn": "It has been present continuously.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "hematuria_phase": {
-      "patientAnswerZh": "感染后数日出现肉眼血尿，不按起始/终末定位；可表现为全程淡红或洗肉水样",
-      "patientAnswerEn": "It becomes red near the end of urination.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2278,19 +2278,19 @@
     },
     "clots": {
       "patientAnswerZh": "无血块",
-      "patientAnswerEn": "I have noticed blood clots in the urine.",
+      "patientAnswerEn": "I have not noticed any blood clots.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "pain": {
-      "patientAnswerZh": "无尿痛；可有双腰酸胀",
-      "patientAnswerEn": "I have pain with it.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "dysuria": {
       "patientAnswerZh": "无尿频尿急尿痛",
-      "patientAnswerEn": "It hurts or burns when I urinate.",
+      "patientAnswerEn": "It does not hurt or burn when I urinate.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2302,13 +2302,13 @@
     },
     "renal_colic": {
       "patientAnswerZh": "双侧腰部酸胀痛，不是典型肾绞痛",
-      "patientAnswerEn": "I have had severe colicky flank pain.",
+      "patientAnswerEn": "I have not had severe colicky flank pain.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "radiating_pain": {
-      "patientAnswerZh": "双侧腰部酸胀痛，不是典型肾绞痛",
-      "patientAnswerEn": "The pain does not radiate elsewhere.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -2325,26 +2325,26 @@
       "teacherReviewRequired": true
     },
     "voiding_difficulty": {
-      "patientAnswerZh": "无尿频尿急尿痛",
-      "patientAnswerEn": "I have some difficulty or straining when I urinate.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "retention": {
-      "patientAnswerZh": "无尿频尿急尿痛",
-      "patientAnswerEn": "I have not had urinary retention.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "fever_chills": {
       "patientAnswerZh": "有咽痛/扁桃体炎伴发热，最高38℃",
-      "patientAnswerEn": "I have had fever and chills.",
+      "patientAnswerEn": "I have had fever or chills.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "glomerular_features": {
-      "patientAnswerZh": "我没有注意到明显泡沫尿。\n我有眼睑或下肢水肿。",
-      "patientAnswerEn": "I have not noticed foamy urine.\nI have had swelling around my eyes or legs.",
+      "patientAnswerZh": "尿里泡沫多不多，我之前没特别注意。\n我有眼睑或下肢水肿。",
+      "patientAnswerEn": "I did not pay close attention to whether my urine was unusually foamy.\nI have had swelling around my eyes or legs.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2355,8 +2355,8 @@
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
-      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2433,14 +2433,14 @@
       "teacherReviewRequired": true
     },
     "family_history": {
-      "patientAnswerZh": "原始资料中的家族史/子女情况：否认高血压、糖尿病、肝炎、结核病史。",
-      "patientAnswerEn": "There is a family medical history, but I do not know all the details.",
+      "patientAnswerZh": "这点我记不太清了。",
+      "patientAnswerEn": "I cannot recall that clearly.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "bleeding_tendency": {
-      "patientAnswerZh": "这个我不太清楚。",
-      "patientAnswerEn": "I have had bleeding or bruising elsewhere.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -2451,14 +2451,14 @@
       "teacherReviewRequired": true
     },
     "prior_care": {
-      "patientAnswerZh": "这个我不太清楚。",
-      "patientAnswerEn": "I have already seen a doctor about this, but I do not remember all the details.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "general_condition": {
-      "patientAnswerZh": "这个我不太清楚。",
-      "patientAnswerEn": "My appetite, sleep, bowel movements, and weight have not changed significantly.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     }
@@ -2472,13 +2472,13 @@
     },
     "hematuria_visibility": {
       "patientAnswerZh": "肉眼/镜下血尿合并明显蛋白尿",
-      "patientAnswerEn": "I could not see red urine; blood was found on a urine test.",
+      "patientAnswerEn": "I could see that my urine looked red, and red blood cells were also found on a urine test.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "hematuria_onset": {
       "patientAnswerZh": "患者因“反复小便变红伴尿泡沫增多半年余，加重半月”就诊。血尿类型及定位线索：肉眼/镜下血尿合并明显蛋白尿。现病史关键阳性信息：肉眼/镜下血尿合并明显蛋白尿；感冒后反复出现，不按起始/终末定位；常为全程尿色异常；可呈茶色、淡红或肉眼血尿，伴泡沫增多；无血块；无尿痛和肾绞痛；无典型腰痛；无尿频尿急尿痛；与感冒/上呼吸道感染相关，可无持续发热；泡沫尿、尿蛋白3+、24小时尿蛋白2.4g升至4.7g、畸形红细胞27000，强烈提示肾小球来源。关键阴性信息：原始资料未单列关键阴性病史，需根据问诊继续完善。",
-      "patientAnswerEn": "It started for about half years.",
+      "patientAnswerEn": "It started about half a year ago.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2489,8 +2489,8 @@
       "teacherReviewRequired": true
     },
     "hematuria_phase": {
-      "patientAnswerZh": "感冒后反复出现，不按起始/终末定位；常为全程尿色异常",
-      "patientAnswerEn": "It becomes red near the end of urination.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2502,37 +2502,37 @@
     },
     "clots": {
       "patientAnswerZh": "无血块",
-      "patientAnswerEn": "I have noticed blood clots in the urine.",
+      "patientAnswerEn": "I have not noticed any blood clots.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "pain": {
       "patientAnswerZh": "无尿痛和肾绞痛",
-      "patientAnswerEn": "I have pain with it.",
+      "patientAnswerEn": "I do not have pain with it.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "dysuria": {
       "patientAnswerZh": "无尿频尿急尿痛",
-      "patientAnswerEn": "It hurts or burns when I urinate.",
+      "patientAnswerEn": "It does not hurt or burn when I urinate.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "flank_pain": {
       "patientAnswerZh": "无典型腰痛",
-      "patientAnswerEn": "I have pain in my flank.",
+      "patientAnswerEn": "I do not have flank pain.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "renal_colic": {
       "patientAnswerZh": "无典型腰痛",
-      "patientAnswerEn": "I have had severe colicky flank pain.",
+      "patientAnswerEn": "I have not had severe colicky flank pain.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "radiating_pain": {
-      "patientAnswerZh": "无典型腰痛",
-      "patientAnswerEn": "The pain does not radiate elsewhere.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -2549,38 +2549,38 @@
       "teacherReviewRequired": true
     },
     "voiding_difficulty": {
-      "patientAnswerZh": "无尿频尿急尿痛",
-      "patientAnswerEn": "I have some difficulty or straining when I urinate.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "retention": {
-      "patientAnswerZh": "无尿频尿急尿痛",
-      "patientAnswerEn": "I have not had urinary retention.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "fever_chills": {
-      "patientAnswerZh": "与感冒/上呼吸道感染相关，可无持续发热",
-      "patientAnswerEn": "I have had fever and chills.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "glomerular_features": {
-      "patientAnswerZh": "我有注意到尿里泡沫比较多。\n我没有注意到眼睑或下肢水肿。",
-      "patientAnswerEn": "I have noticed unusually foamy urine.\nI have not noticed swelling around my eyes or legs.",
+      "patientAnswerZh": "我有注意到尿里泡沫比较多。\n眼睑或腿有没有肿，我之前没特别注意。",
+      "patientAnswerEn": "I have noticed unusually foamy urine.\nI did not pay close attention to whether my eyes or legs were swollen.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "recent_uri": {
-      "patientAnswerZh": "最近没有明显感冒、咽痛或扁桃体炎。",
-      "patientAnswerEn": "I have not had a recent cold or sore throat.",
+      "patientAnswerZh": "与感冒/上呼吸道感染相关",
+      "patientAnswerEn": "This followed a recent cold or sore throat.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "triggers": {
-      "patientAnswerZh": "近期有没有伤到腰腹部，我记得不太清楚。",
-      "patientAnswerEn": "I did not notice exercise, trauma, sexual activity, or a urinary procedure as a trigger.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -2657,14 +2657,14 @@
       "teacherReviewRequired": true
     },
     "family_history": {
-      "patientAnswerZh": "原始资料中的家族史/子女情况：既往体健。",
-      "patientAnswerEn": "There is a family medical history, but I do not know all the details.",
+      "patientAnswerZh": "这点我记不太清了。",
+      "patientAnswerEn": "I cannot recall that clearly.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "bleeding_tendency": {
-      "patientAnswerZh": "这个我不太清楚。",
-      "patientAnswerEn": "I have had bleeding or bruising elsewhere.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
@@ -2675,14 +2675,14 @@
       "teacherReviewRequired": true
     },
     "prior_care": {
-      "patientAnswerZh": "这个我不太清楚。",
-      "patientAnswerEn": "I have already seen a doctor about this, but I do not remember all the details.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "derived_from_case_facts",
       "teacherReviewRequired": true
     },
     "general_condition": {
-      "patientAnswerZh": "这个我不太清楚。",
-      "patientAnswerEn": "My appetite, sleep, bowel movements, and weight have not changed significantly.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     }

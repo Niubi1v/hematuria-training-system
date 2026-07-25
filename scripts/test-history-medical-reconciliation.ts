@@ -52,6 +52,20 @@ assert.match(slots.P007.fever_chills.patientAnswerEn, /not had fever/i);
 assert.match(slots.P007.hematuria_visibility.patientAnswerEn, /could see.*urine.*red/i);
 assert.match(slots.P007.hematuria_visibility.patientAnswerEn, /urine test/i);
 
+assert.match(slots.P008.pain.patientAnswerEn, /have pain/i);
+assert.match(slots.P008.voiding_difficulty.patientAnswerEn, /difficulty|straining/i);
+assert.match(slots.P009.hematuria_visibility.patientAnswerEn, /tea- or cola-colored/i);
+assertBilingualUnknown("P009", "hematuria_phase");
+assert.match(slots.P009.radiating_pain.patientAnswerEn, /radiates.*groin/i);
+assert.match(slots.P010.flank_pain.patientAnswerEn, /have pain in my flank/i);
+assertBilingualUnknown("P010", "clots");
+assertBilingualUnknown("P011", "hematuria_phase");
+assert.match(slots.P011.renal_colic.patientAnswerEn, /not had severe colicky/i);
+assert.match(slots.P011.recent_uri.patientAnswerEn, /followed a recent cold|sore throat/i);
+assertBilingualUnknown("P012", "hematuria_phase");
+assertBilingualUnknown("P012", "fever_chills");
+assert.match(slots.P012.recent_uri.patientAnswerEn, /followed a recent cold|sore throat/i);
+
 const p002 = cases.find((item) => item.id === "P002");
 assert.ok(p002, "P002 fixture");
 for (const language of ["zh", "en"] as const) {
