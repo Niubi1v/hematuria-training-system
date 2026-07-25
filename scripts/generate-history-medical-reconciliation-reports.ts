@@ -243,6 +243,13 @@ function dispositionFor(slotId: string, before: Slot, after: Slot): MatrixRow["d
   return "RESOLVED_BY_SOURCE_PRECEDENCE";
 }
 
+function sourceResolutionMatrixId(resolution: SourceResolution, slotId: string) {
+  const primarySlotId = resolution.field === "medication" ? "medications" : resolution.field;
+  if (slotId === primarySlotId) return resolution.resolutionId;
+  const stableSlotSuffix = slotId.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toUpperCase();
+  return `${resolution.resolutionId}-${stableSlotSuffix}`;
+}
+
 const historyBlockedByKey = new Map<string, BlockedItem>();
 for (const item of policy.blockedMedicalHistory) {
   const patientSlotId = item.canonicalSlotId || item.patientSlotId;
@@ -283,7 +290,9 @@ for (const currentCaseId of Object.keys(currentSlots)) {
     const authority = historyBlocked?.basis
       || (hemBlocked ? "HEM-P0-023既有隔离：中英文医学极性冲突，缺乏可裁决的具名专家来源。" : resolution?.authoritativeSource || "当前病例原始中文 source／sourceFacts／结构化 source 字段，依项目既有来源优先级处理。");
     rows.push({
-      itemId: historyBlocked?.reviewItemId || hemBlocked?.reviewItemId || resolution?.resolutionId || `HISTORY-${caseDisplayId}-${slotId}`,
+      itemId: historyBlocked?.reviewItemId
+        || hemBlocked?.reviewItemId
+        || (resolution ? sourceResolutionMatrixId(resolution, slotId) : `HISTORY-${caseDisplayId}-${slotId}`),
       caseId: caseDisplayId,
       sourceCaseId: currentCaseId,
       field: slotId,
@@ -353,6 +362,13 @@ for (const item of bilingualConflictEntries) {
 }
 
 rows.sort((a, b) => a.caseId.localeCompare(b.caseId, "en", { numeric: true }) || a.field.localeCompare(b.field));
+
+const duplicateItemIds = [...new Set(rows
+  .map((row) => row.itemId)
+  .filter((itemId, index, itemIds) => itemIds.indexOf(itemId) !== index))];
+if (duplicateItemIds.length > 0) {
+  throw new Error(`History reconciliation matrix contains duplicate item IDs: ${duplicateItemIds.join(", ")}`);
+}
 
 const resolvedBySource = rows.filter((row) => row.disposition === "RESOLVED_BY_SOURCE_PRECEDENCE").length;
 const wordingOnly = rows.filter((row) => row.disposition === "RESOLVED_WORDING_ONLY").length;

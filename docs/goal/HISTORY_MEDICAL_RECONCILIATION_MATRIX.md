@@ -1,7 +1,7 @@
 # P001–P042 病史医学协调矩阵
 
 - 基线：`1566f7c21aabbd30eff2e30abf9924e214d1b7a4`
-- 生成时HEAD：`d4904c4d619df9af0016b88e3d1385d87c9ba8bc`
+- 生成时HEAD：`fbe39d724fcad84d3757a7cfffc5398f418c1e89`
 - 病例范围：P001–P042（42例有审计记录）
 - 逐字段记录：893项；其中 `RESOLVED_BY_SOURCE_PRECEDENCE` 371项，`RESOLVED_WORDING_ONLY` 490项，`BLOCKED_MEDICAL` 32项。
 - 说明：原始冲突值保留在本矩阵、git基线或既有HEM治理记录中；工程修正未写成 `expert_approved`，也未解除任何病例的 `needs_revision`。
@@ -580,7 +580,7 @@
 | HISTORY-P028-urinary_frequency | P028 | HX-ADD-016 | urinary_frequency | 尿频有；尿急有；尿痛否；排尿困难明显 | I have been urinating more often. | BILINGUAL_OR_PATIENT_WORDING | 当前病例原始中文 source／sourceFacts／结构化 source 字段，依项目既有来源优先级处理。 | 我小便次数比平时多。 | I have been urinating more often. | RESOLVED_WORDING_ONLY | 是：患者回答与权威 source 对齐 | 不改360分规则；仅修正可评分事实投影 | PASS：42例矩阵、极性与Patient治理回归 |
 | HISTORY-P028-urinary_urgency | P028 | HX-ADD-016 | urinary_urgency | 尿频有；尿急有；尿痛否；排尿困难明显 | I often have a sudden urgent need to urinate. | BILINGUAL_OR_PATIENT_WORDING | 当前病例原始中文 source／sourceFacts／结构化 source 字段，依项目既有来源优先级处理。 | 我会突然尿急、憋不住。 | I often have a sudden urgent need to urinate. | RESOLVED_WORDING_ONLY | 是：患者回答与权威 source 对齐 | 不改360分规则；仅修正可评分事实投影 | PASS：42例矩阵、极性与Patient治理回归 |
 | HISTORY-P028-voiding_difficulty | P028 | HX-ADD-016 | voiding_difficulty | 尿频有；尿急有；尿痛否；排尿困难明显 | I have some difficulty or straining when I urinate. | BILINGUAL_OR_PATIENT_WORDING | 当前病例原始中文 source／sourceFacts／结构化 source 字段，依项目既有来源优先级处理。 | 我排尿有些费力或不顺。 | I have some difficulty or straining when I urinate. | RESOLVED_WORDING_ONLY | 是：患者回答与权威 source 对齐 | 不改360分规则；仅修正可评分事实投影 | PASS：42例矩阵、极性与Patient治理回归 |
-| HISTORY-SOURCE-001 | P029 | HX-ADD-017 | anticoagulant | 我在服用华法林、利伐沙班。 | I take an anticoagulant. | DERIVED_SOURCE_MISMATCH | Hematuria_AI_Training_Final_v1.4_RELEASE_P013-P042精细病史扩写版_医学审核修订版.xlsx / 42例临床问诊病例!L32 and P013_P042扩写病例!F18 | 我没有服用华法林、利伐沙班等抗凝药。 | I do not take anticoagulants. | RESOLVED_BY_SOURCE_PRECEDENCE | 是：患者回答与权威 source 对齐 | 不改360分规则；仅修正可评分事实投影 | PASS：42例矩阵、极性与Patient治理回归 |
+| HISTORY-SOURCE-001-ANTICOAGULANT | P029 | HX-ADD-017 | anticoagulant | 我在服用华法林、利伐沙班。 | I take an anticoagulant. | DERIVED_SOURCE_MISMATCH | Hematuria_AI_Training_Final_v1.4_RELEASE_P013-P042精细病史扩写版_医学审核修订版.xlsx / 42例临床问诊病例!L32 and P013_P042扩写病例!F18 | 我没有服用华法林、利伐沙班等抗凝药。 | I do not take anticoagulants. | RESOLVED_BY_SOURCE_PRECEDENCE | 是：患者回答与权威 source 对齐 | 不改360分规则；仅修正可评分事实投影 | PASS：42例矩阵、极性与Patient治理回归 |
 | HISTORY-P029-bleeding_tendency | P029 | HX-ADD-017 | bleeding_tendency | 这个我不太清楚。 | I have had bleeding or bruising elsewhere. | BILINGUAL_OR_PATIENT_WORDING | 当前病例原始中文 source／sourceFacts／结构化 source 字段，依项目既有来源优先级处理。 | 这个我之前没特别注意。 | I did not pay close attention to that before. | RESOLVED_WORDING_ONLY | 是：患者回答与权威 source 对齐 | 不改360分规则；仅修正可评分事实投影 | PASS：42例矩阵、极性与Patient治理回归 |
 | HISTORY-P029-chief_complaint | P029 | HX-ADD-017 | chief_complaint | 导尿后肉眼血尿1天 | Hematuria for 1 day | BILINGUAL_OR_PATIENT_WORDING | 当前病例原始中文 source／sourceFacts／结构化 source 字段，依项目既有来源优先级处理。 | 导尿后小便变红1天 | Red urine for 1 day after catheterization. | RESOLVED_WORDING_ONLY | 是：患者回答与权威 source 对齐 | 不改360分规则；仅修正可评分事实投影 | PASS：42例矩阵、极性与Patient治理回归 |
 | HISTORY-MED-008 | P029 | HX-ADD-017 | clots | 小血块可能 | I have noticed blood clots in the urine. | SOURCE_CERTAINTY_CONTRADICTION | The narrative says small clots were visible in the urine bag, while the structured field says small clots were only possible. | 这个我之前没特别注意。 | I did not pay close attention to that before. | BLOCKED_MEDICAL | 是：仅返回自然不确定表达，不收集事实 | 是：不进入确定性评分 | PASS：42例矩阵、极性与Patient治理回归 |
