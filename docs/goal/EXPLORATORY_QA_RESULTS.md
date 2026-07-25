@@ -424,3 +424,12 @@ Patient Session 报告记录 295 次 `unsafe_deterministic_answer` source-cell �
 - 终态新页面恢复4/4为`PASS_EMULATION`：新页面在目标origin初始化前的sessionStorage条目为0；最终360报告、7个已提交阶段和唯一attempt汇总均恢复，阶段1–6共24/24锁定，终末按钮4/4禁用。新页面没有新增`stage-feedback`或`score`，重复计分0。
 - 两组测试均使用浏览器只见`qa-redacted-training-state`的本地Production handler代理；报告不保存request ID、attempt ID、回答正文、header、Cookie、签名或环境值。没有使用真实浏览器进程关闭，不能写成真实关闭或真机通过。
 - 本轮没有新增缺陷编号；HEM-P1-060复现范围扩大，新增P0/P1/P2为0/0/0。HEM-P1-057/058/060及其他开放P1仍阻止最终教师人工审阅，医学、来源、Preview故障注入和真机阻塞不变。
+
+## 2026-07-25 第 19 轮：`7781586` 客户端存储故障与终态指针作用域隔离
+
+- Production仍精确为`77815862a0abebff67b8d958f66944a0e11b068f`；本轮只改QA测试、报告和最小证据，`app/src/api/server/data`相对Production差异为0。
+- 四固定viewport中英交错执行损坏JSON与`QuotaExceededError`方法级故障注入。损坏attempt 4/4被清除并回到空白可恢复状态；写失败时草稿0/4被误报为已持久化，恢复写权限后4/4成功落盘且4/4刷新后保留，核心fail-closed与恢复路径通过。
+- 新增HEM-P2-062：恢复成功后“自动保存失败”提示4/4仍残留；英文两个viewport的缓存损坏及写失败警告2/2显示硬编码中文。全部操作网络失败0、HTTP非200为0、意外console错误0。该结论仅为浏览器方法级仿真，不替代真实磁盘配额耗尽。
+- 新增HEM-P1-061：把当前作用域指针定向到真实本地handler生成的另一语言P001终态或P002页面上的P001终态后，四viewport均显示外语/跨病例最终报告；两组共8个指针均与目标病例/语言不兼容。P002服务端初始化仍4/4为200，说明缺陷是客户端未在hydration前执行既有兼容性校验，而不是服务端接受跨病例token。
+- 指针隔离测试不记录训练签名、request ID、病例事实或报告正文；该组trace关闭截图与DOM snapshot，只保留可重建动作和脱敏计数。它是受控`localStorage`污染测试，不扩张为正常用户路径或远程攻击结论。
+- 本轮新增P0/P1/P2为0/1/1。HEM-P1-061以及既有开放P1仍阻止进入最终教师人工审阅；真实存储耗尽、真实浏览器进程关闭、真机、医学裁决和来源修订继续分别阻塞。

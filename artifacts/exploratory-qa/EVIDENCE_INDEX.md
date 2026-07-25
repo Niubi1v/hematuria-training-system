@@ -319,3 +319,23 @@ SHA-256：
 - 第18轮最终全证据树流式/解包扫描覆盖717个物理文件、ZIP内14,312个条目和1,976,549,155字节，敏感值命中0；扫描器只输出计数，不输出候选值。
 - scanner自测合同通过。通用repository candidate scanner仍只对历史5个本机未跟踪大trace按大小上限fail-closed（4个ZIP内entry过大、1个ZIP文件过大），没有新增规则或历史命中；这5个文件已由上项无大小上限扫描覆盖并得到0命中。
 - 第18轮10个staged文件及完整可达文本历史的独立扫描命中0；暂存范围严格为QA文档、测试、1份脱敏聚合和1张代表截图，不含业务代码、`data/**`、完整问答、header或大trace/录像。
+
+## `7781586` 第19轮存储故障与指针作用域证据
+
+| 证据名称 | 对应测试或缺陷 | 文件路径 | 文件大小 | 提交Git | 未提交原因 | 本机保留位置 |
+| --- | --- | --- | ---: | --- | --- | --- |
+| 存储故障/指针作用域四viewport测试 | HEM-P1-061、HEM-P2-062 | `tests/exploratory/long-running-qa.spec.mjs` | 122,664 B（整文件） | 是 | — | 仓库路径 |
+| 第19轮脱敏聚合 | 本轮验收结论 | `artifacts/exploratory-qa/reports/7781586-storage-scope-fault-summary.json` | 1,568 B | 是 | — | 仓库路径 |
+| HEM-P1-061代表性移动截图 | P002页面错误显示跨病例终态 | `artifacts/exploratory-qa/screenshots/terminal-pointer-scope-isolation-zh-390x844.png` | 49,468 B | 是 | — | 仓库路径 |
+| HEM-P2-062代表性移动截图 | 英文界面中文存储告警 | `artifacts/exploratory-qa/screenshots/storage-fault-recovery-en-360x800.png` | 46,548 B | 是 | — | 仓库路径 |
+| 四viewport原始摘要 | 两组测试×4 viewport | `artifacts/exploratory-qa/reports/7781586-{storage-fault-recovery,terminal-pointer-scope-isolation}-*-summary.json` | 8份/7,188 B | 否 | 聚合已保留必要计数 | 同路径，本机未跟踪 |
+| console/network摘要 | 两组四viewport页面诊断 | `artifacts/exploratory-qa/reports/{storage-fault-recovery,terminal-pointer-scope-isolation}-*` | 16份/37,028 B | 否 | 与聚合重复，可能含本机运行上下文 | 同路径，本机未跟踪 |
+| 本轮截图及诊断失败帧 | 两组四viewport、含首次QA探针帧 | `artifacts/exploratory-qa/screenshots/{storage-fault-recovery,terminal-pointer-scope-isolation}-*` | 16份/2,540,198 B | 否 | 每个缺陷各提交一张代表图；其余重复或为已修正QA探针 | 同路径，本机未跟踪 |
+| 本轮trace | 两组四viewport可重建证据 | `artifacts/exploratory-qa/traces/{storage-fault-recovery,terminal-pointer-scope-isolation}-*.zip` | 8份/18,628,724 B | 否 | 体积大且可由测试重建；指针组已关闭截图与DOM snapshot | 同路径，本机未跟踪 |
+| 本轮失败录像 | 两组四viewport失败过程 | `artifacts/exploratory-qa/videos/{storage-fault-recovery,terminal-pointer-scope-isolation}-*.webm` | 8份/2,425,895 B | 否 | 体积大；测试、聚合和代表截图足够 | 同路径，本机未跟踪 |
+
+- 指针测试的真实本地训练签名只存在Node内存，浏览器端仍只见`qa-redacted-training-state`占位符；聚合不保存request ID、attempt ID、回答、报告正文、header、Cookie、token、签名或环境值。
+- HEM-P1-061代表截图已人工复核，只包含公开P002标题、阶段状态和最终评估框架；HEM-P2-062截图只包含公开英文界面与中文存储警告。两图均不含医学事实、评分明细或凭据。
+- 第19轮最终全证据树流式/解包扫描覆盖774个物理文件、ZIP内14,708个条目和2,024,143,152字节，敏感值命中0；扫描器只输出计数，不输出候选值。
+- scanner自测合同通过。通用repository candidate scanner仍只对历史5个本机未跟踪大trace按大小上限fail-closed（4个ZIP内entry过大、1个ZIP文件过大），没有新增规则或历史命中；这5个文件已由上项无大小上限的流式/解包扫描覆盖并得到0命中。
+- 第19轮11个staged文件及完整可达文本历史的独立扫描敏感值命中0；`git diff --cached --check`通过，暂存范围不含业务代码、`data/**`、完整问答、header或大trace/录像。重复截图、原始console/network和HTML报告继续保留本机、不进入Git。

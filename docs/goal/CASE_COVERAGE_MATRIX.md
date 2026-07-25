@@ -199,3 +199,18 @@
 
 - 并发安全通过仅指服务端拒绝第二个陈旧写入；不能覆盖失败标签无法重新同步的用户可继续性失败。HEM-P1-060保持OPEN。
 - 终态新页面恢复是P001代表状态机证据，不扩张为42例逐例视觉覆盖；42例评分、attempt隔离和路由全量合同沿用既有独立证据。
+
+## Production `7781586` 第19轮存储故障与指针作用域增量
+
+| 覆盖 | 结果 | 状态 |
+| --- | --- | --- |
+| 损坏attempt JSON | 四viewport 4/4清除损坏值并回到空白可恢复状态 | PASS_EMULATION_FAIL_CLOSED |
+| `QuotaExceededError`写失败/恢复 | 失败草稿0/4误持久化；恢复后4/4落盘并4/4刷新保留 | PASS_EMULATION_CORE_RECOVERY |
+| 自动保存告警生命周期 | 成功恢复后旧失败提示4/4仍显示 | FAIL_EMULATION，HEM-P2-062 |
+| 英文存储告警本地化 | 英文两个viewport的损坏/写失败警告2/2为中文 | FAIL_EMULATION，HEM-P2-062 |
+| P001跨语言终态指针 | 四viewport均接受不兼容指针并显示另一语言最终报告 | FAIL_EMULATION，HEM-P1-061 |
+| P002跨病例终态指针 | 四viewport均接受P001终态指针并在P002显示最终报告 | FAIL_EMULATION，HEM-P1-061 |
+| 真实配额耗尽/真机存储 | 本轮仅覆盖浏览器API方法级故障注入 | BLOCKED_REAL_STORAGE / BLOCKED_REAL_DEVICE |
+
+- 指针测试只使用P001/P002合成训练状态验证客户端作用域校验，不评价病例事实或医学内容，也不扩张为42例逐例UI结论。
+- HEM-P1-061的服务端P002初始化4/4为200；失败判定来自客户端显示与目标`caseId/language/mode/participant`不兼容的终态，不将合法服务端新attempt误报为服务端越权。

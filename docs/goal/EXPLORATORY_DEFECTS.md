@@ -491,3 +491,41 @@
 - 复现与环境：中文`1440×900/390×844`、英文`1280×720/360×800`共4/4；失败网络请求0、意外console error 0、provider调用0。自动标签页仿真不冒充真实浏览器进程关闭或真机。
 - 证据：最小复现为同文件`@multi-tab-attempt`；代表截图`artifacts/exploratory-qa/screenshots/multi-tab-attempt-concurrency-zh-390x844.png`。聚合只保存计数、状态码和公开错误码，不保存request ID、attempt ID、token、header、正文或环境值。
 - 修复回归补充要求：并发时仍必须保持恰好一次权威写入；失败标签刷新/重新验证后应取得当前attempt版本，并能提交唯一下一阶段动作。不得通过允许两个陈旧写入、共享跨标签长期签名或静默创建新attempt来“修复”。
+
+## HEM-P1-061：不兼容本地attempt指针可把其他语言及病例的终态报告恢复到当前页面
+
+- 严重级别 / 状态：P1 / OPEN；`FAIL_EMULATION / INCOMPATIBLE_LOCAL_ATTEMPT_POINTER_EMULATION`。
+- 基线：`77815862a0abebff67b8d958f66944a0e11b068f`。
+- 页面和路径：`/cases/P001/`与`/cases/P002/`；客户端attempt pointer读取、终态本地状态hydration及服务端attempt初始化。
+- 病例 / 语言 / viewport：源病例P001、目标病例P001/P002；中英文互为源/目标；`1440×900`、`1280×720`、`390×844`、`360×800`。
+- 完整操作步骤：使用本地Production handler生成真实已完成的P001七阶段/360报告状态 → 将该P001源语言attempt对象和终态状态写入其合法存储键 → 把当前目标语言的P001 pointer及P002 pointer分别指向该不兼容attempt → 打开目标语言P001并等待hydration稳定 → 导航P002并再次等待hydration稳定 → 检查终态报告、7/7状态及两个pointer身份。
+- 预期：页面在读取pointer后使用既有`isAttemptCompatible`等价合同验证`caseId/mode/language/participant/schemaVersion`；不兼容pointer应被安全移除并创建当前作用域空白attempt，不得hydrate外语或他例终态、评分、反馈或时间线。
+- 实际：四viewport 4/4在目标语言P001显示源语言P001终态报告；导航P002后4/4继续显示同一P001终态报告。P001与P002目标pointer共8/8保持`caseId/language`不兼容，页面均呈现7/7。服务端对同病例跨语言初始化4/4返回409 `attempt_already_exists`，但客户端已显示终态；P002初始化4/4为200独立服务端作用域，客户端仍使用P001本地状态。
+- 复现：四viewport 4/4，中文目标2次、英文目标2次；跨语言与跨病例各4/4。该测试是受控localStorage污染，不宣称自然用户路径或远程攻击。
+- AI来源：N/A；本地Production training handler，provider调用0。终态评分由本地确定性评分器生成，仅检查作用域与可见性，不评价医学内容。
+- 状态变化时间线：生成P001源语言终态 → 写入不兼容目标pointer → 目标语言P001加载7/7终态 → 服务端语言作用域409 → 导航P002 → P002初始化200 → P002页面仍加载P001终态与7/7。
+- HTTP状态和耗时：语言作用域4×409 `attempt_already_exists`；P002作用域4×200；network failure 0。本地耗时不作为Preview指标。
+- console/network摘要：每次仅有对应409的预期资源console error，意外console error 0。报告不保存request ID、attempt ID、token、header、Cookie、签名、响应正文或环境值。
+- 截图 / trace / 录像：代表截图`artifacts/exploratory-qa/screenshots/terminal-pointer-scope-isolation-zh-390x844.png`；四viewport trace关闭截图与DOM snapshot，仅保留动作骨架；其余截图、trace、console/network及录像本机保留。
+- 最小复现测试：`tests/exploratory/long-running-qa.spec.mjs`中的`@terminal-pointer-isolation`；失败断言要求外语/他例报告均不可见且目标pointer身份兼容。
+- 建议方向：在使用pointer前调用`isAttemptCompatible(activeAttempt, expectedScope)`；不兼容时删除当前pointer并创建新attempt，且不得读取由不兼容对象派生的attemptStorageKey。增加客户端hydrate前身份门禁及P001→P002、zh↔en终态回归。
+- 是否需要医学专家裁决：否；纯客户端身份作用域、评分隔离和状态泄露问题。
+
+## HEM-P2-062：存储恢复成功后失败警告不清除且英文界面显示中文警告
+
+- 严重级别 / 状态：P2 / OPEN；`FAIL_EMULATION / LOCAL_STORAGE_CORRUPTION_AND_QUOTA_EMULATION`。
+- 基线：`77815862a0abebff67b8d958f66944a0e11b068f`。
+- 页面和路径：P001阶段1；损坏attempt JSON恢复、自动保存失败和后续写入恢复。
+- 病例 / 语言 / viewport：P001；中文`1440×900/390×844`、英文`1280×720/360×800`。
+- 完整操作步骤：预置兼容attempt pointer及损坏JSON正文 → 打开页面确认安全清空 → 关闭恢复警告 → 仅对`hematuria-attempt-v3:*`写入模拟`QuotaExceededError` → 填写QA病史小结 → 确认失败草稿未落盘 → 恢复`setItem`并修改草稿触发重写 → 确认新草稿已落盘 → 检查警告 → 刷新确认草稿恢复。
+- 预期：损坏内容清空并显示当前语言安全提示；写入失败提示当前语言且失败草稿不伪装为已保存；下一次成功写入后保存状态与警告同步恢复，刷新保持最新草稿。
+- 实际：核心安全/恢复合同通过：损坏正文4/4移除、空白恢复4/4；失败草稿0/4落盘；恢复写入4/4成功且刷新4/4恢复。缺陷为成功写入后旧“自动保存失败”警告4/4仍显示；英文2/2的损坏缓存及自动保存失败警告均为中文。
+- 复现：四viewport 4/4存在陈旧警告；英文本地化2/2失败。使用方法级写入异常仿真，不冒充真实磁盘配额耗尽。
+- AI来源：N/A；provider调用0。
+- 状态变化时间线：损坏JSON → 安全删除/空白状态 → 模拟写入失败 → 警告出现且草稿未落盘 → 恢复写入 → 草稿落盘/saveStatus恢复 → 旧警告仍可见 → 刷新后最新草稿恢复。
+- HTTP状态和耗时：training action非200为0；network failure 0；不记录本地性能结论。
+- console/network摘要：意外console error 0；报告只保存布尔值与计数，不含草稿正文、存储内容、token、header、Cookie或环境值。
+- 截图 / trace / 录像：代表截图`artifacts/exploratory-qa/screenshots/storage-fault-recovery-en-360x800.png`显示英文界面中的中文陈旧警告；其余四viewport证据本机保留。
+- 最小复现测试：同文件`@storage-fault-recovery`；保留本地化与“成功写入后警告消失”失败断言。
+- 建议方向：所有storageWarning走中英文文案表；成功`writeJsonStorage`后仅在当前警告属于自动保存失败时清除，避免覆盖其他独立警告。保留`saveStatus=error`与恢复后重新持久化合同。
+- 是否需要医学专家裁决：否；纯本地存储状态与UI本地化缺陷。

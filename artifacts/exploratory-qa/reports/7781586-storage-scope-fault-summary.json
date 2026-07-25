@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "exploratory-storage-scope-fault-aggregate-v1",
+  "productionBaseline": "77815862a0abebff67b8d958f66944a0e11b068f",
+  "executedAt": "2026-07-25",
+  "viewports": [
+    "1440x900",
+    "1280x720",
+    "390x844",
+    "360x800"
+  ],
+  "storageFaultRecovery": {
+    "result": "FAIL_EMULATION",
+    "defectId": "HEM-P2-062",
+    "runs": 4,
+    "corruptPayloadRemoved": 4,
+    "blankRecoveryState": 4,
+    "failedDraftPersisted": 0,
+    "recoveredDraftPersisted": 4,
+    "recoveredAfterReload": 4,
+    "staleWarningAfterRecovery": 4,
+    "chineseWarningLocalizationPassed": 2,
+    "englishWarningLocalizationPassed": 0,
+    "actionNon200Responses": 0,
+    "boundary": "LOCAL_STORAGE_CORRUPTION_AND_QUOTA_EMULATION",
+    "realQuotaExhaustionClaimed": false
+  },
+  "terminalPointerIsolation": {
+    "result": "FAIL_EMULATION",
+    "defectId": "HEM-P1-061",
+    "runs": 4,
+    "crossLanguageFinalReportVisible": 4,
+    "crossCaseFinalReportVisible": 4,
+    "compatibleP001Pointers": 0,
+    "compatibleP002Pointers": 0,
+    "languageInitializationStatuses": {
+      "409": 4
+    },
+    "languageInitializationErrors": {
+      "attempt_already_exists": 4
+    },
+    "caseInitializationStatuses": {
+      "200": 4
+    },
+    "boundary": "INCOMPATIBLE_LOCAL_ATTEMPT_POINTER_EMULATION",
+    "traceScreenshotsRetained": false,
+    "traceSnapshotsRetained": false
+  },
+  "failedNetworkRequests": 0,
+  "unexpectedConsoleErrors": 0,
+  "medicalFactsEvaluated": false,
+  "responseBodiesRetained": false,
+  "requestIdsRetained": false,
+  "credentialsRetained": false
+}

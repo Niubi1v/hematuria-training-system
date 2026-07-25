@@ -186,3 +186,10 @@ console 文本对 Authorization、Cookie、签名、token、secret 和 API key �
 - HEM-P1-060修复回归增加多标签门禁：两个标签同时提交仍只能有一个权威写入，失败标签刷新/验证后必须能从服务端当前版本继续唯一下一阶段动作；clean-tab和多标签两条路径均须四viewport通过。
 - 下一可独立范围转向浏览器存储损坏/配额失败时的fail-closed与可恢复性、终态attempt跨病例/语言污染防护；避免重复普通刷新、终态新页面和已覆盖跨病例键隔离。
 - 真实浏览器进程关闭、真实设备后台/软键盘/safe-area、受控Preview网络/provider/Redis故障和医学/来源裁决继续保持各自阻塞，不由自动页面仿真替代。
+
+## 2026-07-25 第 19 轮 `7781586` 存储故障与终态指针隔离后续
+
+- 已完成损坏attempt JSON、`QuotaExceededError`写失败/恢复，以及跨语言/跨病例终态指针污染四viewport测试。核心存储fail-closed与恢复通过；新增HEM-P1-061和HEM-P2-062。
+- HEM-P1-061修复验收必须在从pointer派生attempt存储键之前调用统一兼容性检查，覆盖`caseId/language/mode/participant/schemaVersion`；发现不兼容时清除错误指针并初始化目标作用域，不得显示外语或跨病例终态，也不得放宽服务端token、版本或病例校验。
+- HEM-P2-062修复验收必须覆盖中英文四viewport：缓存损坏与自动保存失败提示使用当前语言；一次后续成功持久化只清除对应自动保存失败提示，不吞掉其他会话或医学安全告警。
+- 下一独立范围可覆盖缺失或畸形身份字段的pointer、`getItem/removeItem`整体不可用，以及history-log pending队列在写失败后的恢复；避免重复本轮相同故障。真实存储耗尽、浏览器进程损坏、真机与Preview受保护故障注入继续单独阻塞。

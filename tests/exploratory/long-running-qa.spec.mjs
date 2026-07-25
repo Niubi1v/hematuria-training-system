@@ -64,6 +64,74 @@ async function invokeLocalTrainingAction(body, token = "", remoteAddress = "qa-l
   };
 }
 
+async function createCompletedAttemptSeed(caseId, language, attemptId) {
+  resetMemoryAttemptStore();
+  const attempt = {
+    attemptId,
+    caseId,
+    mode: "free",
+    language,
+    participantId: "practice-user",
+    schemaVersion: "attempt-v3",
+    createdAt: "2026-07-25T00:00:00.000Z"
+  };
+  let token = "";
+  const initialized = await invokeLocalTrainingAction({
+    action: "init-attempt",
+    caseId,
+    attemptId,
+    language,
+    mode: "free",
+    requestId: `${attemptId}-init`
+  }, token, `${attemptId}-seed`);
+  if (initialized.statusCode !== 200) throw new Error(`QA completed-attempt seed init failed: ${initialized.statusCode}`);
+  token = initialized.token;
+  const submitted = {};
+  const stageKeys = ["history", "orders", "diagnosis", "consult", "treatment", "perioperative", "debrief"];
+  for (let index = 0; index < stageKeys.length; index += 1) {
+    const stageKey = stageKeys[index];
+    const response = await invokeLocalTrainingAction({
+      action: "stage-feedback",
+      caseId,
+      attemptId,
+      language,
+      mode: "free",
+      stageKey,
+      submission: {},
+      requestId: `${attemptId}-stage-${index + 1}`
+    }, token, `${attemptId}-seed`);
+    if (response.statusCode !== 200) throw new Error(`QA completed-attempt seed stage ${stageKey} failed: ${response.statusCode}`);
+    token = response.token;
+    submitted[index + 1] = response.payload;
+  }
+  const scored = await invokeLocalTrainingAction({
+    action: "score",
+    caseId,
+    attemptId,
+    language,
+    mode: "free",
+    requestId: `${attemptId}-score`
+  }, token, `${attemptId}-seed`);
+  if (scored.statusCode !== 200) throw new Error(`QA completed-attempt seed score failed: ${scored.statusCode}`);
+  return {
+    attempt,
+    token: scored.token,
+    savedState: {
+      attempt,
+      activeStageNo: 7,
+      submitted,
+      finalReport: scored.payload,
+      messages: [],
+      askedSlots: [],
+      examLogs: [],
+      orderLogs: [],
+      mdtOpinions: [],
+      timeline: [],
+      pendingHistoryLogs: []
+    }
+  };
+}
+
 async function installProductionTrainingApi(page, observations = [], actionObservations = [], {
   resetStore = true,
   serverTokens = new Map(),
@@ -164,7 +232,11 @@ async function installProductionTrainingApi(page, observations = [], actionObser
   });
 }
 
-async function withEvidence(browser, testInfo, scenario, run, { videoOnFailure = true } = {}) {
+async function withEvidence(browser, testInfo, scenario, run, {
+  videoOnFailure = true,
+  traceScreenshots = true,
+  traceSnapshots = true
+} = {}) {
   await ensureDirs();
   const viewport = testInfo.project.use.viewport;
   const slug = `${safeSlug(scenario)}-${viewportSlug(testInfo)}`;
@@ -205,7 +277,7 @@ async function withEvidence(browser, testInfo, scenario, run, { videoOnFailure =
     });
   });
 
-  await context.tracing.start({ screenshots: true, snapshots: true, sources: false });
+  await context.tracing.start({ screenshots: traceScreenshots, snapshots: traceSnapshots, sources: false });
   try {
     await run({ context, page, slug, consoleEvents, networkEvents });
   } catch (error) {
@@ -1590,6 +1662,257 @@ test("a new page restores a completed report as read-only without duplicate scor
     expect(unexpectedConsoleErrors).toEqual([]);
     expect(resultPassed).toBe(true);
   }, { videoOnFailure: true });
+});
+
+test("corrupted and temporarily unwritable local storage recovers without stale or cross-language warnings @storage-fault-recovery", async ({ browser }, testInfo) => {
+  const language = ["qa-1440x900", "qa-390x844"].includes(testInfo.project.name) ? "zh" : "en";
+  const copy = language === "en"
+    ? { summary: "History summary" }
+    : { summary: "病史小结" };
+  const draftMarker = language === "en"
+    ? "QA storage recovery marker"
+    : "QA存储恢复标记";
+
+  await withEvidence(browser, testInfo, "storage-fault-recovery", async ({ page, slug, consoleEvents, networkEvents }) => {
+    const actionObservations = [];
+    await page.addInitScript((selectedLanguage) => {
+      if (!window.__qaStorageFaultPatched) {
+        const originalSetItem = Storage.prototype.setItem;
+        Storage.prototype.setItem = function qaStorageSetItem(key, value) {
+          if (window.__qaFailAttemptStorageWrites && String(key).startsWith("hematuria-attempt-v3:")) {
+            throw new DOMException("QA simulated quota boundary", "QuotaExceededError");
+          }
+          return originalSetItem.call(this, key, value);
+        };
+        window.__qaStorageFaultPatched = true;
+      }
+      if (sessionStorage.getItem("qa-storage-fault-seeded")) return;
+      const attemptId = `qa-corrupt-cache-${selectedLanguage}`;
+      const attempt = {
+        attemptId,
+        caseId: "P001",
+        mode: "free",
+        language: selectedLanguage,
+        participantId: "practice-user",
+        schemaVersion: "attempt-v3",
+        createdAt: "2026-07-25T00:00:00.000Z"
+      };
+      localStorage.setItem("hematuria-language", selectedLanguage);
+      localStorage.setItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`, JSON.stringify(attempt));
+      localStorage.setItem(`hematuria-attempt-v3:P001:free:${selectedLanguage}:${attemptId}`, "{qa-invalid-json");
+      sessionStorage.setItem("qa-storage-fault-seeded", "1");
+    }, language);
+    await installProductionTrainingApi(page, [], actionObservations);
+    await page.goto("/cases/P001/");
+
+    const initialAlert = page.getByRole("alert").first();
+    await expect(initialAlert).toBeVisible();
+    const initialAlertText = await initialAlert.innerText();
+    const cacheWarningLocalized = language === "zh"
+      ? /损坏.*安全恢复/.test(initialAlertText)
+      : !/[\u3400-\u9fff]/u.test(initialAlertText);
+    const summaryField = page.getByRole("textbox", { name: copy.summary, exact: true });
+    await expect(summaryField).toHaveValue("");
+    const corruptPayloadRemoved = await page.evaluate((selectedLanguage) => {
+      const pointer = JSON.parse(localStorage.getItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`) || "null");
+      if (!pointer?.attemptId) return false;
+      const raw = localStorage.getItem(`hematuria-attempt-v3:P001:free:${selectedLanguage}:${pointer.attemptId}`);
+      if (!raw) return false;
+      try {
+        const saved = JSON.parse(raw);
+        return !saved?.answers?.historySummary;
+      } catch {
+        return false;
+      }
+    }, language);
+    await initialAlert.getByRole("button").click();
+
+    await page.evaluate(() => { window.__qaFailAttemptStorageWrites = true; });
+    await summaryField.fill(draftMarker);
+    await expect(page.getByRole("alert").first()).toBeVisible();
+    const writeFailureAlertText = await page.getByRole("alert").first().innerText();
+    const writeFailureWarningLocalized = language === "zh"
+      ? /自动保存失败/.test(writeFailureAlertText)
+      : !/[\u3400-\u9fff]/u.test(writeFailureAlertText);
+    const failedDraftPersisted = await page.evaluate(({ selectedLanguage, marker }) => {
+      const pointer = JSON.parse(localStorage.getItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`) || "null");
+      const raw = pointer?.attemptId
+        ? localStorage.getItem(`hematuria-attempt-v3:P001:free:${selectedLanguage}:${pointer.attemptId}`)
+        : "";
+      if (!raw) return false;
+      return JSON.parse(raw)?.answers?.historySummary === marker;
+    }, { selectedLanguage: language, marker: draftMarker });
+
+    const recoveredMarker = `${draftMarker}-RECOVERED`;
+    await page.evaluate(() => { window.__qaFailAttemptStorageWrites = false; });
+    await summaryField.fill(recoveredMarker);
+    await page.waitForFunction(({ selectedLanguage, marker }) => {
+      const pointer = JSON.parse(localStorage.getItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`) || "null");
+      const raw = pointer?.attemptId
+        ? localStorage.getItem(`hematuria-attempt-v3:P001:free:${selectedLanguage}:${pointer.attemptId}`)
+        : "";
+      return Boolean(raw) && JSON.parse(raw)?.answers?.historySummary === marker;
+    }, { selectedLanguage: language, marker: recoveredMarker }, { timeout: 8_000 });
+    const staleWarningAfterRecovery = await page.getByRole("alert").first().isVisible().catch(() => false);
+    await saveShot(page, testInfo, `storage-fault-recovery-${language}`, false);
+    await page.reload();
+    await expect(page.getByRole("textbox", { name: copy.summary, exact: true })).toHaveValue(recoveredMarker);
+    const recoveredAfterReload = true;
+
+    const failedNetworkRequestCount = networkEvents.filter((item) => item.status === "FAILED").length;
+    const unexpectedConsoleErrors = consoleEvents.filter((item) => item.type === "error");
+    const resultPassed = corruptPayloadRemoved
+      && cacheWarningLocalized
+      && writeFailureWarningLocalized
+      && !failedDraftPersisted
+      && !staleWarningAfterRecovery
+      && recoveredAfterReload;
+    const summary = {
+      schemaVersion: "exploratory-storage-fault-recovery-v1",
+      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
+      defectId: resultPassed ? null : "HEM-P2-062",
+      language,
+      viewport: testInfo.project.use.viewport,
+      boundary: "LOCAL_STORAGE_CORRUPTION_AND_QUOTA_EMULATION",
+      corruptPayloadRemoved,
+      blankRecoveryState: true,
+      cacheWarningLocalized,
+      writeFailureWarningLocalized,
+      failedDraftPersisted,
+      recoveredDraftPersisted: true,
+      staleWarningAfterRecovery,
+      recoveredAfterReload,
+      actionNon200Responses: actionObservations.filter((item) => item.status !== 200).length,
+      failedNetworkRequests: failedNetworkRequestCount,
+      unexpectedConsoleErrors: unexpectedConsoleErrors.length,
+      realQuotaExhaustionClaimed: false,
+      responseBodiesRetained: false,
+      credentialsRetained: false
+    };
+    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    expect(corruptPayloadRemoved).toBe(true);
+    expect(failedDraftPersisted).toBe(false);
+    expect(recoveredAfterReload).toBe(true);
+    expect(failedNetworkRequestCount).toBe(0);
+    expect(unexpectedConsoleErrors).toEqual([]);
+    expect(cacheWarningLocalized, "storage corruption warning must match the active interface language").toBe(true);
+    expect(writeFailureWarningLocalized, "auto-save failure warning must match the active interface language").toBe(true);
+    expect(staleWarningAfterRecovery, "a successful subsequent write must clear the obsolete auto-save failure warning").toBe(false);
+  }, { videoOnFailure: true });
+});
+
+test("an incompatible completed attempt pointer cannot hydrate another case or language @terminal-pointer-isolation", async ({ browser }, testInfo) => {
+  const targetLanguage = ["qa-1440x900", "qa-390x844"].includes(testInfo.project.name) ? "zh" : "en";
+  const sourceLanguage = targetLanguage === "zh" ? "en" : "zh";
+  const attemptId = `qa-terminal-scope-${viewportSlug(testInfo)}`;
+  const seed = await createCompletedAttemptSeed("P001", sourceLanguage, attemptId);
+
+  await withEvidence(browser, testInfo, "terminal-pointer-scope-isolation", async ({ page, slug, consoleEvents, networkEvents }) => {
+    const actionObservations = [];
+    const requestIds = new Set();
+    await page.addInitScript(({ selectedLanguage, sourceAttempt, sourceSavedState }) => {
+      localStorage.setItem("hematuria-language", selectedLanguage);
+      const sourceKey = `hematuria-attempt-v3:${sourceAttempt.caseId}:${sourceAttempt.mode}:${sourceAttempt.language}:${sourceAttempt.attemptId}`;
+      localStorage.setItem(sourceKey, JSON.stringify(sourceSavedState));
+      localStorage.setItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`, JSON.stringify(sourceAttempt));
+      localStorage.setItem(`hematuria-attempt-pointer-v3:P002:free:${selectedLanguage}`, JSON.stringify(sourceAttempt));
+    }, {
+      selectedLanguage: targetLanguage,
+      sourceAttempt: seed.attempt,
+      sourceSavedState: seed.savedState
+    });
+    await installProductionTrainingApi(page, [], actionObservations, {
+      resetStore: false,
+      serverTokens: new Map([[attemptId, seed.token]]),
+      requestIds,
+      pageLabel: "scope-probe"
+    });
+
+    await page.goto("/cases/P001/");
+    await expect(page.getByText("P001", { exact: true }).first()).toBeVisible();
+    await page.waitForTimeout(800);
+    const crossLanguageReportVisible = await page.getByTestId("final-report").isVisible().catch(() => false);
+    await expect.poll(() => actionObservations.length).toBeGreaterThan(0);
+    const languageActions = [...actionObservations];
+    const p001PointerCompatible = await page.evaluate((selectedLanguage) => {
+      const pointer = JSON.parse(localStorage.getItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`) || "null");
+      return pointer?.caseId === "P001" && pointer?.mode === "free" && pointer?.language === selectedLanguage;
+    }, targetLanguage);
+
+    const beforeCaseNavigation = actionObservations.length;
+    await page.goto("/cases/P002/");
+    await expect(page.getByText("P002", { exact: true }).first()).toBeVisible();
+    await page.waitForTimeout(800);
+    const crossCaseReportVisible = await page.getByTestId("final-report").isVisible().catch(() => false);
+    await expect.poll(() => actionObservations.length).toBeGreaterThan(beforeCaseNavigation);
+    const caseActions = actionObservations.slice(beforeCaseNavigation);
+    const p002PointerCompatible = await page.evaluate((selectedLanguage) => {
+      const pointer = JSON.parse(localStorage.getItem(`hematuria-attempt-pointer-v3:P002:free:${selectedLanguage}`) || "null");
+      return pointer?.caseId === "P002" && pointer?.mode === "free" && pointer?.language === selectedLanguage;
+    }, targetLanguage);
+    const displayedSubmittedStageCount = await page.locator("aside").first().locator("section").first().locator("button").count();
+    await saveShot(page, testInfo, `terminal-pointer-scope-isolation-${targetLanguage}`, false);
+
+    const failedNetworkRequestCount = networkEvents.filter((item) => item.status === "FAILED").length;
+    const knownScopeConsoleErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && /status of (401|409).*?(Unauthorized|Conflict)/i.test(item.text)
+    );
+    const knownEnglishKeyErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && /same key|keys should be unique/i.test(item.text)
+      && /Physical examination/i.test(item.text)
+    );
+    const unexpectedConsoleErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && !knownScopeConsoleErrors.includes(item)
+      && !knownEnglishKeyErrors.includes(item)
+    );
+    const resultPassed = !crossLanguageReportVisible
+      && !crossCaseReportVisible
+      && p001PointerCompatible
+      && p002PointerCompatible;
+    const summary = {
+      schemaVersion: "exploratory-terminal-pointer-isolation-v1",
+      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
+      defectId: resultPassed ? null : "HEM-P1-061",
+      targetLanguage,
+      sourceLanguage,
+      viewport: testInfo.project.use.viewport,
+      boundary: "INCOMPATIBLE_LOCAL_ATTEMPT_POINTER_EMULATION",
+      crossLanguageReportVisible,
+      crossCaseReportVisible,
+      p001PointerCompatible,
+      p002PointerCompatible,
+      displayedStageButtonCount: displayedSubmittedStageCount,
+      languageScopeRejected: languageActions.some((item) => item.status >= 400),
+      languageScopeStatuses: languageActions.map((item) => item.status),
+      languageScopeErrors: languageActions.map((item) => item.error).filter(Boolean),
+      caseScopeRejected: caseActions.some((item) => item.status >= 400),
+      caseScopeStatuses: caseActions.map((item) => item.status),
+      caseScopeErrors: caseActions.map((item) => item.error).filter(Boolean),
+      failedNetworkRequests: failedNetworkRequestCount,
+      expectedScopeConsoleErrors: knownScopeConsoleErrors.length,
+      unexpectedConsoleErrors: unexpectedConsoleErrors.length,
+      medicalFactsEvaluated: false,
+      responseBodiesRetained: false,
+      requestIdsRetained: false,
+      credentialsRetained: false
+    };
+    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    expect(failedNetworkRequestCount).toBe(0);
+    expect(unexpectedConsoleErrors).toEqual([]);
+    expect(crossLanguageReportVisible, "a completed attempt from another language must not hydrate the active language").toBe(false);
+    expect(crossCaseReportVisible, "a completed attempt from another case must not hydrate the active case").toBe(false);
+    expect(p001PointerCompatible).toBe(true);
+    expect(p002PointerCompatible).toBe(true);
+  }, {
+    videoOnFailure: true,
+    traceScreenshots: false,
+    traceSnapshots: false
+  });
 });
 
 test("HEM-P1-046 numeric lab result exposes unit and reference range metadata", async ({ browser }, testInfo) => {
