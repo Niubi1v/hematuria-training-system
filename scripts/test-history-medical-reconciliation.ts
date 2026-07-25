@@ -21,6 +21,15 @@ const { matchStructuredFacts } = require("../server/structuredFacts.js") as {
     fallbackReason?: string;
   } | null;
 };
+const { matchCanonicalPatientFacts } = require("../server/canonicalFacts.js") as {
+  matchCanonicalPatientFacts(caseId: string, question: string, language: "zh" | "en"): {
+    replyText: string;
+    matchedSlotIds: string[];
+    collectableSlotIds?: string[];
+    collectableFacts?: string[];
+    unresolvedReason?: string;
+  } | null;
+};
 const { bilingualConflictEntries } = require("../server/bilingualConflictQuarantine.js") as {
   bilingualConflictEntries: Array<{ caseId: string; field: string }>;
 };
@@ -81,6 +90,29 @@ assert.match(slots["HX-ADD-004"].renal_colic.patientAnswerEn, /not had severe co
 assert.match(slots["HX-ADD-005"].medications.patientAnswerEn, /statin/i);
 assert.match(slots["HX-ADD-006"].urinary_urgency.patientAnswerEn, /sudden urgent need/i);
 assert.match(slots["HX-ADD-006"].voiding_difficulty.patientAnswerEn, /do not have difficulty/i);
+
+assertBilingualUnknown("HX-ADD-007", "hematuria_visibility");
+assertBilingualUnknown("HX-ADD-007", "hematuria_phase");
+assert.match(slots["HX-ADD-007"].urine_color.patientAnswerEn, /looked normal|only on testing/i);
+assert.match(slots["HX-ADD-007"].fever_chills.patientAnswerEn, /have had fever/i);
+assertBilingualUnknown("HX-ADD-008", "radiating_pain");
+assertBilingualUnknown("HX-ADD-010", "hematuria_phase");
+assert.match(slots["HX-ADD-010"].urine_color.patientAnswerEn, /looked normal|only on testing/i);
+assert.match(slots["HX-ADD-010"].fever_chills.patientAnswerEn, /have had fever/i);
+assertBilingualUnknown("HX-ADD-012", "renal_colic");
+
+for (const probe of [
+  { caseId: "HX-ADD-007", zh: "这是肉眼血尿还是镜下血尿？", en: "Was this visible blood or microscopic hematuria?" },
+  { caseId: "HX-ADD-012", zh: "这是肾绞痛吗？", en: "Did you have renal colic?" }
+]) {
+  for (const language of ["zh", "en"] as const) {
+    const governed = matchCanonicalPatientFacts(probe.caseId, probe[language], language);
+    assert.ok(governed, `${probe.caseId} governed canonical route (${language})`);
+    assert.deepEqual(governed.collectableSlotIds || [], [], `${probe.caseId} blocked medical fact must not be collectable`);
+    assert.deepEqual(governed.collectableFacts || [], [], `${probe.caseId} blocked medical fact must not enter scoring`);
+    assert.equal(governed.unresolvedReason, "medical_history_pending_review");
+  }
+}
 
 const p002 = cases.find((item) => item.id === "P002");
 assert.ok(p002, "P002 fixture");

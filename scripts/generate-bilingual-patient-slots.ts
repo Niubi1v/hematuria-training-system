@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import casesJson from "../data/cases.json";
 import casesEnJson from "../data/cases_en.json";
 import existingSlotsJson from "../data/patient_slots_bilingual.json";
+import historyMedicalPolicy from "../data/history_medical_reconciliation.json";
 import { canonicalSlotFromLegacy, canonicalSlotIds, type CanonicalSlotId } from "../src/lib/canonicalSlots";
 import type { CaseData } from "../src/lib/types";
 
@@ -17,6 +18,11 @@ const { isBilingualConflict } = require("../server/bilingualConflictQuarantine.j
 const cases = casesJson as CaseData[];
 const englishCases = casesEnJson as Array<Record<string, string>>;
 const existingSlots = existingSlotsJson as Output;
+const blockedCanonicalKeys = new Set(
+  historyMedicalPolicy.blockedMedicalHistory
+    .filter((item) => "canonicalSlotId" in item)
+    .map((item) => `${item.caseId}:${(item as { canonicalSlotId: string }).canonicalSlotId}`)
+);
 const value = (...items: unknown[]) => items.map((item) => String(item || "").trim()).find(Boolean) || "";
 const compact = (text: string) => String(text || "").replace(/\s+/g, "");
 const genericUnknown = (text: string) => /不太清楚|没(?:有)?特别注意|没留意|记不(?:太)?清|记不准确|说不准|一时记不全|未诉|未主动诉|需追问|需主动询问|不详|未提供|无法确认|有没有.+记|可有|可伴|可无/.test(compact(text));
@@ -57,12 +63,12 @@ const positivePatterns: Partial<Record<CanonicalSlotId, RegExp>> = {
   dysuria: /尿痛|小便[^。；]*(?:疼|痛)|排尿[^。；]*(?:疼|痛)|烧灼/,
   flank_pain: /肾绞痛|[左右双侧]*腰[^。；]*(?:痛|疼|酸胀|不适)|肾区痛/,
   renal_colic: /绞痛/,
-  radiating_pain: /放射|腹股沟|会阴/,
+  radiating_pain: /放射|向[^。；]*(?:腹股沟|会阴|下腹)/,
   urinary_frequency: /尿频|次数增多|小便次数[^。；]*多/,
   urinary_urgency: /尿急|憋不住|急迫性尿失禁/,
   voiding_difficulty: /排尿[^。；]*(?:困难|费力|中断)|尿线变细|尿流中断/,
   retention: /尿潴留|尿不出来/,
-  fever_chills: /发热|发烧|寒战|高热/,
+  fever_chills: /发热|发烧|寒战|高热|低热/,
   recent_uri: /(?:感冒|咽痛|扁桃体炎|上呼吸道感染|上感)(?:后|之后|相关|伴)/,
   triggers: /(?:剧烈运动|外伤|性生活|导尿|膀胱镜|尿路操作)(?:后|之后|诱发)/,
   stone_history: /(?:有|曾|既往|以前)[^。；]*(?:结石|肾结石|输尿管结石)/,
@@ -94,7 +100,8 @@ function unknownAnswer(slot: CanonicalSlotId, language: "zh" | "en") {
   const observationSlots = new Set<CanonicalSlotId>([
     "clots", "pain", "dysuria", "flank_pain", "renal_colic", "radiating_pain", "urinary_frequency",
     "urinary_urgency", "voiding_difficulty", "retention", "fever_chills", "recent_uri", "triggers",
-    "bleeding_tendency", "hematuria_frequency", "hematuria_phase", "prior_care", "general_condition"
+    "bleeding_tendency", "hematuria_visibility", "hematuria_frequency", "hematuria_phase", "urine_color",
+    "prior_care", "general_condition"
   ]);
   if (language === "en") {
     return observationSlots.has(slot)
@@ -215,11 +222,15 @@ function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en"
   const recentUriZh = uriMatch || unknownAnswer("recent_uri", "zh");
   const englishCase = englishCases.find((item) => item.id === caseData.id);
   const rawPhase = value(pfp.hematuriaPhase, illness.hematuriaPhase, caseData.patientAnswers?.phase);
+  const rawVisibility = value(pfp.hematuriaType, illness.hematuriaType);
+  const microscopicOnly = /镜下|潜血|隐血/.test(rawVisibility) && !/肉眼/.test(rawVisibility);
   const rawFrequency = value(extended.presentIllness.frequency, illness.duration);
   const rawClots = value(pfp.clots, illness.clots, caseData.patientAnswers?.clots);
   const rawFlankPain = value(pfp.flankPain, illness.flankPain);
   const rawPainDetail = value(caseData.patientAnswers?.pain, illness.pain, pfp.painRelation, illness.flankPain);
-  const rawRenalColic = firstMatching(/绞痛/, illness.pain, pfp.painRelation, pfp.subjectiveHistory, illness.onset);
+  const renalMarker = String(pfp.subjectiveHistory || "").match(/肾绞痛([^、，。；]*)/)?.[1]?.trim() || "";
+  const rawRenalColic = firstMatching(/绞痛/, illness.pain, pfp.painRelation)
+    || (renalMarker ? `肾绞痛${renalMarker}` : "");
   const rawVoiding = value(illness.voidingDifficulty, pfp.luts);
   const rawFever = value(pfp.fever, illness.fever, caseData.patientAnswers?.fever);
   const rawRecentUri = recentUriZh;
@@ -228,10 +239,10 @@ function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en"
   const familyAnswersSpecificQuestion = /血尿|肾病|肾炎|肿瘤|癌|遗传|类似/.test(rawFamily);
   const zh: Partial<Record<CanonicalSlotId, string>> = {
     chief_complaint: value(pfp.chiefComplaint, caseData.studentChiefComplaint, caseData.chiefComplaint),
-    hematuria_visibility: value(pfp.hematuriaType, illness.hematuriaType), hematuria_onset: value(illness.onset, illness.duration, caseData.studentChiefComplaint),
+    hematuria_visibility: rawVisibility, hematuria_onset: value(illness.onset, illness.duration, caseData.studentChiefComplaint),
     hematuria_frequency: /间断|反复|时有时无|持续|每次|一直/.test(rawFrequency) ? rawFrequency : unknownAnswer("hematuria_frequency", "zh"),
-    hematuria_phase: /需追问|可伴|可表现|常为|多为|未分清|不详/.test(rawPhase) ? unknownAnswer("hematuria_phase", "zh") : rawPhase,
-    urine_color: value(pfp.urineColor, illness.color, caseData.patientAnswers?.color),
+    hematuria_phase: microscopicOnly || /需追问|可伴|可表现|常为|多为|未分清|不详/.test(rawPhase) ? unknownAnswer("hematuria_phase", "zh") : rawPhase,
+    urine_color: microscopicOnly ? "尿色外观看不出明显发红。" : value(pfp.urineColor, illness.color, caseData.patientAnswers?.color),
     clots: naturalBinaryZh("clots", rawClots),
     pain: naturalBinaryZh("pain", rawPainDetail), dysuria: naturalBinaryZh("dysuria", dysuriaZh),
     flank_pain: naturalBinaryZh("flank_pain", rawFlankPain),
@@ -287,7 +298,7 @@ function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en"
         : /起始|开始/.test(source)
           ? "It is red mainly at the beginning."
           : unknownAnswer(slot, "en"),
-    urine_color: /茶|酱油|可乐/.test(source) ? "It looks tea- or cola-colored." : /鲜红/.test(source) ? "It looks bright red." : /暗红/.test(source) ? "It looks dark red." : /洗肉水/.test(source) ? "It looks pink-red, like water used to rinse meat." : "It looks reddish.",
+    urine_color: /外观看不出|外观.*正常|看不出明显发红/.test(source) ? "My urine looked normal; the blood was found only on testing." : /茶|酱油|可乐/.test(source) ? "It looks tea- or cola-colored." : /鲜红/.test(source) ? "It looks bright red." : /暗红/.test(source) ? "It looks dark red." : /洗肉水/.test(source) ? "It looks pink-red, like water used to rinse meat." : "It looks reddish.",
     clots: unknown ? unknownAnswer(slot, "en") : negative ? "I have not noticed any blood clots." : "I have noticed blood clots in the urine.",
     pain: unknown ? unknownAnswer(slot, "en") : negative ? "I do not have pain with it." : "I have pain with it.",
     dysuria: unknown ? unknownAnswer(slot, "en") : negative ? "It does not hurt or burn when I urinate." : "It hurts or burns when I urinate.",
@@ -341,9 +352,10 @@ for (const caseData of cases.filter((item) => !selectedCaseIds.size || selectedC
       output[caseData.id][slot] = existingSlots[caseData.id][slot];
       continue;
     }
+    const blockedMedical = blockedCanonicalKeys.has(`${caseData.id}:${slot}`);
     output[caseData.id][slot] = {
-      patientAnswerZh: answer(caseData, slot, "zh"),
-      patientAnswerEn: answer(caseData, slot, "en"),
+      patientAnswerZh: blockedMedical ? unknownAnswer(slot, "zh") : answer(caseData, slot, "zh"),
+      patientAnswerEn: blockedMedical ? unknownAnswer(slot, "en") : answer(caseData, slot, "en"),
       provenance: legacyProvenance.get(slot) || "derived_from_case_facts",
       teacherReviewRequired: caseData.medicalReview?.status !== "approved"
     };
