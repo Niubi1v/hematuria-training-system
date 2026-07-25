@@ -1,0 +1,4 @@
+interface:
+  display_name: "Hematuria Medical Governance"
+  short_description: "Prepare read-only medical review materials"
+  default_prompt: "Use $hematuria-medical-governance to organize medical review evidence without adjudicating it."
