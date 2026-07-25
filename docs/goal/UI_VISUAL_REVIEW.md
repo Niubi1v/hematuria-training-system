@@ -132,3 +132,10 @@
 - 本轮聚焦病史权威、语言与Preview接口合同，没有新增视觉缺陷，也没有为真实患者回答保存截图、trace或录像。
 - 既有四固定viewport结论保持`PASS_EMULATION`；本轮未获得真实软键盘或safe-area证据，继续`BLOCKED_REAL_DEVICE`，不得视为真机通过。
 - HEM-P1-057/058均由脱敏计数、来源、HTTP状态和最小重建脚本支持，不需要提交含回答正文的视觉证据。
+
+## 2026-07-25 `7781586` 第3–6阶段返回与HEM-P2-059
+
+- `1440×900`中文、`1280×720`英文、`390×844`中文、`360×800`英文均完成阶段3返回重提、阶段5重新锁定、阶段4–6重做和最终360报告；无HTTP非200、失败请求或横向流程阻断，标记`PASS_EMULATION_FLOW`。
+- 英文长流程两个viewport各出现12条`Physical examination`重复React key错误；中文对照两个viewport为0。独立最小复现仅执行P001英文阶段1→阶段2，四viewport 4/4各出现4条相同console error及5个同名分类标题，登记HEM-P2-059。
+- 代表性`360×800`全页失败截图显示多个`Physical examination`分组及安全占位文案；截图只证明渲染重复，不证明英文医学来源已审核。
+- 自动viewport仍不替代真实软键盘或safe-area，真机状态继续`BLOCKED_REAL_DEVICE`。

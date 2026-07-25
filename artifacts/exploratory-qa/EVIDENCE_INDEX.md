@@ -260,3 +260,24 @@ SHA-256：
 - 第15轮最终全证据树流式/解包扫描覆盖508个物理文件、ZIP内9,029个条目和1,344,951,147字节，敏感值命中0；扫描器只输出计数，不输出候选值。
 - 通用仓库candidate scanner仍对既有5个未跟踪大trace按大小上限fail-closed（4个ZIP内entry过大、1个ZIP文件过大）；这些文件未staged，且已由上项流式/解包扫描覆盖并得到0命中。scanner自测合同通过，未删除或放宽断言。
 - 第15轮11个staged文件及完整可达文本历史的独立扫描敏感值命中0；暂存范围严格为QA文档、QA测试与1份脱敏聚合，不含业务代码、`data/**`或大体积证据。
+
+## `7781586` 第16轮阶段返回治理证据
+
+| 证据名称 | 对应测试或缺陷 | 文件路径 | 文件大小 | 提交Git | 未提交原因 | 本机保留位置 |
+| --- | --- | --- | ---: | --- | --- | --- |
+| 第3–6阶段返回API矩阵 | 42例双语返回/重锁/幂等/隐藏响应 | `tests/exploratory/stage-3-6-return-governance-matrix.mjs` | 17,170 B | 是 | — | 仓库路径 |
+| 四viewport UI与最小复现 | 阶段返回UI、HEM-P2-059 | `tests/exploratory/long-running-qa.spec.mjs` | 64,956 B（整文件） | 是 | — | 仓库路径 |
+| 第16轮脱敏聚合 | 本轮验收结论 | `artifacts/exploratory-qa/reports/7781586-stage-return-qa-summary.json` | 2,342 B | 是 | — | 仓库路径 |
+| HEM-P2-059代表性全页截图 | 英文移动端重复分类标题 | `artifacts/exploratory-qa/screenshots/hem-p2-059-english-physical-exam-category-keys-360x800-failure.png` | 345,853 B | 是 | — | 仓库路径 |
+| API矩阵原始运行1/2 | 两次确定性复核 | `artifacts/exploratory-qa/reports/7781586-stage-3-6-return-governance-run-{1,2}.json` | 876 B/份 | 否 | 与脚本和聚合重复 | 同路径，本机未跟踪 |
+| 阶段返回四viewport原始摘要 | UI返回流程 | `artifacts/exploratory-qa/reports/7781586-stage-3-6-return-governance-*-summary.json` | 4份/2,384 B | 否 | 聚合已保留必要计数 | 同路径，本机未跟踪 |
+| HEM-P2-059四viewport原始摘要 | 最小复现 | `artifacts/exploratory-qa/reports/7781586-hem-p2-059-*-summary.json` | 4份/1,762 B | 否 | 聚合已保留必要计数 | 同路径，本机未跟踪 |
+| 阶段返回截图 | 返回重锁与最终报告 | `artifacts/exploratory-qa/screenshots/stage-3-6-return-governance-*.png` | 11份/2,872,018 B | 否 | 重复视觉证据；含一次已修正QA选择器失败帧 | 同路径，本机未跟踪 |
+| HEM-P2-059其余截图 | 四viewport对照/失败帧 | `artifacts/exploratory-qa/screenshots/hem-p2-059-*.png` | 其余7份/约1.36 MB | 否 | 代表性360×800全页图已提交 | 同路径，本机未跟踪 |
+| 本轮trace | UI返回与HEM-P2-059 | `artifacts/exploratory-qa/traces/{stage-3-6-return-governance,hem-p2-059-*}.zip` | 8份/61,035,841 B | 否 | 体积大且可由测试重建 | 同路径，本机未跟踪 |
+| 本轮失败录像 | HEM-P2-059及一次QA选择器诊断 | `artifacts/exploratory-qa/videos/{stage-3-6-return-governance,hem-p2-059-*}.webm` | 7份/3,137,428 B | 否 | 体积大；聚合、截图和测试足够 | 同路径，本机未跟踪 |
+
+- 首次移动返回测试因导航菜单关闭后的可见性选择器错误失败；修正QA选择器后中文移动通过、英文移动只因HEM-P2-059失败。首次诊断产物不计产品复现且不提交。
+- HEM-P2-059最小复现只保存公开P001界面、console计数和network摘要；缺失英文来源继续`BLOCKED_SOURCE_REVISION`，没有把占位文案解释为审核翻译。
+- 第16轮最终全证据树流式/解包扫描覆盖573个物理文件、ZIP内10,232个条目和1,492,358,566字节，敏感值命中0；扫描器只输出计数，不输出候选值。
+- 第16轮11个staged文件及完整可达文本历史的独立扫描敏感值命中0；暂存范围不含业务代码、`data/**`、完整问答、header或本轮大trace/录像。

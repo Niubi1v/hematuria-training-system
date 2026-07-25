@@ -63,7 +63,7 @@ async function invokeLocalTrainingAction(body, token = "", remoteAddress = "qa-l
   };
 }
 
-async function installProductionTrainingApi(page, observations = []) {
+async function installProductionTrainingApi(page, observations = [], actionObservations = []) {
   resetMemoryAttemptStore();
   await page.route("**/api/health/**", (route) => route.fulfill({
     status: 200,
@@ -116,8 +116,15 @@ async function installProductionTrainingApi(page, observations = []) {
     const result = await invokeLocalTrainingAction(
       body,
       request.headers()["x-training-state"] || "",
-      "qa-production-handler-ui"
+      `qa-production-handler-ui-${String(body.attemptId || "unscoped")}`
     );
+    actionObservations.push({
+      action: String(body.action || ""),
+      stageKey: String(body.stageKey || ""),
+      requestIdPresent: Boolean(body.requestId),
+      status: result.statusCode,
+      error: String(result.payload?.error || "")
+    });
     if (body.action === "order") {
       observations.push({
         action: "order",
@@ -633,6 +640,168 @@ test("fixture completes all seven stages and renders a 360-point report after re
       languages: expect.arrayContaining(["zh"]),
       uniqueStageRequestIds: 7
     });
+  }, { videoOnFailure: true });
+});
+
+test("stages 3-6 support governed return, relock, rebuild, and stable final scoring @stage-return-governance", async ({ browser }, testInfo) => {
+  const language = ["qa-1440x900", "qa-390x844"].includes(testInfo.project.name) ? "zh" : "en";
+  const copy = language === "en"
+    ? {
+        submit: "Submit stage",
+        next: "Next Agent",
+        resubmit: "Resubmit this stage",
+        noConsult: "No consultation for now",
+        diagnosis: "Most likely diagnosis",
+        evidence: "Diagnostic evidence",
+        differentials: "At least 3 differential diagnoses",
+        analysis: "Supportive and opposing points for each differential",
+        reflection: "Reflection",
+        finish: "Finish training and generate final report",
+        stage3: /3\. Diagnostic Reasoning/,
+        stage4: /4\. MDT Coordinator/,
+        stage5: /5\. Clinical Decision Support/
+      }
+    : {
+        submit: "提交本阶段",
+        next: "进入下一阶段",
+        resubmit: "修改后重新提交",
+        noConsult: "暂不需要会诊",
+        diagnosis: "最可能诊断",
+        evidence: "诊断依据",
+        differentials: "至少 3 个鉴别诊断",
+        analysis: "各鉴别诊断的支持点与反对点",
+        reflection: "学习反思",
+        finish: "完成训练并生成最终报告",
+        stage3: /第3阶段·诊断推理/,
+        stage4: /第4阶段·多学科协作/,
+        stage5: /第5阶段·治疗决策/
+      };
+
+  await withEvidence(browser, testInfo, "stage-3-6-return-governance", async ({ page, slug, consoleEvents, networkEvents }) => {
+    const actionObservations = [];
+    await page.addInitScript((selectedLanguage) => localStorage.setItem("hematuria-language", selectedLanguage), language);
+    await installProductionTrainingApi(page, [], actionObservations);
+    await page.goto("/cases/P001/");
+    await expect(page.getByText("P001", { exact: true }).first()).toBeVisible();
+
+    const submitAndAdvance = async () => {
+      await page.getByRole("button", { name: copy.submit, exact: true }).click();
+      await expect(page.getByRole("button", { name: copy.next, exact: true })).toBeVisible();
+      await page.getByRole("button", { name: copy.next, exact: true }).click();
+    };
+
+    await submitAndAdvance();
+    await submitAndAdvance();
+    await page.getByLabel(copy.diagnosis, { exact: true }).fill(language === "en" ? "QA-only training diagnosis" : "仅用于QA流程的训练诊断");
+    await page.getByLabel(copy.evidence, { exact: true }).fill(language === "en" ? "QA-only evidence text of sufficient length." : "仅用于QA流程、长度足够的训练依据。");
+    await page.getByLabel(copy.differentials, { exact: true }).fill(language === "en" ? "QA option one; QA option two; QA option three" : "QA选项一；QA选项二；QA选项三");
+    await page.getByLabel(copy.analysis, { exact: true }).fill(language === "en" ? "Each QA option has a supporting and opposing point." : "每个QA选项均有支持点和反对点。");
+    await submitAndAdvance();
+    await page.getByRole("radio", { name: copy.noConsult, exact: true }).check();
+    await submitAndAdvance();
+    await submitAndAdvance();
+    await submitAndAdvance();
+
+    const viewport = testInfo.project.use.viewport;
+    if (viewport.width < 1024) {
+      await page.locator('button[aria-expanded="false"]').filter({ hasText: "7/7" }).click();
+    }
+    await page.getByRole("button", { name: copy.stage3 }).click();
+    await expect(page.getByLabel(copy.diagnosis, { exact: true })).toBeVisible();
+    await page.getByLabel(copy.diagnosis, { exact: true }).fill(language === "en" ? "QA-only revised training diagnosis" : "仅用于QA流程的修订训练诊断");
+    await page.getByRole("button", { name: copy.resubmit, exact: true }).click();
+    if (viewport.width < 1024) {
+      await page.locator('button[aria-expanded="false"]').filter({ hasText: "3/7" }).click();
+    }
+    await expect(page.getByRole("button", { name: copy.stage4 })).toBeEnabled();
+    await expect(page.getByRole("button", { name: copy.stage5 })).toBeDisabled();
+    await saveShot(page, testInfo, `stage-3-6-return-governance-${language}-relocked`, false);
+
+    await page.getByRole("button", { name: copy.next, exact: true }).click();
+    await page.getByRole("button", { name: copy.submit, exact: true }).click();
+    await page.getByRole("button", { name: copy.next, exact: true }).click();
+    await page.getByRole("button", { name: copy.submit, exact: true }).click();
+    await page.getByRole("button", { name: copy.next, exact: true }).click();
+    await page.getByRole("button", { name: copy.submit, exact: true }).click();
+    await page.getByRole("button", { name: copy.next, exact: true }).click();
+
+    await page.getByLabel(copy.reflection, { exact: true }).fill(language === "en"
+      ? "QA-only reflection long enough to confirm stable final scoring after a governed stage return."
+      : "仅用于QA的反思文本，长度足够，用来确认阶段返回重做后的终末评分稳定。"
+    );
+    await page.getByRole("button", { name: copy.finish, exact: true }).click();
+    await expect(page.getByTestId("final-report")).toBeVisible();
+    await expect(page.getByTestId("final-report")).toContainText("/ 360");
+    await saveShot(page, testInfo, `stage-3-6-return-governance-${language}-final`);
+
+    const stageFeedbacks = actionObservations.filter((item) => item.action === "stage-feedback");
+    const scores = actionObservations.filter((item) => item.action === "score");
+    const non200 = actionObservations.filter((item) => item.status !== 200);
+    const consoleErrorCount = consoleEvents.filter((item) => item.type === "error").length;
+    const failedNetworkRequestCount = networkEvents.filter((item) => item.status === "FAILED").length;
+    const summary = {
+      schemaVersion: "exploratory-stage-return-ui-v1",
+      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      source: "production_handler_local_ui",
+      result: non200.length || consoleErrorCount || failedNetworkRequestCount ? "FAIL_EMULATION" : "PASS_EMULATION",
+      language,
+      viewport,
+      stageFeedbackRequests: stageFeedbacks.length,
+      uniqueStageFeedbackRequestIds: stageFeedbacks.filter((item) => item.requestIdPresent).length,
+      scoreRequests: scores.length,
+      non200ActionResponses: non200.length,
+      consoleErrors: consoleErrorCount,
+      failedNetworkRequests: failedNetworkRequestCount,
+      futureStageRelockedAfterStage3Resubmit: true,
+      finalReportVisible: true,
+      responseBodiesRetained: false,
+      credentialsRetained: false
+    };
+    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    expect(stageFeedbacks).toHaveLength(11);
+    expect(stageFeedbacks.every((item) => item.requestIdPresent)).toBe(true);
+    expect(scores).toHaveLength(1);
+    expect(non200).toEqual([]);
+    expect(summary.consoleErrors).toBe(0);
+    expect(summary.failedNetworkRequests).toBe(0);
+  }, { videoOnFailure: true });
+});
+
+test("HEM-P2-059 English physical-exam category placeholders keep unique React keys @hem-p2-059", async ({ browser }, testInfo) => {
+  await withEvidence(browser, testInfo, "hem-p2-059-english-physical-exam-category-keys", async ({ page, slug, consoleEvents, networkEvents }) => {
+    await page.addInitScript(() => localStorage.setItem("hematuria-language", "en"));
+    await installProductionTrainingApi(page);
+    await page.goto("/cases/P001/");
+    await page.getByRole("button", { name: "Submit stage", exact: true }).click();
+    await page.getByRole("button", { name: "Next Agent", exact: true }).click();
+    await expect(page.getByText("Investigation Agent", { exact: true }).first()).toBeVisible();
+    await page.waitForTimeout(300);
+
+    const duplicateKeyErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && /same key|keys should be unique/i.test(item.text)
+      && /Physical examination/i.test(item.text)
+    );
+    const placeholderHeadingCount = await page.getByRole("heading", { name: "Physical examination", exact: true }).count();
+    const failedNetworkRequestCount = networkEvents.filter((item) => item.status === "FAILED").length;
+    await saveShot(page, testInfo, "hem-p2-059-english-physical-exam-category-keys", false);
+    const summary = {
+      schemaVersion: "exploratory-hem-p2-059-v1",
+      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      result: duplicateKeyErrors.length ? "FAIL_EMULATION" : "PASS_EMULATION",
+      language: "en",
+      viewport: testInfo.project.use.viewport,
+      duplicateKeyErrors: duplicateKeyErrors.length,
+      duplicatePlaceholderHeadings: placeholderHeadingCount,
+      failedNetworkRequests: failedNetworkRequestCount,
+      sourceRevisionStatus: "BLOCKED_SOURCE_REVISION",
+      responseBodiesRetained: false,
+      credentialsRetained: false
+    };
+    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    expect(failedNetworkRequestCount).toBe(0);
+    expect(placeholderHeadingCount).toBeGreaterThan(1);
+    expect(duplicateKeyErrors, "HEM-P2-059 duplicate React keys must be eliminated without approving missing English source labels").toHaveLength(0);
   }, { videoOnFailure: true });
 });
 

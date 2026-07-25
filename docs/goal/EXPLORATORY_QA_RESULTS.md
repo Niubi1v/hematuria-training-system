@@ -397,3 +397,12 @@ Patient Session 报告记录 295 次 `unsafe_deterministic_answer` source-cell �
 - 新增HEM-P1-058：P037英文开放式主诉在6个全新Preview会话中6/6遗漏权威“1 day ago”病程；均为DeepSeek live_ai、agent/history 200且无fallback。中文Preview 1/1及本地中英2/2正确。
 - Preview七阶段最终报告仍为360分且重复评分防护有效；最终完成后刷新仍出现既有HEM-P2-028的`attempt_already_completed` 401。后续复合问法复测受Preview 429速率限制，标`BLOCKED_PREVIEW_RATE_LIMIT`，不据此登记history缺陷。
 - 本轮新增P0/P1/P2为0/2/0。由于HEM-P1-057/058及既有开放P1，不建议进入教师人工审阅；HEM-P0-001/023、14+18共32项逐字段阻塞继续`BLOCKED_MEDICAL`，没有被工程通过或专家批准。
+
+## 2026-07-25 第 16 轮：`7781586` 第3–6阶段返回与隐藏响应治理
+
+- Production与QA远程基线未变化；受控工作树从`7c6bb9d8abf9bffa1322d9b32fd5fdb38dc3dc60`继续，业务目录及`data/**`仍无QA差异。
+- 新增42例×中英双语API矩阵，两次运行逐字节一致：168条practice旅程、2,016次阶段反馈、1,512次第3–6阶段反馈、336次返回已完成阶段重提、924次未解锁/越阶段拒绝、168次评分及168次相同request ID评分重放。返回重提后后续阶段重新锁定，重做至终末的360分维度/条目与无返回对照一致，评分漂移0。
+- 所有未解锁响应都严格为`409 stage_not_unlocked`单字段错误，不含标准答案、病例结构或未来阶段字段；已提交practice反馈及360报告的响应字段均通过allowlist。全部42例中英共84次formal/OSCE初始化继续以`case_not_clinically_approved`拒绝，`needs_revision`及formalUse状态未改变。
+- 四固定viewport实际UI均完成“至阶段7→返回阶段3→重提→阶段5重新锁定→重做阶段4–6→最终360报告”；共44次stage-feedback、44个唯一request ID、4次score，HTTP非200和network失败均为0。中文`1440×900/390×844` console错误0；英文`1280×720/360×800`流程完成但各产生12条同根React重复key错误，因此UI批次为2 PASS_EMULATION / 2 FAIL_EMULATION。
+- 新增HEM-P2-059：P001英文进入第2阶段的最小复现四viewport 4/4失败。5个不同查体类别因未审核英文来源被安全显示为同一个`Physical examination`标题，React每次稳定报告4条重复key错误；network失败0。英文来源仍`BLOCKED_SOURCE_REVISION`，缺陷只要求稳定内部key，不批准或补写翻译。
+- 既有阶段5/6/7、42例双语七阶段、42例360评分及attempt隔离合同全部通过。本轮新增P0/P1/P2为0/0/1；HEM-P1-057/058和其他开放P1状态不变。

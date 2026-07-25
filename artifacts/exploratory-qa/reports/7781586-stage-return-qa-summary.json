@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "exploratory-stage-return-qa-summary-v1",
+  "productionBaseline": "77815862a0abebff67b8d958f66944a0e11b068f",
+  "localRuntime": {
+    "node": "v24.14.0",
+    "productionEngineTarget": ">=22.14 <23",
+    "status": "PASS_LOCAL_QA_WITH_RUNTIME_DIFFERENCE"
+  },
+  "apiMatrix": {
+    "status": "PASS_LOCAL_QA",
+    "runs": 2,
+    "deterministicSha256": "3838FEF4A2913CC1BECBC26A5247473CECC84B362D65D5215F275272765DEFC0",
+    "cases": 42,
+    "languages": 2,
+    "practiceJourneys": 168,
+    "formalUseRejections": 84,
+    "lockedRejections": 924,
+    "stageFeedbacks": 2016,
+    "stageThreeToSixFeedbacks": 1512,
+    "postSubmitPracticeAnswers": 1008,
+    "returnResubmissions": 336,
+    "scoreRequests": 168,
+    "duplicateScoreReplays": 168,
+    "completedAttemptRejections": 168,
+    "scoreDriftFailures": 0,
+    "preSubmitLockedResponseShape": "error_only",
+    "stageFeedbackResponseShapeAllowlisted": true,
+    "scoreResponseShapeAllowlisted": true,
+    "allCasesRemainNeedsRevision": true,
+    "formalUseApprovalChanged": false
+  },
+  "uiReturnMatrix": {
+    "source": "production_handler_local_ui",
+    "status": "PASS_FLOW_WITH_SEPARATE_CONSOLE_DEFECT",
+    "viewports": [
+      "1440x900",
+      "1280x720",
+      "390x844",
+      "360x800"
+    ],
+    "languages": [
+      "zh",
+      "en"
+    ],
+    "runs": 4,
+    "completedFinalReports": 4,
+    "stageFeedbackRequests": 44,
+    "uniqueStageFeedbackRequestIds": 44,
+    "scoreRequests": 4,
+    "non200ActionResponses": 0,
+    "failedNetworkRequests": 0,
+    "futureStageRelockPasses": 4,
+    "chineseConsoleErrors": 0,
+    "englishConsoleErrors": 24
+  },
+  "newDefects": [
+    {
+      "id": "HEM-P2-059",
+      "severity": "P2",
+      "status": "FAIL_EMULATION",
+      "reproduction": "4/4 fixed viewports",
+      "duplicateKeyErrorsPerRun": 4,
+      "duplicatePlaceholderHeadingsPerRun": 5,
+      "language": "en",
+      "summary": "Fail-closed English physical-exam category placeholders collapse distinct groups to one React key."
+    }
+  ],
+  "blockedBoundaries": {
+    "englishPhysicalExamSourceLabels": "BLOCKED_SOURCE_REVISION",
+    "realKeyboardAndSafeArea": "BLOCKED_REAL_DEVICE",
+    "medicalApprovalChanged": false
+  },
+  "medicalValuesRetained": false,
+  "responseBodiesRetained": false,
+  "requestIdsRetained": false,
+  "credentialsRetained": false
+}

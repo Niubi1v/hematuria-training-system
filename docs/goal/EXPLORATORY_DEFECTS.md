@@ -444,3 +444,22 @@
 - 最小证据：`tests/preview/preview-stability.spec.mjs`中的`@preview-p037-one-day-duration`及脱敏聚合`7781586-history-medical-qa-summary.json`。
 - 建议方向：在允许事实构造及provider输出保真检查中对已审核duration建立英文等价语义门禁；不能用rule fallback掩盖provider成功后的遗漏。
 - 医学专家裁决：否；现有权威值已明确，本缺陷不新增或批准医学事实。
+
+## HEM-P2-059：英文查体分类安全占位折叠为重复React key
+
+- 严重级别 / 状态：P2 / OPEN；`FAIL_EMULATION`。
+- 基线：`77815862a0abebff67b8d958f66944a0e11b068f`。
+- 页面和路径：P001训练页，第1阶段提交后进入第2阶段“Investigation Agent physical examination”；全局查体目录渲染路径。
+- 病例 / 语言 / viewport：P001代表性复现；英文；`1440×900`、`1280×720`、`390×844`、`360×800`。
+- 操作步骤：选择英文 → 打开P001 → 提交第1阶段 → 进入第2阶段 → 等待查体分类列表渲染 → 采集页面、console和network。
+- 预期：未审核英文类别继续显示安全占位，但每个React列表项使用稳定唯一内部key；console error为0。
+- 实际：5个不同类别均显示为`Physical examination`，组件同时把该展示占位用作列表key；四viewport每次稳定产生4条“same key / Keys should be unique”console error。页面仍可操作。
+- 复现：最小探针4/4，每次4条错误、5个同名标题；完整阶段返回流程的英文桌面/移动2/2各出现12条同根错误，中文对照2/2为0。
+- AI来源：N/A；Production前端与本地Production handler，provider调用0。
+- 状态变化时间线：init-attempt 200 → stage1 feedback 200 → 打开stage2 → 英文查体分类同步渲染 → 4条重复key错误。
+- HTTP状态和耗时：所有训练操作200，request failure 0；本轮缺陷不依赖网络耗时或Preview。
+- console/network摘要：console唯一产品错误为重复key；network失败0。摘要不含header、body、token、Cookie、签名或环境值。
+- 截图 / trace / 录像：代表截图`artifacts/exploratory-qa/screenshots/hem-p2-059-english-physical-exam-category-keys-360x800-failure.png`提交Git；四viewport trace、其余截图、console/network和失败录像仅本机保留并列入证据索引。
+- 最小复现测试：`tests/exploratory/long-running-qa.spec.mjs`中的`@hem-p2-059`。
+- 建议方向：React key使用未翻译的稳定类别ID/原始类别键或显式索引复合键，展示文案继续走安全占位；补四viewport英文console=0回归。
+- 是否需要医学专家裁决：否。23个英文名称及相关查体来源仍`BLOCKED_SOURCE_REVISION`；修复不得补写或批准医学翻译。

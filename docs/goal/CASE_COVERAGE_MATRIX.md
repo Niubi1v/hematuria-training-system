@@ -157,3 +157,18 @@
 | P026/P027/P029/P039用药 | 本地双语8/8、Preview双语8/8内容稳定 | PASS_LOCAL_QA / PASS_PREVIEW |
 | P037病程 | 本地双语2/2、Preview中文1/1；Preview英文0/6 | FAIL_PREVIEW，HEM-P1-058 |
 | 42例评分 | 42×360，无评分漂移 | PASS_LOCAL_QA |
+
+## Production `7781586` 第3–6阶段返回治理增量
+
+| 覆盖 | 结果 | 状态 |
+| --- | --- | --- |
+| 42例×中英×对照/返回 | 168条practice旅程 | PASS_LOCAL_QA |
+| 第3–6阶段返回重提 | 336次；后续阶段重新锁定并可按序重做 | PASS_LOCAL_QA |
+| 未解锁/越阶段调用 | 924次均为单字段`stage_not_unlocked`，隐藏字段0 | PASS_LOCAL_QA |
+| 阶段反馈/评分响应shape | 2,016反馈、168报告均符合allowlist | PASS_LOCAL_QA |
+| 重复终末评分 | 168次相同request ID重放；评分漂移0 | PASS_LOCAL_QA |
+| formal/OSCE用途 | 42例×双语84/84拒绝，审批状态未改变 | BLOCKED_MEDICAL / FAIL_CLOSED |
+| P001阶段3返回UI | 四viewport均完成返回、重新锁定、重做和最终报告 | PASS_EMULATION_FLOW |
+| P001英文第2阶段分类key | 四viewport各4条React重复key错误、5个同名占位标题 | FAIL_EMULATION，HEM-P2-059 |
+
+- HEM-P2-059只证明全局查体目录在P001英文界面的渲染缺陷；未把它扩张成P002–P042逐例UI结论。未审核英文分类继续`BLOCKED_SOURCE_REVISION`。
