@@ -87,7 +87,7 @@
     "difficulty": "标准",
     "diseaseCategory": "感染",
     "diseaseSubcategory": "右侧肾输尿管结石伴积水和感染",
-    "studentChiefComplaint": "突发右侧腰痛伴小便变红半天"
+    "studentChiefComplaint": "突发右侧腰痛伴浓茶色尿半天"
   },
   {
     "id": "P010",
@@ -137,7 +137,7 @@
     "difficulty": "挑战",
     "diseaseCategory": "泌尿系肿瘤",
     "diseaseSubcategory": "膀胱癌/感染样表现",
-    "studentChiefComplaint": "反复尿频伴血尿半年"
+    "studentChiefComplaint": "反复尿频伴小便变红半年"
   },
   {
     "id": "HX-ADD-003",
@@ -147,7 +147,7 @@
     "difficulty": "挑战",
     "diseaseCategory": "泌尿系肿瘤",
     "diseaseSubcategory": "上尿路尿路上皮癌",
-    "studentChiefComplaint": "左腰隐痛伴肉眼血尿1个月"
+    "studentChiefComplaint": "左腰隐痛伴小便变红1个月"
   },
   {
     "id": "HX-ADD-004",
@@ -157,7 +157,7 @@
     "difficulty": "挑战",
     "diseaseCategory": "泌尿系肿瘤",
     "diseaseSubcategory": "肾细胞癌",
-    "studentChiefComplaint": "无痛性肉眼血尿3周"
+    "studentChiefComplaint": "间断小便变红3周"
   },
   {
     "id": "HX-ADD-005",
@@ -177,7 +177,7 @@
     "difficulty": "基础",
     "diseaseCategory": "感染",
     "diseaseSubcategory": "急性膀胱炎",
-    "studentChiefComplaint": "尿频尿急尿痛伴血尿2天"
+    "studentChiefComplaint": "尿频、尿急、尿痛伴小便发红2天"
   },
   {
     "id": "HX-ADD-007",
@@ -187,7 +187,7 @@
     "difficulty": "标准",
     "diseaseCategory": "感染",
     "diseaseSubcategory": "急性肾盂肾炎/系统性UTI",
-    "studentChiefComplaint": "发热腰痛伴尿频尿痛3天"
+    "studentChiefComplaint": "发热、左腰痛伴尿频、尿痛3天"
   },
   {
     "id": "HX-ADD-008",
@@ -207,7 +207,7 @@
     "difficulty": "标准",
     "diseaseCategory": "感染",
     "diseaseSubcategory": "复杂性尿路感染",
-    "studentChiefComplaint": "尿频尿痛伴血尿1周"
+    "studentChiefComplaint": "尿频、尿痛伴小便发红1周"
   },
   {
     "id": "HX-ADD-010",
@@ -217,7 +217,7 @@
     "difficulty": "挑战",
     "diseaseCategory": "感染",
     "diseaseSubcategory": "复发性UTI后持续血尿",
-    "studentChiefComplaint": "反复尿痛伴镜下血尿1年"
+    "studentChiefComplaint": "反复尿痛伴尿检发现血尿1年"
   },
   {
     "id": "HX-ADD-011",
@@ -227,7 +227,7 @@
     "difficulty": "标准",
     "diseaseCategory": "结石",
     "diseaseSubcategory": "输尿管结石",
-    "studentChiefComplaint": "右腰腹绞痛伴血尿6小时"
+    "studentChiefComplaint": "右腰腹绞痛伴小便发红6小时"
   },
   {
     "id": "HX-ADD-012",
@@ -237,7 +237,7 @@
     "difficulty": "标准",
     "diseaseCategory": "结石",
     "diseaseSubcategory": "肾盂/肾盏结石",
-    "studentChiefComplaint": "左腰痛伴血尿1天"
+    "studentChiefComplaint": "左腰痛伴小便发红1天"
   },
   {
     "id": "HX-ADD-013",
@@ -247,7 +247,7 @@
     "difficulty": "标准",
     "diseaseCategory": "结石",
     "diseaseSubcategory": "膀胱结石",
-    "studentChiefComplaint": "排尿困难伴终末血尿3个月"
+    "studentChiefComplaint": "排尿困难伴排尿末小便发红3个月"
   },
   {
     "id": "HX-ADD-014",
@@ -257,7 +257,7 @@
     "difficulty": "挑战",
     "diseaseCategory": "结石",
     "diseaseSubcategory": "感染性鹿角形结石",
-    "studentChiefComplaint": "反复发热腰痛伴血尿半年"
+    "studentChiefComplaint": "反复发热、腰痛伴小便发红半年"
   },
   {
     "id": "HX-ADD-015",
@@ -267,7 +267,7 @@
     "difficulty": "标准",
     "diseaseCategory": "结石",
     "diseaseSubcategory": "尿酸结石",
-    "studentChiefComplaint": "左侧腰腹痛伴血尿1天"
+    "studentChiefComplaint": "左侧腰腹痛伴小便发红1天"
   },
   {
     "id": "HX-ADD-016",
@@ -277,7 +277,7 @@
     "difficulty": "标准",
     "diseaseCategory": "前列腺疾病",
     "diseaseSubcategory": "良性前列腺增生相关血尿",
-    "studentChiefComplaint": "排尿困难伴肉眼血尿3天"
+    "studentChiefComplaint": "排尿困难伴小便变红3天"
   },
   {
     "id": "HX-ADD-017",
@@ -287,7 +287,7 @@
     "difficulty": "挑战",
     "diseaseCategory": "前列腺疾病",
     "diseaseSubcategory": "BPH急性尿潴留/导尿相关血尿",
-    "studentChiefComplaint": "导尿后肉眼血尿1天"
+    "studentChiefComplaint": "导尿后小便变红1天"
   },
   {
     "id": "HX-ADD-018",
@@ -297,7 +297,7 @@
     "difficulty": "挑战",
     "diseaseCategory": "前列腺疾病",
     "diseaseSubcategory": "前列腺癌相关血尿",
-    "studentChiefComplaint": "排尿困难伴镜下血尿半年"
+    "studentChiefComplaint": "排尿困难伴尿检发现血尿半年"
   },
   {
     "id": "HX-ADD-019",
@@ -307,7 +307,7 @@
     "difficulty": "标准",
     "diseaseCategory": "肾小球疾病",
     "diseaseSubcategory": "IgA肾病",
-    "studentChiefComplaint": "咽痛后肉眼血尿2天"
+    "studentChiefComplaint": "咽痛后尿色呈浓茶色或可乐色2天"
   },
   {
     "id": "HX-ADD-020",
@@ -327,7 +327,7 @@
     "difficulty": "标准",
     "diseaseCategory": "肾小球疾病",
     "diseaseSubcategory": "薄基底膜肾病",
-    "studentChiefComplaint": "体检发现镜下血尿3年"
+    "studentChiefComplaint": "体检反复发现尿检有血3年"
   },
   {
     "id": "HX-ADD-022",
@@ -347,7 +347,7 @@
     "difficulty": "挑战",
     "diseaseCategory": "肾小球疾病",
     "diseaseSubcategory": "狼疮性肾炎",
-    "studentChiefComplaint": "泡沫尿、血尿伴面部皮疹2周"
+    "studentChiefComplaint": "泡沫尿、尿检发现血尿伴面部皮疹2周"
   },
   {
     "id": "HX-ADD-024",
@@ -357,7 +357,7 @@
     "difficulty": "基础",
     "diseaseCategory": "功能性血尿",
     "diseaseSubcategory": "运动性血尿",
-    "studentChiefComplaint": "长跑后肉眼血尿1次"
+    "studentChiefComplaint": "长跑后小便发红1次"
   },
   {
     "id": "HX-ADD-025",
@@ -367,7 +367,7 @@
     "difficulty": "基础",
     "diseaseCategory": "假性血尿",
     "diseaseSubcategory": "月经污染/妇科来源",
-    "studentChiefComplaint": "体检尿潜血阳性1天"
+    "studentChiefComplaint": "经期体检发现尿潜血阳性1天"
   },
   {
     "id": "HX-ADD-026",
@@ -377,7 +377,7 @@
     "difficulty": "挑战",
     "diseaseCategory": "外伤",
     "diseaseSubcategory": "肾挫伤/泌尿系外伤",
-    "studentChiefComplaint": "车祸后腰痛伴肉眼血尿4小时"
+    "studentChiefComplaint": "车祸后腰痛伴小便变红4小时"
   },
   {
     "id": "HX-ADD-027",
@@ -387,7 +387,7 @@
     "difficulty": "挑战",
     "diseaseCategory": "肾实质/结构性疾病",
     "diseaseSubcategory": "肾乳头坏死",
-    "studentChiefComplaint": "腰痛伴血尿反复半年"
+    "studentChiefComplaint": "反复腰痛伴茶色或淡红色尿半年"
   },
   {
     "id": "HX-ADD-028",
@@ -397,7 +397,7 @@
     "difficulty": "挑战",
     "diseaseCategory": "肾实质/结构性疾病",
     "diseaseSubcategory": "多囊肾囊肿出血",
-    "studentChiefComplaint": "突发左腰痛伴肉眼血尿1天"
+    "studentChiefComplaint": "突发左腰痛伴小便变红1天"
   },
   {
     "id": "HX-ADD-029",
@@ -417,6 +417,6 @@
     "difficulty": "挑战",
     "diseaseCategory": "泌尿系肿瘤",
     "diseaseSubcategory": "高危无症状镜下血尿",
-    "studentChiefComplaint": "体检发现镜下血尿1个月"
+    "studentChiefComplaint": "体检发现尿检有血1个月"
   }
 ]

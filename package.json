@@ -49,7 +49,8 @@
     "test:medical-review": "tsx scripts/test-medical-review-workbook.ts",
     "test:workbook-security": "tsx scripts/test-workbook-security.ts",
     "build:medical-review-queue": "tsx scripts/build-medical-review-queue.ts && tsx scripts/apply-medical-review-candidate.ts",
-    "apply:medical-review": "tsx scripts/apply-medical-review-candidate.ts && tsx scripts/generate-bilingual-patient-slots.ts && tsx scripts/generate-public-training-data.ts",
+    "apply:medical-review": "tsx scripts/apply-medical-review-candidate.ts && tsx scripts/apply-chief-complaint-wording.ts && tsx scripts/generate-bilingual-patient-slots.ts && tsx scripts/generate-public-training-data.ts",
+    "apply:chief-complaint-wording": "tsx scripts/apply-chief-complaint-wording.ts",
     "test:medical-review-queue": "tsx scripts/test-medical-review-queue.ts",
     "test:medical-review-import": "tsx scripts/test-medical-review-import.ts",
     "test:release-v14": "tsx scripts/test-release-v14-import.ts",
@@ -87,7 +88,7 @@
     "generate:bilingual": "tsx scripts/generate-bilingual-patient-slots.ts",
     "generate:orders": "tsx scripts/generate-structured-order-results.ts",
     "generate:public": "tsx scripts/generate-public-training-data.ts",
-    "convert:excel": "tsx scripts/convert-tutor-template-cases.ts work/source/v2_only_cases.xlsx data && tsx scripts/convert-frontend-fixes.ts work/source/frontend_order_consult_fix.xlsx data && tsx scripts/convert-diagnostic-knowledge.ts work/source/hematuria_diagnostics_scoring_rules.xlsx data && tsx scripts/convert-bilingual-7agent.ts work/source/v2_bilingual.xlsx data && tsx scripts/convert-supplement-30-ai.ts work/source/supplement_30_ai.xlsx data && tsx scripts/convert-release-v14.ts && tsx scripts/structure-patient-history.ts && tsx scripts/normalize-case-library.ts && tsx scripts/structure-patient-history.ts && tsx scripts/apply-medical-review-candidate.ts && tsx scripts/generate-physical-exams.ts && tsx scripts/apply-ui-overrides.ts && tsx scripts/generate-bilingual-patient-slots.ts && tsx scripts/generate-structured-order-results.ts && tsx scripts/generate-public-training-data.ts"
+    "convert:excel": "tsx scripts/convert-tutor-template-cases.ts work/source/v2_only_cases.xlsx data && tsx scripts/convert-frontend-fixes.ts work/source/frontend_order_consult_fix.xlsx data && tsx scripts/convert-diagnostic-knowledge.ts work/source/hematuria_diagnostics_scoring_rules.xlsx data && tsx scripts/convert-bilingual-7agent.ts work/source/v2_bilingual.xlsx data && tsx scripts/convert-supplement-30-ai.ts work/source/supplement_30_ai.xlsx data && tsx scripts/convert-release-v14.ts && tsx scripts/structure-patient-history.ts && tsx scripts/normalize-case-library.ts && tsx scripts/structure-patient-history.ts && tsx scripts/apply-medical-review-candidate.ts && tsx scripts/apply-chief-complaint-wording.ts && tsx scripts/generate-physical-exams.ts && tsx scripts/apply-ui-overrides.ts && tsx scripts/generate-bilingual-patient-slots.ts && tsx scripts/generate-structured-order-results.ts && tsx scripts/generate-public-training-data.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",
