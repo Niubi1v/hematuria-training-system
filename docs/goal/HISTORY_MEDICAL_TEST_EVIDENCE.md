@@ -1,7 +1,7 @@
 # P001–P042 病史医学协调测试证据
 
 - 基线：`1566f7c21aabbd30eff2e30abf9924e214d1b7a4`
-- 生成时HEAD：`3a7b227a8f03af0b1a6e0c69714d5a7772f1f48d`
+- 生成时HEAD：`1f88148bdc055f3d00322360004ebff603d9e261`
 - 运行日期：2026-07-25（Asia/Shanghai）。
 - 运行时提示：仓库声明 Node `>=22.14 <23`；本地Codex bundled runtime为 Node 24.14.0，因此pnpm会给出engine warning，但下列定向测试、TypeScript、ESLint与构建结果以实际退出码为准。
 

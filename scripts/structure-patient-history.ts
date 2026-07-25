@@ -23,7 +23,8 @@ const sourceMedicationOverrides = new Map<string, MedicationResolution>(
     .filter((item) => item.field === "medication")
     .map((item) => [item.caseId, item as MedicationResolution])
 );
-const sourcePrecedenceOnly = process.env.HISTORY_SOURCE_PRECEDENCE_ONLY === "1";
+const sourcePrecedenceOnly = process.env.HISTORY_SOURCE_PRECEDENCE_ONLY === "1"
+  || process.argv.includes("--source-precedence-only");
 
 function read<T>(file: string): T { return JSON.parse(fs.readFileSync(path.join(dataDir, file), "utf8")); }
 function write(file: string, value: unknown) { fs.writeFileSync(path.join(dataDir, file), `${JSON.stringify(value, null, 2)}\n`, "utf8"); }
