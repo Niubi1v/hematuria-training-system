@@ -593,3 +593,11 @@
 - 本地完整门禁通过：42×37、42×17、572/419、3150、840/1428、786/618、42例360分、84条七阶段旅程、TypeScript、ESLint、Playwright 85/3/0、78输出幂等、82页构建、25 bundle及355文件/历史secret scan。
 - 当前应用候选HEAD为`38451b0a7d9e67752e024910351057efff42dd92`；证据文档提交后使用更晚仓库HEAD。远程Node 22、Actions、Vercel和Preview尚未验证，不以旧绿灯替代。PR #1继续Open/Draft，不转Ready、不合并main、不部署Production。
 - 回滚按最小范围使用普通`git revert`逆序处理证据提交、`38451b0`、`0ba9699`、`a6d423f`及相应cherry-pick提交；不得reset或force push。长期QA需从最终推送HEAD复测P026/P027/P029/P039、P002隔离、32项阻塞、42×37/42×17、P019/P020英文目录和生成幂等性。
+
+### 病史集成首次远程门禁与依赖恢复候选（2026-07-25）
+
+- 病史集成HEAD `aca8a2a76cb3d51f958fe1f55ec62b56829c2716`已推送；Vercel两项检查成功，但Actions run `30147515100`在Node 22.14.0的完整依赖审计失败，故该HEAD不登记为绿色。
+- 失败不是病史、Patient Agent或Playwright断言：新发布的PostCSS路径遍历公告和brace-expansion无界展开公告命中旧override版本，所有后续Actions步骤均skipped。
+- 恢复候选仅更新`pnpm-workspace.yaml`与`pnpm-lock.yaml`的安全下限至PostCSS 8.5.18和brace-expansion 5.0.8。完整高危审计、TypeScript、ESLint、产品审计、82页构建、25资产bundle及repository secret scan本地通过；`data/**`零差异。
+- 新候选须普通push并等待精确新HEAD的完整Node 22 Actions和Vercel。若远程继续失败，读取第一条真实日志继续最小修复；PR保持Draft，不合并main、不部署Production。
+- 依赖修复可用普通`git revert <dependency-fix-sha>`回滚，但会重新暴露两项高危公告；不得reset、rebase或force push。长期QA起点须使用最终绿色远程HEAD，而不是`aca8a2a`。

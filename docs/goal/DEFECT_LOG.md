@@ -646,3 +646,11 @@
 - **状态**：`RESOLVED_LOCAL / NODE22_PENDING`。
 - **复现**：隔离worktree幂等性首次准确指出`data/cases_en.json`、`data/cases_public.json`漂移。
 - **修复**：执行仓库完整生成链，仅产生P020两处语言安全派生变化；审查确认未改sourceFacts、医学极性、审批或评分。提交后78个受控输出首轮与baseline一致，第二轮零漂移。
+
+### CI-P1-20260725-02 新依赖公告阻断病史集成远程门禁
+
+- **状态**：`LOCAL FIXED / NODE22 RECHECK PENDING`。
+- **复现**：Actions run `30147515100`、HEAD `aca8a2a`在Node 22.14.0的`pnpm audit --audit-level high`退出1；2项high分别命中PostCSS 8.5.15和brace-expansion 5.0.7。后续测试是skipped，不登记为产品测试失败或通过。
+- **根因**：项目既有安全override固定在公告发布前的修复版本；2026-07-24更新的两个GitHub reviewed advisory提高了安全下限。
+- **修复**：仅将`postcss@<=8.5.17`覆盖为8.5.18、`brace-expansion@<=5.0.7`覆盖为5.0.8并重建锁文件；审计等级、CI步骤和测试断言不变。
+- **本地证据**：完整高危审计0已知漏洞；TypeScript、ESLint、产品审计、82页构建、25资产bundle和repository secret scan通过。关闭条件为新HEAD Node 22 Actions完整success。

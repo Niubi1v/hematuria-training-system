@@ -1345,3 +1345,20 @@ P001新增三轮及P037/P038各两轮的每次`/api/agent-chat/`均200、`genera
 | medical governance diff review | 0 | 无sourceFacts、360规则、`expert_approved`或`needs_revision`解除；仅四项明确source用药投影及P020派生语言占位 |
 
 首次完整Playwright在本机Node 24的自管Next回收阶段达到10分钟上限，且在失败汇总前已暴露P019/P020旧断言/跨语言问题；该次不登记为通过。修复后用相同测试集和受控外部Next执行，得到上述85/3/0真实exit 0。未增加重试或测试超时。
+
+## 病史集成首次远程门禁及依赖恢复证据（2026-07-25）
+
+| 合同/命令 | 退出码 | 结果 |
+|---|---:|---|
+| Actions run `30147515100` / `aca8a2a` | 1 | Node 22.14.0；首个真实失败为`Full dependency audit`；其余门禁skipped |
+| 公告核对 | — | PostCSS `GHSA-r28c-9q8g-f849`修复于8.5.18；brace-expansion `GHSA-mh99-v99m-4gvg`修复于5.0.8 |
+| frozen install | 0 | 新锁文件可安装；解析结果仅保留PostCSS 8.5.18与brace-expansion 5.0.8 |
+| `pnpm audit --audit-level high` | 0 | `No known vulnerabilities found` |
+| TypeScript / ESLint | 0 / 0 | 新依赖解析下通过；覆盖ESLint/minimatch实际加载路径 |
+| `pnpm run test:product` | 0 | 病例、360分、医嘱释放、OSCE、存储、RCT、i18n及Pages配置合同通过 |
+| secret scanner / repository scan | 0 / 0 | scanner自测通过；355个tracked/candidate及可达历史通过，未输出敏感值 |
+| Pages build | 0 | `/hematuria-training-system` basePath，82/82页；PostCSS 8.5.18编译成功 |
+| static bundle scan | 0 | 25个JavaScript资产通过 |
+| `git diff -- data` | 0 | 无医学数据或生成数据差异 |
+
+本机运行时为Node 24.14.0，因此Node 22.14.0权威结果仍由新HEAD Actions确认。依赖外没有应用代码变化，未重复运行不受影响且已在`aca8a2a`前通过的85/3完整Playwright。

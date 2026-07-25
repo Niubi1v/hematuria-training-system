@@ -693,3 +693,11 @@
 - 集成期发现并最小修复三个工程缺陷：893行协调矩阵中P029两个投影复用审核ID；P020英文目录回退为中文；完整生成链使`cases_en.json`与`cases_public.json`出现未提交派生漂移。修复提交为`a6d423f`、`0ba9699`、`38451b0`，均未改变医学真值或审批状态。
 - 本地门禁：42例×37双语槽、42例×17病史、572=153+419、18项冲突、3150 canonical、840自然问法、786复合/618跨层、42例360分和84条双语七阶段旅程通过；TypeScript、ESLint通过；Playwright 85 passed/3互斥skip/0 failed；78受控输出两轮幂等；82页Pages构建、25个JS bundle和355文件/历史secret scan通过。
 - 当前应用候选HEAD为`38451b0a7d9e67752e024910351057efff42dd92`；本段文档提交后仓库HEAD会更晚。Node 22 Actions、Vercel部署和Preview应用层结果仍待普通push后按精确新HEAD验证，PR继续Draft。
+
+### 2026-07-25 病史集成首次远程门禁与依赖审计恢复候选
+
+- 病史集成仓库HEAD `aca8a2a76cb3d51f958fe1f55ec62b56829c2716`已普通push；Vercel Deployment与Preview Comments成功，PR #1继续Open/Draft。
+- Actions run `30147515100`在Node 22.14.0的`Full dependency audit`首先且唯一真实失败；后续行为、Playwright和构建步骤均为skipped。新公告分别为PostCSS `GHSA-r28c-9q8g-f849`（受影响`<=8.5.17`，修复`8.5.18`）与brace-expansion `GHSA-mh99-v99m-4gvg`（受影响`<=5.0.7`，修复`5.0.8`）。
+- 最小候选只更新项目级安全override和锁文件：PostCSS统一为8.5.18，brace-expansion统一为5.0.8；没有删除审计、放宽阈值或修改业务、医学数据、审批状态、session/attempt与360分规则。
+- 本地`pnpm audit --audit-level high`由2 high恢复为`No known vulnerabilities found`。TypeScript、ESLint、产品审计、secret scanner自测、355文件/历史secret scan、82页Pages构建和25个JS资产bundle scan通过；`data/**`零差异。因为应用代码未变，没有重复已通过的85/3完整Playwright。
+- 该候选仍须小步提交、普通push，并由精确新HEAD的Node 22完整Actions与Vercel重新验收；旧run与旧部署不得替代。
