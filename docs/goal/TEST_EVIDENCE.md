@@ -1381,3 +1381,20 @@ P001新增三轮及P037/P038各两轮的每次`/api/agent-chat/`均200、`genera
 | `git diff -- data` | 0 | 无医学事实、审批或生成数据差异 |
 
 `PATIENT_PROFILE_COMPLETENESS_REPORT.md`只同步专项已经确认的四项source用药投影；P026、P027、P029、P039对应患者可见文本与当前生成结果一致。没有写入新的医学结论。
+
+## 病史协调集成最终远程门禁（2026-07-25）
+
+| 证据 | 结果 |
+|---|---|
+| 精确HEAD | `e70ed19fadd51671602e937565b779154b16522d`，本地/远程ahead-behind `0/0` |
+| GitHub Actions | run `30148941887` / build job `89655884652`，completed/success |
+| Node | `v22.14.0` |
+| 行为与治理 | dependency audit、78输出幂等、生成基线、schema、临床矛盾、双语fixture、Unit and behavioral、医学审核合同、360分均success |
+| TypeScript / ESLint / repository secret scan | success / success / success |
+| Playwright | 88项：85 passed、3按项目互斥规则skipped、0 failed；8.2分钟，runner正常退出 |
+| 构建与bundle | 82/82静态页；23个JavaScript资产；clean gate success |
+| Vercel | 精确HEAD status `success`，deployment `BmFSFi24jvwadzzo3Qj7eqFdFMTT`；Preview Comments success |
+| PR/Pages | PR #1 Open/Draft；Pages artifact/deploy按Draft规则skipped，未部署Production |
+| 医学边界 | `data/**`零差异；未批准或解除任何BLOCKED、HEM-P0-001/023、simulation或`needs_revision`状态 |
+
+Actions URL：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/30148941887`。Vercel状态页：`https://vercel.com/niubi1vs-projects/hematuria-training-system/BmFSFi24jvwadzzo3Qj7eqFdFMTT`。

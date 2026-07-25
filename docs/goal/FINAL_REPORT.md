@@ -609,3 +609,11 @@
 - P026/P027/P029/P039患者资料报告同步既有source优先结论；P002、14项新增阻塞、18项HEM-P0-023、151项HEM-P0-001、419条模拟事实和42例`needs_revision`均未裁决或解除。
 - 本地最终门禁：完整行为exit 0；Playwright 85/3/0；TypeScript/ESLint；82页构建；25资产bundle；356文件/历史secret scan；高危审计0；`data/**`零差异。
 - 该候选尚须小步提交、普通push和精确新HEAD远程复核。长期QA应从最终绿色HEAD复测P037英文时长、P004/P005/P006未知时相零收集、P001/HX-ADD-001未审核生活史隔离，以及原病史专项P026/P027/P029/P039与32项冻结。
+
+### 病史协调专项最终远程结论（2026-07-25）
+
+- 最终Production Goal HEAD为`e70ed19fadd51671602e937565b779154b16522d`。专项14个提交逐笔选择性集成，状态均为`CHERRY_PICKED`；没有整体merge专项分支或直接cherry-pick其最终HEAD。
+- 本轮新增可独立回滚提交为`d09b7a6`（依赖安全下限）、`969ce96`（依赖证据）、`d75655d`（Patient治理与病史投影）、`e70ed19`（最终本地证据）。回滚使用普通`git revert`并重新运行门禁，禁止reset或force push。
+- Actions run `30148941887`在Node 22.14.0完整success：Playwright 85/3/0、82/82页面、23个JS资产、行为/医学/安全/类型/lint/secret/clean门禁全部通过。Vercel Deployment及Preview Comments绑定精确HEAD并成功；PR #1仍Open/Draft，Pages按Draft规则跳过，未部署Production。
+- 四项source优先用药投影P026/P027/P029/P039通过；P002手术史、14项新增BLOCKED_MEDICAL、18项HEM-P0-023、151项HEM-P0-001、419条模拟事实及42例`needs_revision`均未自动裁决、批准或解除。
+- 长期QA从`e70ed19fadd51671602e937565b779154b16522d`复测：P026/P027/P029/P039；P002与32项阻塞隔离；P037英文`1 day ago`；P004/P005/P006患者未留意事实零收集；P001/HX-ADD-001未审核生活史；42×37、42×17、Patient开场白、360分及双语七阶段。

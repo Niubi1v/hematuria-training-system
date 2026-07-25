@@ -710,3 +710,11 @@
 - 最终本地行为链exit 0；Patient安全投影45个确定性回答、69个governed unknown、12个unreviewed history均符合收集边界；3150/3150、840/840、1428/1428、786/618、42×17、42例双语七阶段及360分通过。
 - 受控外部Next下完整Playwright为85 passed/3互斥skip/0 failed，runner正常退出；TypeScript、ESLint、82页Pages构建、25资产bundle、356文件/历史secret scan和高危审计通过，`data/**`零差异。自管Next断言完成后进程未回收的exit124不登记为通过。
 - 新候选仍须原子提交、普通push及精确新HEAD的Node 22完整Actions/Vercel验收；PR继续Draft。
+
+### 2026-07-25 病史协调集成远程闭环
+
+- 产品/测试修复提交`d75655d`与证据提交`e70ed19`已普通push；本地与远程`codex/hematuria-production-goal`均为`e70ed19fadd51671602e937565b779154b16522d`，ahead/behind=`0/0`，工作树干净。
+- Actions run `30148941887`在Node 22.14.0完整成功：依赖审计、78输出幂等与生成基线、schema、临床矛盾、双语fixture、完整行为、医学审核合同、360分、TypeScript、ESLint、repository secret scan、Playwright `85 passed / 3 skipped / 0 failed`、82/82静态构建、23个JS资产bundle scan及最终clean gate全部通过。
+- 精确HEAD `e70ed19`的Vercel Deployment与Preview Comments均为success；Draft规则下Pages artifact与deploy为skipped，未发布Production。PR #1保持Open/Draft。
+- `CI-P1-20260725-02`与`CI-P1-20260725-03`工程项关闭。P002、14项新增BLOCKED_MEDICAL、18项HEM-P0-023、151项HEM-P0-001、419条模拟事实和42例`needs_revision`仍保持冻结；没有医学审批状态变化。
+- 长期QA起始HEAD为`e70ed19fadd51671602e937565b779154b16522d`，重点复测P026/P027/P029/P039、P002冲突隔离、P037英文时长、P004/P005/P006未留意事实零收集、P001/HX-ADD-001未审核生活史隔离及42×37/42×17双语合同。

@@ -664,3 +664,5 @@
 - **根因C**：三个旧测试仍要求未审核饮酒/吸烟事实确定化，违反当前simulation、teacher-review和HEM-P0-001冻结合同；患者资料完整性报告也未同步四项明确source用药投影。
 - **修复**：扩展受限英文duration解析；未知legacy槽保留路由但从收集/评分投影排除；测试改为断言自然不确定、blocked field与零collectable，不放宽安全规则；报告只同步P026/P027/P029/P039既有source结论。
 - **本地证据**：完整行为链、42例病史协调、TypeScript、ESLint、Playwright 85/3/0、82页构建、bundle、secret及依赖审计通过；`data/**`零差异。
+- **远程关闭证据**：产品修复`d75655d`、证据提交`e70ed19`；Actions run `30148941887`在Node 22.14.0完整success，Playwright 85/3/0、82页build、bundle、secret与clean gate通过；Vercel两项success，PR仍Open/Draft。
+- **最终状态**：`ENGINEERING CLOSED / REMOTE VERIFIED`。医学冻结项继续由具名医学审核处理，不因工程关闭而改变。
