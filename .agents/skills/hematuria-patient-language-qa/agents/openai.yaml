@@ -1,0 +1,4 @@
+interface:
+  display_name: "Hematuria Patient Language QA"
+  short_description: "Audit bilingual patient language safely"
+  default_prompt: "Use $hematuria-patient-language-qa to audit a patient-facing language or intent-routing change."

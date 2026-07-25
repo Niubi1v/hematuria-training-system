@@ -1,0 +1,4 @@
+interface:
+  display_name: "Hematuria Release Gate"
+  short_description: "Run proportionate release readiness gates"
+  default_prompt: "Use $hematuria-release-gate to assess the current branch against the project release gates."
