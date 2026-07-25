@@ -82,6 +82,7 @@
       "caseId": "P002",
       "field": "surgeryHistory",
       "slotId": "PAST_SURGERY",
+      "patientSlotId": "surgery_history",
       "conflictType": "SOURCE_TO_SOURCE_CONTRADICTION",
       "disposition": "BLOCKED_MEDICAL",
       "teacherReviewRequired": true,

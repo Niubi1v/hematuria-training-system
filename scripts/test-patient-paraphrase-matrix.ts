@@ -129,8 +129,8 @@ const contracts: IntentContract[] = [
 
 function unknown(text: string, language: Language) {
   return language === "en"
-    ? /not sure|did not clearly notice|have not been able to say|do not know|have not (?:kept|paid|counted)|did not (?:look|measure)|cannot say for sure/i.test(text)
-    : /说不准|没仔细看|不太清楚|不清楚|没注意|没有注意|没特别注意|没有数清|没有量清|没特别留意|没有数过/.test(text);
+    ? /not sure|cannot recall|do not recall|did not clearly notice|have not been able to say|do not know|have not (?:kept|paid|counted)|did not (?:look|measure|pay)|cannot say for sure/i.test(text)
+    : /说不准|记不(?:太)?清|没仔细看|不太清楚|不清楚|没注意|没有注意|没特别注意|没有数清|没有量清|没特别留意|没有数过/.test(text);
 }
 
 function polarity(text: string, language: Language, value: Exclude<Value, "unknown">) {

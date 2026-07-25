@@ -162,11 +162,11 @@ async function main() {
 
           const expectedSlots = unique([
             ...(canonical?.collectableSlotIds || canonicalSlots),
-            ...probe.structured
+            ...(structured?.collectableSlotIds || [])
           ]);
           const governanceSlots = unique([
             ...(canonical?.governanceSlotIds || canonicalSlots),
-            ...probe.structured
+            ...(structured?.governanceSlotIds || structuredSlots)
           ]);
           const conflictSlots = governanceSlots.filter(
             (slotId) => conflictKeys.has(`${caseData.id}:${slotId}`)

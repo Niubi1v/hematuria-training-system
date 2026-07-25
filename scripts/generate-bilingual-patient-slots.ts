@@ -20,8 +20,8 @@ const englishCases = casesEnJson as Array<Record<string, string>>;
 const existingSlots = existingSlotsJson as Output;
 const blockedCanonicalKeys = new Set(
   historyMedicalPolicy.blockedMedicalHistory
-    .filter((item) => "canonicalSlotId" in item)
-    .map((item) => `${item.caseId}:${(item as { canonicalSlotId: string }).canonicalSlotId}`)
+    .filter((item) => "canonicalSlotId" in item || "patientSlotId" in item)
+    .map((item) => `${item.caseId}:${(item as { canonicalSlotId?: string; patientSlotId?: string }).canonicalSlotId || (item as { patientSlotId: string }).patientSlotId}`)
 );
 const value = (...items: unknown[]) => items.map((item) => String(item || "").trim()).find(Boolean) || "";
 const compact = (text: string) => String(text || "").replace(/\s+/g, "");
@@ -209,7 +209,6 @@ function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en"
   };
   const pfp = extended.patientFacingProfile || {};
   const illness = caseData.presentIllness || {};
-  const risk = caseData.riskFactors || {};
   const sh = caseData.structuredHistory;
   const chronicFacts = sh ? [sh.hypertension, sh.diabetes, sh.coronaryDisease, sh.stroke, sh.liverDisease, sh.tuberculosis]
     .filter((fact) => fact && fact.status === "present") : [];
