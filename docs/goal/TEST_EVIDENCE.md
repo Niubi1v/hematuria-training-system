@@ -1323,3 +1323,25 @@ P001新增三轮及P037/P038各两轮的每次`/api/agent-chat/`均200、`genera
 | Preview稳定性 | fresh session 10/10；中文live AI 5/5，回答P95 1378ms；英文5/5，回答P95 1297ms |
 
 证据边界：标准Preview 11项直接覆盖HEM-P1-053来源与基础阶段流程，但没有直接重放HEM-P1-052的23/29矩阵、HEM-P1-055的58×两种顺序、HEM-P1-054的786/618矩阵、HEM-P2-056非终态报告卡或HEM-P2-028第7阶段双击。上述项目有本地专项和Node 22完整门禁证据，问题级真实Preview复测仍交由长期QA，不登记为已在线专项验证。
+
+## 病史医学协调专项集成本地证据（2026-07-25）
+
+本机使用Node `24.14.0`；Node 22.14权威结果须由新HEAD Actions确认。
+
+| 合同/命令 | 退出码 | 结果 |
+|---|---:|---|
+| 病史协调与双语槽 | 0 | 42例×37槽；14项新增阻塞、18项HEM-P0-023隔离；42例均`needs_revision` |
+| `test-structured-history-matrix.ts` | 0 | 42例×17问法 |
+| 医学审核workbook/queue/import | 0 | 572=153 source+419待专家；0伪造批准 |
+| canonical / natural paraphrase | 0 | 3150/3150；QA自然840/840、1428/1428；错误unknown 0、极性错误0 |
+| compound history | 0 | 786复合、618跨层、42肿瘤边界、56冲突隔离，providerCalls=0 |
+| 360分与七阶段 | 0 | 42例360分；84条双语旅程、588次阶段提交、84份报告 |
+| TypeScript / ESLint | 0 / 0 | 最终代码状态通过 |
+| Playwright desktop/mobile | 0 | 88项：85 passed、3互斥skip、0 failed；3.6分钟；受控外部Next正常退出 |
+| P019/P020英文目录精确回归 | 0 | desktop/mobile 2/2；P019明确英文source，P020自然英文待复核 |
+| conversion idempotency | 0 | 78个受控输出首轮匹配baseline，第二轮零漂移 |
+| Pages basePath构建 | 0 | `/hematuria-training-system`，82/82页 |
+| bundle / repository secret / scanner self-test | 0 | 25个JS资产；355个tracked/candidate及历史；无敏感值输出 |
+| medical governance diff review | 0 | 无sourceFacts、360规则、`expert_approved`或`needs_revision`解除；仅四项明确source用药投影及P020派生语言占位 |
+
+首次完整Playwright在本机Node 24的自管Next回收阶段达到10分钟上限，且在失败汇总前已暴露P019/P020旧断言/跨语言问题；该次不登记为通过。修复后用相同测试集和受控外部Next执行，得到上述85/3/0真实exit 0。未增加重试或测试超时。

@@ -626,3 +626,23 @@
 - **HEM-P2-044**：`ENGINEERING CLOSED EMULATION / BLOCKED_REAL_DEVICE`；真实手机触控与软键盘仍需人工。
 - **HEM-P2-028**：`ENGINEERING CLOSED / REMOTE GATES PASS / STAGE-7 PREVIEW RETEST REQUIRED`。当前Preview验证的是第一阶段快速双击；第7阶段debrief singleflight仍需长期QA在该SHA复测。
 - **冻结边界**：23个英文名称、28项元数据、161个来源、HEM-P0-001/023、419条模拟事实和42例`needs_revision`继续由来源/专家处理。
+
+## 2026-07-25 病史医学协调专项集成缺陷
+
+### HEM-P1-057 协调矩阵审核项ID不唯一
+
+- **状态**：`RESOLVED_LOCAL / REMOTE_RECHECK_PENDING`。
+- **复现**：893行矩阵只有892个唯一ID；P029的`medications`和`anticoagulant`均使用`HISTORY-SOURCE-001`。
+- **修复**：主决议保留原ID，次级投影增加稳定字段后缀；报告生成器发现任何重复ID时fail-closed。现为893/893唯一。
+
+### HEM-P1-058 阻塞主诉英文目录回退为中文
+
+- **状态**：`RESOLVED_LOCAL / REMOTE_RECHECK_PENDING`。
+- **复现**：P020在英文目录显示“发热、尿痛伴会阴胀痛2天”；桌面和移动端同样失败。
+- **修复**：英文fallback拒绝CJK并返回自然安全占位；P019使用已有明确英文source主诉，P020继续`Chief complaint pending medical review`。精确Playwright 2/2及完整85/3通过；P020仍为`needs_revision`，未裁决其可见性冲突。
+
+### CI-P1-20260725 病史专项生成基线漂移
+
+- **状态**：`RESOLVED_LOCAL / NODE22_PENDING`。
+- **复现**：隔离worktree幂等性首次准确指出`data/cases_en.json`、`data/cases_public.json`漂移。
+- **修复**：执行仓库完整生成链，仅产生P020两处语言安全派生变化；审查确认未改sourceFacts、医学极性、审批或评分。提交后78个受控输出首轮与baseline一致，第二轮零漂移。

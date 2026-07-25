@@ -583,3 +583,13 @@
 - HEM-P2-028第7阶段singleflight需在该SHA继续做真实Preview双击复测；HEM-P2-044仍需真机。23个英文名称、28项元数据、161个来源、HEM-P0-001/023、419条模拟事实与42例`needs_revision`均未自动处理。
 - 提交链：`fe93b0e`（052/055）、`ad49132`（054/053）、`d492cea`（056）、`f6c5269`（044）、`cda359e`（028）、`d2dae6e`（PostCSS高危审计恢复）。按影响范围使用普通`git revert <sha>`回滚，不得reset、rebase或force push。
 - PR #1仍为Open/Draft；不转Ready、不合并main、不部署Production。长期QA的准确起始应用HEAD为`d2dae6ebe8956885764b032314616dd2f59d50cb`，若纳入本段证据文档提交，则以包含该应用HEAD的后续文档-only HEAD作为仓库起点，但应用代码基线仍为`d2dae6e`。
+
+### 病史医学协调专项选择性集成本地结论（2026-07-25）
+
+- 从绿色Production `1566f7c21aabbd30eff2e30abf9924e214d1b7a4`开始，逐笔引入专项`d316af9^..50084f7`的14个提交；没有整体merge、最终HEAD cherry-pick、reset、rebase或force push。
+- 所有专项提交状态均为`CHERRY_PICKED`；merge-base等于起点，因此没有`ALREADY_SUPERSEDED`。专项代码、报告、六个病例批次和隔离规则均经逐提交审查后落地。
+- 四项source优先用药投影已核对：P026降糖药类别、P027别嘌醇、P029阿司匹林/坦索罗辛且无华法林/利伐沙班、P039布洛芬/复方止痛药。所有病例继续`needs_revision`；14项新增阻塞、18项HEM-P0-023、151项HEM-P0-001与P002手术史冲突继续不确定回答、不收集、不评分。
+- 集成期额外修复三个可重复工程问题：矩阵ID唯一性`a6d423f`、阻塞主诉语言安全`0ba9699`、生成投影基线`38451b0`。最后一项只把P020英文派生字段从中文换成待复核英文占位，没有修改原始中文、医学极性或审核状态。
+- 本地完整门禁通过：42×37、42×17、572/419、3150、840/1428、786/618、42例360分、84条七阶段旅程、TypeScript、ESLint、Playwright 85/3/0、78输出幂等、82页构建、25 bundle及355文件/历史secret scan。
+- 当前应用候选HEAD为`38451b0a7d9e67752e024910351057efff42dd92`；证据文档提交后使用更晚仓库HEAD。远程Node 22、Actions、Vercel和Preview尚未验证，不以旧绿灯替代。PR #1继续Open/Draft，不转Ready、不合并main、不部署Production。
+- 回滚按最小范围使用普通`git revert`逆序处理证据提交、`38451b0`、`0ba9699`、`a6d423f`及相应cherry-pick提交；不得reset或force push。长期QA需从最终推送HEAD复测P026/P027/P029/P039、P002隔离、32项阻塞、42×37/42×17、P019/P020英文目录和生成幂等性。

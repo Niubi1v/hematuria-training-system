@@ -684,3 +684,12 @@
 - Preview直接验证P003零轮提交、P001中英文问答/双向切换/刷新/快速双击/进入第二阶段，以及P001英文纠错澄清、P037/P038上下文追问均保持DeepSeek `live_ai`且history-log 200。10次fresh session为10/10；中文live AI 5/5（回答P95 1378ms）、英文5/5（回答P95 1297ms），均低于3秒目标。
 - HEM-P1-053的问题级真实Preview来源缺口关闭。HEM-P1-052/055/054和HEM-P2-056的精确问题级Preview场景未被现有11项套件直接重放；它们当前为“本地专项通过 + Node 22完整远程门禁通过”，仍交由长期QA按原始复现矩阵独立复测，不虚报为线上专项通过。
 - PR #1继续Open/Draft，不转Ready、不合并main、不部署Production。`data/**`、医学事实、审核状态、419条模拟事实和42例`needs_revision`均未改变。
+
+### 2026-07-25 病史医学协调专项选择性集成本地里程碑
+
+- 起点为绿色Production `1566f7c21aabbd30eff2e30abf9924e214d1b7a4`；专项为`origin/codex/hematuria-history-medical-reconciliation@50084f71508ee19c4c9b58e5cdf69a64fdd9fadb`，merge-base等于起点。没有整体merge，也没有直接cherry-pick专项最终HEAD。
+- 逐提交状态均为`CHERRY_PICKED`：`d316af9`、`f07fa8c`、`e0b4624`、`108d280`、`952e81e`、`0c772c0`、`53078d3`、`3fa830e`、`3e35f1f`、`5b2fb69`、`3a7b227`、`1f88148`、`d4904c4`、`50084f7`。没有`PARTIALLY_PORTED`、`ALREADY_SUPERSEDED`或`REJECTED`提交。
+- source优先级只应用于有明确依据的四项用药投影：P026降糖药类别、P027别嘌醇、P029阿司匹林/坦索罗辛且明确无华法林/利伐沙班、P039布洛芬/复方止痛药。14项新增`BLOCKED_MEDICAL`、18项HEM-P0-023、151项HEM-P0-001继续冻结；P002手术史source/source冲突继续隔离。
+- 集成期发现并最小修复三个工程缺陷：893行协调矩阵中P029两个投影复用审核ID；P020英文目录回退为中文；完整生成链使`cases_en.json`与`cases_public.json`出现未提交派生漂移。修复提交为`a6d423f`、`0ba9699`、`38451b0`，均未改变医学真值或审批状态。
+- 本地门禁：42例×37双语槽、42例×17病史、572=153+419、18项冲突、3150 canonical、840自然问法、786复合/618跨层、42例360分和84条双语七阶段旅程通过；TypeScript、ESLint通过；Playwright 85 passed/3互斥skip/0 failed；78受控输出两轮幂等；82页Pages构建、25个JS bundle和355文件/历史secret scan通过。
+- 当前应用候选HEAD为`38451b0a7d9e67752e024910351057efff42dd92`；本段文档提交后仓库HEAD会更晚。Node 22 Actions、Vercel部署和Preview应用层结果仍待普通push后按精确新HEAD验证，PR继续Draft。
