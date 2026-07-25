@@ -601,3 +601,11 @@
 - 恢复候选仅更新`pnpm-workspace.yaml`与`pnpm-lock.yaml`的安全下限至PostCSS 8.5.18和brace-expansion 5.0.8。完整高危审计、TypeScript、ESLint、产品审计、82页构建、25资产bundle及repository secret scan本地通过；`data/**`零差异。
 - 新候选须普通push并等待精确新HEAD的完整Node 22 Actions和Vercel。若远程继续失败，读取第一条真实日志继续最小修复；PR保持Draft，不合并main、不部署Production。
 - 依赖修复可用普通`git revert <dependency-fix-sha>`回滚，但会重新暴露两项高危公告；不得reset、rebase或force push。长期QA起点须使用最终绿色远程HEAD，而不是`aca8a2a`。
+
+### Node 22行为门禁恢复候选（2026-07-25）
+
+- `969ce96`的Actions run `30147937615`证明两项新增高危公告已经关闭，但在行为链首先发现P037自然英文source措辞未被旧duration解析器支持；Vercel两项检查成功，Actions不绿色。
+- 最小产品修复支持`for <duration>`与`<duration> ago`，并让“患者未留意”的legacy槽保留intent路由但不进入收集或评分。旧测试同步当前冻结边界：未审核饮酒/吸烟事实必须自然不确定，不能为了绿灯恢复确定性negative。
+- P026/P027/P029/P039患者资料报告同步既有source优先结论；P002、14项新增阻塞、18项HEM-P0-023、151项HEM-P0-001、419条模拟事实和42例`needs_revision`均未裁决或解除。
+- 本地最终门禁：完整行为exit 0；Playwright 85/3/0；TypeScript/ESLint；82页构建；25资产bundle；356文件/历史secret scan；高危审计0；`data/**`零差异。
+- 该候选尚须小步提交、普通push和精确新HEAD远程复核。长期QA应从最终绿色HEAD复测P037英文时长、P004/P005/P006未知时相零收集、P001/HX-ADD-001未审核生活史隔离，以及原病史专项P026/P027/P029/P039与32项冻结。

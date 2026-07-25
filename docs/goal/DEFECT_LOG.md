@@ -654,3 +654,13 @@
 - **根因**：项目既有安全override固定在公告发布前的修复版本；2026-07-24更新的两个GitHub reviewed advisory提高了安全下限。
 - **修复**：仅将`postcss@<=8.5.17`覆盖为8.5.18、`brace-expansion@<=5.0.7`覆盖为5.0.8并重建锁文件；审计等级、CI步骤和测试断言不变。
 - **本地证据**：完整高危审计0已知漏洞；TypeScript、ESLint、产品审计、82页构建、25资产bundle和repository secret scan通过。关闭条件为新HEAD Node 22 Actions完整success。
+
+### CI-P1-20260725-03 病史source措辞与Patient收集合同未同步
+
+- **状态**：`LOCAL FIXED / NODE22 RECHECK PENDING`。
+- **远程证据**：Actions run `30147937615`在依赖审计成功后，首先失败于P037英文onset；实际回答`It started for some time.`，预期保留source主诉中的`1 day`。后续步骤skipped。
+- **根因A**：确定性onset投影仅解析`for <duration>`，未解析专项引入的`<duration> ago`自然英文。
+- **根因B**：legacy canonical槽即使回答明确表示患者未留意，仍进入collectable集合；P005/P006时相可被错误计为已收集。
+- **根因C**：三个旧测试仍要求未审核饮酒/吸烟事实确定化，违反当前simulation、teacher-review和HEM-P0-001冻结合同；患者资料完整性报告也未同步四项明确source用药投影。
+- **修复**：扩展受限英文duration解析；未知legacy槽保留路由但从收集/评分投影排除；测试改为断言自然不确定、blocked field与零collectable，不放宽安全规则；报告只同步P026/P027/P029/P039既有source结论。
+- **本地证据**：完整行为链、42例病史协调、TypeScript、ESLint、Playwright 85/3/0、82页构建、bundle、secret及依赖审计通过；`data/**`零差异。

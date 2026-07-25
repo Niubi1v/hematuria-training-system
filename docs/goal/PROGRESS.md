@@ -701,3 +701,12 @@
 - 最小候选只更新项目级安全override和锁文件：PostCSS统一为8.5.18，brace-expansion统一为5.0.8；没有删除审计、放宽阈值或修改业务、医学数据、审批状态、session/attempt与360分规则。
 - 本地`pnpm audit --audit-level high`由2 high恢复为`No known vulnerabilities found`。TypeScript、ESLint、产品审计、secret scanner自测、355文件/历史secret scan、82页Pages构建和25个JS资产bundle scan通过；`data/**`零差异。因为应用代码未变，没有重复已通过的85/3完整Playwright。
 - 该候选仍须小步提交、普通push，并由精确新HEAD的Node 22完整Actions与Vercel重新验收；旧run与旧部署不得替代。
+
+### 2026-07-25 Node 22行为门禁恢复候选
+
+- 依赖修复HEAD `969ce963cbf47ccf84f0a27205b1f543cbf97183`已普通push。Actions run `30147937615`的Node 22依赖审计、生成幂等性、schema、临床矛盾及双语fixture通过；第一条行为失败为P037英文onset未从新source主诉“1 day ago”提取时长。Vercel Deployment与Preview Comments成功。
+- 行为链继续独立暴露两个治理合同缺口：未知legacy槽仍可被计作已收集，以及旧测试仍要求未审核饮酒/吸烟史确定化。修复后“患者未留意”槽保留canonical命中，但`collectableSlotIds/matchedSlotIds`为空并标记`patient_not_observed`；HEM-P0-001、simulation及teacher-review事实继续自然不确定、不收集、不评分。
+- P037修复只扩展英文时长语法，兼容`for 1 day`与`1 day ago`，最终时长仍来自权威chief complaint；未修改病程事实。患者资料完整性报告同步四项已审核source用药投影P026/P027/P029/P039。
+- 最终本地行为链exit 0；Patient安全投影45个确定性回答、69个governed unknown、12个unreviewed history均符合收集边界；3150/3150、840/840、1428/1428、786/618、42×17、42例双语七阶段及360分通过。
+- 受控外部Next下完整Playwright为85 passed/3互斥skip/0 failed，runner正常退出；TypeScript、ESLint、82页Pages构建、25资产bundle、356文件/历史secret scan和高危审计通过，`data/**`零差异。自管Next断言完成后进程未回收的exit124不登记为通过。
+- 新候选仍须原子提交、普通push及精确新HEAD的Node 22完整Actions/Vercel验收；PR继续Draft。

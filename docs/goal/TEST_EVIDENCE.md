@@ -1362,3 +1362,22 @@ P001新增三轮及P037/P038各两轮的每次`/api/agent-chat/`均200、`genera
 | `git diff -- data` | 0 | 无医学数据或生成数据差异 |
 
 本机运行时为Node 24.14.0，因此Node 22.14.0权威结果仍由新HEAD Actions确认。依赖外没有应用代码变化，未重复运行不受影响且已在`aca8a2a`前通过的85/3完整Playwright。
+
+## Node 22行为失败与Patient治理恢复证据（2026-07-25）
+
+| 合同/命令 | 退出码 | 结果 |
+|---|---:|---|
+| Actions run `30147937615` / `969ce96` | 1 | Node 22依赖审计与前置数据门禁通过；Unit and behavioral tests首个失败为P037英文onset丢失`1 day` |
+| P037 contextual follow-up | 0 | `1 day ago`与`for <duration>`均投影为source支持的自然英文；P037/P038纠错、澄清、fallback恢复通过 |
+| unknown legacy collection | 0 | P004/P005/P006未留意事实匹配但不收集；`patient_not_observed`与`collectableSlotIds=[]` |
+| LLM adapter治理 | 0 | HX-ADD-001未审核饮酒史为`pending_review`，blocked field保留，零确定性negative |
+| safe projection | 0 | 45 approved；69 governed unknown；12 unreviewed history；全部unknown/unreviewed不可收集 |
+| 完整`pnpm run test` | 0 | 42例、572/419、3150、840/1428、786/618、42×17、84条七阶段、360分及安全链通过 |
+| Playwright自管Next | 124 | 88项断言完成、无失败符号；Windows Node 24子进程未回收，按证据规则不登记为通过 |
+| 受控外部Next完整Playwright | 0 | 85 passed、3互斥skip、0 failed；desktop/mobile；3.6分钟；runner正常退出 |
+| TypeScript / ESLint | 0 / 0 | 最终代码状态通过 |
+| Pages build / bundle | 0 / 0 | 82/82页；25个JavaScript资产 |
+| repository secret / audit | 0 / 0 | 356 tracked/candidate及历史通过；`No known vulnerabilities found` |
+| `git diff -- data` | 0 | 无医学事实、审批或生成数据差异 |
+
+`PATIENT_PROFILE_COMPLETENESS_REPORT.md`只同步专项已经确认的四项source用药投影；P026、P027、P029、P039对应患者可见文本与当前生成结果一致。没有写入新的医学结论。
