@@ -59,7 +59,7 @@ const negativePatterns: Partial<Record<CanonicalSlotId, RegExp>> = {
 
 const positivePatterns: Partial<Record<CanonicalSlotId, RegExp>> = {
   clots: /(?:有|出现|伴)[^。；]*血块|血块/,
-  pain: /(?:疼痛|腰痛|腹痛|不适|憋胀|酸胀痛|胀痛|隐痛|绞痛|刺痛|痛感)/,
+  pain: /(?:疼痛|腰痛|腹痛|酸痛|不适|憋胀|酸胀痛|胀痛|隐痛|绞痛|刺痛|痛感)/,
   dysuria: /尿痛|小便[^。；]*(?:疼|痛)|排尿[^。；]*(?:疼|痛)|烧灼/,
   flank_pain: /肾绞痛|[左右双侧]*腰[^。；]*(?:痛|疼|酸|酸胀|不适)|肾区痛/,
   renal_colic: /绞痛/,
@@ -70,7 +70,7 @@ const positivePatterns: Partial<Record<CanonicalSlotId, RegExp>> = {
   retention: /尿潴留|尿不出来/,
   fever_chills: /发热|发烧|寒战|高热|低热/,
   recent_uri: /(?:感冒|咽痛|扁桃体炎|上呼吸道感染|上感)[^。；]*(?:后|之后|相关|伴|期间|同步|前驱)/,
-  triggers: /(?:长跑|长距离跑步|跑步|运动|剧烈运动|皮肤[^。；]{0,8}感染|感冒|咽痛|上感|外伤|性生活|导尿|膀胱镜|尿路操作)[^。；]{0,12}(?:后|之后|诱发|期间|同步)/,
+  triggers: /(?:长跑|长距离跑步|跑步|运动|剧烈运动|皮肤[^。；]{0,8}感染|感冒|咽痛|上感|车祸|交通事故|撞击|摔倒|外伤|性生活|导尿|膀胱镜|尿路操作)[^。；]{0,12}(?:后|之后|诱发|期间|同步)/,
   stone_history: /(?:有|曾|既往|以前)[^。；]*(?:结石|肾结石|输尿管结石)/,
   uti_history: /(?:有|曾|既往|以前|反复)[^。；]*(?:尿路感染|膀胱炎|肾盂肾炎)/,
   tumor_history: /(?:有|曾|既往|以前)[^。；]*(?:肿瘤|癌|放化疗)/,
@@ -148,6 +148,8 @@ function naturalBinaryZh(slot: CanonicalSlotId, text: string) {
       ? "这次是在长跑或运动后出现的。"
       : /皮肤[^。；]{0,8}感染/.test(text)
         ? "这次是在皮肤感染后出现的。"
+        : /车祸|交通事故|撞击|摔倒/.test(text)
+          ? "这次是在车祸或腰腹部撞击后出现的。"
         : /感冒|咽痛|上感/.test(text)
           ? "这次和感冒或咽痛前后发生。"
           : "发作前有明确诱因。"
@@ -175,7 +177,7 @@ const medicationNames: Record<string, string> = {
   缬沙坦: "valsartan", 阿司匹林: "aspirin", 氯吡格雷: "clopidogrel", 华法林: "warfarin", 利伐沙班: "rivaroxaban",
   达比加群: "dabigatran", 阿哌沙班: "apixaban", 二甲双胍: "metformin", 胰岛素: "insulin", 非那雄胺: "finasteride", 坦索罗辛: "tamsulosin",
   厄贝沙坦: "irbesartan", 达格列净: "dapagliflozin", 硝苯地平: "nifedipine", 贝那普利: "benazepril", 氨氯地平: "amlodipine",
-  他汀: "a statin", 别嘌醇: "allopurinol", 降压药: "blood-pressure medicine", 降糖药: "diabetes medication"
+  他汀: "a statin", 别嘌醇: "allopurinol", 布洛芬: "ibuprofen", 复方止痛药: "combination painkillers", 降压药: "blood-pressure medicine", 降糖药: "diabetes medication"
 };
 function translateMedication(text: string) {
   let translated = text;
@@ -186,6 +188,17 @@ function translateMedication(text: string) {
 
 function firstMatching(pattern: RegExp, ...items: unknown[]) {
   return items.map((item) => String(item || "").trim()).find((item) => pattern.test(item)) || "";
+}
+
+function hematuriaFrequencySource(...items: unknown[]) {
+  const clauses = items
+    .flatMap((item) => String(item || "").split(/[；。\n]/))
+    .map((item) => item.trim())
+    .filter((item) => /血尿|尿色|尿检|红细胞|潜血/.test(item));
+  if (clauses.some((item) => /反复|多次|复查仍|两次/.test(item))) return "反复";
+  if (clauses.some((item) => /(?:仅|只|发现)\s*(?:过)?(?:1|一)次[^；。]*(?:血尿|尿色)|(?:血尿|尿色)[^；。]{0,16}(?:仅|只)\s*(?:1|一)次/.test(item))) return "只出现一次";
+  if (clauses.some((item) => /(?:持续|一直|每次)(?:性)?(?:肉眼|镜下)?血尿|(?:血尿|尿色)(?:持续|一直|每次)/.test(item))) return "持续";
+  return "";
 }
 
 function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en") {
@@ -237,7 +250,8 @@ function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en"
   const rawUrineColor = value(pfp.urineColor, illness.color, caseData.patientAnswers?.color);
   const microscopicOnly = /镜下|潜血|隐血/.test(rawVisibility) && !/肉眼/.test(rawVisibility);
   const specialVisibleColor = /茶色|浓茶|可乐|酱油|烟熏/.test(rawUrineColor);
-  const rawFrequency = firstMatching(/间断|反复|多次|持续|每次|一直|始终|仅?一次|1次/, extended.presentIllness.frequency, illness.onset, illness.duration, caseData.chiefComplaint);
+  const menstrualContamination = /经血|月经/.test(rawUrineColor);
+  const rawFrequency = hematuriaFrequencySource(extended.presentIllness.frequency, illness.onset, illness.duration, caseData.chiefComplaint);
   const rawClots = value(pfp.clots, illness.clots, caseData.patientAnswers?.clots);
   const rawFlankPain = value(pfp.flankPain, illness.flankPain);
   const rawPainDetail = value(caseData.patientAnswers?.pain, illness.pain, pfp.painRelation, illness.flankPain);
@@ -249,12 +263,20 @@ function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en"
   const rawVoiding = value(illness.voidingDifficulty, pfp.luts);
   const rawFever = value(pfp.fever, illness.fever, caseData.patientAnswers?.fever);
   const rawRecentUri = recentUriZh;
-  const triggerPattern = /(?:长跑|长距离跑步|跑步|运动|剧烈运动|皮肤[^。；]{0,8}感染|感冒|咽痛|上感|外伤|性生活|导尿|膀胱镜|尿路操作)[^。；]{0,12}(?:后|之后|诱发|期间|同步)/;
-  const rawTrigger = value(illness.trigger)
-    || [illness.onset, caseData.chiefComplaint]
-      .map((item) => String(item || "").match(triggerPattern)?.[0] || "")
-      .find(Boolean)
-    || "";
+  const triggerPattern = /(?:长跑|长距离跑步|跑步|运动|剧烈运动|皮肤[^。；]{0,8}感染|感冒|咽痛|上感|车祸|交通事故|撞击|摔倒|外伤|性生活|导尿|膀胱镜|尿路操作)[^。；]{0,12}(?:后|之后|诱发|期间|同步)/;
+  const triggerCandidates = [
+    value(illness.trigger),
+    caseData.chiefComplaint,
+    ...String(illness.onset || "").split(/[；。\n]/)
+  ].map((item) => String(item || "").trim()).filter(Boolean);
+  const negativeTriggerPattern = /(?:无|没有|否认)[^；。]*(?:运动|外伤|性生活|导尿|膀胱镜|尿路操作)/;
+  const triggerSource = triggerCandidates.find((item) =>
+    negativeTriggerPattern.test(item)
+    || triggerPattern.test(item) && /血尿|尿色|小便|尿检|潜血/.test(item)
+  ) || "";
+  const rawTrigger = /(?:无|没有|否认)/.test(triggerSource)
+    ? triggerSource
+    : triggerSource.match(triggerPattern)?.[0] || "";
   const rawFamily = sh?.familyHistory?.patientAnswerZh || "";
   const familyAnswersSpecificQuestion = /血尿|肾病|肾炎|肿瘤|癌|遗传|类似/.test(rawFamily);
   const zh: Partial<Record<CanonicalSlotId, string>> = {
@@ -275,7 +297,11 @@ function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en"
           ? "这段时间一直都有。"
           : unknownAnswer("hematuria_frequency", "zh"),
     hematuria_phase: microscopicOnly || /需追问|可伴|可表现|常为|多为|未分清|未明确|不详/.test(rawPhase) ? unknownAnswer("hematuria_phase", "zh") : rawPhase,
-    urine_color: microscopicOnly && !specialVisibleColor ? "尿色外观看不出明显发红。" : rawUrineColor,
+    urine_color: menstrualContamination
+      ? "这份尿样在经期留取，外观可能受经血影响。"
+      : microscopicOnly && !specialVisibleColor
+        ? "尿色外观看不出明显发红。"
+        : rawUrineColor,
     clots: naturalBinaryZh("clots", rawClots),
     pain: naturalBinaryZh("pain", rawPainDetail), dysuria: naturalBinaryZh("dysuria", dysuriaZh),
     flank_pain: naturalBinaryZh("flank_pain", rawFlankPain),
@@ -335,7 +361,7 @@ function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en"
         : /起始|开始/.test(source)
           ? "It is red mainly at the beginning."
           : unknownAnswer(slot, "en"),
-    urine_color: /茶|酱油|可乐|烟熏/.test(source) ? "It sometimes looks tea- or cola-colored." : /外观看不出|外观.*正常|看不出明显发红/.test(source) ? "My urine looked normal; the blood was found only on testing." : /鲜红/.test(source) ? "It looks bright red." : /暗红/.test(source) ? "It looks dark red." : /洗肉水/.test(source) ? "It looks pink-red, like water used to rinse meat." : "It looks reddish.",
+    urine_color: /经期|经血/.test(source) ? "The sample was collected during menstruation, so menstrual blood may have affected its appearance." : /茶[^。；]*淡红|淡红[^。；]*茶/.test(source) ? "It looks tea-colored or pale red." : /鲜红[^。；]*暗红|暗红[^。；]*鲜红/.test(source) ? "It looks bright to dark red." : /茶|酱油|可乐|烟熏/.test(source) ? "It sometimes looks tea- or cola-colored." : /外观看不出|外观.*正常|看不出明显发红/.test(source) ? "My urine looked normal; the blood was found only on testing." : /鲜红/.test(source) ? "It looks bright red." : /暗红/.test(source) ? "It looks dark red." : /洗肉水/.test(source) ? "It looks pink-red, like water used to rinse meat." : "It looks reddish.",
     clots: unknown ? unknownAnswer(slot, "en") : negative ? "I have not noticed any blood clots." : "I have noticed blood clots in the urine.",
     pain: unknown ? unknownAnswer(slot, "en") : negative ? "I do not have pain with it." : "I have pain with it.",
     dysuria: unknown ? unknownAnswer(slot, "en") : negative ? "It does not hurt or burn when I urinate." : "It hurts or burns when I urinate.",
@@ -361,6 +387,8 @@ function answer(caseData: CaseData, slot: CanonicalSlotId, language: "zh" | "en"
           ? "This happened after a long run or other strenuous exercise."
           : /皮肤[^。；]{0,8}感染/.test(source)
             ? "This happened after a skin infection."
+            : /车祸|交通事故|撞击|摔倒/.test(source)
+              ? "This happened after a traffic accident or a direct blow to my flank."
             : /感冒|咽痛|上感/.test(source)
               ? "This happened around the time of a cold or sore throat."
               : "There was a trigger before this started.",

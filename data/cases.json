@@ -47972,7 +47972,7 @@
     "pastHistory": "否认糖尿病、镰状细胞病、泌尿系结石、反复感染、泌尿操作、肿瘤及放化疗史；无高血压、冠心病、脑卒中、肝病、结核。训练设定为有慢性头痛或肌肉骨骼痛导致镇痛药长期使用，需核实。无手术、输血史，无已知过敏；结石史：结石史：否；尿路感染史：感染史：否；外伤/泌尿操作史：外伤/操作：否；肿瘤史：肿瘤/放化疗：否",
     "personalHistory": "我不吸烟。；我平时不喝酒。；我的工作会接触一些化工材料。；工作中没有接触染料、橡胶、皮革、化工或重金属。",
     "familyHistory": "家里没有人得过类似血尿或遗传性肾病。",
-    "medication": "无长期用药",
+    "medication": "布洛芬或复方止痛药",
     "urineTestResult": "尿RBC+~++，可有蛋白轻度；肾功能需评估",
     "investigations": [
       {
@@ -49052,9 +49052,26 @@
         "provenance": "author_added_for_simulation",
         "teacherReviewRequired": true
       },
-      "medicationList": [],
-      "medicationAnswerZh": "我没有长期服药。",
-      "medicationAnswerEn": "I do not take any long-term medication."
+      "medicationList": [
+        {
+          "name": "布洛芬",
+          "dose": "",
+          "frequency": "",
+          "indication": "",
+          "provenance": "source",
+          "teacherReviewRequired": false
+        },
+        {
+          "name": "复方止痛药",
+          "dose": "",
+          "frequency": "",
+          "indication": "",
+          "provenance": "source",
+          "teacherReviewRequired": false
+        }
+      ],
+      "medicationAnswerZh": "我长期服用布洛芬或复方止痛药，但具体用量和频率记不清。",
+      "medicationAnswerEn": "I have been taking ibuprofen or combination painkillers regularly, but I cannot recall the exact amount or frequency."
     },
     "schemaVersion": "2.2.0",
     "reproductiveHistory": "未提供（需在问诊中确认）",
