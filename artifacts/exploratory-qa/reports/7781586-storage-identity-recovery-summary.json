@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "exploratory-storage-identity-recovery-summary-v1",
+  "productionBaseline": "77815862a0abebff67b8d958f66944a0e11b068f",
+  "executedAt": "2026-07-25",
+  "viewports": [
+    "1440x900",
+    "1280x720",
+    "390x844",
+    "360x800"
+  ],
+  "malformedPointerFields": {
+    "result": "FAIL_EMULATION",
+    "defectId": "HEM-P1-061",
+    "runs": 4,
+    "variantsPerRun": 7,
+    "totalVariants": 28,
+    "unsafeHydrations": 24,
+    "finalReportsVisibleFromMalformedPointers": 24,
+    "compatiblePointersAfterHydration": 4,
+    "safeControl": "missing_schema_version",
+    "unsafeVariants": [
+      "missing_case_id",
+      "missing_mode",
+      "missing_language",
+      "missing_participant_id",
+      "missing_attempt_id",
+      "wrong_participant_id"
+    ],
+    "failedNetworkRequests": 0,
+    "unexpectedConsoleErrors": 0,
+    "traceScreenshotsEnabled": false,
+    "traceDomSnapshotsEnabled": false
+  },
+  "attemptStorageApiRecovery": {
+    "result": "FAIL_EMULATION",
+    "defectId": "HEM-P1-063",
+    "runs": 4,
+    "storageFaultObserved": 4,
+    "draftPersistedAfterApiRecovery": 4,
+    "pointerRepairedBeforeReload": 0,
+    "draftRecoveredAfterReload": 0,
+    "orphanDraftsAfterReload": 4,
+    "trainingInitializationSucceeded": 8,
+    "failedNetworkRequests": 0,
+    "unexpectedConsoleErrors": 0,
+    "realStorageOutageClaimed": false
+  },
+  "historyLogStorageRecovery": {
+    "result": "PASS_EMULATION",
+    "defectId": null,
+    "runs": 4,
+    "oneShotWriteFailuresObserved": 4,
+    "pendingQueuesPersistedAfterThreeFailures": 4,
+    "automaticCallsAfterReload": 0,
+    "failedHistoryRequests": 12,
+    "successfulManualRetries": 4,
+    "historyRequestsPerRun": 4,
+    "uniqueRequestIdsPerRun": 1,
+    "pendingQueuesAfterRecovery": 0,
+    "failedNetworkRequests": 0,
+    "unexpectedConsoleErrors": 0
+  },
+  "retention": {
+    "questionText": false,
+    "patientReplyText": false,
+    "requestIds": false,
+    "attemptIds": false,
+    "responseBodies": false,
+    "credentials": false,
+    "medicalFactsEvaluated": false
+  }
+}

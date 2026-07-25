@@ -214,3 +214,19 @@
 
 - 指针测试只使用P001/P002合成训练状态验证客户端作用域校验，不评价病例事实或医学内容，也不扩张为42例逐例UI结论。
 - HEM-P1-061的服务端P002初始化4/4为200；失败判定来自客户端显示与目标`caseId/language/mode/participant`不兼容的终态，不将合法服务端新attempt误报为服务端越权。
+
+## Production `7781586` 第20轮身份完整性与队列恢复增量
+
+| 覆盖 | 结果 | 状态 |
+| --- | --- | --- |
+| 缺`schemaVersion`pointer | 四viewport 4/4替换为兼容pointer，终态泄漏0 | PASS_EMULATION_FAIL_CLOSED |
+| 缺其他身份字段pointer | 5种×4 viewport共20/20显示畸形终态 | FAIL_EMULATION，HEM-P1-061 |
+| 错误participant pointer | 四viewport 4/4显示错误参与者终态 | FAIL_EMULATION，HEM-P1-061 |
+| attempt存储API恢复后保存 | 草稿文件4/4落盘，pointer补写0/4 | FAIL_EMULATION，HEM-P1-063 |
+| attempt存储恢复后刷新 | 草稿恢复0/4，孤儿草稿4/4，init 8/8为200 | FAIL_EMULATION，HEM-P1-063 |
+| history-log一次写失败 | 4/4保存pending队列，attempts均为3 | PASS_EMULATION |
+| history-log刷新/手动恢复 | 自动额外请求0；每次3×503+1×200、唯一ID=1、最终pending=0 | PASS_EMULATION |
+| 真实浏览器存储封锁/磁盘故障 | 仅Storage API方法级故障注入 | BLOCKED_REAL_STORAGE / BLOCKED_REAL_BROWSER |
+
+- 本批仍以P001代表客户端attempt身份和队列状态机，不扩张为42例逐例视觉覆盖；42例服务端隔离、评分和路由证据沿用既有全量矩阵。
+- history-log通过只证明固定本地handler下的队列持久化、相同幂等ID和手动恢复，不替代真实Preview Redis/history故障注入。

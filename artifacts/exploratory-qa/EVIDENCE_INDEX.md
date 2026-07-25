@@ -339,3 +339,22 @@ SHA-256：
 - 第19轮最终全证据树流式/解包扫描覆盖774个物理文件、ZIP内14,708个条目和2,024,143,152字节，敏感值命中0；扫描器只输出计数，不输出候选值。
 - scanner自测合同通过。通用repository candidate scanner仍只对历史5个本机未跟踪大trace按大小上限fail-closed（4个ZIP内entry过大、1个ZIP文件过大），没有新增规则或历史命中；这5个文件已由上项无大小上限的流式/解包扫描覆盖并得到0命中。
 - 第19轮11个staged文件及完整可达文本历史的独立扫描敏感值命中0；`git diff --cached --check`通过，暂存范围不含业务代码、`data/**`、完整问答、header或大trace/录像。重复截图、原始console/network和HTML报告继续保留本机、不进入Git。
+
+## `7781586` 第20轮身份完整性与队列恢复证据
+
+| 证据名称 | 对应测试或缺陷 | 文件路径 | 文件大小 | 提交Git | 未提交原因 | 本机保留位置 |
+| --- | --- | --- | ---: | --- | --- | --- |
+| 三组四viewport存储/身份测试 | HEM-P1-061扩展、HEM-P1-063、history队列恢复 | `tests/exploratory/long-running-qa.spec.mjs` | 144,847 B（整文件） | 是 | — | 仓库路径 |
+| 第20轮脱敏聚合 | 本轮验收结论 | `artifacts/exploratory-qa/reports/7781586-storage-identity-recovery-summary.json` | 2,048 B | 是 | — | 仓库路径 |
+| HEM-P1-063代表性移动截图 | 390×844刷新后草稿未恢复 | `artifacts/exploratory-qa/screenshots/attempt-storage-api-recovery-zh-390x844.png` | 41,543 B | 是 | — | 仓库路径 |
+| 四viewport原始摘要 | 3组测试×4 viewport | `artifacts/exploratory-qa/reports/7781586-{malformed-pointer-fields,attempt-storage-api-recovery,history-log-storage-recovery}-*-summary.json` | 12份/17,206 B | 否 | 聚合已保留必要计数 | 同路径，本机未跟踪 |
+| console/network摘要 | 三组四viewport页面诊断 | `artifacts/exploratory-qa/reports/{malformed-pointer-fields,attempt-storage-api-recovery,history-log-storage-recovery}-*` | 24份/117,520 B | 否 | 与聚合重复，可能含本机运行上下文 | 同路径，本机未跟踪 |
+| 本轮截图及QA探针失败帧 | 三组四viewport、含首次选择器/TTS夹具失败 | `artifacts/exploratory-qa/screenshots/{malformed-pointer-fields,attempt-storage-api-recovery,history-log-storage-recovery}-*` | 20份/2,925,994 B | 否 | 仅提交HEM-P1-063一张代表图；其余重复或为已排除QA探针 | 同路径，本机未跟踪 |
+| 本轮trace | 三组四viewport可重建证据 | `artifacts/exploratory-qa/traces/{malformed-pointer-fields,attempt-storage-api-recovery,history-log-storage-recovery}-*.zip` | 12份/35,579,569 B | 否 | 体积大且可重建；畸形pointer组关闭截图与DOM snapshot | 同路径，本机未跟踪 |
+| 本轮失败录像 | 首次/正式失败过程 | `artifacts/exploratory-qa/videos/{malformed-pointer-fields,attempt-storage-api-recovery,history-log-storage-recovery}-*.webm` | 12份/6,537,740 B | 否 | 体积大；测试、聚合和代表截图足够 | 同路径，本机未跟踪 |
+
+- 聚合只保留变体、状态和计数，不保存问题、回答、最终报告正文、request ID、attempt ID、header、Cookie、token、签名或环境值；HEM-P1-061 trace关闭截图和DOM snapshot。
+- HEM-P1-063代表截图已人工复核，只含公开P001开场、阶段状态和刷新后空白病史小结；不含QA草稿标记、评分、隐藏病例事实或凭据。
+- 第20轮最终全证据树流式/解包扫描覆盖842个物理文件、ZIP内15,416个条目和2,114,751,760字节，敏感值命中0；扫描器只输出计数，不输出候选值。
+- scanner自测合同通过。通用repository candidate scanner仍只对历史5个本机未跟踪大trace按大小上限fail-closed（4个ZIP内entry过大、1个ZIP文件过大），没有新增规则或历史命中；这5个文件已由上项无大小上限的流式/解包扫描覆盖并得到0命中。
+- 第20轮10个staged文件及完整可达文本历史的独立扫描敏感值命中0；`git diff --cached --check`通过，暂存范围不含业务代码、`data/**`、完整问答、终态正文、header或大trace/录像。原始console/network和HTML报告继续仅本机保留。

@@ -1915,6 +1915,442 @@ test("an incompatible completed attempt pointer cannot hydrate another case or l
   });
 });
 
+test("malformed attempt pointers fail closed before terminal state hydration @malformed-pointer-fields", async ({ browser }, testInfo) => {
+  const language = ["qa-1440x900", "qa-390x844"].includes(testInfo.project.name) ? "zh" : "en";
+  const attemptId = `qa-malformed-pointer-${viewportSlug(testInfo)}`;
+  const seed = await createCompletedAttemptSeed("P001", language, attemptId);
+  const variants = [
+    { id: "missing-schema", omit: ["schemaVersion"] },
+    { id: "missing-case", omit: ["caseId"] },
+    { id: "missing-mode", omit: ["mode"] },
+    { id: "missing-language", omit: ["language"] },
+    { id: "missing-participant", omit: ["participantId"] },
+    { id: "missing-attempt-id", omit: ["attemptId"] },
+    { id: "wrong-participant", patch: { participantId: "qa-other-participant" } }
+  ];
+
+  await withEvidence(browser, testInfo, "malformed-pointer-fields", async ({ page, slug, consoleEvents, networkEvents }) => {
+    const actionObservations = [];
+    await page.addInitScript((selectedLanguage) => localStorage.setItem("hematuria-language", selectedLanguage), language);
+    await installProductionTrainingApi(page, [], actionObservations, {
+      resetStore: false,
+      serverTokens: new Map([[attemptId, seed.token]]),
+      requestIds: new Set(),
+      pageLabel: "malformed-pointer"
+    });
+    await page.goto("/cases/P001/");
+    await expect(page.getByText("P001", { exact: true }).first()).toBeVisible();
+
+    const observations = [];
+    for (const variant of variants) {
+      await page.evaluate(({ selectedLanguage, sourceAttempt, sourceSavedState, scenario }) => {
+        for (const key of Object.keys(localStorage)) {
+          if (key.startsWith("hematuria-attempt-v3:") || key.startsWith("hematuria-attempt-pointer-v3:")) localStorage.removeItem(key);
+        }
+        const malformed = { ...sourceAttempt, ...(scenario.patch || {}) };
+        for (const field of scenario.omit || []) delete malformed[field];
+        const participantScope = malformed.participantId === "practice-user"
+          ? ""
+          : `:participant:${encodeURIComponent(malformed.participantId)}:${malformed.schemaVersion}`;
+        const storageKey = `hematuria-attempt-v3:${malformed.caseId}:${malformed.mode}:${malformed.language}${participantScope}:${malformed.attemptId}`;
+        localStorage.setItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`, JSON.stringify(malformed));
+        localStorage.setItem(storageKey, JSON.stringify({ ...sourceSavedState, attempt: malformed }));
+      }, {
+        selectedLanguage: language,
+        sourceAttempt: seed.attempt,
+        sourceSavedState: seed.savedState,
+        scenario: variant
+      });
+      const actionOffset = actionObservations.length;
+      await page.reload();
+      await expect(page.getByText("P001", { exact: true }).first()).toBeVisible();
+      await page.waitForTimeout(500);
+      const finalReportVisible = await page.getByTestId("final-report").isVisible().catch(() => false);
+      const pointerAudit = await page.evaluate((selectedLanguage) => {
+        const pointer = JSON.parse(localStorage.getItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`) || "null");
+        return {
+          compatible: Boolean(
+            pointer?.attemptId
+            && pointer?.caseId === "P001"
+            && pointer?.mode === "free"
+            && pointer?.language === selectedLanguage
+            && pointer?.participantId === "practice-user"
+            && pointer?.schemaVersion === "attempt-v3"
+          ),
+          identityFieldCount: ["attemptId", "caseId", "mode", "language", "participantId", "schemaVersion"]
+            .filter((field) => typeof pointer?.[field] === "string" && pointer[field].length > 0).length
+        };
+      }, language);
+      observations.push({
+        variant: variant.id,
+        finalReportVisible,
+        pointerCompatible: pointerAudit.compatible,
+        pointerIdentityFieldCount: pointerAudit.identityFieldCount,
+        actionStatuses: actionObservations.slice(actionOffset).map((item) => item.status),
+        actionErrors: actionObservations.slice(actionOffset).map((item) => item.error).filter(Boolean)
+      });
+    }
+
+    await saveShot(page, testInfo, `malformed-pointer-fields-${language}`, false);
+    const expectedNavigationAborts = networkEvents.filter((item) =>
+      item.status === "FAILED"
+      && item.failure === "net::ERR_ABORTED"
+      && item.path === "/api/session/init/"
+    );
+    const failedNetworkRequestCount = networkEvents.filter((item) =>
+      item.status === "FAILED"
+      && !expectedNavigationAborts.includes(item)
+    ).length;
+    const knownScopeConsoleErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && /status of (400|401|409).*?(Bad Request|Unauthorized|Conflict)/i.test(item.text)
+    );
+    const knownEnglishKeyErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && /same key|keys should be unique/i.test(item.text)
+      && /Physical examination/i.test(item.text)
+    );
+    const unexpectedConsoleErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && !knownScopeConsoleErrors.includes(item)
+      && !knownEnglishKeyErrors.includes(item)
+    );
+    const unsafeHydrationCount = observations.filter((item) => item.finalReportVisible || !item.pointerCompatible).length;
+    const resultPassed = unsafeHydrationCount === 0;
+    const summary = {
+      schemaVersion: "exploratory-malformed-pointer-fields-v1",
+      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
+      defectId: resultPassed ? null : "HEM-P1-061",
+      language,
+      viewport: testInfo.project.use.viewport,
+      boundary: "MALFORMED_LOCAL_ATTEMPT_POINTER_EMULATION",
+      variantCount: observations.length,
+      unsafeHydrationCount,
+      finalReportVisibleCount: observations.filter((item) => item.finalReportVisible).length,
+      compatiblePointerCount: observations.filter((item) => item.pointerCompatible).length,
+      observations,
+      failedNetworkRequests: failedNetworkRequestCount,
+      expectedNavigationAborts: expectedNavigationAborts.length,
+      expectedScopeConsoleErrors: knownScopeConsoleErrors.length,
+      unexpectedConsoleErrors: unexpectedConsoleErrors.length,
+      medicalFactsEvaluated: false,
+      responseBodiesRetained: false,
+      requestIdsRetained: false,
+      credentialsRetained: false
+    };
+    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    expect(failedNetworkRequestCount).toBe(0);
+    expect(unexpectedConsoleErrors).toEqual([]);
+    expect(observations, "all malformed pointers must be replaced before terminal state hydration").toEqual(
+      observations.map((item) => expect.objectContaining({ finalReportVisible: false, pointerCompatible: true }))
+    );
+  }, {
+    videoOnFailure: true,
+    traceScreenshots: false,
+    traceSnapshots: false
+  });
+});
+
+test("attempt storage recovers its pointer after a transient API outage @attempt-storage-api-recovery", async ({ browser }, testInfo) => {
+  const language = ["qa-1440x900", "qa-390x844"].includes(testInfo.project.name) ? "zh" : "en";
+  const copy = language === "en"
+    ? { summary: "History summary" }
+    : { summary: "病史小结" };
+  const marker = language === "en"
+    ? "QA transient attempt storage recovery marker"
+    : "QA临时attempt存储恢复标记";
+
+  await withEvidence(browser, testInfo, "attempt-storage-api-recovery", async ({ page, slug, consoleEvents, networkEvents }) => {
+    const actionObservations = [];
+    await page.addInitScript((selectedLanguage) => {
+      localStorage.setItem("hematuria-language", selectedLanguage);
+      if (sessionStorage.getItem("qa-attempt-storage-restored") === "1") return;
+      const original = {
+        getItem: Storage.prototype.getItem,
+        setItem: Storage.prototype.setItem,
+        removeItem: Storage.prototype.removeItem
+      };
+      const isAttemptKey = (key) => String(key).startsWith("hematuria-attempt-v3:")
+        || String(key).startsWith("hematuria-attempt-pointer-v3:");
+      globalThis.__qaAttemptStorageFaultCounts = { get: 0, set: 0, remove: 0 };
+      Storage.prototype.getItem = function getItem(key) {
+        if (this === localStorage && isAttemptKey(key)) {
+          globalThis.__qaAttemptStorageFaultCounts.get += 1;
+          throw new DOMException("QA attempt storage unavailable", "SecurityError");
+        }
+        return original.getItem.call(this, key);
+      };
+      Storage.prototype.setItem = function setItem(key, value) {
+        if (this === localStorage && isAttemptKey(key)) {
+          globalThis.__qaAttemptStorageFaultCounts.set += 1;
+          throw new DOMException("QA attempt storage unavailable", "SecurityError");
+        }
+        return original.setItem.call(this, key, value);
+      };
+      Storage.prototype.removeItem = function removeItem(key) {
+        if (this === localStorage && isAttemptKey(key)) {
+          globalThis.__qaAttemptStorageFaultCounts.remove += 1;
+          throw new DOMException("QA attempt storage unavailable", "SecurityError");
+        }
+        return original.removeItem.call(this, key);
+      };
+      globalThis.__qaRestoreAttemptStorage = () => {
+        Storage.prototype.getItem = original.getItem;
+        Storage.prototype.setItem = original.setItem;
+        Storage.prototype.removeItem = original.removeItem;
+        sessionStorage.setItem("qa-attempt-storage-restored", "1");
+      };
+    }, language);
+    await installProductionTrainingApi(page, [], actionObservations);
+    await page.goto("/cases/P001/");
+    await expect(page.getByText("P001", { exact: true }).first()).toBeVisible();
+    await expect(page.getByRole("alert").first()).toBeVisible();
+    await expect.poll(() => actionObservations.filter((item) => item.action === "init-attempt").length).toBeGreaterThan(0);
+
+    const faultCounts = await page.evaluate(() => {
+      const counts = { ...globalThis.__qaAttemptStorageFaultCounts };
+      globalThis.__qaRestoreAttemptStorage();
+      return counts;
+    });
+    await page.getByLabel(copy.summary).fill(marker);
+    const readStorageRecoveryState = () => page.evaluate(({ selectedLanguage, expectedMarker }) => {
+      const pointerKey = `hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`;
+      const pointer = JSON.parse(localStorage.getItem(pointerKey) || "null");
+      const attemptKeys = Object.keys(localStorage).filter((key) => key.startsWith(`hematuria-attempt-v3:P001:free:${selectedLanguage}:`));
+      const markerKey = attemptKeys.find((key) => {
+        const saved = JSON.parse(localStorage.getItem(key) || "null");
+        return saved?.answers?.historySummary === expectedMarker;
+      });
+      return {
+        pointerPresent: Boolean(pointer?.attemptId),
+        persistedMarkerPresent: Boolean(markerKey),
+        persistedAttemptCount: attemptKeys.length
+      };
+    }, { selectedLanguage: language, expectedMarker: marker });
+    await expect.poll(readStorageRecoveryState).toMatchObject({ persistedMarkerPresent: true });
+    const beforeReload = await readStorageRecoveryState();
+
+    await page.reload();
+    await expect(page.getByText("P001", { exact: true }).first()).toBeVisible();
+    await page.waitForTimeout(600);
+    const afterReload = await page.evaluate(({ selectedLanguage, expectedMarker }) => {
+      const pointer = JSON.parse(localStorage.getItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`) || "null");
+      const pointedState = pointer?.attemptId
+        ? JSON.parse(localStorage.getItem(`hematuria-attempt-v3:P001:free:${selectedLanguage}:${pointer.attemptId}`) || "null")
+        : null;
+      const orphanMarkerCount = Object.keys(localStorage)
+        .filter((key) => key.startsWith(`hematuria-attempt-v3:P001:free:${selectedLanguage}:`))
+        .filter((key) => JSON.parse(localStorage.getItem(key) || "null")?.answers?.historySummary === expectedMarker)
+        .length;
+      return {
+        pointerPresent: Boolean(pointer?.attemptId),
+        markerRecovered: pointedState?.answers?.historySummary === expectedMarker,
+        orphanMarkerCount
+      };
+    }, { selectedLanguage: language, expectedMarker: marker });
+    await saveShot(page, testInfo, `attempt-storage-api-recovery-${language}`, false);
+
+    const failedNetworkRequestCount = networkEvents.filter((item) => item.status === "FAILED").length;
+    const knownEnglishKeyErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && /same key|keys should be unique/i.test(item.text)
+      && /Physical examination/i.test(item.text)
+    );
+    const unexpectedConsoleErrors = consoleEvents.filter((item) => item.type === "error" && !knownEnglishKeyErrors.includes(item));
+    const resultPassed = beforeReload.pointerPresent && afterReload.markerRecovered && afterReload.orphanMarkerCount === 0;
+    const summary = {
+      schemaVersion: "exploratory-attempt-storage-api-recovery-v1",
+      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
+      defectId: resultPassed ? null : "HEM-P1-063",
+      language,
+      viewport: testInfo.project.use.viewport,
+      boundary: "ATTEMPT_STORAGE_API_UNAVAILABLE_EMULATION",
+      storageFaultObserved: Object.values(faultCounts).some((count) => count > 0),
+      faultCounts,
+      beforeReload,
+      afterReload,
+      trainingInitStatuses: actionObservations.filter((item) => item.action === "init-attempt").map((item) => item.status),
+      failedNetworkRequests: failedNetworkRequestCount,
+      unexpectedConsoleErrors: unexpectedConsoleErrors.length,
+      realStorageOutageClaimed: false,
+      medicalFactsEvaluated: false,
+      responseBodiesRetained: false,
+      requestIdsRetained: false,
+      credentialsRetained: false
+    };
+    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    expect(failedNetworkRequestCount).toBe(0);
+    expect(unexpectedConsoleErrors).toEqual([]);
+    expect(beforeReload.pointerPresent, "the recovered storage API must receive a pointer for the active attempt").toBe(true);
+    expect(afterReload.markerRecovered, "a draft saved after storage recovery must survive reload").toBe(true);
+    expect(afterReload.orphanMarkerCount).toBe(0);
+  }, { videoOnFailure: true });
+});
+
+test("a transient attempt-state write failure preserves one history-log retry identity @history-log-storage-recovery", async ({ browser }, testInfo) => {
+  const language = ["qa-1440x900", "qa-390x844"].includes(testInfo.project.name) ? "zh" : "en";
+  const copy = language === "en"
+    ? {
+        input: "Enter an interview question",
+        question: "Have you noticed any change in urine color?",
+        reply: "I have not noticed.",
+        paused: "Scoring sync paused",
+        retry: "Retry sync",
+        verified: "Scoring synced"
+      }
+    : {
+        input: "输入问诊问题",
+        question: "有没有留意尿液颜色变化？",
+        reply: "我没有留意。",
+        paused: "评分同步已暂停",
+        retry: "重新同步",
+        verified: "评分已同步"
+      };
+
+  await withEvidence(browser, testInfo, "history-log-storage-recovery", async ({ page, slug, consoleEvents, networkEvents }) => {
+    const actionObservations = [];
+    const historyRequestIds = [];
+    const historyStatuses = [];
+    let historyAllowed = false;
+    await page.addInitScript((selectedLanguage) => {
+      localStorage.setItem("hematuria-language", selectedLanguage);
+      localStorage.setItem("hematuria-speech-preferences", JSON.stringify({ enabled: false, provider: "disabled" }));
+    }, language);
+    await installProductionTrainingApi(page, [], actionObservations);
+    await page.route("**/api/agent-chat/**", (route) => route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        replyText: copy.reply,
+        matchedSlotIds: [],
+        matchedFacts: [],
+        provider: "fixture",
+        generationSource: "fixture",
+        isFallback: false
+      })
+    }));
+    await page.route("**/api/training-action/**", async (route) => {
+      const body = route.request().postDataJSON();
+      if (body?.action !== "history-log") return route.fallback();
+      historyRequestIds.push(String(body.requestId || ""));
+      if (historyAllowed) {
+        historyStatuses.push(200);
+        return route.fallback();
+      }
+      historyStatuses.push(503);
+      await new Promise((resolve) => setTimeout(resolve, 120));
+      return route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "qa_history_log_unavailable" })
+      });
+    });
+
+    await page.goto("/cases/P001/");
+    await expect(page.getByText("P001", { exact: true }).first()).toBeVisible();
+    await expect(page.getByRole("textbox", { name: copy.input })).toBeEnabled();
+    await page.waitForTimeout(500);
+    await page.evaluate(() => {
+      const originalSetItem = Storage.prototype.setItem;
+      globalThis.__qaAttemptWriteFailureCount = 0;
+      Storage.prototype.setItem = function setItem(key, value) {
+        if (
+          this === localStorage
+          && String(key).startsWith("hematuria-attempt-v3:")
+          && globalThis.__qaAttemptWriteFailureCount === 0
+        ) {
+          globalThis.__qaAttemptWriteFailureCount += 1;
+          Storage.prototype.setItem = originalSetItem;
+          throw new DOMException("QA one-shot attempt write failure", "QuotaExceededError");
+        }
+        return originalSetItem.call(this, key, value);
+      };
+    });
+    await page.getByRole("textbox", { name: copy.input }).fill(copy.question);
+    await page.getByRole("textbox", { name: copy.input }).press("Enter");
+    await expect(page.getByText(copy.reply, { exact: true }).first()).toBeVisible();
+    await expect(page.getByText(copy.paused, { exact: true })).toBeVisible({ timeout: 10_000 });
+
+    const persistedBeforeReload = await page.evaluate((selectedLanguage) => {
+      const pointer = JSON.parse(localStorage.getItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`) || "null");
+      const saved = pointer?.attemptId
+        ? JSON.parse(localStorage.getItem(`hematuria-attempt-v3:P001:free:${selectedLanguage}:${pointer.attemptId}`) || "null")
+        : null;
+      return {
+        oneShotWriteFailures: Number(globalThis.__qaAttemptWriteFailureCount || 0),
+        pendingCount: Array.isArray(saved?.pendingHistoryLogs) ? saved.pendingHistoryLogs.length : 0,
+        pendingAttempts: Number(saved?.pendingHistoryLogs?.[0]?.attempts ?? -1)
+      };
+    }, language);
+    const callsBeforeReload = historyStatuses.length;
+    await page.reload();
+    await expect(page.getByText(copy.paused, { exact: true })).toBeVisible();
+    await page.waitForTimeout(500);
+    const automaticCallsAfterReload = historyStatuses.length - callsBeforeReload;
+    historyAllowed = true;
+    await page.getByRole("button", { name: copy.retry, exact: true }).click();
+    await expect(page.getByText(copy.verified, { exact: true })).toBeVisible();
+    await expect.poll(() => historyStatuses.filter((status) => status === 200).length).toBe(1);
+    const readPendingHistoryState = () => page.evaluate((selectedLanguage) => {
+      const pointer = JSON.parse(localStorage.getItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`) || "null");
+      const saved = pointer?.attemptId
+        ? JSON.parse(localStorage.getItem(`hematuria-attempt-v3:P001:free:${selectedLanguage}:${pointer.attemptId}`) || "null")
+        : null;
+      return {
+        pendingCount: Array.isArray(saved?.pendingHistoryLogs) ? saved.pendingHistoryLogs.length : 0
+      };
+    }, language);
+    await expect.poll(readPendingHistoryState).toEqual({ pendingCount: 0 });
+    const persistedAfterRecovery = await readPendingHistoryState();
+
+    const uniqueRequestIdCount = new Set(historyRequestIds.filter(Boolean)).size;
+    const failedNetworkRequestCount = networkEvents.filter((item) => item.status === "FAILED").length;
+    const knownHistoryConsoleErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && /status of 503.*Service Unavailable/i.test(item.text)
+    );
+    const unexpectedConsoleErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && !knownHistoryConsoleErrors.includes(item)
+    );
+    const resultPassed = persistedBeforeReload.oneShotWriteFailures === 1
+      && persistedBeforeReload.pendingCount === 1
+      && persistedBeforeReload.pendingAttempts === 3
+      && automaticCallsAfterReload === 0
+      && historyStatuses.filter((status) => status === 503).length === 3
+      && historyStatuses.filter((status) => status === 200).length === 1
+      && uniqueRequestIdCount === 1
+      && persistedAfterRecovery.pendingCount === 0;
+    const summary = {
+      schemaVersion: "exploratory-history-log-storage-recovery-v1",
+      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
+      defectId: null,
+      language,
+      viewport: testInfo.project.use.viewport,
+      boundary: "ONE_SHOT_ATTEMPT_WRITE_FAILURE_AND_HISTORY_RETRY_EMULATION",
+      persistedBeforeReload,
+      automaticCallsAfterReload,
+      historyRequestCount: historyStatuses.length,
+      uniqueRequestIdCount,
+      historyStatuses,
+      persistedAfterRecovery,
+      failedNetworkRequests: failedNetworkRequestCount,
+      expectedHistoryConsoleErrors: knownHistoryConsoleErrors.length,
+      unexpectedConsoleErrors: unexpectedConsoleErrors.length,
+      questionTextRetained: false,
+      requestIdsRetained: false,
+      credentialsRetained: false
+    };
+    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    expect(failedNetworkRequestCount).toBe(0);
+    expect(unexpectedConsoleErrors).toEqual([]);
+    expect(resultPassed).toBe(true);
+  }, { videoOnFailure: true });
+});
+
 test("HEM-P1-046 numeric lab result exposes unit and reference range metadata", async ({ browser }, testInfo) => {
   test.skip(testInfo.project.name !== "qa-1440x900", "One representative desktop trace is sufficient for the data metadata defect.");
   await withEvidence(browser, testInfo, "hem-p1-046-data-agent-metadata", async ({ page }) => {

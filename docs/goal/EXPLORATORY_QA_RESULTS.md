@@ -433,3 +433,12 @@ Patient Session 报告记录 295 次 `unsafe_deterministic_answer` source-cell �
 - 新增HEM-P1-061：把当前作用域指针定向到真实本地handler生成的另一语言P001终态或P002页面上的P001终态后，四viewport均显示外语/跨病例最终报告；两组共8个指针均与目标病例/语言不兼容。P002服务端初始化仍4/4为200，说明缺陷是客户端未在hydration前执行既有兼容性校验，而不是服务端接受跨病例token。
 - 指针隔离测试不记录训练签名、request ID、病例事实或报告正文；该组trace关闭截图与DOM snapshot，只保留可重建动作和脱敏计数。它是受控`localStorage`污染测试，不扩张为正常用户路径或远程攻击结论。
 - 本轮新增P0/P1/P2为0/1/1。HEM-P1-061以及既有开放P1仍阻止进入最终教师人工审阅；真实存储耗尽、真实浏览器进程关闭、真机、医学裁决和来源修订继续分别阻塞。
+
+## 2026-07-25 第 20 轮：`7781586` 畸形身份、存储一致性与history队列恢复
+
+- Production与QA远程起点未变化；本轮仍只改QA测试、文档和最小证据，`app/src/api/server/data`相对Production差异为0。
+- HEM-P1-061扩展矩阵在四viewport分别测试7种pointer身份，共28个场景。仅缺失`schemaVersion`的4/4安全自愈；缺`caseId/mode/language/participantId/attemptId`或错误participant的24/24均显示畸形对象终态，兼容pointer为0。非预期network failure和console error为0。
+- 新增HEM-P1-063：首次attempt存储API不可用时页面以内存attempt继续；同页恢复API后，草稿文件4/4成功写入但pointer 0/4补写。刷新后草稿恢复0/4、孤儿草稿4/4，初始与刷新init共8/8为200。该结果只标`FAIL_EMULATION`，不冒充真实浏览器存储策略或磁盘故障。
+- history-log持久化恢复4/4为`PASS_EMULATION`：每次单次attempt写失败后，待同步队列仍保存1项/attempts=3；刷新自动新增请求0，手动重试各1次200。每次总请求为3×503+1×200、唯一request ID为1，最终pending队列0。
+- 初次history探针的重复文本选择器、英文标签及未禁用TTS 404均已定位为QA夹具问题，修正后正式4/4通过，不计产品缺陷。首次未限定spec导致的deployed配置导入失败同样不计产品证据。
+- 本轮新增P0/P1/P2为0/1/0；HEM-P1-061扩大复现但不重复编号。由于HEM-P1-061/063及其他开放P1，仍不建议进入最终教师人工审阅。

@@ -529,3 +529,29 @@
 - 最小复现测试：同文件`@storage-fault-recovery`；保留本地化与“成功写入后警告消失”失败断言。
 - 建议方向：所有storageWarning走中英文文案表；成功`writeJsonStorage`后仅在当前警告属于自动保存失败时清除，避免覆盖其他独立警告。保留`saveStatus=error`与恢复后重新持久化合同。
 - 是否需要医学专家裁决：否；纯本地存储状态与UI本地化缺陷。
+
+### HEM-P1-061第20轮畸形身份字段扩展
+
+- 新增最小矩阵：同一P001目标作用域依次注入缺少`schemaVersion/caseId/mode/language/participantId/attemptId`及错误`participantId`的7种pointer，每个固定viewport均完整执行。
+- 结果：仅缺少`schemaVersion`的4/4被替换为兼容新pointer且未显示终态；其余6种在四viewport共24/24均显示由畸形对象派生的最终报告，pointer仍不兼容。缺`attemptId`时甚至没有合法初始化动作，终态仍先被客户端hydrate。
+- 中英文、桌面/移动结果一致；非预期network failure和console error均为0。反复reload主动取消的`session/init`被单列为预期导航取消，不计产品网络失败。
+- 该扩展证明门禁必须校验完整身份对象，而不能只检查`schemaVersion`；继续沿用HEM-P1-061，不另建同根缺陷。trace关闭截图和DOM snapshot，聚合不保存终态正文或身份值。
+
+## HEM-P1-063：attempt存储API恢复后未补写pointer，已落盘草稿刷新即成为孤儿并丢失
+
+- 严重级别 / 状态：P1 / OPEN；`FAIL_EMULATION / ATTEMPT_STORAGE_API_UNAVAILABLE_EMULATION`。
+- 基线：`77815862a0abebff67b8d958f66944a0e11b068f`。
+- 页面和路径：P001训练页；客户端attempt pointer初始化、自动保存及刷新恢复。
+- 病例 / 语言 / viewport：P001；中文`1440×900/390×844`、英文`1280×720/360×800`。
+- 完整操作步骤：在页面首次加载期间仅让`hematuria-attempt-v3:*`和`hematuria-attempt-pointer-v3:*`的`getItem/setItem/removeItem`抛出`SecurityError` → 确认训练以内存attempt初始化 → 恢复原生Storage API → 修改第1阶段病史小结并等待草稿文件成功写入 → 检查当前作用域pointer → 刷新 → 检查pointer指向状态、草稿内容及孤儿attempt文件。
+- 预期：存储恢复后的第一次成功自动保存应同时修复当前作用域pointer，或以同等安全机制保证该attempt可发现；刷新应恢复刚保存的草稿且不得留下无法访问的孤儿状态。修复不得跨病例、语言、mode或participant猜测孤儿归属。
+- 实际：四viewport均在恢复后写出包含新草稿的attempt文件，但当前pointer 0/4存在；刷新后客户端创建另一attempt并写新pointer，草稿恢复0/4，旧草稿文件4/4成为孤儿。初始与刷新后的training init共8/8为200，说明不是服务端初始化失败。
+- 复现：正式运行4/4；中文2、英文2，桌面2、移动模拟2。每次均观察到attempt存储读、写、删除故障并在同页恢复；这是方法级故障注入，不冒充真实浏览器策略封锁、磁盘故障或配额耗尽。
+- AI来源：N/A；本地Production training handler，provider调用0。草稿只使用QA标记，不评价医学事实。
+- 状态变化时间线：pointer/attempt读取失败 → 内存attempt与服务端init 200 → Storage API恢复 → 草稿文件成功落盘但pointer仍缺失 → 刷新 → 新attempt init 200/新pointer → 当前表单空白、旧草稿孤立。
+- HTTP状态和耗时：每次两次init均200；HTTP非200、request failure和非预期console error均为0。本地耗时不作为Preview性能结论。
+- console/network摘要：存储警告生命周期与英文硬编码继续归HEM-P2-062；本缺陷只评价pointer与草稿可达性。摘要不保存草稿正文、attempt ID、request ID、header、Cookie、token、签名或环境值。
+- 截图 / trace / 录像：代表截图`artifacts/exploratory-qa/screenshots/attempt-storage-api-recovery-zh-390x844.png`显示刷新后的P001空白第1阶段；其余截图、trace、console/network和失败录像仅本机保留。
+- 最小复现测试：`tests/exploratory/long-running-qa.spec.mjs`中的`@attempt-storage-api-recovery`；失败断言要求恢复后pointer存在、刷新恢复草稿且孤儿计数为0。
+- 建议方向：成功写入attempt状态时幂等校验/补写同作用域pointer，或把pointer和状态作为可恢复的一致性单元；补写前必须用`isAttemptCompatible`校验完整身份。增加初始读写不可用→同页恢复→保存→刷新，以及跨病例/语言孤儿不被错误收养的回归。
+- 是否需要医学专家裁决：否；纯客户端存储一致性与训练进度恢复问题。

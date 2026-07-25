@@ -193,3 +193,11 @@ console 文本对 Authorization、Cookie、签名、token、secret 和 API key �
 - HEM-P1-061修复验收必须在从pointer派生attempt存储键之前调用统一兼容性检查，覆盖`caseId/language/mode/participant/schemaVersion`；发现不兼容时清除错误指针并初始化目标作用域，不得显示外语或跨病例终态，也不得放宽服务端token、版本或病例校验。
 - HEM-P2-062修复验收必须覆盖中英文四viewport：缓存损坏与自动保存失败提示使用当前语言；一次后续成功持久化只清除对应自动保存失败提示，不吞掉其他会话或医学安全告警。
 - 下一独立范围可覆盖缺失或畸形身份字段的pointer、`getItem/removeItem`整体不可用，以及history-log pending队列在写失败后的恢复；避免重复本轮相同故障。真实存储耗尽、浏览器进程损坏、真机与Preview受保护故障注入继续单独阻塞。
+
+## 2026-07-25 第 20 轮 `7781586` 身份完整性与队列恢复后续
+
+- 已完成7种pointer身份字段矩阵、attempt存储API初始不可用→恢复→保存→刷新，以及history-log一次写失败/三次503/刷新/手动恢复四viewport测试。
+- HEM-P1-061修复门禁扩展为7种身份对象：除完整且作用域一致的pointer外都必须在任何`attemptStorageKey`读取前替换；缺`attemptId`也不得仅凭本地终态绕过服务端初始化。
+- 新增HEM-P1-063修复验收：初始pointer/attempt读写删除失败后，同页恢复Storage API；下一次成功自动保存必须建立一致pointer，刷新恢复同一草稿，孤儿计数0。不得通过扫描并收养其他病例、语言、mode或participant的孤儿文件规避身份校验。
+- history-log门禁保持：一次状态写失败后仍持久化pending及原request ID；3次失败刷新不自动风暴，用户重试只发1次并清空队列。后续不得为修复pointer破坏该通过路径。
+- 下一独立范围转向病例目录在`localStorage`读取/枚举不可用时的fail-closed、重新开始训练在remove失败时是否真正清除，以及attempt摘要/目录计数是否会被畸形pointer或孤儿状态污染。真实存储、真机、Preview受保护故障及医学裁决继续分层阻塞。

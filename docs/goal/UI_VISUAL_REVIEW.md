@@ -158,3 +158,10 @@
 - HEM-P1-061在四viewport均呈现完整终态面板：P001错误语言终态4/4、P002页面显示P001终态4/4。代表`390×844`截图只显示P002标题、7/7和最终评估面板，不包含病例事实、评分明细、request ID或凭据。
 - HEM-P1-061 trace主动关闭截图与DOM snapshot，避免把隐藏报告内容写入ZIP；失败由目标作用域与hydrated attempt元数据的不兼容计数、可见终态布尔值和代表截图支持。
 - 本批仅为自动viewport与受控存储污染，标`PASS_EMULATION`/`FAIL_EMULATION`。真实磁盘配额耗尽、真实浏览器配置损坏、移动软键盘、动态地址栏及safe-area继续`BLOCKED_REAL_STORAGE / BLOCKED_REAL_DEVICE`。
+
+## 2026-07-25 `7781586` 畸形身份与存储恢复界面
+
+- HEM-P1-061畸形字段扩展在四viewport的6个失败变体均显示完整终态区域；缺`schemaVersion`控制组回到空白第1阶段。trace继续关闭截图和DOM snapshot，避免保存终态正文。
+- HEM-P1-063在`1440×900/1280×720/390×844/360×800`刷新后均回到空白第1阶段；代表`390×844`截图显示阶段1/7、公开开场白和空白病史小结，证明恢复后的草稿未被当前pointer找回。没有横向滚动或页面崩溃。
+- history-log队列四viewport均可见“同步已暂停→重新同步→同步成功”的状态变化；禁用无关语音夹具后console意外错误0。该通过是自动viewport，不代表真实网络中断或真机。
+- 真实Storage策略封锁、磁盘故障、移动软键盘、动态地址栏及safe-area继续`BLOCKED_REAL_STORAGE / BLOCKED_REAL_DEVICE`。
