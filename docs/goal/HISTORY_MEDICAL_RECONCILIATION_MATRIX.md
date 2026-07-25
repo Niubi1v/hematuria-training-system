@@ -1,7 +1,7 @@
 # P001–P042 病史医学协调矩阵
 
 - 基线：`1566f7c21aabbd30eff2e30abf9924e214d1b7a4`
-- 生成时HEAD：`1f88148bdc055f3d00322360004ebff603d9e261`
+- 生成时HEAD：`d4904c4d619df9af0016b88e3d1385d87c9ba8bc`
 - 病例范围：P001–P042（42例有审计记录）
 - 逐字段记录：893项；其中 `RESOLVED_BY_SOURCE_PRECEDENCE` 371项，`RESOLVED_WORDING_ONLY` 490项，`BLOCKED_MEDICAL` 32项。
 - 说明：原始冲突值保留在本矩阵、git基线或既有HEM治理记录中；工程修正未写成 `expert_approved`，也未解除任何病例的 `needs_revision`。
