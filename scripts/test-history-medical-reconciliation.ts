@@ -66,6 +66,22 @@ assertBilingualUnknown("P012", "hematuria_phase");
 assertBilingualUnknown("P012", "fever_chills");
 assert.match(slots.P012.recent_uri.patientAnswerEn, /followed a recent cold|sore throat/i);
 
+assert.equal(slots["HX-ADD-001"].pain.patientAnswerEn, "I have pain with it.", "HEM-P0-023 pain value stays frozen");
+assert.match(slots["HX-ADD-001"].dysuria.patientAnswerEn, /does not hurt/i);
+assert.match(slots["HX-ADD-001"].urinary_frequency.patientAnswerEn, /not been urinating more often/i);
+assert.match(slots["HX-ADD-001"].glomerular_features.patientAnswerEn, /not noticed foamy urine/i);
+assert.match(slots["HX-ADD-001"].medications.patientAnswerEn, /amlodipine/i);
+assert.match(slots["HX-ADD-002"].urinary_frequency.patientAnswerEn, /urinating more often/i);
+assert.match(slots["HX-ADD-002"].voiding_difficulty.patientAnswerEn, /do not have difficulty/i);
+assert.match(slots["HX-ADD-003"].flank_pain.patientAnswerEn, /have pain in my flank/i);
+assert.match(slots["HX-ADD-003"].renal_colic.patientAnswerEn, /not had severe colicky/i);
+assertBilingualUnknown("HX-ADD-003", "recent_uri");
+assertBilingualUnknown("HX-ADD-004", "pain");
+assert.match(slots["HX-ADD-004"].renal_colic.patientAnswerEn, /not had severe colicky/i);
+assert.match(slots["HX-ADD-005"].medications.patientAnswerEn, /statin/i);
+assert.match(slots["HX-ADD-006"].urinary_urgency.patientAnswerEn, /sudden urgent need/i);
+assert.match(slots["HX-ADD-006"].voiding_difficulty.patientAnswerEn, /do not have difficulty/i);
+
 const p002 = cases.find((item) => item.id === "P002");
 assert.ok(p002, "P002 fixture");
 for (const language of ["zh", "en"] as const) {
