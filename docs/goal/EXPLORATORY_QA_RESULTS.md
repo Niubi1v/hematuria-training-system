@@ -386,3 +386,14 @@ Patient Session 报告记录 295 次 `unsafe_deterministic_answer` source-cell �
 - 新增HEM-P1-055：41条带前置条件的结果覆盖17例。中文41场景及有审核英文来源的17场景中，58/58均在“先目标→提示缺前置→补前置→重试目标”后仍不返回报告，公开payload把重试标为`duplicate=true`；相同58场景按“先前置→再目标”全部返回，证明不是数据缺失。两次独立矩阵逐字节一致。
 - P001真实本地UI黑盒在`1440×900`与`390×844` 2/2复现：三次order均200，返回报告数依次0/1/0，补齐前置后的重试仍显示重复医嘱且报告卡保持1→1。相同路径2/2另出现`ReportCard`缺少唯一key的React console error，登记HEM-P2-056；网络失败和HTTP 4xx/5xx均为0。
 - 本轮新增P0/P1/P2为0/1/1。开放工程项增加HEM-P1-055与HEM-P2-056；在HEM-P1-030/052/053/054/055修复前仍不建议进入最终教师人工审阅。
+
+## 2026-07-25 第 15 轮：`7781586` 病史权威与医学阻塞复测
+
+- Production基线确认为`77815862a0abebff67b8d958f66944a0e11b068f`并无冲突合入QA分支；QA相对Production的`app/src/api/server/data`差异为0，42例仍全部`needs_revision`。
+- 本地权威矩阵两次逐字节一致：42×37双语槽1,554项、42×17病史714项、572事实、419条审核约束、151条source标记冲突、18条HEM-P0-023冲突及14条新增阻塞均与基线一致。32项逐字段阻塞的64条双语路由均未进入收集或评分；P004/P005/P006“患者未留意”6/6未进入收集或评分；未审核吸烟/饮酒84条双语探针保持自然不确定。
+- P026降糖药、P027别嘌醇、P029抗凝/抗血小板、P039止痛药及P037“1 day ago”本地双语规则路径10/10稳定。Patient Agent回归继续为840/840自然问法、1,428/1,428 canonical、3,150/3,150问法矩阵，错误unknown 0、极性错误0；786个复合问题通过。42例360分评分无漂移。
+- 真实Preview部署健康检查返回精确Production SHA；P001–P042目录/直接URL/刷新42/42通过、session初始化10/10、中文live_ai 5/5、英文live_ai 5/5、连续20轮20/20且history 20/20。P026/P027/P029/P039双语用药8/8内容稳定；P029两条复合问法由明确安全规则处理，未冒充live_ai。
+- 新增HEM-P1-057：P002手术史、P004未审核吸烟及P013未审核饮酒在真实Preview两次各6/6、合成provider两次各6/6丢失`medical_history_pending_review`治理，合法provider回答虽仍自然不确定，却返回可收集的matched slots/facts。该缺陷是工程隔离失效，不是医学裁决。
+- 新增HEM-P1-058：P037英文开放式主诉在6个全新Preview会话中6/6遗漏权威“1 day ago”病程；均为DeepSeek live_ai、agent/history 200且无fallback。中文Preview 1/1及本地中英2/2正确。
+- Preview七阶段最终报告仍为360分且重复评分防护有效；最终完成后刷新仍出现既有HEM-P2-028的`attempt_already_completed` 401。后续复合问法复测受Preview 429速率限制，标`BLOCKED_PREVIEW_RATE_LIMIT`，不据此登记history缺陷。
+- 本轮新增P0/P1/P2为0/2/0。由于HEM-P1-057/058及既有开放P1，不建议进入教师人工审阅；HEM-P0-001/023、14+18共32项逐字段阻塞继续`BLOCKED_MEDICAL`，没有被工程通过或专家批准。

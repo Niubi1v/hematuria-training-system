@@ -142,3 +142,18 @@
 - 16项查体×42例×双语共1,344次选择：752次精确映射已配置行、592次对未配置行安全返回不可用，跨病例/教师字段泄露0。英文376条来源文本继续`BLOCKED_SOURCE_REVISION`，安全占位不等于翻译通过。
 - 中文逐例精确释放257条结构结果：检验129、影像87、内镜17、病理24；英文仅对有审核来源的135条计工程通过，另122条保持`BLOCKED_SOURCE_REVISION`。28条医学元数据继续`BLOCKED_MEDICAL`。
 - 17例的41条前置条件结果新增HEM-P1-055：中文41/41与已审核英文17/17在补齐前置后重试仍不释放；58/58前置优先对照通过。P001桌面/移动UI 2/2复现，故相应病例的前置条件恢复列标`FAIL_LOCAL_QA`。
+
+## Production `7781586` 病史权威增量
+
+| 覆盖 | 结果 | 状态 |
+| --- | --- | --- |
+| P001–P042 × 37槽 × 中英 | 1,554/1,554结构与语言检查；英文CJK来源0 | PASS_LOCAL_QA |
+| P001–P042 × 17病史主题 | 714/714路由回归 | PASS_LOCAL_QA |
+| 572事实 / 419审核约束 | 计数稳定；全部病例仍`needs_revision` | PASS_LOCAL_QA / BLOCKED_MEDICAL |
+| 151项source标记冲突 | 151/151保持标记；仅2项已有权威reconciliation | BLOCKED_MEDICAL |
+| HEM-P0-023 18项 + 新增14项 | 32项、64条双语路由均不收集/不评分 | BLOCKED_MEDICAL / ISOLATED |
+| P004血块、P005/P006血尿时相 | 6/6“患者未留意”不收集/不评分 | PASS_LOCAL_QA |
+| 未审核吸烟6项、饮酒36项 | 84条双语路由保持自然不确定 | PASS_LOCAL_QA；Preview治理见HEM-P1-057 |
+| P026/P027/P029/P039用药 | 本地双语8/8、Preview双语8/8内容稳定 | PASS_LOCAL_QA / PASS_PREVIEW |
+| P037病程 | 本地双语2/2、Preview中文1/1；Preview英文0/6 | FAIL_PREVIEW，HEM-P1-058 |
+| 42例评分 | 42×360，无评分漂移 | PASS_LOCAL_QA |

@@ -2029,3 +2029,421 @@ test("@preview-session-abuse rejects missing and mismatched capabilities before 
     await context.close().catch(() => undefined);
   }
 });
+
+test("@preview-history-medical-authority samples corrected and blocked history bilingually", async ({ browser }, testInfo) => {
+  test.setTimeout(900_000);
+  const probes = [
+    {
+      id: "p026-diabetes-medication",
+      caseId: "P026",
+      language: "zh",
+      question: "平时吃什么药？",
+      expected: /降糖药|糖尿病药/
+    },
+    {
+      id: "p026-diabetes-medication",
+      caseId: "P026",
+      language: "en",
+      question: "What medications do you take?",
+      expected: /diabetes medication|blood[- ]sugar|glucose[- ]lowering|hypoglyc/i
+    },
+    {
+      id: "p027-allopurinol",
+      caseId: "P027",
+      language: "zh",
+      question: "平时吃什么药？",
+      expected: /别嘌醇/
+    },
+    {
+      id: "p027-allopurinol",
+      caseId: "P027",
+      language: "en",
+      question: "What medications do you take?",
+      expected: /allopurinol/i
+    },
+    {
+      id: "p029-antithrombotic",
+      caseId: "P029",
+      language: "zh",
+      question: "吃抗凝药或抗血小板药吗？",
+      expected: /没有服用.*抗凝药[\s\S]*(?:阿司匹林|抗血小板)/
+    },
+    {
+      id: "p029-antithrombotic",
+      caseId: "P029",
+      language: "en",
+      question: "Do you take anticoagulants or antiplatelet medication?",
+      expected: /do not take anticoagulants[\s\S]*(?:aspirin|antiplatelet medication)/i
+    },
+    {
+      id: "p039-analgesics",
+      caseId: "P039",
+      language: "zh",
+      question: "平时吃什么止痛药？",
+      expected: /布洛芬|复方止痛药/
+    },
+    {
+      id: "p039-analgesics",
+      caseId: "P039",
+      language: "en",
+      question: "What medications do you take?",
+      expected: /ibuprofen|combination painkillers?/i
+    },
+    {
+      id: "p002-surgery-block",
+      caseId: "P002",
+      language: "zh",
+      question: "以前做过手术吗？",
+      expectedReason: "medical_history_pending_review",
+      expected: /记不(?:太)?清|没特别注意|说不准/
+    },
+    {
+      id: "p002-surgery-block",
+      caseId: "P002",
+      language: "en",
+      question: "Have you had surgery?",
+      expectedReason: "medical_history_pending_review",
+      expected: /cannot recall|not sure|did not notice/i
+    },
+    {
+      id: "p004-smoking-block",
+      caseId: "P004",
+      language: "zh",
+      question: "吸烟吗？",
+      expectedReason: "medical_history_pending_review",
+      expected: /记不(?:太)?清|记不准确|没特别注意/
+    },
+    {
+      id: "p004-smoking-block",
+      caseId: "P004",
+      language: "en",
+      question: "Do you smoke?",
+      expectedReason: "medical_history_pending_review",
+      expected: /cannot recall|not sure|did not notice/i
+    },
+    {
+      id: "p013-alcohol-block",
+      caseId: "P013",
+      language: "zh",
+      question: "喝酒吗？",
+      expectedReason: "medical_history_pending_review",
+      expected: /记不(?:太)?清|没特别注意|不太清楚/
+    },
+    {
+      id: "p013-alcohol-block",
+      caseId: "P013",
+      language: "en",
+      question: "Do you drink alcohol?",
+      expectedReason: "medical_history_pending_review",
+      expected: /cannot recall|not sure|did not notice/i
+    },
+    {
+      id: "p037-duration",
+      caseId: "P037",
+      language: "zh",
+      question: "请用自己的话说说这次最主要的不舒服是什么？",
+      expected: /一天|1天/
+    },
+    {
+      id: "p037-duration",
+      caseId: "P037",
+      language: "en",
+      question: "Please describe the main problem that brought you here in your own words.",
+      expected: /\b(?:1|one) day\s+ago\b/i
+    }
+  ];
+  const samples = [];
+  for (const probe of probes) {
+    const context = await browser.newContext();
+    await context.addInitScript(() => localStorage.removeItem("hematuria-language"));
+    let opened;
+    try {
+      opened = await openReadyCase(context, probe.caseId, probe.language);
+      let agentRequestCount = 0;
+      let historyLogCount = 0;
+      opened.page.on("request", (request) => {
+        const pathname = new URL(request.url()).pathname;
+        if (pathname === "/api/agent-chat/" && request.method() === "POST" && !safeBody(request).probe) agentRequestCount += 1;
+        if (pathname === "/api/training-action/" && request.method() === "POST" && safeBody(request).action === "history-log") historyLogCount += 1;
+      });
+      const answer = await askLiveQuestion(opened.page, probe.language, probe.question, {
+        includeReplyText: true,
+        includeMatchMetadata: true
+      });
+      const replyText = String(answer.replyText || "");
+      const chinesePresent = /[\u3400-\u9fff]/u.test(replyText);
+      samples.push({
+        id: probe.id,
+        caseId: probe.caseId,
+        language: probe.language,
+        patientStatus: answer.patientStatus,
+        historyStatus: answer.historyStatus,
+        generationSource: answer.generationSource,
+        provider: String(answer.provider || "").toLowerCase(),
+        isFallback: answer.isFallback === true,
+        fallbackReason: String(answer.fallbackReason || ""),
+        expectedReason: probe.expectedReason || "",
+        contentMatched: probe.expected.test(replyText),
+        blockedFactsEmpty: probe.expectedReason
+          ? (answer.matchMetadata?.factIds || []).length === 0 && (answer.matchMetadata?.slotIds || []).length === 0
+          : true,
+        languageLeakDetected: probe.language === "en" ? chinesePresent : !chinesePresent,
+        teacherMetaLeakageDetected: /评分|得分点|教师|标准答案|scor(?:e|ing)|rubric|teacher|standard answer|JSON|system\s*prompt/i.test(replyText),
+        structuredPayloadLeakageDetected: /matchedSlotIds?|matchedFacts?|generationSource|isFallback|caseId|slotId/i.test(replyText),
+        agentRequestCount,
+        historyLogCount,
+        crossOriginProtectionRequests: opened.protection.crossOriginProtectionRequests,
+        responseTextRetained: false
+      });
+    } finally {
+      await opened?.page.close().catch(() => undefined);
+      await context.close().catch(() => undefined);
+    }
+  }
+
+  const sourceCounts = Object.fromEntries([...new Set(samples.map((sample) => sample.generationSource || "unknown"))]
+    .sort()
+    .map((source) => [source, samples.filter((sample) => (sample.generationSource || "unknown") === source).length]));
+  const blockedSamples = samples.filter((sample) => sample.expectedReason);
+  const knownSamples = samples.filter((sample) => !sample.expectedReason);
+  const summary = {
+    scenario: "preview-history-medical-authority-bilingual",
+    sampleCount: samples.length,
+    knownSampleCount: knownSamples.length,
+    blockedSampleCount: blockedSamples.length,
+    sourceCounts,
+    httpContractFailures: samples.filter((sample) => sample.patientStatus !== 200 || sample.historyStatus !== 200).length,
+    requestContractFailures: samples.filter((sample) => sample.agentRequestCount !== 1 || sample.historyLogCount !== 1).length,
+    contentFailures: samples.filter((sample) => !sample.contentMatched).length,
+    blockedGovernanceFailures: blockedSamples.filter((sample) =>
+      sample.fallbackReason !== sample.expectedReason || !sample.blockedFactsEmpty
+    ).length,
+    knownSafetyFallbacks: knownSamples.filter((sample) =>
+      (sample.generationSource === "safety_boundary"
+        && sample.fallbackReason !== "compound_question_preserves_all_facts")
+      || sample.generationSource === "unknown"
+      || sample.fallbackReason === "classifier_disabled"
+    ).length,
+    intentionalCompoundFallbacks: knownSamples.filter((sample) =>
+      sample.generationSource === "safety_boundary"
+      && sample.fallbackReason === "compound_question_preserves_all_facts"
+    ).length,
+    languageLeakCount: samples.filter((sample) => sample.languageLeakDetected).length,
+    teacherMetaLeakCount: samples.filter((sample) => sample.teacherMetaLeakageDetected).length,
+    structuredPayloadLeakCount: samples.filter((sample) => sample.structuredPayloadLeakageDetected).length,
+    crossOriginProtectionRequestCount: samples.reduce((sum, sample) => sum + sample.crossOriginProtectionRequests, 0),
+    responseTextRetained: false,
+    samples
+  };
+  await testInfo.attach("preview-history-medical-authority-bilingual", {
+    body: JSON.stringify(summary, null, 2),
+    contentType: "application/json"
+  });
+  console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
+
+  expect(summary.sampleCount).toBe(16);
+  expect(summary.httpContractFailures).toBe(0);
+  expect(summary.requestContractFailures).toBe(0);
+  expect(summary.contentFailures).toBe(0);
+  expect(summary.blockedGovernanceFailures).toBe(0);
+  expect(summary.knownSafetyFallbacks).toBe(0);
+  expect(summary.languageLeakCount).toBe(0);
+  expect(summary.teacherMetaLeakCount).toBe(0);
+  expect(summary.structuredPayloadLeakCount).toBe(0);
+  expect(summary.crossOriginProtectionRequestCount).toBe(0);
+});
+
+test("@preview-p037-one-day-duration remains stable in five English chief-complaint answers", async ({ browser }, testInfo) => {
+  test.setTimeout(480_000);
+  const samples = [];
+  for (let index = 0; index < 5; index += 1) {
+    const context = await browser.newContext();
+    await context.addInitScript(() => localStorage.removeItem("hematuria-language"));
+    let opened;
+    try {
+      opened = await openReadyCase(context, "P037", "en");
+      let agentRequestCount = 0;
+      let historyLogCount = 0;
+      opened.page.on("request", (request) => {
+        const pathname = new URL(request.url()).pathname;
+        if (pathname === "/api/agent-chat/" && request.method() === "POST" && !safeBody(request).probe) agentRequestCount += 1;
+        if (pathname === "/api/training-action/" && request.method() === "POST" && safeBody(request).action === "history-log") historyLogCount += 1;
+      });
+      const answer = await askLiveQuestion(
+        opened.page,
+        "en",
+        "Please describe the main problem that brought you here in your own words.",
+        { includeReplyText: true }
+      );
+      const replyText = String(answer.replyText || "");
+      samples.push({
+        run: index + 1,
+        patientStatus: answer.patientStatus,
+        historyStatus: answer.historyStatus,
+        generationSource: answer.generationSource,
+        provider: String(answer.provider || "").toLowerCase(),
+        isFallback: answer.isFallback === true,
+        exactOneDayAgo: /\b(?:1|one|a) day\s+ago\b/i.test(replyText),
+        yesterdayEquivalent: /\byesterday\b/i.test(replyText),
+        otherDurationDetected: /\b(?:\d+|one|two|three|four|five|six|seven)\s+(?:hours?|days?|weeks?|months?|years?)\b/i.test(replyText),
+        languageLeakDetected: /[\u3400-\u9fff]/u.test(replyText),
+        teacherMetaLeakageDetected: /评分|得分点|教师|标准答案|scor(?:e|ing)|rubric|teacher|standard answer|JSON|system\s*prompt/i.test(replyText),
+        structuredPayloadLeakageDetected: /matchedSlotIds?|matchedFacts?|generationSource|isFallback|caseId|slotId/i.test(replyText),
+        agentRequestCount,
+        historyLogCount,
+        crossOriginProtectionRequests: opened.protection.crossOriginProtectionRequests,
+        responseTextRetained: false
+      });
+    } finally {
+      await opened?.page.close().catch(() => undefined);
+      await context.close().catch(() => undefined);
+    }
+  }
+  const summary = {
+    scenario: "preview-p037-one-day-chief-complaint-stability",
+    sampleCount: samples.length,
+    exactOneDayAgoCount: samples.filter((sample) => sample.exactOneDayAgo).length,
+    yesterdayEquivalentCount: samples.filter((sample) => sample.yesterdayEquivalent).length,
+    missingOrDriftedDurationCount: samples.filter((sample) =>
+      !sample.exactOneDayAgo && !sample.yesterdayEquivalent
+    ).length,
+    otherDurationCount: samples.filter((sample) =>
+      !sample.exactOneDayAgo && !sample.yesterdayEquivalent && sample.otherDurationDetected
+    ).length,
+    liveAiCount: samples.filter((sample) =>
+      sample.generationSource === "live_ai" && sample.provider === "deepseek" && !sample.isFallback
+    ).length,
+    httpContractFailures: samples.filter((sample) => sample.patientStatus !== 200 || sample.historyStatus !== 200).length,
+    requestContractFailures: samples.filter((sample) => sample.agentRequestCount !== 1 || sample.historyLogCount !== 1).length,
+    languageLeakCount: samples.filter((sample) => sample.languageLeakDetected).length,
+    teacherMetaLeakCount: samples.filter((sample) => sample.teacherMetaLeakageDetected).length,
+    structuredPayloadLeakCount: samples.filter((sample) => sample.structuredPayloadLeakageDetected).length,
+    crossOriginProtectionRequestCount: samples.reduce((sum, sample) => sum + sample.crossOriginProtectionRequests, 0),
+    responseTextRetained: false,
+    samples
+  };
+  await testInfo.attach("preview-p037-one-day-chief-complaint-stability", {
+    body: JSON.stringify(summary, null, 2),
+    contentType: "application/json"
+  });
+  console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
+  expect(summary.sampleCount).toBe(5);
+  expect(summary.exactOneDayAgoCount + summary.yesterdayEquivalentCount).toBe(5);
+  expect(summary.otherDurationCount).toBe(0);
+  expect(summary.liveAiCount).toBe(5);
+  expect(summary.httpContractFailures).toBe(0);
+  expect(summary.requestContractFailures).toBe(0);
+  expect(summary.languageLeakCount).toBe(0);
+  expect(summary.teacherMetaLeakCount).toBe(0);
+  expect(summary.structuredPayloadLeakCount).toBe(0);
+  expect(summary.crossOriginProtectionRequestCount).toBe(0);
+});
+
+test("@preview-compound-history-log-repro records one P001 compound turn", async ({ browser }, testInfo) => {
+  test.setTimeout(240_000);
+  const samples = [];
+  for (let index = 0; index < 3; index += 1) {
+    const context = await browser.newContext();
+    await context.addInitScript(() => localStorage.removeItem("hematuria-language"));
+    let opened;
+    try {
+      opened = await openReadyCase(context, "P001", "zh");
+      let agentRequestCount = 0;
+      let historyRequestCount = 0;
+      const historyStatuses = [];
+      let historyRequestFailureCount = 0;
+      opened.page.on("request", (request) => {
+        const pathname = new URL(request.url()).pathname;
+        if (pathname === "/api/agent-chat/" && request.method() === "POST" && !safeBody(request).probe) agentRequestCount += 1;
+        if (pathname === "/api/training-action/" && request.method() === "POST" && safeBody(request).action === "history-log") {
+          historyRequestCount += 1;
+        }
+      });
+      opened.page.on("response", (response) => {
+        if (isAction(response, "history-log")) historyStatuses.push(response.status());
+      });
+      opened.page.on("requestfailed", (request) => {
+        if (new URL(request.url()).pathname === "/api/training-action/"
+          && request.method() === "POST"
+          && safeBody(request).action === "history-log") {
+          historyRequestFailureCount += 1;
+        }
+      });
+      const answer = await askLiveQuestion(
+        opened.page,
+        "zh",
+        "血尿是什么时候开始的，反复吗，以前得过结石吗？",
+        {
+          includeReplyText: true,
+          includeMatchMetadata: true,
+          allowMissingHistory: true,
+          historyTimeoutMs: 12_000
+        }
+      );
+      await opened.page.waitForTimeout(3_000);
+      const replyText = String(answer.replyText || "");
+      samples.push({
+        run: index + 1,
+        patientStatus: answer.patientStatus,
+        helperHistoryStatus: answer.historyStatus,
+        generationSource: answer.generationSource,
+        provider: String(answer.provider || "").toLowerCase(),
+        isFallback: answer.isFallback === true,
+        fallbackReason: String(answer.fallbackReason || ""),
+        matchedSlotCount: (answer.matchMetadata?.slotIds || []).length,
+        matchedFactCount: (answer.matchMetadata?.factIds || []).length,
+        agentRequestCount,
+        historyRequestCount,
+        historyStatuses,
+        historyRequestFailureCount,
+        languageLeakDetected: answer.patientStatus === 200 && !/[\u3400-\u9fff]/u.test(replyText),
+        teacherMetaLeakageDetected: /评分|得分点|教师|标准答案|scor(?:e|ing)|rubric|teacher|standard answer|JSON|system\s*prompt/i.test(replyText),
+        structuredPayloadLeakageDetected: /matchedSlotIds?|matchedFacts?|generationSource|isFallback|caseId|slotId/i.test(replyText),
+        crossOriginProtectionRequests: opened.protection.crossOriginProtectionRequests,
+        responseTextRetained: false
+      });
+    } finally {
+      await opened?.page.close().catch(() => undefined);
+      await context.close().catch(() => undefined);
+    }
+  }
+  const summary = {
+    scenario: "preview-p001-compound-history-log-repro",
+    sampleCount: samples.length,
+    patientSuccessCount: samples.filter((sample) => sample.patientStatus === 200).length,
+    historySuccessCount: samples.filter((sample) =>
+      sample.helperHistoryStatus === 200 || sample.historyStatuses.includes(200)
+    ).length,
+    missingHistoryCount: samples.filter((sample) =>
+      sample.helperHistoryStatus !== 200 && !sample.historyStatuses.includes(200)
+    ).length,
+    agentRequestCount: samples.reduce((sum, sample) => sum + sample.agentRequestCount, 0),
+    historyRequestCount: samples.reduce((sum, sample) => sum + sample.historyRequestCount, 0),
+    historyRequestFailureCount: samples.reduce((sum, sample) => sum + sample.historyRequestFailureCount, 0),
+    non200HistoryResponseCount: samples.reduce((sum, sample) =>
+      sum + sample.historyStatuses.filter((status) => status !== 200).length, 0),
+    languageLeakCount: samples.filter((sample) => sample.languageLeakDetected).length,
+    teacherMetaLeakCount: samples.filter((sample) => sample.teacherMetaLeakageDetected).length,
+    structuredPayloadLeakCount: samples.filter((sample) => sample.structuredPayloadLeakageDetected).length,
+    crossOriginProtectionRequestCount: samples.reduce((sum, sample) => sum + sample.crossOriginProtectionRequests, 0),
+    responseTextRetained: false,
+    samples
+  };
+  await testInfo.attach("preview-p001-compound-history-log-repro", {
+    body: JSON.stringify(summary, null, 2),
+    contentType: "application/json"
+  });
+  console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
+  expect(summary.sampleCount).toBe(3);
+  expect(summary.patientSuccessCount).toBe(3);
+  expect(summary.historySuccessCount).toBe(3);
+  expect(summary.missingHistoryCount).toBe(0);
+  expect(summary.agentRequestCount).toBe(3);
+  expect(summary.historyRequestCount).toBe(3);
+  expect(summary.historyRequestFailureCount).toBe(0);
+  expect(summary.non200HistoryResponseCount).toBe(0);
+  expect(summary.languageLeakCount).toBe(0);
+  expect(summary.teacherMetaLeakCount).toBe(0);
+  expect(summary.structuredPayloadLeakCount).toBe(0);
+  expect(summary.crossOriginProtectionRequestCount).toBe(0);
+});

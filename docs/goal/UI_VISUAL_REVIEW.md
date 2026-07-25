@@ -126,3 +126,9 @@
 - P001第2阶段在`1440×900`与`390×844` 2/2执行“CTU→补肾功能→重试CTU”。三次order均200，但报告数固定0/1/0，重试被标为重复医嘱，报告卡数量保持1→1；HEM-P1-055为用户可见流程失败。
 - 两个viewport页面均无横向滚动或崩溃，桌面/移动全页截图可读；自动viewport只标`FAIL_EMULATION`，不替代真机。
 - 合法非终态报告卡在两个viewport各产生1条React列表key console error，登记HEM-P2-056。其余network request failure和HTTP错误为0。
+
+## 2026-07-25 `7781586` 本轮视觉范围
+
+- 本轮聚焦病史权威、语言与Preview接口合同，没有新增视觉缺陷，也没有为真实患者回答保存截图、trace或录像。
+- 既有四固定viewport结论保持`PASS_EMULATION`；本轮未获得真实软键盘或safe-area证据，继续`BLOCKED_REAL_DEVICE`，不得视为真机通过。
+- HEM-P1-057/058均由脱敏计数、来源、HTTP状态和最小重建脚本支持，不需要提交含回答正文的视觉证据。

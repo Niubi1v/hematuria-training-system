@@ -408,3 +408,39 @@
 - 最小证据：HEM-P1-055同一UI最小复现、两份本机console摘要及脱敏聚合；不额外提交重复截图或大trace。
 - 建议方向：对结果行使用不依赖空文本的稳定复合key（如resultId+索引），并避免在`result`为空而仅有impression时生成空key段落；新增合法非终态/空result报告卡的console零错误回归。
 - 医学专家裁决：否；纯渲染稳定性问题。
+
+## HEM-P1-057：待审核病史在provider成功路径丢失治理并暴露收集元数据
+
+- 严重级别 / 状态：P1 / OPEN；`FAIL_LOCAL_QA`、`FAIL_PREVIEW`。
+- 基线：`77815862a0abebff67b8d958f66944a0e11b068f`。
+- 页面和路径：Patient Agent，`POST /api/agent-chat/`；P002手术史、P004吸烟史、P013饮酒史。
+- 语言 / viewport：中文、英文；API黑盒与合成provider最小复现，viewport N/A。
+- 操作步骤：新建合法session → 分别询问上述待审核病史 → 记录公开source/fallback/matched计数 → 对照provider调用前应生效的`medical_history_pending_review`隔离。
+- 预期：不调用provider；返回安全不确定，`isFallback=true`、`fallbackReason=medical_history_pending_review`，匹配槽位/事实均为空，不进入收集、时间线或评分。
+- 实际：回答文本仍自然不确定，但被标为DeepSeek live_ai，`isFallback=false`、fallback reason为空，且每次返回1个matched slot和1个matched fact；前端收集路径会消费这些元数据。
+- 复现：真实Preview两次独立运行各6/6；本地合成provider两次独立运行各6/6，报告逐字节一致。合计24/24失败样本。
+- AI来源：真实Preview为DeepSeek live_ai；本地为只回显`currentAllowedAnswer`的合成provider，不冒充真实AI。
+- 状态时间线：session成功 → agent-chat 200 → provider成功 → 治理标志缺失、匹配元数据非空 → history-log 200。
+- HTTP / 耗时：Preview 12/12 agent-chat 200、12/12 history-log 200；无401/403/5xx。本轮聚合不保留逐请求耗时或request ID。
+- console/network摘要：跨源保护请求0，教师/结构/语言泄露0；header、body、token、Cookie及完整回答不落盘。
+- 最小证据：`tests/exploratory/history-medical-provider-governance.mjs`、`tests/preview/preview-stability.spec.mjs`及`artifacts/exploratory-qa/reports/7781586-history-medical-qa-summary.json`；两组原始脱敏重复报告仅本机保留。
+- 建议方向：在任何provider调用前统一解析`unresolvedReason/fallbackReason`并强制隔离；provider成功分支不得恢复blocked事实的matched元数据；增加双语合成provider与Preview回归。
+- 医学专家裁决：否；修复是恢复现有待审核状态，不得借此批准或改写医学事实。
+
+## HEM-P1-058：P037英文live_ai开放式主诉遗漏权威“1 day ago”病程
+
+- 严重级别 / 状态：P1 / OPEN；`FAIL_PREVIEW`。
+- 基线：`77815862a0abebff67b8d958f66944a0e11b068f`。
+- 页面和路径：P037 Patient Agent，`POST /api/agent-chat/`与`history-log`。
+- 语言 / viewport：英文；Preview API黑盒，viewport N/A。
+- 操作步骤：每次创建全新P037英文session → 询问开放式主诉/发病经过 → 检查是否包含“1 day ago/yesterday”等等价一天病程 → 核对source、fallback与history。
+- 预期：英文回答自然表达权威一天病程，且不泄露未问病史。
+- 实际：6/6回答均未出现一天病程等价语义；全部为DeepSeek live_ai、无fallback，agent/history均200。本地规则中英2/2及Preview中文1/1正确。
+- 复现：6个独立英文Preview session，6/6；不是同一会话缓存或fallback。
+- AI来源：DeepSeek live_ai。
+- 状态时间线：session成功 → agent-chat 200/live_ai → 回答缺病程 → history-log 200。
+- HTTP / 耗时：agent-chat 6/6为200，history-log 6/6为200；无401/403/5xx。本轮不保留回答正文、request ID或逐请求耗时。
+- console/network摘要：fallback 0，教师/结构/跨病例/语言泄露0；凭据字段未输出。
+- 最小证据：`tests/preview/preview-stability.spec.mjs`中的`@preview-p037-one-day-duration`及脱敏聚合`7781586-history-medical-qa-summary.json`。
+- 建议方向：在允许事实构造及provider输出保真检查中对已审核duration建立英文等价语义门禁；不能用rule fallback掩盖provider成功后的遗漏。
+- 医学专家裁决：否；现有权威值已明确，本缺陷不新增或批准医学事实。

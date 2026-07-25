@@ -241,3 +241,22 @@ SHA-256：
 - `reports/results.json` 等其余本机报告也可能含 `<QA_WORKTREE>` 的实际绝对路径，因此整类报告保持不提交；本索引使用占位符，不暴露用户目录。
 - fixture 响应中的训练状态仅为明确测试占位符；live adapter 的签名材料运行时随机生成且不输出，真实签名只存在于进程内存。network 摘要不保存 header、query、attemptId、sessionId 或问答正文。
 - 后续每个里程碑仍重复仓库扫描和 trace 解包扫描；任何新增命中必须在提交前定位并排除。
+
+## `7781586` 第15轮病史权威证据
+
+| 证据名称 | 对应测试或缺陷 | 文件路径 | 文件大小 | 提交Git | 未提交原因 | 本机保留位置 |
+| --- | --- | --- | ---: | --- | --- | --- |
+| 病史权威矩阵脚本 | 42×37、42×17、572/419、32项阻塞 | `tests/exploratory/history-medical-authority-matrix.mjs` | 13,655 B | 是 | — | 仓库路径 |
+| provider治理最小复现 | HEM-P1-057 | `tests/exploratory/history-medical-provider-governance.mjs` | 约4.2 KB | 是 | — | 仓库路径 |
+| Preview定向复测 | HEM-P1-057、HEM-P1-058、速率限制诊断 | `tests/preview/preview-stability.spec.mjs` | 130,034 B（整文件） | 是 | — | 仓库路径 |
+| 第15轮脱敏聚合 | 本轮验收结论 | `artifacts/exploratory-qa/reports/7781586-history-medical-qa-summary.json` | 3,126 B | 是 | — | 仓库路径 |
+| 权威矩阵原始运行1/2 | 本地确定性复核 | `artifacts/exploratory-qa/reports/7781586-history-medical-authority-run-{1,2}.json` | 1,085 B/份 | 否 | 与聚合重复 | 同路径，本机未跟踪 |
+| HEM-P1-057原始运行1/2 | 6/6最小复现确定性 | `artifacts/exploratory-qa/reports/7781586-hem-p1-057-run-{1,2}.json` | 2,129 B/份 | 否 | 与最小脚本和聚合重复 | 同路径，本机未跟踪 |
+| Preview原始stdout/stderr与附件 | 真实Preview定向及广域运行 | 专用安全wrapper临时目录 | 不保留 | 否 | 含运行上下文且聚合足够；扫描后删除 | 无 |
+| 历史HTML、截图、trace、视频及console/network | 既有轮次证据 | `artifacts/exploratory-qa/`既有未跟踪目录 | 见既有索引 | 否 | 重复、体积大或含本机路径 | 原工作树原位保留 |
+
+- 本轮没有新增截图、trace或录像；HEM-P1-057/058由可重建脚本、HTTP/source计数及脱敏聚合支持，避免保存真实回答。
+- Preview安全wrapper确认凭据命中0后删除专用输出；Cookie、Authorization、bypass secret、session/attempt token、Redis凭据、完整签名和环境变量值均未进入聚合。
+- 第15轮最终全证据树流式/解包扫描覆盖508个物理文件、ZIP内9,029个条目和1,344,951,147字节，敏感值命中0；扫描器只输出计数，不输出候选值。
+- 通用仓库candidate scanner仍对既有5个未跟踪大trace按大小上限fail-closed（4个ZIP内entry过大、1个ZIP文件过大）；这些文件未staged，且已由上项流式/解包扫描覆盖并得到0命中。scanner自测合同通过，未删除或放宽断言。
+- 第15轮11个staged文件及完整可达文本历史的独立扫描敏感值命中0；暂存范围严格为QA文档、QA测试与1份脱敏聚合，不含业务代码、`data/**`或大体积证据。

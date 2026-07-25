@@ -1,0 +1,96 @@
+{
+  "schemaVersion": "exploratory-history-medical-qa-summary-v1",
+  "productionBaseline": "77815862a0abebff67b8d958f66944a0e11b068f",
+  "localRuntime": {
+    "node": "v24.14.0",
+    "productionEngineTarget": ">=22.14 <23",
+    "status": "PASS_LOCAL_QA_WITH_RUNTIME_DIFFERENCE"
+  },
+  "localAuthorityMatrix": {
+    "runs": 2,
+    "deterministicSha256": "69CE87D8F99ADB39F6901ACF791CF6A98C0EDE73B5D5EA4953D419FC6BDC21A8",
+    "cases": 42,
+    "slotsPerCase": 37,
+    "bilingualSlotChecks": 1554,
+    "historyQuestionsPerCase": 17,
+    "historyQuestionChecks": 714,
+    "facts": 572,
+    "pendingExpertFacts": 419,
+    "sourceFacts": 153,
+    "sourceMarkerConflicts": 151,
+    "newBlockedMedical": 14,
+    "bilingualMedicalConflicts": 18,
+    "blockedFieldRows": 32,
+    "blockedFieldRouteChecks": 64,
+    "patientNotObservedChecks": 6,
+    "unreviewedLifestyleChecks": 84,
+    "medicationAuthorityChecks": 8,
+    "p037DurationChecks": 2,
+    "englishCjkFailures": 0,
+    "failures": 0,
+    "medicalApprovalStatus": "BLOCKED_MEDICAL",
+    "allCasesRemainNeedsRevision": true
+  },
+  "patientAgentRegression": {
+    "canonicalNormalizationQuestions": 86,
+    "paraphraseMatrixQuestions": 3150,
+    "priorityNaturalQuestions": 840,
+    "priorityIntentChecks": 1428,
+    "canonicalHitFailures": 0,
+    "erroneousUnknowns": 0,
+    "polarityErrors": 0,
+    "compoundQuestions": 786,
+    "compoundFailures": 0
+  },
+  "scoringRegression": {
+    "cases": 42,
+    "maximum": 360,
+    "status": "PASS_LOCAL_QA",
+    "blockedFactsApproved": false
+  },
+  "preview": {
+    "deploymentSha": "77815862a0abebff67b8d958f66944a0e11b068f",
+    "deploymentMatched": true,
+    "routesDirectAndRefresh": 42,
+    "invalidRoute404": true,
+    "sessionInitializationSuccesses": 10,
+    "liveAiChineseSuccesses": 5,
+    "liveAiEnglishSuccesses": 5,
+    "singleSessionTwentyTurnSuccesses": 20,
+    "focusedAuthoritySamples": 16,
+    "focusedHttpAndHistorySuccesses": 16,
+    "focusedLiveAiSamples": 14,
+    "intentionalCompoundRuleSafeguards": 2,
+    "medicationContentPasses": 8,
+    "blockedGovernanceFailures": 6,
+    "p037EnglishDurationFailures": 1,
+    "p037EnglishDurationStabilitySamples": 5,
+    "p037EnglishDurationStabilityFailures": 5,
+    "p037RefreshBilingualAnswerSuccesses": 8,
+    "sevenStageFeedbackSuccesses": 7,
+    "scoreRequests": 1,
+    "finalReportMaximumVisible": 360,
+    "postFinalRefreshValidation401": 1,
+    "compoundBatchStatus": "BLOCKED_PREVIEW_RATE_LIMIT",
+    "compoundBatch429Samples": 3,
+    "credentialScanPassed": true,
+    "responseTextRetained": false
+  },
+  "newDefects": [
+    {
+      "id": "HEM-P1-057",
+      "severity": "P1",
+      "status": "FAIL_LOCAL_QA_AND_PREVIEW",
+      "reproduction": "6/6 synthetic-provider and 6/6 Preview",
+      "summary": "Pending-review history enters the live-provider path with collectable/scorable metadata."
+    },
+    {
+      "id": "HEM-P1-058",
+      "severity": "P1",
+      "status": "FAIL_PREVIEW",
+      "reproduction": "6/6",
+      "summary": "P037 English open chief complaint omits the authoritative one-day duration."
+    }
+  ],
+  "sensitiveContentRetained": false
+}
