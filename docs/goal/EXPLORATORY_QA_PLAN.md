@@ -201,3 +201,11 @@ console 文本对 Authorization、Cookie、签名、token、secret 和 API key �
 - 新增HEM-P1-063修复验收：初始pointer/attempt读写删除失败后，同页恢复Storage API；下一次成功自动保存必须建立一致pointer，刷新恢复同一草稿，孤儿计数0。不得通过扫描并收养其他病例、语言、mode或participant的孤儿文件规避身份校验。
 - history-log门禁保持：一次状态写失败后仍持久化pending及原request ID；3次失败刷新不自动风暴，用户重试只发1次并清空队列。后续不得为修复pointer破坏该通过路径。
 - 下一独立范围转向病例目录在`localStorage`读取/枚举不可用时的fail-closed、重新开始训练在remove失败时是否真正清除，以及attempt摘要/目录计数是否会被畸形pointer或孤儿状态污染。真实存储、真机、Preview受保护故障及医学裁决继续分层阻塞。
+
+## 2026-07-26 第 21 轮 `7781586` 目录容错与restart后续
+
+- 已完成目录storage读写不可用、畸形pointer/无验证summary/孤儿attempt三控制，以及restart首次remove失败四viewport测试；新增HEM-P1-064、HEM-P2-065、HEM-P1-066。
+- HEM-P1-064修复验收必须让共享Header/Footer及CaseCatalog的语言、进度读写全部fail-safe；`getItem/setItem`分别失败时仍显示42卡、搜索筛选可用、语言状态与`document.lang`一致且page/console error为0。
+- HEM-P2-065修复验收必须解析并验证pointer正文、完整作用域和对应attempt；completed summary必须有受信schema/attempt/360终态。不得通过扫描并收养HEM-P1-063孤儿状态来制造进度。
+- HEM-P1-066修复验收覆盖active attempt、pointer、当前/legacy session能力四项任一删除失败：不得reload成“看似重启”；成功时新attempt、0 submitted、空草稿，失败时当前语言明确提示并允许重试。
+- 下一独立范围扩展HEM-P1-064到首页、直接病例页和语言切换；检查restart在pointer删除失败及sessionStorage删除失败时的差异化结果，以及目录summary重复/跨语言/跨病例污染。真实存储和真机仍单独阻塞。

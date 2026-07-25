@@ -358,3 +358,24 @@ SHA-256：
 - 第20轮最终全证据树流式/解包扫描覆盖842个物理文件、ZIP内15,416个条目和2,114,751,760字节，敏感值命中0；扫描器只输出计数，不输出候选值。
 - scanner自测合同通过。通用repository candidate scanner仍只对历史5个本机未跟踪大trace按大小上限fail-closed（4个ZIP内entry过大、1个ZIP文件过大），没有新增规则或历史命中；这5个文件已由上项无大小上限的流式/解包扫描覆盖并得到0命中。
 - 第20轮10个staged文件及完整可达文本历史的独立扫描敏感值命中0；`git diff --cached --check`通过，暂存范围不含业务代码、`data/**`、完整问答、终态正文、header或大trace/录像。原始console/network和HTML报告继续仅本机保留。
+
+## `7781586` 第21轮目录与restart证据
+
+| 证据名称 | 对应测试或缺陷 | 文件路径 | 文件大小 | 提交Git | 未提交原因 | 本机保留位置 |
+| --- | --- | --- | ---: | --- | --- | --- |
+| 三组四viewport目录/restart测试 | HEM-P1-064、HEM-P2-065、HEM-P1-066 | `tests/exploratory/long-running-qa.spec.mjs` | 159,577 B（整文件） | 是 | — | 仓库路径 |
+| 第21轮脱敏聚合 | 本轮验收结论 | `artifacts/exploratory-qa/reports/7781586-catalog-restart-integrity-summary.json` | 1,491 B | 是 | — | 仓库路径 |
+| HEM-P1-064代表性移动截图 | 390×844目录Application error | `artifacts/exploratory-qa/screenshots/catalog-storage-unavailable-zh-390x844.png` | 41,228 B | 是 | — | 仓库路径 |
+| HEM-P2-065代表性移动截图 | 390×844 P001假“进行中” | `artifacts/exploratory-qa/screenshots/catalog-progress-integrity-zh-390x844.png` | 44,497 B | 是 | — | 仓库路径 |
+| HEM-P1-066代表性移动截图 | 390×844 restart后仍为1/7 | `artifacts/exploratory-qa/screenshots/restart-remove-failure-zh-390x844.png` | 44,506 B | 是 | — | 仓库路径 |
+| 四viewport原始摘要 | 3组测试×4 viewport | `artifacts/exploratory-qa/reports/7781586-{catalog-storage-unavailable,catalog-progress-integrity,restart-remove-failure}-*-summary.json` | 12份/8,616 B | 否 | 聚合已保留必要计数 | 同路径，本机未跟踪 |
+| console/network摘要 | 三组四viewport页面诊断 | `artifacts/exploratory-qa/reports/{catalog-storage-unavailable,catalog-progress-integrity,restart-remove-failure}-*` | 24份/31,989 B | 否 | 与聚合重复，可能含本机运行上下文 | 同路径，本机未跟踪 |
+| 本轮截图及QA探针失败帧 | 三组四viewport、含首次locator超时帧 | `artifacts/exploratory-qa/screenshots/{catalog-storage-unavailable,catalog-progress-integrity,restart-remove-failure}-*` | 24份/3,296,980 B | 否 | 每个缺陷各提交一张代表图；其余重复或为已排除QA探针 | 同路径，本机未跟踪 |
+| 本轮trace | 三组四viewport可重建证据 | `artifacts/exploratory-qa/traces/{catalog-storage-unavailable,catalog-progress-integrity,restart-remove-failure}-*.zip` | 12份/34,307,153 B | 否 | 体积大且可由测试重建 | 同路径，本机未跟踪 |
+| 本轮失败录像 | 三组四viewport失败过程 | `artifacts/exploratory-qa/videos/{catalog-storage-unavailable,catalog-progress-integrity,restart-remove-failure}-*.webm` | 12份/2,319,147 B | 否 | 体积大；测试、聚合和代表截图足够 | 同路径，本机未跟踪 |
+
+- 聚合不保存草稿、pointer/summary正文、attempt/request ID、header、Cookie、token、签名或环境值。目录崩溃截图包含固定QA异常消息和公开源码位置，不含用户路径或凭据。
+- 三张代表截图均已人工复核：目录错误页、公开P001进度卡及restart后1/7状态；不含QA草稿、患者回答、评分正文或隐藏病例数据。
+- 第21轮最终全证据树流式/解包扫描覆盖940个物理文件、ZIP内16,076个条目和2,200,171,017字节，敏感值命中0；扫描器只输出计数，不输出候选值。
+- scanner自测合同通过。通用repository candidate scanner仍只对历史5个本机未跟踪大trace按大小上限fail-closed（4个ZIP内entry过大、1个ZIP文件过大），没有新增规则或历史命中；这5个文件已由上项无大小上限的流式/解包扫描覆盖并得到0命中。
+- 第21轮12个staged文件及完整可达文本历史已独立扫描，敏感值命中0；暂存范围不含业务代码、`data/**`、完整问答、header或大trace/录像。大trace、录像、重复截图、console/network和HTML报告继续仅本机保留。

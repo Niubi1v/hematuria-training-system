@@ -442,3 +442,12 @@ Patient Session 报告记录 295 次 `unsafe_deterministic_answer` source-cell �
 - history-log持久化恢复4/4为`PASS_EMULATION`：每次单次attempt写失败后，待同步队列仍保存1项/attempts=3；刷新自动新增请求0，手动重试各1次200。每次总请求为3×503+1×200、唯一request ID为1，最终pending队列0。
 - 初次history探针的重复文本选择器、英文标签及未禁用TTS 404均已定位为QA夹具问题，修正后正式4/4通过，不计产品缺陷。首次未限定spec导致的deployed配置导入失败同样不计产品证据。
 - 本轮新增P0/P1/P2为0/1/0；HEM-P1-061扩大复现但不重复编号。由于HEM-P1-061/063及其他开放P1，仍不建议进入最终教师人工审阅。
+
+## 2026-07-26 第 21 轮：`7781586` 病例目录容错、进度真实性与重新开始清理
+
+- Production仍精确为`77815862a0abebff67b8d958f66944a0e11b068f`；本轮仅新增QA测试、文档和最小证据，业务目录及`data/**`差异为0。
+- 新增HEM-P1-064：`localStorage.getItem/setItem`不可用时，`/cases/`四viewport 4/4进入Next客户端Application error；病例卡0/42、搜索可用0/4、每次1个page error，network failure 0。即时DOM正式探针4/4稳定。
+- 新增HEM-P2-065：畸形P001 pointer键4/4被标为“进行中”，仅含`caseId=P002`的无验证summary 4/4被标为“已完成”，共8条假进度；无pointer的P003孤儿attempt 4/4保持未开始，未被目录自动收养。
+- 新增HEM-P1-066：成功提交P001第1阶段后，让第一次active attempt删除抛出一次异常；用户确认重新开始并reload后，四viewport 4/4仍恢复相同attempt、1个已提交阶段和原QA草稿。网络失败和意外console错误均为0。
+- 初次目录可访问性locator在Application error页等待超时；改为即时DOM审计后4/4在约20秒内稳定复现，旧超时只记QA探针失败。目录正常路径的开发favicon 404通过显式204路由排除后，假进度正式结果console错误0。
+- 本轮新增P0/P1/P2为0/2/1。HEM-P1-064/066及其他开放P1仍阻止最终教师人工审阅；真实浏览器存储策略、磁盘故障和真机继续独立阻塞。

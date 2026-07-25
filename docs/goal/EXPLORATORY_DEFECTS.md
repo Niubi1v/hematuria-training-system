@@ -555,3 +555,59 @@
 - 最小复现测试：`tests/exploratory/long-running-qa.spec.mjs`中的`@attempt-storage-api-recovery`；失败断言要求恢复后pointer存在、刷新恢复草稿且孤儿计数为0。
 - 建议方向：成功写入attempt状态时幂等校验/补写同作用域pointer，或把pointer和状态作为可恢复的一致性单元；补写前必须用`isAttemptCompatible`校验完整身份。增加初始读写不可用→同页恢复→保存→刷新，以及跨病例/语言孤儿不被错误收养的回归。
 - 是否需要医学专家裁决：否；纯客户端存储一致性与训练进度恢复问题。
+
+## HEM-P1-064：localStorage读写不可用时病例目录触发全页客户端异常且0/42病例可访问
+
+- 严重级别 / 状态：P1 / OPEN；`FAIL_EMULATION / CATALOG_LOCAL_STORAGE_GET_SET_UNAVAILABLE_EMULATION`。
+- 基线：`77815862a0abebff67b8d958f66944a0e11b068f`。
+- 页面和路径：`/cases/`病例目录及共享`AppHeader`语言初始化。
+- 语言 / viewport：中文意图`1440×900/390×844`、英文切换意图`1280×720/360×800`；四个viewport均在目录交互前崩溃。
+- 完整操作步骤：在页面脚本执行前令`localStorage.getItem/setItem`抛出`SecurityError` → 打开`/cases/` → 检查目录标题、42个病例卡、搜索与语言控件、HTML语言和客户端异常。
+- 预期：病例目录不依赖浏览器存储才能浏览；语言/进度读取失败应回退默认值，写入失败应仅禁用偏好持久化，不得阻断42例目录、搜索、筛选或直接URL。
+- 实际：四viewport 4/4进入Next `Application error: a client-side exception`，病例卡0/42、搜索可用0/4、英文按钮不可用；每次1个page error。错误在共享`AppHeader`读取`hematuria-language`时即可触发，`CaseCatalogClient`自身语言读写也未保护。
+- 复现：正式即时DOM审计4/4；此前可访问性locator探针也4/4进入同一错误页，但因等待目标元素产生超时，超时不计产品复现。方法级故障注入不冒充真实浏览器策略封锁。
+- AI来源：N/A；纯客户端目录与布局。
+- 状态变化时间线：导航`/cases/` → 共享语言读取抛出 → React客户端异常 → Next错误页 → 目录/搜索/病例卡均不可用。
+- HTTP状态和耗时：request failure 0；故障发生在客户端storage调用，本地耗时不作为Preview指标。
+- console/network摘要：每次page error 1、额外console error 0、network failure 0。报告不保存异常正文、存储键值、用户路径、Cookie、token、签名或环境值。
+- 截图 / trace / 录像：代表截图`artifacts/exploratory-qa/screenshots/catalog-storage-unavailable-zh-390x844.png`；其余四viewport截图、trace、console/network及失败录像本机保留。
+- 最小复现测试：`tests/exploratory/long-running-qa.spec.mjs`中的`@catalog-storage-unavailable`，断言42卡、目录/搜索可用、无Application error和page error。
+- 建议方向：共享Header、Footer和CaseCatalog全部经安全storage helper读取/写入；失败时使用内存默认语言和空进度，目录仍渲染42卡。增加四viewport的`getItem/setItem`分别失败、语言切换和搜索回归。
+- 是否需要医学专家裁决：否；纯客户端容错和核心导航可用性问题。
+
+## HEM-P2-065：病例目录仅凭畸形pointer键名和无验证summary显示“进行中/已完成”
+
+- 严重级别 / 状态：P2 / OPEN；`FAIL_EMULATION / MALFORMED_POINTER_AND_UNVERIFIED_SUMMARY_CATALOG_EMULATION`。
+- 基线：`77815862a0abebff67b8d958f66944a0e11b068f`。
+- 页面和路径：`/cases/`病例目录的进度标签聚合。
+- 病例 / 语言 / viewport：P001畸形pointer、P002无验证summary、P003孤儿attempt控制；中文`1440×900/390×844`、英文`1280×720/360×800`。
+- 完整操作步骤：预置值为损坏JSON的P001 pointer键 → 预置仅含`caseId=P002`、无attempt/评分/完成时间的summary → 预置无pointer的P003完整身份孤儿attempt → 打开目录并检查三张卡状态。
+- 预期：目录在显示进度前校验pointer值、作用域和对应attempt；“已完成”必须来自结构完整且可验证的终态summary。畸形pointer、无验证summary和孤儿attempt均不得伪造进度。
+- 实际：P001四viewport4/4显示“进行中”，P002 4/4显示“已完成”；共8条假进度。P003 4/4保持“未开始”，说明目录没有扫描收养孤儿attempt。
+- 复现：四viewport4/4；每次2条假进度。页面仍可用，无network failure或console error。
+- AI来源：N/A；纯客户端目录状态。
+- 状态变化时间线：读取summary数组并按任意caseId标完成 → 枚举pointer键名并按caseId标进行中 → 不解析pointer正文/attempt → 渲染错误标签和“继续/进入”动作。
+- HTTP/console/network：无API依赖；request failure 0、console error 0。证据不保存注入的storage正文、attempt ID或用户数据。
+- 截图 / trace / 录像：代表截图`artifacts/exploratory-qa/screenshots/catalog-progress-integrity-zh-390x844.png`；其余证据本机保留。
+- 最小复现测试：同文件`@catalog-progress-integrity`；P003孤儿不自动收养作为安全控制。
+- 建议方向：复用完整`isAttemptCompatible`和安全JSON读取验证pointer；summary至少校验schema、attemptId、caseId、language、total=360及完成时间，并与本地终态或受信服务端状态绑定。损坏值应忽略而不是升级进度。
+- 是否需要医学专家裁决：否；纯进度真实性与客户端数据完整性问题。
+
+## HEM-P1-066：重新开始训练遇一次removeItem异常后仍reload并恢复原attempt、草稿和已提交阶段
+
+- 严重级别 / 状态：P1 / OPEN；`FAIL_EMULATION / ONE_SHOT_ACTIVE_ATTEMPT_REMOVE_FAILURE_EMULATION`。
+- 基线：`77815862a0abebff67b8d958f66944a0e11b068f`。
+- 页面和路径：P001第1阶段；“重新开始训练/Restart training”清理与reload。
+- 病例 / 语言 / viewport：P001；中文`1440×900/390×844`、英文`1280×720/360×800`。
+- 完整操作步骤：建立合法attempt → 填写QA病史小结并成功提交第1阶段 → 确认本地submitted=1 → 让首次active attempt `removeItem`抛出一次`SecurityError`并立即恢复Storage API → 接受重新开始确认 → 等待reload → 比较attempt身份、草稿和submitted阶段。
+- 预期：明确的重新开始操作应原子或可验证地清除当前attempt、pointer和能力后再reload；若清理失败，应保留当前页并提示失败，不能表现为已重启后恢复旧状态。
+- 实际：一次删除故障4/4被触发；reload后4/4仍为相同attempt，submitted阶段4/4仍为1，QA草稿4/4保留。用户看似执行了重新开始，但训练状态完全未清除。
+- 复现：四viewport4/4；同一方法级一次性异常，不冒充真实磁盘或浏览器策略故障。
+- AI来源：N/A；本地Production training handler，provider调用0。只使用QA标记，不评价医学事实。
+- 状态变化时间线：stage1提交200/本地落盘 → 用户确认restart → 第一个attempt文件删除抛错 → catch吞掉后直接reload → pointer与session能力未删除 → 原attempt、草稿和1/7状态恢复。
+- HTTP状态和耗时：每次初始init与stage1提交为200；restart后复用旧本地/会话状态，无HTTP非200、request failure或非预期console error。
+- console/network摘要：网络失败0、意外console error 0。聚合不保存草稿、attempt ID、request ID、header、Cookie、token、签名或环境值。
+- 截图 / trace / 录像：代表截图`artifacts/exploratory-qa/screenshots/restart-remove-failure-zh-390x844.png`显示reload后仍为1/7；其余四viewport证据本机保留。
+- 最小复现测试：同文件`@restart-remove-failure`；失败断言要求新attempt、submitted=0、草稿不保留。
+- 建议方向：分别尝试并验证每个清理键，只有全部必要状态清理成功才reload；失败时显示当前语言错误并允许重试。或使用新attempt pointer的原子切换，同时确保旧token不可继续且不误删其他病例/语言/participant状态。
+- 是否需要医学专家裁决：否；纯显式重启、存储清理和状态一致性问题。

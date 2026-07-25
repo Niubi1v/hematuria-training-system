@@ -2351,6 +2351,288 @@ test("a transient attempt-state write failure preserves one history-log retry id
   }, { videoOnFailure: true });
 });
 
+test("the case catalog remains usable when browser storage reads and writes are unavailable @catalog-storage-unavailable", async ({ browser }, testInfo) => {
+  const targetLanguage = ["qa-1280x720", "qa-360x800"].includes(testInfo.project.name) ? "en" : "zh";
+
+  await withEvidence(browser, testInfo, "catalog-storage-unavailable", async ({ page, slug, consoleEvents, networkEvents }) => {
+    const pageErrors = [];
+    page.on("pageerror", (error) => pageErrors.push(redact(error.message).slice(0, 500)));
+    await page.addInitScript(() => {
+      const originalGetItem = Storage.prototype.getItem;
+      const originalSetItem = Storage.prototype.setItem;
+      Storage.prototype.getItem = function getItem(key) {
+        if (this === localStorage) throw new DOMException(`QA catalog storage read unavailable: ${String(key).slice(0, 40)}`, "SecurityError");
+        return originalGetItem.call(this, key);
+      };
+      Storage.prototype.setItem = function setItem(key, value) {
+        if (this === localStorage) throw new DOMException(`QA catalog storage write unavailable: ${String(key).slice(0, 40)}`, "SecurityError");
+        return originalSetItem.call(this, key, value);
+      };
+    });
+    await page.route("**/favicon.ico", (route) => route.fulfill({ status: 204, body: "" }));
+    await page.goto("/cases/");
+    await page.waitForTimeout(1000);
+    const englishButtonVisible = await page.evaluate(() =>
+      [...document.querySelectorAll("button")].some((button) => button.textContent?.trim() === "English")
+    ).catch(() => false);
+    if (targetLanguage === "en" && englishButtonVisible) {
+      await page.evaluate(() => {
+        const button = [...document.querySelectorAll("button")].find((item) => item.textContent?.trim() === "English");
+        button?.click();
+      });
+      await page.waitForTimeout(250);
+    }
+    const heading = targetLanguage === "en" ? "Case selection" : "病例选择";
+    const searchLabel = targetLanguage === "en" ? "Search cases" : "搜索病例";
+    const domAudit = await page.evaluate(({ expectedHeading, expectedSearchLabel }) => {
+      const text = document.body?.innerText || "";
+      const search = [...document.querySelectorAll("input")].find((item) =>
+        item.getAttribute("aria-label") === expectedSearchLabel
+        || item.getAttribute("placeholder")?.includes(expectedSearchLabel)
+      );
+      return {
+        catalogHeadingVisible: [...document.querySelectorAll("h1,h2")].some((item) => item.textContent?.trim() === expectedHeading),
+        searchUsable: Boolean(search && !search.disabled),
+        applicationErrorVisible: /Application error: a client-side exception/i.test(text),
+        caseCardCount: document.querySelectorAll('a[href*="/cases/P"]').length,
+        htmlLanguage: document.documentElement.lang
+      };
+    }, { expectedHeading: heading, expectedSearchLabel: searchLabel }).catch(() => ({
+      catalogHeadingVisible: false,
+      searchUsable: false,
+      applicationErrorVisible: true,
+      caseCardCount: 0,
+      htmlLanguage: ""
+    }));
+    const {
+      catalogHeadingVisible,
+      searchUsable,
+      applicationErrorVisible,
+      caseCardCount,
+      htmlLanguage
+    } = domAudit;
+    await saveShot(page, testInfo, `catalog-storage-unavailable-${targetLanguage}`, false);
+
+    const failedNetworkRequestCount = networkEvents.filter((item) => item.status === "FAILED").length;
+    const consoleErrorCount = consoleEvents.filter((item) => item.type === "error").length;
+    const expectedHtmlLanguage = targetLanguage === "en" ? "en" : "zh-CN";
+    const resultPassed = caseCardCount === 42
+      && htmlLanguage === expectedHtmlLanguage
+      && pageErrors.length === 0
+      && consoleErrorCount === 0;
+    const summary = {
+      schemaVersion: "exploratory-catalog-storage-unavailable-v1",
+      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
+      defectId: resultPassed ? null : "HEM-P1-064",
+      targetLanguage,
+      viewport: testInfo.project.use.viewport,
+      boundary: "CATALOG_LOCAL_STORAGE_GET_SET_UNAVAILABLE_EMULATION",
+      caseCardCount,
+      expectedCaseCardCount: 42,
+      catalogHeadingVisible,
+      searchUsable,
+      applicationErrorVisible,
+      languageButtonVisible: englishButtonVisible,
+      htmlLanguage,
+      expectedHtmlLanguage,
+      pageErrorCount: pageErrors.length,
+      consoleErrorCount,
+      failedNetworkRequests: failedNetworkRequestCount,
+      errorMessagesRetained: false,
+      credentialsRetained: false
+    };
+    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    expect(failedNetworkRequestCount).toBe(0);
+    expect(caseCardCount).toBe(42);
+    expect(catalogHeadingVisible).toBe(true);
+    expect(searchUsable).toBe(true);
+    expect(applicationErrorVisible).toBe(false);
+    expect(pageErrors).toEqual([]);
+    expect(consoleErrorCount).toBe(0);
+    expect(htmlLanguage).toBe(expectedHtmlLanguage);
+  }, { videoOnFailure: true });
+});
+
+test("catalog progress ignores malformed pointers and unverified summaries @catalog-progress-integrity", async ({ browser }, testInfo) => {
+  const language = ["qa-1440x900", "qa-390x844"].includes(testInfo.project.name) ? "zh" : "en";
+  const labels = language === "en"
+    ? { inProgress: "In progress", completed: "Completed", notStarted: "Not started" }
+    : { inProgress: "进行中", completed: "已完成", notStarted: "未开始" };
+
+  await withEvidence(browser, testInfo, "catalog-progress-integrity", async ({ page, slug, consoleEvents, networkEvents }) => {
+    await page.addInitScript((selectedLanguage) => {
+      localStorage.setItem("hematuria-language", selectedLanguage);
+      localStorage.setItem("hematuria-attempt-pointer-v3:P001:free:zh", "{qa-malformed-pointer");
+      localStorage.setItem("hematuria-practice-attempt-summaries-v1", JSON.stringify([{ caseId: "P002" }]));
+      localStorage.setItem("hematuria-attempt-v3:P003:free:zh:qa-orphan", JSON.stringify({
+        attempt: {
+          attemptId: "qa-orphan",
+          caseId: "P003",
+          mode: "free",
+          language: "zh",
+          participantId: "practice-user",
+          schemaVersion: "attempt-v3"
+        },
+        activeStageNo: 3
+      }));
+    }, language);
+    await page.route("**/favicon.ico", (route) => route.fulfill({ status: 204, body: "" }));
+    await page.goto("/cases/");
+    const cards = {
+      malformedPointer: page.locator('a[href$="/cases/P001/"]'),
+      unverifiedSummary: page.locator('a[href$="/cases/P002/"]'),
+      orphanAttempt: page.locator('a[href$="/cases/P003/"]')
+    };
+    await expect(cards.malformedPointer).toBeVisible();
+    const statuses = {
+      malformedPointerInProgress: await cards.malformedPointer.getByText(labels.inProgress, { exact: true }).isVisible().catch(() => false),
+      unverifiedSummaryCompleted: await cards.unverifiedSummary.getByText(labels.completed, { exact: true }).isVisible().catch(() => false),
+      orphanAttemptNotStarted: await cards.orphanAttempt.getByText(labels.notStarted, { exact: true }).isVisible().catch(() => false)
+    };
+    await saveShot(page, testInfo, `catalog-progress-integrity-${language}`, false);
+
+    const failedNetworkRequestCount = networkEvents.filter((item) => item.status === "FAILED").length;
+    const consoleErrorCount = consoleEvents.filter((item) => item.type === "error").length;
+    const resultPassed = !statuses.malformedPointerInProgress
+      && !statuses.unverifiedSummaryCompleted
+      && statuses.orphanAttemptNotStarted;
+    const summary = {
+      schemaVersion: "exploratory-catalog-progress-integrity-v1",
+      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
+      defectId: resultPassed ? null : "HEM-P2-065",
+      language,
+      viewport: testInfo.project.use.viewport,
+      boundary: "MALFORMED_POINTER_AND_UNVERIFIED_SUMMARY_CATALOG_EMULATION",
+      statuses,
+      falseProgressSignals: Number(statuses.malformedPointerInProgress) + Number(statuses.unverifiedSummaryCompleted),
+      orphanAttemptAutoAdopted: !statuses.orphanAttemptNotStarted,
+      failedNetworkRequests: failedNetworkRequestCount,
+      consoleErrorCount,
+      storageValuesRetained: false,
+      credentialsRetained: false
+    };
+    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    expect(failedNetworkRequestCount).toBe(0);
+    expect(consoleErrorCount).toBe(0);
+    expect(statuses).toEqual({
+      malformedPointerInProgress: false,
+      unverifiedSummaryCompleted: false,
+      orphanAttemptNotStarted: true
+    });
+  }, { videoOnFailure: true });
+});
+
+test("restart clears the active attempt even when the first remove call fails @restart-remove-failure", async ({ browser }, testInfo) => {
+  const language = ["qa-1440x900", "qa-390x844"].includes(testInfo.project.name) ? "zh" : "en";
+  const copy = language === "en"
+    ? { summary: "History summary", submit: "Submit stage", restart: "Restart training" }
+    : { summary: "病史小结", submit: "提交本阶段", restart: "重新开始训练" };
+  const marker = language === "en"
+    ? "QA restart storage cleanup marker"
+    : "QA重启存储清理标记";
+
+  await withEvidence(browser, testInfo, "restart-remove-failure", async ({ page, slug, consoleEvents, networkEvents }) => {
+    const actionObservations = [];
+    await page.addInitScript((selectedLanguage) => localStorage.setItem("hematuria-language", selectedLanguage), language);
+    await installProductionTrainingApi(page, [], actionObservations);
+    await page.goto("/cases/P001/");
+    await expect(page.getByText("P001", { exact: true }).first()).toBeVisible();
+    await page.getByLabel(copy.summary).fill(marker);
+    await page.getByRole("button", { name: copy.submit, exact: true }).click();
+    await expect.poll(() => actionObservations.filter((item) => item.action === "stage-feedback" && item.status === 200).length).toBe(1);
+    const beforeRestart = await page.evaluate((selectedLanguage) => {
+      const pointer = JSON.parse(localStorage.getItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`) || "null");
+      const saved = pointer?.attemptId
+        ? JSON.parse(localStorage.getItem(`hematuria-attempt-v3:P001:free:${selectedLanguage}:${pointer.attemptId}`) || "null")
+        : null;
+      return {
+        attemptId: String(pointer?.attemptId || ""),
+        submittedStageCount: saved?.submitted ? Object.keys(saved.submitted).length : 0
+      };
+    }, language);
+    await page.evaluate(() => {
+      const originalRemoveItem = Storage.prototype.removeItem;
+      globalThis.__qaRestartRemoveFailureCount = 0;
+      Storage.prototype.removeItem = function removeItem(key) {
+        if (
+          this === localStorage
+          && String(key).startsWith("hematuria-attempt-v3:")
+          && sessionStorage.getItem("qa-restart-remove-failure-count") !== "1"
+        ) {
+          globalThis.__qaRestartRemoveFailureCount += 1;
+          sessionStorage.setItem("qa-restart-remove-failure-count", "1");
+          Storage.prototype.removeItem = originalRemoveItem;
+          throw new DOMException("QA one-shot restart remove failure", "SecurityError");
+        }
+        return originalRemoveItem.call(this, key);
+      };
+    });
+    page.once("dialog", (dialog) => dialog.accept());
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: "domcontentloaded" }),
+      page.getByRole("button", { name: copy.restart, exact: true }).click()
+    ]);
+    await expect(page.getByText("P001", { exact: true }).first()).toBeVisible();
+    await page.waitForTimeout(600);
+    const afterRestart = await page.evaluate(({ selectedLanguage, expectedMarker, previousAttemptId }) => {
+      const pointer = JSON.parse(localStorage.getItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`) || "null");
+      const saved = pointer?.attemptId
+        ? JSON.parse(localStorage.getItem(`hematuria-attempt-v3:P001:free:${selectedLanguage}:${pointer.attemptId}`) || "null")
+        : null;
+      return {
+        oneShotRemoveFailures: Number(sessionStorage.getItem("qa-restart-remove-failure-count") || 0),
+        sameAttempt: pointer?.attemptId === previousAttemptId,
+        submittedStageCount: saved?.submitted ? Object.keys(saved.submitted).length : 0,
+        markerRetained: saved?.answers?.historySummary === expectedMarker
+      };
+    }, { selectedLanguage: language, expectedMarker: marker, previousAttemptId: beforeRestart.attemptId });
+    await saveShot(page, testInfo, `restart-remove-failure-${language}`, false);
+
+    const failedNetworkRequestCount = networkEvents.filter((item) => item.status === "FAILED").length;
+    const knownEnglishKeyErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && /same key|keys should be unique/i.test(item.text)
+      && /Physical examination/i.test(item.text)
+    );
+    const unexpectedConsoleErrors = consoleEvents.filter((item) => item.type === "error" && !knownEnglishKeyErrors.includes(item));
+    const resultPassed = afterRestart.oneShotRemoveFailures === 1
+      && !afterRestart.sameAttempt
+      && afterRestart.submittedStageCount === 0
+      && !afterRestart.markerRetained;
+    const summary = {
+      schemaVersion: "exploratory-restart-remove-failure-v1",
+      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
+      defectId: resultPassed ? null : "HEM-P1-066",
+      language,
+      viewport: testInfo.project.use.viewport,
+      boundary: "ONE_SHOT_ACTIVE_ATTEMPT_REMOVE_FAILURE_EMULATION",
+      beforeRestart: {
+        attemptPresent: Boolean(beforeRestart.attemptId),
+        submittedStageCount: beforeRestart.submittedStageCount
+      },
+      afterRestart,
+      trainingInitStatuses: actionObservations.filter((item) => item.action === "init-attempt").map((item) => item.status),
+      failedNetworkRequests: failedNetworkRequestCount,
+      unexpectedConsoleErrors: unexpectedConsoleErrors.length,
+      attemptIdsRetained: false,
+      medicalFactsEvaluated: false,
+      credentialsRetained: false
+    };
+    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    expect(failedNetworkRequestCount).toBe(0);
+    expect(unexpectedConsoleErrors).toEqual([]);
+    expect(afterRestart).toEqual({
+      oneShotRemoveFailures: 1,
+      sameAttempt: false,
+      submittedStageCount: 0,
+      markerRetained: false
+    });
+  }, { videoOnFailure: true });
+});
+
 test("HEM-P1-046 numeric lab result exposes unit and reference range metadata", async ({ browser }, testInfo) => {
   test.skip(testInfo.project.name !== "qa-1440x900", "One representative desktop trace is sufficient for the data metadata defect.");
   await withEvidence(browser, testInfo, "hem-p1-046-data-agent-metadata", async ({ page }) => {

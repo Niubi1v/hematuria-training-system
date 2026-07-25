@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "exploratory-catalog-restart-integrity-summary-v1",
+  "productionBaseline": "77815862a0abebff67b8d958f66944a0e11b068f",
+  "executedAt": "2026-07-25",
+  "viewports": [
+    "1440x900",
+    "1280x720",
+    "390x844",
+    "360x800"
+  ],
+  "catalogStorageUnavailable": {
+    "result": "FAIL_EMULATION",
+    "defectId": "HEM-P1-064",
+    "runs": 4,
+    "applicationErrors": 4,
+    "pageErrors": 4,
+    "caseCardsVisible": 0,
+    "expectedCaseCardsPerRun": 42,
+    "searchControlsUsable": 0,
+    "failedNetworkRequests": 0,
+    "realStoragePolicyFailureClaimed": false
+  },
+  "catalogProgressIntegrity": {
+    "result": "FAIL_EMULATION",
+    "defectId": "HEM-P2-065",
+    "runs": 4,
+    "malformedPointersShownAsInProgress": 4,
+    "unverifiedSummariesShownAsCompleted": 4,
+    "falseProgressSignals": 8,
+    "orphanAttemptsAutoAdopted": 0,
+    "failedNetworkRequests": 0,
+    "unexpectedConsoleErrors": 0
+  },
+  "restartRemoveFailure": {
+    "result": "FAIL_EMULATION",
+    "defectId": "HEM-P1-066",
+    "runs": 4,
+    "oneShotRemoveFailuresObserved": 4,
+    "sameAttemptsRestored": 4,
+    "submittedStagesRetained": 4,
+    "draftMarkersRetained": 4,
+    "failedNetworkRequests": 0,
+    "unexpectedConsoleErrors": 0,
+    "realStorageFailureClaimed": false
+  },
+  "retention": {
+    "draftText": false,
+    "attemptIds": false,
+    "requestIds": false,
+    "responseBodies": false,
+    "storageValues": false,
+    "credentials": false,
+    "medicalFactsEvaluated": false
+  }
+}

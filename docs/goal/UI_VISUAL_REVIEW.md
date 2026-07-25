@@ -165,3 +165,10 @@
 - HEM-P1-063在`1440×900/1280×720/390×844/360×800`刷新后均回到空白第1阶段；代表`390×844`截图显示阶段1/7、公开开场白和空白病史小结，证明恢复后的草稿未被当前pointer找回。没有横向滚动或页面崩溃。
 - history-log队列四viewport均可见“同步已暂停→重新同步→同步成功”的状态变化；禁用无关语音夹具后console意外错误0。该通过是自动viewport，不代表真实网络中断或真机。
 - 真实Storage策略封锁、磁盘故障、移动软键盘、动态地址栏及safe-area继续`BLOCKED_REAL_STORAGE / BLOCKED_REAL_DEVICE`。
+
+## 2026-07-26 `7781586` 目录与restart界面
+
+- HEM-P1-064四viewport均不是部分降级，而是完整Next Application error页；代表`390×844`截图显示`SecurityError`和共享Header调用栈，42个病例卡与搜索区域均不存在。
+- HEM-P2-065四viewport页面布局正常，但P001卡稳定显示“进行中/继续”，P002显示“已完成”；代表`390×844`截图保留P001假进度。无横向滚动或额外console错误。
+- HEM-P1-066四viewport确认reload后仍为1/7；代表`390×844`截图显示同一病例第1阶段已提交状态仍存在。截图不含QA草稿、attempt ID或评分正文。
+- 自动viewport结论不替代真实浏览器策略封锁、磁盘删除失败、移动软键盘、动态地址栏或safe-area；这些继续`BLOCKED_REAL_STORAGE / BLOCKED_REAL_DEVICE`。

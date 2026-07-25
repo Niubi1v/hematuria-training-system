@@ -230,3 +230,18 @@
 
 - 本批仍以P001代表客户端attempt身份和队列状态机，不扩张为42例逐例视觉覆盖；42例服务端隔离、评分和路由证据沿用既有全量矩阵。
 - history-log通过只证明固定本地handler下的队列持久化、相同幂等ID和手动恢复，不替代真实Preview Redis/history故障注入。
+
+## Production `7781586` 第21轮目录与restart增量
+
+| 覆盖 | 结果 | 状态 |
+| --- | --- | --- |
+| `/cases/`存储读写不可用 | 四viewport均Application error，病例卡0/42、搜索0/4 | FAIL_EMULATION，HEM-P1-064 |
+| 畸形P001 pointer目录状态 | 4/4错误显示进行中 | FAIL_EMULATION，HEM-P2-065 |
+| 无验证P002 summary目录状态 | 4/4错误显示已完成 | FAIL_EMULATION，HEM-P2-065 |
+| P003孤儿attempt控制 | 4/4保持未开始，未自动收养 | PASS_EMULATION_FAIL_CLOSED |
+| restart一次active state删除失败 | 4/4触发一次异常后仍恢复相同attempt | FAIL_EMULATION，HEM-P1-066 |
+| restart清理结果 | 已提交阶段4/4仍为1，QA草稿4/4保留 | FAIL_EMULATION，HEM-P1-066 |
+| 真实浏览器策略/磁盘删除故障 | 本轮仅Storage API方法级异常 | BLOCKED_REAL_STORAGE / BLOCKED_REAL_BROWSER |
+
+- HEM-P1-064只在`/cases/`做四viewport页面证据；共享Header代码表明影响面可能更广，但在补充逐页证据前不扩张为首页或42个训练页全量结论。
+- 目录进度测试不收养孤儿attempt是安全控制；不能用HEM-P2-065修复为扫描所有孤儿并猜测归属，必须验证完整身份与终态来源。
