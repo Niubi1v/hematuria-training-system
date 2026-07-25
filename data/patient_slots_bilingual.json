@@ -243,14 +243,14 @@
       "teacherReviewRequired": true
     },
     "hematuria_frequency": {
-      "patientAnswerZh": "反复左侧腰痛伴血尿1月余",
+      "patientAnswerZh": "尿检或尿色异常反复出现过。",
       "patientAnswerEn": "It has been intermittent rather than present every time.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
     "hematuria_phase": {
       "patientAnswerZh": "全程血尿",
-      "patientAnswerEn": "It is red throughout the whole urinary stream.",
+      "patientAnswerEn": "I notice the urine color throughout the whole urinary stream.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -309,7 +309,7 @@
       "teacherReviewRequired": true
     },
     "voiding_difficulty": {
-      "patientAnswerZh": "无明显尿频尿急尿痛",
+      "patientAnswerZh": "这个我之前没特别注意。",
       "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
@@ -333,8 +333,8 @@
       "teacherReviewRequired": true
     },
     "recent_uri": {
-      "patientAnswerZh": "无泡沫尿、水肿、上感后茶色尿等肾小球线索",
-      "patientAnswerEn": "This followed a recent cold or sore throat.",
+      "patientAnswerZh": "这个我之前没特别注意。",
+      "patientAnswerEn": "I did not pay close attention to that before.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
@@ -369,8 +369,8 @@
       "teacherReviewRequired": true
     },
     "surgery_history": {
-      "patientAnswerZh": "我以前做过手术或介入治疗。",
-      "patientAnswerEn": "I have had surgery or an interventional procedure before.",
+      "patientAnswerZh": "这点我记不太清了。",
+      "patientAnswerEn": "I cannot recall that clearly.",
       "provenance": "source",
       "teacherReviewRequired": true
     },
