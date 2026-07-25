@@ -22,6 +22,7 @@
     "test:complaint-wording": "tsx scripts/test-chief-complaint-wording.ts",
     "test:product": "tsx scripts/test-product-audit.ts",
     "test:history-matrix": "tsx scripts/test-structured-history-matrix.ts",
+    "test:history-medical-reconciliation": "tsx scripts/test-history-medical-reconciliation.ts",
     "test:e2e-contract": "tsx scripts/test-representative-e2e.ts",
     "test:exam-qc": "tsx scripts/test-physical-exam-qc.ts",
     "test:profile-qc": "tsx scripts/test-patient-facing-profile.ts",

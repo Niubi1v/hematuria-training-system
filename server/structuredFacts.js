@@ -28,6 +28,28 @@ const factMatchers = [
   ["pregnancyHistory", "GYNE_PREGNANCY", /怀孕|妊娠|pregnan/i]
 ];
 const broadMedication = /长期.*(?:吃|服|用).*药|平时.*(?:吃|服|用).*药|都吃什么药|用药史|长期用药|regular medication|medications do you take/i;
+const historyMedicalPolicy = require("../data/history_medical_reconciliation.json");
+const explicitBlockedFacts = new Set(
+  historyMedicalPolicy.blockedMedicalHistory.map((item) => `${item.caseId}:${item.field}`)
+);
+
+function unresolvedStructuredReply(key, language = "zh") {
+  const observationFacts = new Set(["traumaHistory", "urinaryProcedureHistory"]);
+  if (language === "en") {
+    return observationFacts.has(key)
+      ? "I did not pay close attention to that before."
+      : "I cannot recall that clearly.";
+  }
+  return observationFacts.has(key)
+    ? "这个我之前没特别注意。"
+    : "这点我记不太清了。";
+}
+
+function unresolvedFact(caseId, key, fact) {
+  return explicitBlockedFacts.has(`${caseId}:${key}`)
+    || fact?.provenance === "author_added_for_simulation"
+    || fact?.teacherReviewRequired === true;
+}
 
 function matchStructuredFacts(caseData, question, language = "zh") {
   const history = caseData?.structuredHistory;
@@ -41,7 +63,10 @@ function matchStructuredFacts(caseData, question, language = "zh") {
   const answers = [];
   const matchedFacts = [];
   const matchedSlotIds = [];
+  const collectableFacts = [];
+  const collectableSlotIds = [];
   const sources = [];
+  let hasUnresolved = false;
   const clauses = [
     ...matches.map((item) => ({
       kind: "fact",
@@ -61,15 +86,24 @@ function matchStructuredFacts(caseData, question, language = "zh") {
       answers.push(language === "en" ? history.medicationAnswerEn : history.medicationAnswerZh);
       matchedFacts.push("medicationList");
       matchedSlotIds.push("MED_ALL");
+      collectableFacts.push("medicationList");
+      collectableSlotIds.push("MED_ALL");
       sources.push(...(history.medicationList || []));
       continue;
     }
     const [key, slotId] = clause.entry;
     const fact = history[key];
     if (!fact) continue;
-    answers.push(language === "en" ? fact.patientAnswerEn : fact.patientAnswerZh);
+    const blocked = unresolvedFact(caseData.id, key, fact);
+    answers.push(blocked ? unresolvedStructuredReply(key, language) : (language === "en" ? fact.patientAnswerEn : fact.patientAnswerZh));
     matchedFacts.push(key);
     matchedSlotIds.push(slotId);
+    if (blocked) {
+      hasUnresolved = true;
+    } else {
+      collectableFacts.push(key);
+      collectableSlotIds.push(slotId);
+    }
     sources.push(fact);
   }
   if (!answers.length) return null;
@@ -79,12 +113,12 @@ function matchStructuredFacts(caseData, question, language = "zh") {
     matchedSlotIds: [...new Set(matchedSlotIds)],
     matchedFacts: [...new Set(matchedFacts)],
     governanceSlotIds: [...new Set(matchedSlotIds)],
-    collectableSlotIds: [...new Set(matchedSlotIds)],
-    collectableFacts: [...new Set(matchedFacts)],
-    answerSource: provenance.size > 1 ? "mixed" : ([...provenance][0] || "source"),
-    confidence: sources.some((item) => item.provenance === "author_added_for_simulation") ? 0.82 : 0.99,
+    collectableSlotIds: [...new Set(collectableSlotIds)],
+    collectableFacts: [...new Set(collectableFacts)],
+    answerSource: hasUnresolved ? "pending_review" : (provenance.size > 1 ? "mixed" : ([...provenance][0] || "source")),
+    confidence: hasUnresolved ? 0 : 0.99,
     safetyFlags: [],
-    fallbackReason: ""
+    fallbackReason: hasUnresolved ? "medical_history_pending_review" : ""
   };
 }
 

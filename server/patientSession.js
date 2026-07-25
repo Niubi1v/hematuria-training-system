@@ -720,7 +720,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   if (quarantine.conflictingSlotIds.length) {
     safeLogger.warn("patient_fact_quarantined", { caseId, slotIds: quarantine.conflictingSlotIds, reason: BILINGUAL_CONFLICT_REASON });
     return {
-      replyText: uncertainConflictReply(language),
+      replyText: uncertainConflictReply(language, quarantine.conflictingSlotIds),
       provider: "rule",
       model: "local-rule",
       isFallback: true,

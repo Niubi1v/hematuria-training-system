@@ -1,0 +1,39 @@
+{
+  "version": "1.0.0",
+  "sourcePrecedence": [
+    "named_expert_confirmed_original_record",
+    "original_chinese_source",
+    "original_english_source",
+    "structured_source_field",
+    "derived",
+    "simulation",
+    "display_copy_or_legacy_fixture"
+  ],
+  "existingQuarantines": [
+    {
+      "policyId": "HEM-P0-001",
+      "disposition": "BLOCKED_MEDICAL",
+      "policyReference": "docs/goal/HEM-P0-001_SOURCE_MARKER_CONFLICT.md"
+    },
+    {
+      "policyId": "HEM-P0-023",
+      "disposition": "BLOCKED_MEDICAL",
+      "policyReference": "server/bilingualConflictQuarantine.js"
+    }
+  ],
+  "blockedMedicalHistory": [
+    {
+      "reviewItemId": "HISTORY-MED-001",
+      "caseId": "P002",
+      "field": "surgeryHistory",
+      "slotId": "PAST_SURGERY",
+      "conflictType": "SOURCE_TO_SOURCE_CONTRADICTION",
+      "disposition": "BLOCKED_MEDICAL",
+      "teacherReviewRequired": true,
+      "reviewStatus": "needs_review",
+      "basis": "The original history records mechanical valve replacement but also says that the patient has never had surgery.",
+      "questionZh": "请核对P002机械瓣膜置换记录与“没有做过手术”的原始病史冲突，并确认手术史真值及患者可回答范围。",
+      "questionEn": "Please reconcile the P002 mechanical-valve replacement record with the original statement that the patient never had surgery, then confirm the true surgical history and patient-answer scope."
+    }
+  ]
+}

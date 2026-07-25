@@ -81,6 +81,8 @@ async function main() {
       assert.ok(Object.values(canonical.factValues || {}).every((value) => value === "unknown"));
       assert.deepEqual(canonical.collectableSlotIds || [], []);
       assert.deepEqual(result.matchedSlotIds || [], [], `${probe.id} unknown must remain uncollected`);
+    } else if (result.fallbackReason === "medical_history_pending_review") {
+      assert.deepEqual(result.matchedSlotIds || [], [], `${probe.id} unreviewed history must remain uncollected`);
     } else {
       assert.deepEqual(result.matchedSlotIds || [], probe.expectedSlots, probe.id);
     }
