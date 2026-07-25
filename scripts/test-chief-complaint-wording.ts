@@ -60,6 +60,9 @@ assert(Object.keys(policy.blockedMedical).length === 15, "BLOCKED_MEDICAL queue 
 assert(Object.keys(policy.updates).every((id) => !policy.blockedMedical[id]), "a blocked case was added to the automatic update queue");
 for (const item of publicCases) {
   assert(!/[+＋]/.test(`${item.studentChiefComplaint}${item.chiefComplaintEn}`), `${item.id} public complaint contains a plus sign`);
+  if (policy.blockedMedical[item.id]) {
+    assert(!/[\u3400-\u9fff]/.test(item.chiefComplaintEn), `${item.id} blocked public complaint leaks Chinese into English`);
+  }
   assert(!("diagnosis" in item) && !("finalDiagnosis" in item) && !("title" in item), `${item.id} public catalog leaks diagnosis fields`);
 }
 

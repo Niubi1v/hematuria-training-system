@@ -274,7 +274,7 @@
     "difficulty": "标准",
     "difficultyEn": "Standard",
     "studentChiefComplaint": "发热、尿痛伴会阴胀痛2天",
-    "chiefComplaintEn": "发热、尿痛伴会阴胀痛2天",
+    "chiefComplaintEn": "Chief complaint pending medical review",
     "caseVersion": "v1.4-release-expanded-2.2",
     "medicalReviewStatus": "needs_revision",
     "sourceGroup": "supplementary"
