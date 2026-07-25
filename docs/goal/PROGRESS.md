@@ -726,3 +726,9 @@
 - 本地完整门禁：58 段行为/安全/医学治理链 exit 0；Playwright `91 passed / 7 intentional skipped / 0 failed`；TypeScript、ESLint、两种 `82/82` 构建、两次 26 资产 bundle、357 文件/历史 secret scan、78 个受控输出幂等均通过；`data/**`零差异。
 - 当前本地代码提交为`df89a91f304f867855b6708cab152b70e57fad80`。本机捆绑运行时为 Node 24，因此 Node 22.14、Actions、Vercel 与精确新 HEAD 的远程结果仍为`REMOTE_PENDING`，未用旧绿灯替代。
 - 未修改医学事实、审批状态、`needs_revision`、HEM-P0-001/023、419 条审核决定或 360 分规则。下一步为证据文档原子提交、fetch 冲突门禁、普通 push；PR #1继续保持 Draft，不合并 main、不部署 Production。
+
+### 远程门禁关闭（2026-07-26）
+
+- `df89a91`与证据提交`ee48cc9`已普通推送；精确 HEAD `ee48cc99f0c9613704d89c1742158b13287e58d2`的 Actions run `30166227983`在 Node 22.14 下 success。
+- 远程 Playwright 为`91 passed / 7 intentional skipped / 0 failed`；行为/医学治理、TypeScript、ESLint、repository secret scan、82/82 静态构建、24 个 JavaScript 资产 bundle 扫描及 clean gate 均通过。Pages artifact/deploy 按 Draft 规则跳过。
+- Vercel Preview deployment `5602981833`对应精确 SHA `ee48cc99f0c9613704d89c1742158b13287e58d2`并 success；PR #1保持 Open/Draft。HEM-P1-061/063/064/066 与 HEM-P2-065 更新为`REMOTE_VERIFIED`，长期 QA 可从最终文档记录提交复测既定范围。

@@ -674,3 +674,9 @@
 - **HEM-P1-066 — LOCAL_ENGINEERING_CLOSED / REMOTE_PENDING**：restart 首次 remove 失败仍 reload 并伪装成功。当前删除使用可回滚快照并显式返回结果；失败时保留页面、attempt、草稿和阶段并提示重试，成功清理后才 reload；四 viewport 通过且不误删其他作用域。
 - **HEM-P2-065 — LOCAL_ENGINEERING_CLOSED / REMOTE_PENDING**：旧目录仅凭 pointer key 或 v1 summary 显示“进行中/已完成”。新 v2 summary 与完整 pointer、attempt state、签名 token 结构、阶段 1–7、360 report 及总分一致性共同验证；8/8 畸形/未验证场景不显示假进度，孤儿 attempt 不自动收养。
 - **回归控制**：history-log 的 3×503、刷新无重试风暴、同一 request ID、人工重试 200 与 pending=0 合同继续通过。代码提交`df89a91`；远程 Node 22/Actions/Vercel 尚待新 HEAD 验证，不提前登记为远程关闭。
+
+#### 远程关闭证据
+
+- 精确 HEAD `ee48cc99f0c9613704d89c1742158b13287e58d2`的 Actions run `30166227983`在 Node 22.14 下 success：Playwright 91/7/0、82/82 build、24-asset bundle、TypeScript、ESLint、secret 与 clean gate 全部通过。
+- Vercel deployment `5602981833`绑定相同 SHA 并 success；PR #1仍 Open/Draft，Pages deploy 按 Draft 规则 skipped。
+- **最终工程状态**：HEM-P1-061、HEM-P1-063、HEM-P1-064、HEM-P1-066、HEM-P2-065 均为`ENGINEERING CLOSED / REMOTE VERIFIED`。医学治理冻结项无变化。

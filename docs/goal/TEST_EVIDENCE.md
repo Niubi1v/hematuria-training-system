@@ -1417,3 +1417,16 @@ Actions URL：`https://github.com/Niubi1v/hematuria-training-system/actions/runs
 | 数据边界 | `git diff --exit-code -- data` exit 0；未修改医学事实、审核状态、`needs_revision`或评分规则 |
 
 本地运行使用当前 Codex 捆绑 Node 24.14；仓库要求的 Node 22.14 结果必须由精确新 HEAD 的 GitHub Actions补证。当前不得写成远程或 Preview 已通过。
+
+### 精确 HEAD 远程证据
+
+| 项目 | 结果 |
+|---|---|
+| GitHub Actions | run `30166227983`，HEAD `ee48cc99f0c9613704d89c1742158b13287e58d2`，Node 22.14，completed/success |
+| Playwright | 91 passed、7 intentional skipped、0 failed，runner 正常退出 |
+| 行为与治理 | conversion idempotency、生成基线、Schema、医学矛盾、双语 fixtures、完整行为链和医学审核合同全部 success |
+| 工程门禁 | TypeScript、ESLint、repository secret scan、82/82 静态构建、24-asset bundle scan、tracked-worktree clean gate 全部 success |
+| Vercel | Preview deployment `5602981833`，部署 SHA 与 Actions HEAD 完全一致，state=success |
+| PR / Pages | PR #1 Open/Draft；Pages artifact 与 deploy 按 Draft 规则 skipped，未部署 Production |
+
+Actions：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/30166227983`。Preview：`https://hematuria-training-system-fkjmi09rf-niubi1vs-projects.vercel.app`。

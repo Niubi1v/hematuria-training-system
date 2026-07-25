@@ -627,3 +627,9 @@
 - 当前仍需：证据提交、fetch 后普通 push、精确新 HEAD 的 Node 22 Actions、Vercel 和 Draft PR检查。PR保持 Draft；不合并 main、不部署 Production。
 - 回滚：按提交逆序普通执行`git revert <evidence-commit>`与`git revert df89a91`，随后重跑 session/attempt、history-log、Playwright、构建和扫描门禁；禁止 reset、rebase 或 force push。
 - 长期 QA 复测范围：28身份场景、4 pointer恢复、localStorage异常四 viewport、restart首次删除失败四 viewport、8假进度、history-log 3×503+1×200、七阶段与360分。准确起始 HEAD 在远程门禁成功后以最终推送 HEAD 为准。
+
+#### 远程验收结论
+
+- `ee48cc99f0c9613704d89c1742158b13287e58d2`的 Node 22.14 Actions run `30166227983`已 success；远程 Playwright 91/7/0、82/82 build、24-asset bundle、TypeScript、ESLint、行为/医学治理、secret 与 clean gate 全绿。
+- Vercel Preview deployment `5602981833`绑定同一 SHA 并 success。PR #1保持 Open/Draft，Pages按规则 skipped；未合并 main、未部署 Production。
+- HEM-P1-061/063/064/066 与 HEM-P2-065 的无需人工权限工程工作已经关闭。长期 QA 应以最终文档记录提交为起点，复测 28身份、4 pointer补偿、四 viewport storage/restart、8假进度和 history-log 恢复控制。
