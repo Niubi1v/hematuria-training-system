@@ -89,12 +89,13 @@ export function simplifiedChiefComplaintZh(raw?: string) {
 export function simplifiedChiefComplaintEn(rawZh?: string, fallbackEn?: string) {
   const text = String(rawZh || "").trim();
   const cleanFallback = String(fallbackEn || "").trim().replace(/\.$/, "");
-  if (!text) return cleanFallback;
+  const safeEnglishFallback = /[\u3400-\u9fff]/.test(cleanFallback) ? "" : cleanFallback;
+  if (!text) return safeEnglishFallback;
   if (!/(?:血尿|尿潜血|尿隐血|小便.*红|尿色.*红|尿液.*红|茶色尿|可乐色尿|酱油色尿)/.test(text)) {
-    if (/(?:hematuria|blood in (?:the )?urine|red urine)/i.test(cleanFallback)) {
+    if (/(?:hematuria|blood in (?:the )?urine|red urine)/i.test(safeEnglishFallback)) {
       return "Chief complaint pending medical review";
     }
-    return cleanFallback || text;
+    return safeEnglishFallback || "Chief complaint pending medical review";
   }
 
   const duration = findDurationNearHematuria(text);

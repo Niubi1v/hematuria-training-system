@@ -159,7 +159,7 @@ test("case catalog switches public complaint language", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Case selection" })).toBeVisible();
   await expect(page.getByText(/Hematuria/i).first()).toBeVisible();
   await expect(page.locator('a[href="/cases/P013/"]')).toContainText("Intermittent red urine for 2 months");
-  await expect(page.locator('a[href="/cases/P019/"]')).toContainText("Chief complaint pending medical review");
+  await expect(page.locator('a[href="/cases/P019/"]')).toContainText("Fever, left flank pain, urinary frequency, and painful urination for 3 days");
   await expect(page.locator('a[href="/cases/P020/"]')).toContainText("Chief complaint pending medical review");
 });
 
