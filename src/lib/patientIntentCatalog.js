@@ -8,11 +8,13 @@ const priorityIntentDefinitions = Object.freeze([
       zh: Object.freeze([
         "尿痛", "小便痛", "小便疼", "排尿痛", "排尿疼", "尿的时候痛", "尿的时候疼",
         "解小便时痛", "撒尿痛", "撒尿疼", "小便时刺痛", "排尿时烧灼感", "尿道烧得慌",
-        "小便有没有不舒服", "小便不痛", "小便不疼", "尿的时候会不会痛", "有还是没有尿痛"
+        "小便有没有不舒服", "小便不痛", "小便不疼", "尿的时候会不会痛", "有还是没有尿痛",
+        "拉尿痛", "解小便痛", "尿尿时疼", "小便时烧灼", "小便时不舒服", "没有尿痛吧"
       ]),
       en: Object.freeze([
         "dysuria", "painful urination", "pain when urinating", "burning when i pee", "does it hurt to pee",
-        "any pain passing urine", "burning when urinating", "urination painful", "sting when you pee"
+        "any pain passing urine", "burning when urinating", "urination painful", "sting when you pee",
+        "burning when urinating", "does it hurt when you pee"
       ])
     }),
     confusableWith: Object.freeze(["pain", "flank_pain", "suprapubic_pain"])
@@ -148,6 +150,190 @@ const priorityIntentDefinitions = Object.freeze([
   })
 ]);
 
+function defineOntologyFact(definition) {
+  const aliasesZh = [...new Set(definition.aliases?.zh || [])];
+  const aliasesEn = [...new Set(definition.aliases?.en || [])];
+  return Object.freeze({
+    ...definition,
+    aliases: Object.freeze({
+      zh: Object.freeze(aliasesZh),
+      en: Object.freeze(aliasesEn)
+    }),
+    lexicon: Object.freeze({
+      zhMedical: Object.freeze(definition.lexicon?.zhMedical || [definition.labelZh].filter(Boolean)),
+      zhPatient: Object.freeze(definition.lexicon?.zhPatient || aliasesZh),
+      zhRegional: Object.freeze(definition.lexicon?.zhRegional || []),
+      enMedical: Object.freeze(definition.lexicon?.enMedical || [definition.labelEn].filter(Boolean)),
+      enPatient: Object.freeze(definition.lexicon?.enPatient || aliasesEn),
+      negatedZh: Object.freeze(definition.lexicon?.negatedZh || []),
+      negatedEn: Object.freeze(definition.lexicon?.negatedEn || []),
+      choiceZh: Object.freeze(definition.lexicon?.choiceZh || []),
+      choiceEn: Object.freeze(definition.lexicon?.choiceEn || []),
+      typosZh: Object.freeze(definition.lexicon?.typosZh || []),
+      confusableWith: Object.freeze(definition.confusableWith || [])
+    })
+  });
+}
+
+const canonicalLegacyIntentDefinitions = [
+  {
+    key: "chief_complaint", sourceSlotId: "chief_complaint", domain: "canonical_legacy", labelZh: "主诉", labelEn: "Chief complaint",
+    aliases: { zh: ["哪里不舒服", "为什么来", "主诉", "怎么回事"], en: ["what brings you", "main complaint", "what is wrong"] },
+    pattern: /哪里不舒服|为什么来|主诉|怎么回事|用自己的话.*(?:不舒服|经过|为什么)|what brings you|what is wrong|main complaint|main problem.*brought you|in your own words.*(?:why|what happened)|describe.*(?:main problem|what happened).*(?:brought you|in your own words)|why you came/i
+  },
+  {
+    key: "gross_hematuria", sourceSlotId: "hematuria_visibility", domain: "canonical_legacy", labelZh: "肉眼血尿", labelEn: "Gross hematuria",
+    aliases: { zh: ["肉眼血尿", "看得见血", "尿是红的", "小便红"], en: ["gross hematuria", "visible blood in urine", "urine looks red"] },
+    pattern: /肉眼|看得见|尿(?:是|变)?红|小便(?:是|变)?红|visible blood|gross hematuria|urine looks red/i,
+    confusableWith: ["microscopic_hematuria", "urine_color"]
+  },
+  {
+    key: "microscopic_hematuria", sourceSlotId: "hematuria_visibility", domain: "canonical_legacy", labelZh: "镜下血尿", labelEn: "Microscopic hematuria",
+    aliases: { zh: ["镜下血尿", "尿潜血", "尿检发现血"], en: ["microscopic hematuria", "blood found on urine test", "urine test showed blood"] },
+    pattern: /镜下|尿潜血|尿检.*(?:血|异常)|microscopic|urine test.*blood|urinalysis.*blood/i,
+    confusableWith: ["gross_hematuria"]
+  },
+  {
+    key: "hematuria_onset", sourceSlotId: "hematuria_onset", domain: "canonical_legacy", labelZh: "血尿起病时间", labelEn: "Hematuria onset",
+    aliases: { zh: ["血尿多久", "什么时候开始", "几天了", "起病时间"], en: ["when did the hematuria start", "how long has the blood been present", "hematuria onset"] },
+    pattern: /什么时候|多久|几天|几周|几个月|起病|今天才.*(?:出现|开始)|血尿.*外伤后|when did|how long|when.*start|onset|(?:only )?started today|blood.*after.*injur/i
+  },
+  {
+    key: "intermittent_hematuria", sourceSlotId: "hematuria_frequency", domain: "canonical_legacy", labelZh: "间歇性血尿", labelEn: "Intermittent hematuria",
+    aliases: { zh: ["间断血尿", "一阵有一阵没有", "反复尿红", "时有时无"], en: ["intermittent hematuria", "blood comes and goes", "red urine on and off"] },
+    pattern: /间断|持续|每次|频率|反复|时有时无|intermittent|continuous|every time|how often|frequency|keep(?:s)? coming back|come(?:s)? back|recur/i,
+    confusableWith: ["hematuria_onset"]
+  },
+  {
+    key: "urine_color", sourceSlotId: "urine_color", domain: "canonical_legacy", labelZh: "尿液颜色", labelEn: "Urine color",
+    aliases: { zh: ["尿什么颜色", "小便什么色", "尿色", "鲜红", "暗红", "洗肉水", "茶色", "酱油色"], en: ["urine color", "what color is the urine", "bright red urine", "tea-colored urine"] },
+    pattern: /鲜红|暗红|洗肉水|茶色|酱油色|什么颜色|什么色|尿色|小便.*(?:颜色|色)|bright red|dark red|tea.colou?r|cola.colou?r|(?:urine|pee).*colou?r|what colou?r.*(?:urine|pee)/i
+  },
+  {
+    key: "hesitancy", sourceSlotId: "voiding_difficulty", domain: "canonical_legacy", labelZh: "排尿踌躇", labelEn: "Urinary hesitancy",
+    aliases: { zh: ["排尿踌躇", "尿要等一会", "想尿却要等", "起尿慢"], en: ["urinary hesitancy", "wait before urine starts", "difficulty starting urination"] },
+    pattern: /排尿踌躇|尿.*等一会|想尿.*等|起尿慢|urinary hesitancy|wait.*(?:urine|pee).*start|difficulty starting urination/i,
+    confusableWith: ["weak_stream", "urinary_retention"]
+  },
+  {
+    key: "renal_colic", sourceSlotId: "renal_colic", domain: "canonical_legacy", labelZh: "肾绞痛", labelEn: "Renal colic",
+    aliases: { zh: ["肾绞痛", "阵发性绞痛"], en: ["renal colic", "colicky flank pain"] },
+    pattern: /肾绞痛|绞痛|renal colic|colicky pain/i
+  },
+  {
+    key: "radiating_pain", sourceSlotId: "radiating_pain", domain: "canonical_legacy", labelZh: "放射痛", labelEn: "Radiating pain",
+    aliases: { zh: ["放射痛", "疼到腹股沟"], en: ["radiating pain", "pain radiates to the groin"] },
+    pattern: /放射痛|放射到|radiat.*pain|pain.*groin/i
+  },
+  {
+    key: "pain", sourceSlotId: "pain", domain: "canonical_legacy", labelZh: "一般疼痛", labelEn: "Pain",
+    aliases: { zh: ["疼不疼", "有没有痛", "疼痛"], en: ["any pain", "does it hurt"] },
+    pattern: /疼不疼|有没有痛|疼痛|\bpain\b|does it hurt|any pain/i,
+    confusableWith: ["dysuria", "flank_pain"]
+  },
+  {
+    key: "voiding_difficulty", sourceSlotId: "voiding_difficulty", domain: "canonical_legacy", labelZh: "排尿困难", labelEn: "Voiding difficulty",
+    aliases: { zh: ["排尿困难", "排尿费力", "尿流中断"], en: ["difficulty urinating", "straining to urinate"] },
+    pattern: /排尿困难|尿流中断|排尿费力|排尿费不费劲|膀胱.*没排空|difficulty urinating|straining/i
+  },
+  {
+    key: "recent_uri", sourceSlotId: "recent_uri", domain: "canonical_legacy", labelZh: "近期上呼吸道感染", labelEn: "Recent upper respiratory infection",
+    aliases: { zh: ["最近感冒", "咽痛", "扁桃体炎"], en: ["recent cold", "sore throat", "tonsillitis"] },
+    pattern: /感冒|咽痛|扁桃体炎|cold|sore throat|tonsillitis|upper respiratory/i
+  },
+  {
+    key: "triggers", sourceSlotId: "triggers", domain: "canonical_legacy", labelZh: "诱因", labelEn: "Triggers",
+    aliases: { zh: ["运动后", "劳累后", "受凉后", "外伤后"], en: ["after exercise", "after exertion", "after trauma"] },
+    pattern: /运动|劳累|受凉|外伤|性生活|导尿|尿路操作|exercise|exertion|trauma|sexual activity|catheter|urinary procedure/i
+  },
+  {
+    key: "prior_care", sourceSlotId: "prior_care", domain: "canonical_legacy", labelZh: "既往就诊", labelEn: "Prior care",
+    aliases: { zh: ["以前看过医生", "之前治疗过"], en: ["seen a doctor before", "previous treatment"] },
+    pattern: /以前看过医生|之前看过医生|之前治疗过|接受过治疗|seen a doctor before|previous treatment|treated for this before/i
+  },
+  {
+    key: "general_condition", sourceSlotId: "general_condition", domain: "canonical_legacy", labelZh: "一般情况", labelEn: "General condition",
+    aliases: { zh: ["胃口", "食欲", "睡眠", "大便", "体重", "消瘦"], en: ["appetite", "sleep", "bowel", "weight loss"] },
+    pattern: /胃口|食欲|睡眠|大便|体重|消瘦|appetite|sleep|bowel|stool|weight loss|lost weight/i
+  },
+  {
+    key: "bleeding_tendency", sourceSlotId: "bleeding_tendency", domain: "canonical_legacy", labelZh: "出血倾向", labelEn: "Bleeding tendency",
+    aliases: { zh: ["鼻出血", "牙龈出血", "瘀斑", "紫癜"], en: ["nosebleed", "gum bleeding", "bruising"] },
+    pattern: /鼻出血|牙龈出血|瘀斑|紫癜|nosebleed|gum bleeding|bruis|purpura/i
+  }
+].map(defineOntologyFact);
+
+const structuredHistoryIntentDefinitions = [
+  ["smoking_history", "smokingHistory", "LIFE_SMOKING", "吸烟史", "Smoking history", /吸烟|抽烟|烟龄|每天.*(?:支|根|包)|一天抽多少|包年|smok|cigarettes?.*(?:day|daily)|how many cigarettes/i],
+  ["alcohol_history", "alcoholHistory", "LIFE_ALCOHOL", "饮酒史", "Alcohol history", /喝酒|饮酒|酒量|白酒|啤酒|alcohol|drink/i],
+  ["occupation", "occupation", "LIFE_OCCUPATION", "职业", "Occupation", /什么工作|做什么工作|职业|occupation|job|what do you do for a living/i],
+  ["occupational_exposure", "occupationalExposure", "LIFE_EXPOSURE", "职业暴露", "Occupational exposure", /染料|染发剂|油漆|橡胶|皮革|化工|重金属|芳香胺|职业暴露|(?:work|job|occupation|expos).*(?:chemical|dye|paint|rubber|leather)|(?:chemical|dye|paint|rubber|leather).*(?:work|job|occupation|expos)/i],
+  ["hypertension_history", "hypertension", "PAST_HYPERTENSION", "高血压史", "Hypertension history", /高血压|hypertension/i],
+  ["diabetes_history", "diabetes", "PAST_DIABETES", "糖尿病史", "Diabetes history", /糖尿病|diabetes/i],
+  ["coronary_history", "coronaryDisease", "PAST_CORONARY", "冠心病史", "Coronary history", /冠心病|心脏病|心肌梗死|心绞痛|coronary|heart disease/i],
+  ["stroke_history", "stroke", "PAST_STROKE", "脑卒中史", "Stroke history", /脑梗|脑卒中|中风|stroke/i],
+  ["liver_disease_history", "liverDisease", "PAST_LIVER", "肝病史", "Liver disease history", /肝炎|乙肝|丙肝|肝病|hepatitis|liver disease/i],
+  ["tuberculosis_history", "tuberculosis", "PAST_TB", "结核史", "Tuberculosis history", /结核|tuberculosis|\bTB\b/i],
+  ["previous_stone", "stoneHistory", "PAST_STONE", "既往结石", "Previous urinary stones", /结石史|以前.*结石|得过.*结石|结石或者|stone history|stones before|had.*stones/i],
+  ["previous_urinary_infection", "urinaryInfectionHistory", "PAST_UTI", "既往尿路感染", "Previous urinary infection", /感染史|以前.*尿路感染|反复.*感染|尿路感染或者|UTI history|urinary infection/i],
+  ["previous_malignancy", "malignancyHistory", "PAST_MALIGNANCY", "既往肿瘤", "Previous malignancy", /肿瘤史|以前.*肿瘤|得过.*癌|结石或者肿瘤|cancer history|previous cancer|cancer before/i],
+  ["trauma_history", "traumaHistory", "PAST_TRAUMA", "外伤史", "Trauma history", /外伤史|受过(?:外)?伤|以前[^，。！？?]*外伤|既往[^，。！？?]*外伤|撞伤|跌伤|trauma history|have you had[^?.!]*trauma|previous trauma/i],
+  ["urinary_procedure_history", "urinaryProcedureHistory", "PAST_URINARY_PROCEDURE", "泌尿操作史", "Urinary procedure history", /导尿|导过尿|膀胱镜|尿路操作|泌尿.*手术|catheter|cystoscopy|urinary procedure/i],
+  ["surgery_history", "surgeryHistory", "PAST_SURGERY", "手术史", "Surgery history", /手术史|做过.*手术|开过刀|surgery|operation/i],
+  ["transfusion_history", "transfusionHistory", "PAST_TRANSFUSION", "输血史", "Transfusion history", /输血史|输过血|blood transfusion/i],
+  ["allergy_history", "allergyHistory", "PAST_ALLERGY", "过敏史", "Allergy history", /过敏|allerg/i],
+  ["anticoagulant_use", "anticoagulantUse", "MED_ANTICOAGULANT", "抗凝药使用", "Anticoagulant use", /抗凝|让血变稀|稀释血液|华法林|利伐沙班|达比加群|阿哌沙班|依度沙班|anticoag|blood thinner|warfarin|rivaroxaban|dabigatran|apixaban|edoxaban/i],
+  ["antiplatelet_use", "antiplateletUse", "MED_ANTIPLATELET", "抗血小板药使用", "Antiplatelet use", /抗血小板|阿司匹林|氯吡格雷|antiplatelet|aspirin|clopidogrel/i],
+  ["family_history", "familyHistory", "FAMILY_HISTORY", "家族史", "Family history", /家族史|家里|父母|兄弟姐妹|遗传|family history|hereditary/i],
+  ["menstrual_history", "menstrualHistory", "GYNE_MENSTRUAL", "月经史", "Menstrual history", /月经|经期|阴道出血|menstru|period/i],
+  ["pregnancy_history", "pregnancyHistory", "GYNE_PREGNANCY", "妊娠史", "Pregnancy history", /怀孕|妊娠|pregnan/i],
+  ["medication_list", "medicationList", "MED_ALL", "用药史", "Medication history", /长期.*(?:吃|服|用).*药|平时.*(?:吃|服|用).*药|都吃什么药|用药史|长期用药|regular medication|medications do you take/i]
+].map(([key, historyKey, sourceSlotId, labelZh, labelEn, pattern]) => defineOntologyFact({
+  key,
+  historyKey,
+  sourceSlotId,
+  domain: "structured_history",
+  labelZh,
+  labelEn,
+  aliases: { zh: [labelZh], en: [labelEn] },
+  pattern
+}));
+
+const safeMissingIntentDefinitions = [
+  defineOntologyFact({
+    key: "previous_kidney_disease",
+    sourceSlotId: null,
+    domain: "safe_missing",
+    labelZh: "既往肾病",
+    labelEn: "Previous kidney disease",
+    aliases: { zh: ["以前得过肾病", "既往肾病", "有过肾脏病"], en: ["previous kidney disease", "history of kidney disease", "had kidney disease before"] },
+    pattern: /以前.*肾病|既往.*肾病|得过.*肾病|有过.*肾脏病|previous kidney disease|history of kidney disease|had kidney disease before/i
+  })
+];
+
+const patientFactOntology = Object.freeze([
+  ...priorityIntentDefinitions.map((definition) => defineOntologyFact({
+    ...definition,
+    domain: "canonical_priority",
+    classifierEligible: true,
+    lexicon: definition.key === "dysuria" ? {
+      zhMedical: ["尿痛", "排尿疼痛", "排尿烧灼感"],
+      zhPatient: ["小便痛", "小便疼", "尿尿时疼", "小便时刺痛", "小便时烧灼", "小便时不舒服"],
+      zhRegional: ["拉尿痛", "撒尿痛", "解小便痛"],
+      enMedical: ["dysuria", "painful urination"],
+      enPatient: ["does it hurt to pee", "burning when urinating", "sting when you pee"],
+      negatedZh: ["没有尿痛吧", "小便不痛吗", "小便不疼吗"],
+      negatedEn: ["no dysuria, right", "it does not hurt to pee, right"],
+      choiceZh: ["小便痛还是不痛", "有还是没有尿痛"],
+      choiceEn: ["does it hurt or not when you pee"],
+      typosZh: ["尿疼", "小便剌痛"]
+    } : undefined
+  })),
+  ...canonicalLegacyIntentDefinitions,
+  ...structuredHistoryIntentDefinitions,
+  ...safeMissingIntentDefinitions
+]);
+
 function normalizeIntentQuestion(value) {
   return String(value || "")
     .normalize("NFKC")
@@ -255,7 +441,8 @@ function matchesNaturalPattern(question, intentKey, language) {
 }
 
 function matchPriorityCanonicalIntents(question, language = "zh") {
-  return priorityIntentDefinitions.flatMap((definition, definitionOrder) => {
+  const definitions = patientFactOntology.filter((definition) => definition.domain === "canonical_priority");
+  return definitions.flatMap((definition, definitionOrder) => {
     const matchedAlias = definition.aliases[language].find((alias) => flexibleAliasMatch(question, alias, language));
     const naturalPatternMatched = !matchedAlias && matchesNaturalPattern(question, definition.key, language);
     if (!matchedAlias && !naturalPatternMatched) return [];
@@ -265,9 +452,33 @@ function matchPriorityCanonicalIntents(question, language = "zh") {
       confidence: 1,
       matchedAlias: matchedAlias || "",
       matcherType: matchedAlias ? "canonical_alias" : "natural_pattern",
-      matchIndex: matchedAlias ? aliasMatchIndex(question, matchedAlias, language) : Number.MAX_SAFE_INTEGER - priorityIntentDefinitions.length + definitionOrder
+      matchIndex: matchedAlias ? aliasMatchIndex(question, matchedAlias, language) : Number.MAX_SAFE_INTEGER - definitions.length + definitionOrder
     }];
   }).sort((left, right) => left.matchIndex - right.matchIndex);
+}
+
+function matchPatientFactOntology(question, language = "zh", domains = []) {
+  const allowedDomains = new Set(Array.isArray(domains) ? domains : [domains]);
+  const text = String(question || "");
+  return patientFactOntology.flatMap((definition, definitionOrder) => {
+    if (allowedDomains.size && !allowedDomains.has(definition.domain)) return [];
+    const matchedAlias = definition.aliases[language]?.find((alias) => flexibleAliasMatch(text, alias, language));
+    const patternIndex = definition.pattern instanceof RegExp ? text.search(definition.pattern) : -1;
+    const naturalPatternMatched = definition.domain === "canonical_priority"
+      && !matchedAlias
+      && matchesNaturalPattern(text, definition.key, language);
+    if (!matchedAlias && patternIndex < 0 && !naturalPatternMatched) return [];
+    return [{
+      ...definition,
+      intentKey: definition.key,
+      matchedAlias: matchedAlias || "",
+      matcherType: matchedAlias ? "ontology_alias" : naturalPatternMatched ? "natural_pattern" : "ontology_pattern",
+      matchIndex: matchedAlias
+        ? aliasMatchIndex(text, matchedAlias, language)
+        : patternIndex >= 0 ? patternIndex : Number.MAX_SAFE_INTEGER - patientFactOntology.length + definitionOrder,
+      definitionOrder
+    }];
+  }).sort((left, right) => left.matchIndex - right.matchIndex || left.definitionOrder - right.definitionOrder);
 }
 
 function recentConversationTopic(conversationHistory = [], language = "zh") {
@@ -377,9 +588,14 @@ function priorityAliasCount() {
 
 module.exports = {
   asksIndependentGeneralPain,
+  canonicalLegacyIntentDefinitions,
+  matchPatientFactOntology,
   matchPriorityCanonicalIntents,
   normalizeIntentQuestion,
+  patientFactOntology,
   priorityAliasCount,
   priorityIntentDefinitions,
-  resolveContextualPatientQuestion
+  resolveContextualPatientQuestion,
+  safeMissingIntentDefinitions,
+  structuredHistoryIntentDefinitions
 };
