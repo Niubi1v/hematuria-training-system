@@ -6,6 +6,7 @@ import orderCatalogProceduresJson from "@/data/order_catalog_procedures.json";
 import orderResultsStructuredJson from "@/data/order_results_structured.json";
 import physicalExamItemsJson from "@/data/physical_exam_items.json";
 import physicalExamResultsJson from "@/data/physical_exam_results.json";
+import { clinicalResultAvailability, presentPhysicalExamResult } from "../../shared/dataAgentPresentation.js";
 import type { CaseData, MdtTrigger, OrderCatalogItem, OrderResultItem, PhysicalExamItem, PhysicalExamResult } from "./types";
 import { scoreTrainingEvents, type TrainingEvent } from "./eventScoring";
 
@@ -15,7 +16,14 @@ export type OrderResultLog = {
   matched: boolean;
   matchedOrders: Array<{ orderId: string; displayName: string }>;
   results: OrderResultItem[];
-  pendingResults?: OrderResultItem[];
+  pendingResults?: Array<{
+    caseId: string;
+    orderId: string;
+    resultId?: string;
+    status: string;
+    availableAt?: "immediate" | "delayed";
+    availabilityReason: string;
+  }>;
   message: string;
   at: string;
   placedAt?: string;
@@ -145,7 +153,13 @@ export function matchOrderResults(caseData: CaseData, input: string, context?: {
     return result ? [{ order, result }] : [];
   });
   const unmetPrerequisites = unique(configured.flatMap(({ result }) => result.prerequisites.filter((prerequisite) => !availableOrderIds.has(prerequisite))));
-  const matched = configured.filter(({ order, result }) => !duplicateOrderIds.includes(order.orderId) && result.prerequisites.every((prerequisite) => availableOrderIds.has(prerequisite))).map(({ order, result }) => ({
+  const acceptedConfigured = configured.filter(({ order, result }) =>
+    !duplicateOrderIds.includes(order.orderId)
+    && result.prerequisites.every((prerequisite) => availableOrderIds.has(prerequisite))
+  );
+  const matched = acceptedConfigured
+    .filter(({ result }) => clinicalResultAvailability(result).release)
+    .map(({ order, result }) => ({
     caseId: result.caseId,
     orderId: result.orderId,
     resultId: result.resultId,
@@ -167,7 +181,20 @@ export function matchOrderResults(caseData: CaseData, input: string, context?: {
     teachingExplanation: "仅返回当前caseId与已开orderId的结构化结果。",
     isKey: true,
     prerequisite: result.prerequisites.join("、")
-  } satisfies OrderResultItem));
+    } satisfies OrderResultItem));
+  const pendingResults = acceptedConfigured
+    .filter(({ result }) => !clinicalResultAvailability(result).release)
+    .map(({ result }) => {
+      const availability = clinicalResultAvailability(result);
+      return {
+        caseId: result.caseId,
+        orderId: result.orderId,
+        resultId: result.resultId,
+        status: availability.status,
+        availableAt: result.availableAt,
+        availabilityReason: availability.reason
+      };
+    });
 
   const at = new Date().toISOString();
   return {
@@ -176,11 +203,12 @@ export function matchOrderResults(caseData: CaseData, input: string, context?: {
     matched: matchedOrders.length > 0,
     matchedOrders: matchedOrders.map((item) => ({ orderId: item.orderId, displayName: item.displayName })),
     results: matched,
+    pendingResults,
     at,
     placedAt: at,
     returnedAt: matched.length ? at : undefined,
     stageNo: context?.stageNo ?? 2,
-    status: matched.length ? "reported" : "no-result",
+    status: matched.length ? "reported" : pendingResults.length ? "ordered" : "no-result",
     duplicateOrderIds,
     unmetPrerequisites,
     selectedOrderCount: splitText(text).length,
@@ -188,6 +216,8 @@ export function matchOrderResults(caseData: CaseData, input: string, context?: {
     returnedReportCount: matched.length,
     message: unmetPrerequisites.length
       ? `医嘱已开立，但缺少前置条件：${unmetPrerequisites.join("、")}；未提前返回报告。`
+      : pendingResults.length
+        ? "医嘱已识别；报告在当前时间点尚不可用。"
       : matchedOrders.length && matched.length
       ? duplicateOrderIds.length
         ? "医嘱已识别，但包含重复开立项目；结果不会重复计入效率得分。"
@@ -204,7 +234,8 @@ export function generatePhysicalExamResult(caseData: CaseData, input: string): E
   if (matchedExam) {
     const configured = physicalExamResults.find((item) => item.caseId === caseData.id && item.examId === matchedExam.examId);
     if (configured && configured.studentVisibleAfterSelection) {
-      return { input: text, result: configured.result, at: new Date().toISOString() };
+      const presented = presentPhysicalExamResult(configured, "zh");
+      return { input: text, result: presented.text, at: new Date().toISOString() };
     }
   }
   return { input: text, result: "未匹配到适用于当前患者的已配置查体项目。", at: new Date().toISOString() };

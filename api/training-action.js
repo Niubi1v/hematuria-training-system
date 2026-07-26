@@ -15,10 +15,11 @@ const { BILINGUAL_CONFLICT_REASON, filterQuarantinedEvents } = require("../serve
 const { setServerTiming } = require("../server/performanceTiming.js");
 const { parseJsonBody } = require("../server/requestSecurity.js");
 const {
-  presentExamResult,
+  clinicalResultAvailability,
   presentMatchedOrder,
   presentOrderCatalogItem,
-  presentOrderResult
+  presentOrderResult,
+  presentPhysicalExamResult
 } = require("../shared/dataAgentPresentation.js");
 
 const catalog = [...labs, ...imaging, ...procedures, ...perioperative];
@@ -163,13 +164,17 @@ function handleExam(caseId, input, language) {
   const exact = normalize(input);
   const item = examItems.find((candidate) => [candidate.displayName, ...(candidate.synonyms || [])].some((name) => normalize(name) === exact));
   const configured = item && examResults.find((result) => result.caseId === caseId && result.examId === item.examId && result.studentVisibleAfterSelection);
-  const presented = presentExamResult(configured?.result || "", language);
+  const presented = configured
+    ? presentPhysicalExamResult(configured, language)
+    : null;
   return {
     input, examId: item?.examId, at: new Date().toISOString(),
     result: configured
       ? presented.text
       : (language === "en" ? "No configured result is available for this examination." : "当前查体项目暂无可返回结果。"),
-    translationStatus: configured ? presented.translationStatus : "not_available"
+    translationStatus: configured ? presented.translationStatus : "not_available",
+    authorityStatus: configured ? presented.authorityStatus : "not_available",
+    provenanceStatus: configured ? presented.provenanceStatus : "missing"
   };
 }
 
@@ -197,7 +202,10 @@ function handleOrder(caseId, input, previousOrderIds, language) {
     .filter((order) => !duplicateOrderIds.includes(order.orderId)
       && !acceptedOrderIds.includes(order.orderId))
     .map((order) => order.orderId);
-  const results = configured.filter(({ order }) => acceptedOrderIds.includes(order.orderId)).map(({ order, result }) => ({
+  const acceptedConfigured = configured.filter(({ order }) => acceptedOrderIds.includes(order.orderId));
+  const results = acceptedConfigured
+    .filter(({ result }) => clinicalResultAvailability(result).release)
+    .map(({ order, result }) => ({
       caseId,
       orderId: order.orderId,
       resultId: result.resultId,
@@ -205,19 +213,34 @@ function handleOrder(caseId, input, previousOrderIds, language) {
       ...presentOrderResult(order, result, language),
       teachingExplanation: language === "en" ? "Released only for this exact case and placed order." : "仅按当前病例与已开立医嘱精确释放。"
     }));
+  const pendingResults = acceptedConfigured
+    .filter(({ result }) => !clinicalResultAvailability(result).release)
+    .map(({ order, result }) => {
+      const availability = clinicalResultAvailability(result);
+      return {
+        caseId,
+        orderId: order.orderId,
+        resultId: result.resultId,
+        status: availability.status,
+        availableAt: result.availableAt,
+        availabilityReason: availability.reason
+      };
+    });
   const at = new Date().toISOString();
   return {
     id: `${caseId}-${Date.now()}`, input, matched: orders.length > 0,
-    matchedOrders: orders.map((item) => presentMatchedOrder(item, language)), results,
+    matchedOrders: orders.map((item) => presentMatchedOrder(item, language)), results, pendingResults,
     duplicateOrderIds, acceptedOrderIds, pendingPrerequisiteOrderIds, unmetPrerequisites,
     unavailableOrderCount: unavailableOrders.length,
     selectedOrderCount: splitOrders(input).length,
     recognizedOrderCount: orders.length, returnedReportCount: results.length, at, placedAt: at, stageNo: 2,
-    status: results.length ? "reported" : "no-result",
+    status: results.length ? "reported" : pendingResults.length ? "ordered" : "no-result",
     message: unavailableOrders.length && !orders.length
       ? "This order is unavailable until its English name has been reviewed."
       : unmetPrerequisites.length
       ? (language === "en" ? `Prerequisites missing: ${unmetPrerequisites.join(", ")}. No report was released.` : `缺少前置条件：${unmetPrerequisites.join("、")}，未返回报告。`)
+      : pendingResults.length
+        ? (language === "en" ? "Order recognized; the report is not available at the current timepoint." : "医嘱已识别；报告在当前时间点尚不可用。")
       : orders.length ? (language === "en" ? "Order recognized; only configured reports were returned." : "医嘱已识别，仅返回已配置的对应报告。")
         : (language === "en" ? "No exact order match was found." : "未精确匹配到规范医嘱。")
   };

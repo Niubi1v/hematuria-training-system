@@ -15,6 +15,7 @@ const results = require("../data/order_results_structured.json") as Array<{
   caseId: string;
   orderId: string;
   resultId: string;
+  availableAt?: "immediate" | "delayed";
   prerequisites?: string[];
 }>;
 const rubrics = require("../data/event_rubrics.json") as Array<{
@@ -121,6 +122,11 @@ function resultIds(payload: Record<string, unknown>): string[] {
     .map((item) => String(item.resultId || ""));
 }
 
+function pendingResultIds(payload: Record<string, unknown>): string[] {
+  return ((payload.pendingResults || []) as Array<{ resultId?: string }>)
+    .map((item) => String(item.resultId || ""));
+}
+
 async function testUnreviewedEnglishOrderAuthority() {
   const unreviewedOrders = catalogs.filter(
     (item) => presentOrderCatalogItem(item, "en").translationAvailable === false
@@ -215,6 +221,8 @@ async function testPrerequisiteRecovery() {
     ...rows.filter(eligibleInEnglish).map((item) => ({ item, language: "en" as const }))
   ];
   assert.equal(scenarios.length, 58);
+  let immediateReports = 0;
+  let delayedReports = 0;
 
   for (const [index, { item, language }] of scenarios.entries()) {
     const prerequisiteId = item.prerequisites?.[0] || "";
@@ -232,7 +240,21 @@ async function testPrerequisiteRecovery() {
 
     response = await order(recovery.attemptId, item.caseId, language, prerequisiteId, response);
     response = await order(recovery.attemptId, item.caseId, language, item.orderId, response);
-    assert.equal(resultIds(response.payload).includes(item.resultId), true);
+    if (item.availableAt === "delayed") {
+      assert.equal(resultIds(response.payload).includes(item.resultId), false);
+      assert.equal(pendingResultIds(response.payload).includes(item.resultId), true);
+      assert.equal(
+        ((response.payload.pendingResults || []) as Array<Record<string, unknown>>)
+          .some((pending) => "value" in pending || "impression" in pending),
+        false,
+        "pending results must not disclose future values"
+      );
+      delayedReports += 1;
+    } else {
+      assert.equal(resultIds(response.payload).includes(item.resultId), true);
+      assert.equal(pendingResultIds(response.payload).includes(item.resultId), false);
+      immediateReports += 1;
+    }
     assert.equal(ids(response.payload, "duplicateOrderIds").includes(item.orderId), false);
 
     const control = await startStageTwo(item.caseId, language, `control-${index}`);
@@ -250,9 +272,20 @@ async function testPrerequisiteRecovery() {
       item.orderId,
       controlResponse
     );
-    assert.equal(resultIds(controlResponse.payload).includes(item.resultId), true);
+    assert.equal(
+      item.availableAt === "delayed"
+        ? pendingResultIds(controlResponse.payload).includes(item.resultId)
+        : resultIds(controlResponse.payload).includes(item.resultId),
+      true
+    );
   }
-  return { prerequisiteRecoveryScenarios: scenarios.length, positiveControls: scenarios.length };
+  assert.equal(immediateReports + delayedReports, scenarios.length);
+  return {
+    prerequisiteRecoveryScenarios: scenarios.length,
+    immediateReports,
+    delayedReports,
+    positiveControls: scenarios.length
+  };
 }
 
 async function main() {

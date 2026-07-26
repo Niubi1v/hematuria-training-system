@@ -5,6 +5,12 @@ export const ENGLISH_EXAM_PLACEHOLDER: string;
 export const ENGLISH_METADATA_PLACEHOLDER: string;
 export const ENGLISH_ORDER_PLACEHOLDER: string;
 export const ENGLISH_RESULT_PLACEHOLDER: string;
+export const MEDICAL_DATA_POLICY: {
+  readonly physicalExamSourceProvenance: readonly string[];
+  readonly simulatedNormalExamIds: readonly string[];
+  readonly delayedResultRelease: "withhold_until_available";
+  readonly missingDataState: "not-available";
+};
 
 export function containsCjk(value: unknown): boolean;
 export function firstEnglishAlias(order: { orderId?: string; synonyms?: string[] }): string;
@@ -42,8 +48,22 @@ export function presentExamResult(result: unknown, language?: DataAgentLanguage)
   text: string;
   translationStatus: string;
 };
+export function clinicalResultAvailability(result: Record<string, unknown>): {
+  release: boolean;
+  status: string;
+  reason: string;
+};
+export function presentPhysicalExamResult(
+  result: Record<string, unknown>,
+  language?: DataAgentLanguage
+): {
+  text: string;
+  translationStatus: string;
+  authorityStatus: string;
+  provenanceStatus: string;
+};
 export function reportStatusPresentation(
   item: { status?: string; abnormalFlags?: string[]; abnormalLevel?: string },
   language?: DataAgentLanguage
-): { state: "needs-review" | "abnormal" | "normal" | "reported"; label: string };
+): { state: "needs-review" | "not-available" | "not-performed" | "abnormal" | "normal" | "reported"; label: string };
 export function safeStudentFacingText(value: unknown, language?: DataAgentLanguage, placeholder?: string): string;

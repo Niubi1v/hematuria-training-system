@@ -28,9 +28,11 @@ assert(/膀胱内多发结石/.test(ctuReport?.result || ""), "P008 CTU must ret
 assert(!/乳果糖|肠道准备|心肺功能/.test(ctuReport?.result || ""), "P008 CTU contains unrelated treatment content");
 
 const pathology = matchOrderResults(p008, "END-002；LAB-PATH-001");
-const pathologyReport = pathology.results.find((item) => item.orderId === "LAB-PATH-001");
-assert(pathologyReport?.status === "not_performed", "P008 TURBT pathology must explicitly state not performed");
-assert(!/乳果糖|肠道准备|前列腺体积/.test(pathologyReport?.result || ""), "P008 TURBT pathology returned contaminated content");
+const pathologyReport = pathology.pendingResults?.find((item) => item.orderId === "LAB-PATH-001");
+assert(pathology.results.length === 0, "P008 delayed TURBT pathology must not be released at the order timepoint");
+assert(pathologyReport?.status === "pending", "P008 delayed TURBT pathology must remain visibly pending");
+assert(pathologyReport?.availabilityReason === "result_not_available_at_current_timepoint", "P008 pathology must preserve the delayed-result reason");
+assert(!/乳果糖|肠道准备|前列腺体积|未实施/.test(JSON.stringify(pathologyReport || {})), "P008 pending pathology leaked a future result");
 
 const partial = matchOrderResults(p008, "血常");
 assert(partial.recognizedOrderCount === 0 && partial.results.length === 0, "substring fragments must not match an order");
