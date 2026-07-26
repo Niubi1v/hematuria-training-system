@@ -309,13 +309,14 @@
 
 ## HEM-P1-052：未审核英文医嘱可通过内部ID释放结果并进入确定性360分评分
 
-- 级别/状态：P1，OPEN / FAIL；Production与精确Preview基线 `c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2`。
+- 级别/状态：P1，首次为`OPEN / FAIL`；当前`RESOLVED_LOCAL_QA / PREVIEW_RETEST_NOT_RUN`，复测Production基线`9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。
 - 页面/路径：英文训练工作台第2阶段与公开 `POST /api/training-action/`；42例评分规则；无viewport依赖的本地公开handler黑盒。
 - 前置条件：合法free-mode英文attempt、有效签名training state、当前阶段已推进到orders。探针只使用Production中已有的内部order ID，不修改目录、医学结果、审核状态或环境值。
 - 操作步骤：读取60项目录并用Production呈现器筛出23个`translationAvailable=false`项目 → 每项建立独立英文attempt并提交第一阶段 → 以内部ID调用order → 记录是否matched/返回result → 对与评分rubric相交的4项遍历29条病例-医嘱规则链 → 完成其余六阶段 → 请求360分报告 → 检查对应rubric item是否earned。
 - 预期：缺审核英文名称的23项必须在服务端fail closed；内部ID不得绕过UI禁用形成validated order/result事件，更不得进入确定性评分。可返回明确“等待审核名称”错误，但不得猜译或修改医学数据。
 - 实际：23/23均被公开handler匹配，6项返回确定性结果；4个评分相关医嘱覆盖29条规则链，29/29对应rubric item均为earned，累计641分。
 - 复现：独立Node进程2/2，计数完全一致；首轮开发探针因错误假设“23项均有配置结果”在准备断言处停止，未计产品复现，修正为无结果项目只测API匹配后得到正式2/2。
+- 当前复测：双跑逐字节一致；英文23/23内部ID匹配0、结果0，29/29评分链得分0；中文23/23仍可匹配，其中6项无前置配置结果返回。没有当前SHA的问题级Preview证据。
 - AI来源：`public_training_handler_local_blackbox`，providerCalls=0；不是DeepSeek、fallback或fixture评分。
 - 状态变化时间线：init-attempt 200 → history stage-feedback 200 → order内部ID 200且matched → 部分项目返回result → orders至debrief六次stage-feedback均200 → score 200 → 对应未审核医嘱rubric item=`earned`。
 - HTTP/console/network：每个正式进程共执行23个目录探针与29条完整评分链，handler操作均为本机内存调用；request ID逐次唯一。报告不保存token、签名、内部医嘱名、结果正文或医学值。
@@ -368,12 +369,13 @@
 
 ## HEM-P1-054：跨 canonical/structured 的复合病史问句静默丢失子句并误触诊断边界
 
-- 级别/状态：P1，`OPEN / FAIL_LOCAL_QA / FAIL_PREVIEW`；Production与精确Preview基线`c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2`。
+- 级别/状态：P1，首次为`OPEN / FAIL_LOCAL_QA / FAIL_PREVIEW`；当前`RESOLVED_LOCAL_QA / PARTIAL_PASS_PREVIEW_COLLECTABLE_COMPLETENESS`，复测Production与精确Preview基线`9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。
 - 页面/路径：本地Patient Session生产规则链与受保护Preview `/cases/P001/`–`/cases/P007/`；本地中文/英文，Preview中文；桌面Chromium`1440×900`。
 - 操作步骤：对42例分别初始化中英文合法session → 发送同时包含症状canonical槽位及既往史/用药/暴露structured槽位的自然复合问句 → 重放同一问题 → 比较公开`matchedSlotIds`与每个明确子句 → 单独核对医学冲突隔离、诊断/报告边界、输出语言与教师/结构泄露 → 在Preview按P001–P007逐例低频复跑5组。
 - 预期：每个子句均被识别并分别回答；缺失事实可自然不确定，医学冲突继续隔离；“以前得过肿瘤吗”是既往史，不应因同句还问发热而变成诊断请求；不得附加未问的当前诱因或generic pain；单次操作保持1 agent/1 history。
 - 实际：本地786场景中689个失败，跨层场景613/618失败。canonical一旦命中即不再执行structured matcher，导致既往结石、感染/肿瘤、高血压/糖尿病、用药/过敏、吸烟/暴露/家族、手术/输血/外伤/泌尿操作和妇科子句被静默丢弃；42/42中文既往肿瘤复合问句返回`diagnosis_boundary`。英文另有84个canonical alias遗漏，structured内部126个matcher遗漏，历史上下文还会错误命中`triggers`/`dysuria`等当前症状槽位。
 - 复现：本地完整矩阵2/2逐字节一致；scenario failure 689/786、cross-layer 613/618。Preview降速正式运行35/35槽位不完整、7/7假诊断边界；首轮唯一429样本排除后HTTP与请求合同均为35/35。
+- 当前复测：本地双跑为786/786、618/618、56/56冲突隔离和42/42肿瘤边界通过，报告逐字节一致。Preview P001–P007中文两轮各35次，合法可收集槽位遗漏0；每轮10次live_ai多返回治理阻塞槽位，归入HEM-P1-057，故本项只标合法子句完整性局部通过，不标完整Preview关闭。
 - AI来源：本地为`local-rule-no-provider`、providerCalls=0。Preview为7次`live_ai`、13次`rule_fallback`、15次`safety_boundary`；不把任一fallback或安全边界冒充真实AI通过。即使7次live_ai，公开匹配元数据仍只含canonical前半句。
 - 状态变化时间线：session ready → 复合问题进入canonical matcher → structured matcher被短路 → 部分问题直接规则回答或进入provider，但允许事实集合只含前半句 → history-log 200 → 学员时间线只收集部分已问病史；中文“肿瘤”路径则在canonical命中后因历史边界判定失败进入诊断阻断。
 - HTTP/耗时：Preview正式35个agent与35个history均200，agent/history一一对应；批次约101秒。首轮高频尾部1个429触发1次客户端重试，降速后未复现，不计本缺陷HTTP失败。
@@ -384,13 +386,14 @@
 
 ## HEM-P1-055：补齐检查前置条件后重试仍被当作重复医嘱且永久不释放报告
 
-- 级别/状态：P1，`OPEN / FAIL_LOCAL_QA / FAIL_EMULATION`；Production基线`c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2`。
+- 级别/状态：P1，首次为`OPEN / FAIL_LOCAL_QA / FAIL_EMULATION`；当前`RESOLVED_LOCAL_QA / PASS_EMULATION / PREVIEW_RETEST_NOT_RUN`，复测Production基线`9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。
 - 页面/路径：本地公开`POST /api/training-action/`与`/cases/P001/`第2阶段；42例生产数据矩阵；中文/英文；UI为`1440×900`与`390×844`。
 - 病例范围：CTU链路影响P001–P016及P042共17例；两类病理链路影响P001–P012共12例。英文病理名称仍为来源审核阻塞，未冒充英文工程通过。
 - 操作步骤：建立合法attempt并提交history进入第2阶段 → 先开带前置条件的目标医嘱 → 确认系统提示缺少前置且未返回报告 → 开立所需前置医嘱 → 再次开立原目标 → 与全新attempt中“先前置、后目标”顺序对照。
 - 预期：补齐前置后重试应释放一次当前病例已配置的目标报告；重复保护只应防止已经成功释放的结果重复计分，不应永久锁死首次未满足条件的目标。
 - 实际：恢复顺序58/58均返回`duplicateOrderIds`且目标结果为0；对照顺序58/58返回目标结果。根因表现为首次未满足前置时目标已进入已开立集合，后续结果过滤先按duplicate排除。
 - 复现：本地矩阵连续2/2逐字节一致；中文41/41、英文17/17；UI桌面/移动模拟2/2，报告卡均为1→1而不是1→2。
+- 当前复测：服务矩阵双跑覆盖42例、58个前置恢复场景，失败0；`1440×900/390×844` 2/2显示报告卡1→2、重试`duplicate=0`且重复提示0。没有当前SHA的问题级Preview证据。
 - AI来源：N/A；生产`training-action`本地黑盒，`providerCalls=0`。
 - 状态变化时间线：stage1拒绝过早开单 → history提交200 → 目标医嘱200、缺前置、0报告 → 前置医嘱200、1报告 → 目标重试200、duplicate=1、0报告 → UI保留旧报告且无法取得目标报告。
 - HTTP/console/network：两次UI运行的`init/history/order×3`均200，HTTP错误和request failure为0；第三个order的业务payload稳定为`returnedReportCount=0`。同路径console另有HEM-P2-056，不作为本P1因果条件。
@@ -400,12 +403,13 @@
 
 ## HEM-P2-056：合法非终态报告卡渲染产生React列表key console error
 
-- 级别/状态：P2，`OPEN / FAIL_EMULATION`；Production基线`c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2`。
+- 级别/状态：P2，首次为`OPEN / FAIL_EMULATION`；当前`RESOLVED_LOCAL_QA / PASS_EMULATION / PREVIEW_RETEST_NOT_RUN`，复测Production基线`9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。
 - 页面/路径：本地`/cases/P001/`第2阶段报告卡；`1440×900`与`390×844`。
 - 操作步骤：进入检查阶段 → 开立P001已有合法`not_available`结构报告的前置医嘱 → 等待报告卡出现 → 采集browser console。
 - 预期：合法报告卡渲染不产生React error；各列表元素具有稳定唯一key。
 - 实际：桌面和移动模拟2/2出现`Each child in a list should have a unique "key" prop`，组件定位为`ReportCard`；页面仍可见，没有崩溃。
 - 复现：2/2；每次1条console error。相同运行所有HTTP请求均200。
+- 当前复测：与HEM-P1-055相同两viewport 2/2，报告卡React key error 0、其他意外console error 0、network failure 0。
 - AI来源：N/A，生产Data Agent报告卡。
 - 最小证据：HEM-P1-055同一UI最小复现、两份本机console摘要及脱敏聚合；不额外提交重复截图或大trace。
 - 建议方向：对结果行使用不依赖空文本的稳定复合key（如resultId+索引），并避免在`result`为空而仅有impression时生成空key段落；新增合法非终态/空result报告卡的console零错误回归。
@@ -414,19 +418,19 @@
 ## HEM-P1-057：待审核病史在provider成功路径丢失治理并暴露收集元数据
 
 - 严重级别 / 状态：P1 / OPEN；`FAIL_LOCAL_QA`、`FAIL_PREVIEW`。
-- 基线：`77815862a0abebff67b8d958f66944a0e11b068f`。
-- 页面和路径：Patient Agent，`POST /api/agent-chat/`；P002手术史、P004吸烟史、P013饮酒史。
+- 首次基线：`77815862a0abebff67b8d958f66944a0e11b068f`；当前复测基线：`9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。
+- 页面和路径：Patient Agent，`POST /api/agent-chat/`；最小复现为P002手术史、P004吸烟史、P013饮酒史，当前Preview复合问句扩展覆盖P001–P006的10组live_ai路径。
 - 语言 / viewport：中文、英文；API黑盒与合成provider最小复现，viewport N/A。
 - 操作步骤：新建合法session → 分别询问上述待审核病史 → 记录公开source/fallback/matched计数 → 对照provider调用前应生效的`medical_history_pending_review`隔离。
 - 预期：不调用provider；返回安全不确定，`isFallback=true`、`fallbackReason=medical_history_pending_review`，匹配槽位/事实均为空，不进入收集、时间线或评分。
 - 实际：回答文本仍自然不确定，但被标为DeepSeek live_ai，`isFallback=false`、fallback reason为空，且每次返回1个matched slot和1个matched fact；前端收集路径会消费这些元数据。
-- 复现：真实Preview两次独立运行各6/6；本地合成provider两次独立运行各6/6，报告逐字节一致。合计24/24失败样本。
+- 复现：首次真实Preview两次各6/6、本地合成provider两次各6/6。当前基线本地双跑仍各6/6且报告逐字节一致；Preview中文复合问句双跑各35次操作，其中10/35稳定只多出治理阻塞槽位，两次相同10组、合计20个严格槽位合同失败。没有漏掉合法可收集槽位。
 - AI来源：真实Preview为DeepSeek live_ai；本地为只回显`currentAllowedAnswer`的合成provider，不冒充真实AI。
 - 状态时间线：session成功 → agent-chat 200 → provider成功 → 治理标志缺失、匹配元数据非空 → history-log 200。
-- HTTP / 耗时：Preview 12/12 agent-chat 200、12/12 history-log 200；无401/403/5xx。本轮聚合不保留逐请求耗时或request ID。
+- HTTP / 耗时：当前Preview两轮各35/35 agent-chat与35/35 history-log成功，HTTP合同失败0；无401/403/429/5xx。本轮聚合不保留逐请求耗时或request ID。
 - console/network摘要：跨源保护请求0，教师/结构/语言泄露0；header、body、token、Cookie及完整回答不落盘。
-- 最小证据：`tests/exploratory/history-medical-provider-governance.mjs`、`tests/preview/preview-stability.spec.mjs`及`artifacts/exploratory-qa/reports/7781586-history-medical-qa-summary.json`；两组原始脱敏重复报告仅本机保留。
-- 建议方向：在任何provider调用前统一解析`unresolvedReason/fallbackReason`并强制隔离；provider成功分支不得恢复blocked事实的matched元数据；增加双语合成provider与Preview回归。
+- 最小证据：`tests/exploratory/history-medical-provider-governance.mjs`、`tests/preview/preview-stability.spec.mjs`、`artifacts/exploratory-qa/reports/7781586-history-medical-qa-summary.json`及`artifacts/exploratory-qa/reports/9b7fcd0-round25-agent-governance-regression-summary.json`；当前双跑原始脱敏报告仅本机保留。
+- 根因证据 / 建议方向：确定性fallback已投影`collectableSlotIds/collectableFacts`，但provider成功分支仍返回治理前的`matchedSlotIds/matchedFacts`。在provider调用前统一解析`unresolvedReason/fallbackReason`并强制隔离；provider成功分支只能返回可收集投影；增加双语、复合问句合成provider与Preview回归。
 - 医学专家裁决：否；修复是恢复现有待审核状态，不得借此批准或改写医学事实。
 
 ## HEM-P1-058：P037英文live_ai开放式主诉遗漏权威“1 day ago”病程

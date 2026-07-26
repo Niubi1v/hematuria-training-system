@@ -485,3 +485,11 @@ Patient Session 报告记录 295 次 `unsafe_deterministic_answer` source-cell �
 - HEM-P2-059四viewport每次稳定产生4条相同React key错误和5个`Physical examination`占位标题，共16条错误/20个标题；训练动作成功、failed network request 0。缺陷保持`OPEN / FAIL_EMULATION`。
 - 23个英文来源未审核状态继续`BLOCKED_SOURCE_REVISION`；安全占位显示本身是正确fail-closed，工程失败仅为把展示文案误用作React key。本轮未批准翻译或修改医学数据。
 - 没有新增缺陷ID或P0/P1/P2；本轮只改QA测试、报告和最小证据，不把自动viewport冒充真机或Preview。
+
+## 2026-07-26 第 25 轮：`9b7fcd0` Agent治理与Data Agent定向回归
+
+- HEM-P1-052本地双跑通过且逐字节一致：23/23个未审核英文内部ID匹配0、返回结果0；29/29评分链得分0。相同23个中文医嘱仍可匹配，其中6个无前置的已配置结果可返回，证明修复没有全局禁用。问题级Preview未运行。
+- HEM-P1-054本地双跑通过：84 sessions、786场景与786重放、618跨层、168 canonical控制、56冲突隔离、42肿瘤边界，失败0、providerCalls 0。Preview双跑各35次中合法可收集槽位遗漏0；但每轮10个live_ai操作多返回治理阻塞槽位，严格合同失败归入既有HEM-P1-057，不能据此把054写成完整Preview关闭。
+- HEM-P1-055服务矩阵双跑通过：42例、84 sessions、1,344查体检查、392结果检查、336阶段权限探针、58前置场景，失败0。`1440×900/390×844` UI 2/2满足三次order、报告卡1→2、重试非重复、重复警告0；HEM-P2-056同轮React key error 0，更新为`RESOLVED_LOCAL_QA / PASS_EMULATION`。两项问题级Preview未运行。
+- HEM-P1-057在当前基线仍为`FAIL_LOCAL_QA / FAIL_PREVIEW`。合成provider双跑每轮6/6调用provider并暴露1个blocked slot/fact；Preview复合批双跑每轮10/35出现相同10组治理前元数据，HTTP、history与回答正文泄露失败均0。代码审计显示provider成功分支返回治理前`matchedSlotIds/matchedFacts`，而fallback使用可收集投影。
+- 三次QA基础设施误差（旧重复告警断言、summary变量缺失、旧矩阵治理期望）均在正式结果前修正并排除，不计产品失败。当前有效结论没有新增缺陷ID或新增P0/P1/P2；HEM-P1-057保持OPEN，仍不建议进入最终教师人工审阅。

@@ -23,6 +23,7 @@ const { matchCanonicalPatientFacts } = require("../../server/canonicalFacts.js")
 const { matchStructuredFacts } = require("../../server/structuredFacts.js");
 
 const DEFAULT_REPORT = "artifacts/exploratory-qa/reports/patient-compound-history-matrix.json";
+const PRODUCTION_SHA = process.env.QA_PRODUCTION_SHA || "unknown";
 const CJK = /[\u3400-\u9fff]/u;
 const TEACHER_META = /根据原始病史|根据病例资料|病例资料显示|未主动诉|需追问|教师提示|标准答案|评分点|standard answer|teacher hint|scoring point|case data shows/i;
 
@@ -150,6 +151,7 @@ async function main() {
   let canonicalControlChecks = 0;
   let conflictBearingChecks = 0;
   let conflictIsolatedChecks = 0;
+  let malignancyBoundaryChecks = 0;
   let quarantineWarnings = 0;
   let deterministicBlockWarnings = 0;
 
@@ -171,8 +173,8 @@ async function main() {
   };
 
   try {
-    for (const [caseIndex, caseData] of cases.entries()) {
-      const caseId = `P${String(caseIndex + 1).padStart(3, "0")}`;
+    for (const caseData of cases) {
+      const caseId = caseData.id;
       const female = String(caseData.sex || "").includes("女");
       for (const language of ["zh", "en"]) {
         const session = await initSession({ caseId: caseData.id, mode: "qa-compound-history", language });
@@ -211,11 +213,11 @@ async function main() {
 
           const expectedSlots = sortedUnique([
             ...(canonical?.collectableSlotIds || canonicalMatched),
-            ...probe.structured
+            ...(structured?.collectableSlotIds || [])
           ]);
           const conflictSlots = sortedUnique([
             ...(canonical?.governanceSlotIds || canonicalMatched),
-            ...probe.structured
+            ...(structured?.governanceSlotIds || structuredMatched)
           ]).filter((slotId) => conflictKeys.has(`${caseData.id}:${slotId}`));
           if (conflictSlots.length) conflictBearingChecks += 1;
 
@@ -241,6 +243,17 @@ async function main() {
           }
           if (TEACHER_META.test(String(first.replyText || ""))) {
             failures.push({ kind: "teacher_meta_leak", caseId, probeId: probe.id, language });
+          }
+          if (probe.id === "fever-and-uti-tumor-history" && language === "zh") {
+            malignancyBoundaryChecks += 1;
+            if (first.fallbackReason === "diagnosis_boundary") {
+              failures.push({
+                kind: "past_malignancy_false_diagnosis_boundary",
+                caseId,
+                probeId: probe.id,
+                language
+              });
+            }
           }
 
           if (conflictSlots.length) {
@@ -308,6 +321,36 @@ async function main() {
     globalThis.fetch = originalFetch;
   }
 
+  const expectedCounts = {
+    sessionChecks: 84,
+    scenarioChecks: 786,
+    repeatChecks: 786,
+    crossLayerChecks: 618,
+    canonicalControlChecks: 168,
+    conflictBearingChecks: 56,
+    conflictIsolatedChecks: 56,
+    malignancyBoundaryChecks: 42
+  };
+  const actualCounts = {
+    sessionChecks,
+    scenarioChecks,
+    repeatChecks,
+    crossLayerChecks,
+    canonicalControlChecks,
+    conflictBearingChecks,
+    conflictIsolatedChecks,
+    malignancyBoundaryChecks
+  };
+  if (JSON.stringify(actualCounts) !== JSON.stringify(expectedCounts)) {
+    failures.push({
+      kind: "matrix_contract_count_mismatch",
+      caseId: "_matrix",
+      probeId: "_all",
+      language: "_all",
+      expectedCounts,
+      actualCounts
+    });
+  }
   if (providerCalls !== 0) {
     failures.push({ kind: "unexpected_provider_call", caseId: "_matrix", probeId: "_all", language: "_all", providerCalls });
   }
@@ -315,6 +358,7 @@ async function main() {
   const grouped = groupedFailures(failures);
   const report = {
     schemaVersion: 1,
+    productionSha: PRODUCTION_SHA,
     mode: "local-rule-no-provider",
     medicalTruthAdjudicated: false,
     medicalBlocksPreserved: ["HEM-P0-001", "HEM-P0-023"],
@@ -329,6 +373,7 @@ async function main() {
       canonicalControlChecks,
       conflictBearingChecks,
       conflictIsolatedChecks,
+      malignancyBoundaryChecks,
       quarantineWarnings,
       deterministicBlockWarnings,
       providerCalls

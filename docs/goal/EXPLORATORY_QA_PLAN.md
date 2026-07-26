@@ -236,3 +236,10 @@ console 文本对 Authorization、Cookie、签名、token、secret 和 API key �
 - HEM-P2-059在四固定viewport打开P001英文第2阶段，要求未审核英文分类继续显示安全占位，但console重复React key为0；不得为关闭工程缺陷补写或批准英文医学来源。
 - 最终有效范围为2个移动几何项和4个英文key项；首次2个几何绿灯只用于确认后增加通过摘要输出，不计入最终有效运行或产品重试。
 - 后续HEM-P2-044只保留真实手机触控为`BLOCKED_REAL_DEVICE`；HEM-P2-059等待稳定内部key修复后四viewport定向重跑。下一独立范围避免重复这两项，继续从当前Production尚未复测的开放工程合同中选择。
+
+## 2026-07-26 第 25 轮 `9b7fcd0` Agent治理回归与下一顺序
+
+- 本轮按当前Production尚未独立复测的缺陷合同执行HEM-P1-052/054/055及HEM-P2-056；本地确定性矩阵均双跑，Data Agent前置恢复仅用`1440×900/390×844`做代表UI回归，未重复42例七阶段或全量Playwright。
+- Preview仅用安全Automation Bypass执行P001–P007中文复合病史35次×2轮，并在测试内绑定完整deployment SHA；不保存问题、回答、token、header或请求标识。HEM-P1-052/055没有取得问题级Preview证据，必须保持`NOT_RUN`，不得由本地结果代替。
+- HEM-P1-057当前基线仍需优先修复：provider调用前阻止`unresolvedReason`待审核事实，provider成功结果只能返回`collectableSlotIds/collectableFacts`。修复回归需同时覆盖三类双语最小探针和当前10组复合问句，不得改变`needs_revision`或批准病史事实。
+- HEM-P1-055及HEM-P2-056仅在Production提供相关运行时变化后再定向重跑；下一独立范围继续从尚未复测的开放工程项中选择，避免重复本轮已稳定双跑的本地矩阵。医学、来源、Preview故障注入和真机阻塞继续分层。

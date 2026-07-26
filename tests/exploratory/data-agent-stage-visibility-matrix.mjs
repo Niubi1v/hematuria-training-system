@@ -26,7 +26,7 @@ const catalog = [
   ...require("../../data/order_catalog_perioperative.json")
 ];
 
-const PRODUCTION_SHA = "c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2";
+const PRODUCTION_SHA = process.env.QA_PRODUCTION_SHA || "unknown";
 const languages = ["zh", "en"];
 const catalogById = new Map(catalog.map((item) => [item.orderId, item]));
 const caseById = new Map(cases.map((item) => [item.id, item]));

@@ -3276,7 +3276,7 @@ test("HEM-P1-055 retry after satisfying an order prerequisite releases the confi
     !["qa-1440x900", "qa-390x844"].includes(testInfo.project.name),
     "One desktop and one mobile viewport provide representative UI evidence."
   );
-  await withEvidence(browser, testInfo, "hem-p1-055-prerequisite-retry", async ({ page, consoleEvents }) => {
+  await withEvidence(browser, testInfo, "hem-p1-055-prerequisite-retry", async ({ page, slug, consoleEvents }) => {
     const observations = [];
     await installProductionTrainingApi(page, observations);
     await page.goto("/cases/P001/");
@@ -3297,9 +3297,10 @@ test("HEM-P1-055 retry after satisfying an order prerequisite releases the confi
 
     await orderInput.fill("CTU");
     await submitOrder.click();
-    await expect(page.getByText("重复医嘱不会重复计入效率得分。", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("report-card")).toHaveCount(2);
     await page.waitForTimeout(700);
     const reportCardsAfterRetry = await page.getByTestId("report-card").count();
+    const duplicateWarningCount = await page.getByText("重复医嘱不会重复计入效率得分。", { exact: true }).count();
     const retryObservation = observations[2] || {};
     const consoleErrorCount = consoleEvents.filter((item) => item.type === "error").length;
     const reportCardKeyWarningCount = consoleEvents.filter((item) => item.type === "error"
@@ -3307,7 +3308,7 @@ test("HEM-P1-055 retry after satisfying an order prerequisite releases the confi
       && /ReportCard/.test(item.text)).length;
     const summary = {
       schemaVersion: 1,
-      productionSha: "c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2",
+      productionSha: PRODUCTION_BASELINE,
       status: retryObservation.returnedReportCount === 1 && reportCardsAfterRetry > reportCardsBeforeRetry
         ? "PASS_LOCAL"
         : "FAIL_LOCAL_QA",
@@ -3322,6 +3323,7 @@ test("HEM-P1-055 retry after satisfying an order prerequisite releases the confi
       orderObservations: observations,
       reportCardsBeforeRetry,
       reportCardsAfterRetry,
+      duplicateWarningCount,
       expectedRetryReportCount: 1,
       consoleErrorCount,
       reportCardKeyWarningCount,
@@ -3331,7 +3333,7 @@ test("HEM-P1-055 retry after satisfying an order prerequisite releases the confi
       credentialsRetained: false
     };
     await writeFile(
-      path.join(DIRS.reports, `hem-p1-055-prerequisite-retry-${viewportSlug(testInfo)}.json`),
+      summaryFile(slug),
       `${JSON.stringify(summary, null, 2)}\n`,
       "utf8"
     );
@@ -3342,6 +3344,7 @@ test("HEM-P1-055 retry after satisfying an order prerequisite releases the confi
       controlReturnedReportCount: observations[1]?.returnedReportCount,
       retryDuplicateOrderCount: retryObservation.duplicateOrderCount,
       retryReturnedReportCount: retryObservation.returnedReportCount,
+      duplicateWarningCount,
       reportCardsBeforeRetry,
       reportCardsAfterRetry,
       reportCardKeyWarningCount
@@ -3349,8 +3352,9 @@ test("HEM-P1-055 retry after satisfying an order prerequisite releases the confi
       orderRequestCount: 3,
       firstUnmetPrerequisiteCount: 1,
       controlReturnedReportCount: 1,
-      retryDuplicateOrderCount: 1,
+      retryDuplicateOrderCount: 0,
       retryReturnedReportCount: 1,
+      duplicateWarningCount: 0,
       reportCardsBeforeRetry: 1,
       reportCardsAfterRetry: 2,
       reportCardKeyWarningCount: 0

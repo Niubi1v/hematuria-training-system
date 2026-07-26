@@ -1,0 +1,140 @@
+{
+  "schemaVersion": "exploratory-round25-agent-governance-v1",
+  "productionBaseline": "9b7fcd0d975533c7c6eda5614ca3b2978c9dce55",
+  "qaBranch": "codex/hematuria-exploratory-qa",
+  "scope": {
+    "defects": [
+      "HEM-P1-052",
+      "HEM-P1-054",
+      "HEM-P1-055",
+      "HEM-P2-056",
+      "HEM-P1-057"
+    ],
+    "localMatrixRuns": 8,
+    "localBrowserRuns": 2,
+    "previewCompoundRuns": 2,
+    "previewDeploymentShaVerified": true,
+    "newDefectIds": 0
+  },
+  "hemP1052": {
+    "result": "PASS_LOCAL_QA",
+    "runs": 2,
+    "englishUnreviewedOrdersBlocked": 23,
+    "englishMatchedOrders": 0,
+    "englishReturnedResults": 0,
+    "scoringLinksBlocked": 29,
+    "earnedPoints": 0,
+    "chineseControlOrdersMatched": 23,
+    "chineseImmediatelyAvailableConfiguredResults": 6,
+    "reportsByteIdentical": true,
+    "previewProblemLevelRetest": "NOT_RUN"
+  },
+  "hemP1054": {
+    "result": "PASS_LOCAL_QA / PARTIAL_PREVIEW",
+    "runs": 2,
+    "sessions": 84,
+    "scenarios": 786,
+    "repeats": 786,
+    "crossLayerScenarios": 618,
+    "canonicalControlScenarios": 168,
+    "conflictBearingScenarios": 56,
+    "conflictIsolationPasses": 56,
+    "malignancyBoundaryScenarios": 42,
+    "providerCalls": 0,
+    "localFailures": 0,
+    "reportsByteIdentical": true,
+    "preview": {
+      "runs": 2,
+      "operationsPerRun": 35,
+      "agentRequestsPerRun": 35,
+      "historyLogsPerRun": 35,
+      "httpContractFailuresPerRun": 0,
+      "missingCollectableSlotFailuresPerRun": 0,
+      "strictSlotContractFailuresPerRun": 10,
+      "linkedDefect": "HEM-P1-057",
+      "sourceCountsPerRun": {
+        "safety_boundary": 25,
+        "live_ai": 10
+      }
+    }
+  },
+  "hemP1055": {
+    "result": "PASS_LOCAL_QA",
+    "runs": 2,
+    "cases": 42,
+    "sessions": 84,
+    "examChecks": 1344,
+    "resultChecks": 392,
+    "stagePermissionProbes": 336,
+    "prerequisiteScenarios": 58,
+    "failures": 0,
+    "browser": {
+      "result": "PASS_EMULATION",
+      "viewports": [
+        "1440x900",
+        "390x844"
+      ],
+      "runs": 2,
+      "orderRequestsPerRun": 3,
+      "duplicateWarnings": 0,
+      "reportCardsBeforeRetry": 1,
+      "reportCardsAfterRetry": 2
+    },
+    "previewProblemLevelRetest": "NOT_RUN"
+  },
+  "hemP2056": {
+    "result": "RESOLVED_LOCAL_QA",
+    "browserRuns": 2,
+    "reportCardReactKeyErrors": 0,
+    "unexpectedConsoleErrors": 0,
+    "networkFailures": 0,
+    "previewProblemLevelRetest": "NOT_RUN"
+  },
+  "hemP1057": {
+    "result": "FAIL_LOCAL_QA / FAIL_PREVIEW",
+    "status": "OPEN",
+    "localSyntheticProvider": {
+      "runs": 2,
+      "samplesPerRun": 6,
+      "failuresPerRun": 6,
+      "providerCallsPerRun": 6,
+      "blockedMetadataLeaksPerRun": 6,
+      "reportsByteIdentical": true
+    },
+    "previewCompoundExtension": {
+      "runs": 2,
+      "operationsPerRun": 35,
+      "governanceWithheldOperationsPerRun": 34,
+      "unexpectedBlockedMetadataFailuresPerRun": 10,
+      "stableFailureGroupsPerRun": 10,
+      "missingCollectableSlotsPerRun": 0,
+      "answerTextLeakageFailuresPerRun": 0,
+      "httpContractFailuresPerRun": 0
+    },
+    "rootCauseEvidence": "Provider success returns pre-governance matchedSlotIds/matchedFacts while deterministic fallback projects collectableSlotIds/collectableFacts."
+  },
+  "excludedQaInstrumentationRuns": [
+    "One stale browser assertion waited for the former duplicate warning after the product behavior had changed.",
+    "One QA summary writer run failed because the viewport slug variable was absent.",
+    "One local compound-matrix run used stale governance expectations before the QA projection was corrected."
+  ],
+  "boundaries": {
+    "medicalFactsApproved": false,
+    "sourceRevisionApproved": false,
+    "realDeviceClaimed": false,
+    "productionClaimed": false,
+    "previewResultsUsedForLocalClaims": false
+  },
+  "privacy": {
+    "patientAnswersRetained": false,
+    "questionsRetainedInAggregate": false,
+    "medicalFactsRetained": false,
+    "requestIdsRetained": false,
+    "attemptIdsRetained": false,
+    "headersRetained": false,
+    "cookiesRetained": false,
+    "tokensRetained": false,
+    "signaturesRetained": false,
+    "environmentValuesRetained": false
+  }
+}

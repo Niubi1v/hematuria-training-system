@@ -13,6 +13,7 @@ process.env.PATIENT_SEMANTIC_CLASSIFIER_ENABLED = "false";
 
 const outputArgIndex = process.argv.indexOf("--output");
 const outputPath = outputArgIndex >= 0 ? process.argv[outputArgIndex + 1] : "";
+const productionBaseline = process.env.QA_PRODUCTION_SHA || "unknown";
 const originalFetch = globalThis.fetch;
 let providerCalls = 0;
 
@@ -86,7 +87,7 @@ try {
   );
   const summary = {
     schemaVersion: "exploratory-history-medical-provider-governance-v1",
-    productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+    productionBaseline,
     defectId: "HEM-P1-057",
     status: failures.length ? "FAIL_LOCAL_QA" : "PASS_LOCAL_QA",
     samples: samples.length,

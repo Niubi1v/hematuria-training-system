@@ -189,3 +189,9 @@
 - HEM-P2-044两个移动viewport四个目标均达到44px，旧的`106×38、26×28、75×38、34×38`不再复现；自动几何状态为`PASS_EMULATION`。没有真实手指命中、系统字体缩放、动态地址栏或safe-area证据。
 - HEM-P2-059四viewport仍显示5个相同`Physical examination`分组并各产生4条重复key console error；360×800代表截图保留公开安全占位，不含查体真值、患者问答、评分或凭据。
 - 页面仍可操作且network failure为0，但React key不唯一可能造成未来重复/遗漏渲染，因此缺陷保持OPEN；未审核英文来源继续独立阻塞。
+
+## 2026-07-26 `9b7fcd0` 第 25 轮Data Agent代表UI
+
+- P001第2阶段在`1440×900`和`390×844`执行“目标失败→补齐前置→重试”，两viewport均显示报告卡1→2；重试没有重复医嘱提示，三次order均为单请求，HEM-P1-055标`PASS_EMULATION`。
+- 同一两次运行ReportCard React key error、意外console error和network failure均为0，HEM-P2-056更新为`RESOLVED_LOCAL_QA`。本轮没有提交重复截图或大trace，测试与脱敏聚合足以重建。
+- 自动viewport不替代真实手机、软键盘或safe-area；本轮Preview复合问句只做数据合同采集，不形成新的视觉结论。

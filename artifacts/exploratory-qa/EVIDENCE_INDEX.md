@@ -436,3 +436,20 @@ SHA-256：
 
 - 第24轮聚合生成前的原始前缀证据共34个文件、20,042,441 B；不保存Patient回答、医学真值、request/attempt ID、header、Cookie、token、签名或环境值。
 - `-NamePrefix`定向流式/解包扫描覆盖34个`9b7fcd0-r24*`原始文件、ZIP内301个条目和42,246,816流式字节；聚合另以`9b7fcd0-round24*`扫描1个文件、2,468字节；两组敏感值命中均为0，未输出候选值。
+
+## Production `9b7fcd0` 第 25 轮Agent治理证据
+
+| 证据名称 | 对应测试或缺陷 | 文件路径 | 文件大小 | 是否提交 Git | 未提交原因 | 本机保留位置 |
+| --- | --- | --- | ---: | --- | --- | --- |
+| 第25轮脱敏聚合 | HEM-P1-052/054/055/057、HEM-P2-056 | `artifacts/exploratory-qa/reports/9b7fcd0-round25-agent-governance-regression-summary.json` | 提交后记录 | 是 | — | 仓库路径 |
+| 本轮QA矩阵与Preview探针 | 五项缺陷可重建测试 | `tests/exploratory/{data-agent-scoring-isolation,data-agent-stage-visibility-matrix,patient-compound-history-matrix,history-medical-provider-governance,long-running-qa.spec}.mjs`、`tests/preview/preview-stability.spec.mjs` | 6个受控文件 | 是 | — | 仓库路径 |
+| HEM-P1-052双跑原始摘要 | 英文内部ID/评分隔离与中文控制 | `artifacts/exploratory-qa/reports/9b7fcd0-r25-hem-p1-052-run-*.json` | 2份/2,278 B | 否 | 聚合已保留验收计数 | 原路径，本机未跟踪 |
+| HEM-P1-054双跑原始摘要 | 786/618/56/42本地矩阵 | `artifacts/exploratory-qa/reports/9b7fcd0-r25-hem-p1-054-run-*.json` | 2份/1,502 B | 否 | 聚合已保留验收计数 | 原路径，本机未跟踪 |
+| HEM-P1-055双跑与两viewport诊断 | 前置恢复矩阵、console/network | `artifacts/exploratory-qa/reports/9b7fcd0-r25-hem-p1-055-*` | 10份/约15 KB | 否 | 聚合已保留计数，逐份可重建 | 原路径，本机未跟踪 |
+| HEM-P1-057合成provider双跑 | 三类待审核病史×中英文 | `artifacts/exploratory-qa/reports/9b7fcd0-r25-hem-p1-057-local-run-*.json` | 2份/4,258 B | 否 | 聚合已保留失败计数且不需重复样本 | 原路径，本机未跟踪 |
+| HEM-P1-055两份trace/录像/截图 | Data Agent代表UI重建证据 | `artifacts/exploratory-qa/{traces,videos,screenshots}/9b7fcd0-r25-hem-p1-055-*` | 本轮原始证据集 | 否 | 体积大且绿灯可由测试重建；无独立失败价值 | 原路径，本机未跟踪 |
+| Preview原始runner输出 | 两轮35次真实Preview复合病史 | `test-results/preview-blackbox/` | 0 B（安全wrapper扫描后删除） | 否 | 不保留真实AI回答、凭据或请求上下文 | 已安全删除 |
+
+- 聚合不保存问题、回答、病例事实、request/attempt ID、header、Cookie、token、签名或环境值。Preview raw在安全wrapper对实际凭据字节和敏感字段扫描通过后删除；只保留无正文计数。
+- `9b7fcd0-r25*`定向流式/解包扫描覆盖24个文件、314个ZIP条目和42,202,653字节；`9b7fcd0-round25*`聚合另扫描1个文件、4,190字节；两组敏感值命中均为0。暂存14个文件及完整可达Git文本历史扫描命中0。
+- 通用repository candidate scanner仍只对5个历史未跟踪大trace按大小上限fail-closed（4个ZIP entry过大、1个ZIP文件过大），没有输出内容命中；这些文件不在受控树或本轮暂存范围，且不进入Git。

@@ -1,10 +1,19 @@
 import { expect, test } from "@playwright/test";
+import { createRequire } from "node:module";
 
 import {
   createPreviewProtectionHeaders,
   resolvePreviewBlackboxConfig,
   shouldAttachPreviewProtection
 } from "../../scripts/preview-blackbox-config.mjs";
+
+const require = createRequire(import.meta.url);
+const localCases = require("../../data/cases.json");
+const { matchCanonicalPatientFacts } = require("../../server/canonicalFacts.js");
+const { matchStructuredFacts } = require("../../server/structuredFacts.js");
+const { bilingualConflictEntries } = require("../../server/bilingualConflictQuarantine.js");
+const localCaseById = new Map(localCases.map((item) => [item.id, item]));
+const bilingualConflictKeys = new Set(bilingualConflictEntries.map((item) => `${item.caseId}:${item.field}`));
 
 const preview = resolvePreviewBlackboxConfig(process.env);
 if (preview.blocked) throw new Error(`${preview.reason}: ${preview.message}`);
@@ -564,6 +573,7 @@ test("@preview-compound-history-batch-1 preserves symptom and structured history
   let agentRequestCount = 0;
   let historyLogCount = 0;
   let crossOriginProtectionRequestCount = 0;
+  let deploymentSha = "";
 
   for (const caseId of caseIds) {
     const context = await browser.newContext();
@@ -573,19 +583,49 @@ test("@preview-compound-history-batch-1 preserves symptom and structured history
       opened = await openReadyCase(context, caseId, "zh");
       expect(opened.attemptResponse.status()).toBe(200);
       expect(opened.sessionResponse.status()).toBe(200);
+      if (!deploymentSha) {
+        const health = await opened.page.evaluate(async () => {
+          const response = await fetch("/api/health/");
+          const payload = await response.json();
+          return { status: response.status, deploymentSha: String(payload.deploymentSha || "") };
+        });
+        expect(health.status).toBe(200);
+        deploymentSha = health.deploymentSha;
+        if (process.env.PLAYWRIGHT_EXPECTED_PREVIEW_SHA) {
+          expect(deploymentSha).toBe(process.env.PLAYWRIGHT_EXPECTED_PREVIEW_SHA);
+        }
+      }
       opened.page.on("request", (request) => {
         const pathname = new URL(request.url()).pathname;
         if (pathname === "/api/agent-chat/" && request.method() === "POST" && !safeBody(request).probe) agentRequestCount += 1;
         if (pathname === "/api/training-action/" && request.method() === "POST" && safeBody(request).action === "history-log") historyLogCount += 1;
       });
       for (const probe of probes) {
+        const localCase = localCaseById.get(caseId);
+        const canonical = matchCanonicalPatientFacts(caseId, probe.question, "zh");
+        const structured = matchStructuredFacts(localCase, probe.question, "zh");
+        const routeMatchedSlots = [...new Set([
+          ...(canonical?.matchedSlotIds || []),
+          ...(structured?.matchedSlotIds || [])
+        ])];
+        const localRouteMissingSlots = probe.expectedSlots.filter((slotId) => !routeMatchedSlots.includes(slotId));
+        const collectableSlots = [...new Set([
+          ...(canonical?.collectableSlotIds || canonical?.matchedSlotIds || []),
+          ...(structured?.collectableSlotIds || [])
+        ])];
+        const governanceSlots = [...new Set([
+          ...(canonical?.governanceSlotIds || canonical?.matchedSlotIds || []),
+          ...(structured?.governanceSlotIds || structured?.matchedSlotIds || [])
+        ])];
+        const conflictSlots = governanceSlots.filter((slotId) => bilingualConflictKeys.has(`${caseId}:${slotId}`));
+        const effectiveExpectedSlots = conflictSlots.length ? [] : collectableSlots;
         const answer = await askLiveQuestion(opened.page, "zh", probe.question, {
           includeReplyText: true,
           includeMatchMetadata: true
         });
         const actualSlots = answer.matchMetadata?.slotIds || [];
-        const missingSlots = probe.expectedSlots.filter((slotId) => !actualSlots.includes(slotId));
-        const unexpectedSlots = actualSlots.filter((slotId) => !probe.expectedSlots.includes(slotId));
+        const missingSlots = effectiveExpectedSlots.filter((slotId) => !actualSlots.includes(slotId));
+        const unexpectedSlots = actualSlots.filter((slotId) => !effectiveExpectedSlots.includes(slotId));
         const source = ["live_ai", "ai_cache", "rule_fallback", "safety_boundary"].includes(answer.generationSource)
           ? answer.generationSource
           : "unknown";
@@ -602,10 +642,14 @@ test("@preview-compound-history-batch-1 preserves symptom and structured history
           historyStatus: answer.historyStatus,
           source,
           fallbackReason,
-          expectedSlotCount: probe.expectedSlots.length,
+          localRouteMissingSlotCount: localRouteMissingSlots.length,
+          expectedSlotCount: effectiveExpectedSlots.length,
           actualSlotCount: actualSlots.length,
           missingSlotCount: missingSlots.length,
           unexpectedSlotCount: unexpectedSlots.length,
+          governanceWithheldSlotCount: governanceSlots.filter((slotId) => !collectableSlots.includes(slotId)).length,
+          conflictBearing: conflictSlots.length > 0,
+          conflictIsolationFailure: conflictSlots.length > 0 && actualSlots.length > 0,
           falseBoundary: ["diagnosis_boundary", "report_boundary"].includes(fallbackReason),
           genericUnknown: new Set(["这项情况我现在不太清楚。", "这个我不太清楚。"]).has(replyText.trim()),
           languageLeakDetected: answer.patientStatus === 200 && !/[\u3400-\u9fff]/u.test(replyText),
@@ -626,13 +670,18 @@ test("@preview-compound-history-batch-1 preserves symptom and structured history
     scenario: "preview-compound-history-batch-1",
     cases: caseIds,
     languages: ["zh"],
+    deploymentSha,
     probes: probes.map((probe) => probe.id),
     operations: samples.length,
     sourceCounts,
     fallbackReasonCounts,
     httpContractFailures: samples.filter((sample) => sample.patientStatus !== 200 || sample.historyStatus !== 200).length,
     requestContractFailures: Math.abs(agentRequestCount - samples.length) + Math.abs(historyLogCount - samples.length),
+    localRouteContractFailures: samples.filter((sample) => sample.localRouteMissingSlotCount > 0).length,
     slotContractFailures: samples.filter((sample) => sample.missingSlotCount > 0 || sample.unexpectedSlotCount > 0).length,
+    governanceWithheldOperations: samples.filter((sample) => sample.governanceWithheldSlotCount > 0).length,
+    conflictBearingOperations: samples.filter((sample) => sample.conflictBearing).length,
+    conflictIsolationFailures: samples.filter((sample) => sample.conflictIsolationFailure).length,
     falseBoundaryCount: samples.filter((sample) => sample.falseBoundary).length,
     genericUnknownCount: samples.filter((sample) => sample.genericUnknown).length,
     leakageFailures: samples.filter((sample) =>
@@ -642,6 +691,19 @@ test("@preview-compound-history-batch-1 preserves symptom and structured history
     historyLogCount,
     crossOriginProtectionRequestCount,
     responseTextRetained: false,
+    slotFailureSamples: samples
+      .filter((sample) => sample.missingSlotCount > 0 || sample.unexpectedSlotCount > 0)
+      .map((sample) => ({
+        caseId: sample.caseId,
+        probeId: sample.probeId,
+        source: sample.source,
+        fallbackReason: sample.fallbackReason,
+        expectedSlotCount: sample.expectedSlotCount,
+        actualSlotCount: sample.actualSlotCount,
+        missingSlotCount: sample.missingSlotCount,
+        unexpectedSlotCount: sample.unexpectedSlotCount,
+        governanceWithheldSlotCount: sample.governanceWithheldSlotCount
+      })),
     samples
   };
   await testInfo.attach("preview-compound-history-batch-1", {
@@ -656,7 +718,9 @@ test("@preview-compound-history-batch-1 preserves symptom and structured history
   expect(samples).toHaveLength(caseIds.length * probes.length);
   expect(summary.httpContractFailures).toBe(0);
   expect(summary.requestContractFailures).toBe(0);
+  expect(summary.localRouteContractFailures).toBe(0);
   expect(summary.slotContractFailures).toBe(0);
+  expect(summary.conflictIsolationFailures).toBe(0);
   expect(summary.falseBoundaryCount).toBe(0);
   expect(summary.genericUnknownCount).toBe(0);
   expect(summary.leakageFailures).toBe(0);

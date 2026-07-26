@@ -114,9 +114,13 @@ for (const order of unreviewedOrders) {
 let reviewedChineseOrdersMatchedByApi = 0;
 let reviewedChineseOrdersReturnedConfiguredResults = 0;
 let reviewedChineseConfiguredResultCount = 0;
+let reviewedChineseImmediatelyAvailableConfiguredResultCount = 0;
 for (const order of unreviewedOrders) {
   const configured = results.find((item) => item.orderId === order.orderId);
   if (configured) reviewedChineseConfiguredResultCount += 1;
+  if (configured && !(configured.prerequisites || []).length) {
+    reviewedChineseImmediatelyAvailableConfiguredResultCount += 1;
+  }
   const placed = await placeUnreviewedOrder(configured?.caseId || "P001", order.orderId, "zh-nonregression", "zh");
   if ((placed.payload?.matchedOrders || []).some((item) => item.orderId === order.orderId)) {
     reviewedChineseOrdersMatchedByApi += 1;
@@ -193,6 +197,7 @@ const summary = {
   reviewedChineseOrdersExercised: unreviewedOrders.length,
   reviewedChineseOrdersMatchedByApi,
   reviewedChineseConfiguredResultCount,
+  reviewedChineseImmediatelyAvailableConfiguredResultCount,
   reviewedChineseOrdersReturnedAtSamePrerequisiteState: reviewedChineseOrdersReturnedConfiguredResults,
   scoringRelevantOrderCount: new Set(scoringLinks.map((item) => item.orderId)).size,
   scoringRuleLinksExercised: scoringLinks.length,
@@ -204,7 +209,7 @@ const summary = {
     scoringRuleLinksEarned: 0,
     scoringPointsEarned: 0,
     reviewedChineseOrdersMatchedByApi: unreviewedOrders.length,
-    reviewedChineseOrdersReturnedAtSamePrerequisiteState: untranslatedOrdersReturnedResults
+    reviewedChineseOrdersReturnedAtSamePrerequisiteState: reviewedChineseImmediatelyAvailableConfiguredResultCount
   }
 };
 
@@ -215,8 +220,8 @@ console.log(`Data Agent scoring isolation: unreviewed=${unreviewedOrders.length}
 assert.equal(reviewedChineseOrdersMatchedByApi, unreviewedOrders.length, "reviewed Chinese orders must remain callable");
 assert.equal(
   reviewedChineseOrdersReturnedConfiguredResults,
-  untranslatedOrdersReturnedResults,
-  "reviewed Chinese orders must preserve the same prerequisite-gated result availability"
+  reviewedChineseImmediatelyAvailableConfiguredResultCount,
+  "reviewed Chinese orders must preserve every configured result whose prerequisites are already satisfied"
 );
 assert.equal(untranslatedOrdersMatchedByApi, 0, "an unreviewed English order name remained callable by internal ID");
 assert.equal(untranslatedOrdersReturnedResults, 0, "an unreviewed English order returned a deterministic report");

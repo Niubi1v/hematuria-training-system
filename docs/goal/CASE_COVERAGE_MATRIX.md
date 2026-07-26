@@ -300,3 +300,18 @@
 | 真实手机触控、缩放与safe-area | 无真机证据 | BLOCKED_REAL_DEVICE |
 
 - HEM-P2-044几何通过只关闭自动viewport层；HEM-P2-059只覆盖P001代表全局查体目录，不扩张为42例逐例UI或医学翻译结论。
+
+## Production `9b7fcd0` 第 25 轮Agent治理增量
+
+| 场景 | 结果 | 状态 |
+| --- | --- | --- |
+| 未审核英文Data Agent内部ID | 23/23匹配0、结果0；29/29评分链0分，双跑一致 | PASS_LOCAL_QA；HEM-P1-052 |
+| 中文同医嘱控制 | 23/23可匹配，6项无前置配置结果可返回 | PASS_LOCAL_QA_CONTROL |
+| 复合病史全矩阵 | 84 sessions、786场景、618跨层、56冲突、42肿瘤边界，双跑0失败 | PASS_LOCAL_QA；HEM-P1-054 |
+| Preview P001–P007中文复合病史 | 每轮35 agent/35 history；合法可收集槽位遗漏0 | PARTIAL_PASS_PREVIEW；HEM-P1-054 |
+| Preview治理前元数据 | 每轮10/35多出blocked槽位，两轮相同10组 | FAIL_PREVIEW；HEM-P1-057 |
+| Data Agent前置条件状态机 | 42例、58恢复序列，双跑0失败 | PASS_LOCAL_QA；HEM-P1-055 |
+| 前置恢复代表UI | `1440×900/390×844`报告卡1→2、重复警告0 | PASS_EMULATION；HEM-P1-055 |
+| 非终态报告卡React key | 两viewport key error 0、console/network异常0 | RESOLVED_LOCAL_QA；HEM-P2-056 |
+
+- HEM-P1-052/055/056没有当前SHA的问题级Preview复测，不能由本地或自动viewport结果代替。HEM-P1-054的Preview仅覆盖P001–P007中文5组；其合法子句完整性与HEM-P1-057治理泄露必须分别记录。
