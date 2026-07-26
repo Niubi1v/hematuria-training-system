@@ -275,3 +275,16 @@
 | restart 一次删除故障 | attempt 4/4 + pointer/capability 4/4 均不导航、不部分重置 | PASS_EMULATION；HEM-P1-066 |
 | 损坏缓存与临时写失败恢复 | 数据恢复 4/4；提示语言/陈旧告警 0/4 | FAIL_EMULATION；HEM-P2-062 |
 | 真实浏览器/磁盘 Storage 故障 | 方法级异常注入不能替代 | BLOCKED_REAL_STORAGE / BLOCKED_REAL_BROWSER |
+
+## Production `9b7fcd0` 第 23 轮 capability 恢复增量
+
+| 场景 | 结果 | 状态 |
+| --- | --- | --- |
+| clean-tab普通刷新控制 | 4/4草稿与已提交状态可继续 | PASS_EMULATION_CONTROL |
+| clean-tab清空session能力后初始化 | 4/4单次init为200、草稿4/4恢复 | PASS_EMULATION_PARTIAL |
+| clean-tab唯一后续写入 | 0/4为200；4/4为409 `stale_attempt_token` | FAIL_EMULATION；HEM-P1-060 |
+| 同attempt双标签并发防重 | 每viewport 1×200 + 1×409，碰撞0、重复权威写入0 | PASS_EMULATION_SECURITY_GUARD |
+| 失败标签刷新后唯一恢复写入 | 0/4为200；4/4为409 `stale_attempt_token` | FAIL_EMULATION；HEM-P1-060 |
+| 真实浏览器关闭/真机 | 仅sessionStorage清空与同context多标签仿真 | BLOCKED_REAL_BROWSER / BLOCKED_REAL_DEVICE |
+
+- 本增量只覆盖P001代表attempt的版本能力恢复；不扩张为42例、Preview、真实浏览器进程关闭或真机结论。并发防重通过不能替代失败标签的用户可继续性。

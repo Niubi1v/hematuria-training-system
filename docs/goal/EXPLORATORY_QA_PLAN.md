@@ -222,3 +222,10 @@ console 文本对 Authorization、Cookie、签名、token、secret 和 API key �
 - 下一运行时优先级：主 Goal 修复 HEM-P1-064 的语言偏好写失败切换原子性，以及 HEM-P2-062 的英文损坏缓存告警和成功保存后旧告警清除；修复后只重跑两场景 8 项及邻接语言切换，不扩大为全量回归。
 - HEM-P1-061、HEM-P1-063、HEM-P2-065、HEM-P1-066 已取得本地 `PASS_EMULATION` 定向证据；真实浏览器存储策略/磁盘故障仍需受控环境，不能由方法级 Storage 异常仿真替代。
 - 长期 Goal 的医学裁决、Preview 受保护故障注入、真实手机软键盘/safe-area 和其他未完成项继续保持原阻塞或后续队列，不因本轮 36/44 通过而结束。
+
+## 2026-07-26 第 23 轮 `9b7fcd0` HEM-P1-060 定向复测与下一顺序
+
+- 发现基线 `7781586` 之后的 Production `df89a91` 修改了 `ClinicalTrainingClient`、attempt identity 与 safe storage，故按缺陷原文重跑 `@clean-tab-recovery` 和 `@multi-tab-attempt`，四固定 viewport 共 8 项；未扩大到完整 Playwright、42 例、自然语言或七阶段。
+- clean-tab 必须在普通刷新对照通过、草稿恢复且重新初始化 200 后，让唯一下一次 `stage-feedback` 为 200；多标签必须继续保持单一权威写入，并让失败标签刷新后取得当前版本能力、唯一下一阶段写入为 200。
+- 两条路径均继续失败，HEM-P1-060 保持 OPEN；修复不得把签名移入 `localStorage`、允许两个陈旧写入、自动创建新 attempt 丢弃进度，或放宽病例/语言/mode/participant/版本约束。
+- 下一无外部权限范围优先从既有开放工程项中选择未在当前 Production 独立复测者；HEM-P1-060 只在 Production 提供 capability resume/reissue 变更后再定向重跑。HEM-P1-064、HEM-P2-062及外部阻塞继续独立跟踪。

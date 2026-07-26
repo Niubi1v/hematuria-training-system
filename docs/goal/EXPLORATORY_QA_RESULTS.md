@@ -469,3 +469,11 @@ Patient Session 报告记录 295 次 `unsafe_deterministic_answer` source-cell �
 - HEM-P1-066：一次 attempt 删除、pointer 删除或 session capability 删除异常时，4+4 次均不导航、不部分重置、保留当前可重试状态并显示失败提示；符合原缺陷文档允许的 fail-closed 分支，状态为 `PASS_EMULATION 8/8`。
 - HEM-P2-062：4/4 仍失败。英文界面的损坏缓存恢复提示仍为中文；中英文在后续保存成功后均保留过期自动保存告警。数据恢复本身、刷新恢复、网络和 console 均正常，缺陷保持 OPEN。
 - history-log 一次写失败的同 ID 手动恢复 4/4 通过。没有新增 P0/P1/P2；本轮不评价医学事实，也不把方法级 Storage 异常仿真冒充真实磁盘、浏览器策略或真机通过。
+
+## 2026-07-26 第 23 轮：`9b7fcd0` HEM-P1-060 capability 恢复复测
+
+- 精确 Production 基线仍为 `9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`；定向收集 2 个测试 × 4 个固定 viewport = 8 项，中文用于 `1440×900/390×844`、英文用于 `1280×720/360×800`，最终 `0 PASS / 8 FAIL_EMULATION`，0 retry。
+- clean-tab 4/4 的普通刷新控制通过、阶段3草稿恢复、边界后 `init-attempt` 为200且只有1次下一阶段请求；但该请求4/4为409 `stale_attempt_token`，capability恢复0/4。失败网络请求0、意外console error 0。
+- 多标签并发防重仍正确：每个viewport恰有2个并发阶段请求、1个200权威写入和1个409陈旧拒绝，request ID碰撞0。失败标签刷新/验证后4/4先读取到获胜写入并进入下一阶段，但唯一恢复写入仍4/4为409 `stale_attempt_token`，重新同步0/4。
+- `df89a91` 的浏览器attempt恢复增量修复了pointer/身份/存储恢复，但没有消除这两条服务端版本能力边界；当前结果与缺陷原文一致，不是QA断言或fixture误报。HEM-P1-060保持OPEN，不新建同根编号。
+- 本轮只使用本地Production handler和headless Chromium，状态不得写成Preview或真实浏览器进程关闭/真机通过；没有新增P0/P1/P2。HEM-P1-060、HEM-P1-064、HEM-P2-062及其他开放项仍不支持进入最终教师人工审阅。

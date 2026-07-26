@@ -620,3 +620,10 @@
 - **HEM-P1-066：`PASS_EMULATION 8/8`。** 一次 attempt/pointer/session capability 删除异常均 fail-closed：不导航、不部分清理，原 attempt、草稿、阶段和能力保持可重试，并显示本地化失败提示。旧测试强制等待 reload 与“故障后仍应清空”不符合缺陷文档允许的 fail-closed 分支，已修正。
 - **HEM-P2-062：`OPEN / FAIL_EMULATION 4/4`。** 英文损坏缓存恢复提示仍为中文；成功保存恢复后旧自动保存告警仍可见。损坏值清理、内存恢复、后续落盘和刷新恢复均通过，故范围收敛为提示语言与陈旧状态清除。
 - 本轮无新增缺陷 ID，无医学专家裁决需求；真实磁盘耗尽、浏览器策略封锁和真机 Storage 行为仍标记 `BLOCKED_REAL_STORAGE / BLOCKED_REAL_BROWSER`。
+
+## 2026-07-26 Production `9b7fcd0` 第 23 轮状态更新
+
+- **HEM-P1-060：`OPEN / FAIL_EMULATION 8/8`。** `@clean-tab-recovery` 四viewport均先通过普通刷新、恢复阶段3草稿并得到1次200初始化，但唯一后续 `stage-feedback` 4/4为409 `stale_attempt_token`；`@multi-tab-attempt` 四viewport均保持1次权威写入/1次陈旧拒绝，但失败标签刷新后唯一恢复写入仍4/4为同一409。
+- clean-tab的初始化失败0、草稿丢失0、额外stage请求0；多标签request ID碰撞0、重复权威写入0、恢复请求倍增0。失败网络请求与意外console error均为0，故缺陷仍精确限定为“成功初始化/验证没有取得服务端当前版本能力”，不扩张为存储、布局或并发防重失败。
+- 当前Production的 `df89a91` 浏览器attempt恢复变更不等于HEM-P1-060修复：它强化pointer、身份与存储恢复，但未建立当前attempt版本的安全resume/reissue。建议方向与原缺陷一致，且必须保留现有伪造、过期、跨病例、跨语言、mode、participant及陈旧写入拒绝。
+- 本轮无新增缺陷ID、无医学专家裁决需求。自动标签页/sessionStorage边界只标 `FAIL_EMULATION`；真实浏览器进程关闭与真机仍为 `BLOCKED_REAL_BROWSER / BLOCKED_REAL_DEVICE`。

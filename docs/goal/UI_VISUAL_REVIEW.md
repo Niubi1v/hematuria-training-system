@@ -177,3 +177,9 @@
 - 四固定 viewport 均以 headless Chromium 执行，结果只标记 `PASS_EMULATION/FAIL_EMULATION`。目录 storage 全不可用、restart fail-closed 与 pointer 隔离布局未出现新的崩溃或横向滚动结论。
 - HEM-P1-064 代表移动截图显示：390×844 点击 English 且偏好写入失败后，页面保持中文并显示“语言偏好无法保存”；该截图只含公开 P001 UI 与 QA 故障提示，不含问答、评分、隐藏病史或凭据。
 - HEM-P2-062 的可见问题为错误语言提示和恢复后旧告警状态，不是数据丢失；本轮没有真实软键盘、safe-area、真实 Storage 策略或磁盘故障证据，相关项继续阻塞。
+
+## 2026-07-26 `9b7fcd0` 第 23 轮 capability 恢复界面
+
+- 四固定viewport的clean-tab与多标签失败均保持页面和已保存进度可见，但唯一恢复写入409后操作区进入“训练会话尚未就绪/Training session unavailable”；没有页面崩溃、额外网络失败或新布局结论。
+- 390×844代表截图只显示公开P001训练界面、固定QA草稿和会话未就绪状态，不含患者回答、评分、隐藏病史、request/attempt ID或凭据。
+- 本轮是headless Chromium的sessionStorage清空与同context多标签仿真，只标 `FAIL_EMULATION`；真实浏览器进程关闭、移动软键盘、动态地址栏及safe-area继续 `BLOCKED_REAL_BROWSER / BLOCKED_REAL_DEVICE`。

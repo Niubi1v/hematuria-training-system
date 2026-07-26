@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "exploratory-round23-hem-p1-060-v1",
+  "productionBaseline": "9b7fcd0d975533c7c6eda5614ca3b2978c9dce55",
+  "qaBranch": "codex/hematuria-exploratory-qa",
+  "scope": {
+    "defectId": "HEM-P1-060",
+    "tests": [
+      "@clean-tab-recovery",
+      "@multi-tab-attempt"
+    ],
+    "viewports": [
+      "1440x900",
+      "1280x720",
+      "390x844",
+      "360x800"
+    ],
+    "languages": [
+      "zh",
+      "en"
+    ],
+    "environment": "local Production handler with headless Chromium",
+    "realBrowserCloseClaimed": false,
+    "realDeviceClaimed": false
+  },
+  "effectiveRuns": {
+    "total": 8,
+    "passed": 0,
+    "failed": 8,
+    "retries": 0
+  },
+  "cleanTabRecovery": {
+    "runs": 4,
+    "normalReloadControlPassed": 4,
+    "localDraftRecovered": 4,
+    "initialization200": 4,
+    "singlePostBoundaryStageFeedback": 4,
+    "postBoundaryStageFeedback200": 0,
+    "postBoundaryStageFeedback409": 4,
+    "staleAttemptToken": 4,
+    "capabilityRecovered": 0,
+    "failedNetworkRequests": 0,
+    "unexpectedConsoleErrors": 0,
+    "result": "FAIL_EMULATION"
+  },
+  "multiTabRecovery": {
+    "runs": 4,
+    "concurrentStageFeedbackRequests": 8,
+    "authoritativeMutationsAccepted": 4,
+    "staleMutationsRejected": 4,
+    "requestIdCollisions": 0,
+    "losingTabReloadInitialization200": 4,
+    "singleRecoveryStageFeedback": 4,
+    "recoveryStageFeedback200": 0,
+    "recoveryStageFeedback409": 4,
+    "staleAttemptToken": 4,
+    "losingTabResynchronized": 0,
+    "failedNetworkRequests": 0,
+    "unexpectedConsoleErrors": 0,
+    "securityGuardResult": "PASS_EMULATION",
+    "recoveryResult": "FAIL_EMULATION"
+  },
+  "disposition": {
+    "defectStatus": "OPEN",
+    "newDefectIds": 0,
+    "productFailure": true,
+    "qaFalsePositive": false,
+    "medicalReviewRequired": false,
+    "recommendedDirection": "Reissue or resume a capability bound to the server-current attempt version after clean-tab initialization or stale-tab revalidation, while preserving one-authoritative-write and all existing scope checks."
+  },
+  "privacy": {
+    "responseBodiesRetained": false,
+    "requestIdsRetained": false,
+    "attemptIdsRetained": false,
+    "headersRetained": false,
+    "cookiesRetained": false,
+    "tokensRetained": false,
+    "signaturesRetained": false,
+    "environmentValuesRetained": false
+  }
+}

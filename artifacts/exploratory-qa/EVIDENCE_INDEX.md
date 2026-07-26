@@ -405,3 +405,18 @@ SHA-256：
 - 聚合不保存草稿、pointer、attempt/request ID、header、Cookie、token、签名、环境值、问答正文或医学事实；代表截图已人工复核，只显示公开界面与固定存储告警。
 - 沙箱 junction 访问失败、过宽测试收集及修正前 QA 断言不计产品结果；最终 44 份摘要一一对应场景与 viewport，36 PASS_EMULATION、8 FAIL_EMULATION。
 - 本轮全部 `9b7fcd0-*` 证据已流式扫描：266 个物理文件、2,414 个 ZIP 条目、309,109,610 字节，敏感值命中 0；扫描器只输出计数，不输出候选值。
+
+## Production `9b7fcd0` 第 23 轮 HEM-P1-060 证据
+
+| 证据名称 | 对应测试或缺陷 | 文件路径 | 文件大小 | 是否提交 Git | 未提交原因 | 本机保留位置 |
+| --- | --- | --- | ---: | --- | --- | --- |
+| 第23轮脱敏聚合 | HEM-P1-060 clean-tab与multi-tab四viewport | `artifacts/exploratory-qa/reports/9b7fcd0-round23-hem-p1-060-regression-summary.json` | 提交后记录 | 是 | — | 仓库路径 |
+| HEM-P1-060移动代表截图 | clean-tab恢复写入409后的会话未就绪状态 | `artifacts/exploratory-qa/screenshots/9b7fcd0-r23-clean-tab-capability-recovery-zh-390x844.png` | 28,235 B | 是 | — | 仓库路径 |
+| 8份逐viewport脱敏摘要 | 2场景×4 viewport | `artifacts/exploratory-qa/reports/9b7fcd0-r23-*-summary.json` | 8份/约8 KB | 否 | 聚合已保留全部验收计数 | 原路径，本机未跟踪 |
+| 16份console/network摘要 | 两场景四viewport诊断 | `artifacts/exploratory-qa/reports/9b7fcd0-r23-*-{console,network}.json` | 16份/约94 KB | 否 | 与聚合重复，可能含本机运行上下文 | 原路径，本机未跟踪 |
+| 8份trace | HEM-P1-060最小可重建浏览器证据 | `artifacts/exploratory-qa/traces/9b7fcd0-r23-*.zip` | 8份/61,328,840 B | 否 | 体积大，可由已提交测试重建 | 原路径，本机未跟踪 |
+| 8份失败录像 | clean-tab与multi-tab失败过程 | `artifacts/exploratory-qa/videos/9b7fcd0-r23-*.webm` | 8份/3,736,317 B | 否 | 体积大；聚合和代表截图足够 | 原路径，本机未跟踪 |
+| 其余截图与runner附件 | 四viewport重复帧及Playwright失败附件 | `artifacts/exploratory-qa/{screenshots,reports/test-results}/**/9b7fcd0-r23-*.png` | 本轮原始证据集 | 否 | 只提交一张代表图，避免重复和runner上下文 | 原路径，本机未跟踪 |
+
+- 第23轮原始前缀证据共64个文件、66,834,036 B；聚合不保存草稿正文、request/attempt ID、header、Cookie、token、签名、环境值、患者回答、评分或医学事实。
+- 更新文档与聚合后，全量证据树流式/解包扫描覆盖1,355个物理文件、ZIP内20,826个条目和2,766,619,953字节，敏感值命中0；扫描器未输出候选值。
