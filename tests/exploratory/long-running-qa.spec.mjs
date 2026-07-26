@@ -3127,8 +3127,8 @@ test("HEM-P1-047 structured report statuses are localized and preserve abnormal 
     ]));
     const rawStatusLeakCount = observedStatusLabels.filter((label) => statusValues.includes(label)).length;
     const summary = {
-      schemaVersion: 1,
-      productionSha: "70ea9b3c7b31e11a84878de5c277cac60f35481c",
+      schemaVersion: 2,
+      productionSha: "9b7fcd0d975533c7c6eda5614ca3b2978c9dce55",
       status: rawStatusLeakCount || cardDataStatuses[0] !== "abnormal" ? "FAIL_LOCAL_QA" : "PASS_LOCAL",
       defectId: rawStatusLeakCount || cardDataStatuses[0] !== "abnormal" ? "HEM-P1-047" : null,
       language,
@@ -3226,8 +3226,12 @@ test("HEM-P1-048 English Data Agent UI does not expose Chinese catalog or report
     await page.getByLabel("History summary").fill("QA bilingual Data Agent reproduction; no medical judgment.");
     await page.getByRole("button", { name: "Submit stage", exact: true }).click();
     await page.getByRole("button", { name: "Next Agent", exact: true }).click();
-    const cjkControlCount = await page.locator("main button, main label").evaluateAll((nodes) => nodes
-      .filter((node) => /[\u3400-\u9fff]/u.test(node.textContent || "")).length);
+    const cjkControls = await page.locator("main button, main label").evaluateAll((nodes) => nodes
+      .map((node) => String(node.textContent || "").replace(/\s+/g, " ").trim())
+      .filter((text) => /[\u3400-\u9fff]/u.test(text)));
+    const intentionalLanguageSwitchCount = cjkControls.filter((text) => text === "中文").length;
+    const unexpectedCjkControls = cjkControls.filter((text) => text !== "中文");
+    const cjkControlCount = unexpectedCjkControls.length;
     await page.context().tracing.stop();
     await page.context().tracing.start({ screenshots: true, snapshots: true, sources: false });
     await page.getByPlaceholder("Example: urinalysis and sediment, CTU, cystoscopy").fill("CBC");
@@ -3243,8 +3247,8 @@ test("HEM-P1-048 English Data Agent UI does not expose Chinese catalog or report
     const returnedVisibleFieldCjkCount = productionOrderPayload.results.reduce((sum, item) => sum
       + visibleFields.filter((field) => cjk.test(String(item[field] || ""))).length, 0);
     const summary = {
-      schemaVersion: 1,
-      productionSha: "70ea9b3c7b31e11a84878de5c277cac60f35481c",
+      schemaVersion: 2,
+      productionSha: "9b7fcd0d975533c7c6eda5614ca3b2978c9dce55",
       status: cjkControlCount || reportCardContainsCjk ? "FAIL_LOCAL_QA" : "PASS_LOCAL",
       defectId: cjkControlCount || reportCardContainsCjk ? "HEM-P1-048" : null,
       language: "en",
@@ -3253,6 +3257,8 @@ test("HEM-P1-048 English Data Agent UI does not expose Chinese catalog or report
       providerCalls: 0,
       handlerStatusCodes,
       cjkControlCount,
+      intentionalLanguageSwitchCount,
+      unexpectedCjkControlLabels: unexpectedCjkControls,
       reportCardContainsCjk,
       matchedOrderDisplayNameContainsCjk,
       returnedVisibleFieldCjkCount,

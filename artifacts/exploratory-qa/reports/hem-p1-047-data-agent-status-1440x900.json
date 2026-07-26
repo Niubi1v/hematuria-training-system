@@ -1,9 +1,8 @@
 {
-  "schemaVersion": 1,
-  "productionSha": "657ba5da8fc6460ad7d0deea882a010c40938b40",
-  "runtimeEquivalentSha": "3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8",
-  "status": "FAIL_LOCAL_QA",
-  "defectId": "HEM-P1-047",
+  "schemaVersion": 2,
+  "productionSha": "9b7fcd0d975533c7c6eda5614ca3b2978c9dce55",
+  "status": "PASS_LOCAL",
+  "defectId": null,
   "language": "zh",
   "viewport": {
     "width": 1440,
@@ -18,16 +17,16 @@
     "not_performed": 1
   },
   "observedStatusLabels": [
-    "final",
-    "not_available",
-    "not_performed"
+    "异常",
+    "当前病例未提供",
+    "未实施"
   ],
   "cardDataStatuses": [
-    "reported",
+    "abnormal",
     "reported",
     "reported"
   ],
-  "rawStatusLeakCount": 3,
-  "governedAbnormalFlagPresented": false,
+  "rawStatusLeakCount": 0,
+  "governedAbnormalFlagPresented": true,
   "medicalValuesRetained": false
 }

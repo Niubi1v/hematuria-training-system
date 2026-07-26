@@ -191,7 +191,7 @@
 
 ## HEM-P1-047：结构化检查状态裸显内部枚举且遮蔽异常标志
 
-- 级别/状态：P1，OPEN / FAIL_LOCAL_QA；Production文档基线`657ba5da8fc6460ad7d0deea882a010c40938b40`，运行时代码等价基线`3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`。
+- 级别/状态：P1，RESOLVED_LOCAL_QA / PASS_EMULATION；Production `9b7fcd0` 的确定性呈现门禁与四固定viewport均通过。
 - 页面/路径：训练工作台`/cases/P001/`第2阶段的Production报告卡；结构化输入审计覆盖P001–P042。中文用于`1440×900`、`390×844`，英文用于`1280×720`、`360×800`。
 - 前置条件：本地Next与脱敏training/session fixture只用于进入第2阶段；QA用非医学文本构造三个报告卡，但状态值取自Production数据实际使用的`final/not_available/not_performed`集合，渲染器为Production组件。该证据不记作Preview或真机通过/失败。
 - 操作步骤：读取257条Production结构化结果并统计状态 → 打开P001、提交脱敏病史小结并进入第2阶段 → 返回三个不含医学值的QA报告卡 → 第一张同时设置`status=final`与`abnormalLevel=positive` → 读取可见状态文案和卡片`data-status`。
@@ -204,10 +204,11 @@
 - 最小证据：`reports/hem-p1-047-data-agent-status-1440x900.json`、`screenshots/hem-p1-047-data-agent-status-zh-1440x900.png`、`traces/hem-p1-047-data-agent-status-1440x900.zip`；其余viewport聚合、截图、trace、失败全页图、录像、console/network与test-results仅本机保留。
 - 建议方向：把结构状态映射为中英文学生文案；计算展示状态时让受治理异常/阳性/高低/危急标志优先于`final`完成态，同时为`not_available/not_performed/needs_review`保留明确且可访问的视觉语义。增加三状态×中英文×四viewport报告卡门禁，不要放宽当前失败断言。
 - 医学专家裁决：确认本工程呈现缺陷不需要医学裁决；具体异常标志、结果内容和医学值是否正确仍遵循既有来源/医学审批，不由QA修改或批准。
+- `9b7fcd0`独立复测：官方Data Agent呈现门禁双跑均覆盖60医嘱、257结构化结果、16查体项；四viewport浏览器4/4为本地化状态、raw status泄漏0、异常优先保持。结果为`PASS_EMULATION`，不代表异常标志的医学正确性获批。最小聚合见`artifacts/exploratory-qa/reports/9b7fcd0-round29-data-agent-presentation-regression-summary.json`。
 
 ## HEM-P1-048：英文数据Agent目录与报告仍大量显示中文
 
-- 级别/状态：P1，OPEN / FAIL_LOCAL_QA；Production文档基线`657ba5da8fc6460ad7d0deea882a010c40938b40`，运行时代码等价基线`3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`。
+- 级别/状态：P1，RESOLVED_LOCAL_QA / PASS_EMULATION；Production `9b7fcd0` 的英文投影、公开handler与四固定viewport均无非预期CJK。
 - 页面/路径：训练工作台`/cases/P008/`英文第2阶段；浏览器覆盖`1440×900`、`1280×720`、`390×844`、`360×800`，Production handler只读审计覆盖P001–P042。
 - 前置条件：本地Next；脱敏session/stage fixture只负责进入第2阶段，浏览器order payload来自Production本地`training-action`的英文P008 `CBC`真实响应。全量脚本以英文attempt逐例开立全部配置医嘱及其前置医嘱，只保存CJK计数与病例ID，不保存请求/响应正文或医学值。
 - 操作步骤：运行`data-agent-bilingual-audit.mjs`对42例依次init英文attempt → 提交history进入第2阶段 → 一次开立该例全部配置医嘱与prerequisite → 对学生可见字段做CJK计数；浏览器打开P008英文页 → 进入第2阶段 → 输入`CBC` → 使用同一Production handler响应渲染报告卡 → 读取控件和报告卡语言。
@@ -220,6 +221,7 @@
 - 最小证据：`reports/data-agent-bilingual-audit.json`、`screenshots/hem-p1-048-data-agent-english-1280x720.png`、`traces/hem-p1-048-data-agent-english-1280x720.zip`；其余viewport聚合/截图/trace、失败全页图、录像、console/network与test-results仅本机保留。
 - 建议方向：为医嘱目录、查体项、结果分类及结构化结果增加显式受控`zh/en`字段并按attempt language选择；英文缺失时fail closed或显示明确“awaiting reviewed translation”，不要运行时猜译。回归需覆盖42例257条结果、60医嘱、前置条件、四viewport和切换/刷新，保持case/order/stage绑定及结果数量不变。
 - 医学专家裁决：确认中文串线工程缺陷不需要医学裁决；具体医学结果、单位、参考范围与英文译文必须由权威双语来源或具名医学专家审核，QA不翻译、不修改`data/**`、不解除HEM-P0-023或来源修订状态。
+- `9b7fcd0`独立复测：英文投影双跑每轮42例、60医嘱、257配置结果，呈现目录/结果/公开handler CJK信号均0；23个缺审核英文名称继续不可用，28项缺元数据继续显示待审核。四viewport浏览器4/4报告卡、医嘱显示名、返回字段和非语言切换控件CJK均0；唯一“中文”按钮是切回中文的预期语言入口。HEM-P2-059重复key仍独立OPEN。
 
 ## HEM-P2-043：本地 Next 开发环境病例目录链接对 42 个 `.html` 路由全部返回 404
 

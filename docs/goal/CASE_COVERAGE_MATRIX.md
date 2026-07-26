@@ -350,3 +350,16 @@
 | 15 intent扩展问法 | 3,150/3,150；1,095 known错误unknown 0、1,990 correct unknown、65 quarantine | PASS_LOCAL_QA |
 
 - 全42行HEM-P1-050工程列继续`PASS_LOCAL_CONTRACT / RESOLVED_LOCAL_QA`。正确unknown及quarantine只证明fail-closed，不批准对应医学事实。
+
+## Production `9b7fcd0` 第 29 轮Data Agent呈现增量
+
+| 场景 | 结果 | 状态 |
+| --- | --- | --- |
+| 42例英文公开投影 | 60医嘱、257配置结果；目录/直接投影/handler CJK信号0 | PASS_LOCAL_QA |
+| 未审核英文名称 | 23/23不可用；中文23/23对照可匹配 | BLOCKED_SOURCE_REVISION / PASS_FAIL_CLOSED |
+| 缺单位/参考范围 | 28/28待审核元数据 | BLOCKED_MEDICAL / PASS_FAIL_CLOSED |
+| 状态本地化与异常优先 | 四viewport 4/4 | PASS_EMULATION |
+| 英文Data Agent UI | 四viewport 4/4，非语言切换控件/报告卡/结果字段CJK 0 | PASS_EMULATION |
+| 英文查体分类key | 6个英文运行各16条重复key | FAIL_EMULATION / HEM-P2-059 |
+
+- HEM-P1-047/048工程列更新为通过，但所有病例的医学/来源审核列不变；135个公开安全结果不能外推为257项英文审核完成。

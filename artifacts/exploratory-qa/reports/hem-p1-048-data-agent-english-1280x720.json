@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 2,
+  "productionSha": "9b7fcd0d975533c7c6eda5614ca3b2978c9dce55",
+  "status": "PASS_LOCAL",
+  "defectId": null,
+  "language": "en",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "source": "production_training_action_local_contract",
+  "providerCalls": 0,
+  "handlerStatusCodes": [
+    200,
+    200,
+    200
+  ],
+  "cjkControlCount": 0,
+  "intentionalLanguageSwitchCount": 1,
+  "unexpectedCjkControlLabels": [],
+  "reportCardContainsCjk": false,
+  "matchedOrderDisplayNameContainsCjk": false,
+  "returnedVisibleFieldCjkCount": 0,
+  "requestBodiesRetained": false,
+  "responseBodiesRetained": false,
+  "medicalValuesRetained": false
+}

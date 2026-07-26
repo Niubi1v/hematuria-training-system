@@ -1,7 +1,7 @@
 # 探索式 QA 执行结果
 
 状态：长期执行中；当前 Preview/本地自动化已恢复并扩展，仍有 HEM-P1-045/046、HEM-P2-044、Pages 部署不匹配、真机和医学阻塞，不得视为最终生产验收。
-当前 Production 基线：`9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。第28轮提交前 QA HEAD：`845114b9fd96272f553008fee81db25cdf198742`；最终 QA HEAD 以本轮报告提交与远程同步状态为准。
+当前 Production 基线：`9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。第29轮提交前 QA HEAD：`103312d0691de0c95959d21d65a498c52420aba6`；最终 QA HEAD 以本轮报告提交与远程同步状态为准。
 
 ## 基线核验
 
@@ -516,3 +516,11 @@ Patient Session 报告记录 295 次 `unsafe_deterministic_answer` source-cell �
 - 3,150问扩展矩阵双跑均3,150/3,150；每轮1,095 known错误unknown 0、极性错误0、1,990 correct unknown、65 quarantine、双语值一致。优先改写门禁双跑1,848/1,848，其中指定QA自然问法840/840、intent 1,428/1,428。
 - pain specificity相邻门禁保持42×6特异合同与5例冲突隔离；dysuria、flank pain等特异问法不扩张generic pain，独立通用pain仍可回答。
 - 当前known/unknown分母相对历史变化由当前治理投影计算，不构成医学真值或审核状态变更。HEM-P1-050保持`RESOLVED_LOCAL_QA`；本轮不运行Preview、不新增P0/P1/P2，也不改变HEM-P1-057/058和医学/来源阻塞。
+
+## 2026-07-26 第 29 轮：`9b7fcd0` Data Agent呈现与英文fail-closed
+
+- 官方呈现门禁双跑均覆盖60医嘱、257结构化结果、16查体项：23个缺审核英文名称保持不可用，28项缺单位/参考范围保持待审核，英文API CJK信号0。Data Agent authority为23/23英文阻断、23/23中文对照、29评分链、58前置恢复及58正向控制通过；产品审计通过。
+- QA双语审计修正为检查公开投影而非中文源数据，双跑逐字节一致：42例、60医嘱、257配置结果、135安全公开结果，handler失败0、受影响病例0、目录/直接投影/公开handler CJK信号均0。
+- 四viewport最终8/8：HEM-P1-047 4/4状态本地化且异常优先，HEM-P1-048 4/4英文报告卡/医嘱名/返回字段无CJK；每个英文页面保留1个预期“中文”语言切换入口。均标`PASS_EMULATION`。
+- 相邻HEM-P2-059在6个英文浏览器运行中每次仍有16条`Physical examination`重复key，其他console error 0、HTTP失败0；属于既有OPEN缺陷，不新增ID。
+- 两次无效QA运行已排除：首次因沙箱无法读取既有postcss junction显示Next构建overlay；第二次旧oracle把“中文”语言切换按钮误计为内容泄漏。两者均未作为产品失败。HEM-P1-047/048更新为`RESOLVED_LOCAL_QA / PASS_EMULATION`，28/23人工阻塞不变。

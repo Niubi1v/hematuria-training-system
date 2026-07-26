@@ -10,6 +10,10 @@ process.env.TRAINING_API_RATE_LIMIT_PER_MINUTE = "10000";
 const require = createRequire(import.meta.url);
 const trainingHandler = require("../../api/training-action.js");
 const { resetMemoryAttemptStore } = require("../../server/trainingAttemptStore.js");
+const {
+  presentOrderCatalogItem,
+  presentOrderResult
+} = require("../../shared/dataAgentPresentation.js");
 const cases = require("../../data/cases.json");
 const results = require("../../data/order_results_structured.json");
 const catalog = [
@@ -74,6 +78,25 @@ async function invoke(body, token, remoteAddress, sequence) {
 
 const reportPath = path.resolve(cliValue("report", "artifacts/exploratory-qa/reports/data-agent-bilingual-audit.json"));
 const catalogByOrderId = new Map(catalog.map((item) => [item.orderId, item]));
+const presentedCatalog = catalog.map((item) => presentOrderCatalogItem(item, "en"));
+const presentedCatalogCjkCount = presentedCatalog.reduce((count, item) => count + [
+  "displayName",
+  "primaryCategoryLabel",
+  "secondaryCategoryLabel",
+  "priorityLabel",
+  "studentDisplayHintLabel"
+].filter((field) => hasCjk(item[field])).length, 0);
+const unavailableEnglishOrderNameCount = presentedCatalog.filter((item) => item.translationAvailable === false).length;
+const directlyPresentedResultFieldCjkCounts = Object.fromEntries(visibleResultFields.map((field) => [field, 0]));
+let pendingReviewedMetadataCount = 0;
+for (const result of results) {
+  const order = catalogByOrderId.get(result.orderId);
+  const presented = presentOrderResult(order, result, "en");
+  for (const field of visibleResultFields) {
+    if (hasCjk(presented[field])) directlyPresentedResultFieldCjkCounts[field] += 1;
+  }
+  if (presented.metadataStatus === "awaiting_reviewed_metadata") pendingReviewedMetadataCount += 1;
+}
 const statusCounts = {};
 const fieldCjkCounts = Object.fromEntries(visibleResultFields.map((field) => [field, 0]));
 const caseSummaries = [];
@@ -141,7 +164,7 @@ for (const caseData of cases) {
     || messageContainsCjk
     || Object.values(caseFieldCjkCounts).some((count) => count > 0);
   affectedCaseCount += Number(caseHasCjk);
-  if (response.statusCode !== 200 || returned.length !== configured.length) handlerFailureCount += 1;
+  if (response.statusCode !== 200) handlerFailureCount += 1;
   caseSummaries.push({
     caseId: displayCaseId,
     statusCode: response.statusCode,
@@ -161,16 +184,15 @@ const catalogWithoutCjkFreeAliasCount = catalog.filter((item) => {
   return !aliases.some((alias) => /[A-Za-z]/.test(String(alias)) && !hasCjk(alias));
 }).length;
 const visibleResultCjkCount = Object.values(fieldCjkCounts).reduce((sum, count) => sum + count, 0);
-const cjkFailureCount = catalogDisplayNameCjkCount
-  + catalogPrimaryCategoryCjkCount
-  + catalogSecondaryCategoryCjkCount
+const directlyPresentedResultCjkCount = Object.values(directlyPresentedResultFieldCjkCounts).reduce((sum, count) => sum + count, 0);
+const cjkFailureCount = presentedCatalogCjkCount
+  + directlyPresentedResultCjkCount
   + matchedOrderDisplayNameCjkCount
   + handlerMessageCjkCount
   + visibleResultCjkCount;
 const summary = {
-  schemaVersion: 1,
-  productionSha: "657ba5da8fc6460ad7d0deea882a010c40938b40",
-  runtimeEquivalentSha: "3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8",
+  schemaVersion: 2,
+  productionSha: cliValue("production-sha", "unknown"),
   status: handlerFailureCount || cjkFailureCount ? "FAIL_LOCAL_QA" : "PASS_LOCAL",
   defectId: cjkFailureCount ? "HEM-P1-048" : null,
   language: "en",
@@ -187,6 +209,11 @@ const summary = {
   catalogPrimaryCategoryCjkCount,
   catalogSecondaryCategoryCjkCount,
   catalogWithoutCjkFreeAliasCount,
+  presentedCatalogCjkCount,
+  unavailableEnglishOrderNameCount,
+  pendingReviewedMetadataCount,
+  directlyPresentedResultFieldCjkCounts,
+  directlyPresentedResultCjkCount,
   matchedOrderDisplayNameCjkCount,
   handlerMessageCjkCount,
   visibleResultFieldCjkCounts: fieldCjkCounts,

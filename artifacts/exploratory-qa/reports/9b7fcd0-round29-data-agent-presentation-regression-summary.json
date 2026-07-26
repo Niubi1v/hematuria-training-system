@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-26T04:45:00.000Z",
+  "productionBaseline": "9b7fcd0d975533c7c6eda5614ca3b2978c9dce55",
+  "qaBranch": "codex/hematuria-exploratory-qa",
+  "qaHeadBeforeCommit": "103312d0691de0c95959d21d65a498c52420aba6",
+  "scope": "HEM-P1-047 and HEM-P1-048 Data Agent localization, abnormal-state precedence, English fail-closed presentation, and browser regression",
+  "medicalTruthAdjudicated": false,
+  "statuses": {
+    "HEM-P1-047": "RESOLVED_LOCAL_QA_PASS_EMULATION",
+    "HEM-P1-048": "RESOLVED_LOCAL_QA_PASS_EMULATION",
+    "HEM-P2-059": "OPEN_FAIL_EMULATION_EXISTING_DEFECT"
+  },
+  "officialPresentationRuns": {
+    "runs": 2,
+    "ordersPerRun": 60,
+    "structuredResultsPerRun": 257,
+    "unavailableEnglishOrderNamesPerRun": 23,
+    "pendingReviewedMetadataPerRun": 28,
+    "physicalExamItemsPerRun": 16,
+    "englishApiCjkSignalsPerRun": 0,
+    "dataChanged": false
+  },
+  "bilingualQaAuditRuns": {
+    "runs": 2,
+    "reportsByteForByteIdentical": true,
+    "casesPerRun": 42,
+    "catalogOrdersPerRun": 60,
+    "configuredResultsPerRun": 257,
+    "publicHandlerReturnedSafeResultsPerRun": 135,
+    "handlerFailuresPerRun": 0,
+    "affectedCasesPerRun": 0,
+    "presentedCatalogCjkSignalsPerRun": 0,
+    "directlyPresentedResultCjkSignalsPerRun": 0,
+    "publicHandlerVisibleCjkSignalsPerRun": 0,
+    "unavailableEnglishOrderNamesPerRun": 23,
+    "pendingReviewedMetadataPerRun": 28
+  },
+  "authorityAndProductGates": {
+    "dataAgentAuthority": {
+      "blockedEnglishOrders": 23,
+      "chineseMatches": 23,
+      "scoringLinks": 29,
+      "prerequisiteRecoveryScenarios": 58,
+      "positiveControls": 58,
+      "passed": true
+    },
+    "productAudit": "passed cases, 360 scoring, order release, OSCE, storage, RCT, i18n, and GitHub Pages configuration"
+  },
+  "browserEmulation": {
+    "viewports": [
+      "1440x900",
+      "1280x720",
+      "390x844",
+      "360x800"
+    ],
+    "HEM-P1-047": {
+      "passed": 4,
+      "failed": 0,
+      "rawStatusLeaks": 0,
+      "abnormalPrecedencePreserved": true
+    },
+    "HEM-P1-048": {
+      "passed": 4,
+      "failed": 0,
+      "unexpectedCjkControls": 0,
+      "intentionalChineseLanguageSwitches": 4,
+      "reportCardCjkSignals": 0,
+      "matchedOrderNameCjkSignals": 0,
+      "returnedVisibleFieldCjkSignals": 0
+    },
+    "httpFailures": 0,
+    "resultClass": "PASS_EMULATION",
+    "realDeviceResult": "NOT_RUN"
+  },
+  "existingAdjacentDefect": {
+    "defectId": "HEM-P2-059",
+    "englishBrowserRunsObserved": 6,
+    "duplicatePhysicalExaminationKeyErrorsPerRun": 16,
+    "otherConsoleErrors": 0,
+    "newDefect": false
+  },
+  "excludedQaInfrastructureRuns": [
+    {
+      "reason": "Sandbox could not read the existing postcss junction, so the Next development page showed a build overlay before the product workflow.",
+      "productResultCounted": false
+    },
+    {
+      "reason": "The old QA oracle counted the intentional Chinese language-switch button as an English Data Agent content leak. Product order names, report cards, and returned fields had zero CJK signals.",
+      "productResultCounted": false
+    }
+  ],
+  "manualBlocksPreserved": {
+    "missingUnitOrReferenceRangeItems": 28,
+    "unreviewedEnglishOrderNames": 23,
+    "HEM-P0-001": "BLOCKED_MEDICAL",
+    "HEM-P0-023": "BLOCKED_MEDICAL",
+    "reviewStateChanged": false,
+    "dataChanged": false
+  },
+  "evidenceMinimization": {
+    "committed": "This aggregate, two QA scripts, two representative summaries, and two existing representative screenshots refreshed at the current baseline",
+    "localOnly": "Remaining per-viewport summaries, console/network files, duplicate screenshots, traces, videos, HTML, and two raw bilingual summaries",
+    "medicalValuesRetainedInAggregate": false,
+    "credentialsOrRequestIdentifiersRetained": false
+  }
+}

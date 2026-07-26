@@ -211,3 +211,10 @@
 
 - HEM-P1-050仅运行本地deterministic handler与路由脚本，不启动浏览器、不生成视觉证据，也不新增UI通过结论。
 - 桌面/移动布局、真实设备和safe-area状态保持既有结论；自然问法工程通过不能替代视觉或真机验收。
+
+## 2026-07-26 `9b7fcd0` 第 29 轮Data Agent四视口
+
+- 1440×900、1280×720、390×844、360×800最终8/8：HEM-P1-047状态文案与异常优先4/4，HEM-P1-048英文报告卡和可见控件4/4；结果标`PASS_EMULATION`。
+- 英文页面唯一CJK控件为预期“中文”语言切换入口；报告卡、医嘱显示名、返回字段和其他控件均无CJK。代表桌面截图刷新，重复截图、trace、录像和HTML仅本机保留。
+- 英文查体安全占位仍造成`Physical examination`重复React key：6个英文运行各16条，HEM-P2-059保持`OPEN / FAIL_EMULATION`。页面HTTP失败0，其他console error 0。
+- 首次沙箱依赖访问失败和旧语言按钮oracle均属于QA基础设施，不计产品结果。真实设备、软键盘、动态地址栏和safe-area仍`BLOCKED_REAL_DEVICE`。

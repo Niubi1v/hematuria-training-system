@@ -264,3 +264,10 @@ console 文本对 Authorization、Cookie、签名、token、secret 和 API key �
 - 强断言错误unknown、极性错误、额外病史泄漏和providerCalls均为0；正确unknown、双语冲突隔离与双语等义必须完整保持。
 - 单独运行generic/特异pain相邻门禁，避免自然问法修复通过掩盖dysuria/flank pain对通用pain的错误扩张。
 - 本轮为本地确定性合同，不触发Preview、浏览器或七阶段；后续继续选择不依赖人工医学裁决、真机或外部权限的开放工程项。
+
+## 2026-07-26 第 29 轮 `9b7fcd0` Data Agent呈现复测
+
+- 依照临床数据策略，先双跑官方呈现门禁，再运行Data Agent authority与产品审计；只验证投影、状态本地化、异常优先和评分隔离，不解释医学值。
+- 更新QA双语审计以区分中文源数据与英文公开投影；23个未审核英文名称必须fail-closed，28项缺元数据必须保留待审核，不能要求全部257结果经英文公开handler释放。
+- 用1440×900、1280×720、390×844、360×800复测HEM-P1-047/048，自动结果仅标`PASS_EMULATION`；保留代表截图和最小聚合，不提交重复trace、录像、HTML或全量截图。
+- HEM-P2-059仍由重复key console证据独立OPEN；下一范围避免重复已稳定的Data Agent 047/048，继续选择无需人工医学裁决或外部权限的工程合同。

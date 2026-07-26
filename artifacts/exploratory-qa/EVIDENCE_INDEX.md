@@ -493,3 +493,19 @@ SHA-256：
 
 - 聚合和本机摘要不保存完整问题、回答、医学值、session/request ID、header、Cookie、Authorization、token、签名或环境值；本轮无浏览器证据。
 - `9b7fcd0-r28*`扫描覆盖2个文件、4,564字节，`9b7fcd0-round28*`扫描覆盖1个文件、2,374字节，敏感值命中均为0。
+
+## Production `9b7fcd0` 第 29 轮Data Agent呈现证据
+
+| 证据名称 | 对应测试或缺陷 | 文件路径 | 文件大小 | 是否提交 Git | 未提交原因 | 本机保留位置 |
+| --- | --- | --- | ---: | --- | --- | --- |
+| 第29轮脱敏聚合 | HEM-P1-047/048与相邻HEM-P2-059 | `artifacts/exploratory-qa/reports/9b7fcd0-round29-data-agent-presentation-regression-summary.json` | 提交后记录 | 是 | — | 仓库路径 |
+| Data Agent双语审计 | 42例公开英文投影与23/28 fail-closed | `tests/exploratory/data-agent-bilingual-audit.mjs` | 整文件 | 是 | — | 仓库路径 |
+| 四视口最小测试 | 状态本地化、异常优先、英文CJK边界 | `tests/exploratory/long-running-qa.spec.mjs` | 整文件 | 是 | — | 仓库路径 |
+| 状态代表摘要/截图 | HEM-P1-047桌面中文 | `artifacts/exploratory-qa/reports/hem-p1-047-data-agent-status-1440x900.json`、`screenshots/hem-p1-047-data-agent-status-zh-1440x900.png` | 706 B / 62,341 B | 是 | — | 仓库路径 |
+| 英文代表摘要/截图 | HEM-P1-048桌面英文 | `artifacts/exploratory-qa/reports/hem-p1-048-data-agent-english-1280x720.json`、`screenshots/hem-p1-048-data-agent-english-1280x720.png` | 668 B / 378,578 B | 是 | — | 仓库路径 |
+| 两轮双语原始摘要 | 42例逐病例计数 | `artifacts/exploratory-qa/reports/9b7fcd0-r29-data-agent-bilingual-run-*.json` | 2份各20,959 B | 否 | 聚合已保留验收计数；逐病例摘要可重建 | 原路径，本机未跟踪 |
+| 其余四视口证据 | per-viewport摘要、console/network、截图、trace、录像、HTML | `artifacts/exploratory-qa/{reports,screenshots,traces,videos}/hem-p1-04[78]-*` | 本轮自动证据集 | 否 | 重复且体积大；代表证据与聚合已足够 | 原路径，本机未跟踪 |
+| 无效QA运行 | postcss沙箱overlay、旧语言按钮oracle | 不作为产品证据提交 | 0 B | 否 | QA基础设施/断言问题，已修正并有效重跑 | 本机失败上下文不提交 |
+
+- 所有提交候选与本机自动证据需再次扫描；聚合不保存医学值、请求正文、session/request ID、header、Cookie、Authorization、token、签名或环境值。
+- `9b7fcd0-r29*`扫描2个文件/41,918字节，`9b7fcd0-round29*`扫描1个文件/3,830字节；`hem-p1-047*`扫描32个文件、551个ZIP条目、67,619,847字节，`hem-p1-048*`扫描28个文件、350个ZIP条目、49,049,417字节，敏感值命中均为0。
