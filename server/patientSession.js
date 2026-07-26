@@ -5,10 +5,11 @@ const { callLLM, getLLMProviderConfig } = require("./llmClient.runtime.js");
 const { BILINGUAL_CONFLICT_REASON, quarantineForMatchedSlots, uncertainConflictReply } = require("./bilingualConflictQuarantine.js");
 const { matchStructuredFacts } = require("./structuredFacts.js");
 const { matchCanonicalPatientFacts, projectCanonicalPatientFacts } = require("./canonicalFacts.js");
-const { resolveContextualPatientQuestion } = require("../src/lib/patientIntentCatalog.js");
+const { matchPatientFactOntology, resolveContextualPatientQuestion } = require("../src/lib/patientIntentCatalog.js");
 const {
   FACT_STATES,
   UNKNOWN_REASON_CODES,
+  answerPlanFromRendered,
   classifierReasonCode,
   renderAnswerPlan
 } = require("../src/lib/patientFactState.js");
@@ -711,6 +712,38 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   let canonical = matchCanonicalPatientFacts(caseId, routedInput, language);
   let structured = matchStructuredFacts(caseData, routedInput, language);
   let matched = mergePatientFactMatches(canonical, structured);
+  const safeMissingMatch = !matched
+    ? matchPatientFactOntology(routedInput, language, ["safe_missing"])[0]
+    : null;
+  if (safeMissingMatch) {
+    const replyText = language === "en"
+      ? "I do not have reliable information about that in what I can recall."
+      : "这方面我没有可靠的信息，不能把没记录当成没有。";
+    const plan = answerPlanFromRendered({
+      intent: safeMissingMatch.intentKey,
+      sourceSlotId: null,
+      factState: FACT_STATES.MISSING,
+      renderedAnswer: replyText,
+      unknownReason: UNKNOWN_REASON_CODES.FACT_MISSING,
+      clauseStatus: "safe_unknown",
+      matchIndex: safeMissingMatch.matchIndex
+    });
+    matched = {
+      replyText,
+      matchedSlotIds: [],
+      matchedFacts: [safeMissingMatch.intentKey],
+      governanceSlotIds: [],
+      collectableSlotIds: [],
+      collectableFacts: [],
+      answerPlans: [plan],
+      factStates: { [safeMissingMatch.intentKey]: FACT_STATES.MISSING },
+      unknownReasonCodes: { [safeMissingMatch.intentKey]: UNKNOWN_REASON_CODES.FACT_MISSING },
+      unresolvedReason: "canonical_fact_unknown",
+      answerSource: "unknown",
+      confidence: 0,
+      safetyFlags: []
+    };
+  }
   const matchedSlotIds = matched?.matchedSlotIds || [];
   const isExplicitHistoryQuestion = explicitHistoryContext.test(String(studentInput || ""))
     && !boundaryDetailIntent.test(String(routedInput || ""))

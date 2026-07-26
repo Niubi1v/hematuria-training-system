@@ -6,6 +6,7 @@ process.env.TRAINING_STATE_SECRET = "test-only-answer-plan-secret-with-adequate-
 const cases = require("../data/cases.json") as Array<{ id: string }>;
 const { matchCanonicalPatientFacts } = require("../server/canonicalFacts.js");
 const { matchStructuredFacts } = require("../server/structuredFacts.js");
+const { generatePatientAnswer } = require("../server/patientSession.js");
 const {
   FACT_STATES,
   UNKNOWN_REASON_CODES,
@@ -24,7 +25,7 @@ function planFor(result: { answerPlans?: AnswerPlan[] } | null, intent: string) 
   return result?.answerPlans?.find((plan) => plan.intent === intent);
 }
 
-function main() {
+async function main() {
   const dysuriaTrue = matchCanonicalPatientFacts("P005", "小便痛不痛？", "zh");
   const truePlan = planFor(dysuriaTrue, "dysuria");
   assert.equal(truePlan?.factState, FACT_STATES.KNOWN_TRUE);
@@ -50,10 +51,10 @@ function main() {
   const p002 = cases.find((item) => item.id === "P002");
   assert.ok(p002);
   const diabetes = matchStructuredFacts(p002, "以前得过糖尿病吗？", "zh");
-  assert.equal(planFor(diabetes, "diabetes")?.factState, FACT_STATES.EXACT_VALUE);
+  assert.equal(planFor(diabetes, "diabetes_history")?.factState, FACT_STATES.EXACT_VALUE);
   const stones = matchStructuredFacts(p002, "以前得过结石吗？", "zh");
-  assert.equal(planFor(stones, "stoneHistory")?.factState, FACT_STATES.NEEDS_REVIEW);
-  assert.equal(planFor(stones, "stoneHistory")?.unknownReason, UNKNOWN_REASON_CODES.NEEDS_REVIEW);
+  assert.equal(planFor(stones, "previous_stone")?.factState, FACT_STATES.NEEDS_REVIEW);
+  assert.equal(planFor(stones, "previous_stone")?.unknownReason, UNKNOWN_REASON_CODES.NEEDS_REVIEW);
 
   const partial = answerPlanFromRendered({
     intent: "hematuria_onset",
@@ -72,7 +73,18 @@ function main() {
     }
   }
 
+  const missingKidneyHistory = await generatePatientAnswer({
+    sessionId: "answer-plan-missing-kidney-history",
+    caseId: "P002",
+    studentInput: "以前得过肾病吗？",
+    conversationHistory: [],
+    language: "zh"
+  });
+  assert.equal(missingKidneyHistory.unknownReasonCodes?.previous_kidney_disease, UNKNOWN_REASON_CODES.FACT_MISSING);
+  assert.match(missingKidneyHistory.replyText, /没有可靠的信息|不能把没记录当成没有/);
+  assert.doesNotMatch(missingKidneyHistory.replyText, /^没有[，。]/, "missing history must not become a negative fact");
+
   console.log("Patient fact-state model and deterministic answer-plan contracts passed.");
 }
 
-main();
+void main();

@@ -257,8 +257,8 @@ async function main() {
     });
     const orderedIntents = (ordered.clauseOutcomes || []).map((item: { intent: string }) => item.intent);
     assert.deepEqual(
-      orderedIntents.filter((intent: string) => ["urinary_frequency", "urinary_urgency", "dysuria", "stoneHistory"].includes(intent)),
-      ["urinary_frequency", "urinary_urgency", "dysuria", "stoneHistory"],
+      orderedIntents.filter((intent: string) => ["urinary_frequency", "urinary_urgency", "dysuria", "previous_stone"].includes(intent)),
+      ["urinary_frequency", "urinary_urgency", "dysuria", "previous_stone"],
       "compound clause outcomes must preserve source order"
     );
   } finally {
