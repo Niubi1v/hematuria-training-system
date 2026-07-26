@@ -153,6 +153,7 @@ function normalizeIntentQuestion(value) {
     .normalize("NFKC")
     .toLowerCase()
     .replace(/[，。！？；：、,.!?;:()[\]{}'"“”‘’]/g, " ")
+    .replace(/解(?:个)?小便|撒尿|尿尿/g, "小便")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -192,12 +193,12 @@ function matchesNaturalPattern(question, intentKey, language) {
   }
   if (intentKey === "urinary_frequency") {
     return language === "zh"
-      ? /(?:小便|尿|厕所).*(?:次数多|次数增多|尿得勤|老想|总想|经常|频繁)|(?:老是|总是|总|一会儿就).*(?:小便|尿|厕所)/.test(compacted)
+      ? /(?:小便|尿|厕所).*(?:次数(?:是不是|有没有|有没|没(?:有)?|不)?(?:变)?多|次数增多|尿得勤|老想|总想|经常|频繁)|(?:老是|总是|总|一会儿就).*(?:小便|尿|厕所)/.test(compacted)
       : /(?:urinate|urinating|pee|passurine).*(?:moreoften|frequently|alot)|(?:frequent|often).*(?:urination|urinate|pee)/i.test(compacted);
   }
   if (intentKey === "urinary_urgency") {
     return language === "zh"
-      ? /(?:尿意|想尿|尿来了).*(?:很急|突然|憋不住|等不了)|(?:突然|马上|来不及).*(?:想尿|厕所)|有尿.*憋不住/.test(compacted)
+      ? /(?:尿意|想尿|尿来了).*(?:很急|突然|憋不住|等不了)|(?:突然|马上|来不及).*(?:想尿|厕所)|有尿.*憋不住|(?:小便|排尿|尿)(?:时|的时候)?(?:会不会|有没有|有无|是不是|不)?(?:很)?(?:急|憋不住)/.test(compacted)
       : /(?:sudden|urgent).*(?:urge|need).*(?:urinate|pee)|(?:cannot|can't).*(?:hold|wait).*(?:urine|pee)|rush.*(?:bathroom|toilet)|(?:urinaryfrequency|dysuria|painwhenurinating).*urgency|urgency.*(?:urinaryfrequency|dysuria|painwhenurinating)/i.test(compacted);
   }
   if (intentKey === "blood_clots") {

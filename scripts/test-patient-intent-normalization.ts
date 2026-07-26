@@ -72,6 +72,14 @@ add("P002", "zh", "initial_hematuria", "hematuria_phase", false, initialZh);
 add("P002", "en", "initial_hematuria", "hematuria_phase", false, initialEn);
 add("HX-ADD-006", "zh", "terminal_hematuria", "hematuria_phase", true, terminalZh);
 add("HX-ADD-006", "en", "terminal_hematuria", "hematuria_phase", true, terminalEn);
+add("P005", "zh", "urinary_frequency", "urinary_frequency", true, [
+  "撒尿次数是不是多了？",
+  "撒尿次数没有变多吧？"
+]);
+add("P005", "zh", "urinary_urgency", "urinary_urgency", true, [
+  "解小便会不会憋不住？",
+  "解小便不急吧？"
+]);
 
 function isUnknown(text: string, language: Language) {
   return language === "en"
@@ -141,7 +149,7 @@ async function main() {
   const compound = await generatePatientAnswer({
     sessionId: compoundSession.sessionId,
     caseId: "P005",
-    studentInput: "尿频尿急尿痛有没有？",
+    studentInput: "撒尿次数多不多、解小便会不会憋不住、排尿痛不痛？",
     language: "zh"
   });
   for (const intent of ["urinary_frequency", "urinary_urgency", "dysuria"]) {
