@@ -55,7 +55,8 @@ assert.ok(cases.every((item) => englishIds.has(item.id)), "中英文病例ID必�
 
 const clinicalSource = fs.readFileSync(path.join(process.cwd(), "src/components/ClinicalTrainingClient.tsx"), "utf8");
 assert.match(clinicalSource, /!isOsce \|\| activeStageNo === 7/, "OSCE阶段反馈必须延迟到终末复盘");
-assert.match(clinicalSource, /status: "ordered"/, "检查应先进入已开具状态");
+assert.match(clinicalSource, /matchedLog\.results\.length > 0[\s\S]{0,240}status: "reported"/, "服务端已返回的检查报告应立即进入已报告状态");
+assert.doesNotMatch(clinicalSource, /pendingResults: matchedLog\.results/, "不得把已返回报告降级为仅由前端定时器释放的pending状态");
 assert.match(clinicalSource, /修改后重新提交/, "阶段反馈后应允许修改并重新提交");
 assert.doesNotMatch(clinicalSource, /events: buildScoringEvents/, "终末评分不得提交客户端构造的满分事件");
 assert.doesNotMatch(clinicalSource, />DeepSeek AI</, "生产界面不得展示模型品牌作为模式按钮");

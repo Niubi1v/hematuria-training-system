@@ -48,8 +48,8 @@ async function main() {
   assert(!("completedPatientFacingProfile" in session), "session/init must not return the patient profile to the browser");
   assert(!("teacherOnlyData" in session), "session/init must not return teacher-only data");
   assert(session.patientOpeningStatement, "session/init should return patientOpeningStatement");
-  assert(session.patientOpeningStatement.includes("小便颜色变红3月余") || session.patientOpeningStatement.includes("血尿3月余"), `opening should use simplified complaint: ${session.patientOpeningStatement}`);
-  assertNotContains(session.patientOpeningStatement, ["无痛", "肉眼", "全程"], "session opening complaint");
+  assert(session.patientOpeningStatement === "医生您好，我来看一下。", `opening must remain neutral: ${session.patientOpeningStatement}`);
+  assertNotContains(session.patientOpeningStatement, ["血尿", "尿红", "小便", "3月", "无痛", "肉眼", "全程"], "session opening complaint");
   assert(session.apiVersion === "2.6.0", `session/init should expose API version: ${session.apiVersion}`);
   assert(session.deploymentSha, "session/init should expose deployment SHA");
   assert(Date.parse(session.sessionExpiresAt) > Date.parse(session.sessionCreatedAt), "session should have a future expiration");
@@ -63,6 +63,7 @@ async function main() {
     assert(opening.length > 0, `${caseItem.id} English session should have an opening statement`);
     assert(!/[\u3400-\u9fff]/u.test(opening), `${caseItem.id} English opening must not contain Chinese text: ${opening}`);
     assert(/\b(?:hello|hi|doctor)\b/i.test(opening), `${caseItem.id} English opening should be a natural patient greeting: ${opening}`);
+    assert(!/hematuria|blood|urine|day|week|month|year/i.test(opening), `${caseItem.id} English opening must not reveal the complaint or duration: ${opening}`);
   }
   globalThis.fetch = originalFetch;
 

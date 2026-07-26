@@ -22,13 +22,9 @@ export default async function TrainingPage({ params }: { params: Promise<{ id: s
   const studentVisibleCase = {
     id: caseData.id,
     displayCaseId: caseData.displayCaseId,
-    studentChiefComplaint: caseData.studentChiefComplaint,
-    chiefComplaint: caseData.studentChiefComplaint,
-    chiefComplaintEn: caseData.chiefComplaintEn,
     age: caseData.age,
     sex: caseData.sex,
-    sexEn: caseData.sexEn,
-    difficulty: caseData.difficulty
+    sexEn: caseData.sexEn
   };
   return <ClinicalTrainingClient caseData={studentVisibleCase} />;
 }

@@ -42,12 +42,14 @@ import {
   ENGLISH_METADATA_PLACEHOLDER,
   ENGLISH_ORDER_PLACEHOLDER,
   ENGLISH_RESULT_PLACEHOLDER,
+  buildStudentOrderCatalog,
+  orderApplicableForSex,
   presentOrderCatalogItem,
   presentPhysicalExamItem,
   reportStatusPresentation,
   safeStudentFacingText
 } from "@/shared/dataAgentPresentation.js";
-import { chiefComplaintForCase, patientOpeningForCase } from "@/src/lib/chiefComplaint";
+import { patientOpeningForCase } from "@/src/lib/chiefComplaint";
 import { ApiRequestError, createIdempotencyKey, createRequestId, fetchWithRecovery, requestJson, studentFacingApiMessage } from "@/src/lib/apiClient";
 import { publicApiConfig } from "@/src/lib/apiConfig";
 import { ATTEMPT_SUMMARY_KEY, createAttemptSummary, isAttemptSummary, type AttemptSummary } from "@/src/lib/catalogProgress";
@@ -84,13 +86,9 @@ type AgentStageNo = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 type StudentVisibleCase = {
   id: string;
   displayCaseId?: string;
-  studentChiefComplaint: string;
-  chiefComplaint: string;
-  chiefComplaintEn?: string;
   age: string;
   sex: string;
   sexEn?: string;
-  difficulty?: string;
 };
 type TimelineEvent = {
   id: string;
@@ -214,6 +212,37 @@ function stageSubmissionFailureMessage(error: unknown, language: LanguageCode) {
   }
   return language === "en" ? "Stage submission failed. Please retry." : "阶段提交失败，请重试。";
 }
+
+function orderSubmissionFailureMessage(error: unknown, language: LanguageCode) {
+  const reason = trainingFailureReason(error);
+  if (reason === "configuration_error") {
+    return language === "en"
+      ? "The training record service is not configured, so this order cannot be saved. Ask an administrator to check the attempt store."
+      : "训练记录服务未配置，医嘱无法保存。请管理员检查训练记录存储配置。";
+  }
+  if (reason === "attempt_not_found" || reason === "token_expired" || reason === "token_missing") {
+    return language === "en"
+      ? "The training session has expired. Reinitialize the training session, then place the order again."
+      : "训练会话已失效，请重新初始化训练会话后再次开单。";
+  }
+  if (reason === "stage_mismatch" || reason === "state_mismatch") {
+    return language === "en"
+      ? "The server stage changed. Refresh to restore the latest stage, then place the order again."
+      : "服务端阶段状态已变化，请刷新恢复最新阶段后再次开单。";
+  }
+  if (reason === "origin_mismatch") {
+    return language === "en"
+      ? "This page is connected to a mismatched order API. Refresh after the application is updated."
+      : "当前页面连接了不匹配的开单接口，请在应用更新后刷新重试。";
+  }
+  if (reason === "rate_limit") {
+    return language === "en" ? "Orders are being submitted too quickly. Wait briefly and retry." : "开单请求过于频繁，请稍候重试。";
+  }
+  if (reason === "network_error") {
+    return language === "en" ? "The network request failed. Check the connection and place the order again." : "开单请求网络连接失败，请检查连接后重试。";
+  }
+  return language === "en" ? "The order was not accepted. Keep the page open and retry." : "开单请求未被服务接受，请保持页面打开并重试。";
+}
 type PendingFailedQuestion = {
   question: string;
   patientMessageIndex: number;
@@ -241,12 +270,18 @@ type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 
 const agents = (agentsJson as AgentConfig[]).sort((a, b) => a.stageNo - b.stageNo);
 const i18n = { zh: i18nZhJson as Record<string, string>, en: i18nEnJson as Record<string, string> };
-const orderCatalog = [
+type StudentOrderCatalogItem = OrderCatalogItem & {
+  catalogId?: string;
+  sourceOrderId?: string;
+  applicableSex?: string[];
+};
+
+const orderCatalog = buildStudentOrderCatalog([
   ...(orderCatalogLabsJson as OrderCatalogItem[]),
   ...(orderCatalogImagingJson as OrderCatalogItem[]),
   ...(orderCatalogProceduresJson as OrderCatalogItem[]),
   ...(orderCatalogPerioperativeJson as OrderCatalogItem[])
-];
+]) as StudentOrderCatalogItem[];
 const physicalExamItems = physicalExamItemsJson as PhysicalExamItem[];
 const consultCatalog = consultCatalogJson as ConsultCatalogItem[];
 const orderPrimaryTabs = ["检验", "检查", "病理/操作", "围术期评估"];
@@ -255,8 +290,6 @@ const imagingSecondaryOrder = ["超声", "X线", "CT", "MRI", "内镜", "核医�
 const consultGroupOrder = ["外科", "内科", "辅助/平台", "急诊/危重"];
 const PATIENT_REPLY_TIMEOUT_MS = 12000;
 const EXPECTED_API_VERSION = "2.6.0";
-const isDevelopment = process.env.NODE_ENV !== "production";
-
 const patientReplyForbiddenTerms = [
   "根据原始病史",
   "根据病例资料",
@@ -398,21 +431,19 @@ function nextStage(stageNo: AgentStageNo): AgentStageNo | null {
 }
 
 function patientOpening(caseData: StudentVisibleCase, lang: LanguageCode) {
-  return patientOpeningForCase(caseData.id, caseData.studentChiefComplaint || caseData.chiefComplaint, lang, caseData.chiefComplaintEn);
+  return patientOpeningForCase(caseData.id, undefined, lang);
 }
 
 function caseDisplay(caseData: StudentVisibleCase, lang: LanguageCode) {
   return {
     title: lang === "en" ? `Training case ${caseData.displayCaseId || caseData.id}` : `训练病例 ${caseData.displayCaseId || caseData.id}`,
     age: caseData.age,
-    sex: lang === "en" ? caseData.sexEn || (caseData.sex === "女" ? "Female" : "Male") : caseData.sex,
-    difficulty: caseData.difficulty || "",
-    chiefComplaint: chiefComplaintForCase(caseData.id, caseData.studentChiefComplaint || caseData.chiefComplaint, lang, caseData.chiefComplaintEn)
+    sex: lang === "en" ? caseData.sexEn || (caseData.sex === "女" ? "Female" : "Male") : caseData.sex
   };
 }
 
 type PresentedPhysicalExamItem = PhysicalExamItem & { translationAvailable: boolean };
-type PresentedOrderCatalogItem = OrderCatalogItem & {
+type PresentedOrderCatalogItem = StudentOrderCatalogItem & {
   primaryCategoryLabel?: string;
   secondaryCategoryLabel?: string;
   priorityLabel?: string;
@@ -420,9 +451,12 @@ type PresentedOrderCatalogItem = OrderCatalogItem & {
   translationAvailable: boolean;
 };
 
-function groupPhysicalExamItems(language: LanguageCode) {
+function groupPhysicalExamItems(language: LanguageCode, sex: string) {
   const grouped = new Map<string, PhysicalExamItem[]>();
-  physicalExamItems.forEach((item) => grouped.set(item.category, [...(grouped.get(item.category) ?? []), item]));
+  physicalExamItems
+    .filter((item) => !(item.examId.startsWith("PE2") && sex === "女"))
+    .filter((item) => !(item.examId.startsWith("PE3") && sex === "男"))
+    .forEach((item) => grouped.set(item.category, [...(grouped.get(item.category) ?? []), item]));
   return Array.from(grouped.entries()).map(([category, items]) => {
     const presented = items.map((item) => presentPhysicalExamItem(item, language) as PresentedPhysicalExamItem);
     return {
@@ -689,6 +723,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [activeOrderTab, setActiveOrderTab] = useState("检验");
   const [examLogs, setExamLogs] = useState<ExamResultLog[]>([]);
   const [orderLogs, setOrderLogs] = useState<OrderResultLog[]>([]);
+  const [orderSubmitting, setOrderSubmitting] = useState(false);
   const [mdtOpinions, setMdtOpinions] = useState<MdtOpinion[]>([]);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [osceTimeLeft, setOsceTimeLeft] = useState(20 * 60);
@@ -761,6 +796,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const autoSessionInitRef = useRef<{ key: string; promise: Promise<SessionInitResponse>; controller: AbortController } | null>(null);
   const patientReplyAbortRef = useRef<AbortController | null>(null);
   const patientSubmitLockRef = useRef(false);
+  const orderSubmitLockRef = useRef(false);
   const stageSubmitLockRef = useRef(false);
   const historyLogSyncRef = useRef(false);
   const historyLogRetryTimerRef = useRef(0);
@@ -787,17 +823,18 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     () => selectBestVoice(speechVoices, { ...voiceProfile, manualOverride: manualVoiceOverrides[voiceKey] }),
     [manualVoiceOverrides, speechVoices, voiceKey, voiceProfile]
   );
-  const physicalGroups = useMemo(() => groupPhysicalExamItems(lang), [lang]);
+  const physicalGroups = useMemo(() => groupPhysicalExamItems(lang, caseData.sex), [caseData.sex, lang]);
 
   const orderGroups = useMemo(() => {
     const keyword = orderSearch.trim().toLowerCase();
     const visible = orderCatalog.filter((item) => {
       if (item.primaryCategory !== activeOrderTab) return false;
+      if (!orderApplicableForSex(item, caseData.sex)) return false;
       if (!keyword) return true;
       return [item.displayName, item.secondaryCategory, item.priority, item.studentDisplayHint, ...item.synonyms].join(" ").toLowerCase().includes(keyword);
     });
     const categoryOrder = activeOrderTab === "检验" ? labSecondaryOrder : activeOrderTab === "检查" ? imagingSecondaryOrder : [];
-    const grouped = new Map<string, OrderCatalogItem[]>();
+    const grouped = new Map<string, StudentOrderCatalogItem[]>();
     visible.forEach((item) => {
       const key = item.secondaryCategory || activeOrderTab;
       grouped.set(key, [...(grouped.get(key) ?? []), item]);
@@ -813,7 +850,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         items
       };
     });
-  }, [activeOrderTab, lang, orderSearch]);
+  }, [activeOrderTab, caseData.sex, lang, orderSearch]);
 
   const consultGroups = useMemo(() => consultGroupOrder.map((group) => ({
     group,
@@ -1019,7 +1056,17 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     if (saved.askedSlots) setAskedSlots(saved.askedSlots);
     if (saved.collected) setCollected(saved.collected);
     if (saved.examLogs) setExamLogs(saved.examLogs);
-    if (saved.orderLogs) setOrderLogs(saved.orderLogs);
+    if (saved.orderLogs) {
+      setOrderLogs(saved.orderLogs.map((log) => log.pendingResults?.length
+        ? {
+            ...log,
+            results: log.pendingResults,
+            pendingResults: undefined,
+            returnedAt: log.returnedAt || new Date().toISOString(),
+            status: "reported"
+          }
+        : log));
+    }
     if (saved.mdtOpinions) setMdtOpinions(saved.mdtOpinions);
     if (saved.timeline) setTimeline(saved.timeline);
     if (saved.pendingHistoryLogs) setPendingHistoryLogs(saved.pendingHistoryLogs);
@@ -1039,7 +1086,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
 
   useEffect(() => {
     const handleOffline = () => { setAiStatus("offline"); setReconnectNotice(lang === "en" ? "You are offline. Existing training records are preserved." : "当前处于离线状态，既有训练记录已保留。"); };
-    const handleOnline = () => { setAiStatus((current) => current === "offline" ? "unknown" : current); setReconnectNotice(lang === "en" ? "Network restored. You can reconnect AI." : "网络已恢复，可以重新连接AI。"); };
+    const handleOnline = () => { setAiStatus((current) => current === "offline" ? "unknown" : current); setReconnectNotice(lang === "en" ? "Network restored. You can reconnect the patient service." : "网络已恢复，可以重新连接患者服务。"); };
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
     if (!navigator.onLine) handleOffline();
@@ -1526,7 +1573,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     const text = (textOverride ?? question).trim();
     if (!text || patientReplyLoading || patientSubmitLockRef.current) return;
     if (!aiSessionId) {
-      setReconnectNotice(t(lang, "aiPreparing"));
+      setReconnectNotice(lang === "en" ? "The patient service is connecting..." : "患者服务连接中……");
       return;
     }
     patientSubmitLockRef.current = true;
@@ -1570,7 +1617,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       } else if (isConnectionFailureFallback(aiResult.fallbackReason)) {
         pendingReason = aiResult.fallbackReason || "provider_unavailable";
         setAiStatus("degraded");
-        setReconnectNotice(lang === "en" ? "Current answer came from the rule fallback." : "当前由规则库回答，可随时重新连接AI。");
+        setReconnectNotice(lang === "en" ? "The patient service is using its safe offline response path. You can reconnect." : "患者服务正在使用安全离线回答，可随时重新连接。");
       } else if (isSafetyFallback(aiResult.fallbackReason)) {
         setAiStatus((current) => current === "connected" ? current : "unknown");
       } else {
@@ -1621,8 +1668,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     setAiStatus("connected");
     setSessionInitError("");
     setPendingFailedQuestion(null);
-    setReconnectNotice(lang === "en" ? "AI reconnected" : "已重新连接AI");
-    globalThis.setTimeout(() => setReconnectNotice((current) => /AI reconnected|已重新连接AI/.test(current) ? "" : current), 1800);
+    setReconnectNotice(lang === "en" ? "Patient service reconnected" : "患者服务已重新连接");
+    globalThis.setTimeout(() => setReconnectNotice((current) => /Patient service reconnected|患者服务已重新连接/.test(current) ? "" : current), 1800);
     addTimeline("technical", eventLabel, lang === "en" ? "The failed patient reply was replaced without duplicating the question." : "已替换失败患者回答，未重复提问或计分。", 1);
     void speak(aiResult.replyText);
     return true;
@@ -1667,9 +1714,9 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             aiMode: "deepseek", runtimeMode, language: lang, attemptId: attempt.attemptId, signal: controller.signal, recoveryCycle: `reconnect-${session.sessionId}`
           });
           if (generation !== aiGenerationRef.current) return false;
-          if (!applyRecoveredReply(aiResult, pending, lang === "en" ? "AI reconnection restored patient reply" : "重新连接后回答成功")) {
+          if (!applyRecoveredReply(aiResult, pending, lang === "en" ? "Reconnection restored the patient reply" : "重新连接后回答成功")) {
             setAiStatus("degraded");
-            setReconnectNotice(lang === "en" ? "Connection failed; using rule fallback" : "连接失败，使用规则库");
+            setReconnectNotice(lang === "en" ? "Connection failed; the safe offline response remains available" : "连接失败，仍可使用安全离线回答");
             return false;
           }
         } else {
@@ -1677,13 +1724,13 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           if (generation !== aiGenerationRef.current) return false;
           if (probe.isFallback) {
             setAiStatus("degraded");
-            setReconnectNotice(lang === "en" ? "Connection failed; using rule fallback" : "连接失败，使用规则库");
+            setReconnectNotice(lang === "en" ? "Connection failed; the safe offline response remains available" : "连接失败，仍可使用安全离线回答");
             return false;
           }
           setAiStatus("connected");
           setSessionInitError("");
-          setReconnectNotice(lang === "en" ? "AI reconnected" : "已重新连接AI");
-          globalThis.setTimeout(() => setReconnectNotice((current) => /AI reconnected|已重新连接AI/.test(current) ? "" : current), 1800);
+          setReconnectNotice(lang === "en" ? "Patient service reconnected" : "患者服务已重新连接");
+          globalThis.setTimeout(() => setReconnectNotice((current) => /Patient service reconnected|患者服务已重新连接/.test(current) ? "" : current), 1800);
         }
         return true;
       } catch (error) {
@@ -1741,29 +1788,28 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }
 
   async function submitOrder(textOverride?: string) {
-    if (osceLocked) return;
+    if (osceLocked || orderSubmitLockRef.current) return;
     const text = (textOverride ?? orderInput).trim();
     if (!text) return;
+    orderSubmitLockRef.current = true;
+    setOrderSubmitting(true);
     try {
       const matchedLog = await trainingAction<OrderResultLog>({ action: "order", input: text });
       const hasReport = matchedLog.results.length > 0;
       const log: OrderResultLog = hasReport
-        ? { ...matchedLog, pendingResults: matchedLog.results, results: [], returnedAt: undefined, status: "ordered", message: lang === "en" ? "Order placed. The simulated report is pending." : "医嘱已开具，模拟报告返回中。" }
+        ? { ...matchedLog, returnedAt: new Date().toISOString(), status: "reported" }
         : matchedLog;
       setOrderLogs((current) => [...current, log]);
       addTimeline("order", lang === "en" ? "Order placed" : "开立医嘱", text, 2);
       if (hasReport) {
-        window.setTimeout(() => {
-          const returnedAt = new Date().toISOString();
-          setOrderLogs((current) => current.map((item) => item.id === log.id
-            ? { ...item, results: item.pendingResults ?? [], pendingResults: undefined, returnedAt, at: returnedAt, status: "reported", message: matchedLog.message }
-            : item));
-          addTimeline("result", lang === "en" ? "Report returned" : "返回检查结果", matchedLog.results.map((item) => `${item.orderCategory}：${item.result}`).join("\n"), 2);
-        }, 500);
+        addTimeline("result", lang === "en" ? "Report returned" : "返回检查结果", matchedLog.results.map((item) => `${item.orderCategory}：${item.result}`).join("\n"), 2);
       }
       setOrderInput("");
-    } catch {
-      setStorageWarning(lang === "en" ? "The order service is unavailable. No report was released." : "开单服务暂时不可用，未释放报告。" );
+    } catch (error) {
+      setStorageWarning(orderSubmissionFailureMessage(error, lang));
+    } finally {
+      orderSubmitLockRef.current = false;
+      setOrderSubmitting(false);
     }
   }
 
@@ -1941,9 +1987,15 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     : (serviceHealth?.patientServiceConfigured === false || serviceHealth?.trainingStateConfigured === false)
       ? (lang === "en" ? "Some online functions are unavailable. Text practice remains available." : "部分在线功能暂不可用，仍可继续文字练习。")
       : "";
-  const connectionMessage = reconnectNotice || sessionInitError || ((sessionInitLoading || !aiSessionId) ? t(lang, "aiPreparing") : "") || healthNotice;
+  const connectionMessage = reconnectNotice || sessionInitError || ((sessionInitLoading || !aiSessionId) ? (lang === "en" ? "The patient service is connecting..." : "患者服务连接中……") : "") || healthNotice;
   const connectionIsBusy = sessionInitLoading || !aiSessionId || aiStatus === "reconnecting";
   const showReconnect = aiMode !== "rule" && (["degraded", "offline", "error", "reconnecting"].includes(aiStatus) || /reconnect|重新连接/i.test(reconnectNotice));
+  const patientServiceConnected = Boolean(aiSessionId)
+    && !healthCheckFailed
+    && !["offline", "error"].includes(aiStatus);
+  const patientServiceLabel = patientServiceConnected
+    ? (lang === "en" ? "Patient service connected" : "患者服务已连接")
+    : (lang === "en" ? "Patient service disconnected" : "患者服务未连接");
 
   function scrollChatToBottom() {
     const panel = chatScrollRef.current;
@@ -1978,34 +2030,21 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           </div>
           <h1 className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">{t(lang, "appTitle")}</h1>
           <p className="mt-1 hidden text-sm text-clinic-muted md:block">{t(lang, "appSubtitle")}</p>
-          <p className="mt-1 line-clamp-2 text-sm text-clinic-muted lg:hidden">{display.age || "-"} / {display.sex || "-"} · {display.chiefComplaint}</p>
+          <p className="mt-1 line-clamp-2 text-sm text-clinic-muted lg:hidden">{display.age || "-"} / {display.sex || "-"}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 xl:justify-end">
           <div className="ui-segmented">
             <button type="button" onClick={() => setLanguage("zh")} className={`ui-segment ${lang === "zh" ? "ui-segment-active" : ""}`}>{t(lang, "zh")}</button>
             <button type="button" onClick={() => setLanguage("en")} className={`ui-segment ${lang === "en" ? "ui-segment-active" : ""}`}>{t(lang, "en")}</button>
           </div>
-          {isDevelopment && (
-            <div className="ui-segmented">
-              <button type="button" onClick={() => setAiMode("deepseek")} className={`ui-segment ${aiMode === "deepseek" ? "ui-segment-active" : ""}`}>AI</button>
-              <button type="button" onClick={() => setAiMode("rule")} className={`ui-segment ${aiMode === "rule" ? "ui-segment-active" : ""}`}>{lang === "en" ? "Rules" : "规则库"}</button>
-            </div>
-          )}
-          <span aria-live="polite" className={`ui-status ${aiStatus === "connected" ? "ui-status-success" : aiStatus === "checking" || aiStatus === "unknown" || aiStatus === "reconnecting" ? "bg-slate-100 text-slate-700" : "ui-status-warning"}`}>
-            {t(lang, "responseSource")}：
-            {aiStatus === "connected"
-              ? t(lang, "aiConnected")
-              : aiStatus === "reconnecting"
-                ? (lang === "en" ? "Reconnecting..." : "正在连接……")
-                : aiStatus === "checking"
-                ? t(lang, "aiChecking")
-                : aiStatus === "offline"
-                  ? (lang === "en" ? "Offline" : "离线")
-                : aiStatus === "unknown"
-                  ? t(lang, "statusUnknown")
-                  : aiMode === "rule"
-                    ? t(lang, "ruleFallback")
-                    : t(lang, "degradedMode")}
+          <span
+            aria-live="polite"
+            aria-label={patientServiceLabel}
+            title={patientServiceLabel}
+            className={`ui-status ${patientServiceConnected ? "ui-status-success" : "ui-status-danger"}`}
+          >
+            <span aria-hidden="true" className={`h-2.5 w-2.5 rounded-full ${patientServiceConnected ? "bg-emerald-600" : "bg-rose-600"}`} />
+            {patientServiceLabel}
           </span>
           {logSyncStatus !== "idle" && <div role="status" aria-live="polite" className={`ui-status ${logSyncStatus === "failed" ? "ui-status-warning" : "ui-status-info"}`}>
             <span>{logSyncStatus === "verified"
@@ -2030,7 +2069,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
               ? (lang === "en" ? "Reconnecting..." : "正在连接……")
               : aiStatus === "connected"
                 ? (lang === "en" ? "Check connection" : "检测连接")
-                : (lang === "en" ? "Reconnect AI" : "重新连接AI")}
+                : (lang === "en" ? "Reconnect" : "重新连接")}
           </button>}
           <button type="button" aria-label={lang === "en" ? "Restart training" : "重新开始训练"} title={lang === "en" ? "Restart" : "重新开始"} onClick={restartTraining} className="ui-button-secondary px-3"><RotateCcw size={16} /><span className="hidden sm:inline">{lang === "en" ? "Restart" : "重新开始"}</span></button>
           <Link aria-label={t(lang, "backToCases")} title={t(lang, "backToCases")} onClick={(event) => { if (!confirmExit()) event.preventDefault(); }} href="/cases" className="ui-button-secondary px-3"><ClipboardList size={16} /><span className="hidden sm:inline">{t(lang, "backToCases")}</span></Link>
@@ -2053,7 +2092,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       <div className="mb-3 min-h-9" aria-live="polite">
         {connectionMessage && <div role="status" className={`flex min-h-9 flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm ${connectionIsBusy ? "border-sky-200 bg-sky-50 text-sky-900" : "border-amber-200 bg-amber-50 text-amber-950"}`}>
           <span>{connectionMessage}</span>
-          {showReconnect && aiStatus !== "reconnecting" && <button type="button" onClick={() => void reconnectAiPatient()} className="font-semibold underline underline-offset-2">{lang === "en" ? "Reconnect AI" : "重新连接AI"}</button>}
+          {showReconnect && aiStatus !== "reconnecting" && <button type="button" onClick={() => void reconnectAiPatient()} className="font-semibold underline underline-offset-2">{lang === "en" ? "Reconnect" : "重新连接"}</button>}
         </div>}
       </div>
 
@@ -2096,7 +2135,6 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             <h2 className="font-semibold">{t(lang, "visibleInfo")}</h2>
             <dl className="mt-4 grid gap-3 text-sm">
               <div><dt className="text-clinic-muted">{t(lang, "ageSex")}</dt><dd className="leading-6">{display.age || "-"} / {display.sex || "-"}</dd></div>
-              <div><dt className="text-clinic-muted">{t(lang, "chiefComplaint")}</dt><dd className="leading-6">{display.chiefComplaint}</dd></div>
             </dl>
           </section>
         </aside>
@@ -2282,7 +2320,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                       <h4 className="font-semibold text-clinic-blue">{group.categoryLabel}</h4>
                       <div className="mt-3 grid gap-2 md:grid-cols-2">
                         {group.items.map((item) => (
-                          <label key={item.orderId} className="flex min-h-[72px] items-start justify-between gap-3 rounded-lg border border-clinic-line px-3 py-2 text-sm transition-colors hover:border-clinic-blue">
+                          <label key={item.catalogId || item.orderId} className="flex min-h-[72px] items-start justify-between gap-3 rounded-lg border border-clinic-line px-3 py-2 text-sm transition-colors hover:border-clinic-blue">
                             <span className="flex items-start gap-2">
                               <input className="mt-1" type="checkbox" disabled={!item.translationAvailable} checked={answers.selectedOrders.includes(item.displayName)} onChange={() => toggleOrder(item.displayName)} />
                               <span>
@@ -2300,8 +2338,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 <label className="mt-4 block"><span className="font-medium">{t(lang, "otherOrders")}</span><textarea value={answers.customOrders} onChange={(event) => updateAnswer("customOrders", event.target.value)} rows={4} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" /></label>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <input value={orderInput} onChange={(event) => setOrderInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") submitOrder(); }} className="ui-input min-w-[220px] flex-1" placeholder={t(lang, "orderPlaceholder")} />
-                  <button onClick={() => submitOrder()} className="ui-button-primary">{t(lang, "orderAndReturn")}</button>
-                  <button onClick={submitSelectedOrders} className="ui-button-secondary">{t(lang, "selectedOrderResults")}</button>
+                  <button onClick={() => submitOrder()} disabled={orderSubmitting} className="ui-button-primary">{orderSubmitting ? (lang === "en" ? "Submitting..." : "提交中……") : t(lang, "orderAndReturn")}</button>
+                  <button onClick={submitSelectedOrders} disabled={orderSubmitting} className="ui-button-secondary">{t(lang, "selectedOrderResults")}</button>
                 </div>
                 <div className="mt-4 space-y-3">
                   {orderLogs.map((log) => (

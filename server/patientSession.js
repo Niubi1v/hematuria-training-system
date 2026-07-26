@@ -250,11 +250,9 @@ function buildRawPatientFacingProfile(caseData, language = "zh") {
   const simplifiedComplaint = wording
     ? (language === "en" ? wording.en : wording.zh)
     : (language === "en" ? simplifiedChiefComplaintEn(rawComplaint) : simplifiedChiefComplaintZh(rawComplaint));
-  const openingStatement = wording
-    ? (language === "en" ? wording.openingEn : wording.openingZh)
-    : language === "en"
-      ? `Hello, doctor. I came in because I have had ${simplifiedComplaint}.`
-      : `医生您好，我是因为${simplifiedComplaint || "小便颜色异常"}来看病的。`;
+  const openingStatement = language === "en"
+    ? "Hello doctor. I came in for a consultation."
+    : "医生您好，我来看一下。";
   return {
     patient_id: field(caseData.id),
     age: field(pfp.age || caseData.age),

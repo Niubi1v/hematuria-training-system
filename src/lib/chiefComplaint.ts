@@ -153,11 +153,7 @@ export function chiefComplaintForCase(caseId: string, rawZh: string | undefined,
   return simplifiedChiefComplaint(rawZh, lang, fallbackEn);
 }
 
-export function patientOpeningForCase(caseId: string, rawZh: string | undefined, lang: Lang, fallbackEn?: string) {
-  const update = wordingUpdates[caseId];
-  if (update) return lang === "en" ? update.openingEn : update.openingZh;
-  const complaint = simplifiedChiefComplaint(rawZh, lang, fallbackEn);
-  return lang === "en"
-    ? `Hello doctor. I came because of ${complaint || "abnormal urine color"}.`
-    : `医生您好，我是因为${complaint || "小便颜色异常"}来看病的。`;
+export function patientOpeningForCase(_caseId: string, _rawZh: string | undefined, lang: Lang, _fallbackEn?: string) {
+  void _fallbackEn;
+  return lang === "en" ? "Hello doctor. I came in for a consultation." : "医生您好，我来看一下。";
 }
