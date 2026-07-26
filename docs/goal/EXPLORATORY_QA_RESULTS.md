@@ -1,7 +1,7 @@
 # 探索式 QA 执行结果
 
 状态：长期执行中；当前 Preview/本地自动化已恢复并扩展，仍有开放P1、HEM-P2-059/062、Pages部署不匹配、真机和医学阻塞，不得视为最终生产验收。
-当前 Production 基线：`9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。第30轮提交前 QA HEAD：`246823327cbb089e5e1a65c859bb360e1d29931d`；最终 QA HEAD 以本轮报告提交与远程同步状态为准。
+当前 Production 基线：`9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。第31轮提交前 QA HEAD：`ec7f603c52e3471d78e36086b38ba2ac2e4c8cd4`；最终 QA HEAD 以本轮报告提交与远程同步状态为准。
 
 ## 基线核验
 
@@ -532,3 +532,11 @@ Patient Session 报告记录 295 次 `unsafe_deterministic_answer` source-cell �
 - HEM-P2-044两个移动viewport继续2/2通过：四个目标均至少44 CSS px，分别为`106×44、44×44、75×44、44×44`；状态保持`RESOLVED_LOCAL_QA / PASS_EMULATION`。
 - 1440×900网络摘要中1个开发态webpack HMR hot-update请求在导航时`ERR_ABORTED`，不属于应用API或页面失败。初始axe运行因QA探针漏装既有安全fixture产生本地API 404噪声，修正QA脚本后完整重跑，未计产品失败。
 - 本轮无新增P0/P1/P2。没有真实设备、屏幕阅读器或云TTS证据，相关结论继续`BLOCKED_REAL_DEVICE`或`NOT_CLAIMED`；没有修改业务代码、`data/**`、医学事实或审批状态。
+
+## 2026-07-26 第 31 轮：`9b7fcd0` 42例双语可访问性矩阵
+
+- 四个Playwright项目4/4通过，约6分钟完成P001–P042×中英文×四viewport=336次页面扫描；每个viewport均84/84完成。
+- WCAG 2 A/AA与WCAG 2.1 A/AA标签下serious/critical违规0，受影响case-language对0；console error、应用HTTP失败和run error均为0。
+- 42例覆盖矩阵的视觉证据列均补记`A11Y_4_VIEWPORTS`；原有截图、Preview或完整UI证据标签继续保留，不由axe结果替换。
+- 没有生成失败截图、trace或录像。四份原始摘要只在本机保留，Git提交测试脚本与单份脱敏聚合；报告不含患者开场白、DOM片段、问题/回答或医学值。
+- 状态为`PASS_EMULATION`。真实屏幕阅读器、浏览器缩放/高对比度、语音控制、认知可用性、真机与物理键盘仍需独立证据；本轮无新增P0/P1/P2。

@@ -278,3 +278,10 @@ console 文本对 Authorization、Cookie、签名、token、secret 和 API key �
 - 对首页、病例目录和P008训练页在每个viewport执行axe serious/critical扫描。探针复用既有安全fixture，不发真实agent请求，不保存问答或病例事实。
 - 自动viewport结果只标`PASS_EMULATION`；真实手机软键盘、动态地址栏、物理safe-area、屏幕阅读器和物理触控继续`BLOCKED_REAL_DEVICE`，浏览器合成语音不外推为云TTS通过。
 - 下一轮继续从长期Goal尚未完成且不依赖医学裁决、外部权限或真实设备的范围中选择；已稳定通过的本轮合同不做无变化重复回归。
+
+## 2026-07-26 第 31 轮 `9b7fcd0` 42例双语可访问性矩阵
+
+- 补齐覆盖矩阵中除P008外仍为`PENDING`的病例页可访问性层：P001–P042×中文/英文×四固定viewport，共336次页面扫描。
+- 每页执行WCAG 2 A/AA及WCAG 2.1 A/AA标签下的serious/critical axe门禁，并同时收集console error与应用HTTP失败计数。
+- 使用Production公开患者化开场文本驱动布局，但报告只保存case/language计数与规则ID计数，不保存开场白、DOM片段或医学值；安全fixture不调用真实provider。
+- 仅失败时生成截图与trace；通过时只保留四份本机原始摘要和单份提交级脱敏聚合。自动结果只标`PASS_EMULATION`，不替代真实屏幕阅读器、真机或人工可用性审阅。

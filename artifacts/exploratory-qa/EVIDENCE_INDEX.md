@@ -523,3 +523,16 @@ SHA-256：
 
 - 本轮没有失败截图或录像；自动通过不制造重复视觉证据。聚合不保存问题、回答、医学值、session/request ID、header、Cookie、Authorization、token、签名或环境值。
 - `9b7fcd0-r30*`扫描覆盖14个物理文件、390个ZIP条目、83,037,349流式字节；`9b7fcd0-round30*`聚合扫描1个文件、2,937字节，敏感值命中均为0。
+
+## Production `9b7fcd0` 第 31 轮42例双语可访问性证据
+
+| 证据名称 | 对应测试或缺陷 | 文件路径 | 文件大小 | 是否提交 Git | 未提交原因 | 本机保留位置 |
+| --- | --- | --- | ---: | --- | --- | --- |
+| 第31轮脱敏聚合 | 42例×双语×四viewport axe矩阵 | `artifacts/exploratory-qa/reports/9b7fcd0-round31-case-accessibility-matrix-summary.json` | 2,384 B | 是 | — | 仓库路径 |
+| 全病例可访问性测试 | 336次WCAG扫描、失败时截图/trace | `tests/exploratory/case-accessibility-matrix.spec.mjs` | 整文件 | 是 | — | 仓库路径 |
+| 四viewport原始摘要 | 每viewport 84次扫描与零失败计数 | `artifacts/exploratory-qa/reports/9b7fcd0-r31-case-accessibility-matrix-*.json` | 4份/3,142 B | 否 | 聚合已保留全部验收计数；原始摘要可由脚本重建 | 原路径，本机未跟踪 |
+| runner输出 | 4/4 Playwright通过与空stderr | `artifacts/exploratory-qa/reports/9b7fcd0-r31-playwright.*.log` | 2份/709 B | 否 | 与聚合重复且属于运行器上下文 | 原路径，本机未跟踪 |
+| HTML与runner报告 | 本轮通过运行的可重建报告 | `artifacts/exploratory-qa/reports/{html,results.json,junit.xml,test-results}/**` | 自动证据集 | 否 | 无失败价值且包含重复runner上下文 | 原路径，本机未跟踪 |
+| 失败截图/trace/录像 | 仅失败时生成 | 无 | 0 B | 否 | 4/4通过，未制造失败证据 | 无 |
+
+- `9b7fcd0-r31*`扫描覆盖6个文件、3,851字节；`9b7fcd0-round31*`聚合扫描1个文件、2,384字节，敏感值命中均为0。所有摘要均不含开场白、DOM片段、问题/回答、医学值、session/request ID、header、Cookie、Authorization、token、签名或环境值。

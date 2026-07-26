@@ -651,3 +651,9 @@
 - **HEM-P2-044：维持`RESOLVED_LOCAL_QA / PASS_EMULATION 2/2`。** 两个移动viewport四个触控目标仍均至少44 CSS px；键盘、焦点、Escape、reduced-motion与浏览器语音降级四viewport8/8通过。
 - 三个主要页面在四viewport共12次axe扫描无serious/critical违规；最终console error/warning和应用HTTP失败均为0。开发态HMR导航取消不记产品缺陷。
 - 本轮没有新增缺陷编号。真实手机软键盘、safe-area、物理触控和真实屏幕阅读器仍`BLOCKED_REAL_DEVICE`；浏览器合成语音结果不代表云TTS通过。
+
+## 2026-07-26 Production `9b7fcd0` 第 31 轮状态更新
+
+- P001–P042双语四viewport共336次axe页面扫描未发现serious/critical违规，console error与应用HTTP失败均为0。
+- 本轮没有新增缺陷编号，也不关闭既有HEM-P1-057/058/060/064或HEM-P2-059/062；这些缺陷的失败合同与本轮静态可访问性门禁正交。
+- 自动axe结果只标`PASS_EMULATION`；真实屏幕阅读器、缩放、高对比度、语音控制、认知可用性与真机仍未获得通过证据。
