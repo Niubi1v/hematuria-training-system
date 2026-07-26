@@ -7,6 +7,7 @@ const {
   resetPatientIntentClassifierState
 } = require("../server/patientIntentClassifier.js");
 const { matchPriorityCanonicalIntents } = require("../src/lib/patientIntentCatalog.js");
+const { UNKNOWN_REASON_CODES } = require("../src/lib/patientFactState.js");
 const { projectCanonicalPatientFacts } = require("../server/canonicalFacts.js");
 const { matchStructuredFacts } = require("../server/structuredFacts.js");
 const cases = require("../data/cases.json");
@@ -130,6 +131,24 @@ async function main() {
     assert.equal(semanticAnswer.answerSource, "case_bilingual_slot_semantic_classification");
     assert.match(semanticAnswer.replyText, /没有|不痛/);
     assert.equal(integrationProviderCalls, 2, "semantic classification and optional natural-language rewrite are separate bounded calls");
+
+    resetPatientIntentClassifierState();
+    let clarificationProviderCalls = 0;
+    globalThis.fetch = async () => {
+      clarificationProviderCalls += 1;
+      return new Response(JSON.stringify({ choices: [{ message: { content: '{"intent":"dysuria","confidence":0.50,"needsClarification":true}' } }] }), { status: 200, headers: { "Content-Type": "application/json" } });
+    };
+    const ambiguousAnswer = await generatePatientAnswer({
+      sessionId: "",
+      caseId: "P002",
+      studentInput: "排泄尿液的时候某处怪怪的吗？",
+      language: "zh"
+    });
+    assert.equal(clarificationProviderCalls, 1, "low-confidence fallback must only classify, never generate an answer");
+    assert.equal(ambiguousAnswer.answerSource, "unknown");
+    assert.equal(ambiguousAnswer.fallbackReason, "semantic_low_confidence");
+    assert.equal(ambiguousAnswer.unknownReasonCodes?.unresolved_intent, UNKNOWN_REASON_CODES.INTENT_AMBIGUOUS);
+    assert.match(ambiguousAnswer.replyText, /具体.*哪一方面/);
   } finally {
     globalThis.fetch = originalFetch;
     delete process.env.PATIENT_SEMANTIC_CLASSIFIER_ENABLED;

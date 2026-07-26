@@ -1,8 +1,10 @@
 const crypto = require("node:crypto");
 const { callLLM, getLLMProviderConfig } = require("./llmClient.runtime.js");
-const { normalizeIntentQuestion, priorityIntentDefinitions } = require("../src/lib/patientIntentCatalog.js");
+const { normalizeIntentQuestion, patientFactOntology } = require("../src/lib/patientIntentCatalog.js");
 
-const INTENT_WHITELIST = Object.freeze(priorityIntentDefinitions.map((definition) => definition.key));
+const INTENT_WHITELIST = Object.freeze(patientFactOntology
+  .filter((definition) => definition.classifierEligible)
+  .map((definition) => definition.key));
 const INTENT_SET = new Set(INTENT_WHITELIST);
 const CACHE_TTL_MS = 15 * 60 * 1000;
 const CACHE_MAX = 500;
