@@ -481,3 +481,15 @@ SHA-256：
 
 - 聚合及原始摘要不保存回答、病例事实、session/request ID、header、Cookie、Authorization、token、签名或环境值；本轮没有浏览器证据。
 - `9b7fcd0-r27*`扫描覆盖4个文件、2,772字节，`9b7fcd0-round27*`扫描覆盖1个文件、2,805字节，敏感值命中均为0。通用repository scanner仍只对5个既有未跟踪大trace按上限fail-closed（4个ZIP entry过大、1个ZIP文件过大），没有内容命中；这些历史文件不进入本轮暂存或Git。
+
+## Production `9b7fcd0` 第 28 轮HEM-P1-050证据
+
+| 证据名称 | 对应测试或缺陷 | 文件路径 | 文件大小 | 是否提交 Git | 未提交原因 | 本机保留位置 |
+| --- | --- | --- | ---: | --- | --- | --- |
+| 第28轮脱敏聚合 | HEM-P1-050自然问法、极性、unknown与pain边界 | `artifacts/exploratory-qa/reports/9b7fcd0-round28-hem-p1-050-regression-summary.json` | 提交后记录 | 是 | — | 仓库路径 |
+| 自然问法审计脚本 | 840场景、1,428 intent、双语和治理计数 | `tests/exploratory/patient-natural-phrasing-audit.mjs` | 既有受控脚本 | 是（既有） | — | 仓库路径 |
+| 两轮自然问法原始摘要 | 双跑逐字节一致的无正文计数 | `artifacts/exploratory-qa/reports/9b7fcd0-r28-hem-p1-050-natural-run-*.json` | 2份各2,282 B | 否 | 聚合已保留验收计数；可由脚本重建 | 原路径，本机未跟踪 |
+| 3,150/1,848/pain门禁 | 扩展问法、优先问法和疼痛特异性 | 仅终端计数 | 不落盘 | 否 | 受控Production脚本可重建 | 本轮终端会话 |
+
+- 聚合和本机摘要不保存完整问题、回答、医学值、session/request ID、header、Cookie、Authorization、token、签名或环境值；本轮无浏览器证据。
+- `9b7fcd0-r28*`扫描覆盖2个文件、4,564字节，`9b7fcd0-round28*`扫描覆盖1个文件、2,374字节，敏感值命中均为0。

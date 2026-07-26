@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-26T04:30:00.000Z",
+  "productionBaseline": "9b7fcd0d975533c7c6eda5614ca3b2978c9dce55",
+  "qaBranch": "codex/hematuria-exploratory-qa",
+  "qaHeadBeforeCommit": "845114b9fd96272f553008fee81db25cdf198742",
+  "scope": "HEM-P1-050 deterministic natural phrasing, canonical intent, polarity, unknown, conflict, and pain routing regression",
+  "status": "RESOLVED_LOCAL_QA",
+  "previewRetest": "NOT_RUN_LOCAL_DETERMINISTIC_SCOPE",
+  "medicalTruthAdjudicated": false,
+  "medicalBlocksPreserved": [
+    "HEM-P0-001",
+    "HEM-P0-023"
+  ],
+  "naturalPhrasingRuns": {
+    "runs": 2,
+    "reportsByteForByteIdentical": true,
+    "casesPerRun": 42,
+    "probesPerLanguagePerRun": 10,
+    "scenariosPerRun": 840,
+    "canonicalScenarioHitsPerRun": 840,
+    "intentChecksPerRun": 1428,
+    "intentHitsPerRun": 1428,
+    "knownFactsPerRun": 838,
+    "erroneousUnknownsPerRun": 0,
+    "polarityEligiblePerRun": 578,
+    "polarityErrorsPerRun": 0,
+    "correctUnknownsPerRun": 512,
+    "expectedUnknownsPerRun": 512,
+    "medicalConflictScenariosPerRun": 42,
+    "medicalConflictIsolationPerRun": 42,
+    "uniqueMedicalConflictItemsPerRun": 13,
+    "bilingualPairsPerRun": 420,
+    "bilingualMeaningPassPerRun": 420,
+    "extraHistoryLeakagePerRun": 0,
+    "providerCallsPerRun": 0,
+    "failuresPerRun": 0
+  },
+  "extendedParaphraseRuns": {
+    "runs": 2,
+    "questionsPerRun": 3150,
+    "canonicalHitsPerRun": 3150,
+    "knownAnswersPerRun": 1095,
+    "erroneousUnknownsPerRun": 0,
+    "polarityErrorsPerRun": 0,
+    "correctUnknownsPerRun": 1990,
+    "quarantineAnswersPerRun": 65,
+    "bilingualValueConsistencyPerRun": true,
+    "failuresPerRun": 0
+  },
+  "priorityParaphraseRuns": {
+    "runs": 2,
+    "questionsPerRun": 1848,
+    "hitsPerRun": 1848,
+    "qaNaturalQuestionsPerRun": 840,
+    "qaNaturalHitsPerRun": 840,
+    "qaNaturalIntentChecksPerRun": 1428,
+    "qaNaturalIntentHitsPerRun": 1428,
+    "failuresPerRun": 0
+  },
+  "painSpecificityGate": "42 cases x 6 specificity contracts plus 5-case conflict quarantine passed",
+  "evidenceMinimization": {
+    "committed": "This aggregate and QA documentation",
+    "localOnly": "Two natural phrasing raw summaries",
+    "fullQuestionsRetained": false,
+    "fullAnswersRetained": false,
+    "medicalValuesRetained": false,
+    "credentialsOrRequestIdentifiersRetained": false
+  }
+}

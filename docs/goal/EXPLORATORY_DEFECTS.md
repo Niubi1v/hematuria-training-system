@@ -271,7 +271,7 @@
 
 ## HEM-P1-050：用户指定自然问法未稳定路由到 canonical 病史且英文复合问句扩张通用 pain
 
-- 级别/状态：P1，OPEN / FAIL_LOCAL_QA；Production `70ea9b3c7b31e11a84878de5c277cac60f35481c`。
+- 级别/状态：P1，RESOLVED_LOCAL_QA；Production `9b7fcd0` 当前双跑保持840/840自然场景、1,428/1,428 intent与3,150/3,150扩展问法通过。
 - 页面/路径：Patient Agent 问诊链路 `/cases/P001/`–`/cases/P042/` / `/api/agent-chat/`；中文和英文；无 viewport 依赖的本地 deterministic handler 审计。
 - 操作步骤：对每例依次发送用户指定的 10 类问法及英文等价问法，包括尿痛四种表达、全程/分段/终末否定、尿频尿急尿痛复合问法及腰痛/发热/血块复合问法；记录 canonical intent、known/unknown、极性、冲突隔离、双语等义和额外 slot，只保存计数与 case ID。
 - 预期：已知 true/false 保持病例极性；否定词不反转事实；复合/选择问题逐项路由；missing 可自然不确定；needs_review/冲突继续隔离；中英文医学含义一致；不扩张未问病史。
@@ -283,6 +283,8 @@
 - 最小证据：`tests/exploratory/patient-natural-phrasing-audit.mjs`、`reports/70ea9b3-patient-natural-phrasing-audit.json`、`reports/70ea9b3-priority-qa-summary.json`。逐问答正文未生成或保留。
 - 建议方向：扩展 canonical alias/复合拆分，优先覆盖全程与初始/终末选择、否定终末问法、尿频尿急尿痛三联和腰痛/发热/血块；特异 `flank_pain` 不应同时扩张通用 `pain`。将本 840 场景矩阵作为 fail-closed 门禁，不得放宽 unknown、冲突或额外病史断言。
 - 医学专家裁决：确认路由、极性和额外披露工程缺陷不需要医学裁决；事实值、needs_review 与双语医学表述最终批准仍依赖现有来源治理和 HEM-P0-001/023。
+- `9b7fcd0`独立复测：自然问法双跑每轮840/840场景、1,428/1,428 intent；错误unknown 0/838、极性错误0/578、正确unknown 512/512、冲突隔离42/42、双语等义420/420、额外病史0、providerCalls=0。扩展矩阵双跑每轮3,150/3,150，错误unknown 0/1,095、极性错误0、正确unknown 1,990、quarantine 65；优先问法1,848/1,848及42×6 pain specificity/5例冲突范围门禁通过。
+- 当前838/512与历史914/436的分类计数差异来自当前治理投影中known/unknown集合变化；分母由测试从当前审核状态计算，QA没有修改医学数据、审核状态或期望极性。最小聚合为`artifacts/exploratory-qa/reports/9b7fcd0-round28-hem-p1-050-regression-summary.json`。
 
 ## HEM-P1-051：Preview 自然纠错、澄清和多轮复合追问被 rule fallback 接管
 

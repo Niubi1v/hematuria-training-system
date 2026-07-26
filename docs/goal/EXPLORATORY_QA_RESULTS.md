@@ -1,7 +1,7 @@
 # 探索式 QA 执行结果
 
 状态：长期执行中；当前 Preview/本地自动化已恢复并扩展，仍有 HEM-P1-045/046、HEM-P2-044、Pages 部署不匹配、真机和医学阻塞，不得视为最终生产验收。
-当前 Production 基线：`9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。第27轮提交前 QA HEAD：`5dbc7980cc6983f981fcc903f492f10bf9934dff`；最终 QA HEAD 以本轮报告提交与远程同步状态为准。
+当前 Production 基线：`9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。第28轮提交前 QA HEAD：`845114b9fd96272f553008fee81db25cdf198742`；最终 QA HEAD 以本轮报告提交与远程同步状态为准。
 
 ## 基线核验
 
@@ -509,3 +509,10 @@ Patient Session 报告记录 295 次 `unsafe_deterministic_answer` source-cell �
 - 公开handler适配器连续2/2均18/18通过且providerCalls=0；官方病史路由门禁2/2通过，安全投影保持45 approved、69 governed unknown、12 unreviewed history，18项双语医学冲突仍隔离。
 - 首次旧QA oracle产生的2,209实例/114组失败被确认是测试期望错误：它要求治理命中必须公开返回slot。修正后的oracle要求精确治理路由和严格公开抑制，不放宽可收集事实、安全边界或冲突隔离；该首次运行不计产品失败。
 - HEM-P1-030更新为`RESOLVED_LOCAL_QA`。本轮不需要真实Preview或provider，不新增P0/P1/P2，也不改变HEM-P1-057/058、HEM-P0-001/023、来源修订和医学审核阻塞。
+
+## 2026-07-26 第 28 轮：`9b7fcd0` HEM-P1-050确定性自然问法复测
+
+- 840自然问法/1,428 intent审计双跑逐字节一致：每轮840/840场景、1,428/1,428 intent、错误unknown 0/838、极性错误0/578、正确unknown 512/512、冲突隔离42/42、双语等义420/420、额外病史0、providerCalls=0。
+- 3,150问扩展矩阵双跑均3,150/3,150；每轮1,095 known错误unknown 0、极性错误0、1,990 correct unknown、65 quarantine、双语值一致。优先改写门禁双跑1,848/1,848，其中指定QA自然问法840/840、intent 1,428/1,428。
+- pain specificity相邻门禁保持42×6特异合同与5例冲突隔离；dysuria、flank pain等特异问法不扩张generic pain，独立通用pain仍可回答。
+- 当前known/unknown分母相对历史变化由当前治理投影计算，不构成医学真值或审核状态变更。HEM-P1-050保持`RESOLVED_LOCAL_QA`；本轮不运行Preview、不新增P0/P1/P2，也不改变HEM-P1-057/058和医学/来源阻塞。

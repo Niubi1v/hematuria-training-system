@@ -339,3 +339,14 @@
 | 医学冲突隔离 | 144/144直接隔离事件；18项冲突事实保持待裁决 | PASS_ENGINEERING / BLOCKED_MEDICAL |
 
 - 全42行原HEM-P1-030单一`REGRESSED_LOCAL_QA`标记清除为`RESOLVED_LOCAL_QA`。40个受控unknown只说明公开投影正确抑制不可收集事实，不代表这些病例事实已被医学批准。
+
+## Production `9b7fcd0` 第 28 轮HEM-P1-050自然问法增量
+
+| 场景 | 每轮结果 | 状态 |
+| --- | --- | --- |
+| 42×10×双语自然问法 | 840/840场景、1,428/1,428 intent，双跑一致 | PASS_LOCAL_QA |
+| 极性与unknown | 错误unknown 0/838、极性错误0/578、正确unknown 512/512 | PASS_LOCAL_QA |
+| 双语与治理 | 420/420等义、42/42冲突隔离、额外病史0 | PASS_LOCAL_QA / BLOCKED_MEDICAL |
+| 15 intent扩展问法 | 3,150/3,150；1,095 known错误unknown 0、1,990 correct unknown、65 quarantine | PASS_LOCAL_QA |
+
+- 全42行HEM-P1-050工程列继续`PASS_LOCAL_CONTRACT / RESOLVED_LOCAL_QA`。正确unknown及quarantine只证明fail-closed，不批准对应医学事实。
