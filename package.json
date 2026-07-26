@@ -9,6 +9,8 @@
   },
   "scripts": {
     "dev": "next dev",
+    "dev:full": "node scripts/dev-fullstack.mjs",
+    "dev:full:stop": "node scripts/dev-fullstack.mjs --stop",
     "build": "next build",
     "typecheck": "tsc --noEmit",
     "build:github": "next build",
@@ -59,6 +61,7 @@
     "test:release-v14": "tsx scripts/test-release-v14-import.ts",
     "test:adversarial": "tsx scripts/test-adversarial-scoring.ts",
     "test:e2e": "playwright test",
+    "test:first-stage:local": "node scripts/run-local-fullstack-tests.mjs",
     "test:e2e:preview": "node scripts/run-preview-blackbox.mjs",
     "test:e2e:preview:stability": "node scripts/run-preview-blackbox.mjs --grep @preview-stability",
     "test:preview-config": "node scripts/test-preview-blackbox-config.mjs",
