@@ -391,3 +391,17 @@ SHA-256：
 
 - 5 个超限 trace 的流式扫描覆盖 3,256 个 ZIP 条目、733,292,551 字节，敏感值命中 0；临时硬链接目录和 detached worktree 均已删除，不进入 Git。
 - 本轮不生成截图、录像、Playwright trace、完整 HTML 报告或问答 transcript；唯一新增证据为不含凭据值的计数聚合。
+
+## Production `9b7fcd0` 第 22 轮存储恢复证据
+
+| 证据名称 | 对应测试或缺陷 | 文件路径 | 文件大小 | 是否提交 Git | 未提交原因 | 本机保留位置 |
+| --- | --- | --- | ---: | --- | --- | --- |
+| 第 22 轮脱敏聚合 | 44 次最终有效场景及缺陷处置 | `artifacts/exploratory-qa/reports/9b7fcd0-round22-storage-recovery-summary.json` | 提交后记录 | 是 | — | 仓库路径 |
+| HEM-P1-064 移动代表截图 | 390×844 偏好写失败后 English 未切换 | `artifacts/exploratory-qa/screenshots/9b7fcd0-shared-storage-unavailable-write-switch-390x844.png` | 42,303 B | 是 | — | 仓库路径 |
+| 44 份逐场景摘要 | 11 场景 × 4 viewport | `artifacts/exploratory-qa/reports/9b7fcd0-*-summary.json` | 44 份/约 42 KB | 否 | 聚合已保留验收计数，逐份重复 | 原路径，本机未跟踪 |
+| 44 份定向 trace | 刷新、pointer、Storage 与 restart 恢复 | `artifacts/exploratory-qa/traces/9b7fcd0-*.zip` | 44 份/约 127 MB | 否 | 体积大，可由已提交测试重建 | 原路径，本机未跟踪 |
+| 重复截图、console/network、失败录像 | 逐 viewport 诊断 | `artifacts/exploratory-qa/{screenshots,reports,videos}/9b7fcd0-*` | 本机证据集 | 否 | 聚合与一张代表截图足够；可能含本机运行上下文 | 原路径，本机未跟踪 |
+
+- 聚合不保存草稿、pointer、attempt/request ID、header、Cookie、token、签名、环境值、问答正文或医学事实；代表截图已人工复核，只显示公开界面与固定存储告警。
+- 沙箱 junction 访问失败、过宽测试收集及修正前 QA 断言不计产品结果；最终 44 份摘要一一对应场景与 viewport，36 PASS_EMULATION、8 FAIL_EMULATION。
+- 本轮全部 `9b7fcd0-*` 证据已流式扫描：266 个物理文件、2,414 个 ZIP 条目、309,109,610 字节，敏感值命中 0；扫描器只输出计数，不输出候选值。

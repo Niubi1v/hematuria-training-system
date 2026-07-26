@@ -611,3 +611,12 @@
 - 最小复现测试：同文件`@restart-remove-failure`；失败断言要求新attempt、submitted=0、草稿不保留。
 - 建议方向：分别尝试并验证每个清理键，只有全部必要状态清理成功才reload；失败时显示当前语言错误并允许重试。或使用新attempt pointer的原子切换，同时确保旧token不可继续且不误删其他病例/语言/participant状态。
 - 是否需要医学专家裁决：否；纯显式重启、存储清理和状态一致性问题。
+## 2026-07-26 Production `9b7fcd0` 第 22 轮状态更新
+
+- **HEM-P1-061：`PASS_EMULATION 8/8`。** 跨病例/语言终态 pointer 4/4、7 类畸形身份字段矩阵 4/4 均未 hydrate 终态，客户端生成的新 pointer 六个身份字段完整。原缺陷在本地自动 viewport 层已修复；不扩张为真实浏览器存储损坏证据。
+- **HEM-P1-063：`PASS_EMULATION 4/4`。** transient Storage API 恢复后 pointer 与草稿均落盘，刷新命中 pointer 指向状态，排除当前 pointed key 后孤儿标记数为 0。旧 QA 计数曾把 pointed file 错算孤儿，已修正测试。
+- **HEM-P1-064：`OPEN / FAIL_EMULATION 4/4` 扩展。** 原目录全页崩溃路径已 4/4 通过，但 P001 在语言偏好 `setItem` 抛错时点击 English 后 4/4 仍为中文、`html lang=zh-CN`，只显示存储提示。预期语言切换继续生效，仅持久化失败；建议把 React 语言状态更新与偏好写入解耦。
+- **HEM-P2-065：`PASS_EMULATION 8/8`。** 畸形 pointer、未验证 summary、孤儿 attempt 和重复跨病例 summary 均不再制造“进行中/已完成”。
+- **HEM-P1-066：`PASS_EMULATION 8/8`。** 一次 attempt/pointer/session capability 删除异常均 fail-closed：不导航、不部分清理，原 attempt、草稿、阶段和能力保持可重试，并显示本地化失败提示。旧测试强制等待 reload 与“故障后仍应清空”不符合缺陷文档允许的 fail-closed 分支，已修正。
+- **HEM-P2-062：`OPEN / FAIL_EMULATION 4/4`。** 英文损坏缓存恢复提示仍为中文；成功保存恢复后旧自动保存告警仍可见。损坏值清理、内存恢复、后续落盘和刷新恢复均通过，故范围收敛为提示语言与陈旧状态清除。
+- 本轮无新增缺陷 ID，无医学专家裁决需求；真实磁盘耗尽、浏览器策略封锁和真机 Storage 行为仍标记 `BLOCKED_REAL_STORAGE / BLOCKED_REAL_BROWSER`。

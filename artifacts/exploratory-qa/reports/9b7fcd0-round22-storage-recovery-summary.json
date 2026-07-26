@@ -1,0 +1,127 @@
+{
+  "schemaVersion": "exploratory-round22-storage-recovery-v1",
+  "date": "2026-07-26",
+  "productionBaseline": "9b7fcd0d975533c7c6eda5614ca3b2978c9dce55",
+  "qaStartHead": "995627e8ca360db6a7e17d731ce43a9c26f20fcb",
+  "environment": {
+    "kind": "local_headless_chromium_emulation",
+    "node": "24.14.0",
+    "viewports": [
+      "1440x900",
+      "1280x720",
+      "390x844",
+      "360x800"
+    ],
+    "realBrowserStorageFailureClaimed": false,
+    "realDeviceClaimed": false
+  },
+  "execution": {
+    "authoritativeScenarioRuns": 44,
+    "passed": 36,
+    "failed": 8,
+    "retries": 0,
+    "invalidEnvironmentOrQaInvocationRunsExcluded": true,
+    "notes": [
+      "A sandbox-only junction access failure, a broad test-collection invocation, and superseded pre-correction assertions were excluded from product pass/fail counts.",
+      "The final counts use one structured summary for each scenario and viewport after QA assertion corrections."
+    ]
+  },
+  "scenarios": [
+    {
+      "name": "storage-fault-recovery",
+      "passed": 0,
+      "failed": 4,
+      "defectId": "HEM-P2-062",
+      "finding": "English corrupted-cache recovery warning remains Chinese; a successful later save leaves the obsolete autosave warning visible."
+    },
+    {
+      "name": "terminal-pointer-scope-isolation",
+      "passed": 4,
+      "failed": 0,
+      "defectId": null
+    },
+    {
+      "name": "malformed-pointer-fields",
+      "passed": 4,
+      "failed": 0,
+      "defectId": null,
+      "variantsPerViewport": 7,
+      "unsafeHydrationCount": 0
+    },
+    {
+      "name": "attempt-storage-api-recovery",
+      "passed": 4,
+      "failed": 0,
+      "defectId": null,
+      "pointerRecovered": true,
+      "markerRecovered": true,
+      "orphanMarkerCount": 0
+    },
+    {
+      "name": "history-log-storage-recovery",
+      "passed": 4,
+      "failed": 0,
+      "defectId": null
+    },
+    {
+      "name": "catalog-storage-unavailable",
+      "passed": 4,
+      "failed": 0,
+      "defectId": null
+    },
+    {
+      "name": "catalog-progress-integrity",
+      "passed": 4,
+      "failed": 0,
+      "defectId": null
+    },
+    {
+      "name": "restart-remove-failure",
+      "passed": 4,
+      "failed": 0,
+      "defectId": null,
+      "contract": "fail_closed_without_navigation"
+    },
+    {
+      "name": "shared-storage-unavailable",
+      "passed": 0,
+      "failed": 4,
+      "defectId": "HEM-P1-064",
+      "finding": "After English is selected while language preference persistence throws, the page remains Chinese although the warning is visible."
+    },
+    {
+      "name": "restart-cleanup-variants",
+      "passed": 4,
+      "failed": 0,
+      "defectId": null,
+      "contract": "fail_closed_without_partial_reset"
+    },
+    {
+      "name": "catalog-summary-pollution",
+      "passed": 4,
+      "failed": 0,
+      "defectId": null
+    }
+  ],
+  "defectDisposition": {
+    "HEM-P1-061": "PASS_EMULATION_8_OF_8",
+    "HEM-P1-063": "PASS_EMULATION_4_OF_4",
+    "HEM-P1-064": "OPEN_EXPANDED_SHARED_LANGUAGE_STORAGE_4_OF_4",
+    "HEM-P2-065": "PASS_EMULATION_8_OF_8",
+    "HEM-P1-066": "PASS_EMULATION_8_OF_8_FAIL_CLOSED",
+    "HEM-P2-062": "OPEN_FAIL_EMULATION_4_OF_4"
+  },
+  "newDefects": {
+    "p0": 0,
+    "p1": 0,
+    "p2": 0
+  },
+  "evidenceSecretScan": {
+    "physicalFiles": 266,
+    "zipEntries": 2414,
+    "streamedBytes": 309109610,
+    "findings": 0
+  },
+  "credentialsRetained": false,
+  "medicalFactsEvaluated": false
+}

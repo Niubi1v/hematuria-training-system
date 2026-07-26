@@ -215,3 +215,10 @@ console 文本对 Authorization、Cookie、签名、token、secret 和 API key �
 - `df9c35f..9b7fcd0` 只含 4 个仓库级 Skill 的 `SKILL.md`、4 个 `agents/openai.yaml` 以及 2 份 Skill 集成证据文档；`app/src/api/server/data`、`package.json` 与各 lockfile 均无差异。
 - 本轮按比例只执行 4 个官方 Skill 校验、`openai.yaml`、引用文件与 pnpm 脚本存在性、repository secret scan、`data/**` 零差异和最终 clean gate。因授权增量不进入运行时，本轮不触发完整 Playwright、42 例、自然语言矩阵或七阶段昂贵回归。
 - 本门禁不得用于关闭既有运行时缺陷、批准医学事实或替代 Preview/真机证据。完成并普通 push 后，长期 QA 后续仍从尚未独立复测的运行时缺陷与外部阻塞项继续。
+
+## 2026-07-26 第 22 轮 `9b7fcd0` 存储恢复回归与下一顺序
+
+- 在 Skills 门禁独立提交并 push 后，恢复此前暂停的存储/身份/目录/restart 定向回归；44 次最终有效运行覆盖 11 个场景、4 个固定 viewport，未重跑 42 例、自然语言矩阵或七阶段全套。
+- 下一运行时优先级：主 Goal 修复 HEM-P1-064 的语言偏好写失败切换原子性，以及 HEM-P2-062 的英文损坏缓存告警和成功保存后旧告警清除；修复后只重跑两场景 8 项及邻接语言切换，不扩大为全量回归。
+- HEM-P1-061、HEM-P1-063、HEM-P2-065、HEM-P1-066 已取得本地 `PASS_EMULATION` 定向证据；真实浏览器存储策略/磁盘故障仍需受控环境，不能由方法级 Storage 异常仿真替代。
+- 长期 Goal 的医学裁决、Preview 受保护故障注入、真实手机软键盘/safe-area 和其他未完成项继续保持原阻塞或后续队列，不因本轮 36/44 通过而结束。

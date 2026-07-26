@@ -458,3 +458,14 @@ Patient Session 报告记录 295 次 `unsafe_deterministic_answer` source-cell �
 - 4/4 官方 Skill 校验通过；4/4 `openai.yaml` 结构、双引号、字段长度和 `$skill-name` 引用通过；按完整引用口径，38/38 个 pnpm 脚本和 17/17 个文件/目录均存在。上游证据的 37/16 与本轮 38/17 差异来自是否计入通用 `test` 脚本及 `docs/medical-review/` 目录，不是缺失或运行时缺陷。
 - 仅含已提交内容的临时 detached worktree 中，官方 repository scanner 覆盖 461 个跟踪/候选文件及可达文本历史，敏感值命中 0。原 QA 工作树的通用 scanner 对 5 个未跟踪大型 trace 按大小上限 fail-closed；这 5 个文件另经无大小上限流式解包扫描，覆盖 3,256 个 ZIP 条目和 733,292,551 字节，命中 0。没有输出、保存或提交任何凭据值。
 - `data/**` 零差异。完整 Playwright、42 例、自然语言矩阵和七阶段回归未触发，理由是本次授权增量仅为仓库级 Skills 与证据文档、运行时代码和依赖均无变化；因此本轮只形成仓库门禁结论，不推断 HEM-P1-061/063/064/065/066 等既有运行时缺陷已关闭。
+
+## 2026-07-26 第 22 轮：`9b7fcd0` 存储恢复定向回归
+
+- 最终有效矩阵为 11 场景 × 4 viewport = 44 次，`36 PASS_EMULATION / 8 FAIL_EMULATION`，0 retry。沙箱 junction 权限失败、过宽测试收集和修正前 QA 断言均单独排除，不计产品复现次数。
+- HEM-P1-061：跨病例/语言终态 pointer 4/4、7 类畸形身份 pointer 4/4 均安全替换，终态泄漏 0；状态为 `PASS_EMULATION 8/8`。
+- HEM-P1-063：临时 Storage API 故障后 pointer、草稿和刷新恢复 4/4，真正孤儿标记数 0；状态为 `PASS_EMULATION 4/4`。
+- HEM-P1-064：病例目录在 localStorage 读写全不可用时 42 卡/搜索/中英文 4/4 可用；但语言偏好写失败后点击 English 的 4/4 仍保持中文和 `html lang=zh-CN`，仅显示“语言偏好无法保存”，故缺陷保持 OPEN 并扩展 shared-language 场景。
+- HEM-P2-065：畸形 pointer/未验证 summary 与重复跨病例 summary 两组共 8/8 fail-closed，状态为 `PASS_EMULATION`。
+- HEM-P1-066：一次 attempt 删除、pointer 删除或 session capability 删除异常时，4+4 次均不导航、不部分重置、保留当前可重试状态并显示失败提示；符合原缺陷文档允许的 fail-closed 分支，状态为 `PASS_EMULATION 8/8`。
+- HEM-P2-062：4/4 仍失败。英文界面的损坏缓存恢复提示仍为中文；中英文在后续保存成功后均保留过期自动保存告警。数据恢复本身、刷新恢复、网络和 console 均正常，缺陷保持 OPEN。
+- history-log 一次写失败的同 ID 手动恢复 4/4 通过。没有新增 P0/P1/P2；本轮不评价医学事实，也不把方法级 Storage 异常仿真冒充真实磁盘、浏览器策略或真机通过。

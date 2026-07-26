@@ -260,3 +260,18 @@
 | 完整运行时回归 | 授权增量不含运行时、依赖或医学数据变化，按比例未触发 | NOT_TRIGGERED_NO_RUNTIME_DELTA |
 
 - 本表只表示仓库级 Skills 集成门禁，不扩张为病例、Patient Agent、Data Agent、Preview、真机或七阶段运行时通过，也不改变任何医学阻塞或 `needs_revision` 状态。
+
+## Production `9b7fcd0` 第 22 轮存储与身份增量
+
+| 场景 | 结果 | 状态 |
+| --- | --- | --- |
+| 跨病例/语言终态 pointer | 4/4 无终态 hydrate | PASS_EMULATION；HEM-P1-061 |
+| 7 类畸形身份 pointer | 4/4、28/28 变体安全替换 | PASS_EMULATION；HEM-P1-061 |
+| attempt Storage API 恢复 | 4/4 pointer/草稿/刷新恢复、孤儿 0 | PASS_EMULATION；HEM-P1-063 |
+| history-log 写失败恢复 | 4/4 单 ID、pending 清零 | PASS_EMULATION |
+| 目录 localStorage 全不可用 | 4/4 保持 42 卡、搜索与页面可用 | PASS_EMULATION；HEM-P1-064 原路径 |
+| 共享语言偏好写失败 | 4/4 点击 English 后仍中文 | FAIL_EMULATION；HEM-P1-064 扩展 |
+| 目录畸形进度/summary 污染 | 8/8 fail-closed | PASS_EMULATION；HEM-P2-065 |
+| restart 一次删除故障 | attempt 4/4 + pointer/capability 4/4 均不导航、不部分重置 | PASS_EMULATION；HEM-P1-066 |
+| 损坏缓存与临时写失败恢复 | 数据恢复 4/4；提示语言/陈旧告警 0/4 | FAIL_EMULATION；HEM-P2-062 |
+| 真实浏览器/磁盘 Storage 故障 | 方法级异常注入不能替代 | BLOCKED_REAL_STORAGE / BLOCKED_REAL_BROWSER |

@@ -29,6 +29,11 @@ const DIRS = {
 
 const viewportSlug = (testInfo) => testInfo.project.name.replace(/^qa-/, "");
 const safeSlug = (value) => value.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-|-$/g, "");
+const PRODUCTION_BASELINE = process.env.QA_PRODUCTION_BASELINE || "77815862a0abebff67b8d958f66944a0e11b068f";
+const EVIDENCE_PREFIX = safeSlug(process.env.QA_EVIDENCE_PREFIX || PRODUCTION_BASELINE.slice(0, 7));
+const ARTIFACT_RUN_PREFIX = process.env.QA_ARTIFACT_RUN_PREFIX
+  ? `${safeSlug(process.env.QA_ARTIFACT_RUN_PREFIX)}-`
+  : "";
 const redact = (value) => String(value)
   .replace(/(authorization|cookie|set-cookie|x-training-state|api[-_ ]?key|secret|token)\s*[:=]\s*[^\s,;]+/gi, "$1=[REDACTED]")
   .replace(/\b(?:bearer\s+)?[a-z0-9_-]{32,}\b/gi, "[REDACTED]");
@@ -239,7 +244,7 @@ async function withEvidence(browser, testInfo, scenario, run, {
 } = {}) {
   await ensureDirs();
   const viewport = testInfo.project.use.viewport;
-  const slug = `${safeSlug(scenario)}-${viewportSlug(testInfo)}`;
+  const slug = `${ARTIFACT_RUN_PREFIX}${safeSlug(scenario)}-${viewportSlug(testInfo)}`;
   const videoDir = path.join(DIRS.tempVideos, slug);
   const context = await browser.newContext({
     viewport,
@@ -330,9 +335,14 @@ function observeAdditionalPage(page, label, consoleEvents, networkEvents) {
 }
 
 async function saveShot(page, testInfo, name, fullPage = true) {
-  const target = path.join(DIRS.screenshots, `${safeSlug(name)}-${viewportSlug(testInfo)}.png`);
+  const target = path.join(DIRS.screenshots, `${ARTIFACT_RUN_PREFIX}${safeSlug(name)}-${viewportSlug(testInfo)}.png`);
   await page.screenshot({ path: target, fullPage, animations: "disabled" });
   await testInfo.attach(path.basename(target), { path: target, contentType: "image/png" });
+}
+
+function summaryFile(slug) {
+  const prefixedSlug = slug.startsWith(`${EVIDENCE_PREFIX}-`) ? slug : `${EVIDENCE_PREFIX}-${slug}`;
+  return path.join(DIRS.reports, `${prefixedSlug}-summary.json`);
 }
 
 async function installDeterministicApi(page, transcript) {
@@ -859,7 +869,7 @@ test("stages 3-6 support governed return, relock, rebuild, and stable final scor
     const failedNetworkRequestCount = networkEvents.filter((item) => item.status === "FAILED").length;
     const summary = {
       schemaVersion: "exploratory-stage-return-ui-v1",
-      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      productionBaseline: PRODUCTION_BASELINE,
       source: "production_handler_local_ui",
       result: non200.length || consoleErrorCount || failedNetworkRequestCount ? "FAIL_EMULATION" : "PASS_EMULATION",
       language,
@@ -875,7 +885,7 @@ test("stages 3-6 support governed return, relock, rebuild, and stable final scor
       responseBodiesRetained: false,
       credentialsRetained: false
     };
-    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    await writeFile(summaryFile(slug), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
     expect(stageFeedbacks).toHaveLength(11);
     expect(stageFeedbacks.every((item) => item.requestIdPresent)).toBe(true);
     expect(scores).toHaveLength(1);
@@ -905,7 +915,7 @@ test("HEM-P2-059 English physical-exam category placeholders keep unique React k
     await saveShot(page, testInfo, "hem-p2-059-english-physical-exam-category-keys", false);
     const summary = {
       schemaVersion: "exploratory-hem-p2-059-v1",
-      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      productionBaseline: PRODUCTION_BASELINE,
       result: duplicateKeyErrors.length ? "FAIL_EMULATION" : "PASS_EMULATION",
       language: "en",
       viewport: testInfo.project.use.viewport,
@@ -916,7 +926,7 @@ test("HEM-P2-059 English physical-exam category placeholders keep unique React k
       responseBodiesRetained: false,
       credentialsRetained: false
     };
-    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    await writeFile(summaryFile(slug), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
     expect(failedNetworkRequestCount).toBe(0);
     expect(placeholderHeadingCount).toBeGreaterThan(1);
     expect(duplicateKeyErrors, "HEM-P2-059 duplicate React keys must be eliminated without approving missing English source labels").toHaveLength(0);
@@ -1079,7 +1089,7 @@ test("stage 3-6 drafts survive reload and the terminal report relocks prior stag
     const failedNetworkRequestCount = networkEvents.filter((item) => item.status === "FAILED").length;
     const summary = {
       schemaVersion: "exploratory-stage-persistence-v1",
-      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      productionBaseline: PRODUCTION_BASELINE,
       result: unexpectedActionResponses.length || unexpectedConsoleErrors.length || failedNetworkRequestCount
         ? "FAIL_EMULATION"
         : "PASS_EMULATION",
@@ -1104,7 +1114,7 @@ test("stage 3-6 drafts survive reload and the terminal report relocks prior stag
       responseBodiesRetained: false,
       credentialsRetained: false
     };
-    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    await writeFile(summaryFile(slug), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
     expect(unexpectedActionResponses).toEqual([]);
     expect(unexpectedConsoleErrors).toEqual([]);
     expect(failedNetworkRequestCount).toBe(0);
@@ -1222,7 +1232,7 @@ test("saved stage progress can rebuild capability after a clean tab boundary @cl
     );
     const summary = {
       schemaVersion: "exploratory-clean-tab-recovery-v1",
-      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      productionBaseline: PRODUCTION_BASELINE,
       result: capabilityRecovered ? "PASS_EMULATION" : "FAIL_EMULATION",
       defectId: capabilityRecovered ? null : "HEM-P1-060",
       language,
@@ -1245,7 +1255,7 @@ test("saved stage progress can rebuild capability after a clean tab boundary @cl
       expectedConflictConsoleErrors: knownConflictConsoleErrors.length,
       unexpectedConsoleErrors: unexpectedConsoleErrors.length
     };
-    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    await writeFile(summaryFile(slug), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
     expect(failedNetworkRequestCount).toBe(0);
     expect(unexpectedConsoleErrors).toEqual([]);
     expect(initializationFailures, "saved local progress must regain a scoped capability after tab session storage is lost").toEqual([]);
@@ -1320,7 +1330,7 @@ test("case and language draft storage remains isolated @client-storage-isolation
     const failedNetworkRequestCount = networkEvents.filter((item) => item.status === "FAILED").length;
     const summary = {
       schemaVersion: "exploratory-client-storage-isolation-v1",
-      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      productionBaseline: PRODUCTION_BASELINE,
       result: non200.length || failedNetworkRequestCount ? "FAIL_EMULATION" : "PASS_EMULATION",
       viewport: testInfo.project.use.viewport,
       languageTransition: `${initialLanguage}->${otherLanguage}`,
@@ -1333,7 +1343,7 @@ test("case and language draft storage remains isolated @client-storage-isolation
       responseBodiesRetained: false,
       credentialsRetained: false
     };
-    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    await writeFile(summaryFile(slug), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
     expect(storageAudit.attemptKeyCount).toBeGreaterThanOrEqual(3);
     expect(storageAudit.pointerKeyCount).toBeGreaterThanOrEqual(3);
     expect(storageAudit.p001InitialLanguageKeys).toBeGreaterThanOrEqual(2);
@@ -1456,7 +1466,7 @@ test("concurrent tabs keep one authoritative attempt mutation and let the stale 
     );
     const summary = {
       schemaVersion: "exploratory-multi-tab-attempt-v1",
-      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      productionBaseline: PRODUCTION_BASELINE,
       result: accepted.length === 1 && staleRejected.length === 1 && requestIdCollisions === 0 && recoverySucceeded
         ? "PASS_EMULATION"
         : "FAIL_EMULATION",
@@ -1485,7 +1495,7 @@ test("concurrent tabs keep one authoritative attempt mutation and let the stale 
       responseBodiesRetained: false,
       credentialsRetained: false
     };
-    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    await writeFile(summaryFile(slug), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
     expect(concurrentActions).toHaveLength(2);
     expect(accepted).toHaveLength(1);
     expect(staleRejected).toHaveLength(1);
@@ -1633,7 +1643,7 @@ test("a new page restores a completed report as read-only without duplicate scor
       && duplicateScores === 0;
     const summary = {
       schemaVersion: "exploratory-terminal-report-reopen-v1",
-      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      productionBaseline: PRODUCTION_BASELINE,
       result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
       language,
       viewport: testInfo.project.use.viewport,
@@ -1657,7 +1667,7 @@ test("a new page restores a completed report as read-only without duplicate scor
       responseBodiesRetained: false,
       credentialsRetained: false
     };
-    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    await writeFile(summaryFile(slug), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
     expect(failedNetworkRequestCount).toBe(0);
     expect(unexpectedConsoleErrors).toEqual([]);
     expect(resultPassed).toBe(true);
@@ -1732,7 +1742,7 @@ test("corrupted and temporarily unwritable local storage recovers without stale 
     await expect(page.getByRole("alert").first()).toBeVisible();
     const writeFailureAlertText = await page.getByRole("alert").first().innerText();
     const writeFailureWarningLocalized = language === "zh"
-      ? /自动保存失败/.test(writeFailureAlertText)
+      ? /自动保存(?:失败|暂时不可用)/.test(writeFailureAlertText)
       : !/[\u3400-\u9fff]/u.test(writeFailureAlertText);
     const failedDraftPersisted = await page.evaluate(({ selectedLanguage, marker }) => {
       const pointer = JSON.parse(localStorage.getItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`) || "null");
@@ -1769,7 +1779,7 @@ test("corrupted and temporarily unwritable local storage recovers without stale 
       && recoveredAfterReload;
     const summary = {
       schemaVersion: "exploratory-storage-fault-recovery-v1",
-      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      productionBaseline: PRODUCTION_BASELINE,
       result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
       defectId: resultPassed ? null : "HEM-P2-062",
       language,
@@ -1790,7 +1800,7 @@ test("corrupted and temporarily unwritable local storage recovers without stale 
       responseBodiesRetained: false,
       credentialsRetained: false
     };
-    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    await writeFile(summaryFile(slug), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
     expect(corruptPayloadRemoved).toBe(true);
     expect(failedDraftPersisted).toBe(false);
     expect(recoveredAfterReload).toBe(true);
@@ -1875,7 +1885,7 @@ test("an incompatible completed attempt pointer cannot hydrate another case or l
       && p002PointerCompatible;
     const summary = {
       schemaVersion: "exploratory-terminal-pointer-isolation-v1",
-      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      productionBaseline: PRODUCTION_BASELINE,
       result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
       defectId: resultPassed ? null : "HEM-P1-061",
       targetLanguage,
@@ -1901,7 +1911,7 @@ test("an incompatible completed attempt pointer cannot hydrate another case or l
       requestIdsRetained: false,
       credentialsRetained: false
     };
-    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    await writeFile(summaryFile(slug), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
     expect(failedNetworkRequestCount).toBe(0);
     expect(unexpectedConsoleErrors).toEqual([]);
     expect(crossLanguageReportVisible, "a completed attempt from another language must not hydrate the active language").toBe(false);
@@ -1995,7 +2005,10 @@ test("malformed attempt pointers fail closed before terminal state hydration @ma
     const expectedNavigationAborts = networkEvents.filter((item) =>
       item.status === "FAILED"
       && item.failure === "net::ERR_ABORTED"
-      && item.path === "/api/session/init/"
+      && (
+        ["/api/health/", "/api/session/init/", "/api/training-action/"].includes(item.path)
+        || item.path.startsWith("/_next/static/chunks/")
+      )
     );
     const failedNetworkRequestCount = networkEvents.filter((item) =>
       item.status === "FAILED"
@@ -2019,7 +2032,7 @@ test("malformed attempt pointers fail closed before terminal state hydration @ma
     const resultPassed = unsafeHydrationCount === 0;
     const summary = {
       schemaVersion: "exploratory-malformed-pointer-fields-v1",
-      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      productionBaseline: PRODUCTION_BASELINE,
       result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
       defectId: resultPassed ? null : "HEM-P1-061",
       language,
@@ -2039,7 +2052,7 @@ test("malformed attempt pointers fail closed before terminal state hydration @ma
       requestIdsRetained: false,
       credentialsRetained: false
     };
-    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    await writeFile(summaryFile(slug), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
     expect(failedNetworkRequestCount).toBe(0);
     expect(unexpectedConsoleErrors).toEqual([]);
     expect(observations, "all malformed pointers must be replaced before terminal state hydration").toEqual(
@@ -2136,11 +2149,13 @@ test("attempt storage recovers its pointer after a transient API outage @attempt
     await page.waitForTimeout(600);
     const afterReload = await page.evaluate(({ selectedLanguage, expectedMarker }) => {
       const pointer = JSON.parse(localStorage.getItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`) || "null");
-      const pointedState = pointer?.attemptId
-        ? JSON.parse(localStorage.getItem(`hematuria-attempt-v3:P001:free:${selectedLanguage}:${pointer.attemptId}`) || "null")
+      const attemptPrefix = `hematuria-attempt-v3:P001:free:${selectedLanguage}:`;
+      const pointedKey = pointer?.attemptId ? `${attemptPrefix}${pointer.attemptId}` : "";
+      const pointedState = pointedKey
+        ? JSON.parse(localStorage.getItem(pointedKey) || "null")
         : null;
       const orphanMarkerCount = Object.keys(localStorage)
-        .filter((key) => key.startsWith(`hematuria-attempt-v3:P001:free:${selectedLanguage}:`))
+        .filter((key) => key.startsWith(attemptPrefix) && key !== pointedKey)
         .filter((key) => JSON.parse(localStorage.getItem(key) || "null")?.answers?.historySummary === expectedMarker)
         .length;
       return {
@@ -2161,7 +2176,7 @@ test("attempt storage recovers its pointer after a transient API outage @attempt
     const resultPassed = beforeReload.pointerPresent && afterReload.markerRecovered && afterReload.orphanMarkerCount === 0;
     const summary = {
       schemaVersion: "exploratory-attempt-storage-api-recovery-v1",
-      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      productionBaseline: PRODUCTION_BASELINE,
       result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
       defectId: resultPassed ? null : "HEM-P1-063",
       language,
@@ -2180,7 +2195,7 @@ test("attempt storage recovers its pointer after a transient API outage @attempt
       requestIdsRetained: false,
       credentialsRetained: false
     };
-    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    await writeFile(summaryFile(slug), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
     expect(failedNetworkRequestCount).toBe(0);
     expect(unexpectedConsoleErrors).toEqual([]);
     expect(beforeReload.pointerPresent, "the recovered storage API must receive a pointer for the active attempt").toBe(true);
@@ -2325,7 +2340,7 @@ test("a transient attempt-state write failure preserves one history-log retry id
       && persistedAfterRecovery.pendingCount === 0;
     const summary = {
       schemaVersion: "exploratory-history-log-storage-recovery-v1",
-      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      productionBaseline: PRODUCTION_BASELINE,
       result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
       defectId: null,
       language,
@@ -2344,7 +2359,7 @@ test("a transient attempt-state write failure preserves one history-log retry id
       requestIdsRetained: false,
       credentialsRetained: false
     };
-    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    await writeFile(summaryFile(slug), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
     expect(failedNetworkRequestCount).toBe(0);
     expect(unexpectedConsoleErrors).toEqual([]);
     expect(resultPassed).toBe(true);
@@ -2422,7 +2437,7 @@ test("the case catalog remains usable when browser storage reads and writes are 
       && consoleErrorCount === 0;
     const summary = {
       schemaVersion: "exploratory-catalog-storage-unavailable-v1",
-      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      productionBaseline: PRODUCTION_BASELINE,
       result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
       defectId: resultPassed ? null : "HEM-P1-064",
       targetLanguage,
@@ -2442,7 +2457,7 @@ test("the case catalog remains usable when browser storage reads and writes are 
       errorMessagesRetained: false,
       credentialsRetained: false
     };
-    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    await writeFile(summaryFile(slug), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
     expect(failedNetworkRequestCount).toBe(0);
     expect(caseCardCount).toBe(42);
     expect(catalogHeadingVisible).toBe(true);
@@ -2499,7 +2514,7 @@ test("catalog progress ignores malformed pointers and unverified summaries @cata
       && statuses.orphanAttemptNotStarted;
     const summary = {
       schemaVersion: "exploratory-catalog-progress-integrity-v1",
-      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      productionBaseline: PRODUCTION_BASELINE,
       result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
       defectId: resultPassed ? null : "HEM-P2-065",
       language,
@@ -2513,7 +2528,7 @@ test("catalog progress ignores malformed pointers and unverified summaries @cata
       storageValuesRetained: false,
       credentialsRetained: false
     };
-    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    await writeFile(summaryFile(slug), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
     expect(failedNetworkRequestCount).toBe(0);
     expect(consoleErrorCount).toBe(0);
     expect(statuses).toEqual({
@@ -2524,7 +2539,7 @@ test("catalog progress ignores malformed pointers and unverified summaries @cata
   }, { videoOnFailure: true });
 });
 
-test("restart clears the active attempt even when the first remove call fails @restart-remove-failure", async ({ browser }, testInfo) => {
+test("restart fails closed without navigation when the first remove call fails @restart-remove-failure", async ({ browser }, testInfo) => {
   const language = ["qa-1440x900", "qa-390x844"].includes(testInfo.project.name) ? "zh" : "en";
   const copy = language === "en"
     ? { summary: "History summary", submit: "Submit stage", restart: "Restart training" }
@@ -2570,12 +2585,14 @@ test("restart clears the active attempt even when the first remove call fails @r
       };
     });
     page.once("dialog", (dialog) => dialog.accept());
-    await Promise.all([
-      page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-      page.getByRole("button", { name: copy.restart, exact: true }).click()
-    ]);
+    let mainFrameNavigationCount = 0;
+    page.on("framenavigated", (frame) => {
+      if (frame === page.mainFrame()) mainFrameNavigationCount += 1;
+    });
+    await page.getByRole("button", { name: copy.restart, exact: true }).click();
+    await expect(page.getByRole("alert").first()).toBeVisible();
     await expect(page.getByText("P001", { exact: true }).first()).toBeVisible();
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(400);
     const afterRestart = await page.evaluate(({ selectedLanguage, expectedMarker, previousAttemptId }) => {
       const pointer = JSON.parse(localStorage.getItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`) || "null");
       const saved = pointer?.attemptId
@@ -2585,7 +2602,8 @@ test("restart clears the active attempt even when the first remove call fails @r
         oneShotRemoveFailures: Number(sessionStorage.getItem("qa-restart-remove-failure-count") || 0),
         sameAttempt: pointer?.attemptId === previousAttemptId,
         submittedStageCount: saved?.submitted ? Object.keys(saved.submitted).length : 0,
-        markerRetained: saved?.answers?.historySummary === expectedMarker
+        markerRetained: saved?.answers?.historySummary === expectedMarker,
+        cleanupWarningVisible: /重新开始.*(?:失败|未能清除)|无法清除|restart.*(?:failed|could not clear)/i.test(document.body?.innerText || "")
       };
     }, { selectedLanguage: language, expectedMarker: marker, previousAttemptId: beforeRestart.attemptId });
     await saveShot(page, testInfo, `restart-remove-failure-${language}`, false);
@@ -2598,17 +2616,20 @@ test("restart clears the active attempt even when the first remove call fails @r
     );
     const unexpectedConsoleErrors = consoleEvents.filter((item) => item.type === "error" && !knownEnglishKeyErrors.includes(item));
     const resultPassed = afterRestart.oneShotRemoveFailures === 1
-      && !afterRestart.sameAttempt
-      && afterRestart.submittedStageCount === 0
-      && !afterRestart.markerRetained;
+      && mainFrameNavigationCount === 0
+      && afterRestart.sameAttempt
+      && afterRestart.submittedStageCount === 1
+      && afterRestart.markerRetained
+      && afterRestart.cleanupWarningVisible;
     const summary = {
       schemaVersion: "exploratory-restart-remove-failure-v1",
-      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      productionBaseline: PRODUCTION_BASELINE,
       result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
       defectId: resultPassed ? null : "HEM-P1-066",
       language,
       viewport: testInfo.project.use.viewport,
       boundary: "ONE_SHOT_ACTIVE_ATTEMPT_REMOVE_FAILURE_EMULATION",
+      mainFrameNavigationCount,
       beforeRestart: {
         attemptPresent: Boolean(beforeRestart.attemptId),
         submittedStageCount: beforeRestart.submittedStageCount
@@ -2621,15 +2642,17 @@ test("restart clears the active attempt even when the first remove call fails @r
       medicalFactsEvaluated: false,
       credentialsRetained: false
     };
-    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    await writeFile(summaryFile(slug), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
     expect(failedNetworkRequestCount).toBe(0);
     expect(unexpectedConsoleErrors).toEqual([]);
     expect(afterRestart).toEqual({
       oneShotRemoveFailures: 1,
-      sameAttempt: false,
-      submittedStageCount: 0,
-      markerRetained: false
+      sameAttempt: true,
+      submittedStageCount: 1,
+      markerRetained: true,
+      cleanupWarningVisible: true
     });
+    expect(mainFrameNavigationCount).toBe(0);
   }, { videoOnFailure: true });
 });
 
@@ -2690,7 +2713,7 @@ test("shared pages and language switching remain usable when language storage is
     await gotoWithAbortRetry("/cases/P001/");
     await expect(page.getByText("P001", { exact: true }).first()).toBeVisible();
     await page.getByRole("button", { name: "English", exact: true }).click();
-    await expect(page.getByRole("button", { name: "Restart training", exact: true })).toBeVisible();
+    await page.waitForTimeout(400);
     const writeFailureSwitch = await page.evaluate(() => ({
       caseVisible: (document.body?.innerText || "").includes("P001"),
       englishHeaderVisible: (document.body?.innerText || "").includes("Hematuria Clinical Reasoning"),
@@ -2726,7 +2749,7 @@ test("shared pages and language switching remain usable when language storage is
       && writeFailureSwitch.htmlLanguage === "en";
     const summary = {
       schemaVersion: "exploratory-shared-storage-unavailable-v1",
-      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      productionBaseline: PRODUCTION_BASELINE,
       result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
       defectId: resultPassed ? null : "HEM-P1-064",
       viewport: testInfo.project.use.viewport,
@@ -2741,7 +2764,7 @@ test("shared pages and language switching remain usable when language storage is
       errorMessagesRetained: false,
       credentialsRetained: false
     };
-    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    await writeFile(summaryFile(slug), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
     expect(unexpectedNetworkFailures).toEqual([]);
     expect(unexpectedConsoleErrors).toEqual([]);
     expect(homeReadFailure).toEqual({ applicationErrorVisible: false, homeHeadingVisible: true });
@@ -2830,7 +2853,7 @@ test("restart reports each pointer or capability cleanup failure without reloadi
         submittedStageCount: saved?.submitted ? Object.keys(saved.submitted).length : 0,
         markerRetained: saved?.answers?.historySummary === expectedMarker,
         oldTrainingStateRetained,
-        cleanupWarningVisible: /重新开始.*失败|无法清除|restart.*failed|could not clear/i.test(document.body?.innerText || "")
+        cleanupWarningVisible: /重新开始.*(?:失败|未能清除)|无法清除|restart.*(?:failed|could not clear)/i.test(document.body?.innerText || "")
       };
     }, {
       selectedLanguage: language,
@@ -2853,10 +2876,13 @@ test("restart reports each pointer or capability cleanup failure without reloadi
     const resultPassed = afterRestart.injectedFaultObserved
       && mainFrameNavigationCount === 0
       && afterRestart.cleanupWarningVisible
-      && !afterRestart.oldTrainingStateRetained;
+      && afterRestart.sameAttempt
+      && afterRestart.submittedStageCount === 1
+      && afterRestart.markerRetained
+      && afterRestart.oldTrainingStateRetained;
     const summary = {
       schemaVersion: "exploratory-restart-cleanup-variants-v1",
-      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      productionBaseline: PRODUCTION_BASELINE,
       result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
       defectId: resultPassed ? null : "HEM-P1-066",
       language,
@@ -2874,13 +2900,16 @@ test("restart reports each pointer or capability cleanup failure without reloadi
       storageKeysRetained: false,
       credentialsRetained: false
     };
-    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    await writeFile(summaryFile(slug), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
     expect(failedNetworkRequestCount).toBe(0);
     expect(unexpectedConsoleErrors).toEqual([]);
     expect(afterRestart.injectedFaultObserved).toBe(true);
     expect(mainFrameNavigationCount).toBe(0);
     expect(afterRestart.cleanupWarningVisible).toBe(true);
-    expect(afterRestart.oldTrainingStateRetained).toBe(false);
+    expect(afterRestart.sameAttempt).toBe(true);
+    expect(afterRestart.submittedStageCount).toBe(1);
+    expect(afterRestart.markerRetained).toBe(true);
+    expect(afterRestart.oldTrainingStateRetained).toBe(true);
   }, { videoOnFailure: true });
 });
 
@@ -2922,7 +2951,7 @@ test("catalog rejects duplicate cross-case summaries without a verified terminal
     const resultPassed = completedCount === 0 && notStartedCount === caseIds.length;
     const summary = {
       schemaVersion: "exploratory-catalog-summary-pollution-v1",
-      productionBaseline: "77815862a0abebff67b8d958f66944a0e11b068f",
+      productionBaseline: PRODUCTION_BASELINE,
       result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
       defectId: resultPassed ? null : "HEM-P2-065",
       language,
@@ -2937,7 +2966,7 @@ test("catalog rejects duplicate cross-case summaries without a verified terminal
       summaryValuesRetained: false,
       credentialsRetained: false
     };
-    await writeFile(path.join(DIRS.reports, `7781586-${slug}-summary.json`), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    await writeFile(summaryFile(slug), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
     expect(failedNetworkRequestCount).toBe(0);
     expect(consoleErrorCount).toBe(0);
     expect(completedCount).toBe(0);

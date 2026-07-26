@@ -172,3 +172,8 @@
 - HEM-P2-065四viewport页面布局正常，但P001卡稳定显示“进行中/继续”，P002显示“已完成”；代表`390×844`截图保留P001假进度。无横向滚动或额外console错误。
 - HEM-P1-066四viewport确认reload后仍为1/7；代表`390×844`截图显示同一病例第1阶段已提交状态仍存在。截图不含QA草稿、attempt ID或评分正文。
 - 自动viewport结论不替代真实浏览器策略封锁、磁盘删除失败、移动软键盘、动态地址栏或safe-area；这些继续`BLOCKED_REAL_STORAGE / BLOCKED_REAL_DEVICE`。
+## 2026-07-26 `9b7fcd0` 第 22 轮存储恢复界面
+
+- 四固定 viewport 均以 headless Chromium 执行，结果只标记 `PASS_EMULATION/FAIL_EMULATION`。目录 storage 全不可用、restart fail-closed 与 pointer 隔离布局未出现新的崩溃或横向滚动结论。
+- HEM-P1-064 代表移动截图显示：390×844 点击 English 且偏好写入失败后，页面保持中文并显示“语言偏好无法保存”；该截图只含公开 P001 UI 与 QA 故障提示，不含问答、评分、隐藏病史或凭据。
+- HEM-P2-062 的可见问题为错误语言提示和恢复后旧告警状态，不是数据丢失；本轮没有真实软键盘、safe-area、真实 Storage 策略或磁盘故障证据，相关项继续阻塞。
