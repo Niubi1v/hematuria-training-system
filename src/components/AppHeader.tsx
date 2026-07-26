@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { readStringStorage } from "@/src/lib/safeStorage";
 
 const links = [
   { href: "/", zh: "首页", en: "Home", exact: true },
@@ -14,7 +15,7 @@ export default function AppHeader() {
   const pathname = usePathname();
   const [lang, setLang] = useState<"zh" | "en">("zh");
   useEffect(() => {
-    if (localStorage.getItem("hematuria-language") === "en") setLang("en");
+    if (readStringStorage("hematuria-language").value === "en") setLang("en");
     const listener = (event: Event) => setLang((event as CustomEvent<"zh" | "en">).detail);
     window.addEventListener("hematuria-language-change", listener);
     return () => window.removeEventListener("hematuria-language-change", listener);

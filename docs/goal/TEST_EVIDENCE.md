@@ -1398,3 +1398,51 @@ P001新增三轮及P037/P038各两轮的每次`/api/agent-chat/`均200、`genera
 | 医学边界 | `data/**`零差异；未批准或解除任何BLOCKED、HEM-P0-001/023、simulation或`needs_revision`状态 |
 
 Actions URL：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/30148941887`。Vercel状态页：`https://vercel.com/niubi1vs-projects/hematuria-training-system/BmFSFi24jvwadzzo3Qj7eqFdFMTT`。
+## 2026-07-26 — HEM-P1-061/063/064/066 与 HEM-P2-065
+
+基线：`77815862a0abebff67b8d958f66944a0e11b068f`；代码提交：`df89a91f304f867855b6708cab152b70e57fad80`。QA 证据仅从远程已提交 HEAD `e586508c620f0b9ca72930feb1c93526b35e04c1`选择性读取。
+
+| 门禁 | 精确结果 |
+|---|---|
+| attempt 身份 | `scripts/test-attempt-isolation.ts` exit 0；28/28 缺失或不匹配身份场景 fail-closed |
+| 假进度 | `scripts/test-catalog-progress.ts` exit 0；8/8 畸形 pointer、未验证 summary、孤儿 attempt 被拒绝 |
+| 四 viewport 浏览器专项 | `practice.spec.mjs`专项 5/5；覆盖 360×800、390×844、1280×720、1440×900 的 storage 异常、pointer 补偿/刷新、restart 删除失败与目录假进度 |
+| history-log 控制 | 3×HTTP 503 后人工 1×HTTP 200；唯一 request ID；刷新后自动新增请求 0；pending 归零 |
+| 完整 Playwright | 98 discovered；91 passed、7按项目合同 intentional skipped、0 failed；desktop/mobile、42例双语七阶段代表流程均通过 |
+| 完整行为链 | 58/58 命令 exit 0；含 42例、572事实、153/419治理隔离、18项冲突、七阶段、session/attempt与360分 |
+| TypeScript / ESLint | 均 exit 0 |
+| Production build | Vercel同源合同 `82/82`；GitHub Pages basePath合同 `82/82` |
+| bundle / repository scan | 两次 bundle 均 26 JS 资产通过；repository scanner 357 tracked/candidate及历史通过 |
+| 生成幂等 | 已提交 HEAD 的隔离 worktree：78 个受控输出 baseline 与第二轮一致，exit 0 |
+| 数据边界 | `git diff --exit-code -- data` exit 0；未修改医学事实、审核状态、`needs_revision`或评分规则 |
+
+本地运行使用当前 Codex 捆绑 Node 24.14；仓库要求的 Node 22.14 结果必须由精确新 HEAD 的 GitHub Actions补证。当前不得写成远程或 Preview 已通过。
+
+### 精确 HEAD 远程证据
+
+| 项目 | 结果 |
+|---|---|
+| GitHub Actions | run `30166227983`，HEAD `ee48cc99f0c9613704d89c1742158b13287e58d2`，Node 22.14，completed/success |
+| Playwright | 91 passed、7 intentional skipped、0 failed，runner 正常退出 |
+| 行为与治理 | conversion idempotency、生成基线、Schema、医学矛盾、双语 fixtures、完整行为链和医学审核合同全部 success |
+| 工程门禁 | TypeScript、ESLint、repository secret scan、82/82 静态构建、24-asset bundle scan、tracked-worktree clean gate 全部 success |
+| Vercel | Preview deployment `5602981833`，部署 SHA 与 Actions HEAD 完全一致，state=success |
+| PR / Pages | PR #1 Open/Draft；Pages artifact 与 deploy 按 Draft 规则 skipped，未部署 Production |
+
+Actions：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/30166227983`。Preview：`https://hematuria-training-system-fkjmi09rf-niubi1vs-projects.vercel.app`。
+
+## 2026-07-26 — 仓库级 Skill 集成
+
+基线：`df9c35f5c1e1c53e3dbf20b802a6761faee0dc50`；来源提交：`0e4353a722c0505032ef0a088758f37a997849d5`；cherry-pick提交：`f0988dc`。
+
+| 门禁 | 结果 |
+|---|---|
+| 来源范围 | 8/8文件全部位于`.agents/skills/**`；无业务代码、医学数据、审核文档、依赖或临时文件 |
+| 官方Skill校验 | Codex `skill-creator/scripts/quick_validate.py`：4/4 `Skill is valid!` |
+| `openai.yaml` | 4/4 YAML可解析；仅含允许的`interface`字段；名称、描述与`$skill-name`默认提示合同通过 |
+| 引用完整性 | 37/37 pnpm脚本存在；16/16引用文件或目录存在 |
+| repository secret scan | 365个候选/跟踪文件及可达文本历史，exit 0；未输出任何凭据值 |
+| 数据与工作树 | `data/**`零差异；cherry-pick后clean gate通过 |
+| 比例门禁 | Skill仅影响Agent指引，不进入运行时代码；按要求未重复运行无关Playwright和42例矩阵 |
+
+本地校验使用临时目录中的PyYAML运行官方脚本；没有写入`package.json`、锁文件、项目依赖或Git。远程Actions/Vercel必须绑定最终记录提交后再登记。

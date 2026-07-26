@@ -1,0 +1,4 @@
+interface:
+  display_name: "Hematuria Clinical Data Policy"
+  short_description: "Guard clinical data presentation boundaries"
+  default_prompt: "Use $hematuria-clinical-data-policy to review a clinical data display or authority change."

@@ -11,6 +11,14 @@ export type AttemptIdentity = {
   createdAt: string;
 };
 
+export type StoredAttemptState = {
+  attempt?: AttemptIdentity;
+  activeStageNo?: number;
+  submitted?: Record<string, unknown>;
+  finalReport?: Record<string, unknown> | null;
+  [key: string]: unknown;
+};
+
 export function createAttempt(caseId: string, mode: AttemptMode, language: AttemptLanguage, participantId = "practice-user"): AttemptIdentity {
   const random = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   return { attemptId: random, caseId, mode, language, participantId, schemaVersion: "attempt-v3", createdAt: new Date().toISOString() };
@@ -39,15 +47,36 @@ export function legacyTrainingStateStorageKey(attemptId: string) {
 }
 
 export function isAttemptCompatible(
-  attempt: AttemptIdentity,
+  attempt: unknown,
   expected: Pick<AttemptIdentity, "caseId" | "mode" | "language"> & Partial<Pick<AttemptIdentity, "participantId" | "schemaVersion">>
-) {
-  return attempt.schemaVersion === "attempt-v3"
-    && attempt.caseId === expected.caseId
-    && attempt.mode === expected.mode
-    && attempt.language === expected.language
-    && (!expected.participantId || attempt.participantId === expected.participantId)
-    && (!expected.schemaVersion || attempt.schemaVersion === expected.schemaVersion);
+) : attempt is AttemptIdentity {
+  if (!attempt || typeof attempt !== "object" || Array.isArray(attempt)) return false;
+  const candidate = attempt as Partial<AttemptIdentity>;
+  if (
+    typeof candidate.attemptId !== "string" || !candidate.attemptId.trim()
+    || typeof candidate.caseId !== "string" || !candidate.caseId.trim()
+    || !["free", "osce", "rct"].includes(String(candidate.mode))
+    || !["zh", "en"].includes(String(candidate.language))
+    || typeof candidate.participantId !== "string" || !candidate.participantId.trim()
+    || candidate.schemaVersion !== "attempt-v3"
+    || typeof candidate.createdAt !== "string" || !candidate.createdAt.trim()
+    || !Number.isFinite(Date.parse(candidate.createdAt))
+  ) return false;
+  return candidate.caseId === expected.caseId
+    && candidate.mode === expected.mode
+    && candidate.language === expected.language
+    && (!expected.participantId || candidate.participantId === expected.participantId)
+    && (!expected.schemaVersion || candidate.schemaVersion === expected.schemaVersion);
+}
+
+export function isStoredAttemptStateCompatible<T extends StoredAttemptState>(
+  value: T | null | undefined,
+  expected: AttemptIdentity
+): value is T & { attempt: AttemptIdentity } {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const storedAttempt = (value as StoredAttemptState).attempt;
+  return isAttemptCompatible(storedAttempt, expected)
+    && storedAttempt.attemptId === expected.attemptId;
 }
 
 export function recordTimeoutOnce(events: Array<{ type: string; [key: string]: unknown }>, at = new Date().toISOString()) {
