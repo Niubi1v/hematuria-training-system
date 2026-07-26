@@ -27,6 +27,12 @@ const factMatchers = [
   ["menstrualHistory", "GYNE_MENSTRUAL", /月经|经期|阴道出血|menstru|period/i],
   ["pregnancyHistory", "GYNE_PREGNANCY", /怀孕|妊娠|pregnan/i]
 ];
+const {
+  answerPlanFromRendered,
+  factStateFromText,
+  reasonCodeForState,
+  renderAnswerPlan
+} = require("../src/lib/patientFactState.js");
 const broadMedication = /长期.*(?:吃|服|用).*药|平时.*(?:吃|服|用).*药|都吃什么药|用药史|长期用药|regular medication|medications do you take/i;
 const historyMedicalPolicy = require("../data/history_medical_reconciliation.json");
 const explicitBlockedFacts = new Set(
@@ -66,6 +72,7 @@ function matchStructuredFacts(caseData, question, language = "zh") {
   const collectableFacts = [];
   const collectableSlotIds = [];
   const sources = [];
+  const answerPlans = [];
   let hasUnresolved = false;
   const clauses = [
     ...matches.map((item) => ({
@@ -83,19 +90,29 @@ function matchStructuredFacts(caseData, question, language = "zh") {
   ].sort((left, right) => left.index - right.index || left.sourceOrder - right.sourceOrder);
   for (const clause of clauses) {
     if (clause.kind === "allMedication") {
-      answers.push(language === "en" ? history.medicationAnswerEn : history.medicationAnswerZh);
+      const medicationAnswer = language === "en" ? history.medicationAnswerEn : history.medicationAnswerZh;
+      answers.push(medicationAnswer);
       matchedFacts.push("medicationList");
       matchedSlotIds.push("MED_ALL");
       collectableFacts.push("medicationList");
       collectableSlotIds.push("MED_ALL");
       sources.push(...(history.medicationList || []));
+      const factState = factStateFromText(medicationAnswer);
+      answerPlans.push(answerPlanFromRendered({
+        intent: "medicationList",
+        sourceSlotId: "MED_ALL",
+        factState,
+        renderedAnswer: medicationAnswer,
+        unknownReason: reasonCodeForState(factState)
+      }));
       continue;
     }
     const [key, slotId] = clause.entry;
     const fact = history[key];
     if (!fact) continue;
     const blocked = unresolvedFact(caseData.id, key, fact);
-    answers.push(blocked ? unresolvedStructuredReply(key, language) : (language === "en" ? fact.patientAnswerEn : fact.patientAnswerZh));
+    const renderedAnswer = blocked ? unresolvedStructuredReply(key, language) : (language === "en" ? fact.patientAnswerEn : fact.patientAnswerZh);
+    answers.push(renderedAnswer);
     matchedFacts.push(key);
     matchedSlotIds.push(slotId);
     if (blocked) {
@@ -105,11 +122,20 @@ function matchStructuredFacts(caseData, question, language = "zh") {
       collectableSlotIds.push(slotId);
     }
     sources.push(fact);
+    const factState = factStateFromText(renderedAnswer, { needsReview: blocked });
+    answerPlans.push(answerPlanFromRendered({
+      intent: key,
+      sourceSlotId: slotId,
+      factState,
+      renderedAnswer,
+      unknownReason: reasonCodeForState(factState),
+      clauseStatus: blocked ? "blocked_medical" : "matched"
+    }));
   }
   if (!answers.length) return null;
   const provenance = new Set(sources.map((item) => item.provenance));
   return {
-    replyText: [...new Set(answers)].join("\n"),
+    replyText: [...new Set(answerPlans.map(renderAnswerPlan).filter(Boolean))].join("\n"),
     matchedSlotIds: [...new Set(matchedSlotIds)],
     matchedFacts: [...new Set(matchedFacts)],
     governanceSlotIds: [...new Set(matchedSlotIds)],
@@ -118,7 +144,12 @@ function matchStructuredFacts(caseData, question, language = "zh") {
     answerSource: hasUnresolved ? "pending_review" : (provenance.size > 1 ? "mixed" : ([...provenance][0] || "source")),
     confidence: hasUnresolved ? 0 : 0.99,
     safetyFlags: [],
-    fallbackReason: hasUnresolved ? "medical_history_pending_review" : ""
+    fallbackReason: hasUnresolved ? "medical_history_pending_review" : "",
+    factStates: Object.fromEntries(answerPlans.map((plan) => [plan.intent, plan.factState])),
+    answerPlans,
+    unknownReasonCodes: Object.fromEntries(
+      answerPlans.filter((plan) => plan.unknownReason).map((plan) => [plan.intent, plan.unknownReason])
+    )
   };
 }
 

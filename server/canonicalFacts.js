@@ -1,6 +1,13 @@
 const bilingualSlots = require("../data/patient_slots_bilingual.json");
 const historyMedicalPolicy = require("../data/history_medical_reconciliation.json");
 const { asksIndependentGeneralPain, matchPriorityCanonicalIntents, priorityIntentDefinitions } = require("../src/lib/patientIntentCatalog.js");
+const {
+  answerPlanFromRendered,
+  factStateFromBoolean,
+  factStateFromText,
+  reasonCodeForState,
+  renderAnswerPlan
+} = require("../src/lib/patientFactState.js");
 const blockedCanonicalKeys = new Set(
   historyMedicalPolicy.blockedMedicalHistory
     .filter((item) => item.canonicalSlotId)
@@ -333,6 +340,52 @@ function buildCanonicalPatientFacts(caseId, caseSlots, priorityMatches, legacyMa
     return conciseLegacySlotAnswer(caseSlots, slotId, language, question);
   }).filter(Boolean);
   if (!answers.length) return null;
+  const answerPlans = [];
+  for (const slotId of slotIds) {
+    const slotAnswer = slotId === "dysuria" && prioritySourceSlots.has(slotId)
+      ? naturalDysuriaAnswer(factValues.dysuria, language)
+      : slotId === "hematuria_phase" && prioritySourceSlots.has(slotId)
+      ? naturalPhaseAnswer(phaseValue, language, priorityMatches.map((item) => item.intentKey), question)
+      : prioritySourceSlots.has(slotId)
+      ? priorityMatches
+        .filter((item) => item.sourceSlotId === slotId)
+        .map((item) => naturalBooleanAnswer(item.intentKey, factValues[item.intentKey], language))
+        .join("\n")
+      : blockedSlotIds.has(slotId)
+      ? pendingMedicalReply(slotId, language)
+      : conciseLegacySlotAnswer(caseSlots, slotId, language, question);
+    const intents = priorityMatches.filter((item) => item.sourceSlotId === slotId);
+    if (intents.length) {
+      for (const item of intents) {
+        const reason = factValueReasons[item.intentKey];
+        answerPlans.push(answerPlanFromRendered({
+          intent: item.intentKey,
+          sourceSlotId: slotId,
+          factState: factStateFromBoolean(factValues[item.intentKey], reason),
+          renderedAnswer: slotId === "hematuria_phase"
+            ? slotAnswer
+            : intents.length === 1
+            ? slotAnswer
+            : naturalBooleanAnswer(item.intentKey, factValues[item.intentKey], language),
+          unknownReason: reason === "known" ? null : reasonCodeForState(factStateFromBoolean(factValues[item.intentKey], reason))
+        }));
+      }
+      continue;
+    }
+    const factState = factStateFromText(slotAnswer, { needsReview: blockedSlotIds.has(slotId) });
+    answerPlans.push(answerPlanFromRendered({
+      intent: slotId,
+      sourceSlotId: slotId,
+      factState,
+      renderedAnswer: slotAnswer,
+      unknownReason: reasonCodeForState(factState),
+      clauseStatus: blockedSlotIds.has(slotId) ? "blocked_medical" : "matched"
+    }));
+  }
+  const factStates = Object.fromEntries(answerPlans.map((plan) => [plan.intent, plan.factState]));
+  const unknownReasonCodes = Object.fromEntries(
+    answerPlans.filter((plan) => plan.unknownReason).map((plan) => [plan.intent, plan.unknownReason])
+  );
   const matchedFacts = [
     ...priorityMatches.map((item) => item.intentKey),
     ...slotIds.filter((slotId) => !prioritySourceSlots.has(slotId))
@@ -349,7 +402,7 @@ function buildCanonicalPatientFacts(caseId, caseSlots, priorityMatches, legacyMa
   const provenances = [...new Set(slotIds.map((slotId) => caseSlots[slotId]?.provenance).filter(Boolean))];
   const teacherReviewRequired = slotIds.some((slotId) => caseSlots[slotId]?.teacherReviewRequired === true);
   return {
-    replyText: [...new Set(answers)].join("\n"),
+    replyText: [...new Set(answerPlans.map(renderAnswerPlan).filter(Boolean))].join("\n"),
     matchedSlotIds: slotIds,
     matchedFacts: [...new Set(matchedFacts)],
     governanceSlotIds: slotIds,
@@ -357,6 +410,9 @@ function buildCanonicalPatientFacts(caseId, caseSlots, priorityMatches, legacyMa
     collectableFacts: [...new Set(collectableFacts)],
     factValues,
     factValueReasons,
+    factStates,
+    answerPlans,
+    unknownReasonCodes,
     matchedAliases: [...new Set(priorityMatches.map((item) => item.matchedAlias).filter(Boolean))],
     matcherLayer: priorityMatches.some((item) => item.matcherType === "semantic_classifier")
       ? "semantic_classifier"
