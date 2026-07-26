@@ -209,3 +209,9 @@ console 文本对 Authorization、Cookie、签名、token、secret 和 API key �
 - HEM-P2-065修复验收必须解析并验证pointer正文、完整作用域和对应attempt；completed summary必须有受信schema/attempt/360终态。不得通过扫描并收养HEM-P1-063孤儿状态来制造进度。
 - HEM-P1-066修复验收覆盖active attempt、pointer、当前/legacy session能力四项任一删除失败：不得reload成“看似重启”；成功时新attempt、0 submitted、空草稿，失败时当前语言明确提示并允许重试。
 - 下一独立范围扩展HEM-P1-064到首页、直接病例页和语言切换；检查restart在pointer删除失败及sessionStorage删除失败时的差异化结果，以及目录summary重复/跨语言/跨病例污染。真实存储和真机仍单独阻塞。
+## 2026-07-26 仓库级 Skills 授权基线门禁
+
+- QA 上次授权来源基线为 `77815862a0abebff67b8d958f66944a0e11b068f`；本次授权的运行时/Skills 比较旧基线为 `df9c35f5c1e1c53e3dbf20b802a6761faee0dc50`，新 Production 基线为 `9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。
+- `df9c35f..9b7fcd0` 只含 4 个仓库级 Skill 的 `SKILL.md`、4 个 `agents/openai.yaml` 以及 2 份 Skill 集成证据文档；`app/src/api/server/data`、`package.json` 与各 lockfile 均无差异。
+- 本轮按比例只执行 4 个官方 Skill 校验、`openai.yaml`、引用文件与 pnpm 脚本存在性、repository secret scan、`data/**` 零差异和最终 clean gate。因授权增量不进入运行时，本轮不触发完整 Playwright、42 例、自然语言矩阵或七阶段昂贵回归。
+- 本门禁不得用于关闭既有运行时缺陷、批准医学事实或替代 Preview/真机证据。完成并普通 push 后，长期 QA 后续仍从尚未独立复测的运行时缺陷与外部阻塞项继续。

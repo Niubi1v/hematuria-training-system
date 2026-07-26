@@ -245,3 +245,18 @@
 
 - HEM-P1-064只在`/cases/`做四viewport页面证据；共享Header代码表明影响面可能更广，但在补充逐页证据前不扩张为首页或42个训练页全量结论。
 - 目录进度测试不收养孤儿attempt是安全控制；不能用HEM-P2-065修复为扫描所有孤儿并猜测归属，必须验证完整身份与终态来源。
+## Production `9b7fcd0` 仓库级 Skills 增量
+
+| 覆盖 | 结果 | 状态 |
+| --- | --- | --- |
+| `df9c35f..9b7fcd0` 变更边界 | 8 个 `.agents/skills/**` 文件 + 2 份 Skill 集成证据文档 | PASS |
+| `app/src/api/server/data` | 0 个变更文件 | PASS_ZERO_DIFF |
+| `package.json` 与 lockfile | 0 个变更文件 | PASS_ZERO_DIFF |
+| 官方 Skill 校验 | 4/4 | PASS |
+| `openai.yaml` | 4/4 | PASS |
+| pnpm 脚本引用 | 38/38 存在 | PASS |
+| 文件/目录引用 | 17/17 存在 | PASS |
+| repository secret scan | 受控树 461 文件/历史 0 命中；5 个超限本机 trace 定向流式补扫 0 命中 | PASS |
+| 完整运行时回归 | 授权增量不含运行时、依赖或医学数据变化，按比例未触发 | NOT_TRIGGERED_NO_RUNTIME_DELTA |
+
+- 本表只表示仓库级 Skills 集成门禁，不扩张为病例、Patient Agent、Data Agent、Preview、真机或七阶段运行时通过，也不改变任何医学阻塞或 `needs_revision` 状态。

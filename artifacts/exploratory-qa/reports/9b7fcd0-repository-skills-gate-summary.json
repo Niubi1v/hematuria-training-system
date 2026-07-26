@@ -1,0 +1,54 @@
+{
+  "gate": "repository_skills_only",
+  "date": "2026-07-26",
+  "qaBranch": "codex/hematuria-exploratory-qa",
+  "previousQaAuthorizedBaseline": "77815862a0abebff67b8d958f66944a0e11b068f",
+  "comparisonBase": "df9c35f5c1e1c53e3dbf20b802a6761faee0dc50",
+  "productionBaseline": "9b7fcd0d975533c7c6eda5614ca3b2978c9dce55",
+  "mergeCommit": "4307e2182c530edaec8924bba56bdec241a529ce",
+  "delta": {
+    "files": 10,
+    "skillFiles": 8,
+    "evidenceDocuments": 2,
+    "runtimeFiles": 0,
+    "dataFiles": 0,
+    "packageOrLockFiles": 0
+  },
+  "validation": {
+    "officialSkillValidators": {
+      "passed": 4,
+      "total": 4
+    },
+    "openaiYaml": {
+      "passed": 4,
+      "total": 4
+    },
+    "referencedPnpmScripts": {
+      "present": 38,
+      "total": 38
+    },
+    "referencedFilesAndDirectories": {
+      "present": 17,
+      "total": 17
+    },
+    "repositorySecretScan": {
+      "controlledCommittedTreeFiles": 461,
+      "findings": 0,
+      "oversizeLocalEvidenceFiles": 5,
+      "oversizeEvidenceZipEntries": 3256,
+      "oversizeEvidenceStreamedBytes": 733292551,
+      "oversizeEvidenceFindings": 0
+    },
+    "dataDiff": "PASS_ZERO_DIFF",
+    "controlledTrackedWorktree": "PASS_AFTER_COMMIT"
+  },
+  "expensiveRuntimeRegression": {
+    "triggered": false,
+    "reason": "The authorized df9c35f..9b7fcd0 delta contains only repository Skills and integration evidence; no runtime, dependency, lockfile, or medical-data changes."
+  },
+  "notes": [
+    "The inclusive reference count treats the generic test script as a script reference and docs/medical-review/ as a referenced directory, producing 38 scripts and 17 paths; all references exist.",
+    "No runtime defect closure or medical approval is inferred from this proportional repository-only gate.",
+    "No secret values were printed or stored."
+  ]
+}

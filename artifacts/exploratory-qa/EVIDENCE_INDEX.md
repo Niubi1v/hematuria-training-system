@@ -379,3 +379,15 @@ SHA-256：
 - 第21轮最终全证据树流式/解包扫描覆盖940个物理文件、ZIP内16,076个条目和2,200,171,017字节，敏感值命中0；扫描器只输出计数，不输出候选值。
 - scanner自测合同通过。通用repository candidate scanner仍只对历史5个本机未跟踪大trace按大小上限fail-closed（4个ZIP内entry过大、1个ZIP文件过大），没有新增规则或历史命中；这5个文件已由上项无大小上限的流式/解包扫描覆盖并得到0命中。
 - 第21轮12个staged文件及完整可达文本历史已独立扫描，敏感值命中0；暂存范围不含业务代码、`data/**`、完整问答、header或大trace/录像。大trace、录像、重复截图、console/network和HTML报告继续仅本机保留。
+## Production `9b7fcd0` 仓库级 Skills 门禁证据
+
+| 证据名称 | 对应测试或缺陷 | 文件路径 | 文件大小 | 是否提交 Git | 未提交原因 | 本机保留位置 |
+| --- | --- | --- | ---: | --- | --- | --- |
+| Skills 门禁脱敏聚合 | `df9c35f..9b7fcd0` 仓库级 Skills 验收 | `artifacts/exploratory-qa/reports/9b7fcd0-repository-skills-gate-summary.json` | 提交后记录 | 是 | — | 仓库路径 |
+| 4 个 Skill 官方校验输出 | 4/4 `quick_validate.py` | 仅终端计数 | 不落盘 | 否 | 可由提交树重建，避免临时运行环境日志进入 Git | 本轮终端会话 |
+| `openai.yaml` 与引用检查输出 | 4/4 YAML、38/38 脚本、17/17 路径 | 仅终端计数 | 不落盘 | 否 | 可由提交树重建 | 本轮终端会话 |
+| repository scanner 输出 | 461 个受控树文件/历史、0 命中 | 仅终端计数 | 不落盘 | 否 | 不保存可能包含本机路径的原始运行日志 | 本轮终端会话 |
+| 5 个超限 trace 定向补扫 | 通用 scanner 大小保护的补充敏感信息扫描 | 既有 `artifacts/exploratory-qa/traces/` 5 个未跟踪 ZIP | 299,713,153 B | 否 | 历史 QA 大证据、可重建且不属于本次 Skills 最小证据 | 原路径，本机未跟踪 |
+
+- 5 个超限 trace 的流式扫描覆盖 3,256 个 ZIP 条目、733,292,551 字节，敏感值命中 0；临时硬链接目录和 detached worktree 均已删除，不进入 Git。
+- 本轮不生成截图、录像、Playwright trace、完整 HTML 报告或问答 transcript；唯一新增证据为不含凭据值的计数聚合。

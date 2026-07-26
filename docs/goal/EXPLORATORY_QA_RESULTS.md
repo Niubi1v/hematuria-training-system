@@ -451,3 +451,10 @@ Patient Session 报告记录 295 次 `unsafe_deterministic_answer` source-cell �
 - 新增HEM-P1-066：成功提交P001第1阶段后，让第一次active attempt删除抛出一次异常；用户确认重新开始并reload后，四viewport 4/4仍恢复相同attempt、1个已提交阶段和原QA草稿。网络失败和意外console错误均为0。
 - 初次目录可访问性locator在Application error页等待超时；改为即时DOM审计后4/4在约20秒内稳定复现，旧超时只记QA探针失败。目录正常路径的开发favicon 404通过显式204路由排除后，假进度正式结果console错误0。
 - 本轮新增P0/P1/P2为0/2/1。HEM-P1-064/066及其他开放P1仍阻止最终教师人工审阅；真实浏览器存储策略、磁盘故障和真机继续独立阻塞。
+## 2026-07-26 Production `9b7fcd0` 仓库级 Skills 门禁
+
+- `git fetch --prune origin` 后，`origin/codex/hematuria-production-goal` 精确为 `9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。QA 先将暂停中的测试材料以 `349e0ce` 普通 push，再以无冲突 merge `4307e2182c530edaec8924bba56bdec241a529ce` 安全纳入新基线；未 reset、未 force push、未丢失历史 QA 报告。
+- `df9c35f5c1e1c53e3dbf20b802a6761faee0dc50..9b7fcd0` 共 10 个文件、375 行新增：8 个 `.agents/skills/**` 文件和 `docs/goal/PROGRESS.md`、`docs/goal/TEST_EVIDENCE.md` 两份集成证据；`app/src/api/server/data`、`package.json`、`pnpm-lock.yaml`、`package-lock.json`、`yarn.lock` 均为零差异。
+- 4/4 官方 Skill 校验通过；4/4 `openai.yaml` 结构、双引号、字段长度和 `$skill-name` 引用通过；按完整引用口径，38/38 个 pnpm 脚本和 17/17 个文件/目录均存在。上游证据的 37/16 与本轮 38/17 差异来自是否计入通用 `test` 脚本及 `docs/medical-review/` 目录，不是缺失或运行时缺陷。
+- 仅含已提交内容的临时 detached worktree 中，官方 repository scanner 覆盖 461 个跟踪/候选文件及可达文本历史，敏感值命中 0。原 QA 工作树的通用 scanner 对 5 个未跟踪大型 trace 按大小上限 fail-closed；这 5 个文件另经无大小上限流式解包扫描，覆盖 3,256 个 ZIP 条目和 733,292,551 字节，命中 0。没有输出、保存或提交任何凭据值。
+- `data/**` 零差异。完整 Playwright、42 例、自然语言矩阵和七阶段回归未触发，理由是本次授权增量仅为仓库级 Skills 与证据文档、运行时代码和依赖均无变化；因此本轮只形成仓库门禁结论，不推断 HEM-P1-061/063/064/065/066 等既有运行时缺陷已关闭。
