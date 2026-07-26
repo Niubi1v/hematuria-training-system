@@ -234,3 +234,8 @@
 
 - HEM-P1-067/HEM-P2-068均来自控件语义和键盘焦点，不评价中英文医学措辞；fixture未生成Patient Agent问答，providerCalls 0。
 - 可访问名称修复必须保持中英文等义，但QA不得借此修改病例事实、医学文案或审核状态。
+
+## 2026-07-26 `9b7fcd0` 第 33 轮非语言终态隔离
+
+- hydration闪烁探针只使用非医学QA哨兵识别错误终态是否进入DOM；未生成Patient Agent问题/回答，未评价诊断、评分文字或中英文自然度，providerCalls 0。
+- 跨语言结果只证明错误语言终态未瞬时呈现，不扩张为Patient Agent双语医学等义、错误unknown或真实AI连续性结论。

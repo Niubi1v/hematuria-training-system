@@ -29,7 +29,7 @@ const DIRS = {
 
 const viewportSlug = (testInfo) => testInfo.project.name.replace(/^qa-/, "");
 const safeSlug = (value) => value.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-|-$/g, "");
-const PRODUCTION_BASELINE = process.env.QA_PRODUCTION_BASELINE || "77815862a0abebff67b8d958f66944a0e11b068f";
+const PRODUCTION_BASELINE = process.env.QA_PRODUCTION_BASELINE || "9b7fcd0d975533c7c6eda5614ca3b2978c9dce55";
 const EVIDENCE_PREFIX = safeSlug(process.env.QA_EVIDENCE_PREFIX || PRODUCTION_BASELINE.slice(0, 7));
 const ARTIFACT_RUN_PREFIX = process.env.QA_ARTIFACT_RUN_PREFIX
   ? `${safeSlug(process.env.QA_ARTIFACT_RUN_PREFIX)}-`
@@ -2097,6 +2097,241 @@ test("an incompatible completed attempt pointer cannot hydrate another case or l
     videoOnFailure: true,
     traceScreenshots: false,
     traceSnapshots: false
+  });
+});
+
+test("incompatible terminal state never flashes during hydration @terminal-hydration-flicker", async ({ browser }, testInfo) => {
+  await withEvidence(browser, testInfo, "terminal-hydration-flicker-isolation", async ({
+    context,
+    page,
+    slug,
+    consoleEvents,
+    networkEvents
+  }) => {
+    const actionObservations = [];
+    const observations = [];
+    const languages = ["zh", "en"];
+
+    for (const [languageIndex, targetLanguage] of languages.entries()) {
+      const targetPage = languageIndex === 0 ? page : await context.newPage();
+      if (languageIndex > 0) {
+        observeAdditionalPage(targetPage, `hydration-${targetLanguage}`, consoleEvents, networkEvents);
+      }
+      const sourceLanguage = targetLanguage === "zh" ? "en" : "zh";
+      const attemptId = `qa-hydration-scope-${targetLanguage}-${viewportSlug(testInfo)}`;
+      const sentinel = `QA_TERMINAL_SCOPE_SENTINEL_${targetLanguage}_${viewportSlug(testInfo)}`;
+      const seed = await createCompletedAttemptSeed("P001", sourceLanguage, attemptId);
+      const sourceSavedState = structuredClone(seed.savedState);
+      sourceSavedState.answers = { historySummary: sentinel };
+      sourceSavedState.timeline = [{
+        id: "qa-terminal-scope-event",
+        at: "2026-07-26T00:00:00.000Z",
+        stageNo: 7,
+        label: "QA scope isolation",
+        detail: sentinel
+      }];
+      sourceSavedState.finalReport = {
+        ...sourceSavedState.finalReport,
+        redFlags: [sentinel],
+        items: (sourceSavedState.finalReport?.items || []).map((item, itemIndex) => itemIndex === 0
+          ? { ...item, label: sentinel, comment: sentinel }
+          : item)
+      };
+
+      await targetPage.addInitScript(({
+        selectedLanguage,
+        sourceAttempt,
+        persistedState,
+        marker
+      }) => {
+        localStorage.setItem("hematuria-language", selectedLanguage);
+        const sourceKey = `hematuria-attempt-v3:${sourceAttempt.caseId}:${sourceAttempt.mode}:${sourceAttempt.language}:${sourceAttempt.attemptId}`;
+        localStorage.setItem(sourceKey, JSON.stringify(persistedState));
+        localStorage.setItem(`hematuria-attempt-pointer-v3:P001:free:${selectedLanguage}`, JSON.stringify(sourceAttempt));
+        localStorage.setItem(`hematuria-attempt-pointer-v3:P002:free:${selectedLanguage}`, JSON.stringify(sourceAttempt));
+
+        const exposure = {
+          mutationRecords: 0,
+          finalReportInsertions: 0,
+          sentinelInsertions: 0,
+          firstFinalReportAtMs: null,
+          firstSentinelAtMs: null
+        };
+        const inspectNode = (node) => {
+          const element = node?.nodeType === Node.ELEMENT_NODE
+            ? node
+            : node?.parentElement;
+          if (!element) return;
+          const containsFinalReport = element.matches?.('[data-testid="final-report"]')
+            || Boolean(element.querySelector?.('[data-testid="final-report"]'));
+          const containsSentinel = String(element.textContent || "").includes(marker);
+          if (containsFinalReport) {
+            exposure.finalReportInsertions += 1;
+            if (exposure.firstFinalReportAtMs === null) exposure.firstFinalReportAtMs = Math.round(performance.now());
+          }
+          if (containsSentinel) {
+            exposure.sentinelInsertions += 1;
+            if (exposure.firstSentinelAtMs === null) exposure.firstSentinelAtMs = Math.round(performance.now());
+          }
+        };
+        const consume = (records) => {
+          for (const record of records) {
+            exposure.mutationRecords += 1;
+            if (record.type === "childList") {
+              for (const node of record.addedNodes) inspectNode(node);
+            } else {
+              inspectNode(record.target);
+            }
+          }
+        };
+        const observer = new MutationObserver(consume);
+        observer.observe(document, {
+          subtree: true,
+          childList: true,
+          characterData: true,
+          attributes: true,
+          attributeFilter: ["data-testid"]
+        });
+        globalThis.__qaReadHydrationExposure = () => {
+          consume(observer.takeRecords());
+          return { ...exposure };
+        };
+      }, {
+        selectedLanguage: targetLanguage,
+        sourceAttempt: seed.attempt,
+        persistedState: sourceSavedState,
+        marker: sentinel
+      });
+      const languageActionOffset = actionObservations.length;
+      await installProductionTrainingApi(targetPage, [], actionObservations, {
+        resetStore: false,
+        serverTokens: new Map([[attemptId, seed.token]]),
+        requestIds: new Set(),
+        pageLabel: `hydration-${targetLanguage}`
+      });
+
+      for (const targetCaseId of ["P001", "P002"]) {
+        const actionOffset = actionObservations.length;
+        await targetPage.goto(`/cases/${targetCaseId}/`);
+        await expect(targetPage.getByText(targetCaseId, { exact: true }).first()).toBeVisible();
+        await expect.poll(() => actionObservations.length).toBeGreaterThan(actionOffset);
+        await targetPage.waitForTimeout(800);
+        const audit = await targetPage.evaluate(({
+          selectedLanguage,
+          selectedCaseId,
+          marker
+        }) => {
+          const exposure = globalThis.__qaReadHydrationExposure?.() || {};
+          const pointer = JSON.parse(localStorage.getItem(
+            `hematuria-attempt-pointer-v3:${selectedCaseId}:free:${selectedLanguage}`
+          ) || "null");
+          return {
+            mutationRecords: Number(exposure.mutationRecords || 0),
+            finalReportInsertions: Number(exposure.finalReportInsertions || 0),
+            sentinelInsertions: Number(exposure.sentinelInsertions || 0),
+            stableFinalReportVisible: Boolean(document.querySelector('[data-testid="final-report"]')),
+            stableSentinelVisible: String(document.body?.innerText || "").includes(marker),
+            pointerCompatible: Boolean(
+              pointer?.attemptId
+              && pointer?.caseId === selectedCaseId
+              && pointer?.mode === "free"
+              && pointer?.language === selectedLanguage
+              && pointer?.participantId === "practice-user"
+              && pointer?.schemaVersion === "attempt-v3"
+            )
+          };
+        }, {
+          selectedLanguage: targetLanguage,
+          selectedCaseId: targetCaseId,
+          marker: sentinel
+        });
+        observations.push({
+          targetLanguage,
+          sourceLanguage,
+          targetCaseId,
+          boundary: targetCaseId === "P001" ? "CROSS_LANGUAGE" : "CROSS_CASE",
+          ...audit,
+          actionStatuses: actionObservations.slice(actionOffset).map((item) => item.status),
+          actionErrors: actionObservations.slice(actionOffset).map((item) => item.error).filter(Boolean)
+        });
+      }
+      expect(actionObservations.length).toBeGreaterThan(languageActionOffset);
+    }
+
+    const expectedNavigationAborts = networkEvents.filter((item) =>
+      item.status === "FAILED"
+      && item.failure === "net::ERR_ABORTED"
+      && (
+        ["/api/health/", "/api/session/init/", "/api/training-action/"].includes(item.path)
+        || item.path.startsWith("/_next/static/chunks/")
+      )
+    );
+    const failedNetworkRequestCount = networkEvents.filter((item) =>
+      item.status === "FAILED"
+      && !expectedNavigationAborts.includes(item)
+    ).length;
+    const knownScopeConsoleErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && /status of (400|401|409).*?(Bad Request|Unauthorized|Conflict)/i.test(item.text)
+    );
+    const knownEnglishKeyErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && /same key|keys should be unique/i.test(item.text)
+      && /Physical examination/i.test(item.text)
+    );
+    const unexpectedConsoleErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && !knownScopeConsoleErrors.includes(item)
+      && !knownEnglishKeyErrors.includes(item)
+    );
+    const exposureCount = observations.filter((item) =>
+      item.finalReportInsertions > 0
+      || item.sentinelInsertions > 0
+      || item.stableFinalReportVisible
+      || item.stableSentinelVisible
+      || !item.pointerCompatible
+    ).length;
+    const resultPassed = observations.length === 4
+      && exposureCount === 0
+      && failedNetworkRequestCount === 0
+      && unexpectedConsoleErrors.length === 0;
+    const summary = {
+      schemaVersion: "exploratory-terminal-hydration-flicker-v1",
+      productionBaseline: PRODUCTION_BASELINE,
+      result: resultPassed ? "PASS_EMULATION" : "FAIL_EMULATION",
+      defectId: resultPassed ? null : "HEM-P1-069",
+      viewport: testInfo.project.use.viewport,
+      languages: languages.length,
+      scopeChecks: observations.length,
+      exposureCount,
+      finalReportInsertionCount: observations.reduce((sum, item) => sum + item.finalReportInsertions, 0),
+      sentinelInsertionCount: observations.reduce((sum, item) => sum + item.sentinelInsertions, 0),
+      stableExposureCount: observations.filter((item) => item.stableFinalReportVisible || item.stableSentinelVisible).length,
+      compatiblePointerCount: observations.filter((item) => item.pointerCompatible).length,
+      observations,
+      actionNon200Responses: actionObservations.filter((item) => item.status !== 200).length,
+      failedNetworkRequests: failedNetworkRequestCount,
+      expectedNavigationAborts: expectedNavigationAborts.length,
+      expectedScopeConsoleErrors: knownScopeConsoleErrors.length,
+      unexpectedConsoleErrors: unexpectedConsoleErrors.length,
+      mutationObserverUsed: true,
+      animationFrameSamplingClaimed: false,
+      realDeviceClaimed: false,
+      medicalFactsEvaluated: false,
+      responseBodiesRetained: false,
+      requestIdsRetained: false,
+      credentialsRetained: false
+    };
+    await writeFile(summaryFile(slug), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+    expect(observations).toHaveLength(4);
+    expect(failedNetworkRequestCount).toBe(0);
+    expect(unexpectedConsoleErrors).toEqual([]);
+    expect(exposureCount, "incompatible terminal state must never enter the DOM during hydration").toBe(0);
+  }, {
+    videoOnFailure: true,
+    traceScreenshots: false,
+    traceSnapshots: false,
+    traceOnFailure: true
   });
 });
 

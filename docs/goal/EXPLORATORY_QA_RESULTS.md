@@ -549,3 +549,11 @@ Patient Session 报告记录 295 次 `unsafe_deterministic_answer` source-cell �
 - 七阶段合同仍完成56次stage-feedback、8次score，providerCalls 0；HTTP失败0。英文阶段2相邻观察到HEM-P2-059重复key共48条，按既有缺陷记录，不新建重复ID。
 - 首轮4/4失败属于QA oracle错误：进入阶段7后探针错误等待不存在的常规“提交本阶段”按钮，未形成axe产品结论。修正后全矩阵与1440×900聚焦复现一致。
 - 本轮新增P0/P1/P2为0/1/1。结果标`FAIL_EMULATION`；真实屏幕阅读器、系统字体放大、真机软键盘和safe-area仍`BLOCKED_REAL_DEVICE`。
+
+## 2026-07-26 第 33 轮：`9b7fcd0` 终态 hydration 闪烁隔离
+
+- Production远端无变化，未重复完整axe、42例、自然语言或七阶段昂贵回归；改为补测现有HEM-P1-061稳定态证据未覆盖的首帧至hydration稳定阶段。
+- 四个Playwright项目4/4通过：中文/英文×四viewport分别执行跨语言P001终态与跨病例P001→P002终态，共16项；document-start MutationObserver检查7,096条mutation record。
+- `final-report`瞬时插入0、非医学QA哨兵插入0、稳定态暴露0；replacement pointer作用域兼容16/16。training action非200、应用HTTP失败、意外console error与providerCalls均为0。
+- 首个命令误用只收集`tests/e2e`的默认Playwright配置，在收集阶段以应用请求0退出，不计产品结果；正式矩阵使用`playwright.exploratory.config.mjs`。
+- HEM-P1-061增加“hydration期间未进入DOM”的`PASS_EMULATION`证据；不外推为animation-frame/compositor捕获或真实低性能设备观察。本轮新增P0/P1/P2为0/0/0。

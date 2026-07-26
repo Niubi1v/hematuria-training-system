@@ -293,3 +293,10 @@ console 文本对 Authorization、Cookie、签名、token、secret 和 API key �
 - 新Production出现时先比较实际运行时代码差异；只有页面/组件或相关状态机变化才重跑受影响可访问性用例，无运行时变化只记录基线更新。
 - 真实屏幕阅读器、系统字体放大、真机软键盘和safe-area继续`BLOCKED_REAL_DEVICE`，不能由axe或自动viewport替代。
 - 首轮探针误等候第7阶段常规提交按钮，4/4在产品axe结论前失败并排除；修正后完整矩阵与单viewport聚焦证据均稳定复现HEM-P1-067/HEM-P2-068。
+
+## 2026-07-26 第 33 轮 `9b7fcd0` 终态 hydration 闪烁隔离
+
+- 远程Production仍为`9b7fcd0`且无运行时代码变化，故不重跑第31轮完整axe矩阵或第32轮七阶段可访问性；本轮补长期计划中尚未直接验证的状态闪烁与隐藏终态泄露。
+- 在document-start安装MutationObserver，检查跨语言P001终态及跨病例P001→P002终态是否曾以`final-report`节点或非医学QA哨兵文本进入DOM；同时保留稳定态及replacement pointer作用域断言。
+- 覆盖中文/英文×四viewport×跨语言/跨病例共16项。仅记录插入计数、作用域、状态码和兼容性，不保存终态正文、诊断、评分细目、request/attempt ID或凭据。
+- 自动结果只标`PASS_EMULATION`；未声称animation-frame/compositor采样或真实低性能设备观察。真实屏幕阅读器、系统字体放大、真机软键盘和safe-area继续`BLOCKED_REAL_DEVICE`。

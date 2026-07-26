@@ -400,3 +400,16 @@
 | 真实辅助技术 | 屏幕阅读器、系统字体放大、真机软键盘、safe-area | BLOCKED_REAL_DEVICE |
 
 - 第31轮的42例初始病例页`A11Y_4_VIEWPORTS`结论不变；第32轮新增的是展开阶段状态，不能用初始页通过覆盖阶段6/7失败。
+
+## Production `9b7fcd0` 第 33 轮终态 hydration 闪烁隔离增量
+
+| 场景 | 覆盖 | 状态 |
+| --- | --- | --- |
+| P001跨语言终态pointer | 中英文×四viewport=8项 | PASS_EMULATION_NO_DOM_EXPOSURE |
+| P001终态pointer指向P002 | 中英文×四viewport=8项 | PASS_EMULATION_NO_DOM_EXPOSURE |
+| document-start观察 | 7,096条mutation record；终态/哨兵插入0 | PASS_EMULATION |
+| 稳定态与replacement pointer | 暴露0；兼容pointer 16/16 | PASS_EMULATION |
+| 协议与运行稳定性 | action非200、HTTP失败、意外console、providerCalls均0 | PASS_FIXTURE_PROTOCOL |
+| 真实低性能设备与辅助技术缓存 | 未执行 | BLOCKED_REAL_DEVICE / NOT_CLAIMED |
+
+- 本轮不重跑第31轮axe矩阵；只增加状态闪烁与隐藏终态泄露边界。MutationObserver证据不能替代animation-frame/compositor捕获或真实设备观察。

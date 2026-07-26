@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-26",
+  "productionBaseline": "9b7fcd0d975533c7c6eda5614ca3b2978c9dce55",
+  "qaBranch": "codex/hematuria-exploratory-qa",
+  "qaHeadBeforeCommit": "38713db4a42da69490be58cc55c8d1845de01c11",
+  "scope": "Cross-language and cross-case completed-attempt hydration flicker isolation",
+  "status": "PASS_EMULATION",
+  "matrix": {
+    "cases": [
+      "P001",
+      "P002"
+    ],
+    "languages": [
+      "zh",
+      "en"
+    ],
+    "viewports": [
+      "1440x900",
+      "1280x720",
+      "390x844",
+      "360x800"
+    ],
+    "playwrightProjectsPassed": 4,
+    "playwrightProjectsFailed": 0,
+    "scopeChecks": 16,
+    "crossLanguageChecks": 8,
+    "crossCaseChecks": 8,
+    "mutationRecordsInspected": 7096,
+    "terminalReportInsertions": 0,
+    "sentinelInsertions": 0,
+    "stableExposureCount": 0,
+    "compatibleReplacementPointers": 16,
+    "actionNon200Responses": 0,
+    "applicationHttpFailures": 0,
+    "unexpectedConsoleErrors": 0,
+    "providerCalls": 0
+  },
+  "oracle": {
+    "installedAtDocumentStart": true,
+    "mutationObserver": true,
+    "addedNodesInspected": true,
+    "attributeChangesInspected": true,
+    "stableDomChecked": true,
+    "animationFrameSamplingClaimed": false,
+    "sensitiveContentRetained": false
+  },
+  "relatedDefects": {
+    "HEM-P1-061": {
+      "status": "RESOLVED_LOCAL_QA",
+      "newEvidence": "No incompatible final report or QA sentinel entered the DOM during hydration."
+    }
+  },
+  "newDefects": {
+    "P0": 0,
+    "P1": 0,
+    "P2": 0
+  },
+  "excludedRuns": [
+    {
+      "reason": "The first command used the default tests/e2e-only Playwright config and exited during collection with zero application requests.",
+      "productConclusion": false
+    }
+  ],
+  "limitations": [
+    "The result is headless Chromium browser emulation and does not replace observation on a resource-constrained physical device.",
+    "MutationObserver covers inserted nodes, text changes, data-testid changes, and the stable DOM; animation-frame or compositor-only sampling was not claimed.",
+    "The test used a non-medical QA sentinel and did not evaluate patient facts, diagnoses, or scoring correctness.",
+    "Real screen readers, system font scaling, physical mobile keyboards, and safe-area behavior remain BLOCKED_REAL_DEVICE."
+  ],
+  "privacy": {
+    "containsCredentials": false,
+    "containsQuestionsOrAnswers": false,
+    "containsMedicalTruthValues": false,
+    "containsRequestOrAttemptIdentifiers": false,
+    "responseBodiesRetained": false
+  },
+  "changes": {
+    "businessCodeChanged": false,
+    "dataChanged": false,
+    "medicalFactsChanged": false,
+    "approvalStateChanged": false
+  }
+}

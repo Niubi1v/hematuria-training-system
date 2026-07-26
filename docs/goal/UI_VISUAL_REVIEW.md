@@ -237,3 +237,9 @@
 - HEM-P1-067代表截图显示围术期大文本框只有相邻标题/说明而无程序化标签；视觉上可理解不等于屏幕阅读器可识别。
 - HEM-P2-068代表截图显示时间线具有固定高度和内部滚动，但容器无法进入键盘焦点；最终报告生成正常，缺陷不属于评分失败。
 - 真实屏幕阅读器、系统字体放大、真机软键盘和safe-area仍`BLOCKED_REAL_DEVICE`。没有修改Production组件或样式。
+
+## 2026-07-26 `9b7fcd0` 第 33 轮 hydration 状态闪烁
+
+- 四viewport中英文共16个跨语言/跨病例终态边界均未观察到`final-report`或QA哨兵瞬时插入，稳定态暴露同为0；结果标`PASS_EMULATION`。
+- 通过运行不生成截图、trace或录像；四份summary及console/network仅本机保留，Git只提交脱敏聚合和可重建测试。
+- MutationObserver检查DOM插入、文字和属性变化，不声称捕获浏览器compositor-only帧或真实低性能设备的显示缓存；真实辅助技术与真机边界不变。

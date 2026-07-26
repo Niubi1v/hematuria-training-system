@@ -557,3 +557,14 @@ SHA-256：
   - `9b7fcd0-r32-stage`：20份文件、897个ZIP条目、196,411,169 B解压流；
   - `9b7fcd0-r32-playwright`：2份文件、0个ZIP条目、8,364 B；
   - `9b7fcd0-round32`：1份文件、0个ZIP条目、3,688 B。
+
+## Production `9b7fcd0` 第 33 轮终态 hydration 闪烁证据
+
+| 证据名称 | 对应测试或缺陷 | 文件路径 | 文件大小 | 是否提交 Git | 未提交原因 | 本机保留位置 |
+| --- | --- | --- | ---: | --- | --- | --- |
+| 第33轮脱敏聚合 | HEM-P1-061 hydration无瞬时泄露增量 | `artifacts/exploratory-qa/reports/9b7fcd0-round33-terminal-hydration-flicker-summary.json` | 2,692 B | 是 | — | 仓库路径 |
+| document-start闪烁探针 | `@terminal-hydration-flicker` | `tests/exploratory/long-running-qa.spec.mjs` | 整文件 | 是 | — | 仓库路径 |
+| 四viewport原始证据 | 4份summary、4份console、4份network | `artifacts/exploratory-qa/reports/9b7fcd0-r33-terminal-hydration-flicker-isolation-*` | 12份/48,788 B | 否 | 通过证据可由测试重建；聚合已保留完整结论计数 | 原路径，本机未跟踪 |
+
+- 本轮无失败截图、trace或录像；首个错误Playwright配置在收集阶段退出且应用请求0，不计产品证据。聚合不含终态正文、QA哨兵值、医学事实、request/attempt ID、header、Cookie、Authorization、token、签名或环境值。
+- 定向敏感信息扫描全部通过且`findings=0`：`9b7fcd0-r33`为12份文件、0个ZIP条目、48,788 B；`9b7fcd0-round33`为1份文件、0个ZIP条目、2,692 B。
