@@ -1,5 +1,8 @@
 # 腾讯云大陆预发布 Runbook
 
+逐项控制台入口、选择值、敏感信息边界和完成标准见
+[`TENCENT_CLOUD_STAGING_STEP_BY_STEP.md`](./TENCENT_CLOUD_STAGING_STEP_BY_STEP.md)；本页保留值班速查顺序。
+
 1. 人工创建同地域、同 VPC 的 CVM 与腾讯云 Redis。
 2. Redis 白名单只放行应用私网地址/子网；验证公网无法连接。
 3. 安全组只放行固定运维源的 SSH 和公众 80/443；拒绝 3000/6379/8787。
