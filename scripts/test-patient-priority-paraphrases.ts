@@ -54,6 +54,7 @@ const probes: Probe[] = [
   { id: "anticoagulant-colloquial-en", language: "en", question: "Do you take blood thinners?", expectedSlot: "MED_ANTICOAGULANT" },
   { id: "anticoagulant-apixaban-en", language: "en", question: "Are you taking apixaban?", expectedSlot: "MED_ANTICOAGULANT" },
   { id: "qa-dysuria-colloquial-zh", language: "zh", question: "小便痛不痛？", expectedSlots: ["dysuria"], expectedFacts: ["dysuria"], qaNatural: true },
+  { id: "qa-dysuria-laniu-zh", language: "zh", question: "拉尿的时候痛不痛？", expectedSlots: ["dysuria"], expectedFacts: ["dysuria"], qaNatural: true },
   { id: "qa-dysuria-colloquial-en", language: "en", question: "Does it hurt when you urinate?", expectedSlots: ["dysuria"], expectedFacts: ["dysuria"], qaNatural: true },
   { id: "qa-dysuria-formal-zh", language: "zh", question: "排尿时疼吗？", expectedSlots: ["dysuria"], expectedFacts: ["dysuria"], qaNatural: true },
   { id: "qa-dysuria-formal-en", language: "en", question: "Is urination painful?", expectedSlots: ["dysuria"], expectedFacts: ["dysuria"], qaNatural: true },
