@@ -12,7 +12,11 @@ const factMatchers = [
   ["stoneHistory", "PAST_STONE", /结石史|以前.*结石|得过.*结石|stone history|stones before/i],
   ["urinaryInfectionHistory", "PAST_UTI", /感染史|以前.*尿路感染|反复.*感染|UTI history|urinary infection/i],
   ["malignancyHistory", "PAST_MALIGNANCY", /肿瘤史|以前.*肿瘤|得过.*癌|cancer history|previous cancer|cancer before/i],
-  ["traumaHistory", "PAST_TRAUMA", /外伤史|受过伤|撞伤|跌伤|trauma/i],
+  [
+    "traumaHistory",
+    "PAST_TRAUMA",
+    /外伤史|受过(?:外)?伤|以前[^，。！？?]*外伤|既往[^，。！？?]*外伤|撞伤|跌伤|trauma history|have you had[^?.!]*trauma|previous trauma/i
+  ],
   ["urinaryProcedureHistory", "PAST_URINARY_PROCEDURE", /导尿|导过尿|膀胱镜|尿路操作|泌尿.*手术|catheter|cystoscopy|urinary procedure/i],
   ["surgeryHistory", "PAST_SURGERY", /手术史|做过.*手术|开过刀|surgery|operation/i],
   ["transfusionHistory", "PAST_TRANSFUSION", /输血史|输过血|blood transfusion/i],
@@ -24,28 +28,82 @@ const factMatchers = [
   ["pregnancyHistory", "GYNE_PREGNANCY", /怀孕|妊娠|pregnan/i]
 ];
 const broadMedication = /长期.*(?:吃|服|用).*药|平时.*(?:吃|服|用).*药|都吃什么药|用药史|长期用药|regular medication|medications do you take/i;
+const historyMedicalPolicy = require("../data/history_medical_reconciliation.json");
+const explicitBlockedFacts = new Set(
+  historyMedicalPolicy.blockedMedicalHistory.map((item) => `${item.caseId}:${item.field}`)
+);
+
+function unresolvedStructuredReply(key, language = "zh") {
+  const observationFacts = new Set(["traumaHistory", "urinaryProcedureHistory"]);
+  if (language === "en") {
+    return observationFacts.has(key)
+      ? "I did not pay close attention to that before."
+      : "I cannot recall that clearly.";
+  }
+  return observationFacts.has(key)
+    ? "这个我之前没特别注意。"
+    : "这点我记不太清了。";
+}
+
+function unresolvedFact(caseId, key, fact) {
+  return explicitBlockedFacts.has(`${caseId}:${key}`)
+    || fact?.provenance === "author_added_for_simulation"
+    || fact?.teacherReviewRequired === true;
+}
 
 function matchStructuredFacts(caseData, question, language = "zh") {
   const history = caseData?.structuredHistory;
   if (!history) return null;
-  const matches = factMatchers.filter(([, , trigger]) => trigger.test(question));
-  const wantsAllMedication = broadMedication.test(question) && !matches.some(([key]) => key === "anticoagulantUse" || key === "antiplateletUse");
+  const text = String(question || "");
+  const matches = factMatchers
+    .map((entry, sourceOrder) => ({ entry, sourceOrder, index: text.search(entry[2]) }))
+    .filter((item) => item.index >= 0);
+  const medicationIndex = text.search(broadMedication);
+  const wantsAllMedication = medicationIndex >= 0;
   const answers = [];
   const matchedFacts = [];
   const matchedSlotIds = [];
+  const collectableFacts = [];
+  const collectableSlotIds = [];
   const sources = [];
-  if (wantsAllMedication) {
-    answers.push(language === "en" ? history.medicationAnswerEn : history.medicationAnswerZh);
-    matchedFacts.push("medicationList");
-    matchedSlotIds.push("MED_ALL");
-    sources.push(...(history.medicationList || []));
-  }
-  for (const [key, slotId] of matches) {
+  let hasUnresolved = false;
+  const clauses = [
+    ...matches.map((item) => ({
+      kind: "fact",
+      index: item.index,
+      sourceOrder: item.sourceOrder,
+      entry: item.entry
+    })),
+    ...(wantsAllMedication ? [{
+      kind: "allMedication",
+      index: medicationIndex,
+      sourceOrder: factMatchers.length,
+      entry: null
+    }] : [])
+  ].sort((left, right) => left.index - right.index || left.sourceOrder - right.sourceOrder);
+  for (const clause of clauses) {
+    if (clause.kind === "allMedication") {
+      answers.push(language === "en" ? history.medicationAnswerEn : history.medicationAnswerZh);
+      matchedFacts.push("medicationList");
+      matchedSlotIds.push("MED_ALL");
+      collectableFacts.push("medicationList");
+      collectableSlotIds.push("MED_ALL");
+      sources.push(...(history.medicationList || []));
+      continue;
+    }
+    const [key, slotId] = clause.entry;
     const fact = history[key];
     if (!fact) continue;
-    answers.push(language === "en" ? fact.patientAnswerEn : fact.patientAnswerZh);
+    const blocked = unresolvedFact(caseData.id, key, fact);
+    answers.push(blocked ? unresolvedStructuredReply(key, language) : (language === "en" ? fact.patientAnswerEn : fact.patientAnswerZh));
     matchedFacts.push(key);
     matchedSlotIds.push(slotId);
+    if (blocked) {
+      hasUnresolved = true;
+    } else {
+      collectableFacts.push(key);
+      collectableSlotIds.push(slotId);
+    }
     sources.push(fact);
   }
   if (!answers.length) return null;
@@ -54,10 +112,13 @@ function matchStructuredFacts(caseData, question, language = "zh") {
     replyText: [...new Set(answers)].join("\n"),
     matchedSlotIds: [...new Set(matchedSlotIds)],
     matchedFacts: [...new Set(matchedFacts)],
-    answerSource: provenance.size > 1 ? "mixed" : ([...provenance][0] || "source"),
-    confidence: sources.some((item) => item.provenance === "author_added_for_simulation") ? 0.82 : 0.99,
+    governanceSlotIds: [...new Set(matchedSlotIds)],
+    collectableSlotIds: [...new Set(collectableSlotIds)],
+    collectableFacts: [...new Set(collectableFacts)],
+    answerSource: hasUnresolved ? "pending_review" : (provenance.size > 1 ? "mixed" : ([...provenance][0] || "source")),
+    confidence: hasUnresolved ? 0 : 0.99,
     safetyFlags: [],
-    fallbackReason: ""
+    fallbackReason: hasUnresolved ? "medical_history_pending_review" : ""
   };
 }
 

@@ -1265,3 +1265,184 @@ Actions run `30008877764`只证明旧HEAD `141f5bb`的依赖审计失败；不�
 | Preview输出安全 | 保护头跨origin注入0；生成物凭据扫描通过 |
 
 P001新增三轮及P037/P038各两轮的每次`/api/agent-chat/`均200、`generationSource=live_ai`、`provider=deepseek`、`isFallback=false`；对应`history-log`均200。session 10/10 P95 1263ms；中文5/5 P95 1413ms；英文5/5 P95 1858ms。
+
+## QA 2107b7b P1/P2整改本地证据（2026-07-24）
+
+本地bundled Node为`24.14.0`、pnpm为`11.9.0`；新HEAD的Node 22.14结果必须由Actions独立确认。
+
+| 命令/合同 | 退出码 | 结果 |
+|---|---:|---|
+| `pnpm run test:data-agent-authority` | 0 | 23英文内部ID阻断；23中文控制；29评分链0得分；58恢复+58正序通过 |
+| `pnpm run test:patient-compound-history` | 0 | 786复合、618跨层、42肿瘤边界、56冲突隔离；providerCalls=0 |
+| `pnpm run test:patient-chief-complaint` | 0 | 中英文路由84、受控live provider 42、普通词5允许、危险内容4阻断 |
+| `pnpm run test:patient-intents` | 0 | 86/86、3150/3150、1848/1848；QA自然840/840、intent 1428/1428 |
+| Patient context/history/pain/safe projection | 0 | P037/P038、42×8既往史、42×6疼痛、114安全投影全部通过 |
+| `pnpm test` | 0 | 完整行为/治理链；42例双语84旅程、588阶段提交、84份360分报告；572、153/419、18冲突隔离通过 |
+| `pnpm run test:e2e` | 0 | 88项：85 passed、3个项目互斥skip、0 failed，4.2分钟；runner正常退出 |
+| HEM-P2-056 desktop/mobile精确回归 | 0 | 4/4；空result不生成空行，React key console错误0 |
+| HEM-P2-044 mobile精确回归 | 0 | 360×800与390×844几何合同通过；语音/TTS相邻回归3/3 |
+| HEM-P2-028 desktop/mobile精确回归 | 0 | 第7阶段及既有阶段双击4/4；各1 request、1 ID、1 score、1 timeline |
+| `pnpm run typecheck` / `pnpm run lint` | 0 / 0 | 最终代码状态通过 |
+| Vercel同源`pnpm run build` | 0 | 静态生成82/82页；相对同源API合同 |
+| Pages basePath/API `pnpm run build` | 0 | `/hematuria-training-system`下82/82页 |
+| 两次`pnpm run test:bundle` | 0 | 各25个JavaScript资产，无隐藏答案/密钥/退役3001端口 |
+| `pnpm run test:secrets` | 0 | 343个tracked/candidate及可达历史/有界归档，无敏感值输出 |
+| clean gate / `git diff c4ac9b5..HEAD -- data` | 0 / 空 | 工作树干净；医学数据零差异 |
+
+代码候选HEAD为`cda359e6eb233761245e6490f4cc54de1495d594`；远程Actions、Vercel和Preview当前仍标记待验证，旧HEAD绿灯不得替代。
+
+## PostCSS CI恢复证据（2026-07-24）
+
+| 项目 | 结果 |
+|---|---|
+| Actions run `30084158980` / `2e42d64` | failure；Node setup/install通过，首个失败为Full dependency audit，后续门禁skipped |
+| 失败公告 | `GHSA-6g55-p6wh-862q`；Next嵌套PostCSS 8.4.31，patched `>=8.5.12` |
+| 修复 | `postcss@<=8.5.11: 8.5.15`项目级override；lockfile移除8.4.31 |
+| `pnpm audit --audit-level high` | 修复前exit 1（1 high）；修复后exit 0（No known vulnerabilities found） |
+| 冻结安装 / TypeScript / ESLint | exit 0 / 0 / 0 |
+| 同源生产build / bundle / secret | 82/82页；25个JS资产；343文件/历史扫描通过 |
+| 相关Playwright | 11 passed、1互斥skip、0 failed；报告、44px触控、stage1/7双击、axe覆盖 |
+
+业务代码没有因依赖审计修复而变化，因此没有重复完整行为链和85/3 Playwright；新HEAD远程Node 22仍为待验证。
+
+## QA 052–056远程与真实Preview证据（2026-07-24）
+
+| 项目 | 结果 |
+|---|---|
+| 最终候选 | `d2dae6ebe8956885764b032314616dd2f59d50cb`；本地/远端ahead-behind `0/0` |
+| Actions | run `30084546897`，Node 22.14.0，完整success |
+| Node 22 Playwright | 85 passed、3项目互斥skip、0 failed，7.1分钟 |
+| Node 22其余门禁 | dependency audit、生成幂等性、行为/医学/安全、TypeScript、ESLint、secret、82页build、23 JS bundle、clean gate全部success |
+| Pages | artifact与deploy按Draft规则skipped |
+| Vercel | Deployment success；Preview Comments success；部署health SHA=`d2dae6e...` |
+| `pnpm run test:e2e:preview` | exit 0；11/11通过；生成文件凭据扫描通过 |
+| Preview保护 | same-origin注入；跨origin注入0；未输出Cookie、Authorization、token、签名或bypass值 |
+| Preview配置 | `/api/health/` 200；Patient Service、Training State、Durable Attempt Store均configured |
+| 第一阶段流程 | P003零轮；P001中英文、双向切换、刷新、快速双击、进入第二阶段均通过 |
+| Patient来源 | P001纠错/澄清、P037/P038追问均为DeepSeek `live_ai`、非fallback、history-log 200 |
+| Preview稳定性 | fresh session 10/10；中文live AI 5/5，回答P95 1378ms；英文5/5，回答P95 1297ms |
+
+证据边界：标准Preview 11项直接覆盖HEM-P1-053来源与基础阶段流程，但没有直接重放HEM-P1-052的23/29矩阵、HEM-P1-055的58×两种顺序、HEM-P1-054的786/618矩阵、HEM-P2-056非终态报告卡或HEM-P2-028第7阶段双击。上述项目有本地专项和Node 22完整门禁证据，问题级真实Preview复测仍交由长期QA，不登记为已在线专项验证。
+
+## 病史医学协调专项集成本地证据（2026-07-25）
+
+本机使用Node `24.14.0`；Node 22.14权威结果须由新HEAD Actions确认。
+
+| 合同/命令 | 退出码 | 结果 |
+|---|---:|---|
+| 病史协调与双语槽 | 0 | 42例×37槽；14项新增阻塞、18项HEM-P0-023隔离；42例均`needs_revision` |
+| `test-structured-history-matrix.ts` | 0 | 42例×17问法 |
+| 医学审核workbook/queue/import | 0 | 572=153 source+419待专家；0伪造批准 |
+| canonical / natural paraphrase | 0 | 3150/3150；QA自然840/840、1428/1428；错误unknown 0、极性错误0 |
+| compound history | 0 | 786复合、618跨层、42肿瘤边界、56冲突隔离，providerCalls=0 |
+| 360分与七阶段 | 0 | 42例360分；84条双语旅程、588次阶段提交、84份报告 |
+| TypeScript / ESLint | 0 / 0 | 最终代码状态通过 |
+| Playwright desktop/mobile | 0 | 88项：85 passed、3互斥skip、0 failed；3.6分钟；受控外部Next正常退出 |
+| P019/P020英文目录精确回归 | 0 | desktop/mobile 2/2；P019明确英文source，P020自然英文待复核 |
+| conversion idempotency | 0 | 78个受控输出首轮匹配baseline，第二轮零漂移 |
+| Pages basePath构建 | 0 | `/hematuria-training-system`，82/82页 |
+| bundle / repository secret / scanner self-test | 0 | 25个JS资产；355个tracked/candidate及历史；无敏感值输出 |
+| medical governance diff review | 0 | 无sourceFacts、360规则、`expert_approved`或`needs_revision`解除；仅四项明确source用药投影及P020派生语言占位 |
+
+首次完整Playwright在本机Node 24的自管Next回收阶段达到10分钟上限，且在失败汇总前已暴露P019/P020旧断言/跨语言问题；该次不登记为通过。修复后用相同测试集和受控外部Next执行，得到上述85/3/0真实exit 0。未增加重试或测试超时。
+
+## 病史集成首次远程门禁及依赖恢复证据（2026-07-25）
+
+| 合同/命令 | 退出码 | 结果 |
+|---|---:|---|
+| Actions run `30147515100` / `aca8a2a` | 1 | Node 22.14.0；首个真实失败为`Full dependency audit`；其余门禁skipped |
+| 公告核对 | — | PostCSS `GHSA-r28c-9q8g-f849`修复于8.5.18；brace-expansion `GHSA-mh99-v99m-4gvg`修复于5.0.8 |
+| frozen install | 0 | 新锁文件可安装；解析结果仅保留PostCSS 8.5.18与brace-expansion 5.0.8 |
+| `pnpm audit --audit-level high` | 0 | `No known vulnerabilities found` |
+| TypeScript / ESLint | 0 / 0 | 新依赖解析下通过；覆盖ESLint/minimatch实际加载路径 |
+| `pnpm run test:product` | 0 | 病例、360分、医嘱释放、OSCE、存储、RCT、i18n及Pages配置合同通过 |
+| secret scanner / repository scan | 0 / 0 | scanner自测通过；355个tracked/candidate及可达历史通过，未输出敏感值 |
+| Pages build | 0 | `/hematuria-training-system` basePath，82/82页；PostCSS 8.5.18编译成功 |
+| static bundle scan | 0 | 25个JavaScript资产通过 |
+| `git diff -- data` | 0 | 无医学数据或生成数据差异 |
+
+本机运行时为Node 24.14.0，因此Node 22.14.0权威结果仍由新HEAD Actions确认。依赖外没有应用代码变化，未重复运行不受影响且已在`aca8a2a`前通过的85/3完整Playwright。
+
+## Node 22行为失败与Patient治理恢复证据（2026-07-25）
+
+| 合同/命令 | 退出码 | 结果 |
+|---|---:|---|
+| Actions run `30147937615` / `969ce96` | 1 | Node 22依赖审计与前置数据门禁通过；Unit and behavioral tests首个失败为P037英文onset丢失`1 day` |
+| P037 contextual follow-up | 0 | `1 day ago`与`for <duration>`均投影为source支持的自然英文；P037/P038纠错、澄清、fallback恢复通过 |
+| unknown legacy collection | 0 | P004/P005/P006未留意事实匹配但不收集；`patient_not_observed`与`collectableSlotIds=[]` |
+| LLM adapter治理 | 0 | HX-ADD-001未审核饮酒史为`pending_review`，blocked field保留，零确定性negative |
+| safe projection | 0 | 45 approved；69 governed unknown；12 unreviewed history；全部unknown/unreviewed不可收集 |
+| 完整`pnpm run test` | 0 | 42例、572/419、3150、840/1428、786/618、42×17、84条七阶段、360分及安全链通过 |
+| Playwright自管Next | 124 | 88项断言完成、无失败符号；Windows Node 24子进程未回收，按证据规则不登记为通过 |
+| 受控外部Next完整Playwright | 0 | 85 passed、3互斥skip、0 failed；desktop/mobile；3.6分钟；runner正常退出 |
+| TypeScript / ESLint | 0 / 0 | 最终代码状态通过 |
+| Pages build / bundle | 0 / 0 | 82/82页；25个JavaScript资产 |
+| repository secret / audit | 0 / 0 | 356 tracked/candidate及历史通过；`No known vulnerabilities found` |
+| `git diff -- data` | 0 | 无医学事实、审批或生成数据差异 |
+
+`PATIENT_PROFILE_COMPLETENESS_REPORT.md`只同步专项已经确认的四项source用药投影；P026、P027、P029、P039对应患者可见文本与当前生成结果一致。没有写入新的医学结论。
+
+## 病史协调集成最终远程门禁（2026-07-25）
+
+| 证据 | 结果 |
+|---|---|
+| 精确HEAD | `e70ed19fadd51671602e937565b779154b16522d`，本地/远程ahead-behind `0/0` |
+| GitHub Actions | run `30148941887` / build job `89655884652`，completed/success |
+| Node | `v22.14.0` |
+| 行为与治理 | dependency audit、78输出幂等、生成基线、schema、临床矛盾、双语fixture、Unit and behavioral、医学审核合同、360分均success |
+| TypeScript / ESLint / repository secret scan | success / success / success |
+| Playwright | 88项：85 passed、3按项目互斥规则skipped、0 failed；8.2分钟，runner正常退出 |
+| 构建与bundle | 82/82静态页；23个JavaScript资产；clean gate success |
+| Vercel | 精确HEAD status `success`，deployment `BmFSFi24jvwadzzo3Qj7eqFdFMTT`；Preview Comments success |
+| PR/Pages | PR #1 Open/Draft；Pages artifact/deploy按Draft规则skipped，未部署Production |
+| 医学边界 | `data/**`零差异；未批准或解除任何BLOCKED、HEM-P0-001/023、simulation或`needs_revision`状态 |
+
+Actions URL：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/30148941887`。Vercel状态页：`https://vercel.com/niubi1vs-projects/hematuria-training-system/BmFSFi24jvwadzzo3Qj7eqFdFMTT`。
+## 2026-07-26 — HEM-P1-061/063/064/066 与 HEM-P2-065
+
+基线：`77815862a0abebff67b8d958f66944a0e11b068f`；代码提交：`df89a91f304f867855b6708cab152b70e57fad80`。QA 证据仅从远程已提交 HEAD `e586508c620f0b9ca72930feb1c93526b35e04c1`选择性读取。
+
+| 门禁 | 精确结果 |
+|---|---|
+| attempt 身份 | `scripts/test-attempt-isolation.ts` exit 0；28/28 缺失或不匹配身份场景 fail-closed |
+| 假进度 | `scripts/test-catalog-progress.ts` exit 0；8/8 畸形 pointer、未验证 summary、孤儿 attempt 被拒绝 |
+| 四 viewport 浏览器专项 | `practice.spec.mjs`专项 5/5；覆盖 360×800、390×844、1280×720、1440×900 的 storage 异常、pointer 补偿/刷新、restart 删除失败与目录假进度 |
+| history-log 控制 | 3×HTTP 503 后人工 1×HTTP 200；唯一 request ID；刷新后自动新增请求 0；pending 归零 |
+| 完整 Playwright | 98 discovered；91 passed、7按项目合同 intentional skipped、0 failed；desktop/mobile、42例双语七阶段代表流程均通过 |
+| 完整行为链 | 58/58 命令 exit 0；含 42例、572事实、153/419治理隔离、18项冲突、七阶段、session/attempt与360分 |
+| TypeScript / ESLint | 均 exit 0 |
+| Production build | Vercel同源合同 `82/82`；GitHub Pages basePath合同 `82/82` |
+| bundle / repository scan | 两次 bundle 均 26 JS 资产通过；repository scanner 357 tracked/candidate及历史通过 |
+| 生成幂等 | 已提交 HEAD 的隔离 worktree：78 个受控输出 baseline 与第二轮一致，exit 0 |
+| 数据边界 | `git diff --exit-code -- data` exit 0；未修改医学事实、审核状态、`needs_revision`或评分规则 |
+
+本地运行使用当前 Codex 捆绑 Node 24.14；仓库要求的 Node 22.14 结果必须由精确新 HEAD 的 GitHub Actions补证。当前不得写成远程或 Preview 已通过。
+
+### 精确 HEAD 远程证据
+
+| 项目 | 结果 |
+|---|---|
+| GitHub Actions | run `30166227983`，HEAD `ee48cc99f0c9613704d89c1742158b13287e58d2`，Node 22.14，completed/success |
+| Playwright | 91 passed、7 intentional skipped、0 failed，runner 正常退出 |
+| 行为与治理 | conversion idempotency、生成基线、Schema、医学矛盾、双语 fixtures、完整行为链和医学审核合同全部 success |
+| 工程门禁 | TypeScript、ESLint、repository secret scan、82/82 静态构建、24-asset bundle scan、tracked-worktree clean gate 全部 success |
+| Vercel | Preview deployment `5602981833`，部署 SHA 与 Actions HEAD 完全一致，state=success |
+| PR / Pages | PR #1 Open/Draft；Pages artifact 与 deploy 按 Draft 规则 skipped，未部署 Production |
+
+Actions：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/30166227983`。Preview：`https://hematuria-training-system-fkjmi09rf-niubi1vs-projects.vercel.app`。
+
+## 2026-07-26 — 仓库级 Skill 集成
+
+基线：`df9c35f5c1e1c53e3dbf20b802a6761faee0dc50`；来源提交：`0e4353a722c0505032ef0a088758f37a997849d5`；cherry-pick提交：`f0988dc`。
+
+| 门禁 | 结果 |
+|---|---|
+| 来源范围 | 8/8文件全部位于`.agents/skills/**`；无业务代码、医学数据、审核文档、依赖或临时文件 |
+| 官方Skill校验 | Codex `skill-creator/scripts/quick_validate.py`：4/4 `Skill is valid!` |
+| `openai.yaml` | 4/4 YAML可解析；仅含允许的`interface`字段；名称、描述与`$skill-name`默认提示合同通过 |
+| 引用完整性 | 37/37 pnpm脚本存在；16/16引用文件或目录存在 |
+| repository secret scan | 365个候选/跟踪文件及可达文本历史，exit 0；未输出任何凭据值 |
+| 数据与工作树 | `data/**`零差异；cherry-pick后clean gate通过 |
+| 比例门禁 | Skill仅影响Agent指引，不进入运行时代码；按要求未重复运行无关Playwright和42例矩阵 |
+
+本地校验使用临时目录中的PyYAML运行官方脚本；没有写入`package.json`、锁文件、项目依赖或Git。远程Actions/Vercel必须绑定最终记录提交后再登记。

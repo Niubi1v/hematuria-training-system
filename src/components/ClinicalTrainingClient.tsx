@@ -47,12 +47,13 @@ import {
   reportStatusPresentation,
   safeStudentFacingText
 } from "@/shared/dataAgentPresentation.js";
-import { simplifiedChiefComplaint } from "@/src/lib/chiefComplaint";
+import { chiefComplaintForCase, patientOpeningForCase } from "@/src/lib/chiefComplaint";
 import { ApiRequestError, createIdempotencyKey, createRequestId, fetchWithRecovery, requestJson, studentFacingApiMessage } from "@/src/lib/apiClient";
 import { publicApiConfig } from "@/src/lib/apiConfig";
+import { ATTEMPT_SUMMARY_KEY, createAttemptSummary, isAttemptSummary, type AttemptSummary } from "@/src/lib/catalogProgress";
 import { isConnectionFailureFallback, isSafetyFallback, mergeRecoveredCoverage, recordConnectionTransition, validCachedSession, type AiConnectionStatus, type CachedPatientSession, type ConnectionTransition } from "@/src/lib/aiRecovery";
-import { initializeStorageVersion, readJsonStorage, writeJsonStorage } from "@/src/lib/safeStorage";
-import { attemptPointerKey, attemptStorageKey, createAttempt, legacyTrainingStateStorageKey, trainingStateStorageKey, type AttemptIdentity, type AttemptMode } from "@/src/lib/attemptState";
+import { initializeStorageVersion, readJsonStorage, removeBrowserStorageEntries, writeJsonStorage } from "@/src/lib/safeStorage";
+import { attemptPointerKey, attemptStorageKey, createAttempt, isAttemptCompatible, isStoredAttemptStateCompatible, legacyTrainingStateStorageKey, trainingStateStorageKey, type AttemptIdentity, type AttemptMode, type StoredAttemptState } from "@/src/lib/attemptState";
 import {
   AZURE_VOICE_BY_PROFILE,
   cleanSpeechText,
@@ -397,9 +398,7 @@ function nextStage(stageNo: AgentStageNo): AgentStageNo | null {
 }
 
 function patientOpening(caseData: StudentVisibleCase, lang: LanguageCode) {
-  const complaint = simplifiedChiefComplaint(caseData.studentChiefComplaint || caseData.chiefComplaint, lang, caseData.chiefComplaintEn);
-  if (lang === "en") return `Hello doctor. I came because of ${complaint || "abnormal urine color"}.`;
-  return `医生您好，我是因为${complaint || "小便颜色异常"}来看病的。`;
+  return patientOpeningForCase(caseData.id, caseData.studentChiefComplaint || caseData.chiefComplaint, lang, caseData.chiefComplaintEn);
 }
 
 function caseDisplay(caseData: StudentVisibleCase, lang: LanguageCode) {
@@ -408,7 +407,7 @@ function caseDisplay(caseData: StudentVisibleCase, lang: LanguageCode) {
     age: caseData.age,
     sex: lang === "en" ? caseData.sexEn || (caseData.sex === "女" ? "Female" : "Male") : caseData.sex,
     difficulty: caseData.difficulty || "",
-    chiefComplaint: simplifiedChiefComplaint(caseData.studentChiefComplaint || caseData.chiefComplaint, lang, caseData.chiefComplaintEn)
+    chiefComplaint: chiefComplaintForCase(caseData.id, caseData.studentChiefComplaint || caseData.chiefComplaint, lang, caseData.chiefComplaintEn)
   };
 }
 
@@ -553,11 +552,11 @@ function ReportCard({ item, lang }: { item: OrderResultLog["results"][number]; l
           <div><dt className="text-xs text-clinic-muted">{lang === "en" ? "Reference range" : "参考范围"}</dt><dd className="mt-0.5 text-clinic-ink">{referenceRange}</dd></div>
         </dl>
       )}
-      <div className="mt-3 grid gap-2">
-        {(lines.length ? lines : [item.result]).map((line) => (
-          <p key={line} className="rounded-lg bg-clinic-paper px-3 py-2">{line}</p>
+      {lines.length > 0 && <div className="mt-3 grid gap-2">
+        {lines.map((line, lineIndex) => (
+          <p data-testid="report-result-line" key={`${item.resultId || item.orderId}:result-line:${lineIndex}:${line}`} className="rounded-lg bg-clinic-paper px-3 py-2">{line}</p>
         ))}
-      </div>
+      </div>}
       {item.impression && <p className="mt-3 border-l-2 border-clinic-blue pl-3"><span className="font-semibold">{lang === "en" ? "Impression" : "印象"}：</span>{impression}</p>}
       {item.teachingExplanation && <p className="mt-3 text-xs leading-5 text-clinic-muted">{t(lang, "releaseRule")}：{teachingExplanation}</p>}
     </article>
@@ -954,12 +953,24 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     setRuntimeMode(targetMode);
     const attemptMode: AttemptMode = targetMode === "osce" ? "osce" : targetMode === "rct" ? "rct" : "free";
     const pointer = attemptPointerKey(initialCaseData.id, attemptMode, targetLang);
-    const savedAttempt = readJsonStorage<AttemptIdentity | null>(pointer, null).value;
-    const activeAttempt = savedAttempt?.schemaVersion === "attempt-v3"
+    const savedAttempt = readJsonStorage<unknown>(pointer, null).value;
+    const expectedAttempt = {
+      caseId: initialCaseData.id,
+      mode: attemptMode,
+      language: targetLang,
+      participantId: "practice-user",
+      schemaVersion: "attempt-v3" as const
+    };
+    const activeAttempt = isAttemptCompatible(savedAttempt, expectedAttempt)
       ? savedAttempt
       : createAttempt(initialCaseData.id, attemptMode, targetLang);
     setAttempt(activeAttempt);
-    writeJsonStorage(pointer, activeAttempt);
+    const pointerWrite = writeJsonStorage(pointer, activeAttempt);
+    if (!pointerWrite.ok) {
+      setStorageWarning(targetLang === "en"
+        ? "Browser storage is unavailable. This attempt will continue in memory."
+        : "浏览器存储不可用，本次训练将以内存模式继续。");
+    }
     setSpeechInputSupported(Boolean(getSpeechRecognition()));
     setSpeechOutputSupported("Audio" in window || "speechSynthesis" in window);
     const savedSpeech = readJsonStorage<{
@@ -976,7 +987,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     setSpeechProvider(savedSpeech.provider === "disabled" || savedSpeech.provider === "browser" ? savedSpeech.provider : "auto");
     setSpeechPreferencesReady(true);
 
-    const savedResult = readJsonStorage<{
+    type PersistedAttemptState = {
+      attempt?: AttemptIdentity;
       activeStageNo?: AgentStageNo;
       answers?: FullProcessAnswers;
       submitted?: Partial<Record<AgentStageNo, StageEvaluation>>;
@@ -990,8 +1002,14 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       timeline?: TimelineEvent[];
       pendingHistoryLogs?: PendingHistoryLog[];
       osceTimeLeft?: number;
-    }>(attemptStorageKey(activeAttempt), {});
-    const saved = savedResult.value;
+    } & StoredAttemptState;
+    const savedResult = readJsonStorage<PersistedAttemptState | null>(attemptStorageKey(activeAttempt), null);
+    const saved: PersistedAttemptState = isStoredAttemptStateCompatible(savedResult.value, activeAttempt) ? savedResult.value : {};
+    if (savedResult.value && !isStoredAttemptStateCompatible(savedResult.value, activeAttempt)) {
+      setStorageWarning(targetLang === "en"
+        ? "An incompatible saved attempt was ignored and a safe session was started."
+        : "已忽略身份不一致的训练记录，并安全创建新会话。");
+    }
     if (savedResult.recovered) setStorageWarning("检测到损坏的训练缓存，已安全恢复为空白会话。");
     if (saved.activeStageNo) setActiveStageNo(saved.activeStageNo);
     if (saved.answers) setAnswers({ ...emptyAnswers, ...saved.answers });
@@ -1179,9 +1197,24 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       pendingHistoryLogs,
       osceTimeLeft
     });
-    setSaveStatus(result.ok ? "saved" : "error");
-    if (!result.ok) setStorageWarning("自动保存失败，请勿关闭页面；可在浏览器释放存储空间后重试。 ");
-  }, [activeStageNo, answers, askedSlots, attempt, attemptReady, collected, examLogs, finalReport, mdtOpinions, messages, orderLogs, osceTimeLeft, pendingHistoryLogs, submitted, timeline]);
+    const pointerResult = result.ok && isAttemptCompatible(attempt, {
+      caseId: caseData.id,
+      mode: attempt.mode,
+      language: attempt.language,
+      participantId: attempt.participantId,
+      schemaVersion: "attempt-v3"
+    })
+      ? writeJsonStorage(
+        attemptPointerKey(attempt.caseId, attempt.mode, attempt.language, attempt.participantId, attempt.schemaVersion),
+        attempt
+      )
+      : { ok: false as const };
+    const persisted = result.ok && pointerResult.ok;
+    setSaveStatus(persisted ? "saved" : "error");
+    if (!persisted) setStorageWarning(lang === "en"
+      ? "Autosave is temporarily unavailable. Keep this page open and retry after browser storage recovers."
+      : "自动保存暂时不可用，请保持页面打开并在浏览器存储恢复后重试。");
+  }, [activeStageNo, answers, askedSlots, attempt, attemptReady, caseData.id, collected, examLogs, finalReport, lang, mdtOpinions, messages, orderLogs, osceTimeLeft, pendingHistoryLogs, submitted, timeline]);
 
   useEffect(() => {
     if (!isOsce || activeStageNo === 7 || finalReport) return;
@@ -1807,7 +1840,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }
 
   async function completeTraining() {
-    if (finalReport) return;
+    if (finalReport || stageSubmitLockRef.current || trainingAttemptStatus !== "ready") return;
     for (let stage = 1 as AgentStageNo; stage <= 6; stage = (stage + 1) as AgentStageNo) {
       if (!submitted[stage]) { alert(lang === "en" ? "Complete stages 1-6 first." : "请先完成并提交第1至第6阶段。"); return; }
     }
@@ -1815,20 +1848,27 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       alert(t(lang, "finalReflectionRequired"));
       return;
     }
+    stageSubmitLockRef.current = true;
+    setStageSubmitting(true);
     try {
       const evaluation = await trainingAction<StageEvaluation>({ action: "stage-feedback", stageKey: "debrief", submission: { ...answers } });
       const report = await generateReport();
       setSubmitted((current) => ({ ...current, 7: evaluation }));
       setFinalReport(report);
-      const summaries = readJsonStorage<Array<{ attemptId: string; caseId: string; language: LanguageCode; total: number; completedAt: string }>>("hematuria-practice-attempt-summaries-v1", []).value;
-      const previous = [...summaries].reverse().find((item) => item.caseId === caseData.id && item.language === lang && item.attemptId !== attempt.attemptId);
+      const summaries = readJsonStorage<unknown>(ATTEMPT_SUMMARY_KEY, []).value;
+      const validatedSummaries: AttemptSummary[] = Array.isArray(summaries) ? summaries.filter(isAttemptSummary) : [];
+      const previous = [...validatedSummaries].reverse().find((item) => item.caseId === caseData.id && item.language === lang && item.attemptId !== attempt.attemptId);
       setPreviousAttemptScore(previous?.total ?? null);
-      if (!summaries.some((item) => item.attemptId === attempt.attemptId)) {
-        writeJsonStorage("hematuria-practice-attempt-summaries-v1", [...summaries, { attemptId: attempt.attemptId, caseId: caseData.id, language: lang, total: report.total, completedAt: new Date().toISOString() }]);
+      if (!validatedSummaries.some((item) => item.attemptId === attempt.attemptId)) {
+        writeJsonStorage(ATTEMPT_SUMMARY_KEY, [...validatedSummaries, createAttemptSummary(attempt, report.total, report.max)]);
       }
       addTimeline("submit", lang === "en" ? "Final report generated" : "完成训练并生成最终报告", `${report.total}/${report.max}`, 7);
+      setStorageWarning("");
     } catch {
       setStorageWarning(lang === "en" ? "Final scoring is temporarily unavailable." : "终末评分服务暂时不可用。" );
+    } finally {
+      stageSubmitLockRef.current = false;
+      setStageSubmitting(false);
     }
   }
 
@@ -1855,13 +1895,20 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
 
   function restartTraining() {
     if (!window.confirm(lang === "en" ? "Restart this case and clear the saved attempt?" : "确定重新开始并清除本病例当前训练记录吗？")) return;
+    const cleared = removeBrowserStorageEntries([
+      { area: "local", key: attemptStorageKey(attempt) },
+      { area: "local", key: attemptPointerKey(attempt.caseId, attempt.mode, attempt.language, attempt.participantId, attempt.schemaVersion) },
+      { area: "session", key: trainingStateStorageKey(attempt.attemptId, publicApiConfig.baseUrl, window.location.origin) },
+      { area: "session", key: legacyTrainingStateStorageKey(attempt.attemptId) }
+    ]);
+    if (!cleared.ok) {
+      allowNavigationRef.current = false;
+      setStorageWarning(lang === "en"
+        ? "Restart could not clear the current training record. Nothing was reset; please retry."
+        : "重新开始未能清除当前训练记录，页面未重置，请重试。");
+      return;
+    }
     allowNavigationRef.current = true;
-    try {
-      localStorage.removeItem(attemptStorageKey(attempt));
-      localStorage.removeItem(attemptPointerKey(attempt.caseId, attempt.mode, attempt.language));
-      sessionStorage.removeItem(trainingStateStorageKey(attempt.attemptId, publicApiConfig.baseUrl, window.location.origin));
-      sessionStorage.removeItem(legacyTrainingStateStorageKey(attempt.attemptId));
-    } catch { /* Reload still resets the in-memory attempt. */ }
     window.location.reload();
   }
 
@@ -2052,7 +2099,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             <div>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold">{t(lang, "patientAgent")}</h3>
-                <button type="button" onClick={() => setSpeechSettingsOpen(true)} disabled={!speechOutputSupported} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm text-clinic-muted hover:border-clinic-blue disabled:opacity-50">
+                <button type="button" onClick={() => setSpeechSettingsOpen(true)} disabled={!speechOutputSupported} className="inline-flex min-h-11 items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm text-clinic-muted hover:border-clinic-blue disabled:opacity-50">
                   <Settings2 size={16} /> {t(lang, "voiceSettings")}
                   <span className="sr-only">{autoSpeak ? speechStateLabel() : t(lang, "speechOff")}</span>
                 </button>
@@ -2062,7 +2109,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                   <section className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
                     <div className="flex items-center justify-between gap-3">
                       <h4 className="font-semibold text-clinic-blue">{t(lang, "voiceSettings")}</h4>
-                      <button type="button" onClick={() => setSpeechSettingsOpen(false)} className="rounded-md px-2 py-1 text-sm hover:bg-clinic-paper" aria-label={t(lang, "close")}>×</button>
+                      <button type="button" onClick={() => setSpeechSettingsOpen(false)} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md px-2 py-1 text-sm hover:bg-clinic-paper" aria-label={t(lang, "close")}>×</button>
                     </div>
                     <label className="mt-4 flex items-center justify-between gap-3 text-sm"><span>{t(lang, "autoRead")}</span><input type="checkbox" checked={autoSpeak} onChange={(event) => setAutoSpeak(event.target.checked)} /></label>
                     <label className="mt-4 block text-sm"><span>{t(lang, "speechProvider")}</span><select value={speechProvider} onChange={(event) => setSpeechProvider(event.target.value as TtsProviderPreference)} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2"><option value="auto">{lang === "en" ? "Automatic (cloud with browser fallback)" : "自动（云语音，浏览器降级）"}</option><option value="browser">{t(lang, "browserVoice")}</option><option value="disabled">{t(lang, "disabled")}</option></select></label>
@@ -2079,10 +2126,10 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                     <label className="mt-4 block text-sm"><span>{t(lang, "speechRate")} {speechRate.toFixed(2)}</span><input className="mt-2 w-full" type="range" min="0.8" max="1.15" step="0.01" value={speechRate} onChange={(event) => setSpeechRate(Number(event.target.value))} /></label>
                     <label className="mt-4 block text-sm"><span>{t(lang, "speechPitch")} {speechPitch.toFixed(2)}</span><input className="mt-2 w-full" type="range" min="0.85" max="1.1" step="0.01" value={speechPitch} onChange={(event) => setSpeechPitch(Number(event.target.value))} /></label>
                     <div className="mt-5 flex flex-wrap gap-2">
-                      <button type="button" onClick={() => void speak(lang === "en" ? "Hello doctor, I can hear you clearly." : "医生您好，我能听清您的问题。", true)} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-3 py-2 text-sm text-white"><Volume2 size={15} />{t(lang, "testVoice")}</button>
-                      {speechState === "playing" || speechState === "fallback-browser" ? <button type="button" onClick={pauseSpeech} className="rounded-md border border-clinic-line p-2" title={t(lang, "pause")}><Pause size={16} /></button> : <button type="button" onClick={resumeSpeech} disabled={speechState !== "paused"} className="rounded-md border border-clinic-line p-2 disabled:opacity-50" title={t(lang, "resume")}><Play size={16} /></button>}
-                      <button type="button" onClick={() => stopSpeech()} className="rounded-md border border-clinic-line p-2" title={t(lang, "stop")}><Square size={16} /></button>
-                      <button type="button" onClick={() => lastSpokenText && void speak(lastSpokenText, true)} disabled={!lastSpokenText} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm"><RotateCcw size={15} />{t(lang, "replay")}</button>
+                      <button type="button" onClick={() => void speak(lang === "en" ? "Hello doctor, I can hear you clearly." : "医生您好，我能听清您的问题。", true)} className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-md bg-clinic-blue px-3 py-2 text-sm text-white"><Volume2 size={15} />{t(lang, "testVoice")}</button>
+                      {speechState === "playing" || speechState === "fallback-browser" ? <button type="button" onClick={pauseSpeech} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-clinic-line p-2" title={t(lang, "pause")}><Pause size={16} /></button> : <button type="button" onClick={resumeSpeech} disabled={speechState !== "paused"} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-clinic-line p-2 disabled:opacity-50" title={t(lang, "resume")}><Play size={16} /></button>}
+                      <button type="button" onClick={() => stopSpeech()} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-clinic-line p-2" title={t(lang, "stop")}><Square size={16} /></button>
+                      <button type="button" onClick={() => lastSpokenText && void speak(lastSpokenText, true)} disabled={!lastSpokenText} className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm"><RotateCcw size={15} />{t(lang, "replay")}</button>
                     </div>
                     <p
                       data-testid="voice-profile"
@@ -2255,7 +2302,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                       {log.duplicateOrderIds && log.duplicateOrderIds.length > 0 && <p className="mt-1 text-xs text-amber-800">{t(lang, "duplicateOrder")}</p>}
                       <p className="mt-1 text-sm text-clinic-muted">{log.message}</p>
                       {log.status === "ordered" && <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-clinic-paper"><div className="h-full w-1/2 animate-pulse rounded-full bg-clinic-teal" /></div>}
-                      {log.results.map((item, index) => <ReportCard key={`${log.id}-${index}`} item={item} lang={lang} />)}
+                      {log.results.map((item, index) => <ReportCard key={`${log.id}-${item.resultId || `${item.orderId}-${index}`}`} item={item} lang={lang} />)}
                     </div>
                   ))}
                 </div>
@@ -2390,7 +2437,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
 
           <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-clinic-line pt-4">
             {activeStageNo === 7 ? (
-              <button disabled={Boolean(finalReport)} onClick={completeTraining} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white hover:bg-clinic-teal disabled:cursor-not-allowed disabled:opacity-50">
+              <button disabled={Boolean(finalReport) || stageSubmitting || trainingAttemptStatus !== "ready"} onClick={completeTraining} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white hover:bg-clinic-teal disabled:cursor-not-allowed disabled:opacity-50">
                 <CheckCircle2 size={16} /> {t(lang, "finishTraining")}
               </button>
             ) : (

@@ -159,8 +159,92 @@ test("case catalog switches public complaint language", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Case selection" })).toBeVisible();
   await expect(page.getByText(/Hematuria/i).first()).toBeVisible();
   await expect(page.locator('a[href="/cases/P013/"]')).toContainText("Intermittent red urine for 2 months");
-  await expect(page.locator('a[href="/cases/P019/"]')).toContainText("Chief complaint pending medical review");
+  await expect(page.locator('a[href="/cases/P019/"]')).toContainText("Fever, left flank pain, urinary frequency, and painful urination for 3 days");
   await expect(page.locator('a[href="/cases/P020/"]')).toContainText("Chief complaint pending medical review");
+});
+
+test("case catalog remains usable when localStorage throws across four viewports", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "The test explicitly covers all four required viewport sizes.");
+  await page.addInitScript(() => {
+    const originalGetItem = Storage.prototype.getItem;
+    const originalSetItem = Storage.prototype.setItem;
+    window.__blockCatalogStorage = true;
+    Storage.prototype.getItem = function getItem(key) {
+      if (this === localStorage && window.__blockCatalogStorage) throw new DOMException("Synthetic read denial", "SecurityError");
+      return originalGetItem.call(this, key);
+    };
+    Storage.prototype.setItem = function setItem(key, value) {
+      if (this === localStorage && window.__blockCatalogStorage) throw new DOMException("Synthetic write denial", "SecurityError");
+      return originalSetItem.call(this, key, value);
+    };
+  });
+
+  for (const viewport of [
+    { width: 360, height: 800 },
+    { width: 390, height: 844 },
+    { width: 1280, height: 720 },
+    { width: 1440, height: 900 }
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/cases/");
+    await expect(page.locator("a[data-case-id]")).toHaveCount(42);
+    await expect(page.getByRole("status").filter({ hasText: "浏览器存储不可用" })).toBeVisible();
+    const search = page.getByRole("textbox", { name: "搜索病例" });
+    await search.fill("P001");
+    await expect(page.locator("a[data-case-id]")).toHaveCount(1);
+    await search.fill("");
+    await page.getByRole("button", { name: "English" }).click();
+    await expect(page.getByRole("heading", { name: "Case selection" })).toBeVisible();
+    await expect(page.locator("a[data-case-id]")).toHaveCount(42);
+  }
+
+  await page.locator('a[data-case-id="P001"]').click();
+  await expect(page.getByText("P001", { exact: true }).first()).toBeVisible();
+});
+
+test("case catalog rejects malformed pointers and unverified summaries across four viewports", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "The test explicitly covers all four required viewport sizes.");
+  await page.addInitScript(() => {
+    const malformedPointer = {
+      caseId: "P001",
+      mode: "free",
+      language: "en",
+      participantId: "practice-user",
+      schemaVersion: "attempt-v3",
+      createdAt: "2026-07-25T00:00:00.000Z"
+    };
+    const orphanAttempt = {
+      attemptId: "catalog-orphan-attempt",
+      caseId: "P003",
+      mode: "free",
+      language: "en",
+      participantId: "practice-user",
+      schemaVersion: "attempt-v3",
+      createdAt: "2026-07-25T00:00:00.000Z"
+    };
+    localStorage.setItem("hematuria-language", "en");
+    localStorage.setItem("hematuria-attempt-pointer-v3:P001:free:en", JSON.stringify(malformedPointer));
+    localStorage.setItem("hematuria-practice-attempt-summaries-v2", JSON.stringify([{ caseId: "P002", total: 360 }]));
+    localStorage.setItem(`hematuria-attempt-v3:P003:free:en:${orphanAttempt.attemptId}`, JSON.stringify({
+      attempt: orphanAttempt,
+      activeStageNo: 1,
+      submitted: {}
+    }));
+  });
+
+  for (const viewport of [
+    { width: 360, height: 800 },
+    { width: 390, height: 844 },
+    { width: 1280, height: 720 },
+    { width: 1440, height: 900 }
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/cases/");
+    await expect(page.getByRole("heading", { name: "Case selection" })).toBeVisible();
+    await expect(page.locator('a[data-case-id="P001"]')).toContainText("Not started");
+    await expect(page.locator('a[data-case-id="P002"]')).toContainText("Not started");
+    await expect(page.locator('a[data-case-id="P003"]')).toContainText("Not started");
+  }
 });
 
 test("saved English preference initializes one English patient session and opening", async ({ page }) => {
@@ -238,6 +322,98 @@ test("rapid stage submission is accepted only once", async ({ page }) => {
   })).toBe(1);
 });
 
+test("rapid final-stage completion creates one debrief request and one report", async ({ page }) => {
+  const attemptId = "e2e-final-stage-singleflight";
+  await page.addInitScript(({ seededAttemptId }) => {
+    const attempt = {
+      attemptId: seededAttemptId,
+      caseId: "P001",
+      mode: "free",
+      language: "zh",
+      participantId: "practice-user",
+      schemaVersion: "attempt-v3",
+      createdAt: "2026-07-24T00:00:00.000Z"
+    };
+    const evaluation = {
+      stageKey: "history",
+      max: 50,
+      score: 0,
+      hits: [],
+      misses: [],
+      warnings: [],
+      standardAnswer: "",
+      comment: "E2E stage completed.",
+      practiceOnly: true
+    };
+    localStorage.setItem("hematuria-language", "zh");
+    localStorage.setItem("hematuria-attempt-pointer-v3:P001:free:zh", JSON.stringify(attempt));
+    localStorage.setItem(`hematuria-attempt-v3:P001:free:zh:${seededAttemptId}`, JSON.stringify({
+      attempt,
+      activeStageNo: 7,
+      answers: { debriefReflection: "这是一段满足长度要求的复盘内容。" },
+      submitted: Object.fromEntries([1, 2, 3, 4, 5, 6].map((stage) => [stage, { ...evaluation, stageKey: `stage-${stage}` }]))
+    }));
+  }, { seededAttemptId: attemptId });
+  await routeTrainingApiThroughHandler(page, []);
+
+  const debriefRequests = [];
+  const scoreRequests = [];
+  await page.route("**/api/training-action/**", async (route) => {
+    const body = route.request().postDataJSON();
+    const headers = { "Access-Control-Expose-Headers": "X-Training-State", "X-Training-State": `e2e-${body.attemptId}` };
+    if (body.action === "init-attempt") {
+      return route.fulfill({ status: 200, contentType: "application/json", headers, body: JSON.stringify({ attemptId: body.attemptId, practiceOnly: true }) });
+    }
+    if (body.action === "stage-feedback" && body.stageKey === "debrief") {
+      debriefRequests.push(body.requestId);
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      if (debriefRequests.length > 1) {
+        return route.fulfill({ status: 409, contentType: "application/json", headers, body: JSON.stringify({ error: "stage_not_unlocked" }) });
+      }
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers,
+        body: JSON.stringify({
+          stageKey: "debrief", max: 30, score: 0, hits: [], misses: [], warnings: [],
+          standardAnswer: "", comment: "Debrief accepted.", practiceOnly: true
+        })
+      });
+    }
+    if (body.action === "score") {
+      scoreRequests.push(body.requestId);
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        headers,
+        body: JSON.stringify({
+          total: 0, max: 360, items: [], redFlags: [], ragGuardrails: [],
+          scoringVersion: "e2e", caseVersion: "e2e", generatedAt: new Date().toISOString(), reportVersion: 1
+        })
+      });
+    }
+    return route.fulfill({ status: 200, contentType: "application/json", headers, body: JSON.stringify({ recorded: true }) });
+  });
+
+  await page.goto("/cases/P001/");
+  const finish = page.getByRole("button", { name: "完成训练并生成最终报告", exact: true });
+  await expect(finish).toBeEnabled();
+  await finish.evaluate((button) => {
+    button.click();
+    button.click();
+  });
+
+  await expect(page.getByTestId("final-report")).toBeVisible();
+  expect(debriefRequests).toHaveLength(1);
+  expect(new Set(debriefRequests).size).toBe(1);
+  expect(scoreRequests).toHaveLength(1);
+  await expect(page.getByRole("alert").filter({ hasText: "终末评分服务暂时不可用" })).toHaveCount(0);
+  await expect.poll(() => page.evaluate(({ seededAttemptId }) => {
+    const saved = JSON.parse(localStorage.getItem(`hematuria-attempt-v3:P001:free:zh:${seededAttemptId}`) || "null");
+    return saved?.timeline?.filter((item) => item.type === "submit" && item.stageNo === 7).length ?? 0;
+  }, { seededAttemptId: attemptId })).toBe(1);
+});
+
 test("stage submission waits for the training attempt while the AI patient is preparing", async ({ page }) => {
   const observations = [];
   await routeTrainingApiThroughHandler(page, observations, { initAttemptDelayMs: 800, sessionInitDelayMs: 1800 });
@@ -296,6 +472,107 @@ test("P003 replaces a legacy cross-deployment token before zero-round stage subm
     legacyPresent: false,
     scopedKeys: [expect.stringContaining(attemptId)]
   });
+});
+
+test("malformed attempt pointer cannot hydrate a terminal state", async ({ page }) => {
+  const observations = [];
+  await routeTrainingApiThroughHandler(page, observations);
+  await page.addInitScript(() => {
+    const validAttempt = {
+      attemptId: "malformed-terminal-attempt",
+      caseId: "P001",
+      mode: "free",
+      language: "en",
+      participantId: "practice-user",
+      schemaVersion: "attempt-v3",
+      createdAt: "2026-07-25T00:00:00.000Z"
+    };
+    const malformedPointer = { ...validAttempt };
+    delete malformedPointer.participantId;
+    localStorage.setItem("hematuria-language", "en");
+    localStorage.setItem("hematuria-attempt-pointer-v3:P001:free:en", JSON.stringify(malformedPointer));
+    localStorage.setItem(`hematuria-attempt-v3:P001:free:en:${validAttempt.attemptId}`, JSON.stringify({
+      attempt: validAttempt,
+      activeStageNo: 7,
+      submitted: Object.fromEntries(Array.from({ length: 7 }, (_, index) => [index + 1, { score: 1, max: 1 }])),
+      finalReport: {
+        total: 360,
+        max: 360,
+        items: [],
+        redFlags: [],
+        ragGuardrails: [],
+        scoringVersion: "forged",
+        caseVersion: "forged",
+        generatedAt: "2026-07-25T00:00:00.000Z",
+        reportVersion: 3
+      }
+    }));
+  });
+
+  await page.goto("/cases/P001/");
+  await expect(page.getByTestId("final-report")).toHaveCount(0);
+  const pointer = await page.evaluate(() => JSON.parse(localStorage.getItem("hematuria-attempt-pointer-v3:P001:free:en") || "null"));
+  expect(pointer).toMatchObject({
+    caseId: "P001",
+    mode: "free",
+    language: "en",
+    participantId: "practice-user",
+    schemaVersion: "attempt-v3"
+  });
+  expect(pointer.attemptId).not.toBe("malformed-terminal-attempt");
+});
+
+test("autosave repairs the active pointer after browser storage recovers across four viewports", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "The test explicitly covers all four required viewport sizes.");
+  const observations = [];
+  await routeTrainingApiThroughHandler(page, observations);
+  await page.addInitScript(() => {
+    localStorage.setItem("hematuria-language", "en");
+    const originalSetItem = Storage.prototype.setItem;
+    window.__blockAttemptPointerWrites = true;
+    Storage.prototype.setItem = function setItem(key, value) {
+      if (this === localStorage && window.__blockAttemptPointerWrites && String(key).startsWith("hematuria-attempt-pointer-v3:")) {
+        throw new DOMException("Synthetic pointer write outage", "QuotaExceededError");
+      }
+      return originalSetItem.call(this, key, value);
+    };
+    window.__recoverAttemptPointerWrites = () => { window.__blockAttemptPointerWrites = false; };
+  });
+
+  for (const [index, viewport] of [
+    { width: 360, height: 800 },
+    { width: 390, height: 844 },
+    { width: 1280, height: 720 },
+    { width: 1440, height: 900 }
+  ].entries()) {
+    if (index > 0) {
+      await page.evaluate(() => {
+        for (const key of Object.keys(localStorage)) {
+          if (key.startsWith("hematuria-attempt-v3:") || key.startsWith("hematuria-attempt-pointer-v3:")) localStorage.removeItem(key);
+        }
+        window.__blockAttemptPointerWrites = true;
+      });
+    }
+    await page.setViewportSize(viewport);
+    await page.goto("/cases/P001/");
+    await expect(page.getByRole("textbox", { name: "History summary" })).toBeVisible();
+    const marker = `Pointer recovery draft retained ${index}`;
+    await page.getByRole("textbox", { name: "History summary" }).fill(`Pointer recovery draft ${index}`);
+    expect(await page.evaluate(() => localStorage.getItem("hematuria-attempt-pointer-v3:P001:free:en"))).toBeNull();
+
+    await page.evaluate(() => window.__recoverAttemptPointerWrites());
+    await page.getByRole("textbox", { name: "History summary" }).fill(marker);
+    await expect.poll(() => page.evaluate(() => {
+      const pointer = JSON.parse(localStorage.getItem("hematuria-attempt-pointer-v3:P001:free:en") || "null");
+      const state = pointer?.attemptId
+        ? JSON.parse(localStorage.getItem(`hematuria-attempt-v3:P001:free:en:${pointer.attemptId}`) || "null")
+        : null;
+      return { pointerPresent: Boolean(pointer?.attemptId), marker: state?.answers?.historySummary || "" };
+    })).toEqual({ pointerPresent: true, marker });
+
+    await page.reload();
+    await expect(page.getByRole("textbox", { name: "History summary" })).toHaveValue(marker);
+  }
 });
 
 test("an init response without a signed training token never enables stage submission", async ({ page }) => {
@@ -439,7 +716,7 @@ test("report status labels are localized and abnormal evidence takes priority ov
             caseId: "P008", orderId: "TEST-STATUS", resultId: "status-unavailable",
             status: "not_available", orderCategory: "Laboratory tests/Status presentation",
             result: "No configured result is available.", value: "",
-            unit: "", referenceRange: "", impression: "",
+            unit: "", referenceRange: "", impression: "No configured result is available.",
             abnormalFlags: [], abnormalLevel: "not_available",
             teachingExplanation: "", metadataStatus: "complete", translationStatus: "source_text_no_cjk"
           }
@@ -464,6 +741,54 @@ test("report status labels are localized and abnormal evidence takes priority ov
   expect((await reports.allTextContents()).join(" ")).not.toMatch(/\b(final|not_available|not_performed)\b/);
 });
 
+test("nonterminal report with an empty result renders no blank keyed row", async ({ page }) => {
+  const reactKeyErrors = [];
+  page.on("console", (message) => {
+    if (message.type() === "error" && /unique "key" prop/i.test(message.text())) {
+      reactKeyErrors.push(message.text());
+    }
+  });
+  await routeTrainingApiThroughHandler(page, []);
+  await page.route("**/api/training-action/**", async (route) => {
+    const body = route.request().postDataJSON();
+    if (body.action !== "order") return route.fallback();
+    const stateToken = route.request().headers()["x-training-state"];
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers: { "Access-Control-Expose-Headers": "X-Training-State", "X-Training-State": stateToken },
+      body: JSON.stringify({
+        id: "nonterminal-empty-result-fixture",
+        input: body.input,
+        matched: true,
+        matchedOrders: [{ orderId: "TEST-NONTERMINAL", displayName: "非终态报告", translationAvailable: true }],
+        results: [{
+          caseId: "P001", orderId: "TEST-NONTERMINAL", resultId: "status-not-available-empty-result",
+          status: "not_available", orderCategory: "检验/非终态",
+          result: "", value: "", unit: "", referenceRange: "",
+          impression: "当前病例尚无可释放结果。",
+          abnormalFlags: [], abnormalLevel: "not_available",
+          teachingExplanation: "", metadataStatus: "complete"
+        }],
+        duplicateOrderIds: [], unmetPrerequisites: [], selectedOrderCount: 1,
+        recognizedOrderCount: 1, returnedReportCount: 1,
+        at: new Date().toISOString(), placedAt: new Date().toISOString(),
+        stageNo: 2, status: "reported", message: "已返回非终态报告。"
+      })
+    });
+  });
+  await page.goto("/cases/P001/");
+  await enterInvestigationStage(page, "zh");
+  await page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜").fill("非终态报告");
+  await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
+
+  const report = page.getByTestId("report-card");
+  await expect(report).toBeVisible();
+  await expect(report).toContainText("当前病例尚无可释放结果。");
+  await expect(report.getByTestId("report-result-line")).toHaveCount(0);
+  expect(reactKeyErrors).toEqual([]);
+});
+
 test("restart removes the prior browser token and initializes exactly one new attempt", async ({ page }) => {
   const observations = [];
   await routeTrainingApiThroughHandler(page, observations);
@@ -486,6 +811,63 @@ test("restart removes the prior browser token and initializes exactly one new at
   expect(restartedTokenKeys[0]).toContain(initAttempts[1].attemptId);
   expect(restartedTokenKeys[0]).not.toContain(firstInit.attemptId);
   expect(observations.filter((item) => item.action === "stage-feedback")).toHaveLength(0);
+});
+
+test("restart stays on the page after a first delete failure across four viewports", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "The test explicitly covers all four required viewport sizes.");
+  const observations = [];
+  await routeTrainingApiThroughHandler(page, observations);
+  await page.addInitScript(() => localStorage.setItem("hematuria-language", "en"));
+
+  for (const [index, viewport] of [
+    { width: 360, height: 800 },
+    { width: 390, height: 844 },
+    { width: 1280, height: 720 },
+    { width: 1440, height: 900 }
+  ].entries()) {
+    await page.setViewportSize(viewport);
+    await page.goto("/cases/P001/");
+    await expect(page.getByRole("button", { name: "Submit stage", exact: true })).toBeEnabled();
+    const marker = `Restart failure marker ${index}`;
+    await page.getByRole("textbox", { name: "History summary" }).fill(marker);
+    const before = await expect.poll(() => page.evaluate(() => {
+      const pointer = JSON.parse(localStorage.getItem("hematuria-attempt-pointer-v3:P001:free:en") || "null");
+      const state = pointer?.attemptId
+        ? JSON.parse(localStorage.getItem(`hematuria-attempt-v3:P001:free:en:${pointer.attemptId}`) || "null")
+        : null;
+      return { attemptId: pointer?.attemptId || "", marker: state?.answers?.historySummary || "" };
+    })).toEqual(expect.objectContaining({ attemptId: expect.any(String), marker }));
+    void before;
+    const priorAttemptId = await page.evaluate(() => JSON.parse(localStorage.getItem("hematuria-attempt-pointer-v3:P001:free:en") || "null")?.attemptId);
+
+    await page.evaluate(() => {
+      const originalRemoveItem = Storage.prototype.removeItem;
+      let failed = false;
+      Storage.prototype.removeItem = function removeItem(key) {
+        if (!failed && this === localStorage && String(key).startsWith("hematuria-attempt-v3:P001:free:en:")) {
+          failed = true;
+          throw new DOMException("Synthetic one-shot delete failure", "SecurityError");
+        }
+        return originalRemoveItem.call(this, key);
+      };
+    });
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.getByRole("button", { name: "Restart training", exact: true }).click();
+    await expect(page.getByRole("alert").filter({ hasText: "Restart could not clear" })).toBeVisible();
+    expect(new URL(page.url()).pathname).toBe("/cases/P001/");
+    expect(await page.evaluate(() => {
+      const pointer = JSON.parse(localStorage.getItem("hematuria-attempt-pointer-v3:P001:free:en") || "null");
+      const state = pointer?.attemptId
+        ? JSON.parse(localStorage.getItem(`hematuria-attempt-v3:P001:free:en:${pointer.attemptId}`) || "null")
+        : null;
+      return { attemptId: pointer?.attemptId, marker: state?.answers?.historySummary };
+    })).toEqual({ attemptId: priorAttemptId, marker });
+
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.getByRole("button", { name: "Restart training", exact: true }).click();
+    await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("hematuria-attempt-pointer-v3:P001:free:en") || "null")?.attemptId))
+      .not.toBe(priorAttemptId);
+  }
 });
 
 test("stage one safely recovers when the signed browser token outlives the server attempt", async ({ page }) => {
@@ -715,6 +1097,28 @@ test("automatic voice profile follows patient sex, language, and age", async ({ 
   await page.goto("/cases/P001/");
   await page.getByRole("button", { name: /Voice settings/ }).click();
   await expect(page.getByTestId("voice-profile")).toHaveAttribute("data-cloud-voice", "en-US-GuyNeural");
+});
+
+test("mobile voice controls meet the 44px touch-target contract", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-chromium", "Touch geometry is a mobile contract.");
+  for (const viewport of [{ width: 360, height: 800 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/cases/P001/");
+    const trigger = page.getByRole("button", { name: /语音设置/ });
+    const triggerBox = await trigger.boundingBox();
+    expect(triggerBox?.height).toBeGreaterThanOrEqual(44);
+    await trigger.click();
+    for (const control of [
+      page.getByRole("button", { name: "关闭" }),
+      page.getByRole("button", { name: "试听" }),
+      page.getByTitle("停止")
+    ]) {
+      const box = await control.boundingBox();
+      expect(box?.width).toBeGreaterThanOrEqual(44);
+      expect(box?.height).toBeGreaterThanOrEqual(44);
+    }
+    await page.getByRole("button", { name: "关闭" }).click();
+  }
 });
 
 test("cloud TTS failure visibly falls back to the matched browser voice", async ({ page }) => {
@@ -1047,10 +1451,19 @@ test("history log exhausted retries exposes one manual idempotent retry", async 
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByRole("button", { name: "Retry sync" })).toBeVisible();
   expect(historyCalls).toBe(3);
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Retry sync" })).toBeVisible();
+  await page.waitForTimeout(700);
+  expect(historyCalls).toBe(3);
   await page.getByRole("button", { name: "Retry sync" }).click();
   await expect(page.getByText("Scoring synced")).toBeVisible();
   expect(historyCalls).toBe(4);
   expect(new Set(historyRequestIds).size).toBe(1);
+  await expect.poll(() => page.evaluate(() => {
+    const key = Object.keys(localStorage).find((item) => item.startsWith("hematuria-attempt-v3:P001:free:en:"));
+    const saved = key ? JSON.parse(localStorage.getItem(key) || "null") : null;
+    return saved?.pendingHistoryLogs?.length ?? -1;
+  })).toBe(0);
   await expect(page.getByLabel("Simulated patient conversation").getByText("It started this morning.", { exact: true })).toHaveCount(1);
 });
 

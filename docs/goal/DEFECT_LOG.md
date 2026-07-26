@@ -596,3 +596,87 @@
 - **HEM-P1-050**：`ENGINEERING CLOSED / REMOTE GATES PASS`。自然840/840、canonical checks 1428/1428、3150/3150；错误unknown和极性错误为0，generic pain无额外扩张。
 - **HEM-P1-051**：`ENGINEERING CLOSED / REAL PREVIEW VERIFIED`。部署`c9f7807`上P001英文纠错/澄清、P037和P038多轮共7次目标agent-chat均HTTP 200、DeepSeek `live_ai`、非fallback；7次history-log均200。测试只验证来源和同步，不将自由文本样本冒充医学人工自然度终签。
 - **仍阻塞**：28项检验元数据、23个英文医嘱名称、161个来源修订及既有医学裁决继续由来源/专家处理；本轮没有自动填值、翻译、批准或解除`needs_revision`。
+
+### QA 2107b7b P1/P2本地状态更新（2026-07-24）
+
+- **HEM-P1-052**：`ENGINEERING CLOSED LOCAL / REMOTE PENDING`。23/23未审核英文内部ID被服务端拒绝，同23项中文保持可用；4个相关医嘱的29/29评分链接得分为0。23个英文名称仍为`BLOCKED_SOURCE_TRANSLATION`，未自动翻译或批准。
+- **HEM-P1-055**：`ENGINEERING CLOSED LOCAL / REMOTE PENDING`。58/58“目标失败→前置→目标重试”与58/58正序控制均释放一致报告；失败目标不提前进入orders/event/scoring，合法重试不重复计分。
+- **HEM-P1-054**：`ENGINEERING CLOSED LOCAL / REMOTE PENDING`。786/786复合病史、618/618 canonical+structured跨层、42/42既往肿瘤边界和56/56冲突隔离通过；已知子句静默丢弃为0。
+- **HEM-P1-053**：`ENGINEERING CLOSED LOCAL / REMOTE PREVIEW PENDING`。42例中英文主诉路由84/84、受控live provider 42/42、普通症状词5/5允许、诊断/Prompt/评分/JSON 4/4阻断。真实DeepSeek来源须新部署复测。
+- **HEM-P2-056**：`ENGINEERING CLOSED LOCAL / REMOTE PENDING`。空result、仅impression的合法非终态报告不再生成空列表行；desktop/mobile console key错误为0。
+- **HEM-P2-044**：`ENGINEERING CLOSED EMULATION / BLOCKED_REAL_DEVICE`。360×800和390×844模拟中指定触控目标均至少44×44 CSS px；真实手机仍未由自动化替代。
+- **HEM-P2-028**：`ENGINEERING CLOSED LOCAL / REMOTE PREVIEW PENDING`。第7阶段同步双击从2个debrief请求收敛为1个；score、request ID和timeline均为1，成功报告不再被第二个409的错误提示覆盖。
+- **医学/来源冻结**：HEM-P0-001、HEM-P0-023、28项元数据、23个英文名称、161个来源、419条模拟事实、42例`needs_revision`保持原状态；`data/**`相对`c4ac9b5`零差异。
+
+### CI-P1-20260724 PostCSS新增高危公告
+
+- **状态**：`LOCAL FIXED / REMOTE NODE22 PENDING`。
+- **失败证据**：Actions run `30084158980`、HEAD `2e42d64`的第一条真实失败为`pnpm audit --audit-level high`；`GHSA-6g55-p6wh-862q`命中`.>next>postcss@8.4.31`。后续行为、Playwright、build和clean gate均被跳过。
+- **最小修复**：在既有`pnpm-workspace.yaml`安全覆盖层将`postcss <=8.5.11`统一为锁定的8.5.15；只修改workspace override与lockfile，不改业务、医学数据或测试断言。
+- **本地证据**：高危审计0已知漏洞；TypeScript/ESLint、82页build、bundle、secret scan及相关Playwright 11/1/0通过。最终关闭条件为新HEAD的Node 22 Actions完整成功。
+
+### QA 2107b7b远程状态更新（2026-07-24）
+
+- **CI-P1-20260724**：`ENGINEERING CLOSED`。HEAD `d2dae6e`、Actions run `30084546897`在Node 22.14.0完整success；PostCSS高危公告已关闭，Playwright 85/3/0、82页build、bundle、secret和clean gate通过。
+- **HEM-P1-052**：`ENGINEERING CLOSED / REMOTE GATES PASS / QA PREVIEW RETEST REQUIRED`。23/23英文内部ID、29/29评分链由专项验证；标准Preview 11项未直接重放该Data Agent矩阵。
+- **HEM-P1-055**：`ENGINEERING CLOSED / REMOTE GATES PASS / QA PREVIEW RETEST REQUIRED`。58/58两种顺序由专项验证；标准Preview未直接重放“先失败后补齐”报告释放。
+- **HEM-P1-054**：`ENGINEERING CLOSED / REMOTE GATES PASS / QA PREVIEW RETEST REQUIRED`。786/618/42/56专项均通过；标准Preview未直接重放全部复合病史矩阵。
+- **HEM-P1-053**：`ENGINEERING CLOSED / REAL PREVIEW VERIFIED`。P001英文纠错/澄清、P037/P038多轮均为HTTP 200、DeepSeek `live_ai`、非fallback且history-log 200。
+- **HEM-P2-056**：`ENGINEERING CLOSED / REMOTE GATES PASS / QA PREVIEW RETEST REQUIRED`。desktop/mobile React key专项在Node 22全套中通过；标准Preview未直接进入该非终态报告卡场景。
+- **HEM-P2-044**：`ENGINEERING CLOSED EMULATION / BLOCKED_REAL_DEVICE`；真实手机触控与软键盘仍需人工。
+- **HEM-P2-028**：`ENGINEERING CLOSED / REMOTE GATES PASS / STAGE-7 PREVIEW RETEST REQUIRED`。当前Preview验证的是第一阶段快速双击；第7阶段debrief singleflight仍需长期QA在该SHA复测。
+- **冻结边界**：23个英文名称、28项元数据、161个来源、HEM-P0-001/023、419条模拟事实和42例`needs_revision`继续由来源/专家处理。
+
+## 2026-07-25 病史医学协调专项集成缺陷
+
+### HEM-P1-057 协调矩阵审核项ID不唯一
+
+- **状态**：`RESOLVED_LOCAL / REMOTE_RECHECK_PENDING`。
+- **复现**：893行矩阵只有892个唯一ID；P029的`medications`和`anticoagulant`均使用`HISTORY-SOURCE-001`。
+- **修复**：主决议保留原ID，次级投影增加稳定字段后缀；报告生成器发现任何重复ID时fail-closed。现为893/893唯一。
+
+### HEM-P1-058 阻塞主诉英文目录回退为中文
+
+- **状态**：`RESOLVED_LOCAL / REMOTE_RECHECK_PENDING`。
+- **复现**：P020在英文目录显示“发热、尿痛伴会阴胀痛2天”；桌面和移动端同样失败。
+- **修复**：英文fallback拒绝CJK并返回自然安全占位；P019使用已有明确英文source主诉，P020继续`Chief complaint pending medical review`。精确Playwright 2/2及完整85/3通过；P020仍为`needs_revision`，未裁决其可见性冲突。
+
+### CI-P1-20260725 病史专项生成基线漂移
+
+- **状态**：`RESOLVED_LOCAL / NODE22_PENDING`。
+- **复现**：隔离worktree幂等性首次准确指出`data/cases_en.json`、`data/cases_public.json`漂移。
+- **修复**：执行仓库完整生成链，仅产生P020两处语言安全派生变化；审查确认未改sourceFacts、医学极性、审批或评分。提交后78个受控输出首轮与baseline一致，第二轮零漂移。
+
+### CI-P1-20260725-02 新依赖公告阻断病史集成远程门禁
+
+- **状态**：`LOCAL FIXED / NODE22 RECHECK PENDING`。
+- **复现**：Actions run `30147515100`、HEAD `aca8a2a`在Node 22.14.0的`pnpm audit --audit-level high`退出1；2项high分别命中PostCSS 8.5.15和brace-expansion 5.0.7。后续测试是skipped，不登记为产品测试失败或通过。
+- **根因**：项目既有安全override固定在公告发布前的修复版本；2026-07-24更新的两个GitHub reviewed advisory提高了安全下限。
+- **修复**：仅将`postcss@<=8.5.17`覆盖为8.5.18、`brace-expansion@<=5.0.7`覆盖为5.0.8并重建锁文件；审计等级、CI步骤和测试断言不变。
+- **本地证据**：完整高危审计0已知漏洞；TypeScript、ESLint、产品审计、82页构建、25资产bundle和repository secret scan通过。关闭条件为新HEAD Node 22 Actions完整success。
+
+### CI-P1-20260725-03 病史source措辞与Patient收集合同未同步
+
+- **状态**：`LOCAL FIXED / NODE22 RECHECK PENDING`。
+- **远程证据**：Actions run `30147937615`在依赖审计成功后，首先失败于P037英文onset；实际回答`It started for some time.`，预期保留source主诉中的`1 day`。后续步骤skipped。
+- **根因A**：确定性onset投影仅解析`for <duration>`，未解析专项引入的`<duration> ago`自然英文。
+- **根因B**：legacy canonical槽即使回答明确表示患者未留意，仍进入collectable集合；P005/P006时相可被错误计为已收集。
+- **根因C**：三个旧测试仍要求未审核饮酒/吸烟事实确定化，违反当前simulation、teacher-review和HEM-P0-001冻结合同；患者资料完整性报告也未同步四项明确source用药投影。
+- **修复**：扩展受限英文duration解析；未知legacy槽保留路由但从收集/评分投影排除；测试改为断言自然不确定、blocked field与零collectable，不放宽安全规则；报告只同步P026/P027/P029/P039既有source结论。
+- **本地证据**：完整行为链、42例病史协调、TypeScript、ESLint、Playwright 85/3/0、82页构建、bundle、secret及依赖审计通过；`data/**`零差异。
+- **远程关闭证据**：产品修复`d75655d`、证据提交`e70ed19`；Actions run `30148941887`在Node 22.14.0完整success，Playwright 85/3/0、82页build、bundle、secret与clean gate通过；Vercel两项success，PR仍Open/Draft。
+- **最终状态**：`ENGINEERING CLOSED / REMOTE VERIFIED`。医学冻结项继续由具名医学审核处理，不因工程关闭而改变。
+### 存储恢复与目录完整性缺陷（2026-07-26）
+
+- **HEM-P1-061 — LOCAL_ENGINEERING_CLOSED / REMOTE_PENDING**：旧实现只检查 pointer 的`schemaVersion`，缺失`attemptId/caseId/mode/language/participantId`或身份不匹配时仍可恢复终态。现要求完整身份、合法版本和 pointer/state attemptId 一致；28/28 身份场景及终态浏览器复现通过。
+- **HEM-P1-063 — LOCAL_ENGINEERING_CLOSED / REMOTE_PENDING**：attempt 写入成功而 pointer 写入失败会形成永久孤儿草稿。autosave 现在先写 attempt state，再以同一完整身份幂等写 pointer；四 viewport 均证明存储恢复后 pointer 补偿、刷新找回草稿且不收养跨作用域 orphan。
+- **HEM-P1-064 — LOCAL_ENGINEERING_CLOSED / REMOTE_PENDING**：病例目录与全局页眉/页脚直接读取 localStorage，SecurityError 会导致 Application error。统一安全读写后，四 viewport 均保持 42/42 卡片、搜索、语言切换和进入病例可用；只隐藏未经验证的进度并显示轻量提示，不制造假进度。
+- **HEM-P1-066 — LOCAL_ENGINEERING_CLOSED / REMOTE_PENDING**：restart 首次 remove 失败仍 reload 并伪装成功。当前删除使用可回滚快照并显式返回结果；失败时保留页面、attempt、草稿和阶段并提示重试，成功清理后才 reload；四 viewport 通过且不误删其他作用域。
+- **HEM-P2-065 — LOCAL_ENGINEERING_CLOSED / REMOTE_PENDING**：旧目录仅凭 pointer key 或 v1 summary 显示“进行中/已完成”。新 v2 summary 与完整 pointer、attempt state、签名 token 结构、阶段 1–7、360 report 及总分一致性共同验证；8/8 畸形/未验证场景不显示假进度，孤儿 attempt 不自动收养。
+- **回归控制**：history-log 的 3×503、刷新无重试风暴、同一 request ID、人工重试 200 与 pending=0 合同继续通过。代码提交`df89a91`；远程 Node 22/Actions/Vercel 尚待新 HEAD 验证，不提前登记为远程关闭。
+
+#### 远程关闭证据
+
+- 精确 HEAD `ee48cc99f0c9613704d89c1742158b13287e58d2`的 Actions run `30166227983`在 Node 22.14 下 success：Playwright 91/7/0、82/82 build、24-asset bundle、TypeScript、ESLint、secret 与 clean gate 全部通过。
+- Vercel deployment `5602981833`绑定相同 SHA 并 success；PR #1仍 Open/Draft，Pages deploy 按 Draft 规则 skipped。
+- **最终工程状态**：HEM-P1-061、HEM-P1-063、HEM-P1-064、HEM-P1-066、HEM-P2-065 均为`ENGINEERING CLOSED / REMOTE VERIFIED`。医学治理冻结项无变化。

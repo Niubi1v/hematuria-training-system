@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Circle, Clock3, Filter, Languages, Search, Shuffle, X } from "lucide-react";
 import { publicCaseHref, publicPageHref } from "@/src/lib/publicRoutes";
 import { simplifiedChiefComplaint } from "@/src/lib/chiefComplaint";
+import { publicApiConfig } from "@/src/lib/apiConfig";
+import { loadCatalogProgress } from "@/src/lib/catalogProgress";
+import { readStringStorage, writeStringStorage } from "@/src/lib/safeStorage";
 
 export type PublicCase = {
   id: string;
@@ -28,25 +31,19 @@ export default function CaseCatalogClient({ cases }: { cases: PublicCase[] }) {
   const [source, setSource] = useState("all");
   const [search, setSearch] = useState("");
   const [progress, setProgress] = useState<Record<string, "completed" | "in-progress">>({});
+  const [storageUnavailable, setStorageUnavailable] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("hematuria-language");
-    if (saved === "zh" || saved === "en") setLang(saved);
-    const nextProgress: Record<string, "completed" | "in-progress"> = {};
-    try {
-      const summaries = JSON.parse(localStorage.getItem("hematuria-practice-attempt-summaries-v1") || "[]") as Array<{ caseId?: string }>;
-      summaries.forEach((item) => { if (item.caseId) nextProgress[item.caseId] = "completed"; });
-      for (let index = 0; index < localStorage.length; index += 1) {
-        const key = localStorage.key(index) || "";
-        const match = key.match(/^hematuria-attempt-pointer-v3:([^:]+):/);
-        if (match?.[1] && !nextProgress[match[1]]) nextProgress[match[1]] = "in-progress";
-      }
-    } catch { /* Progress is optional when browser storage is unavailable. */ }
-    setProgress(nextProgress);
+    const saved = readStringStorage("hematuria-language");
+    if (saved.value === "zh" || saved.value === "en") setLang(saved.value);
+    const loaded = loadCatalogProgress(publicApiConfig.baseUrl, window.location.origin);
+    setProgress(loaded.progress);
+    setStorageUnavailable(!saved.ok || !loaded.storageAvailable);
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("hematuria-language", lang);
+    const persisted = writeStringStorage("hematuria-language", lang);
+    if (!persisted.ok) setStorageUnavailable(true);
     document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
     window.dispatchEvent(new CustomEvent("hematuria-language-change", { detail: lang }));
   }, [lang]);
@@ -95,6 +92,14 @@ export default function CaseCatalogClient({ cases }: { cases: PublicCase[] }) {
         </div>
       </div>
 
+      {storageUnavailable && (
+        <div role="status" className="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {lang === "en"
+            ? "Browser storage is unavailable. Case browsing still works, but saved progress is hidden."
+            : "浏览器存储不可用，仍可浏览病例，但暂不显示已保存进度。"}
+        </div>
+      )}
+
       <section aria-label={lang === "en" ? "Search and filter cases" : "搜索和筛选病例"} className="ui-card mb-5 grid gap-3 p-3 sm:grid-cols-[minmax(240px,1fr)_auto] sm:items-center sm:p-4">
         <label className="relative block">
           <span className="sr-only">{lang === "en" ? "Search cases" : "搜索病例"}</span>
@@ -119,7 +124,7 @@ export default function CaseCatalogClient({ cases }: { cases: PublicCase[] }) {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {filtered.map((item) => (
-          <a key={item.id} href={publicCaseHref(item.displayCaseId || item.id)} className="ui-card group p-5 transition-colors hover:border-clinic-blue focus-visible:border-clinic-blue">
+          <a key={item.id} data-case-id={item.id} href={publicCaseHref(item.displayCaseId || item.id)} className="ui-card group p-5 transition-colors hover:border-clinic-blue focus-visible:border-clinic-blue">
             <div className="flex items-start justify-between gap-3">
               <span className="text-sm font-semibold text-clinic-blue">{item.displayCaseId || item.id}</span>
               <span className="ui-status bg-clinic-paper text-clinic-muted">{item.difficultyLabel || (lang === "en" ? "Unrated" : "未分级")}</span>

@@ -2937,7 +2937,7 @@
     "age": "83",
     "sex": "男",
     "studentChiefComplaint": "进行性排尿困难3年余，加重伴小便变红1月",
-    "chiefComplaint": "进行性排尿困难3年余，加重伴血尿1月",
+    "chiefComplaint": "进行性排尿困难3年余，加重伴小便变红1月",
     "presentIllness": {
       "onset": "3年前出现尿频、尿急症状，诉出现尿意后如无法排尿可出现尿裤子。同时小便费力，尿线变细，尿分叉，偶有小便带血。夜尿增多，夜尿3-4次/晚。前往当地医院就诊，考虑：前列腺肥大。具体不详。间断吃坦索罗辛胶囊、非那雄胺片，症状改善。1月前开始间断出现肉眼血尿，鲜红色，饮水增多后消失。排尿困难症状加重，尿痛，伴有下腹部憋胀感，夜尿5-6次/晚。无发热，无腰背部、四肢疼痛。遂来我院就诊。平时2天解一次大便，排尿困难时候排便不畅。起病以来，胃口一般，体重无明显下降。",
       "hematuriaType": "肉眼血尿为主，尿检镜下红细胞升高",
@@ -2990,7 +2990,7 @@
       "stoneClues": "否认腰背部及四肢疼痛",
       "tumorRisk": "高龄男性、PSA显著升高、MRI PI-RADS 5、精囊侵犯可能，需考虑前列腺癌；双抗不能作为血尿唯一解释",
       "glomerularClues": "无泡沫尿、水肿、上感后血尿",
-      "opening": "进行性排尿困难3年余，加重伴血尿1月"
+      "opening": "医生，我排尿越来越费劲，最近一个月小便还会变红。"
     },
     "patientPersona": {
       "emotion": "高龄男性，对排尿困难最关心，对前列腺穿刺有顾虑；冠脉支架和双抗需追问。",
@@ -3051,7 +3051,7 @@
         "slotId": "HX001",
         "label": "主诉/哪里不舒服",
         "possibleQuestion": "您这次主要为什么来看病？",
-        "patientAnswer": "进行性排尿困难3年余，加重伴血尿1月",
+        "patientAnswer": "医生，我排尿越来越费劲，最近一个月小便还会变红。",
         "clinicalMeaning": "用于Patient Agent；不能主动泄露。",
         "scoringKeywords": "主诉/哪里不舒服",
         "finalDiagnosis": "",
@@ -5874,8 +5874,8 @@
     "diseaseCategory": "结石/输尿管结石",
     "age": "36",
     "sex": "女",
-    "studentChiefComplaint": "突发右侧腰痛伴小便变红半天",
-    "chiefComplaint": "突发右侧腰痛伴血尿半天",
+    "studentChiefComplaint": "突发右侧腰痛伴浓茶色尿半天",
+    "chiefComplaint": "突发右侧腰痛伴浓茶色尿半天",
     "presentIllness": {
       "onset": "患者昨夜凌晨突发出现右侧腰疼痛，呈刀割样，阵发性加剧，疼痛向右下腹会阴区放射，同时伴恶心、呕吐症状。尿频、尿急症状，小便颜色呈现浓茶样改变。大便正常，无发热、头痛、头晕、腹泻、腹痛、腹胀等不适。来我院急诊就诊，考虑“肾绞痛”。这三个月大便正常，胃口一般，体重没有明显变化。",
       "hematuriaType": "肉眼茶色/镜下大量红细胞",
@@ -5928,7 +5928,7 @@
       "stoneClues": "右侧肾绞痛明显",
       "tumorRisk": "输尿管结石9×8mm伴轻度积水，尿白细胞升高；需警惕感染性梗阻进展",
       "glomerularClues": "无泡沫尿、水肿，茶色尿主要与结石血尿相关但需尿沉渣鉴别",
-      "opening": "突发右侧腰痛伴血尿半天"
+      "opening": "医生，我右边腰突然痛得厉害，小便还是浓茶色，已经半天了。"
     },
     "patientPersona": {
       "emotion": "年轻女性，疼痛明显、焦虑，回答较急躁；月经史需追问排除污染。",
@@ -5991,7 +5991,7 @@
         "slotId": "HX001",
         "label": "主诉/哪里不舒服",
         "possibleQuestion": "您这次主要为什么来看病？",
-        "patientAnswer": "突发右侧腰痛伴血尿半天",
+        "patientAnswer": "医生，我右边腰突然痛得厉害，小便还是浓茶色，已经半天了。",
         "clinicalMeaning": "用于Patient Agent；不能主动泄露。",
         "scoringKeywords": "主诉/哪里不舒服",
         "finalDiagnosis": "",

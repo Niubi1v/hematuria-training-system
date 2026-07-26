@@ -557,3 +557,79 @@
 - Data Agent工程展示边界通过远程门禁；28项元数据、23个英文名称及161个来源修订仍为人工来源阻塞，不因UI fail-closed而视为医学内容完成。
 - 新增测试提交`77df23d`把上述P001/P037/P038真实来源检查纳入安全Preview runner；它不修改业务或医学数据。回滚该门禁可普通`git revert 77df23d`，应用依赖修复回滚为`git revert 6c1d42c`，均不得reset或force push。
 - 长期QA应从包含`77df23d`的最终远程HEAD复测：840/1428/3150、generic/特异pain、P001纠错澄清、P037/P038多轮、Data Agent 28/23 fail-closed、42例双语七阶段及医学冲突隔离。Production、真机与具名医学裁决仍不在本轮自动关闭范围。
+
+### QA 2107b7b P1/P2整改本地结论（2026-07-24）
+
+- 起点为`c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2`；仅选择性读取QA HEAD `2107b7b5849acbb586c8f715d2b95b05cda27a8f`的052–056报告和最小证据，没有整体merge。
+- HEM-P1-052/055在服务端权威Data Agent状态机关闭：未审核英文ID不能进入UI/API事件、阶段状态或评分；未满足前置的目标不被永久记成已完成，补齐后可幂等释放。证据为23/23、29/29、58/58两种顺序。
+- HEM-P1-054关闭：复合问句的canonical与structured子句分别归一化并按顺序合并；786/786、618/618、42/42和56/56通过，医学冲突继续整体隔离。
+- HEM-P1-053本地工程关闭：自然英文主诉可进入受控provider，普通血尿/疼痛词不再误触安全边界，真正的诊断、Prompt、评分和结构化泄露继续阻断。真实Preview DeepSeek来源仍须新部署确认。
+- HEM-P2-056、044、028本地关闭：非终态报告无空key行；移动语音控件达到44px；第7阶段同步双击收敛为一次debrief/score/timeline。真机触控和真实Preview第7阶段仍分别为人工/远程复测项。
+- 完整本地门禁通过：行为链exit 0、Playwright 85/3/0、TypeScript/ESLint、Vercel与Pages各82页、两次25资源bundle、343文件/历史secret scan、clean gate及`data/**`零差异。当前代码HEAD为`cda359e6eb233761245e6490f4cc54de1495d594`，Node 22与远程部署尚待push后补证。
+- 提交与回滚边界：`fe93b0e`（052/055）、`ad49132`（054/053）、`d492cea`（056）、`f6c5269`（044）、`cda359e`（028）。如需回滚，按影响范围使用普通`git revert <sha>`并重新执行门禁；不得reset、rebase或force push。
+- 仍需人工/权限处理：HEM-P0-001/023、28项元数据、23个英文名称、161个来源、419条模拟事实、42例`needs_revision`、真机和医学/自然度终验。PR保持Draft，不合并main、不部署Production。
+
+### 2026-07-24 首次CI失败与依赖恢复候选
+
+- HEAD `2e42d64`的Actions run `30084158980`在业务测试前被新增PostCSS高危公告阻断；只有setup/install执行成功，不能把后续skipped写成测试失败或通过。
+- 最小修复只把Next嵌套的PostCSS 8.4.31提升到项目已使用的8.5.15。高危审计现为0已知漏洞，相关构建、CSS/UI、axe、bundle和secret门禁通过；没有修改医学事实、审批状态、session安全或评分规则。
+- 该恢复候选须普通push并等待精确新HEAD的Node 22 Actions；若远程继续失败，读取第一条真实日志继续修复。PR保持Draft，Vercel/Production职责不变。
+
+### QA 2107b7b整改最终远程结论（2026-07-24）
+
+- 最终应用/依赖候选`d2dae6ebe8956885764b032314616dd2f59d50cb`已通过Actions run `30084546897`和Vercel。Node 22.14.0下依赖审计、生成幂等性、行为、医学、安全、TypeScript、ESLint、Playwright 85/3/0、82页build、23 JS bundle、repository secret scan及clean gate全部成功；Pages按Draft规则跳过。
+- 真实受保护Preview黑盒11/11通过，health精确返回该SHA且Training State/Durable Attempt Store configured。P003零轮、P001中英文/切换/刷新/双击/第二阶段、P001英文纠错澄清及P037/P038多轮均成功；目标Patient请求为DeepSeek `live_ai`且history-log 200。10次初始化10/10，中文与英文live AI各5/5，回答P95分别1378ms和1297ms。
+- HEM-P1-053现有真实Preview来源缺口关闭。HEM-P1-052、055、054与HEM-P2-056已通过各自专项、本地完整回归和Node 22远程门禁，但现有Preview 11项没有直接重放其完整问题级矩阵；长期QA应从`d2dae6e`复测23/29、58×两种顺序、786/618/42/56及非终态报告卡。
+- HEM-P2-028第7阶段singleflight需在该SHA继续做真实Preview双击复测；HEM-P2-044仍需真机。23个英文名称、28项元数据、161个来源、HEM-P0-001/023、419条模拟事实与42例`needs_revision`均未自动处理。
+- 提交链：`fe93b0e`（052/055）、`ad49132`（054/053）、`d492cea`（056）、`f6c5269`（044）、`cda359e`（028）、`d2dae6e`（PostCSS高危审计恢复）。按影响范围使用普通`git revert <sha>`回滚，不得reset、rebase或force push。
+- PR #1仍为Open/Draft；不转Ready、不合并main、不部署Production。长期QA的准确起始应用HEAD为`d2dae6ebe8956885764b032314616dd2f59d50cb`，若纳入本段证据文档提交，则以包含该应用HEAD的后续文档-only HEAD作为仓库起点，但应用代码基线仍为`d2dae6e`。
+
+### 病史医学协调专项选择性集成本地结论（2026-07-25）
+
+- 从绿色Production `1566f7c21aabbd30eff2e30abf9924e214d1b7a4`开始，逐笔引入专项`d316af9^..50084f7`的14个提交；没有整体merge、最终HEAD cherry-pick、reset、rebase或force push。
+- 所有专项提交状态均为`CHERRY_PICKED`；merge-base等于起点，因此没有`ALREADY_SUPERSEDED`。专项代码、报告、六个病例批次和隔离规则均经逐提交审查后落地。
+- 四项source优先用药投影已核对：P026降糖药类别、P027别嘌醇、P029阿司匹林/坦索罗辛且无华法林/利伐沙班、P039布洛芬/复方止痛药。所有病例继续`needs_revision`；14项新增阻塞、18项HEM-P0-023、151项HEM-P0-001与P002手术史冲突继续不确定回答、不收集、不评分。
+- 集成期额外修复三个可重复工程问题：矩阵ID唯一性`a6d423f`、阻塞主诉语言安全`0ba9699`、生成投影基线`38451b0`。最后一项只把P020英文派生字段从中文换成待复核英文占位，没有修改原始中文、医学极性或审核状态。
+- 本地完整门禁通过：42×37、42×17、572/419、3150、840/1428、786/618、42例360分、84条七阶段旅程、TypeScript、ESLint、Playwright 85/3/0、78输出幂等、82页构建、25 bundle及355文件/历史secret scan。
+- 当前应用候选HEAD为`38451b0a7d9e67752e024910351057efff42dd92`；证据文档提交后使用更晚仓库HEAD。远程Node 22、Actions、Vercel和Preview尚未验证，不以旧绿灯替代。PR #1继续Open/Draft，不转Ready、不合并main、不部署Production。
+- 回滚按最小范围使用普通`git revert`逆序处理证据提交、`38451b0`、`0ba9699`、`a6d423f`及相应cherry-pick提交；不得reset或force push。长期QA需从最终推送HEAD复测P026/P027/P029/P039、P002隔离、32项阻塞、42×37/42×17、P019/P020英文目录和生成幂等性。
+
+### 病史集成首次远程门禁与依赖恢复候选（2026-07-25）
+
+- 病史集成HEAD `aca8a2a76cb3d51f958fe1f55ec62b56829c2716`已推送；Vercel两项检查成功，但Actions run `30147515100`在Node 22.14.0的完整依赖审计失败，故该HEAD不登记为绿色。
+- 失败不是病史、Patient Agent或Playwright断言：新发布的PostCSS路径遍历公告和brace-expansion无界展开公告命中旧override版本，所有后续Actions步骤均skipped。
+- 恢复候选仅更新`pnpm-workspace.yaml`与`pnpm-lock.yaml`的安全下限至PostCSS 8.5.18和brace-expansion 5.0.8。完整高危审计、TypeScript、ESLint、产品审计、82页构建、25资产bundle及repository secret scan本地通过；`data/**`零差异。
+- 新候选须普通push并等待精确新HEAD的完整Node 22 Actions和Vercel。若远程继续失败，读取第一条真实日志继续最小修复；PR保持Draft，不合并main、不部署Production。
+- 依赖修复可用普通`git revert <dependency-fix-sha>`回滚，但会重新暴露两项高危公告；不得reset、rebase或force push。长期QA起点须使用最终绿色远程HEAD，而不是`aca8a2a`。
+
+### Node 22行为门禁恢复候选（2026-07-25）
+
+- `969ce96`的Actions run `30147937615`证明两项新增高危公告已经关闭，但在行为链首先发现P037自然英文source措辞未被旧duration解析器支持；Vercel两项检查成功，Actions不绿色。
+- 最小产品修复支持`for <duration>`与`<duration> ago`，并让“患者未留意”的legacy槽保留intent路由但不进入收集或评分。旧测试同步当前冻结边界：未审核饮酒/吸烟事实必须自然不确定，不能为了绿灯恢复确定性negative。
+- P026/P027/P029/P039患者资料报告同步既有source优先结论；P002、14项新增阻塞、18项HEM-P0-023、151项HEM-P0-001、419条模拟事实和42例`needs_revision`均未裁决或解除。
+- 本地最终门禁：完整行为exit 0；Playwright 85/3/0；TypeScript/ESLint；82页构建；25资产bundle；356文件/历史secret scan；高危审计0；`data/**`零差异。
+- 该候选尚须小步提交、普通push和精确新HEAD远程复核。长期QA应从最终绿色HEAD复测P037英文时长、P004/P005/P006未知时相零收集、P001/HX-ADD-001未审核生活史隔离，以及原病史专项P026/P027/P029/P039与32项冻结。
+
+### 病史协调专项最终远程结论（2026-07-25）
+
+- 最终Production Goal HEAD为`e70ed19fadd51671602e937565b779154b16522d`。专项14个提交逐笔选择性集成，状态均为`CHERRY_PICKED`；没有整体merge专项分支或直接cherry-pick其最终HEAD。
+- 本轮新增可独立回滚提交为`d09b7a6`（依赖安全下限）、`969ce96`（依赖证据）、`d75655d`（Patient治理与病史投影）、`e70ed19`（最终本地证据）。回滚使用普通`git revert`并重新运行门禁，禁止reset或force push。
+- Actions run `30148941887`在Node 22.14.0完整success：Playwright 85/3/0、82/82页面、23个JS资产、行为/医学/安全/类型/lint/secret/clean门禁全部通过。Vercel Deployment及Preview Comments绑定精确HEAD并成功；PR #1仍Open/Draft，Pages按Draft规则跳过，未部署Production。
+- 四项source优先用药投影P026/P027/P029/P039通过；P002手术史、14项新增BLOCKED_MEDICAL、18项HEM-P0-023、151项HEM-P0-001、419条模拟事实及42例`needs_revision`均未自动裁决、批准或解除。
+- 长期QA从`e70ed19fadd51671602e937565b779154b16522d`复测：P026/P027/P029/P039；P002与32项阻塞隔离；P037英文`1 day ago`；P004/P005/P006患者未留意事实零收集；P001/HX-ADD-001未审核生活史；42×37、42×17、Patient开场白、360分及双语七阶段。
+### 存储恢复与目录完整性里程碑（2026-07-26，本地完成、远程待验）
+
+- 起始 Production HEAD：`77815862a0abebff67b8d958f66944a0e11b068f`；选择性 QA HEAD：`e586508c620f0b9ca72930feb1c93526b35e04c1`；没有整体 merge QA。
+- 代码 HEAD：`df89a91f304f867855b6708cab152b70e57fad80`。HEM-P1-061、063、064、066 和 HEM-P2-065 已取得本地可重复关闭证据；history-log 既有恢复合同保持。
+- 完整本地结果：58/58 行为门禁、Playwright 91/7/0、TypeScript、ESLint、双 82/82 build、双 26-asset bundle、357-file/history secret scan、78-output idempotency、`data/**`零差异。
+- 安全语义：终态恢复要求完整身份；pointer 与 attempt 内容一致；浏览器旧 token 只作为已签名状态结构参与本地进度一致性，服务端 stage/attempt 校验未放宽；restart 删除失败不 reload、不伪装成功。
+- 医学治理未变化：未批准事实、未解除`needs_revision`、未裁决 HEM-P0-001/023、未改 419 条审核结论或 360 分规则。
+- 当前仍需：证据提交、fetch 后普通 push、精确新 HEAD 的 Node 22 Actions、Vercel 和 Draft PR检查。PR保持 Draft；不合并 main、不部署 Production。
+- 回滚：按提交逆序普通执行`git revert <evidence-commit>`与`git revert df89a91`，随后重跑 session/attempt、history-log、Playwright、构建和扫描门禁；禁止 reset、rebase 或 force push。
+- 长期 QA 复测范围：28身份场景、4 pointer恢复、localStorage异常四 viewport、restart首次删除失败四 viewport、8假进度、history-log 3×503+1×200、七阶段与360分。准确起始 HEAD 在远程门禁成功后以最终推送 HEAD 为准。
+
+#### 远程验收结论
+
+- `ee48cc99f0c9613704d89c1742158b13287e58d2`的 Node 22.14 Actions run `30166227983`已 success；远程 Playwright 91/7/0、82/82 build、24-asset bundle、TypeScript、ESLint、行为/医学治理、secret 与 clean gate 全绿。
+- Vercel Preview deployment `5602981833`绑定同一 SHA 并 success。PR #1保持 Open/Draft，Pages按规则 skipped；未合并 main、未部署 Production。
+- HEM-P1-061/063/064/066 与 HEM-P2-065 的无需人工权限工程工作已经关闭。长期 QA 应以最终文档记录提交为起点，复测 28身份、4 pointer补偿、四 viewport storage/restart、8假进度和 history-log 恢复控制。

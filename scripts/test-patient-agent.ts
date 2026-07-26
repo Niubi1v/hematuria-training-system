@@ -71,7 +71,10 @@ const p001Smoking = ask("P001", "吸烟吗？");
 assertNotContains(p001Smoking.replyText, ["无痛", "肉眼血尿", "血块", "阿司匹林", "膀胱癌", "肿瘤", "高龄男性", "需警惕", "原始既往史", ...forbidden], "P001 smoking question");
 
 const drinking = ask("HX-ADD-001", "喝酒吗？");
-assert(drinking.replyText.includes("饮酒") || drinking.replyText.includes("喝酒"), `drinking answer should mention drinking: ${drinking.replyText}`);
+assert(
+  drinking.replyText.includes("饮酒") || drinking.replyText.includes("喝酒") || /记不(?:太)?清|没特别注意/.test(drinking.replyText),
+  `drinking answer should mention drinking or preserve governed uncertainty: ${drinking.replyText}`
+);
 assertNotContains(drinking.replyText, ["吸烟", "包年", "乙肝", "高血压", "糖尿病"], "drinking question");
 
 const hypertension = ask("HX-ADD-001", "有高血压吗？");

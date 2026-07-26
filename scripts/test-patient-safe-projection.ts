@@ -45,6 +45,7 @@ async function main() {
   let projected = 0;
   let safetyBlocked = 0;
   let canonicalUnknown = 0;
+  let historyPendingReview = 0;
   for (const caseData of cases) {
     for (const probe of probes) {
       const canonical = matchCanonicalPatientFacts(caseData.id, probe.question, "en");
@@ -65,13 +66,19 @@ async function main() {
         assert.ok(result.safetyFlags?.includes("deterministic_answer_blocked"));
         continue;
       }
-      if (result.fallbackReason === "canonical_fact_unknown") {
+      if (result.fallbackReason === "canonical_fact_unknown" || result.fallbackReason === "patient_not_observed") {
         canonicalUnknown += 1;
         assert.ok(canonical, `${caseData.id}/${probe.id} unknown must come from canonical governance`);
         assert.ok(Object.values(canonical.factValues || {}).every((value) => value === "unknown"));
         assert.deepEqual(canonical.collectableSlotIds || [], []);
         assert.deepEqual(result.matchedSlotIds || [], [], `${caseData.id}/${probe.id} unknown must not be collectable`);
         assert.ok(!GENERIC_UNKNOWN.has(String(result.replyText || "")), `${caseData.id}/${probe.id} natural unknown`);
+        continue;
+      }
+      if (result.fallbackReason === "medical_history_pending_review") {
+        historyPendingReview += 1;
+        assert.deepEqual(result.matchedSlotIds || [], [], `${caseData.id}/${probe.id} unreviewed history must not be collectable`);
+        assert.ok(!GENERIC_UNKNOWN.has(String(result.replyText || "")), `${caseData.id}/${probe.id} natural history uncertainty`);
         continue;
       }
 
@@ -84,7 +91,7 @@ async function main() {
   }
 
   assert.ok(projected > 0);
-  console.log(`Patient safe projection preserved ${projected} approved route replies; ${safetyBlocked} unsafe sources stayed blocked; ${canonicalUnknown} governed unknown facts stayed non-collectable.`);
+  console.log(`Patient safe projection preserved ${projected} approved route replies; ${safetyBlocked} unsafe sources stayed blocked; ${canonicalUnknown} governed unknown facts and ${historyPendingReview} unreviewed history facts stayed non-collectable.`);
 }
 
 main().catch((error) => {
