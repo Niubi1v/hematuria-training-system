@@ -5,6 +5,7 @@ const { callLLM, getLLMProviderConfig } = require("./llmClient.runtime.js");
 const { BILINGUAL_CONFLICT_REASON, quarantineForMatchedSlots, uncertainConflictReply } = require("./bilingualConflictQuarantine.js");
 const { matchStructuredFacts } = require("./structuredFacts.js");
 const { matchCanonicalPatientFacts, projectCanonicalPatientFacts } = require("./canonicalFacts.js");
+const { classifierReasonCode } = require("../src/lib/patientFactState.js");
 const { classifyPatientIntent } = require("./patientIntentClassifier.js");
 const { auditPatientPrompt, estimateTokens, promptAuditEnabled } = require("./patientPromptAudit.js");
 const safeLogger = require("./safeLogger.js");
@@ -667,7 +668,10 @@ function mergePatientFactMatches(canonical, structured) {
     ),
     matcherLayer: "compound_canonical_structured",
     safetyFlags: unique([...(canonical.safetyFlags || []), ...(structured.safetyFlags || [])]),
-    fallbackReason: canonical.fallbackReason || structured.fallbackReason || ""
+    fallbackReason: canonical.fallbackReason || structured.fallbackReason || "",
+    factStates: { ...(canonical.factStates || {}), ...(structured.factStates || {}) },
+    answerPlans: [...(canonical.answerPlans || []), ...(structured.answerPlans || [])],
+    unknownReasonCodes: { ...(canonical.unknownReasonCodes || {}), ...(structured.unknownReasonCodes || {}) }
   };
 }
 
@@ -745,6 +749,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
       answerSource: "unknown",
       confidence: 0,
       fallbackReason: matched.unresolvedReason,
+      unknownReasonCodes: matched.unknownReasonCodes || {},
       provider: "rule",
       model: "local-rule",
       isFallback: true,
@@ -782,7 +787,17 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
         provider: getLLMProviderConfig().provider, outputFilter: "safe_unknown", fallbackReason: semanticDecision.reason
       });
     }
-    return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, answerSource: "unknown", confidence: 0, fallbackReason: semanticDecision.reason };
+    return {
+      ...fallback,
+      provider: "rule",
+      model: "local-rule",
+      isFallback: true,
+      filter: { ok: true, hits: [] },
+      answerSource: "unknown",
+      confidence: 0,
+      fallbackReason: semanticDecision.reason,
+      unknownReasonCodes: { unresolved_intent: classifierReasonCode(semanticDecision.reason) }
+    };
   }
   if ((fallback.matchedSlotIds || []).length > 1 && !contextualRecap) {
     return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, fallbackReason: "compound_question_preserves_all_facts" };
