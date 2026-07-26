@@ -280,7 +280,7 @@ function projectCanonicalPatientFacts(caseId, intentKeys, language = "zh", quest
   const allowedKeys = new Set(Array.isArray(intentKeys) ? intentKeys : []);
   const priorityMatches = priorityIntentDefinitions
     .filter((definition) => allowedKeys.has(definition.key))
-    .map((definition) => ({ intentKey: definition.key, sourceSlotId: definition.sourceSlotId, confidence: 1, matchedAlias: "", matcherType: "semantic_classifier" }));
+    .map((definition, matchIndex) => ({ intentKey: definition.key, sourceSlotId: definition.sourceSlotId, confidence: 1, matchedAlias: "", matcherType: "semantic_classifier", matchIndex }));
   if (!priorityMatches.length) return null;
   return buildCanonicalPatientFacts(caseId, caseSlots, priorityMatches, [], language, question);
 }
@@ -367,7 +367,8 @@ function buildCanonicalPatientFacts(caseId, caseSlots, priorityMatches, legacyMa
             : intents.length === 1
             ? slotAnswer
             : naturalBooleanAnswer(item.intentKey, factValues[item.intentKey], language),
-          unknownReason: reason === "known" ? null : reasonCodeForState(factStateFromBoolean(factValues[item.intentKey], reason))
+          unknownReason: reason === "known" ? null : reasonCodeForState(factStateFromBoolean(factValues[item.intentKey], reason)),
+          matchIndex: item.matchIndex
         }));
       }
       continue;

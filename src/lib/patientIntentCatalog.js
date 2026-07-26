@@ -167,6 +167,12 @@ function flexibleAliasMatch(question, alias, language) {
   return normalizedQuestion.includes(normalizedAlias);
 }
 
+function aliasMatchIndex(question, alias, language) {
+  const normalizedQuestion = language === "zh" ? compact(question) : normalizeIntentQuestion(question);
+  const normalizedAlias = language === "zh" ? compact(alias) : normalizeIntentQuestion(alias);
+  return normalizedQuestion.indexOf(normalizedAlias);
+}
+
 function matchesNaturalPattern(question, intentKey, language) {
   const normalized = normalizeIntentQuestion(question);
   const compacted = normalized.replace(/\s+/g, "");
@@ -249,7 +255,7 @@ function matchesNaturalPattern(question, intentKey, language) {
 }
 
 function matchPriorityCanonicalIntents(question, language = "zh") {
-  return priorityIntentDefinitions.flatMap((definition) => {
+  return priorityIntentDefinitions.flatMap((definition, definitionOrder) => {
     const matchedAlias = definition.aliases[language].find((alias) => flexibleAliasMatch(question, alias, language));
     const naturalPatternMatched = !matchedAlias && matchesNaturalPattern(question, definition.key, language);
     if (!matchedAlias && !naturalPatternMatched) return [];
@@ -258,9 +264,98 @@ function matchPriorityCanonicalIntents(question, language = "zh") {
       sourceSlotId: definition.sourceSlotId,
       confidence: 1,
       matchedAlias: matchedAlias || "",
-      matcherType: matchedAlias ? "canonical_alias" : "natural_pattern"
+      matcherType: matchedAlias ? "canonical_alias" : "natural_pattern",
+      matchIndex: matchedAlias ? aliasMatchIndex(question, matchedAlias, language) : Number.MAX_SAFE_INTEGER - priorityIntentDefinitions.length + definitionOrder
     }];
-  });
+  }).sort((left, right) => left.matchIndex - right.matchIndex);
+}
+
+function recentConversationTopic(conversationHistory = [], language = "zh") {
+  const entries = Array.isArray(conversationHistory) ? conversationHistory.slice(-8).reverse() : [];
+  for (const entry of entries) {
+    const text = String(entry?.text || "");
+    const priority = matchPriorityCanonicalIntents(text, language)[0];
+    if (priority) return priority.intentKey;
+    if (language === "en") {
+      if (/(?:blood|red).*(?:urine|pee)|hematuria/i.test(text)) return "gross_hematuria";
+      if (/(?:urine test|urinalysis).*(?:blood|abnormal)|microscopic hematuria/i.test(text)) return "microscopic_hematuria";
+      if (/\b(?:injury|trauma)\b/i.test(text)) return "trauma";
+    } else {
+      if (/小便.*红|尿.*红|血尿|尿血/.test(text)) return "gross_hematuria";
+      if (/尿检|尿潜血|镜下血尿/.test(text)) return "microscopic_hematuria";
+      if (/外伤|受伤|撞伤|跌伤/.test(text)) return "trauma";
+    }
+  }
+  return "";
+}
+
+function resolveContextualPatientQuestion(question, conversationHistory = [], language = "zh") {
+  const original = String(question || "").trim();
+  const explicitPriority = matchPriorityCanonicalIntents(original, language);
+  const topic = recentConversationTopic(conversationHistory, language);
+  if (!original || !topic) {
+    return { question: original, inherited: false, reason: "", sourceIntent: "" };
+  }
+  const compacted = compact(original);
+  const isHematuriaTopic = ["gross_hematuria", "microscopic_hematuria", "whole_stream_hematuria", "initial_hematuria", "terminal_hematuria"].includes(topic);
+  const durationFollowup = language === "en"
+    ? /^(?:about )?(?:how long|since when|when did (?:it|that) start)\??$/i.test(original)
+    : /^(?:那|这个|这种情况)?(?:多少天|多久(?:了)?|从什么时候开始|什么时候开始)[呢吗]?[？?]?$/.test(compacted);
+  if (durationFollowup && (isHematuriaTopic || topic === "trauma")) {
+    return {
+      question: language === "en"
+        ? (topic === "trauma" ? "How long ago did the injury happen?" : "How long has the blood in the urine been present?")
+        : (topic === "trauma" ? "外伤是多久以前发生的？" : "血尿多久了？"),
+      inherited: true,
+      reason: "contextual_duration",
+      sourceIntent: topic
+    };
+  }
+  const painFollowup = language === "en"
+    ? /^(?:and |what about )?(?:does (?:it|that) hurt|is (?:it|that) painful)\??$/i.test(original)
+    : /^(?:那|这个|这种情况)?(?:疼吗|痛吗|疼不疼|痛不痛)[？?]?$/.test(compacted);
+  if (painFollowup && isHematuriaTopic) {
+    return {
+      question: language === "en" ? "Does it hurt when you urinate?" : "小便时疼吗？",
+      inherited: true,
+      reason: "contextual_pain",
+      sourceIntent: topic
+    };
+  }
+  const continuityFollowup = language === "en"
+    ? /^(?:is|has) (?:it|that) (?:always|continuous|like this all the time)\??$/i.test(original)
+    : /^(?:那|这个|这种情况)?(?:是)?一直这样吗[？?]?$/.test(compacted);
+  if (continuityFollowup && isHematuriaTopic) {
+    return {
+      question: language === "en" ? "Is the blood in the urine continuous or intermittent?" : "血尿是持续还是间断的？",
+      inherited: true,
+      reason: "contextual_course",
+      sourceIntent: topic
+    };
+  }
+  const previousFollowup = language === "en"
+    ? /^(?:has|did) (?:it|this|that) happen before\??$/i.test(original)
+    : /^(?:那|这个|这种情况)?以前有过吗[？?]?$/.test(compacted);
+  if (previousFollowup && isHematuriaTopic) {
+    return {
+      question: language === "en" ? "Has the blood in the urine happened before or recurred?" : "血尿以前反复出现过吗？",
+      inherited: true,
+      reason: "contextual_previous_episode",
+      sourceIntent: topic
+    };
+  }
+  const contradictionFollowup = language === "en"
+    ? /(?:earlier|before).*(?:not hurt|no pain).*(?:now|but).*(?:uncomfortable|hurt|pain)/i.test(original)
+    : /(?:前面|刚才|之前).*(?:不痛|不疼).*(?:现在|又|怎么).*(?:不舒服|痛|疼)/.test(original);
+  if (!explicitPriority.length && contradictionFollowup && (topic === "dysuria" || isHematuriaTopic)) {
+    return {
+      question: language === "en" ? `About urination: ${original}` : `关于小便时疼不疼：${original}`,
+      inherited: true,
+      reason: "contextual_correction",
+      sourceIntent: topic
+    };
+  }
+  return { question: original, inherited: false, reason: "", sourceIntent: topic };
 }
 
 function asksIndependentGeneralPain(question, language = "zh") {
@@ -285,5 +380,6 @@ module.exports = {
   matchPriorityCanonicalIntents,
   normalizeIntentQuestion,
   priorityAliasCount,
-  priorityIntentDefinitions
+  priorityIntentDefinitions,
+  resolveContextualPatientQuestion
 };
