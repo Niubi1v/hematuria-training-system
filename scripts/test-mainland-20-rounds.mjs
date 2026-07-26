@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 
 const baseUrl = String(process.env.MAINLAND_HEALTHCHECK_URL || "http://127.0.0.1:8080").replace(/\/+$/, "");
+// The safe mock answers in a few milliseconds, much faster than a clinician can
+// submit questions or a live provider can respond. Pace the acceptance journey so
+// it exercises the configured Nginx rate contract instead of its overload branch.
+const roundPacingMs = Math.min(Math.max(Number(process.env.MAINLAND_ROUND_PACING_MS || 75), 25), 1000);
 const questions = {
   zh: [
     "什么时候开始发现血尿？", "血尿是突然出现的吗？", "尿液全程都是红色吗？", "尿里有没有血块？",
@@ -77,6 +81,9 @@ async function run(language) {
     const source = String(answer.payload.generationSource || "unknown");
     sources[source] = (sources[source] || 0) + 1;
     history.push({ role: "student", text: question }, { role: "patient", text: answer.payload.replyText });
+    if (index + 1 < questions[language].length) {
+      await new Promise((resolve) => setTimeout(resolve, roundPacingMs));
+    }
   }
   return { rounds: 20, sources, durations };
 }
