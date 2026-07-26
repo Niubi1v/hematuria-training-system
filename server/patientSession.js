@@ -776,8 +776,10 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   const authoritativeProfile = caseData ? localCompleteProfile(buildRawPatientFacingProfile(caseData)) : null;
   const runtimeProfile = authoritativeProfile || session?.completedPatientFacingProfile || completedPatientFacingProfile;
   const naturalClarification = !matched && isNaturalClarificationRequest(studentInput, language);
+  const classifierNeedsClarification = !matched
+    && ["semantic_low_confidence", "semantic_response_invalid"].includes(semanticDecision?.reason);
   const contextualRecap = Boolean(matched) && isContextualRecap(studentInput, language);
-  const genericFallback = naturalClarification
+  const genericFallback = naturalClarification || classifierNeedsClarification
     ? clarificationReply(language)
     : safeFallbackForQuestion(routedInput, runtimeProfile, language);
   const quarantine = quarantineForMatchedSlots(caseId, matched?.governanceSlotIds || matched?.matchedSlotIds || []);
