@@ -288,3 +288,15 @@
 | 真实浏览器关闭/真机 | 仅sessionStorage清空与同context多标签仿真 | BLOCKED_REAL_BROWSER / BLOCKED_REAL_DEVICE |
 
 - 本增量只覆盖P001代表attempt的版本能力恢复；不扩张为42例、Preview、真实浏览器进程关闭或真机结论。并发防重通过不能替代失败标签的用户可继续性。
+
+## Production `9b7fcd0` 第 24 轮UI P2增量
+
+| 场景 | 结果 | 状态 |
+| --- | --- | --- |
+| 语音设置四个移动触控目标 | `390×844/360×800`均为`106×44、44×44、75×44、44×44` | PASS_EMULATION；HEM-P2-044 |
+| 键盘/焦点/Escape/Enter/reduced-motion邻接合同 | 两个移动viewport 2/2 | PASS_EMULATION |
+| P001英文第2阶段分类占位 | 四viewport各5个相同安全展示标题 | BLOCKED_SOURCE_REVISION（预期fail-closed） |
+| 英文分类React key | 四viewport各4条重复key错误，共16条 | FAIL_EMULATION；HEM-P2-059 |
+| 真实手机触控、缩放与safe-area | 无真机证据 | BLOCKED_REAL_DEVICE |
+
+- HEM-P2-044几何通过只关闭自动viewport层；HEM-P2-059只覆盖P001代表全局查体目录，不扩张为42例逐例UI或医学翻译结论。

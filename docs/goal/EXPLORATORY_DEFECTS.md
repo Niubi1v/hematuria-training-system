@@ -239,7 +239,7 @@
 
 ## HEM-P2-044：移动端语音设置触控目标小于 44×44 CSS px
 
-- 级别/状态：P2，OPEN / FAIL_EMULATION；真实设备仍为 `BLOCKED_REAL_DEVICE`。
+- 级别/状态：P2，RESOLVED_LOCAL_QA / PASS_EMULATION；Production `9b7fcd0` 两个移动viewport均达到44px；真实设备仍为 `BLOCKED_REAL_DEVICE`。
 - 页面/路径：训练工作台 `/cases/P001/` → “语音设置”；病例 P001；中文；viewport `390×844`、`360×800`。
 - 前置与步骤：全新浏览器上下文 → 安装脱敏本地 API fixture → 打开 P001 中文训练页 → 打开语音设置 → 读取可交互目标 `getBoundingClientRect()` → 与最小 44×44 CSS px 比较。
 - 预期：移动端所有主要触控目标的宽和高均不小于 44 CSS px，不依赖精确点按。
@@ -249,6 +249,8 @@
 - HTTP/console/network：页面及脱敏 fixture 请求 200；该缺陷为纯几何测量，无 Authorization、Cookie、签名、session 或问答正文记录。
 - 最小证据：`screenshots/hem-p2-044-touch-targets-390x844-failure.png`、`reports/hem-p2-044-touch-targets-summary.json`；360 截图和逐 viewport 原始 JSON 仅本机保留。
 - 建议方向：为语音入口、关闭、试听、停止采用共享 `min-h-11 min-w-11`（或等价 44px）触控容器，并保留视觉图标大小；在 360/390 自动几何断言中回归。医学专家裁决：否。
+
+- `9b7fcd0`回归：`390×844/360×800`最终2/2通过；两个viewport的语音入口`106×44`、关闭`44×44`、试听`75×44`、停止`44×44`，不足项0。键盘焦点、Escape和reduced-motion邻接合同也通过。自动几何关闭本地工程缺陷，但没有真实手指、系统缩放、动态地址栏或safe-area证据，故真机仍阻塞。
 
 ## QA-SEC-P1-001：Preview runner 失败输出可能回显受保护请求头
 
@@ -627,3 +629,9 @@
 - clean-tab的初始化失败0、草稿丢失0、额外stage请求0；多标签request ID碰撞0、重复权威写入0、恢复请求倍增0。失败网络请求与意外console error均为0，故缺陷仍精确限定为“成功初始化/验证没有取得服务端当前版本能力”，不扩张为存储、布局或并发防重失败。
 - 当前Production的 `df89a91` 浏览器attempt恢复变更不等于HEM-P1-060修复：它强化pointer、身份与存储恢复，但未建立当前attempt版本的安全resume/reissue。建议方向与原缺陷一致，且必须保留现有伪造、过期、跨病例、跨语言、mode、participant及陈旧写入拒绝。
 - 本轮无新增缺陷ID、无医学专家裁决需求。自动标签页/sessionStorage边界只标 `FAIL_EMULATION`；真实浏览器进程关闭与真机仍为 `BLOCKED_REAL_BROWSER / BLOCKED_REAL_DEVICE`。
+
+## 2026-07-26 Production `9b7fcd0` 第 24 轮状态更新
+
+- **HEM-P2-044：`RESOLVED_LOCAL_QA / PASS_EMULATION 2/2`。** 两个移动viewport的四个目标均达到至少44 CSS px，不足目标0；邻接键盘与reduced-motion合同通过。真实设备仍`BLOCKED_REAL_DEVICE`。
+- **HEM-P2-059：`OPEN / FAIL_EMULATION 4/4`。** 四viewport每次4条重复key错误、5个相同类别占位标题，failed network request 0；与原缺陷完全一致。修复只需把React key与展示占位解耦，不得补写或批准23个未审核英文来源名称。
+- 本轮没有新增缺陷编号；HEM-P2-044关闭不抵消HEM-P2-059及开放P1，也不改变`BLOCKED_SOURCE_REVISION`或真实设备状态。

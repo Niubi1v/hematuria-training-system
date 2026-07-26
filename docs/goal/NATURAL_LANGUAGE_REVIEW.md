@@ -182,3 +182,8 @@
 
 - 本轮只使用固定QA阶段草稿与训练状态，不调用Patient Agent、不保存问答或病例事实，也不新增canonical、错误unknown、极性、复合问句或双语医学等义结论。
 - 中文/英文结果一致仅说明HEM-P1-060与界面语言无关；不能作为患者语言质量通过。HEM-P1-057/058、HEM-P0-001/023及医学/来源阻塞状态保持不变。
+
+## 2026-07-26 `9b7fcd0` 第 24 轮UI P2
+
+- 本轮没有调用Patient Agent、提出医学问题或评价患者回答；不新增canonical、unknown、极性或双语等义结论。
+- HEM-P2-059中的`Physical examination`与`Awaiting reviewed examination translation`继续作为安全占位，不代表23个英文来源名称已审核。重复key是纯渲染标识缺陷，修复不得用未审核翻译替换安全文案。

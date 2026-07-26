@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "exploratory-round24-ui-p2-v1",
+  "productionBaseline": "9b7fcd0d975533c7c6eda5614ca3b2978c9dce55",
+  "qaBranch": "codex/hematuria-exploratory-qa",
+  "scope": {
+    "defects": [
+      "HEM-P2-044",
+      "HEM-P2-059"
+    ],
+    "environment": "local Production UI with headless Chromium",
+    "effectiveRuns": 6,
+    "passed": 2,
+    "failed": 4,
+    "instrumentationRunsExcluded": 2,
+    "realDeviceClaimed": false,
+    "previewClaimed": false
+  },
+  "hemP2044": {
+    "result": "PASS_EMULATION",
+    "status": "RESOLVED_LOCAL_QA",
+    "runs": 2,
+    "viewports": [
+      "390x844",
+      "360x800"
+    ],
+    "minimumCssPixels": 44,
+    "measurementsByViewport": {
+      "390x844": {
+        "voiceSettings": "106x44",
+        "dialogClose": "44x44",
+        "voiceTest": "75x44",
+        "voiceStop": "44x44"
+      },
+      "360x800": {
+        "voiceSettings": "106x44",
+        "dialogClose": "44x44",
+        "voiceTest": "75x44",
+        "voiceStop": "44x44"
+      }
+    },
+    "undersizedTargets": 0,
+    "adjacentContracts": {
+      "keyboardFocusAndEscape": "PASS_EMULATION",
+      "enterAndShiftEnter": "PASS_EMULATION",
+      "reducedMotion": "PASS_EMULATION"
+    },
+    "remainingBoundary": "BLOCKED_REAL_DEVICE"
+  },
+  "hemP2059": {
+    "result": "FAIL_EMULATION",
+    "status": "OPEN",
+    "runs": 4,
+    "viewports": [
+      "1440x900",
+      "1280x720",
+      "390x844",
+      "360x800"
+    ],
+    "language": "en",
+    "duplicateKeyErrorsPerRun": 4,
+    "duplicateKeyErrorsTotal": 16,
+    "duplicatePlaceholderHeadingsPerRun": 5,
+    "duplicatePlaceholderHeadingsTotal": 20,
+    "failedNetworkRequests": 0,
+    "sourceRevisionStatus": "BLOCKED_SOURCE_REVISION",
+    "medicalTranslationApproved": false
+  },
+  "disposition": {
+    "newDefectIds": 0,
+    "medicalReviewRequiredForEngineeringFix": false,
+    "recommendedDirection": {
+      "HEM-P2-044": "Keep the current 44 CSS pixel minimum and retain mobile geometry regression coverage.",
+      "HEM-P2-059": "Use a stable untranslated internal category identifier for React keys while retaining the reviewed-source placeholder as display text."
+    }
+  },
+  "privacy": {
+    "patientAnswersRetained": false,
+    "medicalFactsRetained": false,
+    "requestIdsRetained": false,
+    "attemptIdsRetained": false,
+    "headersRetained": false,
+    "cookiesRetained": false,
+    "tokensRetained": false,
+    "signaturesRetained": false,
+    "environmentValuesRetained": false
+  }
+}

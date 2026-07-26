@@ -229,3 +229,10 @@ console 文本对 Authorization、Cookie、签名、token、secret 和 API key �
 - clean-tab 必须在普通刷新对照通过、草稿恢复且重新初始化 200 后，让唯一下一次 `stage-feedback` 为 200；多标签必须继续保持单一权威写入，并让失败标签刷新后取得当前版本能力、唯一下一阶段写入为 200。
 - 两条路径均继续失败，HEM-P1-060 保持 OPEN；修复不得把签名移入 `localStorage`、允许两个陈旧写入、自动创建新 attempt 丢弃进度，或放宽病例/语言/mode/participant/版本约束。
 - 下一无外部权限范围优先从既有开放工程项中选择未在当前 Production 独立复测者；HEM-P1-060 只在 Production 提供 capability resume/reissue 变更后再定向重跑。HEM-P1-064、HEM-P2-062及外部阻塞继续独立跟踪。
+
+## 2026-07-26 第 24 轮 `9b7fcd0` 开放UI P2定向复测与下一顺序
+
+- HEM-P2-044按缺陷原文只在`390×844/360×800`测量语音设置入口、关闭、试听和停止四个目标，同时保留键盘焦点、Escape、Enter/Shift+Enter与reduced-motion邻接合同；通过时也输出脱敏精确尺寸。
+- HEM-P2-059在四固定viewport打开P001英文第2阶段，要求未审核英文分类继续显示安全占位，但console重复React key为0；不得为关闭工程缺陷补写或批准英文医学来源。
+- 最终有效范围为2个移动几何项和4个英文key项；首次2个几何绿灯只用于确认后增加通过摘要输出，不计入最终有效运行或产品重试。
+- 后续HEM-P2-044只保留真实手机触控为`BLOCKED_REAL_DEVICE`；HEM-P2-059等待稳定内部key修复后四viewport定向重跑。下一独立范围避免重复这两项，继续从当前Production尚未复测的开放工程合同中选择。

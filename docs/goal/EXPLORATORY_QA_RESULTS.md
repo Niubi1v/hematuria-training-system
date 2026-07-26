@@ -477,3 +477,11 @@ Patient Session 报告记录 295 次 `unsafe_deterministic_answer` source-cell �
 - 多标签并发防重仍正确：每个viewport恰有2个并发阶段请求、1个200权威写入和1个409陈旧拒绝，request ID碰撞0。失败标签刷新/验证后4/4先读取到获胜写入并进入下一阶段，但唯一恢复写入仍4/4为409 `stale_attempt_token`，重新同步0/4。
 - `df89a91` 的浏览器attempt恢复增量修复了pointer/身份/存储恢复，但没有消除这两条服务端版本能力边界；当前结果与缺陷原文一致，不是QA断言或fixture误报。HEM-P1-060保持OPEN，不新建同根编号。
 - 本轮只使用本地Production handler和headless Chromium，状态不得写成Preview或真实浏览器进程关闭/真机通过；没有新增P0/P1/P2。HEM-P1-060、HEM-P1-064、HEM-P2-062及其他开放项仍不支持进入最终教师人工审阅。
+
+## 2026-07-26 第 24 轮：`9b7fcd0` HEM-P2-044/059 UI定向复测
+
+- 最终有效矩阵6项：HEM-P2-044两个移动viewport均通过；HEM-P2-059四固定viewport均失败，合计`2 PASS_EMULATION / 4 FAIL_EMULATION`。为给绿灯补充精确尺寸而发生的首轮2项同结果运行不计最终有效数，也不是产品重试。
+- HEM-P2-044的`390×844`和`360×800`尺寸完全一致：语音设置`106×44`、关闭`44×44`、试听`75×44`、停止`44×44`，不足目标0；键盘焦点与Escape、Enter/Shift+Enter、reduced-motion同轮通过。状态更新为`RESOLVED_LOCAL_QA / PASS_EMULATION`，真实手机仍`BLOCKED_REAL_DEVICE`。
+- HEM-P2-059四viewport每次稳定产生4条相同React key错误和5个`Physical examination`占位标题，共16条错误/20个标题；训练动作成功、failed network request 0。缺陷保持`OPEN / FAIL_EMULATION`。
+- 23个英文来源未审核状态继续`BLOCKED_SOURCE_REVISION`；安全占位显示本身是正确fail-closed，工程失败仅为把展示文案误用作React key。本轮未批准翻译或修改医学数据。
+- 没有新增缺陷ID或P0/P1/P2；本轮只改QA测试、报告和最小证据，不把自动viewport冒充真机或Preview。

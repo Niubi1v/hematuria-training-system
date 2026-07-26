@@ -183,3 +183,9 @@
 - 四固定viewport的clean-tab与多标签失败均保持页面和已保存进度可见，但唯一恢复写入409后操作区进入“训练会话尚未就绪/Training session unavailable”；没有页面崩溃、额外网络失败或新布局结论。
 - 390×844代表截图只显示公开P001训练界面、固定QA草稿和会话未就绪状态，不含患者回答、评分、隐藏病史、request/attempt ID或凭据。
 - 本轮是headless Chromium的sessionStorage清空与同context多标签仿真，只标 `FAIL_EMULATION`；真实浏览器进程关闭、移动软键盘、动态地址栏及safe-area继续 `BLOCKED_REAL_BROWSER / BLOCKED_REAL_DEVICE`。
+
+## 2026-07-26 `9b7fcd0` 第 24 轮移动触控与英文查体分类
+
+- HEM-P2-044两个移动viewport四个目标均达到44px，旧的`106×38、26×28、75×38、34×38`不再复现；自动几何状态为`PASS_EMULATION`。没有真实手指命中、系统字体缩放、动态地址栏或safe-area证据。
+- HEM-P2-059四viewport仍显示5个相同`Physical examination`分组并各产生4条重复key console error；360×800代表截图保留公开安全占位，不含查体真值、患者问答、评分或凭据。
+- 页面仍可操作且network failure为0，但React key不唯一可能造成未来重复/遗漏渲染，因此缺陷保持OPEN；未审核英文来源继续独立阻塞。

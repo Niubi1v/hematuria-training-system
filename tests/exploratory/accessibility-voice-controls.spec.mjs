@@ -2,6 +2,11 @@ import { expect, test } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+const ARTIFACT_PREFIX = process.env.QA_ARTIFACT_RUN_PREFIX
+  ? `${process.env.QA_ARTIFACT_RUN_PREFIX.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-|-$/g, "")}-`
+  : "";
+const PRODUCTION_BASELINE = process.env.QA_PRODUCTION_BASELINE || "unknown";
+
 async function installSafePracticeApi(page) {
   let patientCalls = 0;
   await page.route("**/api/health/**", (route) => route.fulfill({
@@ -184,14 +189,25 @@ test("keyboard, visible focus, Escape, reduced motion, and touch targets", async
       measurements.push({ name: control.name, width: box ? Math.round(box.width) : 0, height: box ? Math.round(box.height) : 0 });
     }
     const undersized = measurements.filter(({ width, height }) => width < 44 || height < 44);
+    const viewport = testInfo.project.use.viewport;
+    const slug = `${viewport.width}x${viewport.height}`;
+    const reportRoot = path.resolve("artifacts/exploratory-qa/reports");
+    const screenshotRoot = path.resolve("artifacts/exploratory-qa/screenshots");
+    await mkdir(reportRoot, { recursive: true });
+    await writeFile(path.join(reportRoot, `${ARTIFACT_PREFIX}hem-p2-044-touch-targets-${slug}.json`), `${JSON.stringify({
+      schemaVersion: "exploratory-hem-p2-044-v2",
+      productionBaseline: PRODUCTION_BASELINE,
+      result: undersized.length ? "FAIL_EMULATION" : "PASS_EMULATION",
+      minimumCssPixels: 44,
+      viewport,
+      measurements,
+      undersized,
+      realDeviceClaimed: false,
+      credentialsRetained: false
+    }, null, 2)}\n`, "utf8");
     if (undersized.length) {
-      const viewport = testInfo.project.use.viewport;
-      const slug = `${viewport.width}x${viewport.height}`;
-      const reportRoot = path.resolve("artifacts/exploratory-qa/reports");
-      const screenshotRoot = path.resolve("artifacts/exploratory-qa/screenshots");
-      await Promise.all([mkdir(reportRoot, { recursive: true }), mkdir(screenshotRoot, { recursive: true })]);
-      await writeFile(path.join(reportRoot, `hem-p2-044-touch-targets-${slug}.json`), `${JSON.stringify({ minimumCssPixels: 44, viewport, measurements, undersized }, null, 2)}\n`, "utf8");
-      await page.screenshot({ path: path.join(screenshotRoot, `hem-p2-044-touch-targets-${slug}-failure.png`), animations: "disabled", fullPage: true });
+      await mkdir(screenshotRoot, { recursive: true });
+      await page.screenshot({ path: path.join(screenshotRoot, `${ARTIFACT_PREFIX}hem-p2-044-touch-targets-${slug}-failure.png`), animations: "disabled", fullPage: true });
     }
     expect(undersized, "mobile touch targets smaller than 44x44").toEqual([]);
   }

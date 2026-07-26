@@ -420,3 +420,19 @@ SHA-256：
 
 - 第23轮原始前缀证据共64个文件、66,834,036 B；聚合不保存草稿正文、request/attempt ID、header、Cookie、token、签名、环境值、患者回答、评分或医学事实。
 - 更新文档与聚合后，全量证据树流式/解包扫描覆盖1,355个物理文件、ZIP内20,826个条目和2,766,619,953字节，敏感值命中0；扫描器未输出候选值。
+
+## Production `9b7fcd0` 第 24 轮UI P2证据
+
+| 证据名称 | 对应测试或缺陷 | 文件路径 | 文件大小 | 是否提交 Git | 未提交原因 | 本机保留位置 |
+| --- | --- | --- | ---: | --- | --- | --- |
+| 第24轮脱敏聚合 | HEM-P2-044/059最终6项 | `artifacts/exploratory-qa/reports/9b7fcd0-round24-ui-p2-regression-summary.json` | 提交后记录 | 是 | — | 仓库路径 |
+| HEM-P2-059移动代表截图 | 360×800英文重复分类占位 | `artifacts/exploratory-qa/screenshots/9b7fcd0-r24-hem-p2-059-english-physical-exam-category-keys-360x800.png` | 提交后记录 | 是 | — | 仓库路径 |
+| HEM-P2-044精确尺寸摘要 | 两个移动viewport | `artifacts/exploratory-qa/reports/9b7fcd0-r24-hem-p2-044-touch-targets-*.json` | 2份/约1.3 KB | 否 | 聚合已逐项保留相同尺寸 | 原路径，本机未跟踪 |
+| HEM-P2-059逐viewport摘要 | 四固定viewport | `artifacts/exploratory-qa/reports/9b7fcd0-r24-hem-p2-059-*-summary.json` | 4份/约2.5 KB | 否 | 聚合已保留相同计数 | 原路径，本机未跟踪 |
+| console/network与runner附件 | 四viewport诊断 | `artifacts/exploratory-qa/reports/**/9b7fcd0-r24-*` | 本轮原始证据集 | 否 | 与聚合重复，可能含本机runner上下文 | 原路径，本机未跟踪 |
+| HEM-P2-059四份trace | 可重建React key失败 | `artifacts/exploratory-qa/traces/9b7fcd0-r24-*.zip` | 4份/17,196,073 B | 否 | 体积大且可由测试重建 | 原路径，本机未跟踪 |
+| HEM-P2-059四份失败录像 | 四viewport失败过程 | `artifacts/exploratory-qa/videos/9b7fcd0-r24-*.webm` | 4份/866,206 B | 否 | 体积大；聚合与一张代表截图足够 | 原路径，本机未跟踪 |
+| 其余重复截图 | 四viewport页面及runner附件 | `artifacts/exploratory-qa/{screenshots,reports/test-results}/**/9b7fcd0-r24-*.png` | 本轮原始证据集 | 否 | 只提交一张代表图 | 原路径，本机未跟踪 |
+
+- 第24轮聚合生成前的原始前缀证据共34个文件、20,042,441 B；不保存Patient回答、医学真值、request/attempt ID、header、Cookie、token、签名或环境值。
+- `-NamePrefix`定向流式/解包扫描覆盖34个`9b7fcd0-r24*`原始文件、ZIP内301个条目和42,246,816流式字节；聚合另以`9b7fcd0-round24*`扫描1个文件、2,468字节；两组敏感值命中均为0，未输出候选值。

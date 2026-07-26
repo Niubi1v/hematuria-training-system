@@ -1,5 +1,6 @@
 param(
-  [string]$EvidenceRoot = "artifacts/exploratory-qa"
+  [string]$EvidenceRoot = "artifacts/exploratory-qa",
+  [string]$NamePrefix = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -78,6 +79,9 @@ function Test-Stream {
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $files = Get-ChildItem -LiteralPath $resolvedRoot -Recurse -File | Sort-Object FullName
+if (![string]::IsNullOrWhiteSpace($NamePrefix)) {
+  $files = $files | Where-Object { $_.Name.StartsWith($NamePrefix, [StringComparison]::OrdinalIgnoreCase) }
+}
 foreach ($file in $files) {
   $fileCount += 1
   $relative = $file.FullName.Substring($resolvedRoot.Length + 1).Replace("\", "/")
