@@ -201,3 +201,8 @@
 - 18个P037英文Preview问答操作均通过桌面Chromium完成单次发送与单次history-log；没有观察到请求倍增、页面崩溃或新的布局/状态堆叠问题。
 - HEM-P1-058属于live_ai内容保真缺陷，不新增视觉缺陷。为避免保存真实患者回答，本轮不提交截图、trace、录像或HTML报告；安全wrapper扫描后删除原始runner输出。
 - 本轮没有移动viewport或真机证据；既有`BLOCKED_REAL_DEVICE`边界不变。
+
+## 2026-07-26 `9b7fcd0` 第 27 轮非视觉路由复测
+
+- HEM-P1-030为本地规则与公开handler契约复测，不启动浏览器、不生成截图、trace、录像或HTML报告，也不新增视觉通过/失败结论。
+- 既有桌面、移动viewport、真实软键盘、动态地址栏和safe-area状态均不被本轮替代；`BLOCKED_REAL_DEVICE`保持。

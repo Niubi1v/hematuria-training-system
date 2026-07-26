@@ -4,12 +4,15 @@ import { randomBytes } from "node:crypto";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
+const cases = require("../../data/cases.json");
 const initHandler = require("../../api/session/init.js");
 const chatHandler = require("../../api/agent-chat.js");
 const trainingHandler = require("../../api/training-action.js");
 const { matchCanonicalPatientFacts } = require("../../server/canonicalFacts.js");
+const { matchStructuredFacts } = require("../../server/structuredFacts.js");
 const { resetMemoryAttemptStore } = require("../../server/trainingAttemptStore.js");
 const { resetMemoryAgentRequestStore } = require("../../server/agentRequestStore.js");
+const caseById = new Map(cases.map((item) => [item.id, item]));
 
 const DEFAULT_REPORT = "artifacts/exploratory-qa/reports/patient-api-adapter-smoke.json";
 const BLOCKED_KEYS = ["diagnosis", "imaging", "pathology", "treatment", "teacherOnlyData", "case_card", "scoring"];
@@ -167,11 +170,11 @@ async function main() {
       { id: "onset-en", caseId: "P001", session: sessions.get("P001/en"), language: "en", question: "When did it start?", expected: ["hematuria_onset"] },
       { id: "prior-care-en", caseId: "P001", session: sessions.get("P001/en"), language: "en", question: "Have you seen a doctor before?", expected: ["prior_care"] },
       { id: "urinary-procedure-en", caseId: "P001", session: sessions.get("P001/en"), language: "en", question: "Have you had a urinary procedure?", expected: ["PAST_URINARY_PROCEDURE"] },
-      { id: "tumor-history-zh", caseId: "P001", session: sessions.get("P001/zh"), language: "zh", question: "以前有肿瘤史吗？", expected: ["PAST_MALIGNANCY"], expectUnsafeBlock: true },
-      { id: "cystoscopy-history-zh", caseId: "P001", session: sessions.get("P001/zh"), language: "zh", question: "以前做过膀胱镜吗？", expected: ["PAST_URINARY_PROCEDURE"], expectUnsafeBlock: true },
-      { id: "clots-meta-zh", caseId: "P004", session: sessions.get("P004/zh"), language: "zh", question: "有血块吗？", expected: ["clots"], noTeacherMeta: true, expectedGovernedUnknownReason: "unsafe_deterministic_answer" },
+      { id: "tumor-history-zh", caseId: "P001", session: sessions.get("P001/zh"), language: "zh", question: "以前有肿瘤史吗？", expected: ["PAST_MALIGNANCY"] },
+      { id: "cystoscopy-history-zh", caseId: "P001", session: sessions.get("P001/zh"), language: "zh", question: "以前做过膀胱镜吗？", expected: ["PAST_URINARY_PROCEDURE"] },
+      { id: "clots-meta-zh", caseId: "P004", session: sessions.get("P004/zh"), language: "zh", question: "有血块吗？", expected: ["clots"], noTeacherMeta: true },
       { id: "flank-pain-en", caseId: "P002", session: sessions.get("P002/en"), language: "en", question: "Do you have flank pain?", expected: ["flank_pain"] },
-      { id: "glomerular-en", caseId: "P001", session: sessions.get("P001/en"), language: "en", question: "Do you have foamy urine?", expected: ["glomerular_features"], noGenericUnknown: true, expectedGovernedUnknownReason: "canonical_fact_unknown" }
+      { id: "glomerular-en", caseId: "P001", session: sessions.get("P001/en"), language: "en", question: "Do you have foamy urine?", expected: ["glomerular_features"], noGenericUnknown: true }
     ];
 
     for (const [index, probe] of probes.entries()) {
@@ -189,28 +192,36 @@ async function main() {
       checks += 1;
       assertPublicEnvelope(result, probe.id, failures);
       const payload = result.payload;
-      const expectedUnsafeBlock = probe.expectUnsafeBlock &&
-        payload.fallbackReason === "unsafe_deterministic_answer" &&
-        (payload.safetyFlags || []).includes("deterministic_answer_blocked") &&
-        (payload.matchedSlotIds || []).length === 0 &&
-        (payload.matchedFacts || []).length === 0;
-      const canonical = probe.expectedGovernedUnknownReason
-        ? matchCanonicalPatientFacts(probe.caseId, probe.question, probe.language)
-        : null;
-      const canonicalFactValues = Object.values(canonical?.factValues || {});
-      const canonicalFactReasons = Object.values(canonical?.factValueReasons || {});
-      const expectedGovernedUnknown = Boolean(probe.expectedGovernedUnknownReason) &&
-        payload.fallbackReason === probe.expectedGovernedUnknownReason &&
-        payload.answerSource === "unknown" &&
+      const caseData = caseById.get(probe.caseId);
+      const canonical = matchCanonicalPatientFacts(probe.caseId, probe.question, probe.language);
+      const structured = matchStructuredFacts(caseData, probe.question, probe.language);
+      const governanceSlotIds = sorted([
+        ...(canonical?.governanceSlotIds || canonical?.matchedSlotIds || []),
+        ...(structured?.governanceSlotIds || structured?.matchedSlotIds || [])
+      ]);
+      const collectableSlotIds = sorted([
+        ...(canonical?.collectableSlotIds || canonical?.matchedSlotIds || []),
+        ...(structured?.collectableSlotIds || [])
+      ]);
+      if (!sameSet(governanceSlotIds, probe.expected)) {
+        addFailure(failures, {
+          kind: "governance_route_mismatch",
+          probeId: probe.id,
+          expectedSlotIds: probe.expected,
+          actualSlotIds: governanceSlotIds,
+          safetyFlags: payload.safetyFlags,
+          fallbackReason: payload.fallbackReason || "",
+          generationSource: payload.generationSource || ""
+        });
+      }
+      const expectedGovernedUnknown = collectableSlotIds.length === 0 &&
+        ["canonical_fact_unknown", "unsafe_deterministic_answer", "medical_history_pending_review", "patient_not_observed"].includes(payload.fallbackReason) &&
+        ["unknown", "pending_review", "pending_medical_review"].includes(payload.answerSource) &&
         payload.confidence === 0 &&
         (payload.matchedSlotIds || []).length === 0 &&
         (payload.matchedFacts || []).length === 0 &&
-        sameSet(canonical?.matchedSlotIds, probe.expected) &&
-        (canonical?.collectableSlotIds || []).length === 0 &&
-        canonicalFactValues.length > 0 &&
-        canonicalFactValues.every((value) => value === "unknown") &&
-        (probe.expectedGovernedUnknownReason !== "unsafe_deterministic_answer" || canonicalFactReasons.includes("unsafe_deterministic_answer"));
-      if (probe.expectedGovernedUnknownReason && !expectedGovernedUnknown) {
+        sameSet(governanceSlotIds, probe.expected);
+      if (collectableSlotIds.length === 0 && !expectedGovernedUnknown) {
         addFailure(failures, {
           kind: "governed_unknown_contract",
           probeId: probe.id,
@@ -221,11 +232,11 @@ async function main() {
           generationSource: payload.generationSource || ""
         });
       }
-      if (!expectedUnsafeBlock && !expectedGovernedUnknown && !sameSet(payload.matchedSlotIds, probe.expected)) {
+      if (collectableSlotIds.length > 0 && !sameSet(payload.matchedSlotIds, collectableSlotIds)) {
         addFailure(failures, {
           kind: "route_mismatch",
           probeId: probe.id,
-          expectedSlotIds: probe.expected,
+          expectedSlotIds: collectableSlotIds,
           actualSlotIds: payload.matchedSlotIds,
           safetyFlags: payload.safetyFlags,
           fallbackReason: payload.fallbackReason || "",

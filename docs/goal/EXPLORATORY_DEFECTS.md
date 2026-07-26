@@ -72,7 +72,7 @@
 
 ## HEM-P1-030：Patient Session 病史路由不完整或错配
 
-- 级别/状态：P1，REGRESSED_LOCAL_QA；Production `8e7d148` 曾关闭，但 `3a16f931` 的严格 v2 矩阵发现 1 个工程路由失败组；不安全来源仍独立 `BLOCKED_SOURCE_REVISION`。
+- 级别/状态：P1，RESOLVED_LOCAL_QA；Production `9b7fcd0` 当前双跑已消除 `3a16f931` 严格 v2 矩阵发现的唯一工程路由失败组；不安全来源仍独立 `BLOCKED_SOURCE_REVISION`。
 - 页面/路径：`server/patientSession.js` 生产规则链路及公开 `POST /api/agent-chat/`；42 例；中英文；N/A（API/契约）。
 - 操作步骤：每例初始化中英文 session → 对 37 canonical slot 各发送 2 条固定自然问法 → 要求单项问题仅命中预期逻辑 slot → 对同一请求立即重放 → 用公开 handler 对代表性 `prior_care`、中文肿瘤史和中文膀胱镜史复核。
 - 预期：37 个 slot 的主问法和固定改写均能到达相应病史事实；询问“既往肿瘤史/做过膀胱镜”不应被当成当前诊断或检查结果请求。
@@ -89,6 +89,8 @@
 - 复现/证据：42/42；`reports/patient-session-matrix-summary.json` 与 QA-only `tests/exploratory/patient-session-matrix.mjs`。聚合文件不含回答正文、session 或凭据。
 - 建议方向：收紧 `triggers` 英文同义词的泛化边界，并为完整短语 `urinary procedure` 增加泌尿操作史优先级；保留 governed unknown、来源阻断与冲突 quarantine 强断言。医学专家裁决：否。
 - `657ba5d` 状态审计差异：Production `DEFECT_LOG.md` 权威索引依据15-intent/190-alias矩阵将 HEM-P1-030列为关闭，但该提交没有运行时代码变化，也未覆盖上述37-slot最小问法。独立QA失败证据优先保持 `REGRESSED_LOCAL_QA`，请求主 Goal 重新打开该工程项；不得用纯文档状态覆盖42/42复现。
+- `9b7fcd0` 独立复测：42例中的英文 `Have you had a urinary procedure?` 治理路由42/42精确命中 `PAST_URINARY_PROCEDURE`，`triggers`泄漏0；其中2例为可收集公开路由，40例因既有审核状态返回受控unknown且公开slots/facts为空。完整42×37×双语×双问法矩阵连续2/2均为6,216路由、6,216重放、168边界、0失败，144/144冲突隔离保持；公开adapter连续2/2均18/18通过，providerCalls=0。
+- QA判定修正：首次运行的2,209实例/114组失败源于旧QA把“治理层命中但不可收集”错误要求为公开slot，已排除而不计产品失败。新oracle同时要求治理slot精确、可收集投影为空、公开slots/facts为空、confidence=0及允许的fail-closed原因；未放宽可收集事实、冲突隔离或安全边界。最小聚合为`artifacts/exploratory-qa/reports/9b7fcd0-round27-hem-p1-030-regression-summary.json`。
 
 ## HEM-P1-031：英文特异疼痛问法额外命中通用 pain 并扩大医学冲突隔离
 

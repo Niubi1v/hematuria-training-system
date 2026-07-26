@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-26T04:10:00.000Z",
+  "productionBaseline": "9b7fcd0d975533c7c6eda5614ca3b2978c9dce55",
+  "qaBranch": "codex/hematuria-exploratory-qa",
+  "qaHeadBeforeCommit": "5dbc7980cc6983f981fcc903f492f10bf9934dff",
+  "scope": "HEM-P1-030 local deterministic routing and public handler regression",
+  "status": "RESOLVED_LOCAL_QA",
+  "previewRetest": "NOT_RUN_NOT_REQUIRED_FOR_LOCAL_RULE_CONTRACT",
+  "medicalTruthAdjudicated": false,
+  "medicalBlocksPreserved": [
+    "HEM-P0-001",
+    "HEM-P0-023"
+  ],
+  "matrixRuns": {
+    "runs": 2,
+    "semanticallyIdenticalIgnoringGeneratedAt": true,
+    "casesPerRun": 42,
+    "canonicalSlotsPerRun": 37,
+    "languagesPerRun": 2,
+    "variantsPerSlotPerLanguage": 2,
+    "sessionsPerRun": 84,
+    "routeChecksPerRun": 6216,
+    "repeatChecksPerRun": 6216,
+    "boundaryChecksPerRun": 168,
+    "failureInstancesPerRun": 0,
+    "failureGroupsPerRun": 0,
+    "providerCallsPerRun": 0,
+    "governedUnknownsPerRun": 3020,
+    "governedUnknownReasonsPerRun": {
+      "canonical_fact_unknown": 811,
+      "patient_not_observed": 1059,
+      "medical_history_pending_review": 1150
+    },
+    "conflictQuarantineExpectedPerRun": 144,
+    "conflictQuarantineObservedPerRun": 144
+  },
+  "urinaryProcedureHistoryRegression": {
+    "questionClass": "English urinary procedure history variant formerly misrouted to triggers",
+    "checksPerRun": 42,
+    "governanceRoutesToPastUrinaryProcedurePerRun": 42,
+    "collectablePublicRoutesPerRun": 2,
+    "governedUnknownPublicSuppressionPerRun": 40,
+    "triggerLeakagePerRun": 0
+  },
+  "publicAdapterRuns": {
+    "runs": 2,
+    "semanticallyIdenticalIgnoringGeneratedAt": true,
+    "checksPerRun": 18,
+    "failuresPerRun": 0,
+    "providerCallsPerRun": 0
+  },
+  "officialAndNeighborGates": {
+    "patientHistoryRoutingRuns": "2/2 passed; 42 cases x 8 questions plus 4 public safety boundaries",
+    "patientSafeProjection": "45 approved route replies; 69 governed unknown facts and 12 unreviewed history facts remained non-collectable",
+    "bilingualConflictQuarantine": "18 facts isolated without medical truth or review-state changes"
+  },
+  "qaAssertionCorrection": {
+    "excludedInitialFailureInstances": 2209,
+    "excludedInitialFailureGroups": 114,
+    "reason": "The prior QA expectation required public matched slots for governed non-collectable facts. The corrected oracle now requires exact internal governance routing plus empty public slots and facts, confidence zero, and an allowed fail-closed reason."
+  },
+  "evidenceMinimization": {
+    "committed": "This aggregate, QA scripts, and QA documentation",
+    "localOnly": "Two matrix and two public-adapter raw summaries",
+    "answersOrQuestionsRetained": false,
+    "credentialsOrRequestIdentifiersRetained": false
+  }
+}

@@ -467,3 +467,17 @@ SHA-256：
 
 - 聚合只保留来源、状态和计数，不保存问题、回答、病例事实、request/attempt ID、header、Cookie、token、签名或环境值。
 - `9b7fcd0-round26*`证据扫描覆盖1个文件、3,084字节，敏感值命中0；Preview四次正式运行的runner输出均由安全wrapper扫描后删除。
+
+## Production `9b7fcd0` 第 27 轮HEM-P1-030证据
+
+| 证据名称 | 对应测试或缺陷 | 文件路径 | 文件大小 | 是否提交 Git | 未提交原因 | 本机保留位置 |
+| --- | --- | --- | ---: | --- | --- | --- |
+| 第27轮脱敏聚合 | HEM-P1-030路由关闭复测 | `artifacts/exploratory-qa/reports/9b7fcd0-round27-hem-p1-030-regression-summary.json` | 提交后记录 | 是 | — | 仓库路径 |
+| 42×37双语双改写QA矩阵 | 治理路由、可收集投影、受控unknown、冲突隔离 | `tests/exploratory/patient-session-matrix.mjs` | 整文件 | 是 | — | 仓库路径 |
+| 公开handler QA适配器 | 18项公开投影与安全边界 | `tests/exploratory/patient-api-adapter-smoke.mjs` | 整文件 | 是 | — | 仓库路径 |
+| 两轮矩阵原始摘要 | 每轮6,216路由、6,216重放、168边界 | `artifacts/exploratory-qa/reports/9b7fcd0-r27-hem-p1-030-matrix-run-*.json` | 2份各1,119 B | 否 | 聚合已保留全部验收计数；可由受控脚本重建 | 原路径，本机未跟踪 |
+| 两轮adapter原始摘要 | 每轮18项公开handler检查 | `artifacts/exploratory-qa/reports/9b7fcd0-r27-hem-p1-030-adapter-run-*.json` | 2份各267 B | 否 | 聚合已保留计数；不重复提交 | 原路径，本机未跟踪 |
+| 首次旧oracle失败输出 | QA断言错误，不是产品失败 | 已被有效run-1覆盖 | 0 B | 否 | 旧oracle错误要求不可收集事实公开slot；不保留误导证据 | 无 |
+
+- 聚合及原始摘要不保存回答、病例事实、session/request ID、header、Cookie、Authorization、token、签名或环境值；本轮没有浏览器证据。
+- `9b7fcd0-r27*`扫描覆盖4个文件、2,772字节，`9b7fcd0-round27*`扫描覆盖1个文件、2,805字节，敏感值命中均为0。通用repository scanner仍只对5个既有未跟踪大trace按上限fail-closed（4个ZIP entry过大、1个ZIP文件过大），没有内容命中；这些历史文件不进入本轮暂存或Git。

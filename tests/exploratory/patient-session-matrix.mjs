@@ -17,6 +17,7 @@ const {
   initSession
 } = require("../../server/patientSession.js");
 const { matchCanonicalPatientFacts } = require("../../server/canonicalFacts.js");
+const { matchStructuredFacts } = require("../../server/structuredFacts.js");
 
 const MATRIX_SCHEMA_VERSION = 2;
 const DEFAULT_REPORT = "artifacts/exploratory-qa/reports/patient-session-matrix.json";
@@ -314,6 +315,14 @@ async function main() {
   let unsafeDeterministicSourceBlocks = 0;
   let governedUnknowns = 0;
   let unsafeGovernedUnknowns = 0;
+  const governedUnknownReasons = {};
+  const urinaryProcedureHistory = {
+    checks: 0,
+    governanceRoutes: 0,
+    collectableRoutes: 0,
+    governedUnknowns: 0,
+    triggerLeakage: 0
+  };
   const sessionIds = new Set();
 
   try {
@@ -426,22 +435,52 @@ async function main() {
 
             const sourceAnswer = String(sourceSlots[probe.slotId]?.[language === "en" ? "patientAnswerEn" : "patientAnswerZh"] || "");
             const canonical = matchCanonicalPatientFacts(caseData.id, routeProbe.question, language);
-            const canonicalFactValues = Object.values(canonical?.factValues || {});
+            const structured = matchStructuredFacts(caseData, routeProbe.question, language);
             const canonicalFactReasons = Object.values(canonical?.factValueReasons || {});
+            const governanceSlotIds = sortedUnique([
+              ...(canonical?.governanceSlotIds || canonical?.matchedSlotIds || []),
+              ...(structured?.governanceSlotIds || structured?.matchedSlotIds || [])
+            ]);
+            const collectableSlotIds = sortedUnique([
+              ...(canonical?.collectableSlotIds || canonical?.matchedSlotIds || []),
+              ...(structured?.collectableSlotIds || [])
+            ]);
+            const governedUnknownReason = [
+              "canonical_fact_unknown",
+              "unsafe_deterministic_answer",
+              "medical_history_pending_review",
+              "patient_not_observed"
+            ].includes(first.fallbackReason);
             const governedUnknown =
-              ["canonical_fact_unknown", "unsafe_deterministic_answer"].includes(first.fallbackReason) &&
-              first.answerSource === "unknown" &&
+              governedUnknownReason &&
+              ["unknown", "pending_review", "pending_medical_review"].includes(first.answerSource) &&
               first.confidence === 0 &&
               (first.matchedSlotIds || []).length === 0 &&
               (first.matchedFacts || []).length === 0 &&
-              sameSet(canonical?.matchedSlotIds || [], routeProbe.expectedSlotIds) &&
-              (canonical?.collectableSlotIds || []).length === 0 &&
-              canonicalFactValues.length > 0 &&
-              canonicalFactValues.every((value) => value === "unknown") &&
+              sameSet(governanceSlotIds, routeProbe.expectedSlotIds) &&
+              collectableSlotIds.length === 0 &&
               (first.fallbackReason !== "unsafe_deterministic_answer" || canonicalFactReasons.includes("unsafe_deterministic_answer"));
             if (governedUnknown) {
               governedUnknowns += 1;
+              governedUnknownReasons[first.fallbackReason] = (governedUnknownReasons[first.fallbackReason] || 0) + 1;
               if (first.fallbackReason === "unsafe_deterministic_answer") unsafeGovernedUnknowns += 1;
+            }
+            if (probe.slotId === "urinary_procedure_history" && language === "en" && variantIndex === 1) {
+              urinaryProcedureHistory.checks += 1;
+              if (sameSet(governanceSlotIds, routeProbe.expectedSlotIds)) {
+                urinaryProcedureHistory.governanceRoutes += 1;
+              }
+              if (collectableSlotIds.length > 0 && sameSet(first.matchedSlotIds || [], collectableSlotIds)) {
+                urinaryProcedureHistory.collectableRoutes += 1;
+              }
+              if (governedUnknown) urinaryProcedureHistory.governedUnknowns += 1;
+              if (
+                governanceSlotIds.includes("triggers") ||
+                collectableSlotIds.includes("triggers") ||
+                (first.matchedSlotIds || []).includes("triggers")
+              ) {
+                urinaryProcedureHistory.triggerLeakage += 1;
+              }
             }
             const unsafeDeterministicSourceBlocked =
               first.fallbackReason === "unsafe_deterministic_answer" &&
@@ -586,6 +625,8 @@ async function main() {
       unsafeDeterministicSourceBlocks,
       governedUnknowns,
       unsafeGovernedUnknowns,
+      governedUnknownReasons,
+      urinaryProcedureHistory,
       providerCalls,
       expectedDirectQuarantineEvents: bilingualConflictEntries.length * 2 * 2 * 2,
       quarantineEventsObserved: quarantineEvents.length

@@ -328,3 +328,14 @@
 | Preview请求与泄露合同 | 18 agent/18 history、HTTP失败0、泄露0 | PASS_PREVIEW_ADJACENT |
 
 - 开放式失败与显式控制必须同时解释：控制通过不能关闭用户主诉路径，开放式遗漏也不能写成权威事实缺失或医学待裁决。
+
+## Production `9b7fcd0` 第 27 轮HEM-P1-030路由增量
+
+| 场景 | 每轮结果 | 状态 |
+| --- | --- | --- |
+| 42×37双语双改写 | 6,216/6,216路由、6,216/6,216重放、168/168边界，双跑0失败 | PASS_LOCAL_QA |
+| 英文泌尿操作史缺陷问法 | 42/42治理路由正确、2可收集、40受控unknown、`triggers`泄漏0 | PASS_LOCAL_QA |
+| 公开handler代表合同 | 18/18，双跑0失败、providerCalls 0 | PASS_LOCAL_QA |
+| 医学冲突隔离 | 144/144直接隔离事件；18项冲突事实保持待裁决 | PASS_ENGINEERING / BLOCKED_MEDICAL |
+
+- 全42行原HEM-P1-030单一`REGRESSED_LOCAL_QA`标记清除为`RESOLVED_LOCAL_QA`。40个受控unknown只说明公开投影正确抑制不可收集事实，不代表这些病例事实已被医学批准。

@@ -1,7 +1,7 @@
 # 探索式 QA 执行结果
 
-状态：长期执行中；当前 Preview/本地自动化已恢复并扩展，仍有 HEM-P1-030、HEM-P1-045/046、HEM-P2-044、Pages 部署不匹配、真机和医学阻塞，不得视为最终生产验收。
-当前 Production 基线：`657ba5da8fc6460ad7d0deea882a010c40938b40`；运行时黑盒证据对应代码等价的 `3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`。文档基线 merge 后 QA HEAD：`bd08566ddb91806abc9c1cc2123138b0ac29a2b4`；最终 QA HEAD 以本轮后续报告提交与远程同步状态为准。
+状态：长期执行中；当前 Preview/本地自动化已恢复并扩展，仍有 HEM-P1-045/046、HEM-P2-044、Pages 部署不匹配、真机和医学阻塞，不得视为最终生产验收。
+当前 Production 基线：`9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。第27轮提交前 QA HEAD：`5dbc7980cc6983f981fcc903f492f10bf9934dff`；最终 QA HEAD 以本轮报告提交与远程同步状态为准。
 
 ## 基线核验
 
@@ -501,3 +501,11 @@ Patient Session 报告记录 295 次 `unsafe_deterministic_answer` source-cell �
 - 12/12开放式回答均为DeepSeek `live_ai`、无fallback；agent-chat/history-log各12/12为200且一一对应，401/403/429/5xx、语言串线、教师元数据、结构字段和跨origin保护请求均0。
 - 显式时长控制两轮共6/6正确表达一天，且同为live_ai、单agent/单history、泄露0。这证明权威时长投影已存在，但开放式provider输出未稳定保留完整允许事实。
 - HEM-P1-058保持`OPEN / FAIL_PREVIEW`，没有新增缺陷ID或新增P0/P1/P2。一次错误Playwright项目名在收集前退出，应用请求0，不计产品结果。原始Preview输出经安全wrapper扫描后删除，未保存问答或凭据。
+
+## 2026-07-26 第 27 轮：`9b7fcd0` HEM-P1-030独立关闭复测
+
+- 42×37×双语×双问法矩阵连续2/2语义一致：每轮84 sessions、6,216路由、6,216重放、168诊断/报告边界、0失败、providerCalls=0；144/144 HEM-P0-023冲突隔离保持。
+- 缺陷最小问法在42/42病例的治理层均精确路由到`PAST_URINARY_PROCEDURE`，`triggers`泄漏0。2例可收集事实公开返回预期slot；40例不可收集事实按既有审核状态受控unknown，公开slots/facts为空，不把fail-closed误写成路由失败或医学通过。
+- 公开handler适配器连续2/2均18/18通过且providerCalls=0；官方病史路由门禁2/2通过，安全投影保持45 approved、69 governed unknown、12 unreviewed history，18项双语医学冲突仍隔离。
+- 首次旧QA oracle产生的2,209实例/114组失败被确认是测试期望错误：它要求治理命中必须公开返回slot。修正后的oracle要求精确治理路由和严格公开抑制，不放宽可收集事实、安全边界或冲突隔离；该首次运行不计产品失败。
+- HEM-P1-030更新为`RESOLVED_LOCAL_QA`。本轮不需要真实Preview或provider，不新增P0/P1/P2，也不改变HEM-P1-057/058、HEM-P0-001/023、来源修订和医学审核阻塞。
