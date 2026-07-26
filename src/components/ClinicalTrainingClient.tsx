@@ -1078,10 +1078,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     if (!request || request.key !== requestKey) {
       request?.controller.abort();
       const controller = new AbortController();
-      request = {
-        key: requestKey,
-        controller,
-        promise: ensureTrainingStateToken().then((trainingStateToken) => requestSessionInit({
+      const initializeSession = async () => {
+        const sessionRequest = (trainingStateToken: string) => requestSessionInit({
           caseId: caseData.id,
           runtimeMode,
           language: lang,
@@ -1089,7 +1087,23 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           attemptId: attempt.attemptId,
           trainingStateToken,
           signal: controller.signal
-        }))
+        });
+        const trainingStateToken = await ensureTrainingStateToken();
+        try {
+          return await sessionRequest(trainingStateToken);
+        } catch (error) {
+          const tokenRotatedDuringInit = error instanceof ApiRequestError
+            && error.code === "stale_attempt_token";
+          if (!tokenRotatedDuringInit) throw error;
+          await trainingActionQueueRef.current;
+          if (controller.signal.aborted) throw error;
+          return sessionRequest(await ensureTrainingStateToken());
+        }
+      };
+      request = {
+        key: requestKey,
+        controller,
+        promise: initializeSession()
       };
       autoSessionInitRef.current = request;
       request.promise.finally(() => {

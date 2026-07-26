@@ -33,22 +33,34 @@ async function routeTrainingApiThroughHandler(page, observations = [], options =
       deploymentSha: "e2e-sha", apiVersion: "2.6.0"
     })
   }));
+  let sessionInitCount = 0;
   await page.route("**/api/session/init/**", async (route) => {
     const startedAt = Date.now();
     const request = route.request();
     const body = request.postDataJSON();
+    sessionInitCount += 1;
     if (options.sessionInitDelayMs) await new Promise((resolve) => setTimeout(resolve, options.sessionInitDelayMs));
-    const sessionStatus = options.sessionInitFailureCode ? 503 : 200;
+    if (options.sessionInitStaleAfterStageOnce && sessionInitCount === 1) {
+      for (let index = 0; index < 200 && !observations.some((item) => item.action === "stage-feedback"); index += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+    }
+    const staleAfterStage = options.sessionInitStaleAfterStageOnce
+      && sessionInitCount === 1
+      && observations.some((item) => item.action === "stage-feedback");
+    const sessionStatus = staleAfterStage ? 409 : options.sessionInitFailureCode ? 503 : 200;
+    const sessionError = staleAfterStage ? "stale_attempt_token" : options.sessionInitFailureCode || "";
     observations.push({
       action: "session-init", caseId: body.caseId, language: body.language,
       attemptId: body.attemptId, status: sessionStatus,
-      error: options.sessionInitFailureCode || "",
+      error: sessionError,
+      requestId: request.headers()["x-request-id"] || "",
       url: request.url(),
       startedAt, endedAt: Date.now(), durationMs: Date.now() - startedAt,
       tokenPresent: Boolean(request.headers()["x-training-state"])
     });
-    if (options.sessionInitFailureCode) {
-      await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: options.sessionInitFailureCode }) });
+    if (sessionError) {
+      await route.fulfill({ status: sessionStatus, contentType: "application/json", body: JSON.stringify({ error: sessionError }) });
       return;
     }
     await route.fulfill({
@@ -435,6 +447,35 @@ test("stage submission waits for the training attempt while the AI patient is pr
   ]);
 });
 
+test("patient session refreshes once after stage feedback rotates the attempt token", async ({ page }) => {
+  const observations = [];
+  await page.addInitScript(() => localStorage.setItem("hematuria-language", "en"));
+  await routeTrainingApiThroughHandler(page, observations, { sessionInitStaleAfterStageOnce: true });
+  await page.goto("/cases/P003/");
+
+  const submit = page.getByRole("button", { name: "Submit stage", exact: true });
+  await expect(submit).toBeEnabled();
+  await submit.click();
+  await expect(page.getByRole("button", { name: "Next Agent", exact: true })).toBeVisible();
+
+  await expect.poll(() => observations.filter((item) => item.action === "session-init").length).toBe(2);
+  expect(observations.filter((item) => item.action === "session-init")).toEqual([
+    expect.objectContaining({ status: 409, error: "stale_attempt_token", tokenPresent: true }),
+    expect.objectContaining({ status: 200, error: "", tokenPresent: true })
+  ]);
+  const feedback = observations.filter((item) => item.action === "stage-feedback");
+  expect(feedback).toEqual([
+    expect.objectContaining({ status: 200, stageKey: "history", tokenPresent: true })
+  ]);
+  expect(new Set(feedback.map((item) => item.requestId)).size).toBe(1);
+  await expect.poll(() => page.evaluate(() => {
+    const storageKey = Object.keys(localStorage).find((key) => key.startsWith("hematuria-attempt-v3:P003:free:en:"));
+    const saved = storageKey ? JSON.parse(localStorage.getItem(storageKey) || "null") : null;
+    return saved?.timeline?.filter((item) => item.type === "submit" && item.stageNo === 1).length ?? 0;
+  })).toBe(1);
+  await expect(page.getByRole("button", { name: "Reconnect AI", exact: true })).toHaveCount(0);
+});
+
 test("P003 replaces a legacy cross-deployment token before zero-round stage submission", async ({ page }) => {
   const observations = [];
   await routeTrainingApiThroughHandler(page, observations, { sessionInitDelayMs: 1200 });
@@ -606,6 +647,35 @@ test("failed training attempt initialization never sends stage feedback and retr
   await submit.click();
   await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
   expect(observations.filter((item) => item.action === "stage-feedback")).toHaveLength(1);
+});
+
+test("a transient durable attempt store failure recovers without a doomed stage request", async ({ page }) => {
+  const observations = [];
+  await page.addInitScript(() => localStorage.setItem("hematuria-language", "en"));
+  await routeTrainingApiThroughHandler(page, observations, {
+    initAttemptFailures: 1,
+    initAttemptFailureStatus: 503,
+    initAttemptFailureCode: "training_attempt_store_unavailable"
+  });
+  await page.goto("/cases/P003/");
+
+  const retry = page.getByRole("button", { name: "Reinitialize training session", exact: true });
+  await expect(retry).toBeVisible();
+  await expect(page.getByRole("button", { name: "Training session unavailable", exact: true })).toBeDisabled();
+  expect(observations.filter((item) => item.action === "stage-feedback")).toHaveLength(0);
+
+  await retry.click();
+  const submit = page.getByRole("button", { name: "Submit stage", exact: true });
+  await expect(submit).toBeEnabled();
+  await submit.click();
+  await expect(page.getByRole("button", { name: "Next Agent", exact: true })).toBeVisible();
+  expect(observations.filter((item) => item.action === "init-attempt")).toEqual([
+    expect.objectContaining({ status: 503, error: "training_attempt_store_unavailable" }),
+    expect.objectContaining({ status: 200, error: "" })
+  ]);
+  expect(observations.filter((item) => item.action === "stage-feedback")).toEqual([
+    expect.objectContaining({ status: 200, stageKey: "history" })
+  ]);
 });
 
 test("AI session failure does not invalidate a ready training attempt", async ({ page }) => {
