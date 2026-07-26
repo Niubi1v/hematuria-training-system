@@ -1446,3 +1446,45 @@ Actions：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/301
 | 比例门禁 | Skill仅影响Agent指引，不进入运行时代码；按要求未重复运行无关Playwright和42例矩阵 |
 
 本地校验使用临时目录中的PyYAML运行官方脚本；没有写入`package.json`、锁文件、项目依赖或Git。远程Actions/Vercel必须绑定最终记录提交后再登记。
+
+## HEM-P1-043-R4 第一阶段与session-init轮换竞态（2026-07-26）
+
+基线：`9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`；代码提交：`2923e8a3dc065c06edf0679ad9b87f96f07c88e0`。
+
+| 命令/检查 | 退出码 | 结果 |
+|---|---:|---|
+| 新失败测试（修复前） | 1 | 首个session-init在stage-feedback后返回`409 stale_attempt_token`，观察到session-init只有1次，未发生预期安全恢复 |
+| 新竞态与Redis恢复测试（修复后） | 0 | 2/2；session-init `409→200`，stage-feedback/request ID/timeline=`1/1/1`；Redis 503期间stage-feedback=0，恢复后各一次 |
+| 第一阶段相关Playwright desktop | 0 | 15/15；含双语切换、刷新、双击、capability等待、fallback、旧token及`attempt_not_found`恢复 |
+| 第一阶段相关Playwright mobile | 0 | 15/15；同一15项全部通过 |
+| `test:session` / `test:attempts` | 0 | 动态Patient session通过；28项attempt身份与隔离通过 |
+| `test:training-api` / `test:training-security` / `test:api-recovery` | 0 | 签名状态、阶段授权、重放拒绝、幂等与恢复边界通过 |
+| `test:e2e-contract` / `test:stage-flow` | 0 | 11例代表合同及阶段5/6/7独立评分/最终报告通过 |
+| `test:attempt-store-config` / `test:health` | 0 | 可写Redis命名兼容、fail-closed及布尔health合同通过 |
+| TypeScript / ESLint | 0 | 本地通过；远程Node 22同样通过 |
+| Vercel同源生产构建 | 0 | `VERCEL=1`、`VERCEL_ENV=preview`，82/82静态页 |
+| bundle / repository secret scan | 0 | 26个JavaScript资产；365个候选/跟踪文件及可达文本历史；无凭据值输出 |
+| `git diff -- data` | 0 | 医学数据与审核状态零差异 |
+| Actions run `30192739538` | 0 | 精确HEAD`2923e8a`，Node 22.14.0；Playwright 95 passed/7 intentional skipped/0 failed；行为、医学、安全、82页、bundle、secret与clean gate全部success；Pages skipped |
+| Vercel deployment `5608228884` | 0 | 精确SHA`2923e8a3dc065c06edf0679ad9b87f96f07c88e0`，success；commit-specific URL为`https://hematuria-training-system-2uzsiimc2-niubi1vs-projects.vercel.app/` |
+| 真实Preview黑盒 | 0 | 8/8；health精确SHA；P003零轮`init-attempt=200`、`stage-feedback=200`、session-init `409→200`并进入第二阶段；P001中英文、双向切换、刷新、双击、`live_ai`及history-log通过 |
+
+说明：无部署标识且无`NEXT_PUBLIC_API_BASE_URL`的本地production build按fail-closed合同拒绝，不登记为源码失败；有效Vercel同源合同构建通过。Preview证据不含bypass secret、Cookie、Authorization、session/attempt token或完整签名；专用输出扫描通过并删除。
+
+## Patient dysuria自然问法专项集成（2026-07-26，本地候选）
+
+基线：`3903be19f3cbcb39522c415091a167b99b16a864`；来源提交：`0618e507d0cc904575ca6f2c96dd841037f98b94`；cherry-pick提交：`422377f`；精确原句测试提交：`17f7caf`。来源提交仅修改`src/lib/patientIntentCatalog.js`和两个Patient intent测试；`data/**`、医学事实、审核状态、360分、session、第一阶段提交及token轮换代码均未改变。
+
+| 命令/合同 | 退出码 | 结果 |
+|---|---:|---|
+| `pnpm run test:patient-intents` | 0 | 94/94目标问法；3150/3150 canonical；1890/1890优先问法；错误unknown 0；极性错误0 |
+| `pnpm run test:patient-compound-history` | 0 | 786复合、618跨层、42肿瘤边界、56冲突隔离；providerCalls=0 |
+| `pnpm run test:bilingual-conflict-quarantine` | 0 | HEM-P0-023的18条双语冲突保持隔离，医学真值和审核状态未改变 |
+| Patient相关Playwright desktop/mobile | 0 | 14/14；fallback、HEM-P1-033、重连恢复、capability等待、日志解耦、快速双击和20轮会话稳定 |
+| `pnpm run typecheck` / `pnpm run lint` | 0 / 0 | 当前代码状态通过 |
+| Vercel同源build / bundle | 0 / 0 | `VERCEL=1`、`VERCEL_ENV=preview`；82/82页；26个JavaScript资产 |
+| GitHub Pages basePath build / bundle | 0 / 0 | `/hematuria-training-system`；82/82页；26个JavaScript资产 |
+| `pnpm run test:secrets` | 0 | 365个tracked/candidate文件、可达文本历史及有界归档元数据通过；未输出凭据值 |
+| `git diff --exit-code -- data` | 0 | 医学数据、审核状态和生成数据零差异 |
+
+七个指定中文问法均在P005明确`dysuria=true`与P002明确`dysuria=false`上执行：true回答以“有/是/会”开头，false回答以“没有/不/不是/不会”开头；问题中的“没有”不反转病例事实；P001双语医学冲突继续返回`medical_bilingual_conflict_pending_review`且不暴露确定性槽位。本地运行时为Node 24.14.0；精确最终HEAD的Node 22.14、Actions、Vercel及真实Preview结果尚待推送后补证，不以本地或旧部署替代。

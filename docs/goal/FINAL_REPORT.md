@@ -633,3 +633,13 @@
 - `ee48cc99f0c9613704d89c1742158b13287e58d2`的 Node 22.14 Actions run `30166227983`已 success；远程 Playwright 91/7/0、82/82 build、24-asset bundle、TypeScript、ESLint、行为/医学治理、secret 与 clean gate 全绿。
 - Vercel Preview deployment `5602981833`绑定同一 SHA 并 success。PR #1保持 Open/Draft，Pages按规则 skipped；未合并 main、未部署 Production。
 - HEM-P1-061/063/064/066 与 HEM-P2-065 的无需人工权限工程工作已经关闭。长期 QA 应以最终文档记录提交为起点，复测 28身份、4 pointer补偿、四 viewport storage/restart、8假进度和 history-log 恢复控制。
+
+### 第一阶段提交与Patient session初始化最终闭环（2026-07-26）
+
+- 用户测试版本已确认使用当前Vercel Preview；修复前真实基线为`9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`，不是`main@5a3ad119`旧GitHub Pages。基线Preview中阶段提交本身成功，但并发session-init在token轮换后返回`409 stale_attempt_token`且未恢复。
+- 根因为合法并发下的token轮换：stage-feedback完成并签发新状态后，较早的Patient session-init携带旧token被服务端正确拒绝。修复只等待既有训练队列、取得新签名token并重试session-init一次；stage-feedback、request ID、timeline保持`1/1/1`，安全验证未放宽。
+- 修改文件仅为`src/components/ClinicalTrainingClient.tsx`与`tests/e2e/practice.spec.mjs`；代码提交为`2923e8a3dc065c06edf0679ad9b87f96f07c88e0`。普通push成功，远端ahead/behind为`0/0`。
+- 本地专项：desktop 15/15、mobile 15/15；session、28项attempt身份、training API/security/recovery、代表七阶段、attempt-store、health、TypeScript、ESLint、82页Vercel同源构建、26-asset bundle和365-file/history secret scan通过；`data/**`零差异。
+- 远程：Actions run`30192739538`在Node 22.14.0 success，完整Playwright 95 passed/7 intentional skipped/0 failed，82页build、bundle、secret与clean gate通过。Vercel deployment`5608228884`绑定同一SHA并success；PR #1保持Open/Draft，Pages按规则skipped。
+- 真实commit-specific Preview黑盒8/8：P003零轮提交的session-init从`409`安全恢复为`200`并保持第二阶段；P001一轮中文/英文、双向切换、刷新、快速双击、DeepSeek `live_ai`与history-log均通过。没有输出或保留保护凭据、Cookie、Authorization、token或签名。
+- 回滚使用普通`git revert 2923e8a`，随后重跑第一阶段竞态、session/attempt、安全、Playwright与构建扫描；禁止reset、rebase或force push。长期QA应从包含本记录的最终Production HEAD复测P003零轮、P001中英文一轮、双向切换、刷新、双击、Redis短暂故障和第二阶段持久化。

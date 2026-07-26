@@ -680,3 +680,13 @@
 - 精确 HEAD `ee48cc99f0c9613704d89c1742158b13287e58d2`的 Actions run `30166227983`在 Node 22.14 下 success：Playwright 91/7/0、82/82 build、24-asset bundle、TypeScript、ESLint、secret 与 clean gate 全部通过。
 - Vercel deployment `5602981833`绑定相同 SHA 并 success；PR #1仍 Open/Draft，Pages deploy 按 Draft 规则 skipped。
 - **最终工程状态**：HEM-P1-061、HEM-P1-063、HEM-P1-064、HEM-P1-066、HEM-P2-065 均为`ENGINEERING CLOSED / REMOTE VERIFIED`。医学治理冻结项无变化。
+
+### HEM-P1-043-R4 并发stage-feedback轮换Patient session token
+
+- **状态**：`ENGINEERING CLOSED / REMOTE PREVIEW VERIFIED`。
+- **真实失败证据**：绿色基线`9b7fcd0`的commit-specific Preview中，P003零轮提交已由`stage-feedback=200`成功进入第二阶段，但较早发出的`session-init`随后返回`409 stale_attempt_token`；客户端没有同步恢复该Patient session。该问题解释“提交后仍准备中/状态异常”，不把已成功的阶段提交误报为服务端失败。
+- **根因**：stage-feedback与Patient session-init合法并发；stage-feedback提交后旋转权威training token，而session-init仍携带旧token。服务端正确fail-closed，客户端只处理了错误提示，未等待训练动作队列后使用新token完成一次安全恢复。
+- **修复边界**：只对精确`stale_attempt_token`等待已有训练队列并重试session-init一次；使用相同幂等键，不重放stage-feedback、不新建attempt、不接纳旧token，也不放宽session/stage/case/language/mode/origin/签名验证。其他409仍按原安全路径失败。
+- **回归证据**：新增竞态测试先得到session-init数量`1`而失败，修复后desktop/mobile均得到`409→200`，且stage-feedback/request ID/timeline均`1/1/1`。Redis首次503时stage-feedback为0，显式恢复后init与提交各一次。相关Playwright desktop/mobile各15/15。
+- **远程证据**：代码HEAD`2923e8a3dc065c06edf0679ad9b87f96f07c88e0`；Actions run`30192739538` Node 22.14 success，Playwright 95/7/0，82页build、bundle、secret、clean gate通过；Vercel deployment`5608228884`与真实Preview黑盒8/8通过。PR保持Draft。
+- **治理边界**：`data/**`零差异；未修改医学事实、审核状态、`needs_revision`、419条决定、HEM-P0-001/023或360分规则。
