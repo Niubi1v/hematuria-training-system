@@ -750,3 +750,10 @@
 - 本地相关Playwright为desktop 15/15、mobile 15/15；session、28项attempt身份、training API/security、API recovery、代表七阶段、attempt-store/health、TypeScript、ESLint均通过。Vercel同源构建82/82、26个bundle资产及365文件/历史secret scan通过，`data/**`零差异。
 - 代码提交`2923e8a3dc065c06edf0679ad9b87f96f07c88e0`已普通push。Actions run `30192739538`在Node 22.14.0完成95 passed/7 intentional skipped/0 failed，82页build、bundle、secret与clean gate均success；Vercel deployment `5608228884`绑定相同SHA并success。
 - 同SHA真实受保护Preview黑盒8/8：P003零轮的session-init按`409→200`恢复；P001中文/英文、双向切换、刷新、快速双击、第二阶段、DeepSeek `live_ai`和history-log均通过。保护凭据输出扫描通过且跨origin注入0；PR #1继续Open/Draft，未合并main、未部署Production。
+
+### Patient dysuria自然问法专项集成（2026-07-26，本地完成、远程待验）
+
+- 从干净且与远端一致的绿色Production `3903be19f3cbcb39522c415091a167b99b16a864`审查`0618e507d0cc904575ca6f2c96dd841037f98b94`；来源只含Patient intent词典及两个相关测试，安全cherry-pick为`422377f`。
+- `17f7caf`将三条近似测试措辞替换为用户指定原句，不增加测试数量、不改变业务代码。七个目标中文问法均显式覆盖；P005 true与P002 false均无错误unknown或极性翻转，P001冲突仍隔离。
+- 比例门禁通过：94/94、3150/3150、1890/1890、786复合、18项冲突隔离、Patient相关Playwright desktop/mobile 14/14、TypeScript、ESLint、双环境82页构建、两次26资产bundle、365文件/历史secret scan；`data/**`零差异。
+- 本地证据使用Node 24.14.0；最终Node 22.14、GitHub Actions、Vercel部署和真实Preview七问法必须绑定推送后的精确新HEAD。PR继续Draft，不合并main、不部署Production。

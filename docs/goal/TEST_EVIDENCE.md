@@ -1470,3 +1470,21 @@ Actions：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/301
 | 真实Preview黑盒 | 0 | 8/8；health精确SHA；P003零轮`init-attempt=200`、`stage-feedback=200`、session-init `409→200`并进入第二阶段；P001中英文、双向切换、刷新、双击、`live_ai`及history-log通过 |
 
 说明：无部署标识且无`NEXT_PUBLIC_API_BASE_URL`的本地production build按fail-closed合同拒绝，不登记为源码失败；有效Vercel同源合同构建通过。Preview证据不含bypass secret、Cookie、Authorization、session/attempt token或完整签名；专用输出扫描通过并删除。
+
+## Patient dysuria自然问法专项集成（2026-07-26，本地候选）
+
+基线：`3903be19f3cbcb39522c415091a167b99b16a864`；来源提交：`0618e507d0cc904575ca6f2c96dd841037f98b94`；cherry-pick提交：`422377f`；精确原句测试提交：`17f7caf`。来源提交仅修改`src/lib/patientIntentCatalog.js`和两个Patient intent测试；`data/**`、医学事实、审核状态、360分、session、第一阶段提交及token轮换代码均未改变。
+
+| 命令/合同 | 退出码 | 结果 |
+|---|---:|---|
+| `pnpm run test:patient-intents` | 0 | 94/94目标问法；3150/3150 canonical；1890/1890优先问法；错误unknown 0；极性错误0 |
+| `pnpm run test:patient-compound-history` | 0 | 786复合、618跨层、42肿瘤边界、56冲突隔离；providerCalls=0 |
+| `pnpm run test:bilingual-conflict-quarantine` | 0 | HEM-P0-023的18条双语冲突保持隔离，医学真值和审核状态未改变 |
+| Patient相关Playwright desktop/mobile | 0 | 14/14；fallback、HEM-P1-033、重连恢复、capability等待、日志解耦、快速双击和20轮会话稳定 |
+| `pnpm run typecheck` / `pnpm run lint` | 0 / 0 | 当前代码状态通过 |
+| Vercel同源build / bundle | 0 / 0 | `VERCEL=1`、`VERCEL_ENV=preview`；82/82页；26个JavaScript资产 |
+| GitHub Pages basePath build / bundle | 0 / 0 | `/hematuria-training-system`；82/82页；26个JavaScript资产 |
+| `pnpm run test:secrets` | 0 | 365个tracked/candidate文件、可达文本历史及有界归档元数据通过；未输出凭据值 |
+| `git diff --exit-code -- data` | 0 | 医学数据、审核状态和生成数据零差异 |
+
+七个指定中文问法均在P005明确`dysuria=true`与P002明确`dysuria=false`上执行：true回答以“有/是/会”开头，false回答以“没有/不/不是/不会”开头；问题中的“没有”不反转病例事实；P001双语医学冲突继续返回`medical_bilingual_conflict_pending_review`且不暴露确定性槽位。本地运行时为Node 24.14.0；精确最终HEAD的Node 22.14、Actions、Vercel及真实Preview结果尚待推送后补证，不以本地或旧部署替代。
