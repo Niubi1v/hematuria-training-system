@@ -2,6 +2,7 @@ param(
   [string]$TestFile = "tests/e2e/practice.spec.mjs",
   [string]$Config = "playwright.config.mjs",
   [string]$Grep = "",
+  [string]$Project = "",
   [int]$Port = 3010,
   [ValidateRange(1, 20)]
   [int]$RepeatEach = 1
@@ -9,9 +10,15 @@ param(
 
 $ErrorActionPreference = "Stop"
 $root = (Resolve-Path (Join-Path $PSScriptRoot "../..")).Path
-$node = Get-ChildItem (Join-Path $env:USERPROFILE "Documents") -Recurse -Filter "node.exe" -ErrorAction SilentlyContinue |
-  Where-Object { $_.FullName -match "node-v22\.14\.0-win-x64" } |
-  Select-Object -First 1 -ExpandProperty FullName
+$node = @(
+  $env:QA_NODE_BINARY,
+  (Join-Path $env:USERPROFILE ".cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe")
+) | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -First 1
+if (!$node) {
+  $node = Get-ChildItem (Join-Path $env:USERPROFILE "Documents") -Recurse -Filter "node.exe" -ErrorAction SilentlyContinue |
+    Where-Object { $_.FullName -match "node-v22\.14\.0-win-x64" } |
+    Select-Object -First 1 -ExpandProperty FullName
+}
 $next = Join-Path $root "node_modules/next/dist/bin/next"
 $playwright = Join-Path $root "node_modules/@playwright/test/cli.js"
 $reportRoot = Join-Path $root "artifacts/exploratory-qa/reports"
@@ -65,6 +72,7 @@ try {
   $arguments = @($playwright, "test", $TestFile, "--config=$Config")
   if ($Config -eq "playwright.config.mjs") { $arguments += "--reporter=line" }
   if ($Grep.Trim()) { $arguments += @("--grep", $Grep.Trim()) }
+  if ($Project.Trim()) { $arguments += "--project=$($Project.Trim())" }
   if ($RepeatEach -gt 1) { $arguments += "--repeat-each=$RepeatEach" }
   & $node @arguments
   $exitCode = $LASTEXITCODE

@@ -657,3 +657,43 @@
 - P001–P042双语四viewport共336次axe页面扫描未发现serious/critical违规，console error与应用HTTP失败均为0。
 - 本轮没有新增缺陷编号，也不关闭既有HEM-P1-057/058/060/064或HEM-P2-059/062；这些缺陷的失败合同与本轮静态可访问性门禁正交。
 - 自动axe结果只标`PASS_EMULATION`；真实屏幕阅读器、缩放、高对比度、语音控制、认知可用性与真机仍未获得通过证据。
+
+## HEM-P1-067：阶段6围术期输入框缺少程序化标签
+
+- 级别/状态：P1，`OPEN / FAIL_EMULATION`；Production `9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。
+- 页面和路径：`/cases/P001/`，第6阶段·围术期管理。
+- 病例/语言/viewport：P001；中文和英文；1440×900、1280×720、390×844、360×800。
+- 操作步骤：用安全fixture依次提交阶段1–5 → 进入阶段6 → 对当前页面运行axe WCAG 2 A/AA与2.1 A/AA扫描。
+- 预期：围术期方案`textarea`具有与当前语言可见标题/说明关联的可访问名称，屏幕阅读器可明确读出输入用途。
+- 实际：axe `label`规则为`critical`，每次精确1个节点；中英文×四viewport 8/8复现。只存在相邻`h3`和说明`p`，`textarea`未嵌入`label`，也没有`aria-label/aria-labelledby`。
+- AI来源：安全fixture，providerCalls=0；不涉及患者回答或医学值。
+- 状态变化时间线：阶段1–5各单次200提交并推进 → 阶段6可见 → axe命中`label/critical` → 测试继续推进以采集后续阶段。
+- HTTP/console：相关stage-feedback均200；应用HTTP失败0、意外console error 0。英文阶段2的既有HEM-P2-059重复key独立记录。
+- 复现次数：全矩阵8/8；1440×900聚焦复现1/1。
+- 截图：`artifacts/exploratory-qa/screenshots/9b7fcd0-r32-evidence-hem-p1-067-stage6-unlabeled-perioperative-1440x900.png`。
+- trace/录像：四viewport完整失败trace、录像及单viewport聚焦trace本机保留，不提交大体积原件。
+- 建议方向：使用真实`label`包裹输入框，或为可见标题/说明配置稳定ID并通过`aria-labelledby/aria-describedby`关联；中英文可访问名称均需复测。
+- 是否需要医学专家裁决：否；纯可访问性语义缺陷。
+
+## HEM-P2-068：阶段7时间线滚动容器无法键盘聚焦
+
+- 级别/状态：P2，`OPEN / FAIL_EMULATION`；Production `9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。
+- 页面和路径：`/cases/P001/`，第7阶段·评估复盘及最终360报告。
+- 病例/语言/viewport：P001；中文和英文；1440×900、1280×720、390×844、360×800。
+- 操作步骤：完成阶段1–6 → 进入阶段7 → 扫描含历史项目的内部时间线 → 提交反思生成最终报告 → 再次扫描同一时间线。
+- 预期：具有固定最大高度和`overflow:auto`的时间线可以通过键盘聚焦和滚动，并有可识别的区域名称。
+- 实际：axe `scrollable-region-focusable`为`serious`，阶段7和最终报告每次各1个节点；2状态×2语言×4viewport共16/16复现。容器没有可聚焦后代覆盖全部滚动内容，也没有自身`tabIndex`。
+- AI来源：安全fixture，providerCalls=0；不涉及真实AI回答。
+- 状态变化时间线：阶段6提交200 → 阶段7时间线出现并失败 → debrief与score各200 → 最终报告显示 → 同一规则继续失败。
+- HTTP/console：应用HTTP失败0、意外console error 0；最终360报告正常生成。
+- 复现次数：全矩阵16/16；1440×900聚焦复现2/2（阶段7与最终报告）。
+- 截图：`artifacts/exploratory-qa/screenshots/9b7fcd0-r32-evidence-hem-p2-068-stage7-timeline-not-focusable-1440x900.png`。
+- trace/录像：四viewport完整失败trace、录像及单viewport聚焦trace本机保留，不提交大体积原件。
+- 建议方向：让滚动容器进入顺序键盘焦点（例如`tabIndex=0`），并通过`role=region`及当前语言`aria-label/aria-labelledby`标明“时间线”；复测Tab顺序、方向键/PageUp/PageDown和焦点可见性。
+- 是否需要医学专家裁决：否；纯键盘与辅助技术可访问性缺陷。
+
+## 2026-07-26 Production `9b7fcd0` 第 32 轮状态更新
+
+- 新增HEM-P1-067与HEM-P2-068；有效矩阵64次扫描中分别8/8、16/16复现，四viewport均失败。
+- HEM-P2-059同轮英文阶段2累计48条重复key，保持既有OPEN，不新建重复缺陷。
+- 真实屏幕阅读器、系统字体放大、真机软键盘和safe-area继续`BLOCKED_REAL_DEVICE`；自动axe失败不扩张为真机实测结论。

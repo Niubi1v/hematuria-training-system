@@ -285,3 +285,11 @@ console 文本对 Authorization、Cookie、签名、token、secret 和 API key �
 - 每页执行WCAG 2 A/AA及WCAG 2.1 A/AA标签下的serious/critical axe门禁，并同时收集console error与应用HTTP失败计数。
 - 使用Production公开患者化开场文本驱动布局，但报告只保存case/language计数与规则ID计数，不保存开场白、DOM片段或医学值；安全fixture不调用真实provider。
 - 仅失败时生成截图与trace；通过时只保留四份本机原始摘要和单份提交级脱敏聚合。自动结果只标`PASS_EMULATION`，不替代真实屏幕阅读器、真机或人工可用性审阅。
+
+## 2026-07-26 第 32 轮 `9b7fcd0` 七阶段状态可访问性
+
+- 不重复第31轮初始病例页336项矩阵；改为覆盖此前未扫描的阶段1–7及最终360报告状态，P001中英文×四viewport共64次。
+- 复用现有七阶段安全fixture和失败证据框架；探针只保存规则ID、impact、node计数和阶段，不保存DOM片段、问答或医学值。
+- 新Production出现时先比较实际运行时代码差异；只有页面/组件或相关状态机变化才重跑受影响可访问性用例，无运行时变化只记录基线更新。
+- 真实屏幕阅读器、系统字体放大、真机软键盘和safe-area继续`BLOCKED_REAL_DEVICE`，不能由axe或自动viewport替代。
+- 首轮探针误等候第7阶段常规提交按钮，4/4在产品axe结论前失败并排除；修正后完整矩阵与单viewport聚焦证据均稳定复现HEM-P1-067/HEM-P2-068。

@@ -387,3 +387,16 @@
 | 真实辅助技术 | 屏幕阅读器、缩放、高对比度、语音控制、认知可用性 | NOT_RUN / BLOCKED_REAL_DEVICE |
 
 - 表首42行的视觉证据列现均包含`A11Y_4_VIEWPORTS`。该标记只代表安全fixture下的自动axe覆盖，不能替代真实AI内容、医学审阅或辅助技术人工验收。
+
+## Production `9b7fcd0` 第 32 轮七阶段可访问性增量
+
+| 场景 | 覆盖 | 状态 |
+| --- | --- | --- |
+| P001双语阶段状态 | 8状态×2语言×4viewport=64次扫描 | FAIL_EMULATION |
+| 阶段1–5 | 中英文四viewport无serious/critical违规 | PASS_EMULATION |
+| 阶段6围术期输入 | `label/critical`，中英文四viewport 8/8 | HEM-P1-067 |
+| 阶段7及最终报告时间线 | `scrollable-region-focusable/serious`，16/16 | HEM-P2-068 |
+| 七阶段协议 | stage-feedback 56、score 8、HTTP失败0、providerCalls 0 | PASS_FIXTURE_PROTOCOL |
+| 真实辅助技术 | 屏幕阅读器、系统字体放大、真机软键盘、safe-area | BLOCKED_REAL_DEVICE |
+
+- 第31轮的42例初始病例页`A11Y_4_VIEWPORTS`结论不变；第32轮新增的是展开阶段状态，不能用初始页通过覆盖阶段6/7失败。

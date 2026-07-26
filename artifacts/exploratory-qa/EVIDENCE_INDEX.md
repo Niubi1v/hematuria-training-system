@@ -536,3 +536,24 @@ SHA-256：
 | 失败截图/trace/录像 | 仅失败时生成 | 无 | 0 B | 否 | 4/4通过，未制造失败证据 | 无 |
 
 - `9b7fcd0-r31*`扫描覆盖6个文件、3,851字节；`9b7fcd0-round31*`聚合扫描1个文件、2,384字节，敏感值命中均为0。所有摘要均不含开场白、DOM片段、问题/回答、医学值、session/request ID、header、Cookie、Authorization、token、签名或环境值。
+
+## Production `9b7fcd0` 第 32 轮七阶段可访问性证据
+
+| 证据名称 | 对应测试或缺陷 | 文件路径 | 文件大小 | 是否提交 Git | 未提交原因 | 本机保留位置 |
+| --- | --- | --- | ---: | --- | --- | --- |
+| 第32轮脱敏聚合 | 64次阶段扫描、HEM-P1-067/HEM-P2-068 | `artifacts/exploratory-qa/reports/9b7fcd0-round32-stage-accessibility-summary.json` | 3,688 B | 是 | — | 仓库路径 |
+| 七阶段axe探针 | 双语阶段1–7/最终报告、已知console隔离 | `tests/exploratory/long-running-qa.spec.mjs` | 整文件 | 是 | — | 仓库路径 |
+| 本地runner改进 | 固定Node优先与单project聚焦复现 | `tests/exploratory/run-local-playwright.ps1` | 整文件 | 是 | — | 仓库路径 |
+| HEM-P1-067代表截图 | 1440×900中文阶段6无标签输入框 | `artifacts/exploratory-qa/screenshots/9b7fcd0-r32-evidence-hem-p1-067-stage6-unlabeled-perioperative-1440x900.png` | 87,390 B | 是 | —；公开合成病例与QA fixture，无凭据 | 仓库路径 |
+| HEM-P2-068代表截图 | 1440×900中文阶段7不可聚焦时间线 | `artifacts/exploratory-qa/screenshots/9b7fcd0-r32-evidence-hem-p2-068-stage7-timeline-not-focusable-1440x900.png` | 116,888 B | 是 | —；公开合成病例与QA fixture，无凭据 | 仓库路径 |
+| 四viewport有效原始证据 | 摘要、console/network、失败trace、截图和录像 | `artifacts/exploratory-qa/**/9b7fcd0-r32-valid-*` | 26份/182,215,598 B | 否 | 体积大；聚合、测试与两张代表截图已保留最小结论 | 原路径，本机未跟踪 |
+| 单viewport聚焦证据 | 代表截图、摘要、trace、录像和runner输出 | `artifacts/exploratory-qa/**/9b7fcd0-r32-evidence-*` | 12份/71,796,284 B | 否（两张截图除外） | 大trace/录像不进Git；两张代表截图单独提交 | 原路径，本机未跟踪 |
+| 无效首轮探针 | 错误等待阶段7常规提交按钮 | `artifacts/exploratory-qa/**/9b7fcd0-r32-stage-*` | 20份/59,240,945 B | 否 | QA oracle错误，发生于产品axe结论前，不作产品证据 | 原路径，本机未跟踪 |
+
+- 提交聚合不保存DOM片段、问题/回答、医学值、session/request ID、header、Cookie、Authorization、token、签名或环境值。大体积失败trace和录像仅本机保留。
+- 第32轮定向敏感信息扫描全部通过且 `findings=0`：
+  - `9b7fcd0-r32-valid`：26份文件、2,486个ZIP条目、578,166,196 B解压流；
+  - `9b7fcd0-r32-evidence`：12份文件、672个ZIP条目、205,137,474 B解压流；
+  - `9b7fcd0-r32-stage`：20份文件、897个ZIP条目、196,411,169 B解压流；
+  - `9b7fcd0-r32-playwright`：2份文件、0个ZIP条目、8,364 B；
+  - `9b7fcd0-round32`：1份文件、0个ZIP条目、3,688 B。

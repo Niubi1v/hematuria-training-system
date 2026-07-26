@@ -240,7 +240,8 @@ async function installProductionTrainingApi(page, observations = [], actionObser
 async function withEvidence(browser, testInfo, scenario, run, {
   videoOnFailure = true,
   traceScreenshots = true,
-  traceSnapshots = true
+  traceSnapshots = true,
+  traceOnFailure = false
 } = {}) {
   await ensureDirs();
   const viewport = testInfo.project.use.viewport;
@@ -292,7 +293,8 @@ async function withEvidence(browser, testInfo, scenario, run, {
     throw error;
   } finally {
     const tracePath = path.join(DIRS.traces, `${slug}.zip`);
-    await context.tracing.stop({ path: tracePath }).catch(() => {});
+    if (traceOnFailure && !failed) await context.tracing.stop().catch(() => {});
+    else await context.tracing.stop({ path: tracePath }).catch(() => {});
     await writeFile(path.join(DIRS.reports, `${slug}-console.json`), JSON.stringify(consoleEvents, null, 2), "utf8");
     await writeFile(path.join(DIRS.reports, `${slug}-network.json`), JSON.stringify(networkEvents, null, 2), "utf8");
     const video = page.video();
@@ -460,24 +462,28 @@ async function installFullWorkflowApi(page, { stageFeedbackDelayMs = 0 } = {}) {
     contentType: "application/json",
     body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, deploymentTier: "practice", apiVersion: "qa-fixture" })
   }));
-  await page.route("**/api/session/init/**", (route) => route.fulfill({
-    status: 200,
-    contentType: "application/json",
-    body: JSON.stringify({
-      sessionId: "qa-seven-stage-session",
-      caseId: "P001",
-      language: "zh",
-      mode: "free",
-      patientOpeningStatement: "您好，医生。",
-      sessionCreatedAt: "2026-07-14T00:00:00.000Z",
-      sessionExpiresAt: "2026-07-14T01:00:00.000Z",
-      deploymentSha: "fixture-only",
-      apiVersion: "qa-fixture",
-      aiStatus: "available",
-      profileSource: "local-simulation",
-      cacheHit: false
-    })
-  }));
+  await page.route("**/api/session/init/**", (route) => {
+    const body = route.request().postDataJSON();
+    const language = body.language === "en" ? "en" : "zh";
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        sessionId: `qa-seven-stage-${body.caseId}-${language}`,
+        caseId: body.caseId,
+        language,
+        mode: body.mode || body.runtimeMode || "free",
+        patientOpeningStatement: language === "en" ? "Hello doctor." : "您好，医生。",
+        sessionCreatedAt: "2026-07-14T00:00:00.000Z",
+        sessionExpiresAt: "2026-07-14T01:00:00.000Z",
+        deploymentSha: "fixture-only",
+        apiVersion: "qa-fixture",
+        aiStatus: "available",
+        profileSource: "local-simulation",
+        cacheHit: false
+      })
+    });
+  });
   await page.route("**/api/agent-chat/**", (route) => route.fulfill({
     status: 200,
     contentType: "application/json",
@@ -771,6 +777,174 @@ test("fixture completes all seven stages and renders a 360-point report after re
       uniqueStageRequestIds: 7
     });
   }, { videoOnFailure: true });
+});
+
+test("P001 bilingual seven-stage states have no serious accessibility violations @stage-accessibility", async ({ browser }, testInfo) => {
+  await withEvidence(browser, testInfo, "stage-accessibility", async ({ page, slug, consoleEvents, networkEvents }) => {
+    const api = await installFullWorkflowApi(page);
+    const findings = [];
+    const capturedViolationIds = new Set();
+    let pageScans = 0;
+
+    const scan = async (state) => {
+      const results = await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+        .analyze();
+      const serious = results.violations.filter((item) =>
+        item.impact === "critical" || item.impact === "serious"
+      );
+      pageScans += 1;
+      if (serious.length) {
+        findings.push({
+          state,
+          violations: serious.map((item) => ({
+            id: item.id,
+            impact: item.impact,
+            nodeCount: item.nodes.length
+          }))
+        });
+        if (testInfo.project.name === "qa-1440x900") {
+          for (const violation of serious) {
+            if (capturedViolationIds.has(violation.id)) continue;
+            capturedViolationIds.add(violation.id);
+            const evidenceName = violation.id === "label"
+              ? "hem-p1-067-stage6-unlabeled-perioperative"
+              : "hem-p2-068-stage7-timeline-not-focusable";
+            await saveShot(page, testInfo, evidenceName, false);
+          }
+        }
+      }
+    };
+
+    const copies = {
+      en: {
+        submit: "Submit stage",
+        next: "Next Agent",
+        noConsult: "No consultation for now",
+        diagnosis: "Most likely diagnosis",
+        evidence: "Diagnostic evidence",
+        differentials: "At least 3 differential diagnoses",
+        analysis: "Supportive and opposing points for each differential",
+        reflection: "Reflection",
+        finish: "Finish training and generate final report",
+        values: {
+          diagnosis: "QA-only training diagnosis",
+          evidence: "QA-only evidence text of sufficient length.",
+          differentials: "QA option one; QA option two; QA option three",
+          analysis: "Each QA option has a supporting and opposing point.",
+          reflection: "QA-only reflection long enough to verify the final accessibility state."
+        }
+      },
+      zh: {
+        submit: "提交本阶段",
+        next: "进入下一阶段",
+        noConsult: "暂不需要会诊",
+        diagnosis: "最可能诊断",
+        evidence: "诊断依据",
+        differentials: "至少 3 个鉴别诊断",
+        analysis: "各鉴别诊断的支持点与反对点",
+        reflection: "学习反思",
+        finish: "完成训练并生成最终报告",
+        values: {
+          diagnosis: "仅用于QA流程的训练诊断",
+          evidence: "仅用于QA流程、长度足够的训练依据。",
+          differentials: "QA选项一；QA选项二；QA选项三",
+          analysis: "每个QA选项均有支持点和反对点。",
+          reflection: "仅用于QA的反思文本，长度足够，用来验证终末可访问性状态。"
+        }
+      }
+    };
+
+    await page.goto("/");
+    for (const language of ["zh", "en"]) {
+      const copy = copies[language];
+      await page.evaluate((selectedLanguage) => localStorage.setItem("hematuria-language", selectedLanguage), language);
+      await page.goto("/cases/P001/");
+      await expect(page.getByText("P001", { exact: true }).first()).toBeVisible();
+      await expect(page.locator("html")).toHaveAttribute("lang", language === "en" ? "en" : "zh-CN");
+      await scan(`${language}:stage1`);
+
+      const submitAndAdvance = async (nextState) => {
+        await page.getByRole("button", { name: copy.submit, exact: true }).click();
+        await expect(page.getByRole("button", { name: copy.next, exact: true })).toBeVisible();
+        await page.getByRole("button", { name: copy.next, exact: true }).click();
+        await page.waitForTimeout(100);
+        await scan(`${language}:${nextState}`);
+      };
+
+      await submitAndAdvance("stage2");
+      await submitAndAdvance("stage3");
+
+      await page.getByLabel(copy.diagnosis, { exact: true }).fill(copy.values.diagnosis);
+      await page.getByLabel(copy.evidence, { exact: true }).fill(copy.values.evidence);
+      await page.getByLabel(copy.differentials, { exact: true }).fill(copy.values.differentials);
+      await page.getByLabel(copy.analysis, { exact: true }).fill(copy.values.analysis);
+      await submitAndAdvance("stage4");
+
+      await page.getByRole("radio", { name: copy.noConsult, exact: true }).check();
+      await submitAndAdvance("stage5");
+      await submitAndAdvance("stage6");
+      await submitAndAdvance("stage7");
+
+      await page.getByLabel(copy.reflection, { exact: true }).fill(copy.values.reflection);
+      await page.getByRole("button", { name: copy.finish, exact: true }).click();
+      await expect(page.getByTestId("final-report")).toBeVisible();
+      await expect(page.getByTestId("final-report")).toContainText("/ 360");
+      await scan(`${language}:final-report`);
+    }
+
+    const knownDuplicateKeyErrors = consoleEvents.filter((item) =>
+      item.type === "error"
+      && /same key|keys should be unique/i.test(item.text)
+      && /Physical examination/i.test(item.text)
+    );
+    const unexpectedConsoleErrors = consoleEvents.filter((item) =>
+      item.type === "error" && !knownDuplicateKeyErrors.includes(item)
+    );
+    const applicationHttpFailures = networkEvents.filter((item) =>
+      String(item.path || "").startsWith("/api/")
+      && (item.status === "FAILED" || Number(item.status) >= 400)
+    );
+    const counts = api.counts();
+    const summary = {
+      schemaVersion: "exploratory-stage-accessibility-v1",
+      productionBaseline: PRODUCTION_BASELINE,
+      source: "safe_fixture_no_real_ai",
+      result: findings.length || unexpectedConsoleErrors.length || applicationHttpFailures.length
+        ? "FAIL_EMULATION"
+        : "PASS_EMULATION",
+      viewport: testInfo.project.use.viewport,
+      caseId: "P001",
+      languages: ["zh", "en"],
+      stageStatesPerLanguage: 8,
+      pageScans,
+      seriousOrCriticalViolations: findings.reduce((total, item) => total + item.violations.length, 0),
+      affectedStates: findings.map((item) => item.state),
+      findings,
+      knownDuplicateKeyErrors: knownDuplicateKeyErrors.length,
+      knownDefectsObserved: knownDuplicateKeyErrors.length ? ["HEM-P2-059"] : [],
+      unexpectedConsoleErrors: unexpectedConsoleErrors.length,
+      applicationHttpFailures: applicationHttpFailures.length,
+      stageFeedbackRequests: counts.stageFeedback,
+      uniqueStageRequestIds: counts.uniqueStageRequestIds,
+      scoreRequests: counts.score,
+      providerCalls: 0,
+      failureEvidenceOnly: true,
+      realDeviceClaimed: false,
+      responseBodiesRetained: false,
+      credentialsRetained: false,
+      medicalTruthAdjudicated: false
+    };
+    await writeFile(summaryFile(slug), `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+
+    expect(pageScans).toBe(16);
+    expect(findings, JSON.stringify(findings)).toEqual([]);
+    expect(unexpectedConsoleErrors, JSON.stringify(unexpectedConsoleErrors)).toEqual([]);
+    expect(applicationHttpFailures, JSON.stringify(applicationHttpFailures)).toEqual([]);
+    expect(counts.stageFeedback).toBe(14);
+    expect(counts.uniqueStageRequestIds).toBe(14);
+    expect(counts.score).toBe(2);
+  }, { videoOnFailure: true, traceOnFailure: true });
 });
 
 test("stages 3-6 support governed return, relock, rebuild, and stable final scoring @stage-return-governance", async ({ browser }, testInfo) => {

@@ -1,7 +1,7 @@
 # 探索式 QA 执行结果
 
 状态：长期执行中；当前 Preview/本地自动化已恢复并扩展，仍有开放P1、HEM-P2-059/062、Pages部署不匹配、真机和医学阻塞，不得视为最终生产验收。
-当前 Production 基线：`9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。第31轮提交前 QA HEAD：`ec7f603c52e3471d78e36086b38ba2ac2e4c8cd4`；最终 QA HEAD 以本轮报告提交与远程同步状态为准。
+当前 Production 基线：`9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。第32轮提交前 QA HEAD：`53b1da9880b5feaea6c618c88cf6e77387b55b0b`；最终 QA HEAD 以本轮报告提交与远程同步状态为准。
 
 ## 基线核验
 
@@ -540,3 +540,12 @@ Patient Session 报告记录 295 次 `unsafe_deterministic_answer` source-cell �
 - 42例覆盖矩阵的视觉证据列均补记`A11Y_4_VIEWPORTS`；原有截图、Preview或完整UI证据标签继续保留，不由axe结果替换。
 - 没有生成失败截图、trace或录像。四份原始摘要只在本机保留，Git提交测试脚本与单份脱敏聚合；报告不含患者开场白、DOM片段、问题/回答或医学值。
 - 状态为`PASS_EMULATION`。真实屏幕阅读器、浏览器缩放/高对比度、语音控制、认知可用性、真机与物理键盘仍需独立证据；本轮无新增P0/P1/P2。
+
+## 2026-07-26 第 32 轮：`9b7fcd0` 七阶段状态可访问性
+
+- 有效矩阵4/4失败：P001中英文阶段1–7及最终报告×四viewport共64次axe扫描，24个state-viewport记录含serious/critical违规；应用HTTP失败、意外console error与run error均为0。
+- 新增HEM-P1-067：阶段6围术期`textarea`无程序化名称，axe `label/critical`在中英文×四viewport 8/8复现，每次1个节点。可见说明文本没有与输入框建立`label`或`aria-labelledby`关系。
+- 新增HEM-P2-068：阶段7时间线内部滚动容器无法通过键盘聚焦，axe `scrollable-region-focusable/serious`在阶段7与最终报告×中英文×四viewport 16/16复现，每次1个节点。
+- 七阶段合同仍完成56次stage-feedback、8次score，providerCalls 0；HTTP失败0。英文阶段2相邻观察到HEM-P2-059重复key共48条，按既有缺陷记录，不新建重复ID。
+- 首轮4/4失败属于QA oracle错误：进入阶段7后探针错误等待不存在的常规“提交本阶段”按钮，未形成axe产品结论。修正后全矩阵与1440×900聚焦复现一致。
+- 本轮新增P0/P1/P2为0/1/1。结果标`FAIL_EMULATION`；真实屏幕阅读器、系统字体放大、真机软键盘和safe-area仍`BLOCKED_REAL_DEVICE`。

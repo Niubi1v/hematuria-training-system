@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-26",
+  "productionBaseline": "9b7fcd0d975533c7c6eda5614ca3b2978c9dce55",
+  "qaBranch": "codex/hematuria-exploratory-qa",
+  "qaHeadBeforeCommit": "53b1da9880b5feaea6c618c88cf6e77387b55b0b",
+  "scope": "P001 bilingual seven-stage and final-report accessibility across four fixed viewports",
+  "status": "FAIL_EMULATION",
+  "matrix": {
+    "caseId": "P001",
+    "languages": [
+      "zh",
+      "en"
+    ],
+    "statesPerLanguage": 8,
+    "states": [
+      "stage1",
+      "stage2",
+      "stage3",
+      "stage4",
+      "stage5",
+      "stage6",
+      "stage7",
+      "final-report"
+    ],
+    "viewports": [
+      "1440x900",
+      "1280x720",
+      "390x844",
+      "360x800"
+    ],
+    "playwrightProjectsPassed": 0,
+    "playwrightProjectsFailed": 4,
+    "pageScans": 64,
+    "affectedStateViewportPairs": 24,
+    "seriousOrCriticalViolationRecords": 24,
+    "unexpectedConsoleErrors": 0,
+    "applicationHttpFailures": 0,
+    "runErrors": 0,
+    "stageFeedbackRequests": 56,
+    "scoreRequests": 8,
+    "providerCalls": 0
+  },
+  "defects": [
+    {
+      "id": "HEM-P1-067",
+      "severity": "P1",
+      "axeRule": "label",
+      "axeImpact": "critical",
+      "title": "Stage 6 perioperative textarea has no programmatic label",
+      "affectedLanguages": [
+        "zh",
+        "en"
+      ],
+      "affectedViewports": [
+        "1440x900",
+        "1280x720",
+        "390x844",
+        "360x800"
+      ],
+      "reproductions": "8/8 stage-language-viewport checks",
+      "nodeCountPerCheck": 1,
+      "medicalReviewRequired": false
+    },
+    {
+      "id": "HEM-P2-068",
+      "severity": "P2",
+      "axeRule": "scrollable-region-focusable",
+      "axeImpact": "serious",
+      "title": "Stage 7 timeline scroll region is not keyboard focusable",
+      "affectedLanguages": [
+        "zh",
+        "en"
+      ],
+      "affectedStates": [
+        "stage7",
+        "final-report"
+      ],
+      "affectedViewports": [
+        "1440x900",
+        "1280x720",
+        "390x844",
+        "360x800"
+      ],
+      "reproductions": "16/16 state-language-viewport checks",
+      "nodeCountPerCheck": 1,
+      "medicalReviewRequired": false
+    }
+  ],
+  "knownDefectsObserved": {
+    "HEM-P2-059": {
+      "duplicateKeyConsoleErrors": 48,
+      "newDefectCreated": false
+    }
+  },
+  "evidence": {
+    "representativeScreenshotsCommitted": [
+      "9b7fcd0-r32-evidence-hem-p1-067-stage6-unlabeled-perioperative-1440x900.png",
+      "9b7fcd0-r32-evidence-hem-p2-068-stage7-timeline-not-focusable-1440x900.png"
+    ],
+    "fullFailureTracesRetainedLocally": 4,
+    "focusedFailureTraceRetainedLocally": 1,
+    "failureVideosRetainedLocally": true,
+    "responseBodiesRetained": false
+  },
+  "excludedRuns": [
+    {
+      "prefix": "9b7fcd0-r32",
+      "projects": 4,
+      "reason": "The initial QA probe incorrectly expected the regular stage-submit button after entering stage 7; no axe product conclusion was taken from that run."
+    }
+  ],
+  "limitations": [
+    "Automated axe failures are browser emulation evidence; no real screen reader or real device was used.",
+    "Real screen-reader, system font scaling, soft-keyboard, dynamic browser chrome, and safe-area validation remain BLOCKED_REAL_DEVICE.",
+    "The safe fixture did not invoke a real provider or adjudicate medical content."
+  ],
+  "privacy": {
+    "containsCredentials": false,
+    "containsQuestionsOrAnswers": false,
+    "containsMedicalTruthValues": false,
+    "containsRequestOrAttemptIdentifiers": false
+  },
+  "changes": {
+    "businessCodeChanged": false,
+    "dataChanged": false,
+    "medicalFactsChanged": false,
+    "approvalStateChanged": false
+  }
+}
