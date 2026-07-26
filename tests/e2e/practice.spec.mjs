@@ -69,7 +69,7 @@ async function routeTrainingApiThroughHandler(page, observations = [], options =
       body: JSON.stringify({
         sessionId: `stage-session-${body.attemptId}`, caseId: body.caseId,
         language: body.language, mode: body.runtimeMode || "free",
-        patientOpeningStatement: body.language === "en" ? "Hello doctor. My urine has looked red." : "医生您好，我发现尿液发红。",
+        patientOpeningStatement: body.language === "en" ? "Hello doctor. I came in for a consultation." : "医生您好，我来看一下。",
         sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(),
         deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available",
         profileSource: "local-simulation", cacheHit: false
@@ -163,6 +163,101 @@ test("case route renders seven locked stages and no disease tag", async ({ page 
   await expect(page.locator("aside button")).toHaveCount(7);
   await expect(page.getByText(/Case tags|疾病标签|膀胱结石/)).toHaveCount(0);
   await expect(page.getByText(/漏问项|得分点/)).toHaveCount(0);
+});
+
+test("@ui-clinical-stage3 male case hides initial answers and restores released canonical reports", async ({ page }) => {
+  const observations = [];
+  await routeTrainingApiThroughHandler(page, observations);
+  await page.route("**/api/agent-chat/**", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({
+      replyText: "我发现小便颜色变红。",
+      matchedSlotIds: ["chief_complaint"],
+      matchedFacts: ["chief_complaint=小便颜色变红"],
+      provider: "deepseek",
+      generationSource: "live_ai",
+      isFallback: false
+    })
+  }));
+  await page.goto("/cases/P001/");
+
+  const visibleInfo = page.locator("aside section").filter({ hasText: "当前可见资料" });
+  await expect(visibleInfo).toContainText("65 / 男");
+  await expect(visibleInfo).not.toContainText("主诉");
+  await expect(page.getByRole("log", { name: "模拟问诊对话" })).toContainText("医生您好，我来看一下。");
+  await expect(page.getByLabel("患者服务已连接")).toHaveAttribute("title", "患者服务已连接");
+  await expect(page.getByText(/人工智能服务|live_ai|ai_cache|rule_fallback|DeepSeek/)).toHaveCount(0);
+
+  await page.getByRole("textbox", { name: "输入问诊问题" }).fill("哪里不舒服？");
+  await page.getByRole("button", { name: "发送", exact: true }).click();
+  await expect(page.getByRole("log", { name: "模拟问诊对话" })).toContainText("我发现小便颜色变红。");
+  await enterInvestigationStage(page, "zh");
+
+  await expect(page.getByRole("button", { name: "直肠指检/前列腺", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "妇科查体/阴道出血", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "检查", exact: true }).click();
+  await expect(page.getByText("彩超男性生殖系统（阴囊、睾丸、输精管）+精索静脉", { exact: true })).toBeVisible();
+  await expect(page.getByText("彩超女性生殖系统", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("前列腺MR平扫", { exact: true })).toBeVisible();
+
+  const orderInput = page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜");
+  await orderInput.fill("肾功能/eGFR；双肾CTU平扫+增强");
+  await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
+  await expect(page.getByTestId("report-card")).toHaveCount(2);
+  await expect(page.getByText("开单服务暂时不可用，未释放报告。")).toHaveCount(0);
+
+  await page.reload();
+  await expect(page.getByTestId("report-card")).toHaveCount(2);
+  const orderCountBeforeDoubleClick = observations.filter((item) => item.action === "order").length;
+  await orderInput.fill("X光膀胱造影");
+  await page.getByRole("button", { name: "开立并返回结果", exact: true }).evaluate((button) => {
+    button.click();
+    button.click();
+  });
+  await expect.poll(() => observations.filter((item) => item.action === "order").length).toBe(orderCountBeforeDoubleClick + 1);
+  await expect(page.getByText("医嘱已开立；该病例未提供此项结果，暂不能据此判断。", { exact: true })).toBeVisible();
+});
+
+test("@ui-clinical-stage3 female case shows only applicable examination and imaging entries", async ({ page }) => {
+  await routeTrainingApiThroughHandler(page, []);
+  await page.route("**/api/agent-chat/**", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({
+      replyText: "我发现小便颜色发红。",
+      matchedSlotIds: ["chief_complaint"],
+      matchedFacts: ["chief_complaint=小便颜色发红"],
+      provider: "deepseek",
+      generationSource: "live_ai",
+      isFallback: false
+    })
+  }));
+  await page.goto("/cases/P002/");
+
+  const visibleInfo = page.locator("aside section").filter({ hasText: "当前可见资料" });
+  await expect(visibleInfo).toContainText("67 / 女");
+  await expect(visibleInfo).not.toContainText("主诉");
+  await expect(page.getByRole("log", { name: "模拟问诊对话" })).toContainText("医生您好，我来看一下。");
+  await expect(page.getByLabel("患者服务已连接")).toBeVisible();
+
+  await page.getByRole("textbox", { name: "输入问诊问题" }).fill("为什么来看？");
+  await page.getByRole("button", { name: "发送", exact: true }).click();
+  await enterInvestigationStage(page, "zh");
+
+  await expect(page.getByRole("button", { name: "妇科查体/阴道出血", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "直肠指检/前列腺", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "检查", exact: true }).click();
+  await expect(page.getByText("彩超女性生殖系统", { exact: true })).toBeVisible();
+  await expect(page.getByText("彩超男性生殖系统（阴囊、睾丸、输精管）+精索静脉", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("前列腺MR平扫", { exact: true })).toHaveCount(0);
+
+  await page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜").fill("肾功能/eGFR；双肾CTU平扫+增强");
+  await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
+  await expect(page.getByTestId("report-card")).toHaveCount(2);
+  await page.reload();
+  await expect(page.getByTestId("report-card")).toHaveCount(2);
+  await expect(page.getByText(/未返回结果|开单服务暂时不可用/)).toHaveCount(0);
 });
 
 test("case catalog switches public complaint language", async ({ page }) => {

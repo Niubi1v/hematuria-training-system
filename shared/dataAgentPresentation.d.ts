@@ -6,8 +6,22 @@ export const ENGLISH_METADATA_PLACEHOLDER: string;
 export const ENGLISH_ORDER_PLACEHOLDER: string;
 export const ENGLISH_RESULT_PLACEHOLDER: string;
 
+export type StudentCatalogItem = Record<string, unknown> & {
+  orderId: string;
+  catalogId?: string;
+  sourceOrderId?: string;
+  primaryCategory: string;
+  secondaryCategory: string;
+  displayName: string;
+  synonyms: string[];
+  applicableSex?: string[];
+};
+
+export function buildStudentOrderCatalog<T extends Record<string, unknown>>(catalog: T[]): Array<T & StudentCatalogItem>;
 export function containsCjk(value: unknown): boolean;
 export function firstEnglishAlias(order: { orderId?: string; synonyms?: string[] }): string;
+export function orderApplicableForSex(order: object, sex: string): boolean;
+export function sourceOrderId(order: { orderId?: string; sourceOrderId?: string }): string;
 export function needsReviewedMetadata(
   order: { primaryCategory?: string },
   result: { status?: string; value?: string; unit?: string; referenceRange?: string }

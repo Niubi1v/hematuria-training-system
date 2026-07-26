@@ -169,17 +169,17 @@ export async function requestJson<T>(url: string, body?: unknown, options: { tim
 export function studentFacingApiMessage(kind: ApiFailureKind, language: "zh" | "en") {
   const messages: Record<ApiFailureKind, readonly [string, string]> = {
     network: ["网络连接失败，请检查网络后重试。", "Network connection failed. Check your connection and retry."],
-    offline: ["当前处于离线状态，恢复网络后可重新连接AI。", "You are offline. Reconnect to the internet, then reconnect AI."],
+    offline: ["当前处于离线状态，恢复网络后可重新连接患者服务。", "You are offline. Reconnect to the internet, then reconnect the patient service."],
     "not-deployed": ["生产后端版本尚未更新，请联系教师。", "The production backend has not been updated."],
     "backend-outdated": ["生产后端版本过旧，请完成后端部署。", "The production backend is outdated."],
     timeout: ["服务响应超时，请稍后重新连接。", "The service timed out. Reconnect shortly."],
     "rate-limited": ["请求过于频繁，请稍后再试。", "Too many requests. Please wait and retry."],
-    "not-configured": ["AI服务尚未配置，当前由规则库回答。", "AI is not configured; rule fallback is active."],
-    "provider-timeout": ["上游AI响应超时，当前由规则库回答。", "The AI provider timed out; rule fallback is active."],
-    "provider-rate-limited": ["上游AI暂时限流，当前由规则库回答。", "The AI provider is rate-limited; rule fallback is active."],
-    "provider-unavailable": ["上游AI暂时不可用，当前由规则库回答。", "The AI provider is unavailable; rule fallback is active."],
-    "safety-filter": ["本次回答触发安全边界，已使用规则库回答。", "This answer triggered a safety boundary; rule fallback was used."],
-    "patient-service": ["患者AI服务暂时失败，当前由规则库回答。", "The patient AI service failed; rule fallback is active."],
+    "not-configured": ["患者服务尚未配置，当前可继续安全文字练习。", "The patient service is not configured; safe text practice remains available."],
+    "provider-timeout": ["患者服务响应超时，当前可继续安全文字练习。", "The patient service timed out; safe text practice remains available."],
+    "provider-rate-limited": ["患者服务暂时繁忙，当前可继续安全文字练习。", "The patient service is busy; safe text practice remains available."],
+    "provider-unavailable": ["患者服务暂时不可用，当前可继续安全文字练习。", "The patient service is unavailable; safe text practice remains available."],
+    "safety-filter": ["本次回答触发安全边界，已切换为安全回答。", "This answer triggered a safety boundary; a safe response was used."],
+    "patient-service": ["患者服务暂时失败，当前可继续安全文字练习。", "The patient service failed; safe text practice remains available."],
     request: ["请求未被服务接受，请刷新后重试。", "The request was not accepted. Refresh and retry."]
   };
   return messages[kind][language === "en" ? 1 : 0];

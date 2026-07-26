@@ -19,6 +19,84 @@ const statusLabels = Object.freeze({
   needs_review: Object.freeze({ zh: "待审核", en: "Awaiting review" })
 });
 
+const studentCatalogSpecs = Object.freeze([
+  { catalogId: "STD-US-001", sourceOrderId: "IMG-US-001", primaryCategory: "检查", secondaryCategory: "超声", displayName: "彩超泌尿系（双肾、输尿管及膀胱）+残余尿", aliases: ["IMG-US-002", "肾脏及输尿管超声", "肾脏超声", "输尿管超声", "肾积水超声"] },
+  { catalogId: "STD-US-002", sourceOrderId: "IMG-US-003", primaryCategory: "检查", secondaryCategory: "超声", displayName: "彩超男性生殖系统（阴囊、睾丸、输精管）+精索静脉", applicableSex: ["男"] },
+  { catalogId: "STD-US-003", sourceOrderId: "STD-US-003", primaryCategory: "检查", secondaryCategory: "超声", displayName: "彩超女性生殖系统", applicableSex: ["女"], aliases: ["妇科超声", "女性生殖系统超声"] },
+  { catalogId: "STD-XR-003", sourceOrderId: "IMG-CT-006", primaryCategory: "检查", secondaryCategory: "X线", displayName: "X光膀胱造影" },
+  { catalogId: "STD-CT-001", sourceOrderId: "IMG-CT-001", primaryCategory: "检查", secondaryCategory: "CT", displayName: "双肾+输尿管CT平扫" },
+  { catalogId: "STD-CT-002", sourceOrderId: "IMG-CT-003", primaryCategory: "检查", secondaryCategory: "CT", displayName: "双肾+输尿管CT平扫+增强" },
+  { catalogId: "STD-CT-003", sourceOrderId: "IMG-CT-007", primaryCategory: "检查", secondaryCategory: "CT", displayName: "双肾+输尿管CT平扫+增强+CTA" },
+  { catalogId: "STD-CT-004", sourceOrderId: "IMG-CT-007", primaryCategory: "检查", secondaryCategory: "CT", displayName: "双肾+输尿管CT平扫+增强+CTA+CTV" },
+  { catalogId: "STD-CT-005", sourceOrderId: "IMG-CT-005", primaryCategory: "检查", secondaryCategory: "CT", displayName: "盆腔CT平扫" },
+  { catalogId: "STD-CT-006", sourceOrderId: "IMG-CT-005", primaryCategory: "检查", secondaryCategory: "CT", displayName: "盆腔CT平扫+增强" },
+  { catalogId: "STD-CT-007", sourceOrderId: "IMG-CT-007", primaryCategory: "检查", secondaryCategory: "CT", displayName: "盆腔CT平扫+增强+CTA" },
+  { catalogId: "STD-CT-008", sourceOrderId: "IMG-CT-007", primaryCategory: "检查", secondaryCategory: "CT", displayName: "盆腔CT平扫+增强+CTA+CTV" },
+  { catalogId: "STD-CT-009", sourceOrderId: "IMG-CT-004", primaryCategory: "检查", secondaryCategory: "CT", displayName: "胸部CT平扫" },
+  { catalogId: "STD-CT-010", sourceOrderId: "IMG-CT-004", primaryCategory: "检查", secondaryCategory: "CT", displayName: "胸部CT平扫+增强" },
+  { catalogId: "STD-CT-011", sourceOrderId: "IMG-CT-002", primaryCategory: "检查", secondaryCategory: "CT", displayName: "双肾CTU平扫+增强", aliases: ["CTUCT"] },
+  { catalogId: "STD-MR-001", sourceOrderId: "IMG-MR-002", primaryCategory: "检查", secondaryCategory: "MRI", displayName: "双肾+输尿管MR平扫" },
+  { catalogId: "STD-MR-002", sourceOrderId: "IMG-MR-003", primaryCategory: "检查", secondaryCategory: "MRI", displayName: "双肾+输尿管MR平扫+增强" },
+  { catalogId: "STD-MR-003", sourceOrderId: "IMG-MR-001", primaryCategory: "检查", secondaryCategory: "MRI", displayName: "盆腔MR平扫" },
+  { catalogId: "STD-MR-004", sourceOrderId: "IMG-MR-001", primaryCategory: "检查", secondaryCategory: "MRI", displayName: "盆腔MR平扫+增强" },
+  { catalogId: "STD-MR-005", sourceOrderId: "IMG-MR-004", primaryCategory: "检查", secondaryCategory: "MRI", displayName: "前列腺MR平扫", applicableSex: ["男"] },
+  { catalogId: "STD-MR-006", sourceOrderId: "IMG-MR-004", primaryCategory: "检查", secondaryCategory: "MRI", displayName: "前列腺MR平扫+增强", applicableSex: ["男"] },
+  { catalogId: "STD-NUC-001", sourceOrderId: "NUC-001", primaryCategory: "检查", secondaryCategory: "核医学", displayName: "全身骨扫描" },
+  { catalogId: "STD-NUC-002", sourceOrderId: "NUC-002", primaryCategory: "检查", secondaryCategory: "核医学", displayName: "PET/CT" },
+  { catalogId: "STD-NUC-003", sourceOrderId: "FUNC-002", primaryCategory: "检查", secondaryCategory: "核医学", displayName: "核素肾图" },
+  { catalogId: "STD-PATH-001", sourceOrderId: "LAB-PATH-001", primaryCategory: "病理/操作", secondaryCategory: "病理", displayName: "常规石蜡病理", aliases: ["组织病理"] },
+  { catalogId: "STD-PATH-002", sourceOrderId: "STD-PATH-002", primaryCategory: "病理/操作", secondaryCategory: "病理", displayName: "冰冻病理", aliases: ["术中冰冻", "冰冻切片"] },
+  { catalogId: "STD-PATH-003", sourceOrderId: "LAB-UR-006", primaryCategory: "病理/操作", secondaryCategory: "病理", displayName: "尿脱落细胞学" },
+  { catalogId: "STD-PATH-004", sourceOrderId: "LAB-PATH-003", primaryCategory: "病理/操作", secondaryCategory: "病理", displayName: "穿刺活检病理", aliases: ["LAB-PATH-002", "活检", "输尿管镜活检病理", "URS活检", "输尿管镜活检", "肾盂活检"] }
+]);
+
+const projectedSourceIds = new Set([
+  ...studentCatalogSpecs.map((item) => item.sourceOrderId),
+  "IMG-US-002",
+  "LAB-PATH-002"
+]);
+
+function uniqueStrings(values) {
+  return [...new Set(values.map((value) => String(value || "").trim()).filter(Boolean))];
+}
+
+function buildStudentOrderCatalog(catalog) {
+  const sourceCatalog = Array.isArray(catalog) ? catalog : [];
+  const byId = new Map(sourceCatalog.map((item) => [String(item.orderId), item]));
+  const retained = sourceCatalog.filter((item) => !projectedSourceIds.has(String(item.orderId)));
+  const projected = studentCatalogSpecs.map((spec) => {
+    const source = byId.get(spec.sourceOrderId) || {};
+    return {
+      scenario: "",
+      resultShouldInclude: "",
+      priority: "按需",
+      studentDisplayHint: "",
+      cautions: "",
+      sourceUrl: "",
+      ...source,
+      ...spec,
+      orderId: spec.sourceOrderId,
+      synonyms: uniqueStrings([
+        spec.displayName,
+        spec.sourceOrderId,
+        source.displayName,
+        ...(source.synonyms || []),
+        ...(spec.aliases || [])
+      ])
+    };
+  });
+  return [...retained, ...projected];
+}
+
+function sourceOrderId(order) {
+  return String(order?.sourceOrderId || order?.orderId || "");
+}
+
+function orderApplicableForSex(order, sex) {
+  const applicableSex = order?.applicableSex;
+  return !Array.isArray(applicableSex) || !applicableSex.length || applicableSex.includes(sex);
+}
+
 function containsCjk(value) {
   return CJK_PATTERN.test(String(value || ""));
 }
@@ -26,7 +104,11 @@ function containsCjk(value) {
 function firstEnglishAlias(order) {
   return (order?.synonyms || []).find((value) => {
     const text = String(value || "").trim();
-    return text && !containsCjk(text) && /[a-z]/i.test(text) && text.toLowerCase() !== String(order?.orderId || "").toLowerCase();
+    return text
+      && !containsCjk(text)
+      && /[a-z]/i.test(text)
+      && !/^(?:IMG|LAB|END|FUNC|NUC|PERI|STD)-[A-Z0-9-]+$/i.test(text)
+      && text.toLowerCase() !== String(order?.orderId || "").toLowerCase();
   }) || "";
 }
 
@@ -150,14 +232,17 @@ module.exports = {
   ENGLISH_METADATA_PLACEHOLDER,
   ENGLISH_ORDER_PLACEHOLDER,
   ENGLISH_RESULT_PLACEHOLDER,
+  buildStudentOrderCatalog,
   containsCjk,
   firstEnglishAlias,
   needsReviewedMetadata,
+  orderApplicableForSex,
   presentExamResult,
   presentMatchedOrder,
   presentOrderCatalogItem,
   presentOrderResult,
   presentPhysicalExamItem,
   reportStatusPresentation,
-  safeStudentFacingText
+  safeStudentFacingText,
+  sourceOrderId
 };

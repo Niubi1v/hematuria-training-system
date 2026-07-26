@@ -76,7 +76,14 @@ export type OrderResultLog = {
   returnedReportCount?: number;
 };
 
-export type ExamResultLog = { input: string; result: string; at: string; examId?: string; translationStatus?: string };
+export type ExamResultLog = {
+  input: string;
+  result: string;
+  at: string;
+  examId?: string;
+  translationStatus?: string;
+  provenance?: "configured_case_result" | "not_provided";
+};
 
 export type MdtOpinion = {
   department: string;

@@ -82,10 +82,10 @@ for (const [id, update] of Object.entries(policy.updates)) {
   assert(publicCase.studentChiefComplaint === update.zh && publicCase.chiefComplaintEn === update.en, `${id} public catalog is stale`);
   assert(chiefSlot.patientAnswerZh === update.zh && chiefSlot.patientAnswerEn === update.en, `${id} Patient Agent chief slot is stale`);
   assert(item.patientAnswers?.opening === update.openingZh, `${id} Patient Agent opening was not updated`);
-  assert(patientOpeningForCase(id, item.studentChiefComplaint, "zh", en.chiefComplaint) === update.openingZh, `${id} client Chinese opening is stale`);
-  assert(patientOpeningForCase(id, item.studentChiefComplaint, "en", en.chiefComplaint) === update.openingEn, `${id} client English opening is stale`);
-  assert(buildRawPatientFacingProfile(item, "zh").patient_opening_statement.value === update.openingZh, `${id} server Chinese opening is stale`);
-  assert(buildRawPatientFacingProfile(item, "en").patient_opening_statement.value === update.openingEn, `${id} server English opening is stale`);
+  assert(patientOpeningForCase(id, item.studentChiefComplaint, "zh", en.chiefComplaint) === "医生您好，我来看一下。", `${id} client Chinese opening is not neutral`);
+  assert(patientOpeningForCase(id, item.studentChiefComplaint, "en", en.chiefComplaint) === "Hello doctor. I came in for a consultation.", `${id} client English opening is not neutral`);
+  assert(buildRawPatientFacingProfile(item, "zh").patient_opening_statement.value === "医生您好，我来看一下。", `${id} server Chinese opening is not neutral`);
+  assert(buildRawPatientFacingProfile(item, "en").patient_opening_statement.value === "Hello doctor. I came in for a consultation.", `${id} server English opening is not neutral`);
 
   assert(!/[+＋]/.test(`${update.zh}${update.en}${update.openingZh}${update.openingEn}`), `${id} contains a plus sign`);
   for (const token of update.durationZh) assert(update.zh.includes(token) || update.openingZh.includes(token), `${id} lost Chinese duration ${token}`);
