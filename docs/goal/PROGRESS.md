@@ -757,3 +757,12 @@
 - `17f7caf`将三条近似测试措辞替换为用户指定原句，不增加测试数量、不改变业务代码。七个目标中文问法均显式覆盖；P005 true与P002 false均无错误unknown或极性翻转，P001冲突仍隔离。
 - 比例门禁通过：94/94、3150/3150、1890/1890、786复合、18项冲突隔离、Patient相关Playwright desktop/mobile 14/14、TypeScript、ESLint、双环境82页构建、两次26资产bundle、365文件/历史secret scan；`data/**`零差异。
 - 本地证据使用Node 24.14.0；最终Node 22.14、GitHub Actions、Vercel部署和真实Preview七问法必须绑定推送后的精确新HEAD。PR继续Draft，不合并main、不部署Production。
+
+### 2026-07-27 第一阶段真实同源本地全栈候选
+
+- 远程Production基线与commit-specific Preview均为`0d50a79f858dc15819458dc1a267f8d02323a61c`；该Preview的P003/P001功能提交通过，未复现用户的通用“阶段提交失败”，但独立性能门槛仍有session P95 4090ms问题。
+- 新增`dev:full`与`test:first-stage:local`：Next页面和Vercel API handler共用`http://127.0.0.1:3000`，本地Redis 7.4持久化attempt，Patient使用安全rule mock。未引入生产环境变量或测试后门。
+- 本地全栈首次捕获Redis Lua空数组往返缺陷：`events=[]`变为`{}`，stage-feedback真实返回HTTP 500。存储边界现仅恢复空对象，畸形非空对象继续拒绝。
+- Redis网络/服务故障现返回`training_attempt_store_temporarily_unavailable`并显示可理解的网络恢复提示；缺凭据或401/403仍按配置错误fail-closed。
+- Node 22.14本地结果：全栈5/5、行为/治理全量通过、Playwright 95/7/0、TypeScript/ESLint、双82页build、双26-asset bundle、依赖与secret扫描通过；`data/**`零差异。
+- 下一步：小步提交代码与证据，fetch确认远端领先0后普通push，等待精确新HEAD的Node 22 Actions/Vercel，再运行新Preview第一阶段黑盒。PR保持Draft。
