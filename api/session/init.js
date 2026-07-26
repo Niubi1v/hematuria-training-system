@@ -93,7 +93,7 @@ module.exports = async function handler(req, res) {
     const code = error instanceof Error ? error.message : "session_init_failed";
     const status = /request_body_too_large/.test(code) ? 413
       : /invalid_json_body|unexpected_request_field|invalid_(?:language|mode|debug|force_refresh)|idempotency_key_too_long/.test(code) ? 400
-        : /store_unavailable|secret/.test(code) ? 503
+        : /store_(?:temporarily_)?unavailable|secret/.test(code) ? 503
       : /stale|completed|attempt_(?:language|mode)_mismatch/.test(code) ? 409
         : /token|mismatch|not_found/.test(code) ? 401 : 500;
     return res.status(status).json({ error: code === "session_init_failed" ? code : code });

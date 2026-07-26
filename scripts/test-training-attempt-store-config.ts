@@ -82,6 +82,59 @@ async function main() {
   assert.equal(requestedUrl, "https://upstash-primary.example.test");
   assert.equal(authorization, "Bearer unit-test-upstash-write-token");
 
+  const luaRoundTrippedState = {
+    attemptId: "attempt-lua-array",
+    caseId: "P003",
+    mode: "public-practice",
+    language: "zh",
+    status: "active",
+    completedStages: {},
+    orders: {},
+    events: {},
+    submissions: {}
+  };
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => ({ result: JSON.stringify({ kind: "active", state: luaRoundTrippedState }) })
+  }) as Response;
+  const normalized = await store.loadAttempt({
+    caseId: "P003",
+    attemptId: "attempt-lua-array",
+    token: "attempt-token-test",
+    requestId: "load-lua-array",
+    requestDigest: "a".repeat(64)
+  });
+  assert.deepEqual(normalized.state.completedStages, []);
+  assert.deepEqual(normalized.state.orders, []);
+  assert.deepEqual(normalized.state.events, []);
+  assert.deepEqual(normalized.state.submissions, {});
+
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => ({
+      result: JSON.stringify({
+        kind: "active",
+        state: { ...luaRoundTrippedState, events: { unexpected: true } }
+      })
+    })
+  }) as Response;
+  await assert.rejects(
+    store.loadAttempt({
+      caseId: "P003",
+      attemptId: "attempt-corrupt-array",
+      token: "attempt-token-test",
+      requestId: "load-corrupt-array",
+      requestDigest: "b".repeat(64)
+    }),
+    /attempt_state_events_invalid/
+  );
+
+  globalThis.fetch = async () => { throw new Error("synthetic_network_failure"); };
+  await assert.rejects(
+    store.validateCurrentAttempt({ caseId: "P003", attemptId: "attempt-transient", token: "attempt-token-test" }),
+    (error: Error) => error.message === "training_attempt_store_temporarily_unavailable"
+  );
+
   process.env.TRAINING_ATTEMPT_STORE_MODE = "memory";
   assert.equal(store.durableAttemptStoreConfigured(), false);
   assert.equal(store.attemptStoreCredentialSource(), "none", "health must describe the credential type actually in use");

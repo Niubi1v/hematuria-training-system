@@ -163,7 +163,7 @@ function trainingFailureReason(error: unknown): TrainingFailureReason {
   if (/origin_not_allowed/.test(code)) return "origin_mismatch";
   if (/rate_limited/.test(code) || kind === "rate-limited") return "rate_limit";
   if (/invalid_attempt_token|invalid_attempt_token_claims|unsupported_attempt_token_version|stale_attempt_token|attempt_already_(?:completed|exists)|idempotency_key_reused|attempt_(?:state|language|mode|case|id)_mismatch/.test(code)) return "state_mismatch";
-  if (/network_error/.test(code) || ["network", "offline", "timeout"].includes(kind)) return "network_error";
+  if (/network_error|training_attempt_store_temporarily_unavailable/.test(code) || ["network", "offline", "timeout"].includes(kind)) return "network_error";
   return "request_error";
 }
 

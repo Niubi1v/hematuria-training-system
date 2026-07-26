@@ -36,6 +36,7 @@ function classify(status: number, code: string): ApiFailureKind {
   if (status === 404) return "not-deployed";
   if (/backend_outdated|version_mismatch/.test(normalized)) return "backend-outdated";
   if (/training_attempt_store_unavailable|training_state_secret_(?:missing|weak|placeholder|reused)/.test(normalized)) return "not-configured";
+  if (/training_attempt_store_temporarily_unavailable/.test(normalized)) return "network";
   if (/provider_not_configured|llm_not_configured|missing_llm/.test(normalized)) return "not-configured";
   if (/provider_timeout|upstream_timeout/.test(normalized)) return "provider-timeout";
   if (/provider_rate_limit|upstream_rate_limit/.test(normalized) || status === 429) return "provider-rate-limited";

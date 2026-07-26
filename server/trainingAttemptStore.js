@@ -19,6 +19,24 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function restoreLuaEmptyArray(value, field) {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).length === 0) return [];
+  throw new Error(`attempt_state_${field}_invalid`);
+}
+
+function normalizeStoredState(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("attempt_state_invalid");
+  const state = clone(value);
+  state.completedStages = restoreLuaEmptyArray(state.completedStages, "completed_stages");
+  state.orders = restoreLuaEmptyArray(state.orders, "orders");
+  state.events = restoreLuaEmptyArray(state.events, "events");
+  if (!state.submissions || typeof state.submissions !== "object" || Array.isArray(state.submissions)) {
+    throw new Error("attempt_state_submissions_invalid");
+  }
+  return state;
+}
+
 function normalizedRequestId(value) {
   return String(value || "").replace(/[^a-zA-Z0-9:_-]/g, "").slice(0, 160);
 }
@@ -79,11 +97,14 @@ async function upstash(command) {
       signal: AbortSignal.timeout(5000)
     });
   } catch {
-    throw new Error("training_attempt_store_unavailable");
+    throw new Error("training_attempt_store_temporarily_unavailable");
   }
-  if (!response.ok) throw new Error("training_attempt_store_unavailable");
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) throw new Error("training_attempt_store_unavailable");
+    throw new Error("training_attempt_store_temporarily_unavailable");
+  }
   const payload = await response.json();
-  if (payload.error) throw new Error("training_attempt_store_unavailable");
+  if (payload.error) throw new Error("training_attempt_store_temporarily_unavailable");
   return payload.result;
 }
 
@@ -191,7 +212,7 @@ async function loadAttempt({ caseId, attemptId, token, requestId, requestDigest 
   }
   const raw = await upstash(["EVAL", LOAD_SCRIPT, 1, key, id, requestDigest, tokenHash]);
   const result = JSON.parse(raw);
-  if (result.kind === "active") return { duplicate: false, state: result.state };
+  if (result.kind === "active") return { duplicate: false, state: normalizeStoredState(result.state) };
   if (result.kind === "duplicate") return cachedResult(result.cached);
   return resultError(result.kind);
 }
@@ -209,7 +230,7 @@ async function validateCurrentAttempt({ caseId, attemptId, token }) {
   if (!record) throw new Error("attempt_not_found");
   if (record.currentTokenHash !== digest(token)) throw new Error("stale_attempt_token");
   if (record.state?.status !== "active") throw new Error("attempt_already_completed");
-  return clone(record.state);
+  return normalizeStoredState(record.state);
 }
 
 async function commitAttempt({ state, previousToken, nextToken, requestId, requestDigest, payload, statusCode = 200 }) {

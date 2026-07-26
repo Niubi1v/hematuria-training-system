@@ -436,7 +436,7 @@ module.exports = async function handler(req, res) {
       : /idempotency_key_required|invalid_request_digest/.test(code) ? 400
         : /stage|mode|language|stale|already_exists|idempotency_key_reused/.test(code) ? 409
           : /token|mismatch|completed|not_found/.test(code) ? 401
-            : /secret|store_unavailable/.test(code) ? 503 : 500;
+            : /secret|store_(?:temporarily_)?unavailable/.test(code) ? 503 : 500;
     return res.status(status).json({ error: code });
   }
 };
