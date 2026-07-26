@@ -121,7 +121,7 @@ const priorityIntentDefinitions = Object.freeze([
       en: Object.freeze([
         "blood throughout urination", "red from start to finish", "red during the whole stream",
         "all of the urine red", "blood throughout the entire stream", "red throughout", "whole stream red",
-        "red from the start to the end of urination", "not only red at the end"
+        "red from the start to the end of urination", "red from beginning to end", "not only red at the end"
       ])
     }),
     confusableWith: Object.freeze(["initial_hematuria", "terminal_hematuria"])
@@ -151,8 +151,37 @@ const priorityIntentDefinitions = Object.freeze([
 ]);
 
 function defineOntologyFact(definition) {
-  const aliasesZh = [...new Set(definition.aliases?.zh || [])];
-  const aliasesEn = [...new Set(definition.aliases?.en || [])];
+  const baseAliasesZh = [...new Set(definition.aliases?.zh || [])];
+  const baseAliasesEn = [...new Set(definition.aliases?.en || [])];
+  const lexicon = {
+    zhMedical: definition.lexicon?.zhMedical || [definition.labelZh].filter(Boolean),
+    zhPatient: definition.lexicon?.zhPatient || baseAliasesZh,
+    zhRegional: definition.lexicon?.zhRegional || [],
+    enMedical: definition.lexicon?.enMedical || [definition.labelEn].filter(Boolean),
+    enPatient: definition.lexicon?.enPatient || baseAliasesEn,
+    negatedZh: definition.lexicon?.negatedZh || (definition.labelZh ? [`没有${definition.labelZh}吧`] : []),
+    negatedEn: definition.lexicon?.negatedEn || (definition.labelEn ? [`No ${definition.labelEn}, right`] : []),
+    choiceZh: definition.lexicon?.choiceZh || (definition.labelZh ? [`有${definition.labelZh}还是没有${definition.labelZh}`] : []),
+    choiceEn: definition.lexicon?.choiceEn || (definition.labelEn ? [`${definition.labelEn} or not`] : []),
+    typosZh: definition.lexicon?.typosZh || [],
+    confusableWith: definition.confusableWith || []
+  };
+  const aliasesZh = [...new Set([
+    ...baseAliasesZh,
+    ...lexicon.zhMedical,
+    ...lexicon.zhPatient,
+    ...lexicon.zhRegional,
+    ...lexicon.negatedZh,
+    ...lexicon.choiceZh,
+    ...lexicon.typosZh
+  ])];
+  const aliasesEn = [...new Set([
+    ...baseAliasesEn,
+    ...lexicon.enMedical,
+    ...lexicon.enPatient,
+    ...lexicon.negatedEn,
+    ...lexicon.choiceEn
+  ])];
   return Object.freeze({
     ...definition,
     aliases: Object.freeze({
@@ -160,17 +189,17 @@ function defineOntologyFact(definition) {
       en: Object.freeze(aliasesEn)
     }),
     lexicon: Object.freeze({
-      zhMedical: Object.freeze(definition.lexicon?.zhMedical || [definition.labelZh].filter(Boolean)),
-      zhPatient: Object.freeze(definition.lexicon?.zhPatient || aliasesZh),
-      zhRegional: Object.freeze(definition.lexicon?.zhRegional || []),
-      enMedical: Object.freeze(definition.lexicon?.enMedical || [definition.labelEn].filter(Boolean)),
-      enPatient: Object.freeze(definition.lexicon?.enPatient || aliasesEn),
-      negatedZh: Object.freeze(definition.lexicon?.negatedZh || []),
-      negatedEn: Object.freeze(definition.lexicon?.negatedEn || []),
-      choiceZh: Object.freeze(definition.lexicon?.choiceZh || []),
-      choiceEn: Object.freeze(definition.lexicon?.choiceEn || []),
-      typosZh: Object.freeze(definition.lexicon?.typosZh || []),
-      confusableWith: Object.freeze(definition.confusableWith || [])
+      zhMedical: Object.freeze(lexicon.zhMedical),
+      zhPatient: Object.freeze(lexicon.zhPatient),
+      zhRegional: Object.freeze(lexicon.zhRegional),
+      enMedical: Object.freeze(lexicon.enMedical),
+      enPatient: Object.freeze(lexicon.enPatient),
+      negatedZh: Object.freeze(lexicon.negatedZh),
+      negatedEn: Object.freeze(lexicon.negatedEn),
+      choiceZh: Object.freeze(lexicon.choiceZh),
+      choiceEn: Object.freeze(lexicon.choiceEn),
+      typosZh: Object.freeze(lexicon.typosZh),
+      confusableWith: Object.freeze(lexicon.confusableWith)
     })
   });
 }
@@ -440,9 +469,26 @@ function matchesNaturalPattern(question, intentKey, language) {
   return false;
 }
 
+function suppressConfusableFact(question, intentKey, language = "zh") {
+  const normalized = normalizeIntentQuestion(question);
+  const compacted = normalized.replace(/\s+/g, "");
+  if (intentKey === "urinary_frequency") {
+    return language === "zh"
+      ? /(?:尿完|排完|小便后|膀胱).*(?:还有尿|还想尿|没排干净|没排空)|总觉得还有尿/.test(compacted)
+      : /(?:after|finish).*(?:stillfeel|bladder).*(?:full|needtogo|urineleft)|incompleteemptying/i.test(compacted);
+  }
+  if (intentKey === "intermittent_hematuria") {
+    return language === "zh"
+      ? /(?:每次尿|每次小便).*(?:全程|从头到尾).*(?:红|血)/.test(compacted)
+      : /everytime.*(?:throughout|wholestream|starttofinish).*(?:red|blood)/i.test(compacted);
+  }
+  return false;
+}
+
 function matchPriorityCanonicalIntents(question, language = "zh") {
   const definitions = patientFactOntology.filter((definition) => definition.domain === "canonical_priority");
   return definitions.flatMap((definition, definitionOrder) => {
+    if (suppressConfusableFact(question, definition.key, language)) return [];
     const matchedAlias = definition.aliases[language].find((alias) => flexibleAliasMatch(question, alias, language));
     const naturalPatternMatched = !matchedAlias && matchesNaturalPattern(question, definition.key, language);
     if (!matchedAlias && !naturalPatternMatched) return [];
@@ -462,6 +508,7 @@ function matchPatientFactOntology(question, language = "zh", domains = []) {
   const text = String(question || "");
   return patientFactOntology.flatMap((definition, definitionOrder) => {
     if (allowedDomains.size && !allowedDomains.has(definition.domain)) return [];
+    if (suppressConfusableFact(text, definition.key, language)) return [];
     const matchedAlias = definition.aliases[language]?.find((alias) => flexibleAliasMatch(text, alias, language));
     const patternIndex = definition.pattern instanceof RegExp ? text.search(definition.pattern) : -1;
     const naturalPatternMatched = definition.domain === "canonical_priority"
@@ -488,7 +535,7 @@ function recentConversationTopic(conversationHistory = [], language = "zh") {
     const priority = matchPriorityCanonicalIntents(text, language)[0];
     if (priority) return priority.intentKey;
     if (language === "en") {
-      if (/(?:blood|red).*(?:urine|pee)|hematuria/i.test(text)) return "gross_hematuria";
+      if (/(?:blood|red).*(?:urine|pee)|(?:urine|pee).*(?:blood|red)|hematuria/i.test(text)) return "gross_hematuria";
       if (/(?:urine test|urinalysis).*(?:blood|abnormal)|microscopic hematuria/i.test(text)) return "microscopic_hematuria";
       if (/\b(?:injury|trauma)\b/i.test(text)) return "trauma";
     } else {

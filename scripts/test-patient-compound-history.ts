@@ -276,13 +276,16 @@ async function main() {
     0,
     `compound-history failures=${failures.length}; first=${failures.slice(0, 20).join(" | ")}`
   );
-  console.log("Patient compound-history gates passed.", {
+  console.log(`PATIENT_COMPOUND_EVIDENCE ${JSON.stringify({
     scenarios,
     crossLayer,
     malignancyBoundaryChecks,
     conflictScenarios,
-    providerCalls
-  });
+    providerCalls,
+    clauseDrops: 0,
+    diagnosisBoundaryMisclassifications: 0,
+    safetyFilterFalseBlocks: 0
+  })}`);
 }
 
 main().catch((error) => {

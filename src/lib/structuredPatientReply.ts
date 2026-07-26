@@ -43,19 +43,19 @@ const { structuredHistoryIntentDefinitions } = require("./patientIntentCatalog.j
     historyKey?: keyof StructuredHistory;
     sourceSlotId: string;
     pattern?: RegExp;
-    intentKey: string;
+    key: string;
   }>;
 };
 
 const facts: FactMatch[] = structuredHistoryIntentDefinitions
-  .filter((definition) => definition.historyKey && definition.intentKey !== "medication_list" && definition.pattern)
+  .filter((definition) => definition.historyKey && definition.key !== "medication_list" && definition.pattern)
   .map((definition) => ({
     key: definition.historyKey!,
     slotId: definition.sourceSlotId,
     triggers: definition.pattern!
   }));
 
-const broadMedication = structuredHistoryIntentDefinitions.find((definition) => definition.intentKey === "medication_list")?.pattern || /$a/;
+const broadMedication = structuredHistoryIntentDefinitions.find((definition) => definition.key === "medication_list")?.pattern || /$a/;
 
 function provenance(items: Array<StructuredPatientFact | { provenance: string }>) {
   const values = new Set(items.map((item) => item.provenance));

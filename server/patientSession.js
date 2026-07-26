@@ -825,8 +825,17 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   }
   const clauseOutcomes = matched?.clauseOutcomes || clauseOutcomesForMatch(matched);
   const fallback = conciseDeterministicReply(matched
-    ? { ...matched, matchedSlotIds: matched.collectableSlotIds || matched.matchedSlotIds, matchedFacts: matched.collectableFacts || matched.matchedFacts, provider: "rule", model: "local-rule", isFallback: true }
-    : genericFallback, language);
+    ? {
+        ...matched,
+        matchedSlotIds: matched.collectableSlotIds || matched.matchedSlotIds,
+        matchedFacts: matched.collectableFacts || matched.matchedFacts,
+        provider: "rule",
+        model: "local-rule",
+        isFallback: true,
+        clauseOutcomes,
+        contextResolution
+      }
+    : { ...genericFallback, clauseOutcomes, contextResolution }, language);
   if (matched?.unresolvedReason && !(matched.collectableSlotIds || []).length) {
     return {
       ...fallback,

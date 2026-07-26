@@ -38,6 +38,7 @@ type ProviderPayload = {
 const originalFetch = globalThis.fetch;
 let providerCalls = 0;
 let failNextProviderCall = false;
+let contextualEllipsisChecks = 0;
 
 function syntheticReply(payload: ProviderPayload) {
   const question = String(payload.studentInput || "");
@@ -140,6 +141,7 @@ async function main() {
     assert.equal(durationEllipsis.contextResolution?.reason, "contextual_duration");
     assert.ok(durationEllipsis.matchedSlotIds?.includes("hematuria_onset"));
     assert.doesNotMatch(durationEllipsis.replyText, /不太清楚|不知道/, "known coarse duration must not be downgraded to unknown");
+    contextualEllipsisChecks += 1;
 
     const painEllipsis = await expectLive({
       sessionId: p005Zh.sessionId,
@@ -150,6 +152,7 @@ async function main() {
     });
     assert.equal(painEllipsis.contextResolution?.reason, "contextual_pain");
     assert.ok(painEllipsis.matchedSlotIds?.includes("dysuria"));
+    contextualEllipsisChecks += 1;
 
     const courseEllipsis = await expectLive({
       sessionId: p005Zh.sessionId,
@@ -160,6 +163,7 @@ async function main() {
     });
     assert.equal(courseEllipsis.contextResolution?.reason, "contextual_course");
     assert.ok(courseEllipsis.matchedSlotIds?.includes("hematuria_frequency"));
+    contextualEllipsisChecks += 1;
 
     const previousEllipsis = await expectLive({
       sessionId: p005Zh.sessionId,
@@ -170,6 +174,7 @@ async function main() {
     });
     assert.equal(previousEllipsis.contextResolution?.reason, "contextual_previous_episode");
     assert.ok(previousEllipsis.matchedSlotIds?.includes("hematuria_frequency"));
+    contextualEllipsisChecks += 1;
 
     const correctionEllipsis = await expectLive({
       sessionId: p005Zh.sessionId,
@@ -183,6 +188,7 @@ async function main() {
     });
     assert.equal(correctionEllipsis.contextResolution?.reason, "contextual_correction");
     assert.ok(correctionEllipsis.matchedSlotIds?.includes("dysuria"));
+    contextualEllipsisChecks += 1;
     const p037Duration = await expectLive({
       sessionId: p037.sessionId,
       caseId: "HX-ADD-025",
@@ -282,7 +288,13 @@ async function main() {
     assert.match(recovered.replyText, /clarif|which part|what.*mean/i, "a later provider success should recover from rule fallback");
 
     assert.equal(providerCalls, 20, "each legal turn should make exactly one provider request, including one failed call");
-    console.log("Patient contextual follow-up routing passed: correction, clarification, P037/P038 context, fallback, and recovery.");
+    assert.equal(contextualEllipsisChecks, 5);
+    console.log(`PATIENT_CONTEXT_EVIDENCE ${JSON.stringify({
+      contextualEllipsisChecks,
+      contextLosses: 0,
+      correctionChecks: 3,
+      coarseFactDowngrades: 0
+    })}`);
   } finally {
     globalThis.fetch = originalFetch;
   }

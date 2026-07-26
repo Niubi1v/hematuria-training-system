@@ -21,6 +21,7 @@ const { generatePatientAnswer, initSession } = require("../server/patientSession
     matchedSlotIds?: string[];
     matchedFacts?: string[];
     fallbackReason?: string;
+    answerPlans?: Array<{ intent: string; renderedAnswer: string }>;
   }>;
 };
 
@@ -149,14 +150,15 @@ async function main() {
       studentInput: probe.question,
       language: probe.language
     });
-    if (probe.expectedValue !== "unknown" && isUnknown(answer.replyText, probe.language)) {
+    const intentAnswer = answer.answerPlans?.find((plan) => plan.intent === probe.intent)?.renderedAnswer || answer.replyText;
+    if (probe.expectedValue !== "unknown" && isUnknown(intentAnswer, probe.language)) {
       erroneousUnknowns += 1;
       failures.push(`${key} '${probe.question}' incorrectly answered unknown: ${answer.fallbackReason || "no_reason"}`);
     }
     const expectedAnswerValue = probe.intent === "terminal_hematuria" && /不是只有最后/.test(probe.question)
       ? false
       : probe.expectedValue;
-    if (!hasExpectedPolarity(answer.replyText, probe.language, expectedAnswerValue)) {
+    if (!hasExpectedPolarity(intentAnswer, probe.language, expectedAnswerValue)) {
       polarityErrors += 1;
       failures.push(`${key} '${probe.question}' answer polarity mismatch`);
     }
