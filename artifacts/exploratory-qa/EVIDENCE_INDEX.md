@@ -1,6 +1,6 @@
 # 探索式 QA 证据索引
 
-当前 Production 与运行时证据基线：`c4ac9b5a59021bed10dc2d94c4ebf4d8f97badd2`
+当前 Production 与运行时证据基线：`9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`
 QA 分支：`codex/hematuria-exploratory-qa`
 本机证据根目录：`<QA_WORKTREE>\artifacts\exploratory-qa\`
 
@@ -509,3 +509,17 @@ SHA-256：
 
 - 所有提交候选与本机自动证据需再次扫描；聚合不保存医学值、请求正文、session/request ID、header、Cookie、Authorization、token、签名或环境值。
 - `9b7fcd0-r29*`扫描2个文件/41,918字节，`9b7fcd0-round29*`扫描1个文件/3,830字节；`hem-p1-047*`扫描32个文件、551个ZIP条目、67,619,847字节，`hem-p1-048*`扫描28个文件、350个ZIP条目、49,049,417字节，敏感值命中均为0。
+
+## Production `9b7fcd0` 第 30 轮可访问性与语音证据
+
+| 证据名称 | 对应测试或缺陷 | 文件路径 | 文件大小 | 是否提交 Git | 未提交原因 | 本机保留位置 |
+| --- | --- | --- | ---: | --- | --- | --- |
+| 第30轮脱敏聚合 | 键盘、焦点、reduced-motion、语音、axe与HEM-P2-044 | `artifacts/exploratory-qa/reports/9b7fcd0-round30-accessibility-voice-regression-summary.json` | 2,937 B | 是 | — | 仓库路径 |
+| 可访问性安全fixture修正 | axe主要页面不产生本地API 404噪声 | `tests/exploratory/long-running-qa.spec.mjs` | 整文件 | 是 | — | 仓库路径 |
+| 两份移动尺寸原始摘要 | HEM-P2-044精确CSS几何 | `artifacts/exploratory-qa/reports/9b7fcd0-r30-hem-p2-044-touch-targets-*.json` | 2份各661 B | 否 | 聚合已逐项保留相同尺寸；避免重复原始证据 | 原路径，本机未跟踪 |
+| 四viewport console/network摘要 | 12次axe页面扫描诊断 | `artifacts/exploratory-qa/reports/9b7fcd0-r30-accessibility-primary-pages-*.json` | 8份/约26 KB | 否 | 聚合已保留零console、零应用HTTP失败及HMR排除项 | 原路径，本机未跟踪 |
+| 四份axe trace | 三个主要页面的可重建浏览器轨迹 | `artifacts/exploratory-qa/traces/9b7fcd0-r30-accessibility-primary-pages-*.zip` | 4份/19,292,329 B | 否 | 通过证据且体积大；测试与聚合可重建 | 原路径，本机未跟踪 |
+| HTML与runner附件 | 本轮通过运行的可重建报告 | `artifacts/exploratory-qa/reports/{html,test-results}/**` | 自动证据集 | 否 | 无失败价值且包含重复runner上下文 | 原路径，本机未跟踪 |
+
+- 本轮没有失败截图或录像；自动通过不制造重复视觉证据。聚合不保存问题、回答、医学值、session/request ID、header、Cookie、Authorization、token、签名或环境值。
+- `9b7fcd0-r30*`扫描覆盖14个物理文件、390个ZIP条目、83,037,349流式字节；`9b7fcd0-round30*`聚合扫描1个文件、2,937字节，敏感值命中均为0。

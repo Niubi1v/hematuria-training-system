@@ -645,3 +645,9 @@
 - **HEM-P2-044：`RESOLVED_LOCAL_QA / PASS_EMULATION 2/2`。** 两个移动viewport的四个目标均达到至少44 CSS px，不足目标0；邻接键盘与reduced-motion合同通过。真实设备仍`BLOCKED_REAL_DEVICE`。
 - **HEM-P2-059：`OPEN / FAIL_EMULATION 4/4`。** 四viewport每次4条重复key错误、5个相同类别占位标题，failed network request 0；与原缺陷完全一致。修复只需把React key与展示占位解耦，不得补写或批准23个未审核英文来源名称。
 - 本轮没有新增缺陷编号；HEM-P2-044关闭不抵消HEM-P2-059及开放P1，也不改变`BLOCKED_SOURCE_REVISION`或真实设备状态。
+
+## 2026-07-26 Production `9b7fcd0` 第 30 轮状态更新
+
+- **HEM-P2-044：维持`RESOLVED_LOCAL_QA / PASS_EMULATION 2/2`。** 两个移动viewport四个触控目标仍均至少44 CSS px；键盘、焦点、Escape、reduced-motion与浏览器语音降级四viewport8/8通过。
+- 三个主要页面在四viewport共12次axe扫描无serious/critical违规；最终console error/warning和应用HTTP失败均为0。开发态HMR导航取消不记产品缺陷。
+- 本轮没有新增缺陷编号。真实手机软键盘、safe-area、物理触控和真实屏幕阅读器仍`BLOCKED_REAL_DEVICE`；浏览器合成语音结果不代表云TTS通过。

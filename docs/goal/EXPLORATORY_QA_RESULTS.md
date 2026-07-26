@@ -1,7 +1,7 @@
 # 探索式 QA 执行结果
 
-状态：长期执行中；当前 Preview/本地自动化已恢复并扩展，仍有 HEM-P1-045/046、HEM-P2-044、Pages 部署不匹配、真机和医学阻塞，不得视为最终生产验收。
-当前 Production 基线：`9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。第29轮提交前 QA HEAD：`103312d0691de0c95959d21d65a498c52420aba6`；最终 QA HEAD 以本轮报告提交与远程同步状态为准。
+状态：长期执行中；当前 Preview/本地自动化已恢复并扩展，仍有开放P1、HEM-P2-059/062、Pages部署不匹配、真机和医学阻塞，不得视为最终生产验收。
+当前 Production 基线：`9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。第30轮提交前 QA HEAD：`246823327cbb089e5e1a65c859bb360e1d29931d`；最终 QA HEAD 以本轮报告提交与远程同步状态为准。
 
 ## 基线核验
 
@@ -524,3 +524,11 @@ Patient Session 报告记录 295 次 `unsafe_deterministic_answer` source-cell �
 - 四viewport最终8/8：HEM-P1-047 4/4状态本地化且异常优先，HEM-P1-048 4/4英文报告卡/医嘱名/返回字段无CJK；每个英文页面保留1个预期“中文”语言切换入口。均标`PASS_EMULATION`。
 - 相邻HEM-P2-059在6个英文浏览器运行中每次仍有16条`Physical examination`重复key，其他console error 0、HTTP失败0；属于既有OPEN缺陷，不新增ID。
 - 两次无效QA运行已排除：首次因沙箱无法读取既有postcss junction显示Next构建overlay；第二次旧oracle把“中文”语言切换按钮误计为内容泄漏。两者均未作为产品失败。HEM-P1-047/048更新为`RESOLVED_LOCAL_QA / PASS_EMULATION`，28/23人工阻塞不变。
+
+## 2026-07-26 第 30 轮：`9b7fcd0` 可访问性、键盘与语音降级
+
+- `accessibility-voice-controls`四viewport共8/8通过：Shift+Enter换行、Enter单次发送、Tab/Shift+Tab焦点、至少2px可见焦点环、Escape关闭、reduced-motion及语音暂停/恢复/停止/重播/快速重复播放/切病例取消/刷新复位均满足合同。
+- axe对`/`、`/cases/`、`/cases/P008/`执行4×3=12次扫描，serious/critical违规0，四个项目4/4通过。最终console error/warning均0，应用API与页面HTTP失败0。
+- HEM-P2-044两个移动viewport继续2/2通过：四个目标均至少44 CSS px，分别为`106×44、44×44、75×44、44×44`；状态保持`RESOLVED_LOCAL_QA / PASS_EMULATION`。
+- 1440×900网络摘要中1个开发态webpack HMR hot-update请求在导航时`ERR_ABORTED`，不属于应用API或页面失败。初始axe运行因QA探针漏装既有安全fixture产生本地API 404噪声，修正QA脚本后完整重跑，未计产品失败。
+- 本轮无新增P0/P1/P2。没有真实设备、屏幕阅读器或云TTS证据，相关结论继续`BLOCKED_REAL_DEVICE`或`NOT_CLAIMED`；没有修改业务代码、`data/**`、医学事实或审批状态。

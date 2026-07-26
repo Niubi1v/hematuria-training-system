@@ -1,6 +1,6 @@
 # 探索式黑盒 QA 长期计划
 
-状态：执行中；当前 Production Goal 与运行时证据基线 `70ea9b3c7b31e11a84878de5c277cac60f35481c`；QA 交付分支 `codex/hematuria-exploratory-qa`。
+状态：执行中；当前 Production Goal 与运行时证据基线 `9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`；QA 交付分支 `codex/hematuria-exploratory-qa`。
 边界：仅修改测试、只读审计工具、QA 文档与证据，不修改业务实现或医学数据。
 
 ## 启动门禁
@@ -271,3 +271,10 @@ console 文本对 Authorization、Cookie、签名、token、secret 和 API key �
 - 更新QA双语审计以区分中文源数据与英文公开投影；23个未审核英文名称必须fail-closed，28项缺元数据必须保留待审核，不能要求全部257结果经英文公开handler释放。
 - 用1440×900、1280×720、390×844、360×800复测HEM-P1-047/048，自动结果仅标`PASS_EMULATION`；保留代表截图和最小聚合，不提交重复trace、录像、HTML或全量截图。
 - HEM-P2-059仍由重复key console证据独立OPEN；下一范围避免重复已稳定的Data Agent 047/048，继续选择无需人工医学裁决或外部权限的工程合同。
+
+## 2026-07-26 第 30 轮 `9b7fcd0` 可访问性、键盘与语音降级复测
+
+- 在四个固定viewport执行键盘发送/换行、Tab/Shift+Tab焦点、Escape关闭、可见焦点环、reduced-motion与浏览器语音降级合同；移动viewport同步复核HEM-P2-044四个触控目标。
+- 对首页、病例目录和P008训练页在每个viewport执行axe serious/critical扫描。探针复用既有安全fixture，不发真实agent请求，不保存问答或病例事实。
+- 自动viewport结果只标`PASS_EMULATION`；真实手机软键盘、动态地址栏、物理safe-area、屏幕阅读器和物理触控继续`BLOCKED_REAL_DEVICE`，浏览器合成语音不外推为云TTS通过。
+- 下一轮继续从长期Goal尚未完成且不依赖医学裁决、外部权限或真实设备的范围中选择；已稳定通过的本轮合同不做无变化重复回归。

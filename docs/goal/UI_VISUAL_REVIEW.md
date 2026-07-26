@@ -218,3 +218,9 @@
 - 英文页面唯一CJK控件为预期“中文”语言切换入口；报告卡、医嘱显示名、返回字段和其他控件均无CJK。代表桌面截图刷新，重复截图、trace、录像和HTML仅本机保留。
 - 英文查体安全占位仍造成`Physical examination`重复React key：6个英文运行各16条，HEM-P2-059保持`OPEN / FAIL_EMULATION`。页面HTTP失败0，其他console error 0。
 - 首次沙箱依赖访问失败和旧语言按钮oracle均属于QA基础设施，不计产品结果。真实设备、软键盘、动态地址栏和safe-area仍`BLOCKED_REAL_DEVICE`。
+
+## 2026-07-26 `9b7fcd0` 第 30 轮可访问性与语音控制
+
+- 四固定viewport的键盘、焦点、reduced-motion和浏览器语音控制8/8通过；首页、病例目录与P008训练页共12次axe扫描无serious/critical违规，标`PASS_EMULATION`。
+- 两个移动viewport的HEM-P2-044触控尺寸继续为`106×44、44×44、75×44、44×44`，不足44px目标0。没有失败帧，故不新增重复截图；脱敏聚合和可重建测试足以支持结论。
+- 最终console error/warning和应用HTTP失败均为0；一个开发态HMR请求在导航时取消不属于产品失败。真实手机软键盘、动态地址栏、safe-area、物理触控与屏幕阅读器仍`BLOCKED_REAL_DEVICE`。

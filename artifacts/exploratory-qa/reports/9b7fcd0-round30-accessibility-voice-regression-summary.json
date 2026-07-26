@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-26",
+  "productionBaseline": "9b7fcd0d975533c7c6eda5614ca3b2978c9dce55",
+  "qaBranch": "codex/hematuria-exploratory-qa",
+  "qaHeadBeforeCommit": "246823327cbb089e5e1a65c859bb360e1d29931d",
+  "scope": "keyboard, focus, reduced-motion, browser speech fallback, touch targets, and serious/critical accessibility checks",
+  "status": "PASS_EMULATION",
+  "runs": {
+    "accessibilityVoiceControls": {
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0,
+      "viewports": [
+        "1440x900",
+        "1280x720",
+        "390x844",
+        "360x800"
+      ],
+      "assertions": [
+        "Shift+Enter inserts a newline",
+        "Enter sends exactly once",
+        "visible focus indicator is at least 2 CSS px",
+        "Tab and Shift+Tab move focus",
+        "Escape closes the voice settings dialog",
+        "reduced-motion disables automatic scroll animation and reduces transition duration to at most 1 ms",
+        "browser speech fallback supports pause, resume, stop, replay, rapid repeated play, case-switch cancellation, and refresh reset"
+      ]
+    },
+    "axePrimaryPages": {
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "routesPerViewport": 3,
+      "pageScans": 12,
+      "seriousOrCriticalViolations": 0,
+      "routes": [
+        "/",
+        "/cases/",
+        "/cases/P008/"
+      ]
+    }
+  },
+  "mobileTouchTargetsCssPx": {
+    "390x844": {
+      "voiceSettings": "106x44",
+      "dialogClose": "44x44",
+      "voiceTest": "75x44",
+      "voiceStop": "44x44",
+      "below44Count": 0
+    },
+    "360x800": {
+      "voiceSettings": "106x44",
+      "dialogClose": "44x44",
+      "voiceTest": "75x44",
+      "voiceStop": "44x44",
+      "below44Count": 0
+    }
+  },
+  "diagnostics": {
+    "finalConsoleErrors": 0,
+    "finalConsoleWarnings": 0,
+    "applicationHttpFailures": 0,
+    "excludedNonProductNetworkEvents": [
+      {
+        "count": 1,
+        "kind": "development HMR hot-update request aborted during navigation",
+        "error": "net::ERR_ABORTED"
+      }
+    ],
+    "excludedInvalidRuns": [
+      {
+        "count": 1,
+        "reason": "The initial axe probe omitted the existing safe API fixture and produced local API 404 noise; the QA-only probe was corrected and the complete four-viewport matrix was rerun."
+      }
+    ]
+  },
+  "defectDisposition": {
+    "HEM-P2-044": "RESOLVED_LOCAL_QA / PASS_EMULATION",
+    "realDevice": "BLOCKED_REAL_DEVICE",
+    "cloudTts": "NOT_CLAIMED"
+  },
+  "privacy": {
+    "containsCredentials": false,
+    "containsQuestionsOrAnswers": false,
+    "containsMedicalTruthValues": false,
+    "containsRequestOrAttemptIdentifiers": false
+  },
+  "notes": [
+    "Automated viewport results do not constitute real-device soft-keyboard, dynamic browser chrome, safe-area, screen-reader, or physical touch validation.",
+    "No business code, data, medical facts, or approval state were changed."
+  ]
+}

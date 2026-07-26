@@ -575,6 +575,7 @@ test("visual baseline captures public pages in every required viewport", async (
 
 test("primary practice pages have no serious accessibility violations in every required viewport", async ({ browser }, testInfo) => {
   await withEvidence(browser, testInfo, "accessibility-primary-pages", async ({ page }) => {
+    await installFullWorkflowApi(page);
     for (const route of ["/", "/cases/", "/cases/P008/"]) {
       await page.goto(route);
       const results = await new AxeBuilder({ page }).analyze();

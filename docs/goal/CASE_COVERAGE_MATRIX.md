@@ -363,3 +363,15 @@
 | 英文查体分类key | 6个英文运行各16条重复key | FAIL_EMULATION / HEM-P2-059 |
 
 - HEM-P1-047/048工程列更新为通过，但所有病例的医学/来源审核列不变；135个公开安全结果不能外推为257项英文审核完成。
+
+## Production `9b7fcd0` 第 30 轮可访问性与语音增量
+
+| 场景 | 覆盖 | 状态 |
+| --- | --- | --- |
+| 键盘与焦点 | 4 viewport；Enter、Shift+Enter、Tab、Shift+Tab、Escape、可见焦点环 | PASS_EMULATION |
+| 浏览器语音降级 | 4 viewport；暂停、恢复、停止、重播、快速重复播放、切病例取消、刷新复位 | PASS_EMULATION |
+| axe主要页面 | 3路由×4 viewport=12次扫描；serious/critical违规0 | PASS_EMULATION |
+| 移动触控目标 | `390×844/360×800`，四目标均至少44 CSS px | PASS_EMULATION / HEM-P2-044 |
+| 真实设备层 | 软键盘、动态地址栏、safe-area、物理触控、屏幕阅读器 | BLOCKED_REAL_DEVICE |
+
+- 本轮使用安全fixture，不触发Patient/Data Agent医学内容判断；P001–P042病例覆盖、医学阻塞及来源修订状态均不因本轮UI合同改变。
