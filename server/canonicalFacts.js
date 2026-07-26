@@ -304,7 +304,10 @@ function buildCanonicalPatientFacts(caseId, caseSlots, priorityMatches, legacyMa
     if (blockedSlotIds.has(slotId)) return pendingMedicalReply(slotId, language);
     if (slotId === "dysuria" && prioritySourceSlots.has(slotId)) return naturalDysuriaAnswer(factValues.dysuria, language);
     if (slotId === "hematuria_phase" && prioritySourceSlots.has(slotId)) {
-      return naturalPhaseAnswer(phaseValue, language, priorityMatches.map((item) => item.intentKey), question);
+      return priorityMatches
+        .filter((item) => item.sourceSlotId === slotId)
+        .map((item) => naturalPhaseAnswer(phaseValue, language, [item.intentKey], question))
+        .join("\n");
     }
     if (prioritySourceSlots.has(slotId)) {
       return priorityMatches
@@ -320,7 +323,10 @@ function buildCanonicalPatientFacts(caseId, caseSlots, priorityMatches, legacyMa
     const slotAnswer = slotId === "dysuria" && prioritySourceSlots.has(slotId)
       ? naturalDysuriaAnswer(factValues.dysuria, language)
       : slotId === "hematuria_phase" && prioritySourceSlots.has(slotId)
-      ? naturalPhaseAnswer(phaseValue, language, priorityMatches.map((item) => item.intentKey), question)
+      ? priorityMatches
+        .filter((item) => item.sourceSlotId === slotId)
+        .map((item) => naturalPhaseAnswer(phaseValue, language, [item.intentKey], question))
+        .join("\n")
       : prioritySourceSlots.has(slotId)
       ? priorityMatches
         .filter((item) => item.sourceSlotId === slotId)
@@ -338,7 +344,7 @@ function buildCanonicalPatientFacts(caseId, caseSlots, priorityMatches, legacyMa
           sourceSlotId: slotId,
           factState: factStateFromBoolean(factValues[item.intentKey], reason),
           renderedAnswer: slotId === "hematuria_phase"
-            ? slotAnswer
+            ? naturalPhaseAnswer(phaseValue, language, [item.intentKey], question)
             : intents.length === 1
             ? slotAnswer
             : naturalBooleanAnswer(item.intentKey, factValues[item.intentKey], language),
