@@ -740,3 +740,13 @@
 - 4/4 Codex官方`quick_validate.py`通过，4/4`openai.yaml`结构与界面字段校验通过；37个引用pnpm脚本与16个引用文件/目录全部存在。
 - repository secret scan覆盖365个候选/跟踪文件及可达文本历史并通过；`data/**`零差异；clean gate通过。该变更不进入运行时bundle，因此按比例门禁未重复运行Playwright或42例矩阵。
 - 下一步：提交本集成记录，fetch确认远端领先0后普通push；PR #1保持Draft，不合并main、不部署Production。
+
+### HEM-P1-043-R4 第一阶段与Patient session初始化轮换竞态闭环（2026-07-26）
+
+- 起点及真实复现均为绿色Production `9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。commit-specific Preview health精确返回该SHA；测试入口是Vercel Preview而非`main@5a3ad119`旧GitHub Pages。
+- P003零轮提交的真实时间线为`init-attempt=200`、`stage-feedback=200`并进入第二阶段，随后并发中的首个`/api/session/init/`因阶段动作轮换training token而返回`409 stale_attempt_token`。旧客户端不恢复Patient session，可能继续显示准备中/错误状态；阶段提交本身没有失败或重复计分。
+- 最小修复仅对session-init的精确`stale_attempt_token`错误生效：先等待现有`trainingActionQueueRef`完成，再读取已轮换的服务端签名token，并以同一session-init幂等键重试一次。未关闭或放宽session、attempt、stage、case、language、mode、origin、签名或token校验。
+- 新增浏览器合同证明：一次合法阶段提交仍为1个`stage-feedback`、1个request ID、1个timeline submit；session-init时间线为一次409后一次200。Redis/attempt store首次503时提交按钮保持不可用，不发送必败stage-feedback；显式恢复后仅初始化并提交一次。
+- 本地相关Playwright为desktop 15/15、mobile 15/15；session、28项attempt身份、training API/security、API recovery、代表七阶段、attempt-store/health、TypeScript、ESLint均通过。Vercel同源构建82/82、26个bundle资产及365文件/历史secret scan通过，`data/**`零差异。
+- 代码提交`2923e8a3dc065c06edf0679ad9b87f96f07c88e0`已普通push。Actions run `30192739538`在Node 22.14.0完成95 passed/7 intentional skipped/0 failed，82页build、bundle、secret与clean gate均success；Vercel deployment `5608228884`绑定相同SHA并success。
+- 同SHA真实受保护Preview黑盒8/8：P003零轮的session-init按`409→200`恢复；P001中文/英文、双向切换、刷新、快速双击、第二阶段、DeepSeek `live_ai`和history-log均通过。保护凭据输出扫描通过且跨origin注入0；PR #1继续Open/Draft，未合并main、未部署Production。
