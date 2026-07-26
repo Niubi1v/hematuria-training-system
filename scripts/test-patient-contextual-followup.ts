@@ -26,6 +26,7 @@ const { initSession, generatePatientAnswer } = require("../server/patientSession
     fallbackReason: string;
     matchedSlotIds?: string[];
     safetyFlags?: string[];
+    contextResolution?: { inherited: boolean; reason: string; sourceIntent: string };
   }>;
 };
 
@@ -123,6 +124,65 @@ async function main() {
       conversationHistory: [],
       language: "en"
     });
+
+    const p005Zh = await initSession({ caseId: "P005", mode: "training", language: "zh" });
+    const ellipsisHistory = [
+      { role: "student", text: "哪里不舒服？" },
+      { role: "patient", text: "我小便红了几天。" }
+    ];
+    const durationEllipsis = await expectLive({
+      sessionId: p005Zh.sessionId,
+      caseId: "P005",
+      studentInput: "多少天？",
+      conversationHistory: ellipsisHistory,
+      language: "zh"
+    });
+    assert.equal(durationEllipsis.contextResolution?.reason, "contextual_duration");
+    assert.ok(durationEllipsis.matchedSlotIds?.includes("hematuria_onset"));
+    assert.doesNotMatch(durationEllipsis.replyText, /不太清楚|不知道/, "known coarse duration must not be downgraded to unknown");
+
+    const painEllipsis = await expectLive({
+      sessionId: p005Zh.sessionId,
+      caseId: "P005",
+      studentInput: "那疼吗？",
+      conversationHistory: ellipsisHistory,
+      language: "zh"
+    });
+    assert.equal(painEllipsis.contextResolution?.reason, "contextual_pain");
+    assert.ok(painEllipsis.matchedSlotIds?.includes("dysuria"));
+
+    const courseEllipsis = await expectLive({
+      sessionId: p005Zh.sessionId,
+      caseId: "P005",
+      studentInput: "是一直这样吗？",
+      conversationHistory: ellipsisHistory,
+      language: "zh"
+    });
+    assert.equal(courseEllipsis.contextResolution?.reason, "contextual_course");
+    assert.ok(courseEllipsis.matchedSlotIds?.includes("hematuria_frequency"));
+
+    const previousEllipsis = await expectLive({
+      sessionId: p005Zh.sessionId,
+      caseId: "P005",
+      studentInput: "那以前有过吗？",
+      conversationHistory: ellipsisHistory,
+      language: "zh"
+    });
+    assert.equal(previousEllipsis.contextResolution?.reason, "contextual_previous_episode");
+    assert.ok(previousEllipsis.matchedSlotIds?.includes("hematuria_frequency"));
+
+    const correctionEllipsis = await expectLive({
+      sessionId: p005Zh.sessionId,
+      caseId: "P005",
+      studentInput: "为什么前面说不痛，现在又说不舒服？",
+      conversationHistory: [
+        { role: "student", text: "小便时痛不痛？" },
+        { role: "patient", text: "有，尿的时候会痛。" }
+      ],
+      language: "zh"
+    });
+    assert.equal(correctionEllipsis.contextResolution?.reason, "contextual_correction");
+    assert.ok(correctionEllipsis.matchedSlotIds?.includes("dysuria"));
     const p037Duration = await expectLive({
       sessionId: p037.sessionId,
       caseId: "HX-ADD-025",
@@ -221,7 +281,7 @@ async function main() {
     });
     assert.match(recovered.replyText, /clarif|which part|what.*mean/i, "a later provider success should recover from rule fallback");
 
-    assert.equal(providerCalls, 15, "each legal turn should make exactly one provider request, including one failed call");
+    assert.equal(providerCalls, 20, "each legal turn should make exactly one provider request, including one failed call");
     console.log("Patient contextual follow-up routing passed: correction, clarification, P037/P038 context, fallback, and recovery.");
   } finally {
     globalThis.fetch = originalFetch;

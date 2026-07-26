@@ -65,7 +65,8 @@ function answerPlanFromRendered({
   factState,
   renderedAnswer,
   unknownReason,
-  clauseStatus = "matched"
+  clauseStatus = "matched",
+  matchIndex = Number.MAX_SAFE_INTEGER
 }) {
   const answer = normalizeSentence(renderedAnswer);
   const separator = answer.search(/[，,]/);
@@ -81,6 +82,7 @@ function answerPlanFromRendered({
     detail,
     unknownReason: unknownReason || reasonCodeForState(factState),
     clauseStatus,
+    matchIndex,
     renderedAnswer: answer
   };
 }

@@ -103,7 +103,8 @@ function matchStructuredFacts(caseData, question, language = "zh") {
         sourceSlotId: "MED_ALL",
         factState,
         renderedAnswer: medicationAnswer,
-        unknownReason: reasonCodeForState(factState)
+        unknownReason: reasonCodeForState(factState),
+        matchIndex: clause.index
       }));
       continue;
     }
@@ -129,7 +130,8 @@ function matchStructuredFacts(caseData, question, language = "zh") {
       factState,
       renderedAnswer,
       unknownReason: reasonCodeForState(factState),
-      clauseStatus: blocked ? "blocked_medical" : "matched"
+      clauseStatus: blocked ? "blocked_medical" : "matched",
+      matchIndex: clause.index
     }));
   }
   if (!answers.length) return null;

@@ -206,14 +206,32 @@ async function main() {
             }
           }
           if (conflictSlots.length) {
-            const isolated = first.fallbackReason === BILINGUAL_CONFLICT_REASON
-              && first.answerSource === "pending_medical_review"
-              && (first.matchedSlotIds || []).length === 0;
-            if (!isolated) failures.push(`${caseData.id}:${probe.id}:${language}:conflict-not-isolated`);
-            continue;
+            const expectedAllowedSlots = expectedSlots.filter((slotId) => !conflictSlots.includes(slotId));
+            if (expectedAllowedSlots.length) {
+              if (first.fallbackReason !== "compound_question_partial_medical_quarantine") {
+                failures.push(`${caseData.id}:${probe.id}:${language}:partial-conflict-reason`);
+              }
+              const quarantined = unique(first.quarantinedSlotIds || []);
+              if (JSON.stringify(quarantined) !== JSON.stringify(unique(conflictSlots))) {
+                failures.push(`${caseData.id}:${probe.id}:${language}:partial-conflict-slots`);
+              }
+              for (const slotId of conflictSlots) {
+                const outcome = (first.clauseOutcomes || []).find((item: { sourceSlotId: string }) => item.sourceSlotId === slotId);
+                if (outcome?.status !== "blocked_medical") {
+                  failures.push(`${caseData.id}:${probe.id}:${language}:missing-blocked-outcome:${slotId}`);
+                }
+              }
+            } else {
+              const isolated = first.fallbackReason === BILINGUAL_CONFLICT_REASON
+                && first.answerSource === "pending_medical_review"
+                && (first.matchedSlotIds || []).length === 0;
+              if (!isolated) failures.push(`${caseData.id}:${probe.id}:${language}:conflict-not-isolated`);
+              continue;
+            }
           }
           const actualSlots = unique(first.matchedSlotIds || []);
-          const missing = expectedSlots.filter((slotId) => !actualSlots.includes(slotId));
+          const effectiveExpectedSlots = expectedSlots.filter((slotId) => !conflictSlots.includes(slotId));
+          const missing = effectiveExpectedSlots.filter((slotId) => !actualSlots.includes(slotId));
           if (missing.length) {
             failures.push(`${caseData.id}:${probe.id}:${language}:dropped:${missing.join(",")}:reason=${first.fallbackReason || "none"}:tooLong=${Boolean(first.filter?.tooLong)}:shape=${Boolean(first.filter?.hasBulletShape)}`);
           }
@@ -228,6 +246,21 @@ async function main() {
         }
       }
     }
+
+    const orderedSession = await initSession({ caseId: "P005", mode: "compound-order-test", language: "zh" });
+    const ordered = await generatePatientAnswer({
+      sessionId: orderedSession.sessionId,
+      caseId: "P005",
+      studentInput: "尿频、尿急、尿痛有没有，以前得过结石吗？",
+      conversationHistory: [],
+      language: "zh"
+    });
+    const orderedIntents = (ordered.clauseOutcomes || []).map((item: { intent: string }) => item.intent);
+    assert.deepEqual(
+      orderedIntents.filter((intent: string) => ["urinary_frequency", "urinary_urgency", "dysuria", "stoneHistory"].includes(intent)),
+      ["urinary_frequency", "urinary_urgency", "dysuria", "stoneHistory"],
+      "compound clause outcomes must preserve source order"
+    );
   } finally {
     globalThis.fetch = originalFetch;
     console.warn = originalWarn;
