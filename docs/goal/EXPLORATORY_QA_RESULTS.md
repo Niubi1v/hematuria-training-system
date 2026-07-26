@@ -493,3 +493,11 @@ Patient Session 报告记录 295 次 `unsafe_deterministic_answer` source-cell �
 - HEM-P1-055服务矩阵双跑通过：42例、84 sessions、1,344查体检查、392结果检查、336阶段权限探针、58前置场景，失败0。`1440×900/390×844` UI 2/2满足三次order、报告卡1→2、重试非重复、重复警告0；HEM-P2-056同轮React key error 0，更新为`RESOLVED_LOCAL_QA / PASS_EMULATION`。两项问题级Preview未运行。
 - HEM-P1-057在当前基线仍为`FAIL_LOCAL_QA / FAIL_PREVIEW`。合成provider双跑每轮6/6调用provider并暴露1个blocked slot/fact；Preview复合批双跑每轮10/35出现相同10组治理前元数据，HTTP、history与回答正文泄露失败均0。代码审计显示provider成功分支返回治理前`matchedSlotIds/matchedFacts`，而fallback使用可收集投影。
 - 三次QA基础设施误差（旧重复告警断言、summary变量缺失、旧矩阵治理期望）均在正式结果前修正并排除，不计产品失败。当前有效结论没有新增缺陷ID或新增P0/P1/P2；HEM-P1-057保持OPEN，仍不建议进入最终教师人工审阅。
+
+## 2026-07-26 第 26 轮：`9b7fcd0` HEM-P1-058真实Preview复测
+
+- 本地Patient上下文路由连续2/2通过；安全投影仍为45个已审核回答、69个治理unknown和12个未审核病史均保持收集边界，18项双语冲突继续隔离。`data/**`未修改。
+- 精确Preview开放式主诉两轮各6个全新P037英文session：第一轮2/6表达`yesterday`、4/6遗漏；第二轮1/6表达`yesterday`、5/6遗漏。合计9/12失败、错误其他时长0。
+- 12/12开放式回答均为DeepSeek `live_ai`、无fallback；agent-chat/history-log各12/12为200且一一对应，401/403/429/5xx、语言串线、教师元数据、结构字段和跨origin保护请求均0。
+- 显式时长控制两轮共6/6正确表达一天，且同为live_ai、单agent/单history、泄露0。这证明权威时长投影已存在，但开放式provider输出未稳定保留完整允许事实。
+- HEM-P1-058保持`OPEN / FAIL_PREVIEW`，没有新增缺陷ID或新增P0/P1/P2。一次错误Playwright项目名在收集前退出，应用请求0，不计产品结果。原始Preview输出经安全wrapper扫描后删除，未保存问答或凭据。

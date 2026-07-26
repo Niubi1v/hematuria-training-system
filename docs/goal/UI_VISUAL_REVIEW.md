@@ -195,3 +195,9 @@
 - P001第2阶段在`1440×900`和`390×844`执行“目标失败→补齐前置→重试”，两viewport均显示报告卡1→2；重试没有重复医嘱提示，三次order均为单请求，HEM-P1-055标`PASS_EMULATION`。
 - 同一两次运行ReportCard React key error、意外console error和network failure均为0，HEM-P2-056更新为`RESOLVED_LOCAL_QA`。本轮没有提交重复截图或大trace，测试与脱敏聚合足以重建。
 - 自动viewport不替代真实手机、软键盘或safe-area；本轮Preview复合问句只做数据合同采集，不形成新的视觉结论。
+
+## 2026-07-26 `9b7fcd0` 第 26 轮P037 Preview界面边界
+
+- 18个P037英文Preview问答操作均通过桌面Chromium完成单次发送与单次history-log；没有观察到请求倍增、页面崩溃或新的布局/状态堆叠问题。
+- HEM-P1-058属于live_ai内容保真缺陷，不新增视觉缺陷。为避免保存真实患者回答，本轮不提交截图、trace、录像或HTML报告；安全wrapper扫描后删除原始runner输出。
+- 本轮没有移动viewport或真机证据；既有`BLOCKED_REAL_DEVICE`边界不变。

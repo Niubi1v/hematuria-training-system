@@ -243,3 +243,10 @@ console 文本对 Authorization、Cookie、签名、token、secret 和 API key �
 - Preview仅用安全Automation Bypass执行P001–P007中文复合病史35次×2轮，并在测试内绑定完整deployment SHA；不保存问题、回答、token、header或请求标识。HEM-P1-052/055没有取得问题级Preview证据，必须保持`NOT_RUN`，不得由本地结果代替。
 - HEM-P1-057当前基线仍需优先修复：provider调用前阻止`unresolvedReason`待审核事实，provider成功结果只能返回`collectableSlotIds/collectableFacts`。修复回归需同时覆盖三类双语最小探针和当前10组复合问句，不得改变`needs_revision`或批准病史事实。
 - HEM-P1-055及HEM-P2-056仅在Production提供相关运行时变化后再定向重跑；下一独立范围继续从尚未复测的开放工程项中选择，避免重复本轮已稳定双跑的本地矩阵。医学、来源、Preview故障注入和真机阻塞继续分层。
+
+## 2026-07-26 第 26 轮 `9b7fcd0` HEM-P1-058定向复测与下一顺序
+
+- P037英文开放式主诉按缺陷合同使用6个全新Preview session独立双跑；每次均要求精确deployment SHA、DeepSeek live_ai、单agent/单history及零语言/教师/结构泄露。
+- 增加3-session显式时长控制并双跑，用于区分权威时长投影与开放式回答保真；控制只验证现有“一天”来源语义，不新增或裁决医学事实。
+- HEM-P1-058仍OPEN。后续修复验收必须让开放式主诉至少6/6保留`1 day ago/yesterday`等价语义，同时保持显式控制、live_ai、history和泄露边界；不得用rule fallback替代。
+- 下一独立范围继续避开HEM-P1-057/058已稳定复现路径，优先选择当前Production尚未独立复测的开放工程合同；只有相关运行时代码更新后才重跑这两项。

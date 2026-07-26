@@ -315,3 +315,16 @@
 | 非终态报告卡React key | 两viewport key error 0、console/network异常0 | RESOLVED_LOCAL_QA；HEM-P2-056 |
 
 - HEM-P1-052/055/056没有当前SHA的问题级Preview复测，不能由本地或自动viewport结果代替。HEM-P1-054的Preview仅覆盖P001–P007中文5组；其合法子句完整性与HEM-P1-057治理泄露必须分别记录。
+
+## Production `9b7fcd0` 第 26 轮P037英文病程增量
+
+| 场景 | 结果 | 状态 |
+| --- | --- | --- |
+| 本地P037/P038上下文与fallback恢复 | 连续2/2通过 | PASS_LOCAL_QA |
+| Patient安全投影 | 45 approved、69 governed unknown、12 unreviewed history | PASS_LOCAL_QA |
+| 双语医学冲突隔离 | 18/18保持不收集、不改真值 | PASS_LOCAL_QA / BLOCKED_MEDICAL |
+| P037英文开放式主诉 | 两轮12 sessions，3/12一天等价、9/12遗漏 | FAIL_PREVIEW；HEM-P1-058 |
+| P037英文显式时长控制 | 两轮6/6保留一天 | PASS_PREVIEW_CONTROL |
+| Preview请求与泄露合同 | 18 agent/18 history、HTTP失败0、泄露0 | PASS_PREVIEW_ADJACENT |
+
+- 开放式失败与显式控制必须同时解释：控制通过不能关闭用户主诉路径，开放式遗漏也不能写成权威事实缺失或医学待裁决。

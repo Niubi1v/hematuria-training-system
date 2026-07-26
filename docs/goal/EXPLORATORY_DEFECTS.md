@@ -436,19 +436,19 @@
 ## HEM-P1-058：P037英文live_ai开放式主诉遗漏权威“1 day ago”病程
 
 - 严重级别 / 状态：P1 / OPEN；`FAIL_PREVIEW`。
-- 基线：`77815862a0abebff67b8d958f66944a0e11b068f`。
+- 首次基线：`77815862a0abebff67b8d958f66944a0e11b068f`；当前复测基线：`9b7fcd0d975533c7c6eda5614ca3b2978c9dce55`。
 - 页面和路径：P037 Patient Agent，`POST /api/agent-chat/`与`history-log`。
 - 语言 / viewport：英文；Preview API黑盒，viewport N/A。
 - 操作步骤：每次创建全新P037英文session → 询问开放式主诉/发病经过 → 检查是否包含“1 day ago/yesterday”等等价一天病程 → 核对source、fallback与history。
 - 预期：英文回答自然表达权威一天病程，且不泄露未问病史。
-- 实际：6/6回答均未出现一天病程等价语义；全部为DeepSeek live_ai、无fallback，agent/history均200。本地规则中英2/2及Preview中文1/1正确。
-- 复现：6个独立英文Preview session，6/6；不是同一会话缓存或fallback。
+- 实际：首次6/6回答均未出现一天病程等价语义。当前两轮各6个全新session分别4/6、5/6遗漏，合计9/12；其余3/12只以`yesterday`表达一天，错误其他时长0。12/12均为DeepSeek live_ai、无fallback、agent/history 200。显式询问发现时间的Preview控制双跑共6/6正确表达一天，本地上下文合成provider双跑通过。
+- 复现：当前开放式主诉两轮共12个独立英文Preview session，9/12失败；显式时长控制6/6通过。不是缓存、fallback、HTTP或权威时长投影缺失。
 - AI来源：DeepSeek live_ai。
 - 状态时间线：session成功 → agent-chat 200/live_ai → 回答缺病程 → history-log 200。
-- HTTP / 耗时：agent-chat 6/6为200，history-log 6/6为200；无401/403/5xx。本轮不保留回答正文、request ID或逐请求耗时。
+- HTTP / 耗时：当前开放式12/12及显式控制6/6的agent-chat、history-log均200；每项单agent/单history，无401/403/429/5xx。本轮不保留回答正文、request ID或逐请求耗时。
 - console/network摘要：fallback 0，教师/结构/跨病例/语言泄露0；凭据字段未输出。
-- 最小证据：`tests/preview/preview-stability.spec.mjs`中的`@preview-p037-one-day-duration`及脱敏聚合`7781586-history-medical-qa-summary.json`。
-- 建议方向：在允许事实构造及provider输出保真检查中对已审核duration建立英文等价语义门禁；不能用rule fallback掩盖provider成功后的遗漏。
+- 最小证据：`tests/preview/preview-stability.spec.mjs`中的`@preview-p037-one-day-duration`、`@preview-p037-explicit-duration-control`，脱敏聚合`7781586-history-medical-qa-summary.json`及`artifacts/exploratory-qa/reports/9b7fcd0-round26-hem-p1-058-regression-summary.json`。
+- 根因定位 / 建议方向：显式控制6/6证明权威一天时长与canonical投影存在；开放式live_ai仍9/12遗漏，问题定位于provider对完整`currentAllowedAnswer`的时间表达保真不足。在provider输出验收中校验已审核duration等价语义；不能修改病例时长，也不能用rule fallback掩盖provider成功后的遗漏。
 - 医学专家裁决：否；现有权威值已明确，本缺陷不新增或批准医学事实。
 
 ## HEM-P2-059：英文查体分类安全占位折叠为重复React key

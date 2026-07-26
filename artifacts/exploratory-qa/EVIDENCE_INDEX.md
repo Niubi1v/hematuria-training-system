@@ -453,3 +453,17 @@ SHA-256：
 - 聚合不保存问题、回答、病例事实、request/attempt ID、header、Cookie、token、签名或环境值。Preview raw在安全wrapper对实际凭据字节和敏感字段扫描通过后删除；只保留无正文计数。
 - `9b7fcd0-r25*`定向流式/解包扫描覆盖24个文件、314个ZIP条目和42,202,653字节；`9b7fcd0-round25*`聚合另扫描1个文件、4,190字节；两组敏感值命中均为0。暂存14个文件及完整可达Git文本历史扫描命中0。
 - 通用repository candidate scanner仍只对5个历史未跟踪大trace按大小上限fail-closed（4个ZIP entry过大、1个ZIP文件过大），没有输出内容命中；这些文件不在受控树或本轮暂存范围，且不进入Git。
+
+## Production `9b7fcd0` 第 26 轮HEM-P1-058证据
+
+| 证据名称 | 对应测试或缺陷 | 文件路径 | 文件大小 | 是否提交 Git | 未提交原因 | 本机保留位置 |
+| --- | --- | --- | ---: | --- | --- | --- |
+| 第26轮脱敏聚合 | HEM-P1-058开放式失败与显式控制 | `artifacts/exploratory-qa/reports/9b7fcd0-round26-hem-p1-058-regression-summary.json` | 提交后记录 | 是 | — | 仓库路径 |
+| P037 Preview最小测试 | 6-session开放式主诉、3-session显式控制 | `tests/preview/preview-stability.spec.mjs` | 整文件 | 是 | — | 仓库路径 |
+| 本地上下文与安全投影输出 | P037/P038、45/69/12及18冲突隔离 | 仅终端计数 | 不落盘 | 否 | 可由受控脚本重建 | 本轮终端会话 |
+| 两轮开放式Preview原始输出 | 12个真实live_ai回答 | `test-results/preview-blackbox/` | 0 B | 否 | 安全wrapper扫描后删除；不保留真实回答或请求上下文 | 已安全删除 |
+| 两轮显式控制Preview原始输出 | 6个真实live_ai控制回答 | `test-results/preview-blackbox/` | 0 B | 否 | 安全wrapper扫描后删除；聚合已保留计数 | 已安全删除 |
+| 首次错误项目名运行 | 收集前QA命令错误 | 无应用证据 | 0 B | 否 | 0应用请求、0生成文件，不计产品结果 | 无 |
+
+- 聚合只保留来源、状态和计数，不保存问题、回答、病例事实、request/attempt ID、header、Cookie、token、签名或环境值。
+- `9b7fcd0-round26*`证据扫描覆盖1个文件、3,084字节，敏感值命中0；Preview四次正式运行的runner输出均由安全wrapper扫描后删除。

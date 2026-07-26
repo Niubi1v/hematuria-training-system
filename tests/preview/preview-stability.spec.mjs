@@ -2317,15 +2317,28 @@ test("@preview-history-medical-authority samples corrected and blocked history b
   expect(summary.crossOriginProtectionRequestCount).toBe(0);
 });
 
-test("@preview-p037-one-day-duration remains stable in five English chief-complaint answers", async ({ browser }, testInfo) => {
+test("@preview-p037-one-day-duration remains stable in six English chief-complaint answers", async ({ browser }, testInfo) => {
   test.setTimeout(480_000);
   const samples = [];
-  for (let index = 0; index < 5; index += 1) {
+  let deploymentSha = "";
+  for (let index = 0; index < 6; index += 1) {
     const context = await browser.newContext();
     await context.addInitScript(() => localStorage.removeItem("hematuria-language"));
     let opened;
     try {
       opened = await openReadyCase(context, "P037", "en");
+      if (!deploymentSha) {
+        const health = await opened.page.evaluate(async () => {
+          const response = await fetch("/api/health/");
+          const payload = await response.json();
+          return { status: response.status, deploymentSha: String(payload.deploymentSha || "") };
+        });
+        expect(health.status).toBe(200);
+        deploymentSha = health.deploymentSha;
+        if (process.env.PLAYWRIGHT_EXPECTED_PREVIEW_SHA) {
+          expect(deploymentSha).toBe(process.env.PLAYWRIGHT_EXPECTED_PREVIEW_SHA);
+        }
+      }
       let agentRequestCount = 0;
       let historyLogCount = 0;
       opened.page.on("request", (request) => {
@@ -2365,6 +2378,7 @@ test("@preview-p037-one-day-duration remains stable in five English chief-compla
   }
   const summary = {
     scenario: "preview-p037-one-day-chief-complaint-stability",
+    deploymentSha,
     sampleCount: samples.length,
     exactOneDayAgoCount: samples.filter((sample) => sample.exactOneDayAgo).length,
     yesterdayEquivalentCount: samples.filter((sample) => sample.yesterdayEquivalent).length,
@@ -2391,15 +2405,107 @@ test("@preview-p037-one-day-duration remains stable in five English chief-compla
     contentType: "application/json"
   });
   console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
-  expect(summary.sampleCount).toBe(5);
-  expect(summary.exactOneDayAgoCount + summary.yesterdayEquivalentCount).toBe(5);
+  expect(summary.sampleCount).toBe(6);
+  expect(summary.exactOneDayAgoCount + summary.yesterdayEquivalentCount).toBe(6);
   expect(summary.otherDurationCount).toBe(0);
-  expect(summary.liveAiCount).toBe(5);
+  expect(summary.liveAiCount).toBe(6);
   expect(summary.httpContractFailures).toBe(0);
   expect(summary.requestContractFailures).toBe(0);
   expect(summary.languageLeakCount).toBe(0);
   expect(summary.teacherMetaLeakCount).toBe(0);
   expect(summary.structuredPayloadLeakCount).toBe(0);
+  expect(summary.crossOriginProtectionRequestCount).toBe(0);
+});
+
+test("@preview-p037-explicit-duration-control preserves the governed one-day fact", async ({ browser }, testInfo) => {
+  test.setTimeout(300_000);
+  const samples = [];
+  let deploymentSha = "";
+  for (let index = 0; index < 3; index += 1) {
+    const context = await browser.newContext();
+    await context.addInitScript(() => localStorage.removeItem("hematuria-language"));
+    let opened;
+    try {
+      opened = await openReadyCase(context, "P037", "en");
+      if (!deploymentSha) {
+        const health = await opened.page.evaluate(async () => {
+          const response = await fetch("/api/health/");
+          const payload = await response.json();
+          return { status: response.status, deploymentSha: String(payload.deploymentSha || "") };
+        });
+        expect(health.status).toBe(200);
+        deploymentSha = health.deploymentSha;
+        if (process.env.PLAYWRIGHT_EXPECTED_PREVIEW_SHA) {
+          expect(deploymentSha).toBe(process.env.PLAYWRIGHT_EXPECTED_PREVIEW_SHA);
+        }
+      }
+      let agentRequestCount = 0;
+      let historyLogCount = 0;
+      opened.page.on("request", (request) => {
+        const pathname = new URL(request.url()).pathname;
+        if (pathname === "/api/agent-chat/" && request.method() === "POST" && !safeBody(request).probe) agentRequestCount += 1;
+        if (pathname === "/api/training-action/" && request.method() === "POST" && safeBody(request).action === "history-log") historyLogCount += 1;
+      });
+      const answer = await askLiveQuestion(
+        opened.page,
+        "en",
+        "How long ago was the urine test abnormality first found?",
+        { includeReplyText: true }
+      );
+      const replyText = String(answer.replyText || "");
+      samples.push({
+        run: index + 1,
+        patientStatus: answer.patientStatus,
+        historyStatus: answer.historyStatus,
+        generationSource: answer.generationSource,
+        provider: String(answer.provider || "").toLowerCase(),
+        isFallback: answer.isFallback === true,
+        oneDayDuration: /\b(?:1|one|a) day(?:\s+ago)?\b|\byesterday\b/i.test(replyText),
+        otherDurationDetected: /\b(?:\d+|one|two|three|four|five|six|seven)\s+(?:hours?|days?|weeks?|months?|years?)\b/i.test(replyText)
+          && !/\b(?:1|one|a) day(?:\s+ago)?\b/i.test(replyText),
+        languageLeakDetected: /[\u3400-\u9fff]/u.test(replyText),
+        teacherMetaLeakageDetected: /评分|得分点|教师|标准答案|scor(?:e|ing)|rubric|teacher|standard answer|JSON|system\s*prompt/i.test(replyText),
+        structuredPayloadLeakageDetected: /matchedSlotIds?|matchedFacts?|generationSource|isFallback|caseId|slotId/i.test(replyText),
+        agentRequestCount,
+        historyLogCount,
+        crossOriginProtectionRequests: opened.protection.crossOriginProtectionRequests,
+        responseTextRetained: false
+      });
+    } finally {
+      await opened?.page.close().catch(() => undefined);
+      await context.close().catch(() => undefined);
+    }
+  }
+  const summary = {
+    scenario: "preview-p037-explicit-duration-control",
+    deploymentSha,
+    sampleCount: samples.length,
+    oneDayDurationCount: samples.filter((sample) => sample.oneDayDuration).length,
+    otherDurationCount: samples.filter((sample) => sample.otherDurationDetected).length,
+    liveAiCount: samples.filter((sample) =>
+      sample.generationSource === "live_ai" && sample.provider === "deepseek" && !sample.isFallback
+    ).length,
+    httpContractFailures: samples.filter((sample) => sample.patientStatus !== 200 || sample.historyStatus !== 200).length,
+    requestContractFailures: samples.filter((sample) => sample.agentRequestCount !== 1 || sample.historyLogCount !== 1).length,
+    leakageFailures: samples.filter((sample) =>
+      sample.languageLeakDetected || sample.teacherMetaLeakageDetected || sample.structuredPayloadLeakageDetected
+    ).length,
+    crossOriginProtectionRequestCount: samples.reduce((sum, sample) => sum + sample.crossOriginProtectionRequests, 0),
+    responseTextRetained: false,
+    samples
+  };
+  await testInfo.attach("preview-p037-explicit-duration-control", {
+    body: JSON.stringify(summary, null, 2),
+    contentType: "application/json"
+  });
+  console.log(`PREVIEW_STABILITY_EVIDENCE ${JSON.stringify(summary)}`);
+  expect(summary.sampleCount).toBe(3);
+  expect(summary.oneDayDurationCount).toBe(3);
+  expect(summary.otherDurationCount).toBe(0);
+  expect(summary.liveAiCount).toBe(3);
+  expect(summary.httpContractFailures).toBe(0);
+  expect(summary.requestContractFailures).toBe(0);
+  expect(summary.leakageFailures).toBe(0);
   expect(summary.crossOriginProtectionRequestCount).toBe(0);
 });
 
