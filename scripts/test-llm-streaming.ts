@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 
-const { callLLM } = require("../server/llmClient.runtime.js") as {
+const { callLLM, currentModelName } = require("../server/llmClient.runtime.js") as {
   callLLM: (input: Record<string, unknown>) => Promise<{ text: string; durationMs: number; firstTokenMs?: number }>;
+  currentModelName: (provider: string, baseUrl: string, model: string) => string;
 };
 const { enterProviderCircuit, recordProviderFailure, recordProviderSuccess, resetMemoryProviderCircuitStore } = require("../server/providerCircuitStore.js");
 
@@ -34,6 +35,9 @@ function restoreEnvironment() {
 }
 
 async function main() {
+  assert.equal(currentModelName("deepseek", "https://api.deepseek.com", "deepseek-chat"), "deepseek-v4-flash");
+  assert.equal(currentModelName("deepseek", "https://api.deepseek.com", "deepseek-reasoner"), "deepseek-v4-flash");
+  assert.equal(currentModelName("deepseek", "https://api.deepseek.com", "deepseek-v4-pro"), "deepseek-v4-pro");
   resetMemoryProviderCircuitStore();
   process.env.LLM_PROVIDER = "deepseek";
   process.env.LLM_API_KEY = "streaming-contract-test-key";

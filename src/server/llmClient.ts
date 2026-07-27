@@ -18,14 +18,30 @@ export type CallLLMInput = {
   userPayload: unknown;
   temperature?: number;
   maxTokens?: number;
+  thinkingMode?: string;
+  reasoningEffort?: string;
+  responseFormat?: { type: "json_object" };
 };
+const RETIRED_DEEPSEEK_MODELS = new Set(["deepseek-chat", "deepseek-reasoner"]);
+
+function isDeepSeekProvider(provider: string, baseUrl?: string) {
+  return provider.toLowerCase() === "deepseek" || String(baseUrl || "").toLowerCase().includes("deepseek.com");
+}
+
+export function currentModelName(provider: string, baseUrl: string | undefined, configuredModel: string | undefined) {
+  return isDeepSeekProvider(provider, baseUrl) && RETIRED_DEEPSEEK_MODELS.has(String(configuredModel || ""))
+    ? "deepseek-v4-flash"
+    : configuredModel;
+}
 
 export function getLLMProviderConfig(): LLMProviderConfig {
+  const provider = process.env.LLM_PROVIDER || "custom";
+  const baseUrl = process.env.LLM_API_BASE_URL;
   return {
-    provider: process.env.LLM_PROVIDER || "custom",
+    provider,
     apiKey: process.env.LLM_API_KEY,
-    baseUrl: process.env.LLM_API_BASE_URL,
-    model: process.env.LLM_MODEL,
+    baseUrl,
+    model: currentModelName(provider, baseUrl, process.env.LLM_MODEL),
     endpointType: (process.env.LLM_ENDPOINT_TYPE || "chat_completions") as LLMEndpointType,
     temperature: Number(process.env.LLM_TEMPERATURE ?? 0.2),
     maxTokens: Number(process.env.LLM_MAX_TOKENS ?? 120),
@@ -35,9 +51,12 @@ export function getLLMProviderConfig(): LLMProviderConfig {
   };
 }
 
-function deepSeekThinking(config: LLMProviderConfig) {
-  const isDeepSeek = config.provider.toLowerCase() === "deepseek" || String(config.baseUrl || "").toLowerCase().includes("deepseek.com");
-  return isDeepSeek ? { thinking: { type: config.thinkingMode } } : {};
+function deepSeekThinking(config: LLMProviderConfig, thinkingMode = config.thinkingMode, reasoningEffort?: string) {
+  if (!isDeepSeekProvider(config.provider, config.baseUrl)) return {};
+  return {
+    thinking: { type: thinkingMode },
+    ...(thinkingMode === "enabled" && reasoningEffort ? { reasoning_effort: reasoningEffort } : {})
+  };
 }
 
 function joinUrl(baseUrl: string, endpointType: LLMEndpointType) {
@@ -57,7 +76,15 @@ function readChatCompletionText(payload: unknown) {
   return data.choices?.[0]?.message?.content || data.choices?.[0]?.text || data.output_text || data.content || "";
 }
 
-export async function callLLM({ systemPrompt, userPayload, temperature, maxTokens }: CallLLMInput) {
+export async function callLLM({
+  systemPrompt,
+  userPayload,
+  temperature,
+  maxTokens,
+  thinkingMode,
+  reasoningEffort,
+  responseFormat
+}: CallLLMInput) {
   const config = getLLMProviderConfig();
   if (!config.enabled) throw new Error("LLM agent mode is disabled");
   if (!config.apiKey) throw new Error("Missing LLM_API_KEY");
@@ -75,9 +102,12 @@ export async function callLLM({ systemPrompt, userPayload, temperature, maxToken
       },
       body: JSON.stringify({
         model: config.model,
-        ...deepSeekThinking(config),
-        temperature: temperature ?? config.temperature,
+        ...deepSeekThinking(config, thinkingMode ?? config.thinkingMode, reasoningEffort),
+        ...((thinkingMode ?? config.thinkingMode) === "enabled"
+          ? {}
+          : { temperature: temperature ?? config.temperature }),
         max_tokens: maxTokens ?? config.maxTokens,
+        ...(responseFormat ? { response_format: responseFormat } : {}),
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: JSON.stringify(userPayload) }

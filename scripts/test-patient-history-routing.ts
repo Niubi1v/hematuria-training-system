@@ -57,6 +57,18 @@ type PatientCase = {
   };
 };
 const cases = require("../data/cases.json") as PatientCase[];
+const {
+  controlledAntihypertensiveNames,
+  historySummaryRecommendations,
+  personalHistoryRecommendation
+} = require("../src/lib/patientRuntimeRecommendations.js") as {
+  controlledAntihypertensiveNames(caseId: string): string[];
+  historySummaryRecommendations(caseId: string): Array<{ targetField: string }>;
+  personalHistoryRecommendation(caseId: string, intent: string): {
+    runtimeAnswer: string;
+    provenance: string;
+  } | null;
+};
 const { matchStructuredFacts } = require("../server/structuredFacts.js") as {
   matchStructuredFacts(caseData: unknown, question: string, language: "zh" | "en"): { matchedSlotIds?: string[] } | null;
 };
@@ -194,7 +206,7 @@ async function main() {
     });
     assert.notEqual(historySummary.fallbackReason, "classifier_disabled", `${currentCase.id} history summary fell through`);
     assert.ok(
-      historySummary.matchedFacts?.includes("past_medical_history_summary"),
+      historySummary.clauseOutcomes?.some((item) => item.intent === "past_medical_history_summary"),
       `${currentCase.id} history summary missed canonical intent`
     );
     assert.doesNotMatch(historySummary.replyText, /这项情况我现在不太清楚/, `${currentCase.id} history summary became generic unknown`);
@@ -218,6 +230,19 @@ async function main() {
         `${currentCase.id} history summary omitted known denial ${key}`
       );
     }
+    const summaryRuntimeRecommendations = historySummaryRecommendations(currentCase.id);
+    if (summaryRuntimeRecommendations.length) {
+      assert.match(
+        historySummary.replyText,
+        /除此之外没有诊断过其他明确疾病/,
+        `${currentCase.id} completed runtime summary was not applied`
+      );
+      assert.deepEqual(
+        historySummary.matchedSlotIds || [],
+        [],
+        `${currentCase.id} teacher-reviewed runtime summary must remain non-collectable`
+      );
+    }
 
     for (const personalProbe of [
       { field: "smokingHistory", intent: "smoking_history", question: "抽烟吗？" },
@@ -238,8 +263,17 @@ async function main() {
         const sourceLead = fact.patientAnswerZh.split(/[。；]/)[0];
         assert.ok(answer.replyText.includes(sourceLead), `${currentCase.id} source ${personalProbe.intent} was not answered`);
       } else {
-        assert.equal(answer.factStates?.[personalProbe.intent], "needs_review", `${currentCase.id} ${personalProbe.intent} gap must remain governed`);
+        const runtimeRecommendation = personalHistoryRecommendation(currentCase.id, personalProbe.intent);
+        assert.equal(
+          answer.factStates?.[personalProbe.intent],
+          runtimeRecommendation ? "known_false" : "needs_review",
+          `${currentCase.id} ${personalProbe.intent} runtime state`
+        );
         assert.equal(answer.fallbackReason, "medical_history_pending_review", `${currentCase.id} ${personalProbe.intent} missing source must not be invented`);
+        if (runtimeRecommendation) {
+          assert.equal(answer.replyText, runtimeRecommendation.runtimeAnswer);
+          assert.deepEqual(answer.matchedSlotIds || [], [], `${currentCase.id} runtime-only personal history must not be collected`);
+        }
       }
     }
 
@@ -254,7 +288,10 @@ async function main() {
         { role: "student", text: "有高血压吗？" },
         { role: "patient", text: currentCase.structuredHistory.hypertension.patientAnswerZh }
       ];
-      const linkedMedications = medications.filter((item) => /高血压|降压/.test(`${item.name} ${item.indication}`));
+      const controlledNames = new Set(controlledAntihypertensiveNames(currentCase.id));
+      const linkedMedications = medications.filter(
+        (item) => /高血压|降压/.test(`${item.name} ${item.indication}`) || controlledNames.has(item.name)
+      );
       const highBloodPressureMedication = await generatePatientAnswer({
         sessionId: `hypertension-medication-${currentCase.id}`,
         caseId: currentCase.id,
@@ -320,7 +357,7 @@ async function main() {
       const otherMedicationFollowup = await generatePatientAnswer({
         sessionId: `hypertension-other-medication-${currentCase.id}`,
         caseId: currentCase.id,
-        studentInput: "还有没有吃其他药？",
+        studentInput: "还有其他药吗？",
         language: "zh",
         conversationHistory: [
           ...hypertensionHistory,

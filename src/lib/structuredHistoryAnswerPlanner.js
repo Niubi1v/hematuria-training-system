@@ -1,4 +1,11 @@
 const { FACT_STATES } = require("./patientFactState.js");
+const {
+  controlledAntihypertensiveNames,
+  historySummaryRecommendations,
+  hypertensionMedicationRecommendation,
+  medicationRecommendations,
+  normalizeRecommendedFactState
+} = require("./patientRuntimeRecommendations.js");
 
 const PAST_MEDICAL_FACTS = Object.freeze([
   ["hypertension", "高血压", "hypertension"],
@@ -34,11 +41,15 @@ function medicationScopeFromQuestion(question, language = "zh") {
   return /高血压|降压药/.test(text) ? "antihypertensive" : "";
 }
 
-function selectMedicationsForQuestion(medications, question, language = "zh") {
+function selectMedicationsForQuestion(medications, question, language = "zh", options = {}) {
   const scope = medicationScopeFromQuestion(question, language);
   if (scope !== "antihypertensive") return { medications, scope: "" };
+  const controlledNames = new Set(controlledAntihypertensiveNames(options.caseId));
   return {
-    medications: medications.filter((item) => /高血压|降压/.test(`${item?.name || ""} ${item?.indication || ""}`)),
+    medications: medications.filter((item) => (
+      /高血压|降压/.test(`${item?.name || ""} ${item?.indication || ""}`)
+      || controlledNames.has(String(item?.name || "").trim())
+    )),
     scope
   };
 }
@@ -69,6 +80,25 @@ function buildMedicationAnswerPlan(
   const allNames = medicationNames(options.allMedications || medications);
   const medicationAnswer = String(language === "en" ? history?.medicationAnswerEn : history?.medicationAnswerZh || "").trim();
   const joinedNames = naturalList(names, language);
+  const hypertensionRecommendation = language === "zh" && options.scope === "antihypertensive"
+    ? hypertensionMedicationRecommendation(options.caseId)
+    : null;
+  const runtimeRecommendation = (questionType, medicationName = "") => (
+    language === "zh" && options.caseId
+      ? medicationRecommendations(options.caseId, questionType, medicationName)[0] || null
+      : null
+  );
+  const recommendationMetadata = (items) => {
+    const usable = items.filter(Boolean);
+    if (!usable.length) return {};
+    return {
+      runtimeOnly: true,
+      provenance: [...new Set(usable.map((item) => item.provenance))].join("+"),
+      runtimeFactStates: Object.fromEntries(
+        usable.map((item) => [item.medicationName || item.targetField, normalizeRecommendedFactState(item.factState)])
+      )
+    };
+  };
 
   if (intent === "medication_list") {
     const partial = /具体.*(?:记不|不太清)|cannot recall.*specific/i.test(medicationAnswer);
@@ -109,16 +139,42 @@ function buildMedicationAnswerPlan(
   }
 
   if (intent === "medication_name") {
+    if (hypertensionRecommendation && names.length) {
+      return {
+        renderedAnswer: hypertensionRecommendation.runtimeAnswer,
+        factState: normalizeRecommendedFactState(hypertensionRecommendation.factState),
+        runtimeOnly: true,
+        provenance: hypertensionRecommendation.provenance,
+        runtimeFactStates: {
+          hypertensionMedicationLink: normalizeRecommendedFactState(hypertensionRecommendation.factState)
+        }
+      };
+    }
     const hasCategoryOnlyName = names.some((name) => categoryOnlyMedicationPattern.test(name));
+    const nameRecommendations = medications
+      .map((item) => runtimeRecommendation("具体药名缺口", String(item?.name || "").trim()))
+      .filter(Boolean);
+    const exactNames = medications
+      .filter((item) => !runtimeRecommendation("具体药名缺口", String(item?.name || "").trim()))
+      .map((item) => String(item?.name || "").trim())
+      .filter(Boolean);
     return {
-      renderedAnswer: hasCategoryOnlyName
+      renderedAnswer: nameRecommendations.length
+        ? [
+            exactNames.length ? `我知道的药名是${naturalList(exactNames, language)}。` : "",
+            ...nameRecommendations.map((item) => item.runtimeAnswer)
+          ].filter(Boolean).join("")
+        : hasCategoryOnlyName
         ? (language === "en"
           ? `I only know that I take ${joinedNames} long term; I cannot recall the specific name.`
           : `只知道长期服用${joinedNames}，具体名称记不清。`)
         : (language === "en"
           ? `The medications I know are ${joinedNames}.`
           : `我知道的药名是${joinedNames}。`),
-      factState: hasCategoryOnlyName ? FACT_STATES.PARTIALLY_KNOWN : FACT_STATES.EXACT_VALUE
+      factState: nameRecommendations.length
+        ? FACT_STATES.PARTIALLY_KNOWN
+        : hasCategoryOnlyName ? FACT_STATES.PARTIALLY_KNOWN : FACT_STATES.EXACT_VALUE,
+      ...recommendationMetadata(nameRecommendations)
     };
   }
 
@@ -129,21 +185,30 @@ function buildMedicationAnswerPlan(
         ? `${item.name}: ${item.dose}`
         : `${item.name}是${item.dose}`);
     const missing = medications.filter((item) => !String(item?.dose || "").trim());
+    const missingRecommendations = missing
+      .map((item) => runtimeRecommendation("用药剂量缺口", String(item?.name || "").trim()))
+      .filter(Boolean);
     if (!known.length) {
       return {
-        renderedAnswer: language === "en"
+        renderedAnswer: missingRecommendations.length
+          ? naturalList(missingRecommendations.map((item) => item.runtimeAnswer), language)
+          : language === "en"
           ? `I only know that I take ${joinedNames} long term; I cannot recall the specific dose.`
           : `只知道长期服用${joinedNames}，具体剂量记不清。`,
-        factState: FACT_STATES.PARTIALLY_KNOWN
+        factState: FACT_STATES.PARTIALLY_KNOWN,
+        ...recommendationMetadata(missingRecommendations)
       };
     }
     return {
       renderedAnswer: missing.length
-        ? (language === "en"
+        ? (missingRecommendations.length
+          ? `${naturalList(known, language)}；${naturalList(missingRecommendations.map((item) => item.runtimeAnswer), language)}`
+          : language === "en"
           ? `${naturalList(known, language)}. I cannot recall the dose of ${naturalList(medicationNames(missing), language)}.`
           : `${naturalList(known, language)}；${naturalList(medicationNames(missing), language)}的具体剂量记不清。`)
         : (language === "en" ? `${naturalList(known, language)}.` : `${naturalList(known, language)}。`),
-      factState: missing.length ? FACT_STATES.PARTIALLY_KNOWN : FACT_STATES.EXACT_VALUE
+      factState: missing.length ? FACT_STATES.PARTIALLY_KNOWN : FACT_STATES.EXACT_VALUE,
+      ...recommendationMetadata(missingRecommendations)
     };
   }
 
@@ -152,21 +217,30 @@ function buildMedicationAnswerPlan(
       .filter((item) => String(item?.frequency || "").trim())
       .map((item) => medicationFrequency(item, language));
     const missing = medications.filter((item) => !String(item?.frequency || "").trim());
+    const missingRecommendations = missing
+      .map((item) => runtimeRecommendation("用药频次缺口", String(item?.name || "").trim()))
+      .filter(Boolean);
     if (!known.length) {
       return {
-        renderedAnswer: language === "en"
+        renderedAnswer: missingRecommendations.length
+          ? naturalList(missingRecommendations.map((item) => item.runtimeAnswer), language)
+          : language === "en"
           ? `I only know that I take ${joinedNames} long term; I cannot recall exactly how I take them.`
           : `只知道长期服用${joinedNames}，具体吃法记不清。`,
-        factState: FACT_STATES.PARTIALLY_KNOWN
+        factState: FACT_STATES.PARTIALLY_KNOWN,
+        ...recommendationMetadata(missingRecommendations)
       };
     }
     return {
       renderedAnswer: missing.length
-        ? (language === "en"
+        ? (missingRecommendations.length
+          ? `${naturalList(known, language)}；${naturalList(missingRecommendations.map((item) => item.runtimeAnswer), language)}`
+          : language === "en"
           ? `${naturalList(known, language)}. I cannot recall exactly how I take ${naturalList(medicationNames(missing), language)}.`
           : `${naturalList(known, language)}；${naturalList(medicationNames(missing), language)}的具体吃法记不清。`)
         : (language === "en" ? `${naturalList(known, language)}.` : `${naturalList(known, language)}。`),
-      factState: missing.length ? FACT_STATES.PARTIALLY_KNOWN : FACT_STATES.EXACT_VALUE
+      factState: missing.length ? FACT_STATES.PARTIALLY_KNOWN : FACT_STATES.EXACT_VALUE,
+      ...recommendationMetadata(missingRecommendations)
     };
   }
 
@@ -178,9 +252,13 @@ function buildMedicationAnswerPlan(
   };
 }
 
-function buildPastMedicalHistorySummary(history, language = "zh", isBlocked = () => false) {
+function buildPastMedicalHistorySummary(history, language = "zh", isBlocked = () => false, options = {}) {
   const known = [];
   const blocked = [];
+  const summaryRecommendations = language === "zh"
+    ? historySummaryRecommendations(options.caseId)
+    : [];
+  const coveredBlockedKeys = new Set(summaryRecommendations.map((item) => item.targetField));
   for (const [key, labelZh, labelEn] of PAST_MEDICAL_FACTS) {
     const fact = history?.[key];
     if (!fact) continue;
@@ -201,7 +279,13 @@ function buildPastMedicalHistorySummary(history, language = "zh", isBlocked = ()
       ? `${renderedAnswer}${renderedAnswer ? " " : ""}I do not have ${naturalList(absent.map((item) => item.label), language)}.`
       : `${renderedAnswer}${renderedAnswer ? " " : ""}已知没有${naturalList(absent.map((item) => item.label), language)}。`;
   }
-  if (blocked.length) {
+  const unresolvedBlocked = blocked.filter((item) => !coveredBlockedKeys.has(item.key));
+  if (summaryRecommendations.length) {
+    renderedAnswer += language === "en"
+      ? " No other definite disease has been diagnosed."
+      : " 除此之外没有诊断过其他明确疾病。";
+  }
+  if (unresolvedBlocked.length) {
     renderedAnswer += language === "en"
       ? " I cannot recall the rest clearly."
       : " 其他既往病史我记不太清。";
@@ -210,11 +294,18 @@ function buildPastMedicalHistorySummary(history, language = "zh", isBlocked = ()
     renderedAnswer: renderedAnswer || (language === "en"
       ? "I cannot recall my other medical history clearly."
       : "其他既往病史我记不太清。"),
-    factState: blocked.length
+    factState: unresolvedBlocked.length
       ? (known.length ? FACT_STATES.PARTIALLY_KNOWN : FACT_STATES.NEEDS_REVIEW)
-      : (known.length ? FACT_STATES.EXACT_VALUE : FACT_STATES.MISSING),
+      : (known.length || summaryRecommendations.length ? FACT_STATES.EXACT_VALUE : FACT_STATES.MISSING),
     sources: [...known, ...blocked].map((item) => item.fact),
-    hasUnresolved: blocked.length > 0
+    hasUnresolved: blocked.length > 0,
+    runtimeOnly: summaryRecommendations.length > 0,
+    provenance: [...new Set(summaryRecommendations.map((item) => item.provenance))].join("+") || null,
+    runtimeFactStates: Object.fromEntries(
+      summaryRecommendations.map((item) => [item.targetField, normalizeRecommendedFactState(item.factState)])
+    ),
+    hasRuntimeGovernance: summaryRecommendations.length > 0,
+    hasUncoveredBlocked: unresolvedBlocked.length > 0
   };
 }
 

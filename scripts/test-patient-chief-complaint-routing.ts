@@ -21,18 +21,14 @@ const originalFetch = globalThis.fetch;
 let providerCalls = 0;
 globalThis.fetch = async (_input, init) => {
   providerCalls += 1;
-  const requestBody = JSON.parse(String(init?.body || "{}"));
-  const payload = JSON.parse(String(requestBody.messages?.[1]?.content || "{}"));
-  return new Response(JSON.stringify({
-    choices: [{ message: { content: String(payload.currentAllowedAnswer || "") } }]
-  }), { status: 200, headers: { "content-type": "application/json" } });
+  throw new Error(`deterministic chief-complaint routing invoked provider: ${String(init?.body || "")}`);
 };
 
 async function main() {
   const naturalEnglish = "Please describe the main problem that brought you here in your own words.";
   const naturalChinese = "请用自己的话说说这次最主要的不舒服是什么？";
   const routeFailures: string[] = [];
-  const providerFailures: string[] = [];
+  const plannerFailures: string[] = [];
 
   try {
     for (const caseData of cases) {
@@ -58,10 +54,10 @@ async function main() {
         conversationHistory: [],
         language: "en"
       });
-      if (answer.isFallback
-        || answer.provider !== "deepseek"
+      if (!answer.isFallback
+        || answer.provider !== "rule"
         || !answer.matchedSlotIds?.includes("chief_complaint")) {
-        providerFailures.push(
+        plannerFailures.push(
           `${caseData.id}:reason=${answer.fallbackReason || "none"}:hits=${(answer.filter?.hits || []).join("+")}:tooLong=${Boolean(answer.filter?.tooLong)}`
         );
       }
@@ -92,11 +88,11 @@ async function main() {
   }
 
   assert.deepEqual(routeFailures, []);
-  assert.deepEqual(providerFailures, []);
-  assert.equal(providerCalls, cases.length);
+  assert.deepEqual(plannerFailures, []);
+  assert.equal(providerCalls, 0);
   console.log("Patient chief-complaint routing gates passed.", {
     bilingualRoutes: cases.length * 2,
-    liveProviderControls: cases.length,
+    deterministicPlannerControls: cases.length,
     ordinaryPhraseControls: ordinaryPatientPhrases.length,
     forbiddenPhraseControls: forbiddenPhrases.length
   });
