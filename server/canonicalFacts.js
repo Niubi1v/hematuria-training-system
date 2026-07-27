@@ -235,6 +235,13 @@ function conciseLegacySlotAnswer(caseSlots, slotId, language, question) {
   const chiefZh = String(caseSlots.chief_complaint?.patientAnswerZh || "");
   const durationZh = chiefZh.match(/([半\d一二两三四五六七八九十]+(?:小时|天|日|周|月|个月|年)(?:余|多|左右)?)/)?.[1];
   if (language === "zh" && durationZh) return `大约${durationZh}前开始的。`;
+  const coarseDurationZh = [chiefZh, answerZh]
+    .map((value) => value.match(/(?:持续|大约|约|有|近)?(数|几)(天|周|月|个月|年)/)?.slice(1, 3))
+    .find((value) => value?.length === 2);
+  if (language === "zh" && coarseDurationZh) {
+    const [, unit] = coarseDurationZh;
+    return `大概有几${unit}了，具体哪一天开始的我记不清。`;
+  }
 
   const chiefEn = String(caseSlots.chief_complaint?.patientAnswerEn || "");
   const durationPatternEn = "((?:(?:about|around|over|more than|nearly|almost)\\s+)?(?:half(?:\\s+a)?|\\d+(?:\\.\\d+)?)\\s+(?:hours?|days?|weeks?|months?|years?))";

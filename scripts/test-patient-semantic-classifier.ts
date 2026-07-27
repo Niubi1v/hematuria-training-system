@@ -6,7 +6,7 @@ const {
   parseClassifierResponse,
   resetPatientIntentClassifierState
 } = require("../server/patientIntentClassifier.js");
-const { matchPriorityCanonicalIntents } = require("../src/lib/patientIntentCatalog.js");
+const { matchPriorityCanonicalIntents, patientFactOntology } = require("../src/lib/patientIntentCatalog.js");
 const { UNKNOWN_REASON_CODES } = require("../src/lib/patientFactState.js");
 const { projectCanonicalPatientFacts } = require("../server/canonicalFacts.js");
 const { matchStructuredFacts } = require("../server/structuredFacts.js");
@@ -18,10 +18,13 @@ function classifierJson(
   needsClarification = false,
   overrides: Record<string, unknown> = {}
 ) {
+  const requestedSlot = intent === null
+    ? null
+    : patientFactOntology.find((definition: { key: string }) => definition.key === intent)?.sourceSlotId || null;
   return JSON.stringify({
     intent,
     topic: intent,
-    clauses: [{ text: "source clause", intent, confidence, needsClarification }],
+    clauses: [{ text: "source clause", intent, requestedSlot, confidence, needsClarification }],
     contextReference: { inherited: false, sourceIntent: null },
     ...overrides
   });
@@ -57,7 +60,7 @@ async function main() {
   assert.equal(providerCalls, 1);
   assert.deepEqual(
     Object.keys(capturedInput?.userPayload as object).sort(),
-    ["allowedIntents", "classificationId", "language", "outputContract", "question", "recentUserQuestions"]
+    ["allowedIntents", "classificationId", "conversationState", "language", "outputContract", "question", "recentUserQuestions"]
   );
   assert.equal(capturedInput?.thinkingMode, "enabled");
   assert.equal(capturedInput?.reasoningEffort, "high");
@@ -154,7 +157,7 @@ async function main() {
     };
     const semanticAnswer = await generatePatientAnswer({ sessionId: "", caseId: "P002", studentInput: semanticQuestion, language: "zh" });
     assert.deepEqual(semanticAnswer.matchedFacts, ["dysuria"]);
-    assert.equal(semanticAnswer.answerSource, "case_bilingual_slot_semantic_classification");
+    assert.equal(semanticAnswer.answerSource, "governed_fact_semantic_classification");
     assert.equal(semanticAnswer.provider, "rule");
     assert.equal(semanticAnswer.model, "local-rule");
     assert.equal(semanticAnswer.classifierProvider, "deepseek");
