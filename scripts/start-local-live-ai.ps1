@@ -47,17 +47,35 @@ function Stop-RecordedProcesses {
 }
 
 function Resolve-NodeExecutable {
+  $candidates = @()
+  if (-not [string]::IsNullOrWhiteSpace($env:HEMATURIA_NODE22_PATH)) {
+    $candidates += $env:HEMATURIA_NODE22_PATH
+  }
   $command = Get-Command node.exe -ErrorAction SilentlyContinue
   if ($command) {
-    return $command.Source
+    $candidates += $command.Source
   }
-
-  $bundledNode = Join-Path $env:USERPROFILE ".cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe"
-  if (Test-Path -LiteralPath $bundledNode) {
-    return $bundledNode
+  $candidates += (Join-Path $repoRoot "local-tools\node-v22.14.0-win-x64\node.exe")
+  $documentsPath = [Environment]::GetFolderPath("MyDocuments")
+  if (-not [string]::IsNullOrWhiteSpace($documentsPath)) {
+    $documentsPattern = Join-Path $documentsPath "*\local-tools\node-v22.14.0-win-x64\node.exe"
+    $candidates += Get-ChildItem -Path $documentsPattern -File -ErrorAction SilentlyContinue |
+      Select-Object -ExpandProperty FullName
   }
-
-  throw "node_runtime_not_found"
+  foreach ($candidate in ($candidates | Select-Object -Unique)) {
+    if (-not (Test-Path -LiteralPath $candidate)) {
+      continue
+    }
+    try {
+      $version = (& $candidate --version 2>$null).Trim()
+      if ($version -match "^v22\.14\.") {
+        return (Resolve-Path -LiteralPath $candidate).Path
+      }
+    } catch {
+      # Try the next known Node 22.14 location.
+    }
+  }
+  throw "node_22_14_not_found"
 }
 
 function Test-TcpPortAvailable {
@@ -111,7 +129,11 @@ try {
   $nodePath = Resolve-NodeExecutable
   $nextCli = Join-Path $repoRoot "node_modules\next\dist\bin\next"
   $tsxCli = Join-Path $repoRoot "node_modules\tsx\dist\cli.mjs"
-  if (-not (Test-Path -LiteralPath $nextCli) -or -not (Test-Path -LiteralPath $tsxCli)) {
+  $probePath = Join-Path $repoRoot "scripts\probe-local-live-ai.cjs"
+  $dependenciesReady = (Test-Path -LiteralPath $nextCli) `
+    -and (Test-Path -LiteralPath $tsxCli) `
+    -and (Test-Path -LiteralPath $probePath)
+  if (-not $dependenciesReady) {
     throw "dependencies_not_installed"
   }
   if (-not (Test-TcpPortAvailable 3000) -or -not (Test-TcpPortAvailable 9001)) {
@@ -179,57 +201,7 @@ try {
     exit 0
   }
 
-  $probeScript = @'
-const classifier = require("./server/patientIntentClassifier.js");
-(async () => {
-  classifier.resetPatientIntentClassifierState();
-  const result = await classifier.classifyPatientIntent({
-    question: "Does it hurt to pee?",
-    language: "en",
-    conversationHistory: [],
-    conversationState: null
-  });
-  const providerConfigured = Boolean(
-    process.env.LLM_API_KEY
-    && process.env.LLM_API_BASE_URL
-    && process.env.LLM_MODEL
-    && process.env.LLM_ENABLE_AI_PATIENT === "true"
-  );
-  const providerHttpSuccess = result.providerCalls === 1
-    && result.reason !== "semantic_provider_unavailable"
-    && Boolean(result.model);
-  const thinkingExecuted = providerHttpSuccess && result.thinkingMode === "max";
-  const answerSource = providerHttpSuccess && result.accepted ? "live_ai" : "rule_fallback";
-  const success = providerConfigured
-    && providerHttpSuccess
-    && answerSource === "live_ai"
-    && result.model === "deepseek-v4-pro"
-    && thinkingExecuted;
-  process.stdout.write(JSON.stringify({
-    providerConfigured,
-    answerSource,
-    thinkingExecuted,
-    model: String(result.model || process.env.LLM_MODEL || ""),
-    providerHttpSuccess,
-    durationMs: Number(result.durationMs || 0),
-    errorCode: success ? "" : String(result.reason || "provider_probe_failed")
-  }));
-  process.exitCode = success ? 0 : 2;
-})().catch(() => {
-  process.stdout.write(JSON.stringify({
-    providerConfigured: true,
-    answerSource: "rule_fallback",
-    thinkingExecuted: false,
-    model: "deepseek-v4-pro",
-    providerHttpSuccess: false,
-    durationMs: 0,
-    errorCode: "provider_probe_failed"
-  }));
-  process.exitCode = 2;
-});
-'@
-
-  $probeOutput = & $nodePath -e $probeScript
+  $probeOutput = & $nodePath $probePath
   $probeExitCode = $LASTEXITCODE
   try {
     $probe = $probeOutput | ConvertFrom-Json
@@ -258,7 +230,7 @@ const classifier = require("./server/patientIntentClassifier.js");
   $startupSucceeded = $true
 } catch {
   $safeCode = switch -Regex ([string]$_.Exception.Message) {
-    "^node_runtime_not_found$" { "node_runtime_not_found"; break }
+    "^node_22_14_not_found$" { "node_22_14_not_found"; break }
     "^dependencies_not_installed$" { "dependencies_not_installed"; break }
     "^local_port_in_use$" { "local_port_in_use"; break }
     "^provider_key_empty$" { "provider_key_empty"; break }
