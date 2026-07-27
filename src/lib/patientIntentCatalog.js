@@ -316,7 +316,12 @@ const structuredHistoryIntentDefinitions = [
   ["family_history", "familyHistory", "FAMILY_HISTORY", "家族史", "Family history", /家族史|家里|父母|兄弟姐妹|遗传|family history|hereditary/i],
   ["menstrual_history", "menstrualHistory", "GYNE_MENSTRUAL", "月经史", "Menstrual history", /月经|经期|阴道出血|menstru|period/i],
   ["pregnancy_history", "pregnancyHistory", "GYNE_PREGNANCY", "妊娠史", "Pregnancy history", /怀孕|妊娠|pregnan/i],
-  ["medication_list", "medicationList", "MED_ALL", "用药史", "Medication history", /长期.*(?:吃|服|用).*药|平时.*(?:吃|服|用).*药|都吃什么药|用药史|长期用药|regular medication|medications do you take/i]
+  ["past_medical_history_summary", null, "PAST_ALL", "其他疾病", "Other medical conditions", /有没有其他(?:疾病|病)|还有(?:没有)?什么(?:疾病|病)|其他(?:疾病|病史)|any other (?:diseases?|medical conditions?)|other medical conditions?/i],
+  ["medication_list", "medicationList", "MED_ALL", "用药史", "Medication history", /长期.*(?:吃|服|用).*药|平时.*(?:吃|服|用).*药|都吃什么药|用药史|长期用药|regular medication|medications do you take/i],
+  ["medication_name", "medicationList", "MED_ALL", "药物名称", "Medication name", /具体(?:的)?药名|药(?:物)?(?:的)?(?:具体)?名(?:称|字)|叫什么药|what (?:is|are) the (?:specific )?(?:medication|medicine|drug)(?: name)?|name of (?:the )?(?:medication|medicine|drug)/i],
+  ["medication_dosage", "medicationList", "MED_ALL", "用药剂量", "Medication dose", /(?:具体)?剂量(?:是)?多少|(?:药|服用|每次).*(?:剂量|多少毫克|吃多少)|(?:剂量|多少毫克).*(?:药|服用)|medication dose|medicine dose|drug dose|how many milligrams|what(?:'s| is)? the dose|what dose/i],
+  ["medication_frequency", "medicationList", "MED_ALL", "用药频次", "Medication frequency", /一天(?:吃|服|用)?(?:几次|多少次)|多久(?:吃|服|用)一次|(?:药|服药).*(?:频次|频率|吃法|怎么吃)|how often.*(?:medication|medicine|drug)|times? (?:a|per) day|medication frequency/i],
+  ["other_medications", "medicationList", "MED_ALL", "其他用药", "Other medications", /还有(?:没有|什么|哪些).*(?:药|用药)|其他(?:药|用药)|any other medications?|other medicines?/i]
 ].map(([key, historyKey, sourceSlotId, labelZh, labelEn, pattern]) => defineOntologyFact({
   key,
   historyKey,
@@ -534,6 +539,8 @@ function recentConversationTopic(conversationHistory = [], language = "zh") {
     const text = String(entry?.text || "");
     const priority = matchPriorityCanonicalIntents(text, language)[0];
     if (priority) return priority.intentKey;
+    const structured = matchPatientFactOntology(text, language, ["structured_history"])[0];
+    if (structured) return structured.intentKey;
     if (language === "en") {
       if (/(?:blood|red).*(?:urine|pee)|(?:urine|pee).*(?:blood|red)|hematuria/i.test(text)) return "gross_hematuria";
       if (/(?:urine test|urinalysis).*(?:blood|abnormal)|microscopic hematuria/i.test(text)) return "microscopic_hematuria";
@@ -556,6 +563,50 @@ function resolveContextualPatientQuestion(question, conversationHistory = [], la
   }
   const compacted = compact(original);
   const isHematuriaTopic = ["gross_hematuria", "microscopic_hematuria", "whole_stream_hematuria", "initial_hematuria", "terminal_hematuria"].includes(topic);
+  const isMedicationTopic = [
+    "medication_list",
+    "medication_name",
+    "medication_dosage",
+    "medication_frequency",
+    "other_medications",
+    "anticoagulant_use",
+    "antiplatelet_use"
+  ].includes(topic);
+  if (isMedicationTopic) {
+    const medicationNameFollowup = language === "en"
+      ? /^(?:what is|what's) (?:the )?(?:specific )?name\??$/i.test(original)
+      : /^(?:那|这个|这种药)?具体(?:的)?(?:药)?名(?:称|字)?(?:是什么|叫什么)?[呢吗]?[？?]?$/.test(compacted);
+    if (medicationNameFollowup) {
+      return {
+        question: language === "en" ? "What is the specific medication name?" : "具体药名是什么？",
+        inherited: true,
+        reason: "contextual_medication_name",
+        sourceIntent: topic
+      };
+    }
+    const medicationDoseFollowup = language === "en"
+      ? /^(?:what|how much)(?: is)? the dose\??$/i.test(original)
+      : /^(?:那|这个|这种药)?(?:具体)?剂量(?:是)?多少[呢吗]?[？?]?$/.test(compacted);
+    if (medicationDoseFollowup) {
+      return {
+        question: language === "en" ? "What is the medication dose?" : "药的具体剂量是多少？",
+        inherited: true,
+        reason: "contextual_medication_dosage",
+        sourceIntent: topic
+      };
+    }
+    const medicationFrequencyFollowup = language === "en"
+      ? /^(?:how often|how many times (?:a|per) day)\??$/i.test(original)
+      : /^(?:那|这个|这种药)?(?:一天)?(?:吃|服|用)?(?:几次|多少次)[呢吗]?[？?]?$/.test(compacted);
+    if (medicationFrequencyFollowup) {
+      return {
+        question: language === "en" ? "How often do you take the medication?" : "这种药一天吃几次？",
+        inherited: true,
+        reason: "contextual_medication_frequency",
+        sourceIntent: topic
+      };
+    }
+  }
   const durationFollowup = language === "en"
     ? /^(?:about )?(?:how long|since when|when did (?:it|that) start)\??$/i.test(original)
     : /^(?:那|这个|这种情况)?(?:多少天|多久(?:了)?|从什么时候开始|什么时候开始)[呢吗]?[？?]?$/.test(compacted);

@@ -460,7 +460,7 @@ function allowedHistoryTerms(matchedSlotIds = []) {
   if (matchedSlotIds.some((slotId) => String(slotId).startsWith("PAST_"))) {
     ["诊断", "治疗", "手术"].forEach((term) => allowed.add(term));
   }
-  if (matchedSlotIds.includes("PAST_MALIGNANCY")) {
+  if (matchedSlotIds.some((slotId) => ["PAST_MALIGNANCY", "PAST_ALL"].includes(slotId))) {
     ["癌", "肿瘤", "化疗", "放疗"].forEach((term) => allowed.add(term));
   }
   if (matchedSlotIds.includes("PAST_URINARY_PROCEDURE")) {

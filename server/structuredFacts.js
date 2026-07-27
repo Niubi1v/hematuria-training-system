@@ -1,10 +1,15 @@
 const { matchPatientFactOntology } = require("../src/lib/patientIntentCatalog.js");
 const {
+  FACT_STATES,
   answerPlanFromRendered,
   factStateFromText,
   reasonCodeForState,
   renderAnswerPlan
 } = require("../src/lib/patientFactState.js");
+const {
+  buildMedicationAnswerPlan,
+  buildPastMedicalHistorySummary
+} = require("../src/lib/structuredHistoryAnswerPlanner.js");
 const historyMedicalPolicy = require("../data/history_medical_reconciliation.json");
 const explicitBlockedFacts = new Set(
   historyMedicalPolicy.blockedMedicalHistory.map((item) => `${item.caseId}:${item.field}`)
@@ -33,9 +38,14 @@ function matchStructuredFacts(caseData, question, language = "zh") {
   if (!history) return null;
   const text = String(question || "");
   const ontologyMatches = matchPatientFactOntology(text, language, ["structured_history"]);
-  const medicationMatch = ontologyMatches.find((item) => item.intentKey === "medication_list");
-  const matches = ontologyMatches.filter((item) => item.intentKey !== "medication_list");
-  const wantsAllMedication = Boolean(medicationMatch);
+  const specialIntents = new Set([
+    "past_medical_history_summary",
+    "medication_list",
+    "medication_name",
+    "medication_dosage",
+    "medication_frequency",
+    "other_medications"
+  ]);
   const answers = [];
   const matchedFacts = [];
   const matchedSlotIds = [];
@@ -44,36 +54,48 @@ function matchStructuredFacts(caseData, question, language = "zh") {
   const sources = [];
   const answerPlans = [];
   let hasUnresolved = false;
-  const clauses = [
-    ...matches.map((definition, sourceOrder) => ({
-      kind: "fact",
-      index: definition.matchIndex,
-      sourceOrder,
-      definition
-    })),
-    ...(wantsAllMedication ? [{
-      kind: "allMedication",
-      index: medicationMatch.matchIndex,
-      sourceOrder: matches.length,
-      definition: medicationMatch
-    }] : [])
-  ].sort((left, right) => left.index - right.index || left.sourceOrder - right.sourceOrder);
+  const clauses = ontologyMatches.map((definition, sourceOrder) => ({
+    kind: specialIntents.has(definition.intentKey) ? "special" : "fact",
+    index: definition.matchIndex,
+    sourceOrder,
+    definition
+  })).sort((left, right) => left.index - right.index || left.sourceOrder - right.sourceOrder);
   for (const clause of clauses) {
-    if (clause.kind === "allMedication") {
-      const medicationAnswer = language === "en" ? history.medicationAnswerEn : history.medicationAnswerZh;
-      answers.push(medicationAnswer);
-      matchedFacts.push("medication_list");
-      matchedSlotIds.push("MED_ALL");
-      collectableFacts.push("medication_list");
-      collectableSlotIds.push("MED_ALL");
-      sources.push(...(history.medicationList || []));
-      const factState = factStateFromText(medicationAnswer);
+    if (clause.kind === "special") {
+      const { intentKey, sourceSlotId } = clause.definition;
+      const summary = intentKey === "past_medical_history_summary"
+        ? buildPastMedicalHistorySummary(
+          history,
+          language,
+          (key, fact) => unresolvedFact(caseData.id, key, fact)
+        )
+        : null;
+      const medicationSources = (history.medicationList || []).filter(
+        (item) => !unresolvedFact(caseData.id, "medicationList", item)
+      );
+      const medicationHasUnresolved = intentKey !== "past_medical_history_summary"
+        && medicationSources.length !== (history.medicationList || []).length;
+      const planned = summary || buildMedicationAnswerPlan(history, intentKey, language, medicationSources);
+      const renderedAnswer = planned.renderedAnswer;
+      const factState = medicationHasUnresolved && planned.factState === FACT_STATES.MISSING
+        ? FACT_STATES.NEEDS_REVIEW
+        : planned.factState;
+      answers.push(renderedAnswer);
+      matchedFacts.push(intentKey);
+      matchedSlotIds.push(sourceSlotId);
+      if (![FACT_STATES.MISSING, FACT_STATES.NEEDS_REVIEW, FACT_STATES.MEDICAL_CONFLICT].includes(factState)) {
+        collectableFacts.push(intentKey);
+        collectableSlotIds.push(sourceSlotId);
+      }
+      sources.push(...(summary?.sources || medicationSources));
+      hasUnresolved ||= Boolean(summary?.hasUnresolved || medicationHasUnresolved);
       answerPlans.push(answerPlanFromRendered({
-        intent: "medication_list",
-        sourceSlotId: "MED_ALL",
+        intent: intentKey,
+        sourceSlotId,
         factState,
-        renderedAnswer: medicationAnswer,
+        renderedAnswer,
         unknownReason: reasonCodeForState(factState),
+        clauseStatus: factState === FACT_STATES.NEEDS_REVIEW ? "blocked_medical" : "matched",
         matchIndex: clause.index
       }));
       continue;
