@@ -143,7 +143,11 @@ async function callLLM({
   const requestId = `llm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const startedAt = Date.now();
   const retryLimit = Number.isInteger(Number(maxRetries)) ? Math.max(0, Math.min(Number(maxRetries), 2)) : 2;
-  const requestTimeoutMs = Math.max(1000, Math.min(Number(timeoutMs) || Number(config.timeoutMs) || 15_000, 30_000));
+  const requestTimeoutLimitMs = process.env.NODE_ENV === "production" ? 30_000 : 90_000;
+  const requestTimeoutMs = Math.max(
+    1000,
+    Math.min(Number(timeoutMs) || Number(config.timeoutMs) || 15_000, requestTimeoutLimitMs)
+  );
   const minimumProbeSeconds = Math.ceil(((retryLimit + 1) * requestTimeoutMs + retryLimit * 2500) / 1000) + 5;
   let circuitAdmission;
   try {
@@ -161,10 +165,10 @@ async function callLLM({
     try {
       const response = await fetch(joinUrl(config.baseUrl, config.endpointType), {
         method: "POST",
-        headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json", Accept: config.streaming ? "text/event-stream" : "application/json", "X-Request-Id": requestId },
+        headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json; charset=utf-8", Accept: config.streaming ? "text/event-stream" : "application/json", "X-Request-Id": requestId },
         body: JSON.stringify({
           model: config.model,
-          ...deepSeekThinking(config, thinkingMode ?? config.thinkingMode, reasoningEffort),
+          ...deepSeekThinking(config, thinkingMode ?? config.thinkingMode, reasoningEffort ?? process.env.LLM_REASONING_EFFORT),
           ...((thinkingMode ?? config.thinkingMode) === "enabled"
             ? {}
             : { temperature: temperature ?? config.temperature }),

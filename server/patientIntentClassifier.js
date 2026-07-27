@@ -180,7 +180,10 @@ async function classifyPatientIntent({
         },
         maxTokens: 300,
         maxRetries: 0,
-        timeoutMs: 8000,
+        timeoutMs: Math.max(
+          8000,
+          Math.min(Number(process.env.PATIENT_DEEPSEEK_TIMEOUT_MS) || 8000, 90000)
+        ),
         thinkingMode: thinking.thinkingMode,
         reasoningEffort: thinking.reasoningEffort,
         responseFormat: { type: "json_object" }
