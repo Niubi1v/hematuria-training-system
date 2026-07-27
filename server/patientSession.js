@@ -5,7 +5,11 @@ const { callLLM, getLLMProviderConfig } = require("./llmClient.runtime.js");
 const { BILINGUAL_CONFLICT_REASON, quarantineForMatchedSlots, uncertainConflictReply } = require("./bilingualConflictQuarantine.js");
 const { matchStructuredFacts } = require("./structuredFacts.js");
 const { matchCanonicalPatientFacts, projectCanonicalPatientFacts } = require("./canonicalFacts.js");
-const { matchPatientFactOntology, resolveContextualPatientQuestion } = require("../src/lib/patientIntentCatalog.js");
+const {
+  matchPatientFactOntology,
+  patientFactOntology,
+  resolveContextualPatientQuestion
+} = require("../src/lib/patientIntentCatalog.js");
 const {
   FACT_STATES,
   UNKNOWN_REASON_CODES,
@@ -13,7 +17,7 @@ const {
   classifierReasonCode,
   renderAnswerPlan
 } = require("../src/lib/patientFactState.js");
-const { classifyPatientIntent } = require("./patientIntentClassifier.js");
+const { classifyPatientIntent, patientThinkingConfig } = require("./patientIntentClassifier.js");
 const { auditPatientPrompt, estimateTokens, promptAuditEnabled } = require("./patientPromptAudit.js");
 const safeLogger = require("./safeLogger.js");
 const { createSessionCapability, verifySessionCapability } = require("./sessionCapability.js");
@@ -391,6 +395,13 @@ async function initSession({ caseId, attemptId, mode = "training", capabilityMod
     },
     isFallback: false,
     providerReachable: null,
+    conversationState: {
+      currentTopic: "",
+      currentEntity: "",
+      requestedSlot: "",
+      lastResolvedFact: null,
+      lastAnswerPlan: null
+    },
     createdAt,
     expiresAt,
     deploymentSha: DEPLOYMENT_SHA,
@@ -625,6 +636,169 @@ function mergePatientFactMatches(canonical, structured) {
   };
 }
 
+function semanticProjectionQuestion(definition, language) {
+  return definition?.aliases?.[language]?.[0]
+    || (language === "en" ? definition?.labelEn : definition?.labelZh)
+    || "";
+}
+
+function projectSemanticPatientFacts(caseId, caseData, semanticDecision, language) {
+  let projected = null;
+  for (const intent of semanticDecision?.intents || []) {
+    const definition = patientFactOntology.find((item) => item.key === intent);
+    if (!definition) continue;
+    let current = null;
+    if (definition.domain === "canonical_priority") {
+      current = projectCanonicalPatientFacts(caseId, [intent], language, semanticDecision.clauses?.[0]?.text || "");
+    } else {
+      const projectionQuestion = semanticProjectionQuestion(definition, language);
+      current = definition.domain === "structured_history"
+        ? matchStructuredFacts(caseData, projectionQuestion, language)
+        : matchCanonicalPatientFacts(caseId, projectionQuestion, language);
+    }
+    projected = mergePatientFactMatches(projected, current);
+  }
+  if (!projected) return null;
+  return {
+    ...projected,
+    confidence: Math.min(Number(projected.confidence ?? 1), Number(semanticDecision.confidence ?? 0)),
+    answerSource: projected.answerSource === "pending_review"
+      ? "pending_review"
+      : "governed_fact_semantic_classification",
+    matcherLayer: "semantic_classifier"
+  };
+}
+
+function conversationStateSnapshot(session) {
+  const state = session?.conversationState || {};
+  return {
+    currentTopic: String(state.currentTopic || ""),
+    currentEntity: String(state.currentEntity || ""),
+    requestedSlot: String(state.requestedSlot || ""),
+    lastResolvedFact: state.lastResolvedFact || null,
+    lastAnswerPlan: state.lastAnswerPlan || null
+  };
+}
+
+function patientEntityForPlan(plan, replyText, previousEntity = "") {
+  const intent = String(plan?.intent || "");
+  if (intent === "chief_complaint") {
+    return /体检|尿检|潜血|镜下|health.?check|urine test|dipstick/i.test(String(replyText || ""))
+      ? "health_check_finding"
+      : "hematuria";
+  }
+  if (["gross_hematuria", "microscopic_hematuria", "hematuria_onset", "intermittent_hematuria"].includes(intent)) {
+    return previousEntity || "hematuria";
+  }
+  if (intent === "hypertension_history") return "hypertension";
+  if (["medication_list", "medication_name", "medication_dosage", "medication_frequency", "other_medications"].includes(intent)) {
+    return /高血压|降压|hypertension|antihypertensive/i.test(String(replyText || ""))
+      ? "antihypertensive_medication"
+      : "medication";
+  }
+  if (intent === "smoking_history") return "smoking";
+  if (intent === "alcohol_history") return "alcohol";
+  if (intent === "past_medical_history_summary") return "past_medical_history";
+  return intent || previousEntity;
+}
+
+function recordConversationState(session, result, traceInput = {}) {
+  const previous = conversationStateSnapshot(session);
+  const plans = Array.isArray(result?.answerPlans) ? result.answerPlans : [];
+  const resolvedPlan = [...plans].reverse().find((plan) => plan?.intent) || null;
+  if (session && resolvedPlan) {
+    session.conversationState = {
+      currentTopic: String(resolvedPlan.intent || previous.currentTopic),
+      currentEntity: patientEntityForPlan(resolvedPlan, result.replyText, previous.currentEntity),
+      requestedSlot: String(resolvedPlan.sourceSlotId || previous.requestedSlot),
+      lastResolvedFact: {
+        intent: String(resolvedPlan.intent || ""),
+        sourceSlotId: String(resolvedPlan.sourceSlotId || ""),
+        factState: String(resolvedPlan.factState || ""),
+        answerSource: String(result.answerSource || "")
+      },
+      lastAnswerPlan: {
+        intent: String(resolvedPlan.intent || ""),
+        sourceSlotId: String(resolvedPlan.sourceSlotId || ""),
+        factState: String(resolvedPlan.factState || ""),
+        directAnswer: String(resolvedPlan.directAnswer || ""),
+        detail: String(resolvedPlan.detail || ""),
+        renderedAnswer: String(resolvedPlan.renderedAnswer || result.replyText || ""),
+        unknownReason: resolvedPlan.unknownReason || null
+      }
+    };
+  }
+  const configured = getLLMProviderConfig();
+  const classifierInvoked = Number(traceInput.semanticDecision?.providerCalls || 0) > 0;
+  const classifierModel = String(traceInput.semanticDecision?.model || configured.model || "");
+  const isMock = /(?:test|synthetic|mock)/i.test(classifierModel)
+    || /\.test(?:\/|$)/i.test(String(configured.baseUrl || ""));
+  const runtimeTrace = {
+    caseId: String(traceInput.caseId || "").slice(0, 20),
+    model: classifierModel || configured.model,
+    generationSource: classifierInvoked ? (isMock ? "mock" : "live_ai") : "rule_fallback",
+    thinkingMode: String(traceInput.semanticDecision?.thinkingMode || patientThinkingConfig().mode),
+    thinkingApplied: classifierInvoked,
+    fallbackReason: String(result?.fallbackReason || (classifierInvoked ? "" : "deterministic_route")),
+    intent: String(resolvedPlan?.intent || ""),
+    currentTopic: String(session?.conversationState?.currentTopic || ""),
+    requestedSlot: String(session?.conversationState?.requestedSlot || ""),
+    answerSource: String(result?.answerSource || ""),
+    durationMs: Number(traceInput.semanticDecision?.durationMs || 0)
+  };
+  safeLogger.debug("patient_runtime_trace", runtimeTrace);
+  return {
+    ...result,
+    conversationState: conversationStateSnapshot(session),
+    runtimeTrace
+  };
+}
+
+function recoverRecentResolvedFact(session, contextResolution, routedInput, language) {
+  if (!contextResolution?.inherited) return null;
+  const previous = session?.conversationState?.lastAnswerPlan;
+  if (!previous?.intent || !previous?.renderedAnswer) return null;
+  const requestedFact = matchPatientFactOntology(routedInput, language)[0];
+  if (
+    requestedFact
+    && requestedFact.intentKey !== previous.intent
+    && requestedFact.sourceSlotId !== previous.sourceSlotId
+  ) {
+    return null;
+  }
+  if ([FACT_STATES.MISSING, FACT_STATES.NEEDS_REVIEW, FACT_STATES.MEDICAL_CONFLICT].includes(previous.factState)) return null;
+  const collectable = [
+    FACT_STATES.KNOWN_TRUE,
+    FACT_STATES.KNOWN_FALSE,
+    FACT_STATES.EXACT_VALUE,
+    FACT_STATES.APPROXIMATE_VALUE
+  ].includes(previous.factState);
+  const plan = answerPlanFromRendered({
+    intent: previous.intent,
+    sourceSlotId: previous.sourceSlotId,
+    factState: previous.factState,
+    renderedAnswer: previous.renderedAnswer,
+    unknownReason: previous.unknownReason,
+    clauseStatus: collectable ? "matched" : "safe_unknown",
+    matchIndex: 0
+  });
+  return {
+    replyText: renderAnswerPlan(plan),
+    matchedSlotIds: previous.sourceSlotId ? [previous.sourceSlotId] : [],
+    matchedFacts: [previous.intent],
+    governanceSlotIds: previous.sourceSlotId ? [previous.sourceSlotId] : [],
+    collectableSlotIds: collectable && previous.sourceSlotId ? [previous.sourceSlotId] : [],
+    collectableFacts: collectable ? [previous.intent] : [],
+    answerSource: "recent_resolved_fact",
+    confidence: collectable ? 0.99 : 0.8,
+    safetyFlags: [],
+    fallbackReason: "",
+    factStates: { [previous.intent]: previous.factState },
+    answerPlans: [plan],
+    unknownReasonCodes: previous.unknownReason ? { [previous.intent]: previous.unknownReason } : {}
+  };
+}
+
 function clauseOutcomesForMatch(matched) {
   return (matched?.answerPlans || []).map((plan) => {
     let status = plan.clauseStatus || "matched";
@@ -643,7 +817,12 @@ function clauseOutcomesForMatch(matched) {
 async function generatePatientAnswer({ sessionId, caseId, studentInput, conversationHistory = [], language = "zh", completedPatientFacingProfile }) {
   const session = getSession(sessionId, caseId, completedPatientFacingProfile);
   const caseData = getCaseById(caseId);
-  const contextResolution = resolveContextualPatientQuestion(studentInput, conversationHistory, language);
+  const contextResolution = resolveContextualPatientQuestion(
+    studentInput,
+    conversationHistory,
+    language,
+    session?.conversationState
+  );
   const routedInput = contextResolution.question || studentInput;
   // Canonical symptoms and structured history are independent clauses. Resolve
   // both, then merge the governed projections so one layer cannot silently
@@ -651,6 +830,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   let canonical = matchCanonicalPatientFacts(caseId, routedInput, language);
   let structured = matchStructuredFacts(caseData, routedInput, language);
   let matched = mergePatientFactMatches(canonical, structured);
+  if (!matched) matched = recoverRecentResolvedFact(session, contextResolution, routedInput, language);
   const safeMissingMatch = !matched
     ? matchPatientFactOntology(routedInput, language, ["safe_missing"])[0]
     : null;
@@ -702,21 +882,13 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     semanticDecision = await classifyPatientIntent({
       question: routedInput,
       language,
-      conversationHistory
+      conversationHistory,
+      conversationState: session?.conversationState
     });
     if (semanticDecision.accepted) {
-      canonical = projectCanonicalPatientFacts(
-        caseId,
-        semanticDecision.intents || [semanticDecision.intent],
-        language,
-        routedInput
-      );
-      if (canonical) {
-        canonical.confidence = Math.min(canonical.confidence, semanticDecision.confidence);
-        canonical.answerSource = "case_bilingual_slot_semantic_classification";
-        structured = null;
-        matched = canonical;
-      }
+      matched = projectSemanticPatientFacts(caseId, caseData, semanticDecision, language);
+      canonical = matched;
+      structured = null;
     }
   }
   // Vercel的会话初始化与问答可能落到不同Serverless实例；每问均从当前病例重建安全档案，
@@ -835,7 +1007,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
         provider: getLLMProviderConfig().provider, outputFilter: "safe_unknown", fallbackReason: semanticDecision.reason
       });
     }
-    return {
+    return recordConversationState(session, {
       ...fallback,
       provider: "rule",
       model: "local-rule",
@@ -847,9 +1019,9 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
       unknownReasonCodes: { unresolved_intent: classifierReasonCode(semanticDecision.reason) },
       clauseOutcomes: [{ intent: null, sourceSlotId: null, status: "needs_clarification", factState: FACT_STATES.MISSING, unknownReason: classifierReasonCode(semanticDecision.reason) }],
       contextResolution
-    };
+    }, { caseId, semanticDecision });
   }
-  return {
+  return recordConversationState(session, {
     ...fallback,
     provider: "rule",
     model: "local-rule",
@@ -863,7 +1035,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     clauseOutcomes,
     contextResolution,
     quarantinedSlotIds: matched?.quarantinedSlotIds || []
-  };
+  }, { caseId, semanticDecision });
 }
 
 module.exports = {

@@ -559,10 +559,13 @@ function recentConversationTopic(conversationHistory = [], language = "zh") {
   return "";
 }
 
-function resolveContextualPatientQuestion(question, conversationHistory = [], language = "zh") {
+function resolveContextualPatientQuestion(question, conversationHistory = [], language = "zh", conversationState = null) {
   const original = String(question || "").trim();
   const explicitPriority = matchPriorityCanonicalIntents(original, language);
-  const topic = recentConversationTopic(conversationHistory, language);
+  const historyTopic = recentConversationTopic(conversationHistory, language);
+  const stateTopic = String(conversationState?.currentTopic || "");
+  const stateEntity = historyTopic ? "" : String(conversationState?.currentEntity || "");
+  const topic = historyTopic || stateTopic;
   if (!original || !topic) {
     return { question: original, inherited: false, reason: "", sourceIntent: "" };
   }
@@ -625,7 +628,7 @@ function resolveContextualPatientQuestion(question, conversationHistory = [], la
     }
     const otherMedicationFollowup = language === "en"
       ? /^(?:do (?:i|you) take|are there) any other medications?\??$/i.test(original)
-      : /^还有(?:没有)?(?:吃|服|用)?(?:什么|哪些)?其他药[呢吗]?[？?]?$/.test(compacted);
+      : /^(?:还有|还)(?:没有)?(?:吃|服|用)?(?:什么|哪些)?其他药[呢吗]?[？?]?$/.test(compacted);
     if (otherMedicationFollowup) {
       return {
         question: language === "en" ? "Do you take any other medications?" : "还有没有吃其他药？",
@@ -638,13 +641,35 @@ function resolveContextualPatientQuestion(question, conversationHistory = [], la
   const durationFollowup = language === "en"
     ? /^(?:about )?(?:how long|since when|when did (?:it|that) start)\??$/i.test(original)
     : /^(?:那|这个|这种情况)?(?:多少天|多久(?:了)?|从什么时候开始|什么时候开始)[呢吗]?[？?]?$/.test(compacted);
-  if (durationFollowup && (isHematuriaTopic || topic === "trauma")) {
+  if (durationFollowup && (
+    isHematuriaTopic
+    || topic === "trauma"
+    || topic === "chief_complaint"
+    || ["hematuria", "health_check_finding", "chief_complaint_finding"].includes(stateEntity)
+  )) {
     return {
       question: language === "en"
         ? (topic === "trauma" ? "How long ago did the injury happen?" : "How long has the blood in the urine been present?")
-        : (topic === "trauma" ? "外伤是多久以前发生的？" : "血尿多久了？"),
+        : (topic === "trauma"
+          ? "外伤是多久以前发生的？"
+          : stateEntity === "health_check_finding" ? "体检发现尿异常多久了？" : "血尿多久了？"),
       inherited: true,
       reason: "contextual_duration",
+      sourceIntent: topic
+    };
+  }
+  const discoveryFollowup = language === "en"
+    ? /^(?:how (?:was|did) (?:it|that).*(?:found|discover)|how did you notice (?:it|that))\??$/i.test(original)
+    : /^(?:那|这个|这种情况)?(?:是)?怎么(?:发现|知道|注意到)的[呢吗]?[？?]?$/.test(compacted);
+  if (discoveryFollowup && (
+    isHematuriaTopic
+    || topic === "chief_complaint"
+    || ["hematuria", "health_check_finding", "chief_complaint_finding"].includes(stateEntity)
+  )) {
+    return {
+      question: language === "en" ? "What brought you here and how was it found?" : "为什么来看，是怎么发现的？",
+      inherited: true,
+      reason: "contextual_discovery",
       sourceIntent: topic
     };
   }
@@ -672,8 +697,12 @@ function resolveContextualPatientQuestion(question, conversationHistory = [], la
   }
   const previousFollowup = language === "en"
     ? /^(?:has|did) (?:it|this|that) happen before\??$/i.test(original)
-    : /^(?:那|这个|这种情况)?以前有过吗[？?]?$/.test(compacted);
-  if (previousFollowup && isHematuriaTopic) {
+    : /^(?:那|这个|这种情况)?以前(?:有过|出现过)吗[？?]?$/.test(compacted);
+  if (previousFollowup && (
+    isHematuriaTopic
+    || topic === "chief_complaint"
+    || ["hematuria", "health_check_finding", "chief_complaint_finding"].includes(stateEntity)
+  )) {
     return {
       question: language === "en" ? "Has the blood in the urine happened before or recurred?" : "血尿以前反复出现过吗？",
       inherited: true,
