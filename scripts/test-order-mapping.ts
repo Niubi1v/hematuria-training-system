@@ -1,4 +1,10 @@
 import casesJson from "../data/cases.json";
+import imaging from "../data/order_catalog_imaging.json";
+import labs from "../data/order_catalog_labs.json";
+import perioperative from "../data/order_catalog_perioperative.json";
+import procedures from "../data/order_catalog_procedures.json";
+import orderResults from "../data/order_results_structured.json";
+import { buildStudentOrderCatalog, sourceOrderId } from "../shared/dataAgentPresentation.js";
 import { matchOrderResults } from "../src/lib/multiAgents";
 import type { CaseData } from "../src/lib/types";
 
@@ -9,14 +15,12 @@ function assert(condition: unknown, message: string) {
 const p008 = (casesJson as CaseData[]).find((item) => item.id === "P008")!;
 
 const cbc = matchOrderResults(p008, "LAB-BL-001");
-assert(cbc.selectedOrderCount === 1 && cbc.recognizedOrderCount === 1 && cbc.returnedReportCount === 1, "P008 CBC counts must be explainable");
-assert(cbc.results[0]?.orderId === "LAB-BL-001", "P008 CBC must return only CBC");
-assert(!/前列腺|结石|CT|尿动力/.test(cbc.results[0]?.result || ""), "P008 CBC leaked imaging or functional results");
+assert(cbc.selectedOrderCount === 1 && cbc.recognizedOrderCount === 1 && cbc.returnedReportCount === 0, "P008 CBC counts must distinguish an order from an available report");
+assert(cbc.orderOutcomes?.[0]?.status === "not_provided" && cbc.orderOutcomes[0].provenance === "source_not_available", "P008 unavailable CBC must remain a per-order source outcome");
 
 const renal = matchOrderResults(p008, "LAB-BL-003");
-assert(renal.results.length === 1 && renal.results[0].orderId === "LAB-BL-003", "P008 renal function must return only renal function");
-assert(/肌酐|eGFR/.test(renal.results[0].result), "P008 renal result must explain creatinine/eGFR availability");
-assert(!/前列腺|结石|CT|尿动力/.test(renal.results[0].result), "P008 renal result leaked unrelated findings");
+assert(renal.results.length === 0, "P008 unavailable renal-function placeholder must not be presented as a report");
+assert(renal.orderOutcomes?.[0]?.status === "not_provided" && renal.orderOutcomes[0].provenance === "source_not_available", "P008 renal-function absence must remain explicit");
 
 const ctuBlocked = matchOrderResults(p008, "IMG-CT-002");
 assert(ctuBlocked.results.length === 0 && ctuBlocked.unmetPrerequisites?.includes("LAB-BL-003"), "CTU must wait for renal-function prerequisite");
@@ -28,9 +32,9 @@ assert(/膀胱内多发结石/.test(ctuReport?.result || ""), "P008 CTU must ret
 assert(!/乳果糖|肠道准备|心肺功能/.test(ctuReport?.result || ""), "P008 CTU contains unrelated treatment content");
 
 const pathology = matchOrderResults(p008, "END-002；LAB-PATH-001");
-const pathologyReport = pathology.results.find((item) => item.orderId === "LAB-PATH-001");
-assert(pathologyReport?.status === "not_performed", "P008 TURBT pathology must explicitly state not performed");
-assert(!/乳果糖|肠道准备|前列腺体积/.test(pathologyReport?.result || ""), "P008 TURBT pathology returned contaminated content");
+const pathologyOutcome = pathology.orderOutcomes?.find((item) => item.orderId === "LAB-PATH-001");
+assert(pathology.results.every((item) => item.orderId !== "LAB-PATH-001"), "P008 not-performed pathology must not be presented as a report");
+assert(pathologyOutcome?.status === "not_provided" && /未实施/.test(pathologyOutcome.message), "P008 TURBT pathology must explicitly state not performed per order");
 
 const partial = matchOrderResults(p008, "血常");
 assert(partial.recognizedOrderCount === 0 && partial.results.length === 0, "substring fragments must not match an order");
@@ -38,4 +42,27 @@ assert(partial.recognizedOrderCount === 0 && partial.results.length === 0, "subs
 const duplicate = matchOrderResults(p008, "LAB-BL-001", { previousOrderIds: ["LAB-BL-001"] });
 assert(duplicate.duplicateOrderIds?.includes("LAB-BL-001") && duplicate.results.length === 0, "duplicate orders must not return or score duplicate evidence");
 
-console.log("P008 exact order mapping and prerequisite tests passed.");
+const cases = casesJson as CaseData[];
+const studentCatalog = buildStudentOrderCatalog([...labs, ...imaging, ...procedures, ...perioperative]);
+let finalMappings = 0;
+let unavailableMappings = 0;
+for (const sourceResult of orderResults) {
+  const caseData = cases.find((item) => item.id === sourceResult.caseId);
+  assert(caseData, `${sourceResult.caseId}: result case must exist`);
+  const studentOrder = studentCatalog.find((item) => sourceOrderId(item) === sourceResult.orderId);
+  const input = studentOrder?.displayName || sourceResult.orderId;
+  const mapped = matchOrderResults(caseData!, input, { previousOrderIds: sourceResult.prerequisites });
+  const outcome = mapped.orderOutcomes?.find((item) => item.orderId === sourceResult.orderId);
+  assert(outcome, `${sourceResult.caseId}/${sourceResult.orderId}: canonical or alias must resolve to an outcome`);
+  if (sourceResult.status === "final") {
+    assert(mapped.results.some((item) => item.resultId === sourceResult.resultId), `${sourceResult.caseId}/${sourceResult.orderId}: final source report must be released`);
+    assert(outcome?.status === "reported" && outcome.provenance === "configured_case_result", `${sourceResult.caseId}/${sourceResult.orderId}: final mapping must preserve source provenance`);
+    finalMappings += 1;
+  } else {
+    assert(mapped.results.every((item) => item.resultId !== sourceResult.resultId), `${sourceResult.caseId}/${sourceResult.orderId}: unavailable placeholder must not be presented as a report`);
+    assert(outcome?.status === "not_provided" && outcome.provenance === `source_${sourceResult.status}`, `${sourceResult.caseId}/${sourceResult.orderId}: unavailable source status must remain explicit`);
+    unavailableMappings += 1;
+  }
+}
+
+console.log(`Order mapping audit passed: P008 prerequisites plus 42 cases / ${finalMappings} final reports / ${unavailableMappings} unavailable or not-performed outcomes.`);

@@ -112,7 +112,8 @@ async function main() {
   input: "肾功能/eGFR；双肾CTU平扫+增强"
 }, attempt.token);
   assert.equal(response.statusCode, 200);
-  assert.deepEqual((response.payload.results as Array<{ orderId: string }>).map((item) => item.orderId).sort(), ["IMG-CT-002", "LAB-BL-003"]);
+  assert.deepEqual((response.payload.results as Array<{ orderId: string }>).map((item) => item.orderId).sort(), ["IMG-CT-002"]);
+  assert((response.payload.orderOutcomes as Array<{ orderId: string; status: string }>).some((item) => item.orderId === "LAB-BL-003" && item.status === "not_provided"));
   assert((response.payload.matchedOrders as Array<{ displayName: string }>).some((item) => item.displayName === "双肾CTU平扫+增强"));
 
   attempt = await investigationAttempt("P008");
@@ -126,6 +127,68 @@ async function main() {
 }, attempt.token);
   assert.equal(response.statusCode, 200);
   assert((response.payload.results as Array<{ orderId: string }>).some((item) => item.orderId === "IMG-CT-002"));
+
+  attempt = await investigationAttempt("P001");
+  response = await call({
+    action: "order",
+    caseId: "P001",
+    attemptId: attempt.attemptId,
+    mode: "free",
+    language: "zh",
+    input: "尿常规；血常规；彩超泌尿系（双肾、输尿管及膀胱）+残余尿"
+  }, attempt.token);
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(
+    (response.payload.results as Array<{ orderId: string }>).map((item) => item.orderId).sort(),
+    ["IMG-US-001", "LAB-BL-001", "LAB-UR-001"]
+  );
+  assert.equal((response.payload.orderOutcomes as Array<{ status: string }>).filter((item) => item.status === "reported").length, 3);
+
+  attempt = await investigationAttempt("P001");
+  response = await call({
+    action: "order",
+    caseId: "P001",
+    attemptId: attempt.attemptId,
+    mode: "free",
+    language: "zh",
+    input: "肾功能/eGFR；X光膀胱造影"
+  }, attempt.token);
+  assert.equal(response.statusCode, 200);
+  assert.equal((response.payload.results as unknown[]).length, 0);
+  const missingOutcomes = response.payload.orderOutcomes as Array<{ displayName: string; status: string; provenance: string; message: string }>;
+  assert.equal(missingOutcomes.length, 2);
+  assert(missingOutcomes.every((item) => item.status === "not_provided"));
+  assert(missingOutcomes.some((item) => item.displayName === "肾功能/eGFR" && item.provenance === "source_not_available"));
+  assert(missingOutcomes.some((item) => item.displayName === "X光膀胱造影" && /X光膀胱造影：/.test(item.message)));
+
+  const safeSimulation = await investigationAttempt("P001");
+  response = await call({
+    action: "exam",
+    caseId: "P001",
+    attemptId: safeSimulation.attemptId,
+    mode: "free",
+    language: "zh",
+    input: "阴囊"
+  }, safeSimulation.token);
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.payload.provenance, "simulated_normal");
+  assert.equal(response.payload.affectsDiagnosis, false);
+  assert.equal(response.payload.affectsScore, false);
+  assert.equal(response.payload.reviewerStatus, "not_required");
+  assert.match(String(response.payload.result), /未见明显异常/);
+
+  const criticalMissing = await investigationAttempt("P001");
+  response = await call({
+    action: "exam",
+    caseId: "P001",
+    attemptId: criticalMissing.attemptId,
+    mode: "free",
+    language: "zh",
+    input: "腰部包块"
+  }, criticalMissing.token);
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.payload.provenance, "not_provided");
+  assert.equal(response.payload.result, "该病例未提供此项结果，暂不能据此判断。");
 
   const female = await investigationAttempt("P002");
   response = await call({
@@ -156,7 +219,35 @@ async function main() {
   assert.equal(response.payload.examId, undefined);
   assert.equal(response.payload.provenance, "not_provided");
 
-  console.log("UI clinical catalog, aliases, sex visibility, exact report binding, and fail-closed missing-result tests passed.");
+  const perioperativeAttemptId = `ui-stage6-P001-${Date.now()}-${Math.random()}`;
+  response = await call({ action: "init-attempt", caseId: "P001", attemptId: perioperativeAttemptId, mode: "free", language: "zh" });
+  for (const stageKey of ["history", "orders", "diagnosis", "consult", "treatment"]) {
+    response = await call({
+      action: "stage-feedback",
+      caseId: "P001",
+      attemptId: perioperativeAttemptId,
+      mode: "free",
+      language: "zh",
+      stageKey,
+      submission: {}
+    }, response.token);
+    assert.equal(response.statusCode, 200);
+  }
+  response = await call({
+    action: "stage-feedback",
+    caseId: "P001",
+    attemptId: perioperativeAttemptId,
+    mode: "free",
+    language: "zh",
+    stageKey: "perioperative",
+    submission: { perioperativePreparation: "完成麻醉、心肺、肾功能、感染、营养、贫血、抗栓及VTE风险评估。" }
+  }, response.token);
+  assert.equal(response.statusCode, 200);
+  assert.match(String(response.payload.standardAnswer), /病例现有管理路径参考要点/);
+  assert.match(String(response.payload.standardAnswer), /尚待持证专家终签/);
+  assert.match(String(response.payload.standardAnswer), /麻醉、心肺、肾功能/);
+
+  console.log("UI clinical catalog, per-order reports, simulated-normal policy, sex visibility, and stage-6 reference tests passed.");
 }
 
 void main().catch((error) => {

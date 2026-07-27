@@ -21,7 +21,20 @@ export function buildStudentOrderCatalog<T extends Record<string, unknown>>(cata
 export function containsCjk(value: unknown): boolean;
 export function firstEnglishAlias(order: { orderId?: string; synonyms?: string[] }): string;
 export function orderApplicableForSex(order: object, sex: string): boolean;
+export function orderResultIsReportable(result: { status?: string } | undefined): boolean;
+export function splitOrderInput(value: unknown): string[];
 export function sourceOrderId(order: { orderId?: string; sourceOrderId?: string }): string;
+export function simulatedPhysicalExamResult(
+  item: { examId?: string },
+  language?: DataAgentLanguage
+): {
+  result: string;
+  provenance: "simulated_normal";
+  affectsDiagnosis: false;
+  affectsScore: false;
+  reviewerStatus: "not_required";
+  simulationPolicyId: string;
+} | null;
 export function needsReviewedMetadata(
   order: { primaryCategory?: string },
   result: { status?: string; value?: string; unit?: string; referenceRange?: string }

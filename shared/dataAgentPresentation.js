@@ -19,6 +19,19 @@ const statusLabels = Object.freeze({
   needs_review: Object.freeze({ zh: "待审核", en: "Awaiting review" })
 });
 
+const simulatedNormalPhysicalExamPolicies = Object.freeze({
+  PE202: Object.freeze({
+    policyId: "MEDICAL_DATA_POLICY:physical_exam:PE202",
+    affectsDiagnosis: false,
+    affectsScore: false,
+    reviewerStatus: "not_required",
+    result: Object.freeze({
+      zh: "阴囊、睾丸及附睾未见明显异常。",
+      en: "No obvious abnormality was found in the scrotum, testes, or epididymides."
+    })
+  })
+});
+
 const studentCatalogSpecs = Object.freeze([
   { catalogId: "STD-US-001", sourceOrderId: "IMG-US-001", primaryCategory: "检查", secondaryCategory: "超声", displayName: "彩超泌尿系（双肾、输尿管及膀胱）+残余尿", aliases: ["IMG-US-002", "肾脏及输尿管超声", "肾脏超声", "输尿管超声", "肾积水超声"] },
   { catalogId: "STD-US-002", sourceOrderId: "IMG-US-003", primaryCategory: "检查", secondaryCategory: "超声", displayName: "彩超男性生殖系统（阴囊、睾丸、输精管）+精索静脉", applicableSex: ["男"] },
@@ -95,6 +108,45 @@ function sourceOrderId(order) {
 function orderApplicableForSex(order, sex) {
   const applicableSex = order?.applicableSex;
   return !Array.isArray(applicableSex) || !applicableSex.length || applicableSex.includes(sex);
+}
+
+function splitOrderInput(value) {
+  const text = String(value || "").replace(/\s+and\s+/gi, "；");
+  const parts = [];
+  let depth = 0;
+  let current = "";
+  for (const character of text) {
+    if ("（([".includes(character)) depth += 1;
+    if ("）)]".includes(character)) depth = Math.max(0, depth - 1);
+    if (depth === 0 && /[；;、,，\n]/.test(character)) {
+      if (current.trim()) parts.push(current.trim());
+      current = "";
+    } else {
+      current += character;
+    }
+  }
+  if (current.trim()) parts.push(current.trim());
+  return uniqueStrings(parts);
+}
+
+function orderResultIsReportable(result) {
+  return result?.status === "final";
+}
+
+function simulatedPhysicalExamResult(item, language = "zh") {
+  const policy = simulatedNormalPhysicalExamPolicies[String(item?.examId || "")];
+  if (!policy
+    || policy.affectsDiagnosis !== false
+    || policy.affectsScore !== false
+    || policy.reviewerStatus !== "not_required") return null;
+  return {
+    result: policy.result[language === "en" ? "en" : "zh"],
+    provenance: "simulated_normal",
+    affectsDiagnosis: policy.affectsDiagnosis,
+    affectsScore: policy.affectsScore,
+    reviewerStatus: policy.reviewerStatus,
+    simulationPolicyId: policy.policyId
+  };
 }
 
 function containsCjk(value) {
@@ -237,6 +289,7 @@ module.exports = {
   firstEnglishAlias,
   needsReviewedMetadata,
   orderApplicableForSex,
+  orderResultIsReportable,
   presentExamResult,
   presentMatchedOrder,
   presentOrderCatalogItem,
@@ -244,5 +297,7 @@ module.exports = {
   presentPhysicalExamItem,
   reportStatusPresentation,
   safeStudentFacingText,
+  simulatedPhysicalExamResult,
+  splitOrderInput,
   sourceOrderId
 };
