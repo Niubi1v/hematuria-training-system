@@ -52,13 +52,15 @@ const { structuredHistoryIntentDefinitions } = require("./patientIntentCatalog.j
 };
 const {
   buildMedicationAnswerPlan,
-  buildPastMedicalHistorySummary
+  buildPastMedicalHistorySummary,
+  selectMedicationsForQuestion
 } = require("./structuredHistoryAnswerPlanner.js") as {
   buildMedicationAnswerPlan(
     history: StructuredHistory,
     intent: string,
     language: "zh" | "en",
-    medications: StructuredHistory["medicationList"]
+    medications: StructuredHistory["medicationList"],
+    options?: { scope?: string; allMedications?: StructuredHistory["medicationList"] }
   ): { renderedAnswer: string };
   buildPastMedicalHistorySummary(
     history: StructuredHistory,
@@ -68,6 +70,11 @@ const {
       fact: Pick<StructuredPatientFact, "provenance" | "teacherReviewRequired">
     ) => boolean
   ): { renderedAnswer: string; sources: StructuredPatientFact[]; hasUnresolved: boolean };
+  selectMedicationsForQuestion(
+    medications: StructuredHistory["medicationList"],
+    question: string,
+    language: "zh" | "en"
+  ): { medications: StructuredHistory["medicationList"]; scope: string };
 };
 
 const specialIntents = new Set([
@@ -125,7 +132,14 @@ export function matchStructuredPatientQuestion(caseData: CaseData, question: str
       const medications = history.medicationList.filter(
         (item) => !unresolvedFact(caseData.id, "medicationList", item)
       );
-      answers.push(buildMedicationAnswerPlan(history, match.key, language, medications).renderedAnswer);
+      const selection = selectMedicationsForQuestion(medications, question, language);
+      answers.push(buildMedicationAnswerPlan(
+        history,
+        match.key,
+        language,
+        selection.medications,
+        { scope: selection.scope, allMedications: medications }
+      ).renderedAnswer);
       sources.push(...medications);
       hasUnresolved ||= medications.length !== history.medicationList.length;
     }
