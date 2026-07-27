@@ -11,10 +11,6 @@ const {
   buildPastMedicalHistorySummary,
   selectMedicationsForQuestion
 } = require("../src/lib/structuredHistoryAnswerPlanner.js");
-const {
-  normalizeRecommendedFactState,
-  personalHistoryRecommendation
-} = require("../src/lib/patientRuntimeRecommendations.js");
 const historyMedicalPolicy = require("../data/history_medical_reconciliation.json");
 const explicitBlockedFacts = new Set(
   historyMedicalPolicy.blockedMedicalHistory.map((item) => `${item.caseId}:${item.field}`)
@@ -132,11 +128,9 @@ function matchStructuredFacts(caseData, question, language = "zh") {
     const fact = history[key];
     if (!fact) continue;
     const blocked = unresolvedFact(caseData.id, key, fact);
-    const runtimeRecommendation = blocked && language === "zh"
-      ? personalHistoryRecommendation(caseData.id, intentKey)
-      : null;
-    const renderedAnswer = runtimeRecommendation?.runtimeAnswer
-      || (blocked ? unresolvedStructuredReply(key, language) : (language === "en" ? fact.patientAnswerEn : fact.patientAnswerZh));
+    const renderedAnswer = blocked
+      ? unresolvedStructuredReply(key, language)
+      : (language === "en" ? fact.patientAnswerEn : fact.patientAnswerZh);
     answers.push(renderedAnswer);
     matchedFacts.push(intentKey);
     matchedSlotIds.push(slotId);
@@ -147,22 +141,18 @@ function matchStructuredFacts(caseData, question, language = "zh") {
       collectableSlotIds.push(slotId);
     }
     sources.push(fact);
-    const factState = runtimeRecommendation
-      ? normalizeRecommendedFactState(runtimeRecommendation.factState)
-      : factStateFromText(renderedAnswer, { needsReview: blocked });
+    const factState = factStateFromText(renderedAnswer, { needsReview: blocked });
     answerPlans.push(answerPlanFromRendered({
       intent: intentKey,
       sourceSlotId: slotId,
       factState,
       renderedAnswer,
       unknownReason: reasonCodeForState(factState),
-      clauseStatus: blocked && !runtimeRecommendation ? "blocked_medical" : "matched",
+      clauseStatus: blocked ? "blocked_medical" : "matched",
       matchIndex: clause.index,
-      provenance: runtimeRecommendation?.provenance,
-      runtimeOnly: Boolean(runtimeRecommendation),
-      runtimeFactStates: runtimeRecommendation
-        ? { [key]: normalizeRecommendedFactState(runtimeRecommendation.factState) }
-        : null
+      provenance: fact.provenance,
+      runtimeOnly: false,
+      runtimeFactStates: null
     }));
   }
   if (!answers.length) return null;

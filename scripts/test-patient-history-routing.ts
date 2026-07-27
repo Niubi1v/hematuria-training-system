@@ -59,15 +59,10 @@ type PatientCase = {
 const cases = require("../data/cases.json") as PatientCase[];
 const {
   controlledAntihypertensiveNames,
-  historySummaryRecommendations,
-  personalHistoryRecommendation
+  historySummaryRecommendations
 } = require("../src/lib/patientRuntimeRecommendations.js") as {
   controlledAntihypertensiveNames(caseId: string): string[];
   historySummaryRecommendations(caseId: string): Array<{ targetField: string }>;
-  personalHistoryRecommendation(caseId: string, intent: string): {
-    runtimeAnswer: string;
-    provenance: string;
-  } | null;
 };
 const { matchStructuredFacts } = require("../server/structuredFacts.js") as {
   matchStructuredFacts(caseData: unknown, question: string, language: "zh" | "en"): { matchedSlotIds?: string[] } | null;
@@ -263,17 +258,13 @@ async function main() {
         const sourceLead = fact.patientAnswerZh.split(/[。；]/)[0];
         assert.ok(answer.replyText.includes(sourceLead), `${currentCase.id} source ${personalProbe.intent} was not answered`);
       } else {
-        const runtimeRecommendation = personalHistoryRecommendation(currentCase.id, personalProbe.intent);
         assert.equal(
           answer.factStates?.[personalProbe.intent],
-          runtimeRecommendation ? "known_false" : "needs_review",
+          "needs_review",
           `${currentCase.id} ${personalProbe.intent} runtime state`
         );
         assert.equal(answer.fallbackReason, "medical_history_pending_review", `${currentCase.id} ${personalProbe.intent} missing source must not be invented`);
-        if (runtimeRecommendation) {
-          assert.equal(answer.replyText, runtimeRecommendation.runtimeAnswer);
-          assert.deepEqual(answer.matchedSlotIds || [], [], `${currentCase.id} runtime-only personal history must not be collected`);
-        }
+        assert.deepEqual(answer.matchedSlotIds || [], [], `${currentCase.id} unreviewed personal history must not be collected`);
       }
     }
 

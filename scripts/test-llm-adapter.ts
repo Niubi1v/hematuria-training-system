@@ -35,7 +35,10 @@ async function main() {
       matchedFacts: drinking.matchedFacts
     })}`
   );
-  assert(/不喝酒/.test(drinking.replyText), `completed runtime recommendation must answer drinking history: ${drinking.replyText}`);
+  assert(
+    /记不太清|没(?:有)?特别注意|不太清楚/.test(drinking.replyText),
+    `unreviewed drinking history must remain naturally uncertain: ${drinking.replyText}`
+  );
   assertNotContains(drinking.replyText, ["吸烟", "包年", "乙肝", "高血压", "糖尿病"], "drinking");
 
   const hypertension = await ask("HX-ADD-001", "有高血压吗？");

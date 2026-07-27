@@ -83,15 +83,6 @@ const {
     options?: { caseId?: string }
   ): { medications: StructuredHistory["medicationList"]; scope: string };
 };
-const {
-  personalHistoryRecommendation
-} = require("./patientRuntimeRecommendations.js") as {
-  personalHistoryRecommendation(
-    caseId: string,
-    intentKey: string
-  ): { runtimeAnswer: string; provenance: string } | null;
-};
-
 const specialIntents = new Set([
   "past_medical_history_summary",
   "medication_list",
@@ -175,13 +166,7 @@ export function matchStructuredPatientQuestion(caseData: CaseData, question: str
     const fact = history[match.key] as StructuredPatientFact;
     if (!fact || typeof fact !== "object" || !("patientAnswerZh" in fact)) continue;
     if (unresolvedFact(caseData.id, String(match.key), fact)) {
-      const personalIntent = match.key === "smokingHistory"
-        ? "smoking_history"
-        : match.key === "alcoholHistory" ? "alcohol_history" : "";
-      const runtimeRecommendation = language === "zh" && personalIntent
-        ? personalHistoryRecommendation(caseData.id, personalIntent)
-        : null;
-      answers.push(runtimeRecommendation?.runtimeAnswer || unresolvedReply(String(match.key), language));
+      answers.push(unresolvedReply(String(match.key), language));
       hasUnresolved = true;
     } else {
       answers.push(language === "en" ? fact.patientAnswerEn : fact.patientAnswerZh);
