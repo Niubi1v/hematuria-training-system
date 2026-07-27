@@ -26,6 +26,23 @@ function medicationNames(medications) {
   return [...new Set(medications.map((item) => String(item?.name || "").trim()).filter(Boolean))];
 }
 
+function medicationScopeFromQuestion(question, language = "zh") {
+  const text = String(question || "");
+  if (language === "en") {
+    return /hypertension|high blood pressure|antihypertensive/i.test(text) ? "antihypertensive" : "";
+  }
+  return /高血压|降压药/.test(text) ? "antihypertensive" : "";
+}
+
+function selectMedicationsForQuestion(medications, question, language = "zh") {
+  const scope = medicationScopeFromQuestion(question, language);
+  if (scope !== "antihypertensive") return { medications, scope: "" };
+  return {
+    medications: medications.filter((item) => /高血压|降压/.test(`${item?.name || ""} ${item?.indication || ""}`)),
+    scope
+  };
+}
+
 function medicationFrequency(item, language) {
   const frequency = String(item?.frequency || "").trim();
   if (language === "en") {
@@ -41,8 +58,15 @@ function noLongTermMedication(answer, language) {
     : /(?:没有|不吃|未服用|没吃).*(?:长期)?(?:药|用药)/.test(answer);
 }
 
-function buildMedicationAnswerPlan(history, intent, language = "zh", medications = history?.medicationList || []) {
+function buildMedicationAnswerPlan(
+  history,
+  intent,
+  language = "zh",
+  medications = history?.medicationList || [],
+  options = {}
+) {
   const names = medicationNames(medications);
+  const allNames = medicationNames(options.allMedications || medications);
   const medicationAnswer = String(language === "en" ? history?.medicationAnswerEn : history?.medicationAnswerZh || "").trim();
   const joinedNames = naturalList(names, language);
 
@@ -57,6 +81,22 @@ function buildMedicationAnswerPlan(history, intent, language = "zh", medications
   }
 
   if (!names.length) {
+    if (options.scope === "antihypertensive" && allNames.length) {
+      return {
+        renderedAnswer: language === "en"
+          ? `I remember taking ${naturalList(allNames, language)}, but I cannot tell which one is for high blood pressure.`
+          : `我只记得在吃${naturalList(allNames, language)}，但哪一种是降压药说不清。`,
+        factState: FACT_STATES.PARTIALLY_KNOWN
+      };
+    }
+    if (options.scope === "antihypertensive") {
+      return {
+        renderedAnswer: language === "en"
+          ? "I know that I have high blood pressure, but I cannot recall which medicine I take for it."
+          : "我只知道自己有高血压，具体吃什么降压药记不清。",
+        factState: FACT_STATES.MISSING
+      };
+    }
     const renderedAnswer = medicationAnswer || (language === "en"
       ? "I do not have a reliable medication list."
       : "我没有可靠的用药记录。");
@@ -73,8 +113,8 @@ function buildMedicationAnswerPlan(history, intent, language = "zh", medications
     return {
       renderedAnswer: hasCategoryOnlyName
         ? (language === "en"
-          ? `I only know that I take ${joinedNames}; I cannot recall the specific name.`
-          : `只知道是${joinedNames}，具体名称记不清。`)
+          ? `I only know that I take ${joinedNames} long term; I cannot recall the specific name.`
+          : `只知道长期服用${joinedNames}，具体名称记不清。`)
         : (language === "en"
           ? `The medications I know are ${joinedNames}.`
           : `我知道的药名是${joinedNames}。`),
@@ -92,8 +132,8 @@ function buildMedicationAnswerPlan(history, intent, language = "zh", medications
     if (!known.length) {
       return {
         renderedAnswer: language === "en"
-          ? `I only know that I take ${joinedNames}; I cannot recall the specific dose.`
-          : `只知道在服用${joinedNames}，具体剂量记不清。`,
+          ? `I only know that I take ${joinedNames} long term; I cannot recall the specific dose.`
+          : `只知道长期服用${joinedNames}，具体剂量记不清。`,
         factState: FACT_STATES.PARTIALLY_KNOWN
       };
     }
@@ -115,8 +155,8 @@ function buildMedicationAnswerPlan(history, intent, language = "zh", medications
     if (!known.length) {
       return {
         renderedAnswer: language === "en"
-          ? `I only know that I take ${joinedNames}; I cannot recall exactly how I take them.`
-          : `只知道在服用${joinedNames}，具体吃法记不清。`,
+          ? `I only know that I take ${joinedNames} long term; I cannot recall exactly how I take them.`
+          : `只知道长期服用${joinedNames}，具体吃法记不清。`,
         factState: FACT_STATES.PARTIALLY_KNOWN
       };
     }
@@ -155,10 +195,11 @@ function buildPastMedicalHistorySummary(history, language = "zh", isBlocked = ()
     renderedAnswer = language === "en"
       ? `My known medical history includes ${naturalList(present.map((item) => item.label), language)}.`
       : `我已知有${naturalList(present.map((item) => item.label), language)}。`;
-  } else if (absent.length) {
+  }
+  if (absent.length) {
     renderedAnswer = language === "en"
-      ? `Of the conditions asked about, I do not have ${naturalList(absent.map((item) => item.label), language)}.`
-      : `目前已知没有${naturalList(absent.map((item) => item.label), language)}。`;
+      ? `${renderedAnswer}${renderedAnswer ? " " : ""}I do not have ${naturalList(absent.map((item) => item.label), language)}.`
+      : `${renderedAnswer}${renderedAnswer ? " " : ""}已知没有${naturalList(absent.map((item) => item.label), language)}。`;
   }
   if (blocked.length) {
     renderedAnswer += language === "en"
@@ -180,5 +221,7 @@ function buildPastMedicalHistorySummary(history, language = "zh", isBlocked = ()
 module.exports = {
   PAST_MEDICAL_FACTS,
   buildMedicationAnswerPlan,
-  buildPastMedicalHistorySummary
+  buildPastMedicalHistorySummary,
+  medicationScopeFromQuestion,
+  selectMedicationsForQuestion
 };

@@ -318,7 +318,7 @@ const structuredHistoryIntentDefinitions = [
   ["pregnancy_history", "pregnancyHistory", "GYNE_PREGNANCY", "妊娠史", "Pregnancy history", /怀孕|妊娠|pregnan/i],
   ["past_medical_history_summary", null, "PAST_ALL", "其他疾病", "Other medical conditions", /有没有其他(?:疾病|病)|还有(?:没有)?什么(?:疾病|病)|其他(?:疾病|病史)|any other (?:diseases?|medical conditions?)|other medical conditions?/i],
   ["medication_list", "medicationList", "MED_ALL", "用药史", "Medication history", /长期.*(?:吃|服|用).*药|平时.*(?:吃|服|用).*药|都吃什么药|用药史|长期用药|regular medication|medications do you take/i],
-  ["medication_name", "medicationList", "MED_ALL", "药物名称", "Medication name", /具体(?:的)?药名|药(?:物)?(?:的)?(?:具体)?名(?:称|字)|叫什么药|what (?:is|are) the (?:specific )?(?:medication|medicine|drug)(?: name)?|name of (?:the )?(?:medication|medicine|drug)/i],
+  ["medication_name", "medicationList", "MED_ALL", "药物名称", "Medication name", /高血压.*(?:吃|服|用).*什么药|(?:吃|服|用)(?:的)?什么降压药|什么降压药|具体(?:的)?药名|药(?:物)?(?:的)?(?:具体)?名(?:称|字)|叫什么药|what (?:is|are) the (?:specific )?(?:medication|medicine|drug)(?: name)?|name of (?:the )?(?:medication|medicine|drug)|what.*(?:take|taking).*(?:hypertension|high blood pressure)/i],
   ["medication_dosage", "medicationList", "MED_ALL", "用药剂量", "Medication dose", /(?:具体)?剂量(?:是)?多少|(?:药|服用|每次).*(?:剂量|多少毫克|吃多少)|(?:剂量|多少毫克).*(?:药|服用)|medication dose|medicine dose|drug dose|how many milligrams|what(?:'s| is)? the dose|what dose/i],
   ["medication_frequency", "medicationList", "MED_ALL", "用药频次", "Medication frequency", /一天(?:吃|服|用)?(?:几次|多少次)|多久(?:吃|服|用)一次|(?:药|服药).*(?:频次|频率|吃法|怎么吃)|how often.*(?:medication|medicine|drug)|times? (?:a|per) day|medication frequency/i],
   ["other_medications", "medicationList", "MED_ALL", "其他用药", "Other medications", /还有(?:没有|什么|哪些).*(?:药|用药)|其他(?:药|用药)|any other medications?|other medicines?/i]
@@ -487,6 +487,11 @@ function suppressConfusableFact(question, intentKey, language = "zh") {
       ? /(?:每次尿|每次小便).*(?:全程|从头到尾).*(?:红|血)/.test(compacted)
       : /everytime.*(?:throughout|wholestream|starttofinish).*(?:red|blood)/i.test(compacted);
   }
+  if (intentKey === "hypertension_history") {
+    return language === "zh"
+      ? /高血压[^，。！？?]*(?:吃|服|用)(?:的)?什么药/.test(String(question))
+      : /what[^,.!?]*(?:take|taking)[^,.!?]*(?:hypertension|high blood pressure)|(?:hypertension|high blood pressure)[^,.!?]*what[^,.!?]*(?:medicine|medication|drug)/i.test(String(question));
+  }
   return false;
 }
 
@@ -570,15 +575,25 @@ function resolveContextualPatientQuestion(question, conversationHistory = [], la
     "medication_frequency",
     "other_medications",
     "anticoagulant_use",
-    "antiplatelet_use"
+    "antiplatelet_use",
+    "hypertension_history"
   ].includes(topic);
   if (isMedicationTopic) {
+    const antihypertensiveContext = [
+      original,
+      ...(Array.isArray(conversationHistory) ? conversationHistory.slice(-8).map((entry) => entry?.text || "") : [])
+    ]
+      .some((value) => language === "en"
+        ? /hypertension|high blood pressure|antihypertensive/i.test(String(value))
+        : /高血压|降压药/.test(String(value)));
     const medicationNameFollowup = language === "en"
-      ? /^(?:what is|what's) (?:the )?(?:specific )?name\??$/i.test(original)
-      : /^(?:那|这个|这种药)?具体(?:的)?(?:药)?名(?:称|字)?(?:是什么|叫什么)?[呢吗]?[？?]?$/.test(compacted);
+      ? /^(?:(?:what is|what's) (?:the )?(?:specific )?name|what.*(?:take|taking).*(?:hypertension|high blood pressure))\??$/i.test(original)
+      : /^(?:(?:那|这个|这种药)?具体(?:的)?(?:药)?名(?:称|字)?(?:是什么|叫什么)?|高血压.*(?:吃|服|用).*什么药|(?:吃|服|用)(?:的)?什么降压药)[呢吗]?[？?]?$/.test(compacted);
     if (medicationNameFollowup) {
       return {
-        question: language === "en" ? "What is the specific medication name?" : "具体药名是什么？",
+        question: language === "en"
+          ? (antihypertensiveContext ? "What is the specific antihypertensive medication name?" : "What is the specific medication name?")
+          : (antihypertensiveContext ? "吃的什么降压药？" : "具体药名是什么？"),
         inherited: true,
         reason: "contextual_medication_name",
         sourceIntent: topic
@@ -596,13 +611,26 @@ function resolveContextualPatientQuestion(question, conversationHistory = [], la
       };
     }
     const medicationFrequencyFollowup = language === "en"
-      ? /^(?:how often|how many times (?:a|per) day)\??$/i.test(original)
-      : /^(?:那|这个|这种药)?(?:一天)?(?:吃|服|用)?(?:几次|多少次)[呢吗]?[？?]?$/.test(compacted);
+      ? /^(?:how often|how many times (?:a|per) day|how (?:do|should) (?:i|you) take (?:it|this medicine))\??$/i.test(original)
+      : /^(?:那|这个药?|这种药)?(?:(?:一天)?(?:吃|服|用)?(?:几次|多少次)|怎么吃|如何服用)[呢吗]?[？?]?$/.test(compacted);
     if (medicationFrequencyFollowup) {
       return {
-        question: language === "en" ? "How often do you take the medication?" : "这种药一天吃几次？",
+        question: language === "en"
+          ? (antihypertensiveContext ? "How often do you take the antihypertensive medication?" : "How often do you take the medication?")
+          : (antihypertensiveContext ? "降压药怎么吃？" : "这种药一天吃几次？"),
         inherited: true,
         reason: "contextual_medication_frequency",
+        sourceIntent: topic
+      };
+    }
+    const otherMedicationFollowup = language === "en"
+      ? /^(?:do (?:i|you) take|are there) any other medications?\??$/i.test(original)
+      : /^还有(?:没有)?(?:吃|服|用)?(?:什么|哪些)?其他药[呢吗]?[？?]?$/.test(compacted);
+    if (otherMedicationFollowup) {
+      return {
+        question: language === "en" ? "Do you take any other medications?" : "还有没有吃其他药？",
+        inherited: true,
+        reason: "contextual_other_medications",
         sourceIntent: topic
       };
     }

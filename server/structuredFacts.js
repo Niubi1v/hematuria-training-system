@@ -8,7 +8,8 @@ const {
 } = require("../src/lib/patientFactState.js");
 const {
   buildMedicationAnswerPlan,
-  buildPastMedicalHistorySummary
+  buildPastMedicalHistorySummary,
+  selectMedicationsForQuestion
 } = require("../src/lib/structuredHistoryAnswerPlanner.js");
 const historyMedicalPolicy = require("../data/history_medical_reconciliation.json");
 const explicitBlockedFacts = new Set(
@@ -70,12 +71,22 @@ function matchStructuredFacts(caseData, question, language = "zh") {
           (key, fact) => unresolvedFact(caseData.id, key, fact)
         )
         : null;
-      const medicationSources = (history.medicationList || []).filter(
+      const allMedicationSources = (history.medicationList || []).filter(
         (item) => !unresolvedFact(caseData.id, "medicationList", item)
       );
       const medicationHasUnresolved = intentKey !== "past_medical_history_summary"
-        && medicationSources.length !== (history.medicationList || []).length;
-      const planned = summary || buildMedicationAnswerPlan(history, intentKey, language, medicationSources);
+        && allMedicationSources.length !== (history.medicationList || []).length;
+      const medicationSelection = selectMedicationsForQuestion(allMedicationSources, text, language);
+      const planned = summary || buildMedicationAnswerPlan(
+        history,
+        intentKey,
+        language,
+        medicationSelection.medications,
+        {
+          scope: medicationSelection.scope,
+          allMedications: allMedicationSources
+        }
+      );
       const renderedAnswer = planned.renderedAnswer;
       const factState = medicationHasUnresolved && planned.factState === FACT_STATES.MISSING
         ? FACT_STATES.NEEDS_REVIEW
@@ -87,7 +98,7 @@ function matchStructuredFacts(caseData, question, language = "zh") {
         collectableFacts.push(intentKey);
         collectableSlotIds.push(sourceSlotId);
       }
-      sources.push(...(summary?.sources || medicationSources));
+      sources.push(...(summary?.sources || (medicationSelection.scope ? allMedicationSources : medicationSelection.medications)));
       hasUnresolved ||= Boolean(summary?.hasUnresolved || medicationHasUnresolved);
       answerPlans.push(answerPlanFromRendered({
         intent: intentKey,
