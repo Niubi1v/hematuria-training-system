@@ -369,7 +369,8 @@ test("saved English preference initializes one English patient session and openi
   await page.goto("/cases/P034/");
 
   const conversation = page.getByRole("log", { name: "Simulated patient conversation" });
-  await expect(conversation).toContainText("Hello doctor. My urine has looked red.");
+  await expect(conversation).toContainText("Hello doctor. I came in for a consultation.");
+  await expect(conversation).not.toContainText("My urine has looked red.");
   await expect(conversation).not.toContainText("医生您好");
   await expect.poll(() => observations.filter((item) => item.action === "session-init").length).toBe(1);
   expect(observations.filter((item) => item.action === "session-init")).toEqual([
@@ -530,9 +531,9 @@ test("rapid final-stage completion creates one debrief request and one report", 
   }, { seededAttemptId: attemptId })).toBe(1);
 });
 
-test("stage submission waits for the training attempt while the AI patient is preparing", async ({ page }) => {
+test("stage submission waits for the training attempt while the patient service is preparing", async ({ page }) => {
   const observations = [];
-  await routeTrainingApiThroughHandler(page, observations, { initAttemptDelayMs: 800, sessionInitDelayMs: 1800 });
+  await routeTrainingApiThroughHandler(page, observations, { initAttemptDelayMs: 800, sessionInitDelayMs: 5000 });
   await page.goto("/cases/P001/");
 
   const initializing = page.getByRole("button", { name: "正在初始化训练会话……", exact: true });
@@ -542,7 +543,7 @@ test("stage submission waits for the training attempt while the AI patient is pr
 
   const submit = page.getByRole("button", { name: "提交本阶段", exact: true });
   await expect(submit).toBeEnabled();
-  await expect(page.getByText("人工智能患者正在准备中……", { exact: false })).toBeVisible();
+  await expect(page.getByText("患者服务连接中……", { exact: false })).toBeVisible();
   await submit.click();
   await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
   expect(observations.filter((item) => item.action === "init-attempt")).toHaveLength(1);
@@ -577,12 +578,12 @@ test("patient session refreshes once after stage feedback rotates the attempt to
     const saved = storageKey ? JSON.parse(localStorage.getItem(storageKey) || "null") : null;
     return saved?.timeline?.filter((item) => item.type === "submit" && item.stageNo === 1).length ?? 0;
   })).toBe(1);
-  await expect(page.getByRole("button", { name: "Reconnect AI", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Reconnect", exact: true })).toHaveCount(0);
 });
 
 test("P003 replaces a legacy cross-deployment token before zero-round stage submission", async ({ page }) => {
   const observations = [];
-  await routeTrainingApiThroughHandler(page, observations, { sessionInitDelayMs: 1200 });
+  await routeTrainingApiThroughHandler(page, observations, { sessionInitDelayMs: 5000 });
   const attemptId = "p003-legacy-preview-attempt";
   await page.addInitScript(({ seededAttemptId }) => {
     const attempt = {
@@ -600,7 +601,7 @@ test("P003 replaces a legacy cross-deployment token before zero-round stage subm
 
   await page.goto("/cases/P003/");
   await expect.poll(() => observations.filter((item) => item.action === "init-attempt").length).toBe(1);
-  await expect(page.getByText("人工智能患者正在准备中……", { exact: false })).toBeVisible();
+  await expect(page.getByText("患者服务连接中……", { exact: false })).toBeVisible();
   await expect(page.getByRole("button", { name: "提交本阶段", exact: true })).toBeEnabled();
 
   await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
@@ -841,9 +842,10 @@ test("English investigation presentation fails closed without exposing untransla
 
   await page.getByPlaceholder("Example: urinalysis and sediment, CTU, cystoscopy").fill("CBC");
   await page.getByRole("button", { name: "Order and return results", exact: true }).click();
-  const report = page.getByTestId("report-card");
-  await expect(report).toBeVisible();
-  await expect(report).not.toContainText(/[\u3400-\u9fff]/u);
+  await expect(page.getByTestId("report-card")).toHaveCount(0);
+  const unavailable = page.getByText("CBC: this case does not provide the result, so no conclusion can be made from it.", { exact: true });
+  await expect(unavailable).toBeVisible();
+  await expect(unavailable).not.toContainText(/[\u3400-\u9fff]/u);
   expect(observations.filter((item) => item.action === "order")).toEqual([
     expect.objectContaining({ status: 200, tokenPresent: true })
   ]);
@@ -1449,11 +1451,11 @@ test("rule fallback keeps reconnection available and recovery replaces the reply
   await page.goto("/cases/P001/");
   await page.getByPlaceholder("输入问诊问题").fill("您吸烟吗？");
   await page.getByRole("button", { name: "发送" }).click();
-  await expect(page.getByText("当前由规则库回答，可随时重新连接AI。")).toBeVisible();
-  const reconnect = page.getByRole("button", { name: "重新连接AI", exact: true });
+  await expect(page.getByText("患者服务正在使用安全离线回答，可随时重新连接。")).toBeVisible();
+  const reconnect = page.getByRole("button", { name: "重新连接", exact: true });
   expect(await reconnect.count()).toBe(1);
   await reconnect.evaluate((button) => { button.click(); button.click(); });
-  await expect(page.getByText("已重新连接AI")).toBeVisible();
+  await expect(page.getByText("患者服务已重新连接")).toBeVisible();
   const conversation = page.getByRole("log", { name: "模拟问诊对话" });
   await expect(conversation.getByText("您吸烟吗？", { exact: true })).toHaveCount(1);
   await expect(conversation.getByText("我吸烟，大约每天一包。", { exact: true })).toHaveCount(1);
@@ -1544,12 +1546,12 @@ test("offline reconnect sends no request and can recover after the online event"
   await context.setOffline(true);
   await expect(page.getByText("当前处于离线状态，既有训练记录已保留。")).toBeVisible();
   const before = healthCalls;
-  await page.getByRole("button", { name: "重新连接AI", exact: true }).click();
+  await page.getByRole("button", { name: "重新连接", exact: true }).click();
   expect(healthCalls).toBe(before);
   await context.setOffline(false);
-  await expect(page.getByText("网络已恢复，可以重新连接AI。")).toBeVisible();
-  await page.getByRole("button", { name: "重新连接AI", exact: true }).click();
-  await expect(page.getByText("已重新连接AI")).toBeVisible();
+  await expect(page.getByText("网络已恢复，可以重新连接患者服务。")).toBeVisible();
+  await page.getByRole("button", { name: "重新连接", exact: true }).click();
+  await expect(page.getByText("患者服务已重新连接")).toBeVisible();
   expect(healthCalls).toBeGreaterThan(before);
 });
 
