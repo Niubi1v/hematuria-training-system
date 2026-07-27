@@ -441,12 +441,20 @@ function providerFallbackReason(error) {
   const message = String(error?.message || error || "").toLowerCase();
   if (/429|rate limit|too many/.test(message)) return "provider_rate_limit";
   if (/abort|timeout|timed out/.test(message)) return "provider_timeout";
+  if (Number(error?.status || 0) > 0 || /provider returned http/.test(message)) return "provider_http_error";
   return "provider_unavailable";
 }
 
 async function probePatientProvider() {
   const config = getLLMProviderConfig();
   if (!config.enabled || !config.apiKey || !config.baseUrl || !config.model) return { isFallback: true, provider: config.provider, model: config.model, fallbackReason: "provider_not_configured" };
+  const timeoutMs = Math.max(
+    5000,
+    Math.min(
+      Number(process.env.PATIENT_DEEPSEEK_TIMEOUT_MS || process.env.LLM_REQUEST_TIMEOUT_MS) || 5000,
+      90000
+    )
+  );
   try {
     const result = await callLLM({
       systemPrompt: "Return exactly OK. Do not include any patient or case information.",
@@ -454,7 +462,7 @@ async function probePatientProvider() {
       temperature: 0,
       maxTokens: 8,
       maxRetries: 0,
-      timeoutMs: 5000
+      timeoutMs
     });
     return { isFallback: false, provider: result.provider, model: result.model, fallbackReason: "", providerDurationMs: result.durationMs, providerFirstTokenMs: result.firstTokenMs };
   } catch (error) {

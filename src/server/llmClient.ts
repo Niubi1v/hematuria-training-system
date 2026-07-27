@@ -117,8 +117,9 @@ export async function callLLM({
     });
 
     if (!response.ok) {
-      const body = await response.text().catch(() => "");
-      throw new Error(`LLM provider returned ${response.status}: ${body.slice(0, 200)}`);
+      const error = new Error(`LLM provider returned HTTP ${response.status}`) as Error & { status?: number };
+      error.status = response.status;
+      throw error;
     }
 
     const payload = await response.json();
