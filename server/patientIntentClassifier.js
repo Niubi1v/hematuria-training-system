@@ -23,8 +23,8 @@ globalThis.__hematuriaPatientIntentClassifierInflight = inflight;
 globalThis.__hematuriaPatientIntentClassifierRequests = requestTimes;
 
 function patientThinkingConfig(env = process.env) {
-  const requested = String(env.PATIENT_DEEPSEEK_THINKING || "high").toLowerCase();
-  const mode = ["disabled", "high", "max"].includes(requested) ? requested : "high";
+  const requested = String(env.PATIENT_DEEPSEEK_THINKING || "disabled").toLowerCase();
+  const mode = ["disabled", "high", "max"].includes(requested) ? requested : "disabled";
   return mode === "disabled"
     ? { mode, thinkingMode: "disabled", reasoningEffort: undefined }
     : { mode, thinkingMode: "enabled", reasoningEffort: mode };
@@ -181,8 +181,8 @@ async function classifyPatientIntent({
         maxTokens: 300,
         maxRetries: 0,
         timeoutMs: Math.max(
-          8000,
-          Math.min(Number(process.env.PATIENT_DEEPSEEK_TIMEOUT_MS) || 8000, 90000)
+          30000,
+          Math.min(Number(process.env.PATIENT_DEEPSEEK_TIMEOUT_MS) || 30000, 90000)
         ),
         thinkingMode: thinking.thinkingMode,
         reasoningEffort: thinking.reasoningEffort,

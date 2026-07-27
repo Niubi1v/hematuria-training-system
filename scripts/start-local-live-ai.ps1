@@ -1,7 +1,13 @@
 [CmdletBinding()]
 param(
   [switch]$Stop,
-  [switch]$SmokeTest
+  [switch]$SmokeTest,
+  [ValidateSet("deepseek-v4-flash", "deepseek-v4-pro")]
+  [string]$Model = "deepseek-v4-flash",
+  [ValidateSet("disabled", "high", "max")]
+  [string]$Thinking = "disabled",
+  [ValidateRange(30000, 90000)]
+  [int]$TimeoutMs = 30000
 )
 
 Set-StrictMode -Version Latest
@@ -154,16 +160,16 @@ try {
   $env:LLM_PROVIDER = "deepseek"
   $env:LLM_API_KEY = $plainKey
   $env:LLM_API_BASE_URL = "https://api.deepseek.com"
-  $env:LLM_MODEL = "deepseek-v4-pro"
+  $env:LLM_MODEL = $Model
   $env:LLM_ENDPOINT_TYPE = "chat_completions"
   $env:LLM_ENABLE_AI_PATIENT = "true"
   $env:PATIENT_SEMANTIC_CLASSIFIER_ENABLED = "true"
-  $env:PATIENT_DEEPSEEK_THINKING = "disabled"
-  $env:PATIENT_DEEPSEEK_TIMEOUT_MS = "90000"
-  $env:LLM_REQUEST_TIMEOUT_MS = "90000"
-  $env:NEXT_PUBLIC_PATIENT_REPLY_TIMEOUT_MS = "90000"
-  $env:LLM_THINKING_MODE = "disabled"
-  $env:LLM_REASONING_EFFORT = $null
+  $env:PATIENT_DEEPSEEK_THINKING = $Thinking
+  $env:PATIENT_DEEPSEEK_TIMEOUT_MS = [string]$TimeoutMs
+  $env:LLM_REQUEST_TIMEOUT_MS = [string]$TimeoutMs
+  $env:NEXT_PUBLIC_PATIENT_REPLY_TIMEOUT_MS = [string]$TimeoutMs
+  $env:LLM_THINKING_MODE = if ($Thinking -eq "disabled") { "disabled" } else { "enabled" }
+  $env:LLM_REASONING_EFFORT = if ($Thinking -eq "disabled") { $null } else { $Thinking }
   $env:LLM_STREAMING_ENABLED = "false"
   $env:PATIENT_PROMPT_AUDIT_ENABLED = "true"
   $env:PATIENT_AGENT_API_PORT = "9001"
@@ -225,29 +231,6 @@ try {
   )
   if ($patientExitCode -ne 0) {
     throw ([string]$patientProbe.errorCode)
-  }
-
-  $env:PATIENT_DEEPSEEK_THINKING = "max"
-  $env:LLM_THINKING_MODE = "enabled"
-  $env:LLM_REASONING_EFFORT = "max"
-  $thinkingOutput = & $nodePath $probePath --provider-only
-  $thinkingExitCode = $LASTEXITCODE
-  try {
-    $thinkingProbe = $thinkingOutput | ConvertFrom-Json
-  } catch {
-    throw "provider_probe_invalid_response"
-  }
-  $thinkingFormat = "LOCAL_LIVE_AI_MAX providerConfigured={0} providerHttpSuccess={1} answerSource={2} thinkingExecuted={3} model={4} durationMs={5}"
-  Write-Host ($thinkingFormat -f
-    ([string]$thinkingProbe.providerConfigured).ToLowerInvariant(),
-    ([string]$thinkingProbe.providerHttpSuccess).ToLowerInvariant(),
-    [string]$thinkingProbe.answerSource,
-    ([string]$thinkingProbe.thinkingExecuted).ToLowerInvariant(),
-    [string]$thinkingProbe.model,
-    [int]$thinkingProbe.durationMs
-  )
-  if ($thinkingExitCode -ne 0) {
-    throw ([string]$thinkingProbe.errorCode)
   }
 
   Write-Host "LOCAL_LIVE_AI_READY pageUrl=$frontendUrl"

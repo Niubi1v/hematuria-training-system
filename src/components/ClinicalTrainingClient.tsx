@@ -289,8 +289,8 @@ const labSecondaryOrder = ["尿液基础", "尿液感染", "尿液肿瘤", "尿�
 const imagingSecondaryOrder = ["超声", "X线", "CT", "MRI", "内镜", "核医学", "功能检查"];
 const consultGroupOrder = ["外科", "内科", "辅助/平台", "急诊/危重"];
 const PATIENT_REPLY_TIMEOUT_MS = Math.max(
-  12000,
-  Math.min(Number(process.env.NEXT_PUBLIC_PATIENT_REPLY_TIMEOUT_MS) || 12000, 90000)
+  30000,
+  Math.min(Number(process.env.NEXT_PUBLIC_PATIENT_REPLY_TIMEOUT_MS) || 30000, 90000)
 );
 const EXPECTED_API_VERSION = "2.6.0";
 const patientReplyForbiddenTerms = [

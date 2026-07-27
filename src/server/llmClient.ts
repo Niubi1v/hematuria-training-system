@@ -35,17 +35,17 @@ export function currentModelName(provider: string, baseUrl: string | undefined, 
 }
 
 export function getLLMProviderConfig(): LLMProviderConfig {
-  const provider = process.env.LLM_PROVIDER || "custom";
-  const baseUrl = process.env.LLM_API_BASE_URL;
+  const provider = process.env.LLM_PROVIDER || "deepseek";
+  const baseUrl = process.env.LLM_API_BASE_URL || "https://api.deepseek.com";
   return {
     provider,
     apiKey: process.env.LLM_API_KEY,
     baseUrl,
-    model: currentModelName(provider, baseUrl, process.env.LLM_MODEL),
+    model: currentModelName(provider, baseUrl, process.env.LLM_MODEL || "deepseek-v4-flash"),
     endpointType: (process.env.LLM_ENDPOINT_TYPE || "chat_completions") as LLMEndpointType,
     temperature: Number(process.env.LLM_TEMPERATURE ?? 0.2),
     maxTokens: Number(process.env.LLM_MAX_TOKENS ?? 120),
-    timeoutMs: Number(process.env.LLM_REQUEST_TIMEOUT_MS ?? 15000),
+    timeoutMs: Number(process.env.LLM_REQUEST_TIMEOUT_MS ?? 30000),
     thinkingMode: process.env.LLM_THINKING_MODE || "disabled",
     enabled: process.env.LLM_ENABLE_AI_AGENTS === "true" || process.env.LLM_ENABLE_AI_PATIENT === "true"
   };

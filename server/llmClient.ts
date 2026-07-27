@@ -33,7 +33,7 @@ export function getLLMProviderConfig(): LLMProviderConfig {
     endpointType: process.env.LLM_ENDPOINT_TYPE || "chat_completions",
     temperature: Number(process.env.LLM_TEMPERATURE || 0.2),
     maxTokens: Number(process.env.LLM_MAX_TOKENS || 500),
-    timeoutMs: Number(process.env.LLM_REQUEST_TIMEOUT_MS || 15000),
+    timeoutMs: Number(process.env.LLM_REQUEST_TIMEOUT_MS || 30000),
     thinkingMode: process.env.LLM_THINKING_MODE || "disabled",
     enabled: process.env.LLM_ENABLE_AI_AGENTS === "true" || process.env.LLM_ENABLE_AI_PATIENT === "true"
   };

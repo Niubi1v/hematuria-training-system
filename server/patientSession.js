@@ -447,9 +447,9 @@ async function probePatientProvider() {
   const config = getLLMProviderConfig();
   if (!config.enabled || !config.apiKey || !config.baseUrl || !config.model) return { isFallback: true, provider: config.provider, model: config.model, fallbackReason: "provider_not_configured" };
   const timeoutMs = Math.max(
-    5000,
+    30000,
     Math.min(
-      Number(process.env.PATIENT_DEEPSEEK_TIMEOUT_MS || process.env.LLM_REQUEST_TIMEOUT_MS) || 5000,
+      Number(process.env.PATIENT_DEEPSEEK_TIMEOUT_MS || process.env.LLM_REQUEST_TIMEOUT_MS) || 30000,
       90000
     )
   );

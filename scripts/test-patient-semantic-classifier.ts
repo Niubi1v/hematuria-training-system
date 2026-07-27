@@ -62,8 +62,8 @@ async function main() {
     Object.keys(capturedInput?.userPayload as object).sort(),
     ["allowedIntents", "classificationId", "conversationState", "language", "outputContract", "question", "recentUserQuestions"]
   );
-  assert.equal(capturedInput?.thinkingMode, "enabled");
-  assert.equal(capturedInput?.reasoningEffort, "high");
+  assert.equal(capturedInput?.thinkingMode, "disabled");
+  assert.equal(capturedInput?.reasoningEffort, undefined);
   assert.deepEqual(capturedInput?.responseFormat, { type: "json_object" });
   assert.doesNotMatch(
     JSON.stringify(capturedInput?.userPayload),
@@ -166,10 +166,14 @@ async function main() {
     assert.doesNotMatch(semanticAnswer.replyText, /private chain of thought/);
     assert.equal(integrationProviderCalls, 1, "DeepSeek may classify once but must not generate or rewrite the patient answer");
     assert.equal(classifierRequestBody?.model, "test-model");
-    assert.deepEqual(classifierRequestBody?.thinking, { type: "enabled" });
-    assert.equal(classifierRequestBody?.reasoning_effort, "high");
+    assert.deepEqual(classifierRequestBody?.thinking, { type: "disabled" });
+    assert.equal("reasoning_effort" in (classifierRequestBody || {}), false);
     assert.deepEqual(classifierRequestBody?.response_format, { type: "json_object" });
-    assert.equal("temperature" in (classifierRequestBody || {}), false, "thinking-mode request must omit ignored sampling controls");
+    assert.equal(
+      typeof classifierRequestBody?.temperature,
+      "number",
+      "disabled-thinking request may retain deterministic sampling controls"
+    );
 
     resetPatientIntentClassifierState();
     let clarificationProviderCalls = 0;
