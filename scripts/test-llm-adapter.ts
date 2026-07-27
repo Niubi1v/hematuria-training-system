@@ -28,15 +28,14 @@ async function main() {
       && drinking.fallbackReason === "medical_history_pending_review"
       && drinking.blockedFields.includes("alcoholHistory")
       && drinking.matchedFacts.length === 0,
-    `unreviewed drinking history must remain quarantined: ${JSON.stringify({
+    `runtime-only drinking history must remain quarantined: ${JSON.stringify({
       answerSource: drinking.answerSource,
       fallbackReason: drinking.fallbackReason,
       blockedFields: drinking.blockedFields,
       matchedFacts: drinking.matchedFacts
     })}`
   );
-  assert(/记不太清|没(?:有)?特别注意|不太清楚/.test(drinking.replyText), `unreviewed drinking history should be naturally uncertain: ${drinking.replyText}`);
-  assert(!/不喝酒|没有饮酒|从不喝/.test(drinking.replyText), `unreviewed drinking history must not become a deterministic negative: ${drinking.replyText}`);
+  assert(/不喝酒/.test(drinking.replyText), `completed runtime recommendation must answer drinking history: ${drinking.replyText}`);
   assertNotContains(drinking.replyText, ["吸烟", "包年", "乙肝", "高血压", "糖尿病"], "drinking");
 
   const hypertension = await ask("HX-ADD-001", "有高血压吗？");
@@ -88,8 +87,9 @@ async function main() {
     !dynamicSessionSource.includes("completedPatientFacingProfile: session.completedPatientFacingProfile"),
     "dynamic Patient Agent must not send the whole patient profile to the per-question LLM call"
   );
-  assert(dynamicSessionSource.includes("currentAllowedAnswer:"), "dynamic Patient Agent must send only the current allowed answer");
-  assert(dynamicSessionSource.includes("preservesAllowedAnswer"), "dynamic Patient Agent must reject factual drift");
+  assert(dynamicSessionSource.includes("classifyPatientIntent"), "dynamic Patient Agent must retain a bounded semantic classifier fallback");
+  assert(!dynamicSessionSource.includes("currentAllowedAnswer:"), "DeepSeek must not receive a patient answer for rewriting");
+  assert(!dynamicSessionSource.includes("patientPrompt ="), "DeepSeek must not generate the final patient answer");
   assert(dynamicSessionSource.includes("localCompleteProfile(rawPatientFacingProfile)"), "session initialization must deterministically complete the authoritative local profile");
   assert(!dynamicSessionSource.includes("rawPatientFacingProfile: runtimeProfile"), "per-question LLM calls must not receive the raw or completed profile");
   assert(dynamicSessionSource.includes('fallbackReason: "diagnosis_boundary"'), "diagnosis requests must be blocked before slot matching");

@@ -60,21 +60,36 @@ const {
     intent: string,
     language: "zh" | "en",
     medications: StructuredHistory["medicationList"],
-    options?: { scope?: string; allMedications?: StructuredHistory["medicationList"] }
-  ): { renderedAnswer: string };
+    options?: { scope?: string; allMedications?: StructuredHistory["medicationList"]; caseId?: string }
+  ): { renderedAnswer: string; runtimeOnly?: boolean };
   buildPastMedicalHistorySummary(
     history: StructuredHistory,
     language: "zh" | "en",
     isBlocked: (
       key: string,
       fact: Pick<StructuredPatientFact, "provenance" | "teacherReviewRequired">
-    ) => boolean
-  ): { renderedAnswer: string; sources: StructuredPatientFact[]; hasUnresolved: boolean };
+    ) => boolean,
+    options?: { caseId?: string }
+  ): {
+    renderedAnswer: string;
+    sources: StructuredPatientFact[];
+    hasUnresolved: boolean;
+    hasRuntimeGovernance?: boolean;
+  };
   selectMedicationsForQuestion(
     medications: StructuredHistory["medicationList"],
     question: string,
-    language: "zh" | "en"
+    language: "zh" | "en",
+    options?: { caseId?: string }
   ): { medications: StructuredHistory["medicationList"]; scope: string };
+};
+const {
+  personalHistoryRecommendation
+} = require("./patientRuntimeRecommendations.js") as {
+  personalHistoryRecommendation(
+    caseId: string,
+    intentKey: string
+  ): { runtimeAnswer: string; provenance: string } | null;
 };
 
 const specialIntents = new Set([
@@ -122,23 +137,29 @@ export function matchStructuredPatientQuestion(caseData: CaseData, question: str
       const summary = buildPastMedicalHistorySummary(
         history,
         language,
-        (key, fact) => unresolvedFact(caseData.id, key, fact)
+        (key, fact) => unresolvedFact(caseData.id, key, fact),
+        { caseId: caseData.id }
       );
       answers.push(summary.renderedAnswer);
       sources.push(...summary.sources);
       hasUnresolved ||= summary.hasUnresolved;
-      collectable = !summary.hasUnresolved;
+      collectable = !summary.hasRuntimeGovernance && !summary.hasUnresolved;
     } else {
       const medications = history.medicationList.filter(
         (item) => !unresolvedFact(caseData.id, "medicationList", item)
       );
-      const selection = selectMedicationsForQuestion(medications, question, language);
+      const selection = selectMedicationsForQuestion(
+        medications,
+        question,
+        language,
+        { caseId: caseData.id }
+      );
       answers.push(buildMedicationAnswerPlan(
         history,
         match.key,
         language,
         selection.medications,
-        { scope: selection.scope, allMedications: medications }
+        { scope: selection.scope, allMedications: medications, caseId: caseData.id }
       ).renderedAnswer);
       sources.push(...medications);
       hasUnresolved ||= medications.length !== history.medicationList.length;
@@ -154,7 +175,13 @@ export function matchStructuredPatientQuestion(caseData: CaseData, question: str
     const fact = history[match.key] as StructuredPatientFact;
     if (!fact || typeof fact !== "object" || !("patientAnswerZh" in fact)) continue;
     if (unresolvedFact(caseData.id, String(match.key), fact)) {
-      answers.push(unresolvedReply(String(match.key), language));
+      const personalIntent = match.key === "smokingHistory"
+        ? "smoking_history"
+        : match.key === "alcoholHistory" ? "alcohol_history" : "";
+      const runtimeRecommendation = language === "zh" && personalIntent
+        ? personalHistoryRecommendation(caseData.id, personalIntent)
+        : null;
+      answers.push(runtimeRecommendation?.runtimeAnswer || unresolvedReply(String(match.key), language));
       hasUnresolved = true;
     } else {
       answers.push(language === "en" ? fact.patientAnswerEn : fact.patientAnswerZh);

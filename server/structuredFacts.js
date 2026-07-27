@@ -11,6 +11,10 @@ const {
   buildPastMedicalHistorySummary,
   selectMedicationsForQuestion
 } = require("../src/lib/structuredHistoryAnswerPlanner.js");
+const {
+  normalizeRecommendedFactState,
+  personalHistoryRecommendation
+} = require("../src/lib/patientRuntimeRecommendations.js");
 const historyMedicalPolicy = require("../data/history_medical_reconciliation.json");
 const explicitBlockedFacts = new Set(
   historyMedicalPolicy.blockedMedicalHistory.map((item) => `${item.caseId}:${item.field}`)
@@ -68,7 +72,8 @@ function matchStructuredFacts(caseData, question, language = "zh") {
         ? buildPastMedicalHistorySummary(
           history,
           language,
-          (key, fact) => unresolvedFact(caseData.id, key, fact)
+          (key, fact) => unresolvedFact(caseData.id, key, fact),
+          { caseId: caseData.id }
         )
         : null;
       const allMedicationSources = (history.medicationList || []).filter(
@@ -76,7 +81,12 @@ function matchStructuredFacts(caseData, question, language = "zh") {
       );
       const medicationHasUnresolved = intentKey !== "past_medical_history_summary"
         && allMedicationSources.length !== (history.medicationList || []).length;
-      const medicationSelection = selectMedicationsForQuestion(allMedicationSources, text, language);
+      const medicationSelection = selectMedicationsForQuestion(
+        allMedicationSources,
+        text,
+        language,
+        { caseId: caseData.id }
+      );
       const planned = summary || buildMedicationAnswerPlan(
         history,
         intentKey,
@@ -84,7 +94,8 @@ function matchStructuredFacts(caseData, question, language = "zh") {
         medicationSelection.medications,
         {
           scope: medicationSelection.scope,
-          allMedications: allMedicationSources
+          allMedications: allMedicationSources,
+          caseId: caseData.id
         }
       );
       const renderedAnswer = planned.renderedAnswer;
@@ -94,7 +105,10 @@ function matchStructuredFacts(caseData, question, language = "zh") {
       answers.push(renderedAnswer);
       matchedFacts.push(intentKey);
       matchedSlotIds.push(sourceSlotId);
-      if (![FACT_STATES.MISSING, FACT_STATES.NEEDS_REVIEW, FACT_STATES.MEDICAL_CONFLICT].includes(factState)) {
+      if (
+        !summary?.hasRuntimeGovernance
+        && ![FACT_STATES.MISSING, FACT_STATES.NEEDS_REVIEW, FACT_STATES.MEDICAL_CONFLICT].includes(factState)
+      ) {
         collectableFacts.push(intentKey);
         collectableSlotIds.push(sourceSlotId);
       }
@@ -107,7 +121,10 @@ function matchStructuredFacts(caseData, question, language = "zh") {
         renderedAnswer,
         unknownReason: reasonCodeForState(factState),
         clauseStatus: factState === FACT_STATES.NEEDS_REVIEW ? "blocked_medical" : "matched",
-        matchIndex: clause.index
+        matchIndex: clause.index,
+        provenance: planned.provenance,
+        runtimeOnly: Boolean(planned.runtimeOnly),
+        runtimeFactStates: planned.runtimeFactStates
       }));
       continue;
     }
@@ -115,7 +132,11 @@ function matchStructuredFacts(caseData, question, language = "zh") {
     const fact = history[key];
     if (!fact) continue;
     const blocked = unresolvedFact(caseData.id, key, fact);
-    const renderedAnswer = blocked ? unresolvedStructuredReply(key, language) : (language === "en" ? fact.patientAnswerEn : fact.patientAnswerZh);
+    const runtimeRecommendation = blocked && language === "zh"
+      ? personalHistoryRecommendation(caseData.id, intentKey)
+      : null;
+    const renderedAnswer = runtimeRecommendation?.runtimeAnswer
+      || (blocked ? unresolvedStructuredReply(key, language) : (language === "en" ? fact.patientAnswerEn : fact.patientAnswerZh));
     answers.push(renderedAnswer);
     matchedFacts.push(intentKey);
     matchedSlotIds.push(slotId);
@@ -126,15 +147,22 @@ function matchStructuredFacts(caseData, question, language = "zh") {
       collectableSlotIds.push(slotId);
     }
     sources.push(fact);
-    const factState = factStateFromText(renderedAnswer, { needsReview: blocked });
+    const factState = runtimeRecommendation
+      ? normalizeRecommendedFactState(runtimeRecommendation.factState)
+      : factStateFromText(renderedAnswer, { needsReview: blocked });
     answerPlans.push(answerPlanFromRendered({
       intent: intentKey,
       sourceSlotId: slotId,
       factState,
       renderedAnswer,
       unknownReason: reasonCodeForState(factState),
-      clauseStatus: blocked ? "blocked_medical" : "matched",
-      matchIndex: clause.index
+      clauseStatus: blocked && !runtimeRecommendation ? "blocked_medical" : "matched",
+      matchIndex: clause.index,
+      provenance: runtimeRecommendation?.provenance,
+      runtimeOnly: Boolean(runtimeRecommendation),
+      runtimeFactStates: runtimeRecommendation
+        ? { [key]: normalizeRecommendedFactState(runtimeRecommendation.factState) }
+        : null
     }));
   }
   if (!answers.length) return null;

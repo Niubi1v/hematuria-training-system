@@ -30,53 +30,26 @@ const { initSession, generatePatientAnswer } = require("../server/patientSession
   }>;
 };
 
-type ProviderPayload = {
-  studentInput?: string;
-  currentAllowedAnswer?: string;
-};
-
 const originalFetch = globalThis.fetch;
 let providerCalls = 0;
-let failNextProviderCall = false;
 let contextualEllipsisChecks = 0;
 
-function syntheticReply(payload: ProviderPayload) {
-  const question = String(payload.studentInput || "");
-  if (/other part/i.test(question)) return "Could you clarify which part you mean?";
-  if (/started today/i.test(question)) return "No, it actually started about 3 months ago.";
-  if (/why you came today/i.test(question)) return "I came because an abnormal urine result was found about one day ago.";
-  if (/describe what happened after the injury/i.test(question)) return "I was injured about 4 hours ago, and then I noticed blood in my urine.";
-  if (/blood in your urine.*after the injury/i.test(question)) return "Yes, I noticed it after the injury.";
-  return String(payload.currentAllowedAnswer || "I am not sure about that.");
-}
-
-globalThis.fetch = async (_input, init) => {
+globalThis.fetch = async () => {
   providerCalls += 1;
-  if (failNextProviderCall) {
-    failNextProviderCall = false;
-    return new Response(JSON.stringify({ error: "synthetic provider rejection" }), {
-      status: 401,
-      headers: { "content-type": "application/json" }
-    });
-  }
-  const requestBody = JSON.parse(String(init?.body || "{}"));
-  const payload = JSON.parse(String(requestBody.messages?.[1]?.content || "{}")) as ProviderPayload;
-  return new Response(JSON.stringify({
-    choices: [{ message: { content: syntheticReply(payload) } }]
-  }), { status: 200, headers: { "content-type": "application/json" } });
+  throw new Error("deterministic Patient routing must not invoke the provider");
 };
 
-async function expectLive(input: Parameters<typeof generatePatientAnswer>[0]) {
+async function expectPlanner(input: Parameters<typeof generatePatientAnswer>[0]) {
   const result = await generatePatientAnswer(input);
-  assert.equal(result.isFallback, false, `${input.caseId}/${input.studentInput} should retain a live provider response`);
-  assert.equal(result.provider, "deepseek", `${input.caseId}/${input.studentInput} should identify the configured provider`);
+  assert.equal(result.isFallback, true, `${input.caseId}/${input.studentInput} should use the governed answer planner`);
+  assert.equal(result.provider, "rule", `${input.caseId}/${input.studentInput} should not identify DeepSeek as the answer author`);
   return result;
 }
 
 async function main() {
   try {
     const p001 = await initSession({ caseId: "P001", mode: "training", language: "en" });
-    const correction = await expectLive({
+    const correction = await expectPlanner({
       sessionId: p001.sessionId,
       caseId: "P001",
       studentInput: "So this only started today and it has never happened before, correct?",
@@ -88,7 +61,7 @@ async function main() {
     });
     assert.match(correction.replyText, /(?:no|not|3 months)/i, "contradictory recap should be corrected from the allowed context");
 
-    const clarification = await expectLive({
+    const clarification = await expectPlanner({
       sessionId: p001.sessionId,
       caseId: "P001",
       studentInput: "Could you explain the other part?",
@@ -98,7 +71,7 @@ async function main() {
     assert.match(clarification.replyText, /clarif|which part|what.*mean/i, "a vague question should receive one concise clarification");
 
     const p001Zh = await initSession({ caseId: "P001", mode: "training", language: "zh" });
-    const correctionZh = await expectLive({
+    const correctionZh = await expectPlanner({
       sessionId: p001Zh.sessionId,
       caseId: "P001",
       studentInput: "我确认一下：您是今天才第一次出现尿红，而且一直没有反复，对吗？",
@@ -109,7 +82,7 @@ async function main() {
       language: "zh"
     });
     assert.match(correctionZh.replyText, /3[^，。！？]{0,6}月/, "Chinese correction should retain the governed onset duration");
-    await expectLive({
+    await expectPlanner({
       sessionId: p001Zh.sessionId,
       caseId: "P001",
       studentInput: "请解释一下刚才说的另一部分。",
@@ -118,7 +91,7 @@ async function main() {
     });
 
     const p037 = await initSession({ caseId: "HX-ADD-025", mode: "training", language: "en" });
-    await expectLive({
+    await expectPlanner({
       sessionId: p037.sessionId,
       caseId: "HX-ADD-025",
       studentInput: "Please tell me in your own words why you came today.",
@@ -131,7 +104,7 @@ async function main() {
       { role: "student", text: "哪里不舒服？" },
       { role: "patient", text: "我小便红了几天。" }
     ];
-    const durationEllipsis = await expectLive({
+    const durationEllipsis = await expectPlanner({
       sessionId: p005Zh.sessionId,
       caseId: "P005",
       studentInput: "多少天？",
@@ -143,7 +116,7 @@ async function main() {
     assert.doesNotMatch(durationEllipsis.replyText, /不太清楚|不知道/, "known coarse duration must not be downgraded to unknown");
     contextualEllipsisChecks += 1;
 
-    const painEllipsis = await expectLive({
+    const painEllipsis = await expectPlanner({
       sessionId: p005Zh.sessionId,
       caseId: "P005",
       studentInput: "那疼吗？",
@@ -154,7 +127,7 @@ async function main() {
     assert.ok(painEllipsis.matchedSlotIds?.includes("dysuria"));
     contextualEllipsisChecks += 1;
 
-    const courseEllipsis = await expectLive({
+    const courseEllipsis = await expectPlanner({
       sessionId: p005Zh.sessionId,
       caseId: "P005",
       studentInput: "是一直这样吗？",
@@ -165,7 +138,7 @@ async function main() {
     assert.ok(courseEllipsis.matchedSlotIds?.includes("hematuria_frequency"));
     contextualEllipsisChecks += 1;
 
-    const previousEllipsis = await expectLive({
+    const previousEllipsis = await expectPlanner({
       sessionId: p005Zh.sessionId,
       caseId: "P005",
       studentInput: "那以前有过吗？",
@@ -176,7 +149,7 @@ async function main() {
     assert.ok(previousEllipsis.matchedSlotIds?.includes("hematuria_frequency"));
     contextualEllipsisChecks += 1;
 
-    const correctionEllipsis = await expectLive({
+    const correctionEllipsis = await expectPlanner({
       sessionId: p005Zh.sessionId,
       caseId: "P005",
       studentInput: "为什么前面说不痛，现在又说不舒服？",
@@ -189,7 +162,7 @@ async function main() {
     assert.equal(correctionEllipsis.contextResolution?.reason, "contextual_correction");
     assert.ok(correctionEllipsis.matchedSlotIds?.includes("dysuria"));
     contextualEllipsisChecks += 1;
-    const p037Duration = await expectLive({
+    const p037Duration = await expectPlanner({
       sessionId: p037.sessionId,
       caseId: "HX-ADD-025",
       studentInput: "How long ago was the urine test abnormality first found?",
@@ -199,14 +172,14 @@ async function main() {
     assert.match(p037Duration.replyText, /\b1 day\b/i, "P037 English onset should retain its one-day duration");
 
     const p037Zh = await initSession({ caseId: "HX-ADD-025", mode: "training", language: "zh" });
-    await expectLive({
+    await expectPlanner({
       sessionId: p037Zh.sessionId,
       caseId: "HX-ADD-025",
       studentInput: "请用自己的话说说这次为什么来就诊。",
       conversationHistory: [],
       language: "zh"
     });
-    const p037DurationZh = await expectLive({
+    const p037DurationZh = await expectPlanner({
       sessionId: p037Zh.sessionId,
       caseId: "HX-ADD-025",
       studentInput: "尿检异常是多久以前发现的？",
@@ -227,14 +200,14 @@ async function main() {
     assert.equal(providerCalls, providerCallsBeforeReportBoundary, "report detail must not reach the patient provider");
 
     const p038 = await initSession({ caseId: "HX-ADD-026", mode: "training", language: "en" });
-    await expectLive({
+    await expectPlanner({
       sessionId: p038.sessionId,
       caseId: "HX-ADD-026",
       studentInput: "Please describe what happened after the injury in your own words.",
       conversationHistory: [],
       language: "en"
     });
-    const p038Duration = await expectLive({
+    const p038Duration = await expectPlanner({
       sessionId: p038.sessionId,
       caseId: "HX-ADD-026",
       studentInput: "About how long ago did the injury happen?",
@@ -244,14 +217,14 @@ async function main() {
     assert.match(p038Duration.replyText, /\b4 hours?\b/i, "P038 English injury context should retain its four-hour duration");
 
     const p038Zh = await initSession({ caseId: "HX-ADD-026", mode: "training", language: "zh" });
-    await expectLive({
+    await expectPlanner({
       sessionId: p038Zh.sessionId,
       caseId: "HX-ADD-026",
       studentInput: "请用自己的话说说受伤后这次不舒服的经过。",
       conversationHistory: [],
       language: "zh"
     });
-    const p038RelationZh = await expectLive({
+    const p038RelationZh = await expectPlanner({
       sessionId: p038Zh.sessionId,
       caseId: "HX-ADD-026",
       studentInput: "血尿是在外伤后才出现的吗？",
@@ -259,7 +232,7 @@ async function main() {
       language: "zh"
     });
     assert.match(p038RelationZh.replyText, /受伤.*后|外伤.*后/, "P038 Chinese answer should preserve the injury relation");
-    await expectLive({
+    await expectPlanner({
       sessionId: p038.sessionId,
       caseId: "HX-ADD-026",
       studentInput: "Did the blood in your urine appear only after the injury?",
@@ -267,27 +240,16 @@ async function main() {
       language: "en"
     });
 
-    failNextProviderCall = true;
-    const degraded = await generatePatientAnswer({
+    const repeatedClarification = await expectPlanner({
       sessionId: p001.sessionId,
       caseId: "P001",
       studentInput: "Could you clarify the other part?",
       conversationHistory: [],
       language: "en"
     });
-    assert.equal(degraded.isFallback, true, "provider failure must use a safe rule fallback");
-    assert.equal(degraded.fallbackReason, "provider_unavailable", "provider failure should retain its safe error classification");
+    assert.match(repeatedClarification.replyText, /clarif|which part|what.*mean/i);
 
-    const recovered = await expectLive({
-      sessionId: p001.sessionId,
-      caseId: "P001",
-      studentInput: "Could you clarify the other part?",
-      conversationHistory: [],
-      language: "en"
-    });
-    assert.match(recovered.replyText, /clarif|which part|what.*mean/i, "a later provider success should recover from rule fallback");
-
-    assert.equal(providerCalls, 20, "each legal turn should make exactly one provider request, including one failed call");
+    assert.equal(providerCalls, 0, "deterministic and contextual Patient turns must not invoke DeepSeek");
     assert.equal(contextualEllipsisChecks, 5);
     console.log(`PATIENT_CONTEXT_EVIDENCE ${JSON.stringify({
       contextualEllipsisChecks,

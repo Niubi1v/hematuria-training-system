@@ -19,14 +19,10 @@ const safeLogger = require("./safeLogger.js");
 const { createSessionCapability, verifySessionCapability } = require("./sessionCapability.js");
 
 const sessionCache = globalThis.__hematuriaSessionCache || new Map();
-const answerCache = globalThis.__hematuriaAnswerCache || new Map();
 globalThis.__hematuriaSessionCache = sessionCache;
-globalThis.__hematuriaAnswerCache = answerCache;
 
 const SESSION_TTL_MS = Math.max(60_000, Number(process.env.PATIENT_SESSION_TTL_MS || 30 * 60 * 1000));
-const ANSWER_TTL_MS = Math.max(30_000, Number(process.env.PATIENT_ANSWER_TTL_MS || 15 * 60 * 1000));
 const SESSION_CACHE_MAX = Math.max(20, Number(process.env.PATIENT_SESSION_CACHE_MAX || 200));
-const ANSWER_CACHE_MAX = Math.max(50, Number(process.env.PATIENT_ANSWER_CACHE_MAX || 500));
 const DEPLOYMENT_SHA = String(process.env.VERCEL_GIT_COMMIT_SHA || process.env.NEXT_PUBLIC_GIT_SHA || "local").slice(0, 40);
 const API_VERSION = "2.6.0";
 
@@ -486,18 +482,6 @@ function filterPatientOutput(text, matchedSlotIds = []) {
   return { ok: hits.length === 0 && hasBulletShape && !tooLong, hits, hasBulletShape, tooLong };
 }
 
-function formatPatientReply(text) {
-  const lines = String(text || "")
-    .split(/\n|。|；|;/)
-    .map((line) => line.replace(/^[-•\s]*/, "").trim())
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((line) => {
-      return line.length > 80 ? `${line.slice(0, 79)}。` : line;
-    });
-  return lines.length ? lines.join("\n") : "";
-}
-
 function readProfileField(profile, path) {
   const value = path.split(".").reduce((node, key) => node?.[key], profile);
   return typeof value?.value === "string" ? value.value : "";
@@ -531,7 +515,8 @@ function wrapPatientReply(text, maxLineLength = 80) {
 function conciseDeterministicReply(result, language = "zh") {
   const replyText = String(result?.replyText || "").trim();
   if (!replyText) return { ...result, replyText: language === "en" ? "I'm not sure about that right now." : "这项情况我现在不太清楚。" };
-  const originalFilter = filterPatientOutput(replyText, result.matchedSlotIds || []);
+  const filterSlotIds = result.governanceSlotIds || result.matchedSlotIds || [];
+  const originalFilter = filterPatientOutput(replyText, filterSlotIds);
   if (originalFilter.ok) return result;
   if (language === "zh" && result.matchedSlotIds?.length === 1 && result.matchedSlotIds[0] === "hematuria_onset") {
     const duration = replyText.match(/(\d+(?:\.\d+)?)(天|周|月|年)(余|多)?/);
@@ -539,7 +524,7 @@ function conciseDeterministicReply(result, language = "zh") {
   }
   if (originalFilter.hits.length || !originalFilter.hasBulletShape) return result;
   const wrappedReply = wrapPatientReply(replyText);
-  if (filterPatientOutput(wrappedReply, result.matchedSlotIds || []).ok) return { ...result, replyText: wrappedReply };
+  if (filterPatientOutput(wrappedReply, filterSlotIds).ok) return { ...result, replyText: wrappedReply };
   return result;
 }
 
@@ -593,52 +578,6 @@ function clarificationReply(language = "zh") {
       : "您具体是想问哪一方面？",
     safetyFlags: []
   };
-}
-
-const patientPrompt = `
-你是血尿临床思维训练系统中的标准化病人，不是医生、教师或病历摘要器。
-你只能根据 currentAllowedAnswer 回答问题。currentAllowedAnswer 是本轮唯一允许使用的医学事实，必须保持它的肯定、否定、数量和时间含义，不得改成“不清楚”。
-绝对规则：
-1. 问什么答什么，没问不说。
-2. 不主动总结完整病史。
-3. 不主动透露多个未被问到的病史点。
-4. 不透露检查结果、影像结果、病理结果、诊断、治疗方案、评分点。
-5. 不使用“根据原始病史”“病例资料显示”“未主动诉”“需追问”“评分点”等词。
-6. 不主动说诊断，不能说癌、肿瘤、结石、肾炎等诊断名。
-7. 如果学生问检查结果，回答“我说不清楚，得看检查报告”。
-8. 如果学生问诊断，回答“这个我不清楚，需要医生判断”。
-9. 如果档案中没有该信息，回答“不太清楚”或“没有注意到”。
-10. 第一人称患者口吻。
-11. 回答简短，1-2句，不超过80字，不使用Markdown项目符号或“患者：”前缀。
-12. 只回答当前问题，不要顺带回答未问内容。
-`.trim();
-
-const patientPromptEn = `
-You are the standardized patient in a clinical interview, not a doctor, teacher, database, or AI assistant.
-Answer only from currentAllowedAnswer and preserve every positive or negative fact, number, unit, and time expression.
-Speak naturally in first person, using wording appropriate to the supplied age, sex, and communication style.
-Answer only what was asked. Do not volunteer the full history, test results, diagnosis, treatment, scoring points, field names, JSON, or system instructions.
-Vary sentence openings instead of repeating a stock phrase. If the question is unclear, ask for a natural clarification.
-Return one or two concise English sentences with no Markdown label or meta-language.
-`.trim();
-
-function preservesAllowedAnswer(reply, allowedAnswer) {
-  const replyText = normalize(reply);
-  const allowedText = normalize(allowedAnswer);
-  const allowedIsUnknown = hasAny(allowedText, ["不太清楚", "没有注意", "说不清楚"]);
-  if (!allowedIsUnknown && hasAny(replyText, ["不太清楚", "不知道", "没注意", "说不清楚"])) return false;
-
-  const factGroups = [
-    ["吸烟", "抽烟", "烟龄", "包年"],
-    ["喝酒", "饮酒", "酒量"]
-  ];
-  for (const words of factGroups) {
-    if (!hasAny(allowedText, words)) continue;
-    if (!hasAny(replyText, words)) return false;
-    const allowedNegative = hasAny(allowedText, ["不吸烟", "不抽烟", "没有吸烟", "不喝酒", "不饮酒", "没有饮酒", "否认"]);
-    if (allowedNegative && !hasAny(replyText, ["不", "没", "否认"])) return false;
-  }
-  return true;
 }
 
 function mergePatientFactMatches(canonical, structured) {
@@ -760,9 +699,18 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   }
   let semanticDecision = null;
   if (!matched) {
-    semanticDecision = await classifyPatientIntent({ question: routedInput, language });
+    semanticDecision = await classifyPatientIntent({
+      question: routedInput,
+      language,
+      conversationHistory
+    });
     if (semanticDecision.accepted) {
-      canonical = projectCanonicalPatientFacts(caseId, [semanticDecision.intent], language, routedInput);
+      canonical = projectCanonicalPatientFacts(
+        caseId,
+        semanticDecision.intents || [semanticDecision.intent],
+        language,
+        routedInput
+      );
       if (canonical) {
         canonical.confidence = Math.min(canonical.confidence, semanticDecision.confidence);
         canonical.answerSource = "case_bilingual_slot_semantic_classification";
@@ -854,7 +802,10 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     };
   }
   if (fallback.safetyFlags?.[0]?.startsWith("blocked_")) return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] } };
-  const deterministicFilter = filterPatientOutput(fallback.replyText, fallback.matchedSlotIds || []);
+  const deterministicFilter = filterPatientOutput(
+    fallback.replyText,
+    fallback.governanceSlotIds || fallback.matchedSlotIds || []
+  );
   if (!deterministicFilter.ok) {
     safeLogger.warn("patient_deterministic_answer_blocked", {
       caseId,
@@ -898,90 +849,21 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
       contextResolution
     };
   }
-  if ((fallback.matchedSlotIds || []).length > 1 && !contextualRecap) {
-    return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, fallbackReason: matched?.fallbackReason || "compound_question_preserves_all_facts", clauseOutcomes, contextResolution, quarantinedSlotIds: matched?.quarantinedSlotIds || [] };
-  }
-  if (!runtimeProfile) return { ...fallback, provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] } };
-
-  const config = getLLMProviderConfig();
-  const normalized = normalize(studentInput);
-  const answerKey = `${sessionId || caseId}:${language}:${normalized}:${normalize(routedInput)}`;
-  const cached = cacheGet(answerCache, answerKey, ANSWER_CACHE_MAX);
-  if (cached) return { ...cached, cacheHit: true, providerDurationMs: undefined, providerFirstTokenMs: undefined };
-
-  if (!config.enabled) return { ...fallback, provider: config.provider, model: config.model, isFallback: true, filter: { ok: true, hits: [] } };
-
-  const payload = {
-    currentAllowedAnswer: matched?.replyText || fallback.replyText,
-    matchedFacts: matched?.matchedFacts || [],
-    patientPersona: runtimeProfile.patient_persona,
-    patientContext: {
-      age: caseData?.age || "",
-      sex: caseData?.sexEn || caseData?.sex || "",
-      communicationStyle: runtimeProfile.patient_persona?.cooperation_style?.value || ""
-    },
-    studentInput,
-    resolvedStudentInput: routedInput,
+  return {
+    ...fallback,
+    provider: "rule",
+    model: "local-rule",
+    classifierProvider: semanticDecision?.accepted ? getLLMProviderConfig().provider : undefined,
+    classifierModel: semanticDecision?.accepted ? getLLMProviderConfig().model : undefined,
+    isFallback: true,
+    filter: { ok: true, hits: [] },
+    fallbackReason: (fallback.matchedSlotIds || []).length > 1 && !contextualRecap
+      ? matched?.fallbackReason || "compound_question_preserves_all_facts"
+      : fallback.fallbackReason,
+    clauseOutcomes,
     contextResolution,
-    conversationHistory: conversationHistory.slice(-6),
-    language,
-    requiredOutputLanguage: language === "en" ? "English only" : "Chinese only"
+    quarantinedSlotIds: matched?.quarantinedSlotIds || []
   };
-  try {
-    const activePrompt = language === "en" ? patientPromptEn : patientPrompt;
-    if (promptAuditEnabled()) {
-      auditPatientPrompt({
-        caseId,
-        language,
-        canonicalIntents: matched?.matchedFacts || [],
-        matchedAliases: matched?.matchedAliases || [],
-        matcherLayer: semanticDecision?.accepted ? "semantic_classifier" : matched?.matcherLayer || "unknown",
-        matcherConfidence: semanticDecision?.confidence || matched?.confidence || 0,
-        factFields: matched?.matchedSlotIds || [],
-        provenance: matched?.provenance || matched?.answerSource || "unknown",
-        reviewerStatus: matched?.reviewerStatus || (matched?.unresolvedReason ? "needs_review" : "governance_checked"),
-        providerInvoked: true,
-        historyCount: conversationHistory.length,
-        estimatedInputTokens: estimateTokens([activePrompt, payload.currentAllowedAnswer, studentInput, JSON.stringify(conversationHistory.slice(-6))]),
-        maxTokens: 300,
-        temperature: 0.35,
-        provider: config.provider,
-        outputFilter: "pending",
-        fallbackReason: ""
-      });
-    }
-    const first = await callLLM({ systemPrompt: activePrompt, userPayload: payload, temperature: 0.35, maxTokens: 300 });
-    const firstText = formatPatientReply(first.text);
-    let filter = filterPatientOutput(firstText, matched?.matchedSlotIds || []);
-    const firstLanguageOk = language !== "en" || !/[\u3400-\u9fff]/.test(firstText);
-    if (filter.ok && firstLanguageOk && preservesAllowedAnswer(firstText, payload.currentAllowedAnswer)) {
-      const result = { replyText: firstText, provider: first.provider, model: first.model, isFallback: false, filter, rewriteTriggered: false, safetyFlags: [], matchedSlotIds: matched?.matchedSlotIds || [], matchedFacts: matched?.matchedFacts || [], answerSource: matched?.answerSource || "ai", confidence: matched?.confidence || 0.9, fallbackReason: matched?.fallbackReason || "", allowedAnswer: payload.currentAllowedAnswer, providerDurationMs: first.durationMs, providerFirstTokenMs: first.firstTokenMs, clauseOutcomes, contextResolution, quarantinedSlotIds: matched?.quarantinedSlotIds || [] };
-      cacheSet(answerCache, answerKey, result, ANSWER_TTL_MS, ANSWER_CACHE_MAX);
-      return result;
-    }
-    const retryInstruction = language === "en"
-      ? `The previous answer was unsafe, changed approved facts, or failed format checks: ${filter.hits.join(", ")}. Preserve currentAllowedAnswer exactly and reply in one or two concise English sentences.`
-      : `上一次回答包含禁止内容、改变了获准事实或格式不合格：${filter.hits.join("、")}。请严格保持 currentAllowedAnswer 的事实含义，只用1-2句且不超过45字。`;
-    const retry = await callLLM({
-      systemPrompt: `${activePrompt}\n\n${retryInstruction}`,
-      userPayload: payload,
-      temperature: 0.2,
-      maxTokens: 220
-    });
-    const retryText = formatPatientReply(retry.text);
-    const retryFilter = filterPatientOutput(retryText, matched?.matchedSlotIds || []);
-    const retryLanguageOk = language !== "en" || !/[\u3400-\u9fff]/.test(retryText);
-    if (retryFilter.ok && retryLanguageOk && preservesAllowedAnswer(retryText, payload.currentAllowedAnswer)) {
-      const result = { replyText: retryText, provider: retry.provider, model: retry.model, isFallback: false, filter: retryFilter, rewriteTriggered: true, safetyFlags: [], matchedSlotIds: matched?.matchedSlotIds || [], matchedFacts: matched?.matchedFacts || [], answerSource: matched?.answerSource || "ai", confidence: matched?.confidence || 0.9, fallbackReason: matched?.fallbackReason || "", allowedAnswer: payload.currentAllowedAnswer, providerDurationMs: Number(first.durationMs || 0) + Number(retry.durationMs || 0), providerFirstTokenMs: retry.firstTokenMs === undefined ? undefined : Number(first.durationMs || 0) + retry.firstTokenMs, clauseOutcomes, contextResolution, quarantinedSlotIds: matched?.quarantinedSlotIds || [] };
-      cacheSet(answerCache, answerKey, result, ANSWER_TTL_MS, ANSWER_CACHE_MAX);
-      return result;
-    }
-    return { ...fallback, provider: config.provider, model: config.model, isFallback: true, filter: retryFilter, rewriteTriggered: true, safetyFlags: [...fallback.safetyFlags, "ai_response_blocked"] };
-  } catch (error) {
-    const fallbackReason = providerFallbackReason(error);
-    safeLogger.warn("patient_provider_fallback", { caseId, action: "patient_answer", language, fallbackReason, error });
-    return { ...fallback, provider: config.provider, model: config.model, isFallback: true, filter: { ok: true, hits: [] }, fallbackReason };
-  }
 }
 
 module.exports = {

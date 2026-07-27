@@ -66,11 +66,19 @@ function answerPlanFromRendered({
   renderedAnswer,
   unknownReason,
   clauseStatus = "matched",
-  matchIndex = Number.MAX_SAFE_INTEGER
+  matchIndex = Number.MAX_SAFE_INTEGER,
+  provenance = null,
+  runtimeOnly = false,
+  runtimeFactStates = null
 }) {
   const answer = normalizeSentence(renderedAnswer);
   const separator = answer.search(/[，,]/);
-  const directAnswer = separator >= 0 ? answer.slice(0, separator).trim() : "";
+  let directAnswer = separator >= 0 ? answer.slice(0, separator).trim() : "";
+  if (!directAnswer && factState === FACT_STATES.KNOWN_FALSE) {
+    directAnswer = answer.match(/(?:没有|不是|不会|不)[^，,。！？.!?]*/)?.[0]?.trim() || "";
+  } else if (!directAnswer && factState === FACT_STATES.KNOWN_TRUE) {
+    directAnswer = answer.match(/(?:有|是|会)[^，,。！？.!?]*/)?.[0]?.trim() || "";
+  }
   const detail = separator >= 0
     ? answer.slice(separator + 1).replace(/[。！？.!?]+$/, "").trim()
     : answer.replace(/[。！？.!?]+$/, "").trim();
@@ -83,7 +91,10 @@ function answerPlanFromRendered({
     unknownReason: unknownReason || reasonCodeForState(factState),
     clauseStatus,
     matchIndex,
-    renderedAnswer: answer
+    renderedAnswer: answer,
+    provenance,
+    runtimeOnly,
+    runtimeFactStates
   };
 }
 
