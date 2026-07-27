@@ -159,10 +159,15 @@ try {
   $env:LLM_ENABLE_AI_PATIENT = "true"
   $env:PATIENT_SEMANTIC_CLASSIFIER_ENABLED = "true"
   $env:PATIENT_DEEPSEEK_THINKING = "max"
+  $env:PATIENT_DEEPSEEK_TIMEOUT_MS = "90000"
+  $env:LLM_REQUEST_TIMEOUT_MS = "90000"
+  $env:LLM_THINKING_MODE = "enabled"
+  $env:LLM_REASONING_EFFORT = "max"
   $env:LLM_STREAMING_ENABLED = "false"
   $env:PATIENT_PROMPT_AUDIT_ENABLED = "true"
   $env:PATIENT_AGENT_API_PORT = "9001"
   $env:PATIENT_AGENT_ALLOWED_ORIGIN = $frontendUrl
+  $env:LOCAL_PATIENT_API_URL = $patientApiUrl
 
   New-Item -ItemType Directory -Path $runtimeRoot -Force | Out-Null
   $frontendProcess = Start-Process `
@@ -209,9 +214,8 @@ try {
     throw "provider_probe_invalid_response"
   }
 
-  Write-Host (
-    "LOCAL_LIVE_AI_STATUS patientServiceConnected=true providerConfigured={0} " +
-    "lastAnswerSource={1} thinkingExecuted={2} model={3} providerHttpSuccess={4} durationMs={5}" -f
+  $statusFormat = "LOCAL_LIVE_AI_STATUS patientServiceConnected=true providerConfigured={0} lastAnswerSource={1} thinkingExecuted={2} model={3} providerHttpSuccess={4} durationMs={5}"
+  Write-Host ($statusFormat -f
     ([string]$probe.providerConfigured).ToLowerInvariant(),
     [string]$probe.answerSource,
     ([string]$probe.thinkingExecuted).ToLowerInvariant(),
@@ -229,14 +233,19 @@ try {
   Write-Host "LOCAL_LIVE_AI_STOP_COMMAND powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-local-live-ai.ps1 -Stop"
   $startupSucceeded = $true
 } catch {
-  $safeCode = switch -Regex ([string]$_.Exception.Message) {
+  $failureMessage = if ($null -ne $_ -and $null -ne $_.Exception) {
+    [string]$_.Exception.Message
+  } else {
+    [string]$_
+  }
+  $safeCode = switch -Regex ($failureMessage) {
     "^node_22_14_not_found$" { "node_22_14_not_found"; break }
     "^dependencies_not_installed$" { "dependencies_not_installed"; break }
     "^local_port_in_use$" { "local_port_in_use"; break }
     "^provider_key_empty$" { "provider_key_empty"; break }
     "^local_health_failed$" { "local_health_failed"; break }
     "^provider_probe_invalid_response$" { "provider_probe_invalid_response"; break }
-    "^semantic_[a-z_]+$" { [string]$_.Exception.Message; break }
+    "^(?:semantic|provider|patient)_[a-z_]+$" { $failureMessage; break }
     default { "local_live_ai_start_failed" }
   }
   Write-SafeFailure $safeCode

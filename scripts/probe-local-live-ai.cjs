@@ -40,7 +40,9 @@ try {
       }, 2);
     } else {
       void (async () => {
+        const patientApiUrl = String(process.env.LOCAL_PATIENT_API_URL || "");
         classifier.resetPatientIntentClassifierState();
+        const startedAt = Date.now();
         const result = await classifier.classifyPatientIntent({
           question: "Does it hurt to pee?",
           language: "en",
@@ -57,7 +59,37 @@ try {
           && result.reason !== "semantic_provider_unavailable"
           && Boolean(result.model);
         const thinkingExecuted = providerHttpSuccess && result.thinkingMode === "max";
-        const answerSource = providerHttpSuccess && result.accepted ? "live_ai" : "rule_fallback";
+        let patientHttpSuccess = false;
+        let patientUsedProvider = false;
+        if (providerHttpSuccess && result.accepted && patientApiUrl) {
+          const patientRequest = Buffer.from(JSON.stringify({
+            caseId: "P002",
+            stage: "history",
+            studentQuestion: "\u5c0f\u4fbf\u75db\u5417\uff1f",
+            mode: "ai",
+            language: "zh",
+            conversationHistory: []
+          }), "utf8");
+          const patientResponse = await fetch(patientApiUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json; charset=utf-8",
+              Accept: "application/json"
+            },
+            body: patientRequest,
+            signal: AbortSignal.timeout(90000)
+          });
+          patientHttpSuccess = patientResponse.ok;
+          if (patientHttpSuccess) {
+            const patientResult = await patientResponse.json();
+            patientUsedProvider = patientResult?.isFallback === false
+              && patientResult?.provider === "deepseek"
+              && patientResult?.model === "deepseek-v4-pro";
+          }
+        }
+        const answerSource = providerHttpSuccess && result.accepted && patientHttpSuccess && patientUsedProvider
+          ? "live_ai"
+          : "rule_fallback";
         const success = providerConfigured
           && providerHttpSuccess
           && answerSource === "live_ai"
@@ -70,8 +102,14 @@ try {
           thinkingExecuted,
           model: String(result.model || process.env.LLM_MODEL || ""),
           providerHttpSuccess,
-          durationMs: Number(result.durationMs || 0),
-          errorCode: success ? "" : String(result.reason || "provider_probe_failed")
+          durationMs: Date.now() - startedAt,
+          errorCode: success
+            ? ""
+            : !patientHttpSuccess
+              ? "patient_http_failed"
+              : !patientUsedProvider
+                ? "patient_provider_fallback"
+                : String(result.reason || "provider_probe_failed")
         }, success ? 0 : 2);
       })().catch(() => {
         writeResult({

@@ -98,11 +98,11 @@ export async function callLLM({
       method: "POST",
       headers: {
         Authorization: `Bearer ${config.apiKey}`,
-        "Content-Type": "application/json"
+        "Content-Type": "application/json; charset=utf-8"
       },
       body: JSON.stringify({
         model: config.model,
-        ...deepSeekThinking(config, thinkingMode ?? config.thinkingMode, reasoningEffort),
+        ...deepSeekThinking(config, thinkingMode ?? config.thinkingMode, reasoningEffort ?? process.env.LLM_REASONING_EFFORT),
         ...((thinkingMode ?? config.thinkingMode) === "enabled"
           ? {}
           : { temperature: temperature ?? config.temperature }),
