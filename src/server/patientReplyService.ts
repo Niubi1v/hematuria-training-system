@@ -69,6 +69,15 @@ function providerLabel() {
   };
 }
 
+function providerFailureReason(error: unknown) {
+  const typed = error as { name?: string; message?: string; status?: number };
+  const message = String(typed?.message || "").toLowerCase();
+  if (typed?.name === "AbortError" || /abort|timeout|timed out/.test(message)) return "provider_timeout";
+  if (Number(typed?.status || 0) === 429) return "provider_rate_limit";
+  if (Number(typed?.status || 0) > 0 || /provider returned http/.test(message)) return "provider_http_error";
+  return "provider_unavailable";
+}
+
 function toRuleResponse(ruleReply: ReturnType<typeof generatePatientReply>, isFallback: boolean, provider = "rule", model = "local-rule", language: "zh" | "en" = "zh"): PatientReplyResponse {
   return {
     replyText: sanitizeRuleReply(ruleReply.replyText, language),
@@ -156,7 +165,10 @@ export async function handlePatientReplyRequest(input: PatientReplyRequest): Pro
       blockedFields: [...new Set([...ruleReply.blockedTeacherFields, ...filteredFirst.hits, ...filteredRetry.hits])],
       safetyFlags: [...new Set([...ruleReply.safetyFlags, "ai_response_blocked"])]
     };
-  } catch {
-    return toRuleResponse(ruleReply, true, labels.provider, labels.model, input.language || "zh");
+  } catch (error) {
+    return {
+      ...toRuleResponse(ruleReply, true, labels.provider, labels.model, input.language || "zh"),
+      fallbackReason: providerFailureReason(error)
+    };
   }
 }

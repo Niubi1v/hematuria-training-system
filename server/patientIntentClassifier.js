@@ -233,8 +233,16 @@ async function classifyPatientIntent({
       cache.set(key, { value, expiresAt: Date.now() + CACHE_TTL_MS });
       prune();
       return value;
-    } catch {
-      return { accepted: false, reason: "semantic_provider_unavailable", providerCalls: 1 };
+    } catch (error) {
+      const status = Number(error?.status || 0);
+      const timedOut = error?.name === "AbortError" || /abort|timeout/i.test(String(error?.message || ""));
+      return {
+        accepted: false,
+        reason: timedOut
+          ? "semantic_provider_timeout"
+          : status > 0 ? "semantic_provider_http_error" : "semantic_provider_unavailable",
+        providerCalls: 1
+      };
     } finally {
       inflight.delete(key);
     }

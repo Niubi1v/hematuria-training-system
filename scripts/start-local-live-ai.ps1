@@ -158,11 +158,12 @@ try {
   $env:LLM_ENDPOINT_TYPE = "chat_completions"
   $env:LLM_ENABLE_AI_PATIENT = "true"
   $env:PATIENT_SEMANTIC_CLASSIFIER_ENABLED = "true"
-  $env:PATIENT_DEEPSEEK_THINKING = "max"
+  $env:PATIENT_DEEPSEEK_THINKING = "disabled"
   $env:PATIENT_DEEPSEEK_TIMEOUT_MS = "90000"
   $env:LLM_REQUEST_TIMEOUT_MS = "90000"
-  $env:LLM_THINKING_MODE = "enabled"
-  $env:LLM_REASONING_EFFORT = "max"
+  $env:NEXT_PUBLIC_PATIENT_REPLY_TIMEOUT_MS = "90000"
+  $env:LLM_THINKING_MODE = "disabled"
+  $env:LLM_REASONING_EFFORT = $null
   $env:LLM_STREAMING_ENABLED = "false"
   $env:PATIENT_PROMPT_AUDIT_ENABLED = "true"
   $env:PATIENT_AGENT_API_PORT = "9001"
@@ -206,25 +207,47 @@ try {
     exit 0
   }
 
-  $probeOutput = & $nodePath $probePath
-  $probeExitCode = $LASTEXITCODE
+  $patientOutput = & $nodePath $probePath --patient-only
+  $patientExitCode = $LASTEXITCODE
   try {
-    $probe = $probeOutput | ConvertFrom-Json
+    $patientProbe = $patientOutput | ConvertFrom-Json
   } catch {
     throw "provider_probe_invalid_response"
   }
-
-  $statusFormat = "LOCAL_LIVE_AI_STATUS patientServiceConnected=true providerConfigured={0} lastAnswerSource={1} thinkingExecuted={2} model={3} providerHttpSuccess={4} durationMs={5}"
+  $statusFormat = "LOCAL_LIVE_AI_DISABLED providerConfigured={0} providerHttpSuccess={1} answerSource={2} thinkingExecuted={3} model={4} durationMs={5}"
   Write-Host ($statusFormat -f
-    ([string]$probe.providerConfigured).ToLowerInvariant(),
-    [string]$probe.answerSource,
-    ([string]$probe.thinkingExecuted).ToLowerInvariant(),
-    [string]$probe.model,
-    ([string]$probe.providerHttpSuccess).ToLowerInvariant(),
-    [int]$probe.durationMs
+    ([string]$patientProbe.providerConfigured).ToLowerInvariant(),
+    ([string]$patientProbe.providerHttpSuccess).ToLowerInvariant(),
+    [string]$patientProbe.answerSource,
+    ([string]$patientProbe.thinkingExecuted).ToLowerInvariant(),
+    [string]$patientProbe.model,
+    [int]$patientProbe.durationMs
   )
-  if ($probeExitCode -ne 0) {
-    throw ([string]$probe.errorCode)
+  if ($patientExitCode -ne 0) {
+    throw ([string]$patientProbe.errorCode)
+  }
+
+  $env:PATIENT_DEEPSEEK_THINKING = "max"
+  $env:LLM_THINKING_MODE = "enabled"
+  $env:LLM_REASONING_EFFORT = "max"
+  $thinkingOutput = & $nodePath $probePath --provider-only
+  $thinkingExitCode = $LASTEXITCODE
+  try {
+    $thinkingProbe = $thinkingOutput | ConvertFrom-Json
+  } catch {
+    throw "provider_probe_invalid_response"
+  }
+  $thinkingFormat = "LOCAL_LIVE_AI_MAX providerConfigured={0} providerHttpSuccess={1} answerSource={2} thinkingExecuted={3} model={4} durationMs={5}"
+  Write-Host ($thinkingFormat -f
+    ([string]$thinkingProbe.providerConfigured).ToLowerInvariant(),
+    ([string]$thinkingProbe.providerHttpSuccess).ToLowerInvariant(),
+    [string]$thinkingProbe.answerSource,
+    ([string]$thinkingProbe.thinkingExecuted).ToLowerInvariant(),
+    [string]$thinkingProbe.model,
+    [int]$thinkingProbe.durationMs
+  )
+  if ($thinkingExitCode -ne 0) {
+    throw ([string]$thinkingProbe.errorCode)
   }
 
   Write-Host "LOCAL_LIVE_AI_READY pageUrl=$frontendUrl"
@@ -244,6 +267,7 @@ try {
     "^local_port_in_use$" { "local_port_in_use"; break }
     "^provider_key_empty$" { "provider_key_empty"; break }
     "^local_health_failed$" { "local_health_failed"; break }
+    "^local_abort_timeout$" { "local_abort_timeout"; break }
     "^provider_probe_invalid_response$" { "provider_probe_invalid_response"; break }
     "^(?:semantic|provider|patient)_[a-z_]+$" { $failureMessage; break }
     default { "local_live_ai_start_failed" }
