@@ -30,7 +30,11 @@ function unresolvedReply(key: string, language: "zh" | "en") {
     : "这点我记不太清了。";
 }
 
-function unresolvedFact(caseId: string, key: string, fact: StructuredPatientFact) {
+function unresolvedFact(
+  caseId: string,
+  key: string,
+  fact: Pick<StructuredPatientFact, "provenance" | "teacherReviewRequired">
+) {
   return explicitlyBlockedFacts.has(`${caseId}:${key}`)
     || fact.provenance === "author_added_for_simulation"
     || fact.teacherReviewRequired;
@@ -46,16 +50,46 @@ const { structuredHistoryIntentDefinitions } = require("./patientIntentCatalog.j
     key: string;
   }>;
 };
+const {
+  buildMedicationAnswerPlan,
+  buildPastMedicalHistorySummary
+} = require("./structuredHistoryAnswerPlanner.js") as {
+  buildMedicationAnswerPlan(
+    history: StructuredHistory,
+    intent: string,
+    language: "zh" | "en",
+    medications: StructuredHistory["medicationList"]
+  ): { renderedAnswer: string };
+  buildPastMedicalHistorySummary(
+    history: StructuredHistory,
+    language: "zh" | "en",
+    isBlocked: (
+      key: string,
+      fact: Pick<StructuredPatientFact, "provenance" | "teacherReviewRequired">
+    ) => boolean
+  ): { renderedAnswer: string; sources: StructuredPatientFact[]; hasUnresolved: boolean };
+};
+
+const specialIntents = new Set([
+  "past_medical_history_summary",
+  "medication_list",
+  "medication_name",
+  "medication_dosage",
+  "medication_frequency",
+  "other_medications"
+]);
 
 const facts: FactMatch[] = structuredHistoryIntentDefinitions
-  .filter((definition) => definition.historyKey && definition.key !== "medication_list" && definition.pattern)
+  .filter((definition) => definition.historyKey && !specialIntents.has(definition.key) && definition.pattern)
   .map((definition) => ({
     key: definition.historyKey!,
     slotId: definition.sourceSlotId,
     triggers: definition.pattern!
   }));
 
-const broadMedication = structuredHistoryIntentDefinitions.find((definition) => definition.key === "medication_list")?.pattern || /$a/;
+const specialDefinitions = structuredHistoryIntentDefinitions.filter(
+  (definition) => specialIntents.has(definition.key) && definition.pattern
+);
 
 function provenance(items: Array<StructuredPatientFact | { provenance: string }>) {
   const values = new Set(items.map((item) => item.provenance));
@@ -66,7 +100,7 @@ export function matchStructuredPatientQuestion(caseData: CaseData, question: str
   const history = caseData.structuredHistory;
   if (!history) return null;
   const matches = facts.filter((item) => item.triggers.test(question));
-  const wantsAllMedication = broadMedication.test(question) && !matches.some((item) => item.key === "anticoagulantUse" || item.key === "antiplateletUse");
+  const specialMatches = specialDefinitions.filter((item) => item.pattern?.test(question));
   const matchedFacts = matches.map((item) => String(item.key));
   const matchedSlotIds = matches.map((item) => item.slotId);
   const answers: string[] = [];
@@ -75,13 +109,32 @@ export function matchStructuredPatientQuestion(caseData: CaseData, question: str
   const sources: Array<StructuredPatientFact | { provenance: string }> = [];
   let hasUnresolved = false;
 
-  if (wantsAllMedication) {
-    answers.push(language === "en" ? history.medicationAnswerEn : history.medicationAnswerZh);
-    matchedFacts.push("medicationList");
-    matchedSlotIds.push("MED_ALL");
-    collectableFacts.push("medicationList");
-    collectableSlotIds.push("MED_ALL");
-    sources.push(...history.medicationList);
+  for (const match of specialMatches) {
+    let collectable = true;
+    if (match.key === "past_medical_history_summary") {
+      const summary = buildPastMedicalHistorySummary(
+        history,
+        language,
+        (key, fact) => unresolvedFact(caseData.id, key, fact)
+      );
+      answers.push(summary.renderedAnswer);
+      sources.push(...summary.sources);
+      hasUnresolved ||= summary.hasUnresolved;
+      collectable = !summary.hasUnresolved;
+    } else {
+      const medications = history.medicationList.filter(
+        (item) => !unresolvedFact(caseData.id, "medicationList", item)
+      );
+      answers.push(buildMedicationAnswerPlan(history, match.key, language, medications).renderedAnswer);
+      sources.push(...medications);
+      hasUnresolved ||= medications.length !== history.medicationList.length;
+    }
+    matchedFacts.push(match.key);
+    matchedSlotIds.push(match.sourceSlotId);
+    if (collectable) {
+      collectableFacts.push(match.key);
+      collectableSlotIds.push(match.sourceSlotId);
+    }
   }
   for (const match of matches) {
     const fact = history[match.key] as StructuredPatientFact;

@@ -13,12 +13,46 @@ const { generatePatientAnswer } = require("../server/patientSession.js") as {
     language: "zh" | "en";
     conversationHistory: unknown[];
   }): Promise<{
+    replyText: string;
     matchedSlotIds?: string[];
+    matchedFacts?: string[];
     fallbackReason?: string;
     safetyFlags?: string[];
+    factStates?: Record<string, string>;
+    clauseOutcomes?: Array<{ intent: string; sourceSlotId: string; status: string; factState: string }>;
+    contextResolution?: { inherited?: boolean; reason?: string };
   }>;
 };
-const cases = require("../data/cases.json") as Array<{ id: string }>;
+type HistoryFact = {
+  status: "present" | "absent" | string;
+  patientAnswerZh: string;
+  patientAnswerEn: string;
+  provenance?: string;
+  teacherReviewRequired?: boolean;
+};
+type Medication = {
+  name: string;
+  dose: string;
+  frequency: string;
+  indication: string;
+};
+type PatientCase = {
+  id: string;
+  structuredHistory: {
+    hypertension: HistoryFact;
+    diabetes: HistoryFact;
+    coronaryDisease: HistoryFact;
+    stroke: HistoryFact;
+    liverDisease: HistoryFact;
+    tuberculosis: HistoryFact;
+    stoneHistory: HistoryFact;
+    urinaryInfectionHistory: HistoryFact;
+    malignancyHistory: HistoryFact;
+    medicationList: Medication[];
+    medicationAnswerZh: string;
+  };
+};
+const cases = require("../data/cases.json") as PatientCase[];
 const { matchStructuredFacts } = require("../server/structuredFacts.js") as {
   matchStructuredFacts(caseData: unknown, question: string, language: "zh" | "en"): { matchedSlotIds?: string[] } | null;
 };
@@ -47,6 +81,31 @@ const historyProbes: Probe[] = [
   { id: "urinary-procedure-history-en", language: "en", question: "Have you had a urinary procedure?", expectedSlots: ["PAST_URINARY_PROCEDURE"] },
   { id: "retention-en", language: "en", question: "Have you been unable to pass urine?", expectedSlots: ["retention"] }
 ];
+
+const pastDiseaseKeys = [
+  "hypertension",
+  "diabetes",
+  "coronaryDisease",
+  "stroke",
+  "liverDisease",
+  "tuberculosis",
+  "stoneHistory",
+  "urinaryInfectionHistory",
+  "malignancyHistory"
+] as const;
+const pastDiseaseLabels: Record<(typeof pastDiseaseKeys)[number], string> = {
+  hypertension: "高血压",
+  diabetes: "糖尿病",
+  coronaryDisease: "冠心病",
+  stroke: "脑卒中",
+  liverDisease: "肝病",
+  tuberculosis: "结核",
+  stoneHistory: "泌尿系结石",
+  urinaryInfectionHistory: "尿路感染",
+  malignancyHistory: "肿瘤"
+};
+
+const categoryOnlyMedication = /^(?:降压药|降糖药|降脂药|止痛药|抗凝药|抗血小板药|利尿药|他汀(?:类)?(?:药)?|中药|保健品)$/i;
 
 async function main() {
   const caseData = cases.find((item) => item.id === "P001");
@@ -88,6 +147,171 @@ async function main() {
     }
   }
 
+  let medicationCases = 0;
+  for (const currentCase of cases) {
+    const compoundHistory = await generatePatientAnswer({
+      sessionId: `history-compound-${currentCase.id}`,
+      caseId: currentCase.id,
+      studentInput: "有没有高血压、糖尿病？",
+      language: "zh",
+      conversationHistory: []
+    });
+    const compoundIntents = compoundHistory.clauseOutcomes?.map((item) => item.intent) || [];
+    assert.ok(compoundIntents.includes("hypertension_history"), `${currentCase.id} hypertension clause dropped`);
+    assert.ok(compoundIntents.includes("diabetes_history"), `${currentCase.id} diabetes clause dropped`);
+    assert.equal(compoundIntents.filter((item) => item === "hypertension_history").length, 1);
+    assert.equal(compoundIntents.filter((item) => item === "diabetes_history").length, 1);
+
+    const hypertension = await generatePatientAnswer({
+      sessionId: `hypertension-authority-${currentCase.id}`,
+      caseId: currentCase.id,
+      studentInput: "有高血压吗？",
+      language: "zh",
+      conversationHistory: []
+    });
+    if (hypertension.fallbackReason === "medical_history_pending_review") {
+      assert.doesNotMatch(hypertension.replyText, /^有高血压。?$/, `${currentCase.id} unreviewed hypertension must not be inferred`);
+    } else {
+      assert.equal(
+        hypertension.replyText,
+        currentCase.structuredHistory.hypertension.patientAnswerZh,
+        `${currentCase.id} hypertension must come from the authoritative history fact`
+      );
+    }
+
+    const historySummary = await generatePatientAnswer({
+      sessionId: `history-summary-${currentCase.id}`,
+      caseId: currentCase.id,
+      studentInput: "有没有其他疾病？",
+      language: "zh",
+      conversationHistory: []
+    });
+    assert.notEqual(historySummary.fallbackReason, "classifier_disabled", `${currentCase.id} history summary fell through`);
+    assert.ok(
+      historySummary.matchedFacts?.includes("past_medical_history_summary"),
+      `${currentCase.id} history summary missed canonical intent`
+    );
+    assert.doesNotMatch(historySummary.replyText, /这项情况我现在不太清楚/, `${currentCase.id} history summary became generic unknown`);
+    const knownPositiveHistory = pastDiseaseKeys.filter((key) => {
+      const fact = currentCase.structuredHistory[key];
+      return fact.status === "present" && fact.provenance === "source" && !fact.teacherReviewRequired;
+    });
+    for (const key of knownPositiveHistory) {
+      assert.ok(
+        historySummary.replyText.includes(pastDiseaseLabels[key]),
+        `${currentCase.id} history summary omitted ${key}`
+      );
+    }
+
+    const medications = currentCase.structuredHistory.medicationList;
+    if (!medications.length) continue;
+    medicationCases += 1;
+    const genericMedication = await generatePatientAnswer({
+      sessionId: `medication-list-${currentCase.id}`,
+      caseId: currentCase.id,
+      studentInput: "平时吃什么药？",
+      language: "zh",
+      conversationHistory: []
+    });
+    assert.notEqual(genericMedication.fallbackReason, "classifier_disabled");
+    for (const medication of medications) {
+      assert.ok(genericMedication.replyText.includes(medication.name), `${currentCase.id} generic medication omitted ${medication.name}`);
+    }
+
+    const medicationName = await generatePatientAnswer({
+      sessionId: `medication-name-${currentCase.id}`,
+      caseId: currentCase.id,
+      studentInput: "具体药名是什么？",
+      language: "zh",
+      conversationHistory: []
+    });
+    for (const medication of medications) {
+      assert.ok(medicationName.replyText.includes(medication.name), `${currentCase.id} medication name omitted ${medication.name}`);
+    }
+    const hasCategoryOnlyName = medications.some((item) => categoryOnlyMedication.test(item.name));
+    assert.equal(
+      medicationName.factStates?.medication_name,
+      hasCategoryOnlyName ? "partially_known" : "exact_value",
+      `${currentCase.id} medication name state`
+    );
+
+    const medicationDose = await generatePatientAnswer({
+      sessionId: `medication-dose-${currentCase.id}`,
+      caseId: currentCase.id,
+      studentInput: "剂量多少？",
+      language: "zh",
+      conversationHistory: []
+    });
+    assert.notEqual(medicationDose.fallbackReason, "classifier_disabled", `${currentCase.id} medication dose fell through`);
+    const hasMissingDose = medications.some((item) => !item.dose);
+    assert.equal(medicationDose.factStates?.medication_dosage, hasMissingDose ? "partially_known" : "exact_value");
+    for (const medication of medications.filter((item) => item.dose)) {
+      assert.ok(medicationDose.replyText.includes(medication.dose), `${currentCase.id} omitted source dose`);
+    }
+    if (medications.every((item) => !item.dose)) {
+      assert.doesNotMatch(medicationDose.replyText, /\d+\s*(?:mg|毫克|片|粒)/i, `${currentCase.id} invented a dose`);
+    }
+
+    const medicationFrequency = await generatePatientAnswer({
+      sessionId: `medication-frequency-${currentCase.id}`,
+      caseId: currentCase.id,
+      studentInput: "一天吃几次？",
+      language: "zh",
+      conversationHistory: []
+    });
+    const hasMissingFrequency = medications.some((item) => !item.frequency);
+    assert.equal(
+      medicationFrequency.factStates?.medication_frequency,
+      hasMissingFrequency ? "partially_known" : "exact_value",
+      `${currentCase.id} medication frequency state`
+    );
+    for (const medication of medications.filter((item) => item.frequency)) {
+      assert.ok(
+        medicationFrequency.replyText.includes(medication.frequency === "每日" ? "每天" : medication.frequency),
+        `${currentCase.id} omitted source frequency`
+      );
+    }
+
+    const otherMedication = await generatePatientAnswer({
+      sessionId: `other-medication-${currentCase.id}`,
+      caseId: currentCase.id,
+      studentInput: "还有没有其他药？",
+      language: "zh",
+      conversationHistory: []
+    });
+    assert.equal(otherMedication.factStates?.other_medications, "exact_value");
+    for (const medication of medications) {
+      assert.ok(otherMedication.replyText.includes(medication.name), `${currentCase.id} other medication omitted ${medication.name}`);
+    }
+
+    const contextualDose = await generatePatientAnswer({
+      sessionId: `contextual-medication-dose-${currentCase.id}`,
+      caseId: currentCase.id,
+      studentInput: "剂量多少？",
+      language: "zh",
+      conversationHistory: [
+        { role: "student", text: "平时吃什么药？" },
+        { role: "patient", text: currentCase.structuredHistory.medicationAnswerZh }
+      ]
+    });
+    assert.equal(contextualDose.contextResolution?.inherited, true, `${currentCase.id} medication context not inherited`);
+    assert.equal(contextualDose.contextResolution?.reason, "contextual_medication_dosage");
+    assert.equal(contextualDose.factStates?.medication_dosage, hasMissingDose ? "partially_known" : "exact_value");
+
+    const medicationCompound = await generatePatientAnswer({
+      sessionId: `medication-compound-${currentCase.id}`,
+      caseId: currentCase.id,
+      studentInput: "有没有高血压、糖尿病，平时吃什么药？",
+      language: "zh",
+      conversationHistory: []
+    });
+    const medicationCompoundIntents = medicationCompound.clauseOutcomes?.map((item) => item.intent) || [];
+    for (const intent of ["hypertension_history", "diabetes_history", "medication_list"]) {
+      assert.ok(medicationCompoundIntents.includes(intent), `${currentCase.id} compound omitted ${intent}`);
+    }
+  }
+  assert.equal(medicationCases, 21, "all cases with structured long-term medication must be covered");
+
   const diagnosis = await generatePatientAnswer({
     sessionId: "routing-diagnosis",
     caseId: "P001",
@@ -128,7 +352,7 @@ async function main() {
   assert.equal(historicalDiagnosis.fallbackReason, "diagnosis_boundary");
   assert.deepEqual(historicalDiagnosis.matchedSlotIds || [], []);
 
-  console.log("Patient history routing preserved 42 cases x 8 natural questions plus 4 public safety boundaries.");
+  console.log("Patient history routing preserved 42 cases x 8 natural questions, 42 history summaries, 21 medication suites, and 4 public safety boundaries.");
 }
 
 main().catch((error) => {
