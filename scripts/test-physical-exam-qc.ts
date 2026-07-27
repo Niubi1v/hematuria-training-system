@@ -1,8 +1,10 @@
 import fs from "node:fs";
+import { simulatedPhysicalExamResult } from "../shared/dataAgentPresentation.js";
 import type { CaseData, PhysicalExamResult } from "../src/lib/types";
 
 const cases = JSON.parse(fs.readFileSync("data/cases.json", "utf8")) as CaseData[];
 const exams = JSON.parse(fs.readFileSync("data/physical_exam_results.json", "utf8")) as PhysicalExamResult[];
+const examItems = JSON.parse(fs.readFileSync("data/physical_exam_items.json", "utf8")) as Array<{ examId: string; displayName: string }>;
 const forbidden = /需检查|建议检查|应关注|应重点|符合.+(?:疾病|结石|梗阻)|提示诊断|需结合|学生应|当前病例无额外|未诉|需测量/;
 
 function assert(condition: unknown, message: string) { if (!condition) throw new Error(message); }
@@ -28,6 +30,27 @@ assert(!p011.some((item) => /阴囊|前列腺|睾丸/.test(item.displayName)), "
 const p012 = exams.filter((item) => item.caseId === "P012");
 assert(!p012.some((item) => /妇科|阴道|输尿管走行区/.test(item.displayName)), "P012 contains female or stone-localization examination");
 
+let simulatedNormalCount = 0;
+let failClosedCount = 0;
+for (const caseData of cases) {
+  const configuredIds = new Set(exams.filter((item) => item.caseId === caseData.id).map((item) => item.examId));
+  const applicableItems = examItems.filter((item) => !(item.examId.startsWith("PE2") && caseData.sex === "女")
+    && !(item.examId.startsWith("PE3") && caseData.sex === "男"));
+  for (const item of applicableItems) {
+    if (configuredIds.has(item.examId)) continue;
+    const simulated = simulatedPhysicalExamResult(item, "zh");
+    if (simulated) {
+      assert(caseData.sex === "男" && item.examId === "PE202", `${caseData.id}/${item.examId} is outside the explicit simulated-normal policy`);
+      assert(simulated.provenance === "simulated_normal" && simulated.affectsDiagnosis === false && simulated.affectsScore === false && simulated.reviewerStatus === "not_required", `${caseData.id}/${item.examId} simulated-normal metadata is incomplete`);
+      simulatedNormalCount += 1;
+    } else {
+      failClosedCount += 1;
+    }
+  }
+}
+assert(simulatedNormalCount > 0, "the explicit non-critical physical-exam simulation policy has no coverage");
+assert(failClosedCount > 0, "critical or unapproved missing examinations must remain fail-closed");
+
 const report = [
   "# 查体数据库质控报告",
   "",
@@ -48,4 +71,4 @@ if (process.env.UPDATE_PHYSICAL_EXAM_QC_REPORT === "1") {
   const updated = report.replace("# 查体数据库质控报告\n\n", `# 查体数据库质控报告\n\n生成时间：${new Date().toISOString()}\n`);
   fs.writeFileSync(reportPath, `${updated}\n`, "utf8");
 }
-console.log(`Physical examination QC passed: ${cases.length} cases, ${exams.length} results.`);
+console.log(`Physical examination QC passed: ${cases.length} cases, ${exams.length} source results, ${simulatedNormalCount} policy-approved simulations, ${failClosedCount} fail-closed missing selections.`);

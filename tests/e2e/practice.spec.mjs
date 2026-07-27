@@ -200,15 +200,21 @@ test("@ui-clinical-stage3 male case hides initial answers and restores released 
   await expect(page.getByText("彩超男性生殖系统（阴囊、睾丸、输精管）+精索静脉", { exact: true })).toBeVisible();
   await expect(page.getByText("彩超女性生殖系统", { exact: true })).toHaveCount(0);
   await expect(page.getByText("前列腺MR平扫", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "阴囊", exact: true }).click();
+  await expect(page.getByText("阴囊、睾丸及附睾未见明显异常。", { exact: true })).toBeVisible();
 
   const orderInput = page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜");
-  await orderInput.fill("肾功能/eGFR；双肾CTU平扫+增强");
+  await orderInput.fill("尿常规；血常规；彩超泌尿系（双肾、输尿管及膀胱）+残余尿");
   await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
-  await expect(page.getByTestId("report-card")).toHaveCount(2);
+  await expect(page.getByTestId("report-card")).toHaveCount(3);
+  await expect(page.getByTestId("order-outcome")).toHaveCount(3);
+  await expect(page.getByText("检查与开单阶段", { exact: true })).toBeVisible();
+  await expect(page.getByText("第2阶段", { exact: true })).toHaveCount(0);
   await expect(page.getByText("开单服务暂时不可用，未释放报告。")).toHaveCount(0);
 
   await page.reload();
-  await expect(page.getByTestId("report-card")).toHaveCount(2);
+  await expect(page.getByTestId("report-card")).toHaveCount(3);
+  await expect(page.getByTestId("order-outcome")).toHaveCount(3);
   const orderCountBeforeDoubleClick = observations.filter((item) => item.action === "order").length;
   await orderInput.fill("X光膀胱造影");
   await page.getByRole("button", { name: "开立并返回结果", exact: true }).evaluate((button) => {
@@ -216,7 +222,7 @@ test("@ui-clinical-stage3 male case hides initial answers and restores released 
     button.click();
   });
   await expect.poll(() => observations.filter((item) => item.action === "order").length).toBe(orderCountBeforeDoubleClick + 1);
-  await expect(page.getByText("医嘱已开立；该病例未提供此项结果，暂不能据此判断。", { exact: true })).toBeVisible();
+  await expect(page.getByText(/X光膀胱造影：该病例未提供此项结果，暂不能据此判断。/)).toBeVisible();
 });
 
 test("@ui-clinical-stage3 female case shows only applicable examination and imaging entries", async ({ page }) => {
@@ -252,11 +258,13 @@ test("@ui-clinical-stage3 female case shows only applicable examination and imag
   await expect(page.getByText("彩超男性生殖系统（阴囊、睾丸、输精管）+精索静脉", { exact: true })).toHaveCount(0);
   await expect(page.getByText("前列腺MR平扫", { exact: true })).toHaveCount(0);
 
-  await page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜").fill("肾功能/eGFR；双肾CTU平扫+增强");
+  await page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜").fill("尿常规；血常规；彩超泌尿系（双肾、输尿管及膀胱）+残余尿");
   await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
-  await expect(page.getByTestId("report-card")).toHaveCount(2);
+  await expect(page.getByTestId("report-card")).toHaveCount(3);
+  await expect(page.getByTestId("order-outcome")).toHaveCount(3);
   await page.reload();
-  await expect(page.getByTestId("report-card")).toHaveCount(2);
+  await expect(page.getByTestId("report-card")).toHaveCount(3);
+  await expect(page.getByTestId("order-outcome")).toHaveCount(3);
   await expect(page.getByText(/未返回结果|开单服务暂时不可用/)).toHaveCount(0);
 });
 
@@ -511,6 +519,7 @@ test("rapid final-stage completion creates one debrief request and one report", 
   });
 
   await expect(page.getByTestId("final-report")).toBeVisible();
+  await expect(page.getByTestId("final-percentage-score")).toHaveText(/0\s*\/\s*100/);
   expect(debriefRequests).toHaveLength(1);
   expect(new Set(debriefRequests).size).toBe(1);
   expect(scoreRequests).toHaveLength(1);

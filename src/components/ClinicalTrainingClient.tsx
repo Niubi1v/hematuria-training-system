@@ -434,6 +434,15 @@ function patientOpening(caseData: StudentVisibleCase, lang: LanguageCode) {
   return patientOpeningForCase(caseData.id, undefined, lang);
 }
 
+function studentStageLabel(stageNo: number, lang: LanguageCode) {
+  if (stageNo === 2) return lang === "en" ? "Investigation and ordering stage" : "检查与开单阶段";
+  return t(lang, "stageLabel").replace("{stage}", String(stageNo));
+}
+
+function percentageScore(rawScore: number) {
+  return Math.round((rawScore / 360) * 1000) / 10;
+}
+
 function caseDisplay(caseData: StudentVisibleCase, lang: LanguageCode) {
   return {
     title: lang === "en" ? `Training case ${caseData.displayCaseId || caseData.id}` : `训练病例 ${caseData.displayCaseId || caseData.id}`,
@@ -619,7 +628,9 @@ function FeedbackBox({ evaluation, lang }: { evaluation: StageEvaluation; lang: 
         </div>
       </div>
       <details className="mt-3 text-sm">
-        <summary className="cursor-pointer font-medium text-clinic-blue">{t(lang, "standardReference")}</summary>
+        <summary className="cursor-pointer font-medium text-clinic-blue">{evaluation.stageKey === "perioperative"
+          ? (lang === "en" ? "Reference answer / key points" : "参考答案 / 参考要点")
+          : t(lang, "standardReference")}</summary>
         <FormattedText text={evaluation.standardAnswer} />
       </details>
     </section>
@@ -629,6 +640,7 @@ function FeedbackBox({ evaluation, lang }: { evaluation: StageEvaluation; lang: 
 function FinalReport({ report, lang }: { report: Evaluator360Report; lang: LanguageCode }) {
   const strengths = report.items.filter((item) => item.max > 0 && item.score / item.max >= 0.8).map((item) => item.label);
   const priorities = report.items.filter((item) => item.criticalErrors.length || item.misses.length || item.improvements.length).map((item) => item.label);
+  const displayedScore = percentageScore(report.total);
   return (
     <section data-testid="final-report" className="rounded-xl border border-clinic-line bg-white p-5 print:border-0 print:p-0">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -638,7 +650,9 @@ function FinalReport({ report, lang }: { report: Evaluator360Report; lang: Langu
         </div>
         <div className="flex items-center gap-3">
           <button type="button" onClick={() => window.print()} className="no-print rounded-md border border-clinic-line px-3 py-2 text-sm font-medium hover:border-clinic-blue">{t(lang, "printReport")}</button>
-          <div className="text-3xl font-semibold text-clinic-blue">{report.total}<span className="text-base text-clinic-muted"> / {report.max}</span></div>
+          <div data-testid="final-percentage-score" aria-label={lang === "en" ? `Percentage score ${displayedScore} out of 100` : `百分制得分 ${displayedScore} / 100`} className="text-3xl font-semibold text-clinic-blue">
+            {displayedScore}<span className="text-base text-clinic-muted"> / 100</span>
+          </div>
         </div>
       </div>
       {report.redFlags.length > 0 && (
@@ -2348,11 +2362,26 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                       <p className="mt-1 text-xs text-clinic-muted">
                         {t(lang, "placedAt")}：{shortTime(log.placedAt || log.at, lang)}
                         {log.returnedAt ? ` · ${t(lang, "returnedAt")}：${shortTime(log.returnedAt, lang)}` : ""}
-                        {` · ${t(lang, "stageLabel").replace("{stage}", String(log.stageNo || 2))}`}
+                        {" · "}<span data-testid="order-stage-label">{studentStageLabel(log.stageNo || 2, lang)}</span>
                       </p>
                       {log.matchedOrders.length > 0 && <p className="mt-1 text-xs text-clinic-muted">{t(lang, "recognizedOrders")}：{log.matchedOrders.map((item) => safeStudentFacingText(item.displayName, lang, ENGLISH_ORDER_PLACEHOLDER)).join("；")}</p>}
                       {log.duplicateOrderIds && log.duplicateOrderIds.length > 0 && <p className="mt-1 text-xs text-amber-800">{t(lang, "duplicateOrder")}</p>}
                       <p className="mt-1 text-sm text-clinic-muted">{log.message}</p>
+                      {log.orderOutcomes && log.orderOutcomes.length > 0 && (
+                        <div className="mt-3 space-y-2" aria-label={lang === "en" ? "Per-order result status" : "逐项医嘱结果状态"}>
+                          {log.orderOutcomes.map((outcome, index) => (
+                            <div data-testid="order-outcome" key={`${log.id}-${outcome.orderId || outcome.displayName}-${index}`} className={`rounded-md border px-3 py-2 text-sm ${
+                              outcome.status === "reported"
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+                                : outcome.status === "not_provided" || outcome.status === "prerequisite_missing"
+                                  ? "border-amber-200 bg-amber-50 text-amber-950"
+                                  : "border-clinic-line bg-clinic-paper text-clinic-muted"
+                            }`}>
+                              <span>{safeStudentFacingText(outcome.message, lang, ENGLISH_RESULT_PLACEHOLDER)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       {log.status === "ordered" && <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-clinic-paper"><div className="h-full w-1/2 animate-pulse rounded-full bg-clinic-teal" /></div>}
                       {log.results.map((item, index) => <ReportCard key={`${log.id}-${item.resultId || `${item.orderId}-${index}`}`} item={item} lang={lang} />)}
                     </div>
@@ -2449,7 +2478,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-y border-clinic-line py-4">
                   <p className="text-sm text-clinic-muted">{previousAttemptScore === null
                     ? (lang === "en" ? "This is your first completed attempt for this case and language." : "这是本病例当前语言的首次完整训练。")
-                    : (lang === "en" ? `Change from the previous attempt: ${finalReport.total - previousAttemptScore >= 0 ? "+" : ""}${finalReport.total - previousAttemptScore}` : `较上次训练：${finalReport.total - previousAttemptScore >= 0 ? "+" : ""}${finalReport.total - previousAttemptScore} 分`)}</p>
+                    : (() => {
+                        const change = Math.round((percentageScore(finalReport.total) - percentageScore(previousAttemptScore)) * 10) / 10;
+                        return lang === "en"
+                          ? `Change from the previous attempt: ${change >= 0 ? "+" : ""}${change} percentage points`
+                          : `较上次训练：${change >= 0 ? "+" : ""}${change} 个百分点`;
+                      })()}</p>
                   <button type="button" onClick={restartTraining} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white"><RotateCcw size={16} />{lang === "en" ? "Retrain this case" : "立即重练同病例"}</button>
                 </div>
               </>}</div>
@@ -2458,7 +2492,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 <div className="mt-3 max-h-[360px] space-y-3 overflow-auto">
                   {timeline.map((item) => (
                     <div key={item.id} className="rounded-md bg-white p-3 text-sm leading-6">
-                      <p className="font-medium text-clinic-blue">{shortTime(item.at, lang)} · {t(lang, "stageLabel").replace("{stage}", String(item.stageNo))} · {item.label}</p>
+                      <p className="font-medium text-clinic-blue">{shortTime(item.at, lang)} · {studentStageLabel(item.stageNo, lang)} · {item.label}</p>
                       <p className="mt-1 text-clinic-muted">{item.detail}</p>
                     </div>
                   ))}
@@ -2525,7 +2559,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             <div className="mt-3 space-y-2 text-sm text-clinic-muted">
               <p>{isOsce ? t(lang, "osceMode") : t(lang, "freeTraining")}</p>
               {isOsce && <p>{formatDuration(osceTimeLeft)}</p>}
-              <p>{t(lang, "stageLabel").replace("{stage}", String(activeStageNo))}：{activeAgent.agentName[lang]}</p>
+              <p>{studentStageLabel(activeStageNo, lang)}：{activeAgent.agentName[lang]}</p>
               <p>{Object.keys(submitted).length} / 7 {t(lang, "completed")}</p>
               <p>{t(lang, "saveStatus")}：{saveStatus === "saved" ? t(lang, "saved") : saveStatus === "saving" ? t(lang, "saving") : t(lang, "saveFailed")}</p>
               <p className="pt-2 text-xs leading-5">{t(lang, "teachingOnly")}</p>
@@ -2546,7 +2580,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             <div className="mt-3 space-y-3">
               {(timeline.length ? timeline.slice(-6).reverse() : []).map((item) => (
                 <div key={item.id} className="rounded-md bg-clinic-paper p-3 text-xs leading-5">
-                  <p className="font-medium text-clinic-blue">{shortTime(item.at, lang)} · {t(lang, "stageLabel").replace("{stage}", String(item.stageNo))} · {item.label}</p>
+                  <p className="font-medium text-clinic-blue">{shortTime(item.at, lang)} · {studentStageLabel(item.stageNo, lang)} · {item.label}</p>
                   <p className="mt-1 line-clamp-3 text-clinic-muted">{item.detail}</p>
                 </div>
               ))}

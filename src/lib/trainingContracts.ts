@@ -58,6 +58,15 @@ export type OrderResultLog = {
     teachingExplanation: string;
     metadataStatus?: "complete" | "awaiting_reviewed_metadata";
     translationStatus?: string;
+    provenance?: "configured_case_result" | "simulated_normal" | "not_provided";
+  }>;
+  orderOutcomes?: Array<{
+    orderId: string;
+    displayName: string;
+    status: "reported" | "not_provided" | "prerequisite_missing" | "duplicate" | "unrecognized" | "unavailable";
+    provenance: string;
+    resultId?: string;
+    message: string;
   }>;
   pendingResults?: OrderResultLog["results"];
   message: string;
@@ -82,7 +91,11 @@ export type ExamResultLog = {
   at: string;
   examId?: string;
   translationStatus?: string;
-  provenance?: "configured_case_result" | "not_provided";
+  provenance?: "configured_case_result" | "simulated_normal" | "not_provided";
+  affectsDiagnosis?: false;
+  affectsScore?: false;
+  reviewerStatus?: "not_required";
+  simulationPolicyId?: string;
 };
 
 export type MdtOpinion = {

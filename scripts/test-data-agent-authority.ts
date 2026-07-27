@@ -15,6 +15,7 @@ const results = require("../data/order_results_structured.json") as Array<{
   caseId: string;
   orderId: string;
   resultId: string;
+  status: "final" | "not_available" | "not_performed";
   prerequisites?: string[];
 }>;
 const rubrics = require("../data/event_rubrics.json") as Array<{
@@ -229,10 +230,20 @@ async function testPrerequisiteRecovery() {
     assert.equal(resultIds(response.payload).includes(item.resultId), false);
     assert.equal(ids(response.payload, "unmetPrerequisites").includes(prerequisiteId), true);
     assert.equal(ids(response.payload, "acceptedOrderIds").includes(item.orderId), false);
+    assert.equal(
+      ((response.payload.orderOutcomes || []) as Array<{ orderId: string; status: string }>).some((outcome) => outcome.orderId === item.orderId && outcome.status === "prerequisite_missing"),
+      true
+    );
 
     response = await order(recovery.attemptId, item.caseId, language, prerequisiteId, response);
     response = await order(recovery.attemptId, item.caseId, language, item.orderId, response);
-    assert.equal(resultIds(response.payload).includes(item.resultId), true);
+    assert.equal(resultIds(response.payload).includes(item.resultId), item.status === "final");
+    if (item.status !== "final") {
+      assert.equal(
+        ((response.payload.orderOutcomes || []) as Array<{ orderId: string; status: string }>).some((outcome) => outcome.orderId === item.orderId && outcome.status === "not_provided"),
+        true
+      );
+    }
     assert.equal(ids(response.payload, "duplicateOrderIds").includes(item.orderId), false);
 
     const control = await startStageTwo(item.caseId, language, `control-${index}`);
@@ -250,7 +261,7 @@ async function testPrerequisiteRecovery() {
       item.orderId,
       controlResponse
     );
-    assert.equal(resultIds(controlResponse.payload).includes(item.resultId), true);
+    assert.equal(resultIds(controlResponse.payload).includes(item.resultId), item.status === "final");
   }
   return { prerequisiteRecoveryScenarios: scenarios.length, positiveControls: scenarios.length };
 }

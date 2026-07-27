@@ -60,6 +60,9 @@ assert.doesNotMatch(clinicalSource, /pendingResults: matchedLog\.results/, "不�
 assert.match(clinicalSource, /修改后重新提交/, "阶段反馈后应允许修改并重新提交");
 assert.doesNotMatch(clinicalSource, /events: buildScoringEvents/, "终末评分不得提交客户端构造的满分事件");
 assert.doesNotMatch(clinicalSource, />DeepSeek AI</, "生产界面不得展示模型品牌作为模式按钮");
+assert.match(clinicalSource, /function percentageScore\(rawScore: number\)[\s\S]{0,120}rawScore \/ 360/, "学生端百分制必须只按原始得分除以360换算");
+assert.match(clinicalSource, /data-testid="final-percentage-score"[\s\S]{0,240}\/ 100/, "学生端主分数必须显示为百分制");
+assert.match(clinicalSource, /createAttemptSummary\(attempt, report\.total, report\.max\)/, "存储仍须保留服务端原始360分报告");
 
 class MemoryStorage {
   private map = new Map<string, string>();
