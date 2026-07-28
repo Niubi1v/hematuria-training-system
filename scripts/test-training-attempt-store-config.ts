@@ -91,7 +91,7 @@ async function main() {
     completedStages: {},
     orders: {},
     events: {},
-    submissions: {}
+    submissions: []
   };
   globalThis.fetch = async () => ({
     ok: true,
@@ -108,6 +108,26 @@ async function main() {
   assert.deepEqual(normalized.state.orders, []);
   assert.deepEqual(normalized.state.events, []);
   assert.deepEqual(normalized.state.submissions, {});
+
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => ({
+      result: JSON.stringify({
+        kind: "active",
+        state: { ...luaRoundTrippedState, submissions: ["unexpected"] }
+      })
+    })
+  }) as Response;
+  await assert.rejects(
+    store.loadAttempt({
+      caseId: "P003",
+      attemptId: "attempt-corrupt-submissions",
+      token: "attempt-token-test",
+      requestId: "load-corrupt-submissions",
+      requestDigest: "c".repeat(64)
+    }),
+    /attempt_state_submissions_invalid/
+  );
 
   globalThis.fetch = async () => ({
     ok: true,

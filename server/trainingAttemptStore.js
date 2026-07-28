@@ -25,15 +25,19 @@ function restoreLuaEmptyArray(value, field) {
   throw new Error(`attempt_state_${field}_invalid`);
 }
 
+function restoreLuaEmptyObject(value, field) {
+  if (value && typeof value === "object" && !Array.isArray(value)) return value;
+  if (Array.isArray(value) && value.length === 0) return {};
+  throw new Error(`attempt_state_${field}_invalid`);
+}
+
 function normalizeStoredState(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("attempt_state_invalid");
   const state = clone(value);
   state.completedStages = restoreLuaEmptyArray(state.completedStages, "completed_stages");
   state.orders = restoreLuaEmptyArray(state.orders, "orders");
   state.events = restoreLuaEmptyArray(state.events, "events");
-  if (!state.submissions || typeof state.submissions !== "object" || Array.isArray(state.submissions)) {
-    throw new Error("attempt_state_submissions_invalid");
-  }
+  state.submissions = restoreLuaEmptyObject(state.submissions, "submissions");
   return state;
 }
 
