@@ -700,3 +700,25 @@
 - **证据**：本地全栈5/5；P003与P001成功，双向语言切换、刷新、快速双击和Redis503→恢复通过；完整行为、Playwright 95/7/0、Node 22类型/lint、双build、bundle、audit、secret通过。
 - **线上边界**：基线`0d50a79`的最新commit-specific Preview功能提交未复现该500；新候选尚未部署，不能登记为远程关闭。
 - **治理**：`data/**`零差异，未修改事实、审批、`needs_revision`、HEM-P0-001/023或360分。
+
+#### 2026-07-28远程关闭证据
+
+- **最终状态**：`ENGINEERING CLOSED / REMOTE PREVIEW VERIFIED`。
+- Production提交`dd64146`将Redis/Lua返回的空`submissions`数组安全迁移为空对象；只有空数组可迁移，非空数组和其他畸形结构仍返回安全错误，validator、签名、session、stage、case、language、origin及幂等验证均未放宽。
+- 精确应用HEAD `f5ab5539c10c6c8a62f99312dbdb37c722d845a9`的Actions run `30354908819`在Node 22.14.0完整成功；真实受保护Preview中P003零轮和P001一轮的`stage-feedback`与`history-log`均为HTTP 200，进入第二阶段并可刷新恢复。
+
+### HEM-P1-068 Preview Patient全量降级为rule_fallback
+
+- **状态**：`ENGINEERING CLOSED / REMOTE PREVIEW VERIFIED`。
+- **根因**：Patient自然化器在对话智能化集成后缺失，确定性治理答案没有进入受控Provider自然化；恢复后，另有超长但无禁词的合法英文答案被格式过滤误判并覆盖为`safety_boundary`。
+- **最小修复**：只把当前已治理答案交给DeepSeek自然化，不提供隐藏病例、诊断、评分或审核内容；Provider返回需通过语言、事实保持、格式和禁词过滤。只有零禁词命中且属于格式/语言/事实保持失败时允许一次受限纠正；禁词命中继续fail-closed。Provider失败仍明确为fallback，不伪装`live_ai`。
+- **证据**：Preview中文5/5、英文5/5均为`live_ai`，模型`deepseek-v4-flash`，thinking未执行；P037/P038两轮上下文问答保持`live_ai`，history-log 200。Actions run `30354908819`和Vercel精确HEAD检查均success。
+- **治理边界**：未修改`data/**`、医学事实、审批状态、`needs_revision`、HEM-P0-001/023、419条决定或360分规则。
+
+### EXT-TENCENT-SSH-20260728 大陆预发布缺少可审计SSH目标
+
+- **状态**：`EXTERNAL BLOCKED / NO SERVER CHANGE`。
+- **证据**：本机`~/.ssh/config`不存在；仅确认本机存在私钥文件名，未读取其内容。仓库部署文档只有主机占位符，未发现可安全识别的腾讯云Host alias、目标用户或目标主机配置。
+- **已完成的不依赖项**：大陆分支已同步到`c71f355b7a861329ef7597e184a96ffb78bdc259`；版本包及SHA256已生成；Compose/Nginx、MAINLAND_RUNTIME build、secret scan和`data/**`等同性通过。
+- **解除条件**：负责人在本机SSH配置中建立指向目标预发布CVM的Host alias；无需把私钥、密码或环境变量值粘贴到聊天。解除后先只读核对服务器现有环境、备份与回滚能力，再部署。
+- **禁止推断**：腾讯云health、真实Redis写读、12轮Flash、P50/P95、内存/OOM及回滚均尚无服务器证据，不得标记通过。

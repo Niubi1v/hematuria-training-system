@@ -58,3 +58,20 @@ UI集成增量的可审计逆序为：证据提交`cdfa51f`、日志重试竞态
 - 无密钥、PII、标准答案或完整病例进入静态bundle。
 - 医学治理计数与状态未被放宽。
 - `PROGRESS.md`、`DEFECT_LOG.md`和`TEST_EVIDENCE.md`记录回滚原因、命令、退出码、部署ID和最终状态。
+
+## 2026-07-28 Preview运行时与大陆同步回滚
+
+Production运行时增量的可审计逆序为：
+
+1. `f5ab553`：安全Patient格式溢出纠正；
+2. `a22c527`：保留受治理live Patient回答；
+3. `972e084`：Provider合同测试对齐；
+4. `f7054d3`：上下文fallback合同测试对齐；
+5. `8c90b45`：恢复受治理Patient自然化；
+6. `dd64146`：Redis空`submissions`安全迁移。
+
+若需要撤销，只能在专项分支按依赖关系执行普通`git revert`并创建可审计反向提交；不得reset、rebase或force push。每一步至少复验attempt schema、stage-feedback、history-log、Patient来源分类、TypeScript、ESLint、构建、bundle、secret和`data/**`零差异。禁词、安全签名、session/stage/origin及医学治理断言不得随回滚放宽。
+
+大陆同步提交`c71f355b7a861329ef7597e184a96ffb78bdc259`是双父merge；若仅撤销分支同步，应使用普通`git revert -m 1 c71f355b7a861329ef7597e184a96ffb78bdc259`，随后复验Docker Compose、Nginx、Redis adapter、同域API、MAINLAND_RUNTIME build和部署包内容。该命令仅为经批准后的操作说明，本轮未执行。
+
+腾讯云尚未部署，因此不存在服务器回滚动作或已验证回滚结果。未来部署前必须先记录当前服务器版本、镜像/包SHA、持久卷与环境引用；失败时恢复先前版本化包和服务清单，不覆盖secret、不删除Redis持久数据，并重新验证health、第一阶段和Patient会话。

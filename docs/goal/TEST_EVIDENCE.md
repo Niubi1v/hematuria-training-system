@@ -1509,3 +1509,53 @@ Actions：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/301
 | `git diff --exit-code -- data` | 0 | 医学事实、审核状态、`needs_revision`与评分数据零差异 |
 
 本地启动：`pnpm run dev:full`，URL `http://127.0.0.1:3000`；停止使用`Ctrl+C`，或另一个终端运行`pnpm run dev:full:stop`关闭项目限定Redis容器。生成的本地签名与Redis REST凭据只存在进程环境，未写入日志、源码、fixture或Git。精确新HEAD的Node 22 Actions和Vercel仍待提交、普通push后补证。
+
+## Preview运行时与大陆预发布准备证据（2026-07-28）
+
+### Production远程门禁
+
+| 环境/检查 | 结果 | 精确证据 |
+|---|---|---|
+| Production分支 | PASS | `f5ab5539c10c6c8a62f99312dbdb37c722d845a9`；本地/远端ahead-behind=`0/0` |
+| GitHub Actions | PASS | run `30354908819`，Node 22.14.0，完整workflow success |
+| TypeScript / ESLint | PASS | 同run对应步骤exit 0 |
+| 完整Playwright | PASS | desktop/mobile完整步骤成功；无失败测试 |
+| 生成与医学治理 | PASS | 幂等、schema、双语、医学审核、360分及冻结边界通过 |
+| build / bundle | PASS | 82/82页；bundle隐藏信息扫描通过 |
+| repository secret / clean gate | PASS | repository与Git历史扫描、最终工作树clean gate通过 |
+| Vercel Deployment / Comments | PASS | 精确HEAD对应两项检查success |
+| Pages | SKIPPED | PR为Draft，未部署正式Pages |
+
+### 受保护Preview黑盒
+
+Preview branch alias：`https://hematuria-training-system-git-codex-he-a06e54-niubi1vs-projects.vercel.app/`。测试只从进程环境读取Automation Bypass凭据；报告、日志和专用输出扫描未包含其值、Cookie、Authorization、token或签名。
+
+| 场景 | 结果 |
+|---|---|
+| 总结果 | 11 passed / 1 intentional skipped；凭据输出扫描PASS |
+| P003零轮第一阶段 | `stage-feedback=200`；进入第二阶段；刷新保持 |
+| 旧session恢复 | 首次`session-init=409`后安全恢复为200；不重复阶段提交 |
+| P001中文/英文 | Patient、history-log、stage-feedback均成功 |
+| 双向语言切换/刷新/快速双击 | PASS；无重复合法提交 |
+| P037/P038英文两轮 | 均保持`live_ai`，history-log 200 |
+| fresh session | 10/10；端到端P95 1419ms，服务端session P95 12ms |
+| 中文Flash | 5/5 `live_ai`；回答P50约1167ms、P95 1272ms；provider P95 874ms；首Token P95 705ms |
+| 英文Flash | 5/5 `live_ai`；回答P50约1358ms、P95 1520ms；provider P95 958ms；首Token P95 794ms |
+| Provider合同 | `model=deepseek-v4-flash`；`thinkingExecuted=false`；fallback未冒充live_ai |
+
+### 大陆分支与部署包
+
+| 命令/合同 | 结果 |
+|---|---|
+| `scripts/test-training-attempt-store-config.ts` | PASS |
+| Patient session、agent chat、Next runtime配置专项 | PASS |
+| TypeScript / ESLint | PASS |
+| `docker compose --env-file .env.mainland -f docker-compose.mainland.yml config --quiet` | PASS；未输出变量值 |
+| `MAINLAND_RUNTIME=1 next build` | PASS；82/82页 |
+| repository secret scan | PASS；416个tracked/candidate及可达文本历史 |
+| Production与大陆`data/**`比较 | PASS；零差异 |
+| `scripts/test-mainland-redis-adapter.mjs` | NOT RUN：本地未提供真实Redis运行时环境；未将缺环境错误登记为产品失败或通过 |
+
+大陆提交为`c71f355b7a861329ef7597e184a96ffb78bdc259`。部署包`outputs/hematuria-mainland-staging-c71f355b7a86.zip`共467项、5,036,482 bytes，SHA256=`2f97220a90a8da3cc0dee4080a55dfffc23bb25d1785aa71de8322e510e6e36e`；已验证不含`.git`、`node_modules`和真实`.env.mainland`。
+
+腾讯云服务器测试未运行：缺少可审计SSH Host alias和目标配置，未连接服务器。因此health、部署SHA、真实Redis、12轮Flash、P50/P95、内存/OOM和回滚状态均为`BLOCKED_EXTERNAL`，不能以本地或Preview结果代替。

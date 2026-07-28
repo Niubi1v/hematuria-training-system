@@ -652,3 +652,15 @@
 - Redis暂时不可用现与缺配置区分；不关闭或放宽session、attempt、stage、case、language、origin、签名及幂等校验。
 - 本地完整门禁通过：行为与医学治理、Playwright 95/7/0、Node 22.14 TypeScript/ESLint、两种82页构建、两次26资产bundle、依赖与secret扫描、`data/**`零差异。
 - 候选仍需小步提交、普通push、精确新HEAD的Actions/Vercel与真实Preview复测。PR继续Draft，不合并main、不部署Production。
+
+### Preview运行时闭环与大陆预发布交付（2026-07-28）
+
+- 起始Production HEAD：`c8834b5e1212ec554e7b2787e35a98d45d484878`；最终已验证应用HEAD：`f5ab5539c10c6c8a62f99312dbdb37c722d845a9`。
+- 三个Preview问题均已闭环：Redis/Lua将空`submissions`对象转成数组导致stage-feedback/history-log 500；受治理Patient自然化器缺失导致全量fallback；格式过滤对无禁词长回答误判导致P037安全降级。修复保持严格validator、签名、session、stage、origin和医学治理边界。
+- Actions run `30354908819`在Node 22.14.0完整success；Vercel Deployment及Preview Comments success；PR #1保持Open/Draft，Pages按规则skipped，未合并main或部署正式Production。
+- 精确HEAD Preview黑盒11 passed/1 intentional skipped。P003零轮与P001一轮可进入第二阶段，history-log 200，刷新/双击/双向语言切换通过；中文Flash 5/5、英文Flash 5/5均为`live_ai`，`model=deepseek-v4-flash`、`thinkingExecuted=false`。session P95 1419ms，中文回答P95 1272ms，英文回答P95 1520ms。
+- 大陆分支最终HEAD：`c71f355b7a861329ef7597e184a96ffb78bdc259`。同步采用双父merge以Production应用为基线，并保留大陆Docker Compose、Nginx、Redis adapter、同域API、health、备份及回滚文件；没有让旧大陆业务逻辑覆盖Production。
+- 大陆部署包：[hematuria-mainland-staging-c71f355b7a86.zip](C:/Users/admin/Documents/血尿问诊项目/outputs/hematuria-mainland-staging-c71f355b7a86.zip)，SHA256=`2f97220a90a8da3cc0dee4080a55dfffc23bb25d1785aa71de8322e510e6e36e`。
+- 腾讯云没有部署，也没有回滚。唯一直接阻塞是本机缺少可审计的目标SSH Host alias；未连接服务器，因此腾讯云health、部署SHA、真实Redis、12轮Flash、P50/P95与内存状态均没有证据。
+- 用户下一步只需在本机SSH配置中建立目标预发布CVM的Host alias，不需发送私钥或secret。解除后应按现有脚本执行：只读环境核对→备份当前版本→上传并校验上述SHA256→启动→health/第一阶段/history/12轮Flash/内存验收→任一关键失败自动回滚。
+- 医学边界未变化：`data/**`零差异；未批准419条事实、未解除42例`needs_revision`，未裁决HEM-P0-001/023，也未修改360分底层规则。

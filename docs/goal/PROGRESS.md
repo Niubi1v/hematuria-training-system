@@ -766,3 +766,16 @@
 - Redis网络/服务故障现返回`training_attempt_store_temporarily_unavailable`并显示可理解的网络恢复提示；缺凭据或401/403仍按配置错误fail-closed。
 - Node 22.14本地结果：全栈5/5、行为/治理全量通过、Playwright 95/7/0、TypeScript/ESLint、双82页build、双26-asset bundle、依赖与secret扫描通过；`data/**`零差异。
 - 下一步：小步提交代码与证据，fetch确认远端领先0后普通push，等待精确新HEAD的Node 22 Actions/Vercel，再运行新Preview第一阶段黑盒。PR保持Draft。
+
+### 2026-07-28 Preview运行时闭环与大陆预发布准备
+
+- Production从`c8834b5e1212ec554e7b2787e35a98d45d484878`开始，依次形成`dd64146`、`8c90b45`、`f7054d3`、`972e084`、`a22c527`、`f5ab553`六个可回滚提交；最终应用HEAD为`f5ab5539c10c6c8a62f99312dbdb37c722d845a9`，本地与`origin/codex/hematuria-production-goal`一致且工作树干净。
+- `stage-feedback=500 attempt_state_submissions_invalid`根因为Redis/Lua JSON往返将空`submissions:{}`恢复为`[]`。加载边界现在仅把空数组迁移回空对象；非空数组和其他畸形状态继续fail-closed。新attempt、旧合法attempt、token轮换、一次安全恢复和幂等合同均保持。
+- `history-log=500`与同一attempt状态类型损坏相关；状态迁移后真实Preview恢复为HTTP 200。合法操作保持单一request ID，刷新可恢复，日志失败不触发重复Patient provider调用。
+- Patient全量`rule_fallback`根因为受治理自然化器在专项集成中缺失，随后又发现安全格式过滤对超长但无禁词回答误判。当前只将已经过治理的单条答案交给DeepSeek自然化；模型不能读取隐藏病例、诊断或评分。仅在零禁词命中且格式/语言/事实保持失败时允许一次受限纠正；真正禁词仍fail-closed。Provider成功才标记`live_ai`。
+- 精确HEAD `f5ab553`的Actions run `30354908819`在Node 22.14.0完整success；依赖审计、生成幂等、行为/医学/安全、TypeScript、ESLint、完整Playwright、82页build、bundle、repository secret scan和clean gate全部通过，Pages按Draft规则skipped。
+- 同HEAD Vercel Deployment及Preview Comments success。受保护Preview黑盒为11 passed/1 intentional skipped：P003零轮`stage-feedback=200`并进入第二阶段；P001中英文、双向切换、刷新和双击通过；P037/P038英文上下文追问保持`live_ai`；history-log均200。session 10/10，P95 1419ms；中文Flash 5/5，回答P95 1272ms；英文Flash 5/5，回答P95 1520ms；模型均为`deepseek-v4-flash`且thinking未执行。
+- 大陆分支没有整体覆盖Production。现有Docker Compose、Nginx、Redis adapter、同域`/api/**`、health、备份和回滚脚本保留，Production应用通过双父merge提交`c71f355b7a861329ef7597e184a96ffb78bdc259`同步；`origin/codex/hematuria-mainland-staging-integration`与其一致且工作树干净。
+- 大陆最小门禁：attempt-store配置、Patient session/agent/runtime、TypeScript、ESLint、Compose/Nginx静态配置、MAINLAND_RUNTIME 82页build、repository secret scan及`data/**`等同性通过。需要真实Redis环境的adapter集成测试因本地未提供运行时Redis变量而未执行，不登记为通过。
+- 版本包为`outputs/hematuria-mainland-staging-c71f355b7a86.zip`，SHA256=`2f97220a90a8da3cc0dee4080a55dfffc23bb25d1785aa71de8322e510e6e36e`。归档不含`.git`、`node_modules`或真实`.env.mainland`。
+- 腾讯云未部署：本机没有可审计的SSH Host alias，也没有可安全识别的目标主机/用户配置。未读取、打印或覆盖SSH私钥、DeepSeek Key、`TRAINING_STATE_SECRET`或Redis凭据；没有服务器变更，也未发生回滚。下一步仅需负责人先在本机建立安全SSH Host alias，随后按现有版本化脚本执行备份、上传、校验、启动和失败自动回滚。

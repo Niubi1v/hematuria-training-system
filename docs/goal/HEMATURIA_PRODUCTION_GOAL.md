@@ -1,7 +1,7 @@
 # Hematuria AI Clinical Interview Training System 生产目标
 
 状态：执行中，尚未达到生产验收。
-基线日期：2026-07-12；最新工程检查点：2026-07-19（Asia/Shanghai）。
+基线日期：2026-07-12；最新工程检查点：2026-07-28（Asia/Shanghai）。
 目标分支：`codex/hematuria-production-goal`，起点 `5a3ad11`。
 
 ## 唯一目标
@@ -49,3 +49,9 @@
 - 测试：`docs/goal/TEST_EVIDENCE.md`
 - 回滚：`docs/goal/ROLLBACK_PLAN.md`
 - 交付状态：`docs/goal/FINAL_REPORT.md`
+
+## 2026-07-28最新工程检查点
+
+- 已验证应用HEAD为`f5ab5539c10c6c8a62f99312dbdb37c722d845a9`；Actions run `30354908819`在Node 22.14.0完整success，精确HEAD Vercel Preview的阶段提交、history-log、刷新恢复以及中文/英文DeepSeek Flash均有真实黑盒证据。
+- 大陆预发布分支HEAD为`c71f355b7a861329ef7597e184a96ffb78bdc259`；版本化部署包及SHA256已经生成，尚未连接或修改腾讯云服务器。
+- 当前外部部署阻塞是本机缺少可审计的目标SSH Host alias。正式Production、main合并、Pages新部署、腾讯云health/性能/内存以及医学专家裁决仍未完成，因此总体状态继续为“执行中”，不得宣称生产验收完成。
