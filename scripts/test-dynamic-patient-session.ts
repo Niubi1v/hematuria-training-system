@@ -197,6 +197,33 @@ async function main() {
     assert(liveAnswer.runtimeTrace?.providerHttpSuccess === true, "live trace must mark the provider request successful");
     assert(liveAnswer.runtimeTrace?.thinkingExecuted === false, "Flash must not execute thinking by default");
     assert((providerRequests[0]?.thinking as { type?: string } | undefined)?.type === "disabled", "DeepSeek thinking must be disabled");
+
+    let correctionCalls = 0;
+    globalThis.fetch = async (_input, init) => {
+      correctionCalls += 1;
+      const providerRequest = JSON.parse(String(init?.body || "{}")) as Record<string, unknown>;
+      const messages = providerRequest.messages as Array<{ content?: string }>;
+      const payload = JSON.parse(String(messages?.[1]?.content || "{}")) as { currentAllowedAnswer?: string };
+      const content = correctionCalls === 1
+        ? "I came because a urine test found blood yesterday."
+        : String(payload.currentAllowedAnswer || "");
+      return new Response(JSON.stringify({
+        choices: [{ message: { content } }]
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    };
+    const correctionSession = await initSession({ caseId: "HX-ADD-025", mode: "training", language: "en" });
+    const correctedAnswer = await generatePatientAnswer({
+      sessionId: correctionSession.sessionId,
+      caseId: "HX-ADD-025",
+      studentInput: "Please tell me in your own words why you came today.",
+      conversationHistory: [],
+      language: "en"
+    });
+    assert(correctionCalls === 2, "a safe but fact-incomplete paraphrase should receive exactly one bounded correction");
+    assert(correctedAnswer.isFallback === false, "a corrected governed answer should remain live");
+    assert(correctedAnswer.runtimeTrace?.generationSource === "live_ai", "a corrected governed answer should remain live_ai");
+    assert(/menstruation/i.test(correctedAnswer.replyText), "the correction must restore the omitted governed fact");
+    assert(/\b1 day\b/i.test(correctedAnswer.replyText), "the correction must restore the governed duration");
   } finally {
     globalThis.fetch = originalFetch;
     for (const key of providerEnvironment) {

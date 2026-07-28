@@ -530,6 +530,11 @@ Reply naturally in the first person, answer only the current question, use one o
 Use requiredOutputLanguage. Every item in requiredDirectAnswers must appear verbatim in the response.
 `.trim();
 
+const patientNaturalizerCorrectionPrompt = `
+You are correcting a standardized-patient response that failed a strict governed-fact check.
+Return currentAllowedAnswer verbatim and nothing else. Do not paraphrase, translate, add, remove, or reorder any content.
+`.trim();
+
 function preservesGovernedAnswer(reply, allowedAnswer, answerPlans = []) {
   const replyText = normalize(reply);
   const allowedText = normalize(allowedAnswer);
@@ -945,10 +950,31 @@ async function naturalizeGovernedPatientAnswer({
       thinkingMode: thinking.thinkingMode,
       reasoningEffort: thinking.reasoningEffort
     });
-    const replyText = formatPatientReply(response.text);
-    const filter = filterPatientOutput(replyText, matched?.governanceSlotIds || matched?.matchedSlotIds || []);
-    const languageOk = language !== "en" || !/[\u3400-\u9fff]/u.test(replyText);
-    if (!filter.ok || !languageOk || !preservesGovernedAnswer(replyText, fallback.replyText, answerPlans)) {
+    let acceptedResponse = response;
+    let replyText = formatPatientReply(response.text);
+    let filter = filterPatientOutput(replyText, matched?.governanceSlotIds || matched?.matchedSlotIds || []);
+    let languageOk = language !== "en" || !/[\u3400-\u9fff]/u.test(replyText);
+    let preservesAnswer = preservesGovernedAnswer(replyText, fallback.replyText, answerPlans);
+    if (filter.ok && languageOk && !preservesAnswer) {
+      acceptedResponse = await callLLM({
+        systemPrompt: patientNaturalizerCorrectionPrompt,
+        userPayload: { currentAllowedAnswer: fallback.replyText },
+        temperature: 0,
+        maxTokens: 300,
+        maxRetries: 0,
+        timeoutMs: Math.max(
+          10000,
+          Math.min(Number(process.env.PATIENT_DEEPSEEK_TIMEOUT_MS || process.env.LLM_REQUEST_TIMEOUT_MS) || 30000, 30000)
+        ),
+        thinkingMode: thinking.thinkingMode,
+        reasoningEffort: thinking.reasoningEffort
+      });
+      replyText = formatPatientReply(acceptedResponse.text);
+      filter = filterPatientOutput(replyText, matched?.governanceSlotIds || matched?.matchedSlotIds || []);
+      languageOk = language !== "en" || !/[\u3400-\u9fff]/u.test(replyText);
+      preservesAnswer = preservesGovernedAnswer(replyText, fallback.replyText, answerPlans);
+    }
+    if (!filter.ok || !languageOk || !preservesAnswer) {
       return {
         ...fallback,
         provider: config.provider,
@@ -962,15 +988,15 @@ async function naturalizeGovernedPatientAnswer({
     const result = {
       ...fallback,
       replyText,
-      provider: response.provider,
-      model: response.model,
+      provider: acceptedResponse.provider,
+      model: acceptedResponse.model,
       isFallback: false,
       filter,
       safetyFlags: fallback.safetyFlags || [],
       fallbackReason: "",
       allowedAnswer: fallback.replyText,
-      providerDurationMs: response.durationMs,
-      providerFirstTokenMs: response.firstTokenMs,
+      providerDurationMs: response.durationMs + (acceptedResponse === response ? 0 : acceptedResponse.durationMs),
+      providerFirstTokenMs: acceptedResponse.firstTokenMs ?? response.firstTokenMs,
       thinkingMode: thinking.mode,
       thinkingExecuted: thinking.mode !== "disabled"
     };
