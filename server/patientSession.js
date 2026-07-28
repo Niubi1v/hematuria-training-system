@@ -955,7 +955,9 @@ async function naturalizeGovernedPatientAnswer({
     let filter = filterPatientOutput(replyText, matched?.governanceSlotIds || matched?.matchedSlotIds || []);
     let languageOk = language !== "en" || !/[\u3400-\u9fff]/u.test(replyText);
     let preservesAnswer = preservesGovernedAnswer(replyText, fallback.replyText, answerPlans);
-    if (filter.ok && languageOk && !preservesAnswer) {
+    const maySafelyCorrect = filter.hits.length === 0
+      && (!filter.ok || !languageOk || !preservesAnswer);
+    if (maySafelyCorrect) {
       acceptedResponse = await callLLM({
         systemPrompt: patientNaturalizerCorrectionPrompt,
         userPayload: { currentAllowedAnswer: fallback.replyText },

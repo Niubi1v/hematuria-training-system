@@ -205,7 +205,7 @@ async function main() {
       const messages = providerRequest.messages as Array<{ content?: string }>;
       const payload = JSON.parse(String(messages?.[1]?.content || "{}")) as { currentAllowedAnswer?: string };
       const content = correctionCalls === 1
-        ? "I came because a urine test found blood yesterday."
+        ? "I came because a urine test found blood yesterday, and I am adding enough harmless wording to exceed the patient-line limit."
         : String(payload.currentAllowedAnswer || "");
       return new Response(JSON.stringify({
         choices: [{ message: { content } }]
