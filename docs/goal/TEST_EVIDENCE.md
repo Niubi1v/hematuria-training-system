@@ -1488,3 +1488,24 @@ Actions：`https://github.com/Niubi1v/hematuria-training-system/actions/runs/301
 | `git diff --exit-code -- data` | 0 | 医学数据、审核状态和生成数据零差异 |
 
 七个指定中文问法均在P005明确`dysuria=true`与P002明确`dysuria=false`上执行：true回答以“有/是/会”开头，false回答以“没有/不/不是/不会”开头；问题中的“没有”不反转病例事实；P001双语医学冲突继续返回`medical_bilingual_conflict_pending_review`且不暴露确定性槽位。本地运行时为Node 24.14.0；精确最终HEAD的Node 22.14、Actions、Vercel及真实Preview结果尚待推送后补证，不以本地或旧部署替代。
+
+## HEM-P1-067 第一阶段持久attempt本地全栈闭环（2026-07-27，本地候选）
+
+基线与线上复现绑定到`0d50a79f858dc15819458dc1a267f8d02323a61c`。commit-specific Preview `https://hematuria-training-system-qnh4ifjx4-niubi1vs-projects.vercel.app`的功能场景未复现阶段失败：P003零轮、P001中英文一轮、中文→英文→中文、刷新与双击均为`init-attempt/session-init/stage-feedback/history-log=200`并进入第二阶段；Preview套件10/11，唯一失败是fresh-session总耗时P95 `4090ms > 3000ms`，不是阶段提交失败。
+
+| 命令/环境 | 退出码 | 精确结果 |
+|---|---:|---|
+| `pnpm run test:first-stage:local`等价Node 22.14直接执行 | 0 | 5/5；真实Next页面、同源`/api/**`、本地Redis 7.4、签名、session/attempt/history-log与安全rule mock |
+| P003零轮 | 0 | `init-attempt=200`、`session-init=200`、`stage-feedback=200`；1 request / 1 request ID / 1 stage-1 timeline；进入第二阶段且刷新保持 |
+| P001一轮与双击 | 0 | Patient fallback与history-log均200；stage-feedback仅1次、唯一request ID、唯一timeline |
+| 双语 | 0 | 英文、中文→英文、英文→中文均创建隔离attempt并成功提交 |
+| Redis暂时失败 | 0 | 首次`init-attempt=503 training_attempt_store_temporarily_unavailable`；提交按钮保持禁用且stage-feedback=0；Redis恢复后显式重试、提交与第二阶段均成功 |
+| Redis Lua空数组兼容 | 0 | 修复前真实HTTP 500：`state.events.map is not a function`；修复后只把Lua往返产生的空对象恢复为空数组，非空畸形结构继续fail-closed |
+| 完整行为与治理 | 0 | 42例、572=153+419、3150、786/618、84条七阶段、360分、18项冲突及医学审核合同全部通过 |
+| TypeScript / ESLint | 0 / 0 | Node 22.14本地通过 |
+| 完整Playwright | 0 | 95 passed、7 intentional skipped、0 failed；desktop/mobile；runner正常退出 |
+| 两种build / bundle | 0 | Vercel origin与Pages basePath各82/82页；各26个JavaScript资产扫描通过 |
+| dependency / secret | 0 / 0 | `No known vulnerabilities found`；repository与scanner自测通过 |
+| `git diff --exit-code -- data` | 0 | 医学事实、审核状态、`needs_revision`与评分数据零差异 |
+
+本地启动：`pnpm run dev:full`，URL `http://127.0.0.1:3000`；停止使用`Ctrl+C`，或另一个终端运行`pnpm run dev:full:stop`关闭项目限定Redis容器。生成的本地签名与Redis REST凭据只存在进程环境，未写入日志、源码、fixture或Git。精确新HEAD的Node 22 Actions和Vercel仍待提交、普通push后补证。

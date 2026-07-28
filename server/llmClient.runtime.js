@@ -1,29 +1,47 @@
 const { enterProviderCircuit, recordProviderFailure, recordProviderSuccess } = require("./providerCircuitStore.js");
 const safeLogger = require("./safeLogger.js");
+const RETIRED_DEEPSEEK_MODELS = new Set(["deepseek-chat", "deepseek-reasoner"]);
+
+function isDeepSeekProvider(provider, baseUrl) {
+  return String(provider || "").toLowerCase() === "deepseek"
+    || String(baseUrl || "").toLowerCase().includes("deepseek.com");
+}
+
+function currentModelName(provider, baseUrl, configuredModel) {
+  const model = String(configuredModel || "");
+  return isDeepSeekProvider(provider, baseUrl) && RETIRED_DEEPSEEK_MODELS.has(model)
+    ? "deepseek-v4-flash"
+    : model;
+}
 
 function getLLMProviderConfig() {
   const endpointType = process.env.LLM_ENDPOINT_TYPE || "chat_completions";
+  const provider = process.env.LLM_PROVIDER || "deepseek";
+  const baseUrl = process.env.LLM_API_BASE_URL || "https://api.deepseek.com";
   return {
-    provider: process.env.LLM_PROVIDER || "deepseek",
+    provider,
     apiKey: process.env.LLM_API_KEY,
-    baseUrl: process.env.LLM_API_BASE_URL || "https://api.deepseek.com",
-    model: process.env.LLM_MODEL || "deepseek-v4-flash",
+    baseUrl,
+    model: currentModelName(provider, baseUrl, process.env.LLM_MODEL || "deepseek-v4-flash"),
     endpointType,
     streaming: process.env.LLM_STREAMING_ENABLED === undefined
       ? endpointType === "chat_completions"
       : process.env.LLM_STREAMING_ENABLED === "true",
     temperature: Number(process.env.LLM_TEMPERATURE || 0.2),
     maxTokens: Number(process.env.LLM_MAX_TOKENS || 500),
-    timeoutMs: Number(process.env.LLM_REQUEST_TIMEOUT_MS || 15000),
+    timeoutMs: Number(process.env.LLM_REQUEST_TIMEOUT_MS || 30000),
     thinkingMode: process.env.LLM_THINKING_MODE || "disabled",
     enabled: process.env.LLM_ENABLE_AI_AGENTS === "true" || process.env.LLM_ENABLE_AI_PATIENT === "true",
     safeMock: process.env.MAINLAND_SAFE_MOCK_LLM === "true"
   };
 }
 
-function deepSeekThinking(config) {
-  const isDeepSeek = config.provider.toLowerCase() === "deepseek" || config.baseUrl.toLowerCase().includes("deepseek.com");
-  return isDeepSeek ? { thinking: { type: config.thinkingMode } } : {};
+function deepSeekThinking(config, thinkingMode = config.thinkingMode, reasoningEffort) {
+  if (!isDeepSeekProvider(config.provider, config.baseUrl)) return {};
+  return {
+    thinking: { type: thinkingMode },
+    ...(thinkingMode === "enabled" && reasoningEffort ? { reasoning_effort: reasoningEffort } : {})
+  };
 }
 
 function joinUrl(baseUrl, endpointType) {
@@ -106,7 +124,17 @@ function retryDelay(attempt, retryAfter = 0) {
   return Math.max(retryAfter, base + Math.round(base * (Math.random() * 0.3 - 0.15)));
 }
 
-async function callLLM({ systemPrompt, userPayload, temperature, maxTokens, maxRetries = 2, timeoutMs }) {
+async function callLLM({
+  systemPrompt,
+  userPayload,
+  temperature,
+  maxTokens,
+  maxRetries = 2,
+  timeoutMs,
+  thinkingMode,
+  reasoningEffort,
+  responseFormat
+}) {
   const config = getLLMProviderConfig();
   if (!config.enabled) throw new Error("LLM agent mode is disabled");
   if (!config.apiKey) throw new Error("Missing LLM_API_KEY");
@@ -116,7 +144,11 @@ async function callLLM({ systemPrompt, userPayload, temperature, maxTokens, maxR
   const requestId = `llm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const startedAt = Date.now();
   const retryLimit = Number.isInteger(Number(maxRetries)) ? Math.max(0, Math.min(Number(maxRetries), 2)) : 2;
-  const requestTimeoutMs = Math.max(1000, Math.min(Number(timeoutMs) || Number(config.timeoutMs) || 15_000, 30_000));
+  const requestTimeoutLimitMs = process.env.NODE_ENV === "production" ? 30_000 : 90_000;
+  const requestTimeoutMs = Math.max(
+    1000,
+    Math.min(Number(timeoutMs) || Number(config.timeoutMs) || 15_000, requestTimeoutLimitMs)
+  );
   const minimumProbeSeconds = Math.ceil(((retryLimit + 1) * requestTimeoutMs + retryLimit * 2500) / 1000) + 5;
   let circuitAdmission;
   try {
@@ -134,12 +166,15 @@ async function callLLM({ systemPrompt, userPayload, temperature, maxTokens, maxR
     try {
       const response = await fetch(joinUrl(config.baseUrl, config.endpointType), {
         method: "POST",
-        headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json", Accept: config.streaming ? "text/event-stream" : "application/json", "X-Request-Id": requestId },
+        headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json; charset=utf-8", Accept: config.streaming ? "text/event-stream" : "application/json", "X-Request-Id": requestId },
         body: JSON.stringify({
           model: config.model,
-          ...deepSeekThinking(config),
-          temperature: temperature ?? config.temperature,
+          ...deepSeekThinking(config, thinkingMode ?? config.thinkingMode, reasoningEffort ?? process.env.LLM_REASONING_EFFORT),
+          ...((thinkingMode ?? config.thinkingMode) === "enabled"
+            ? {}
+            : { temperature: temperature ?? config.temperature }),
           max_tokens: maxTokens ?? config.maxTokens,
+          ...(responseFormat ? { response_format: responseFormat } : {}),
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: JSON.stringify(userPayload) }
@@ -201,4 +236,9 @@ async function callLLM({ systemPrompt, userPayload, temperature, maxTokens, maxR
   throw lastError || new Error("LLM provider unavailable");
 }
 
-module.exports = { callLLM, getLLMProviderConfig, readLLMResponse };
+module.exports = {
+  callLLM,
+  currentModelName,
+  getLLMProviderConfig,
+  readLLMResponse
+};

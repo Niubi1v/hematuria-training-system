@@ -165,7 +165,8 @@ async function completeSevenStages(page, caseId, language) {
   );
   await page.getByRole("button", { name: copy.finish, exact: true }).click();
   await expect(page.getByTestId("final-report")).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByTestId("final-report")).toContainText("/ 360");
+  await expect(page.getByTestId("final-percentage-score")).toContainText("/ 100");
+  await expect(page.locator("footer")).toContainText("360-event-v1");
 }
 
 test("42 cases complete all seven UI stages in Chinese and English @full-stage-matrix", async ({ browser }, testInfo) => {

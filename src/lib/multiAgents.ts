@@ -6,6 +6,14 @@ import orderCatalogProceduresJson from "@/data/order_catalog_procedures.json";
 import orderResultsStructuredJson from "@/data/order_results_structured.json";
 import physicalExamItemsJson from "@/data/physical_exam_items.json";
 import physicalExamResultsJson from "@/data/physical_exam_results.json";
+import {
+  buildStudentOrderCatalog,
+  orderApplicableForSex,
+  orderResultIsReportable,
+  simulatedPhysicalExamResult,
+  splitOrderInput,
+  sourceOrderId
+} from "@/shared/dataAgentPresentation.js";
 import type { CaseData, MdtTrigger, OrderCatalogItem, OrderResultItem, PhysicalExamItem, PhysicalExamResult } from "./types";
 import { scoreTrainingEvents, type TrainingEvent } from "./eventScoring";
 
@@ -27,12 +35,26 @@ export type OrderResultLog = {
   selectedOrderCount?: number;
   recognizedOrderCount?: number;
   returnedReportCount?: number;
+  orderOutcomes?: Array<{
+    orderId: string;
+    displayName: string;
+    status: "reported" | "not_provided" | "prerequisite_missing" | "duplicate" | "unrecognized";
+    provenance: string;
+    resultId?: string;
+    message: string;
+  }>;
 };
 
 export type ExamResultLog = {
   input: string;
   result: string;
   at: string;
+  examId?: string;
+  provenance?: "configured_case_result" | "simulated_normal" | "not_provided";
+  affectsDiagnosis?: false;
+  affectsScore?: false;
+  reviewerStatus?: "not_required";
+  simulationPolicyId?: string;
 };
 
 export type MdtOpinion = {
@@ -94,12 +116,13 @@ type StructuredResult = {
 const orderResults = orderResultsStructuredJson as StructuredResult[];
 const physicalExamItems = physicalExamItemsJson as PhysicalExamItem[];
 const physicalExamResults = physicalExamResultsJson as PhysicalExamResult[];
-const orderCatalog = [
+const sourceOrderCatalog = [
   ...(orderCatalogLabsJson as OrderCatalogItem[]),
   ...(orderCatalogImagingJson as OrderCatalogItem[]),
   ...(orderCatalogProceduresJson as OrderCatalogItem[]),
   ...(orderCatalogPerioperativeJson as OrderCatalogItem[])
 ];
+const orderCatalog = buildStudentOrderCatalog(sourceOrderCatalog) as Array<OrderCatalogItem & { catalogId?: string; sourceOrderId?: string; applicableSex?: string[] }>;
 const mdtTriggers = mdtTriggersJson as MdtTrigger[];
 
 function normalize(text: string) {
@@ -119,15 +142,17 @@ function includesAny(text: string, words: string[]) {
   return words.some((word) => word && target.includes(normalize(word)));
 }
 
-function exactOrderMatches(input: string) {
-  const requested = splitText(input.replace(/\s+和\s+|以及|并且| and /gi, "；"));
+function exactOrderMatches(input: string, sex: string) {
+  const requested = splitOrderInput(input.replace(/\s+和\s+|以及|并且/gi, "；"));
   const matched = requested.flatMap((segment) => {
     const normalized = normalize(segment);
-    const order = orderCatalog.find((item) => item.orderId.toLowerCase() === segment.toLowerCase()
+    const legacyExact = sourceOrderCatalog.find((item) => item.orderId.toLowerCase() === segment.toLowerCase());
+    const order = legacyExact || orderCatalog.find((item) => item.orderId.toLowerCase() === segment.toLowerCase()
       || [item.displayName, ...item.synonyms].some((name) => normalize(name) === normalized));
+    if (order && !orderApplicableForSex(order, sex)) return [];
     return order ? [order] : [];
   });
-  return [...new Map(matched.map((item) => [item.orderId, item])).values()];
+  return [...new Map(matched.map((item) => [sourceOrderId(item), item])).values()];
 }
 
 function caseMdt(caseId: string) {
@@ -136,16 +161,18 @@ function caseMdt(caseId: string) {
 
 export function matchOrderResults(caseData: CaseData, input: string, context?: { previousOrderIds?: string[]; stageNo?: number }): OrderResultLog {
   const text = input.trim();
-  const matchedOrders = exactOrderMatches(text);
+  const matchedOrders = exactOrderMatches(text, caseData.sex);
   const previousOrderIds = context?.previousOrderIds ?? [];
-  const duplicateOrderIds = matchedOrders.map((item) => item.orderId).filter((orderId) => previousOrderIds.includes(orderId));
-  const availableOrderIds = new Set([...previousOrderIds, ...matchedOrders.map((item) => item.orderId)]);
-  const configured = matchedOrders.flatMap((order) => {
-    const result = orderResults.find((item) => item.caseId === caseData.id && item.orderId === order.orderId);
+  const duplicateOrderIds = matchedOrders.map(sourceOrderId).filter((orderId) => previousOrderIds.includes(orderId));
+  const availableOrderIds = new Set([...previousOrderIds, ...matchedOrders.map(sourceOrderId)]);
+  const sourceRows = matchedOrders.flatMap((order) => {
+    const result = orderResults.find((item) => item.caseId === caseData.id && item.orderId === sourceOrderId(order));
     return result ? [{ order, result }] : [];
   });
-  const unmetPrerequisites = unique(configured.flatMap(({ result }) => result.prerequisites.filter((prerequisite) => !availableOrderIds.has(prerequisite))));
-  const matched = configured.filter(({ order, result }) => !duplicateOrderIds.includes(order.orderId) && result.prerequisites.every((prerequisite) => availableOrderIds.has(prerequisite))).map(({ order, result }) => ({
+  const sourceRowsByOrderId = new Map(sourceRows.map(({ order, result }) => [sourceOrderId(order), result]));
+  const reportable = sourceRows.filter(({ result }) => orderResultIsReportable(result));
+  const unmetPrerequisites = unique(sourceRows.flatMap(({ result }) => result.prerequisites.filter((prerequisite) => !availableOrderIds.has(prerequisite))));
+  const matched = reportable.filter(({ order, result }) => !duplicateOrderIds.includes(sourceOrderId(order)) && result.prerequisites.every((prerequisite) => availableOrderIds.has(prerequisite))).map(({ order, result }) => ({
     caseId: result.caseId,
     orderId: result.orderId,
     resultId: result.resultId,
@@ -165,16 +192,50 @@ export function matchOrderResults(caseData: CaseData, input: string, context?: {
     result: result.value || result.impression,
     abnormalLevel: result.abnormalFlags.join("、") || result.status,
     teachingExplanation: "仅返回当前caseId与已开orderId的结构化结果。",
+    provenance: "configured_case_result",
     isKey: true,
     prerequisite: result.prerequisites.join("、")
   } satisfies OrderResultItem));
+  const orderOutcomes = matchedOrders.map((order) => {
+    const canonicalId = sourceOrderId(order);
+    const result = sourceRowsByOrderId.get(canonicalId);
+    const missingPrerequisites = (result?.prerequisites || []).filter((prerequisite) => !availableOrderIds.has(prerequisite));
+    if (duplicateOrderIds.includes(canonicalId)) {
+      return {
+        orderId: canonicalId, displayName: order.displayName, status: "duplicate" as const, provenance: "configured_case_result",
+        message: `${order.displayName}：已开立过，本次不重复释放报告。`
+      };
+    }
+    if (missingPrerequisites.length) {
+      return {
+        orderId: canonicalId, displayName: order.displayName, status: "prerequisite_missing" as const, provenance: "configured_case_result",
+        message: `${order.displayName}：缺少前置条件（${missingPrerequisites.join("、")}），暂不释放报告。`
+      };
+    }
+    if (orderResultIsReportable(result)) {
+      return {
+        orderId: canonicalId, displayName: order.displayName, status: "reported" as const, provenance: "configured_case_result", resultId: result?.resultId,
+        message: `${order.displayName}：已返回病例现有 source 报告。`
+      };
+    }
+    return {
+      orderId: canonicalId,
+      displayName: order.displayName,
+      status: "not_provided" as const,
+      provenance: result ? `source_${result.status}` : "not_provided",
+      message: result?.status === "not_performed"
+        ? `${order.displayName}：本病例未实施该项目，因此无报告。`
+        : `${order.displayName}：该病例未提供此项结果，暂不能据此判断。`
+    };
+  });
 
   const at = new Date().toISOString();
+  const notProvidedCount = orderOutcomes.filter((item) => item.status === "not_provided").length;
   return {
     id: `${caseData.id}-${Date.now()}`,
     input: text,
     matched: matchedOrders.length > 0,
-    matchedOrders: matchedOrders.map((item) => ({ orderId: item.orderId, displayName: item.displayName })),
+    matchedOrders: matchedOrders.map((item) => ({ orderId: sourceOrderId(item), displayName: item.displayName })),
     results: matched,
     at,
     placedAt: at,
@@ -183,31 +244,28 @@ export function matchOrderResults(caseData: CaseData, input: string, context?: {
     status: matched.length ? "reported" : "no-result",
     duplicateOrderIds,
     unmetPrerequisites,
-    selectedOrderCount: splitText(text).length,
+    selectedOrderCount: splitOrderInput(text).length,
     recognizedOrderCount: matchedOrders.length,
     returnedReportCount: matched.length,
-    message: unmetPrerequisites.length
-      ? `医嘱已开立，但缺少前置条件：${unmetPrerequisites.join("、")}；未提前返回报告。`
-      : matchedOrders.length && matched.length
-      ? duplicateOrderIds.length
-        ? "医嘱已识别，但包含重复开立项目；结果不会重复计入效率得分。"
-        : "已根据你开立的具体项目返回模拟检查结果。"
-      : matchedOrders.length
-        ? "已识别医嘱，但当前病例库暂未配置该项目的可返回报告；可继续开立其他关键检查。"
-      : "暂未匹配到可返回结果的具体医嘱，请尝试输入更明确的项目名称，例如尿常规、尿培养、CTU、膀胱镜或肾功能。"
+    orderOutcomes,
+    message: `已识别${matchedOrders.length}项医嘱：返回${matched.length}项病例现有报告，${notProvidedCount}项病例未提供结果。请查看逐项状态。`
   };
 }
 
 export function generatePhysicalExamResult(caseData: CaseData, input: string): ExamResultLog {
   const text = input.trim();
-  const matchedExam = physicalExamItems.find((item) => includesAny(text, [item.displayName, ...item.synonyms]));
+  const matchedExam = physicalExamItems.find((item) => includesAny(text, [item.displayName, ...item.synonyms])
+    && !(item.examId.startsWith("PE2") && caseData.sex === "女")
+    && !(item.examId.startsWith("PE3") && caseData.sex === "男"));
   if (matchedExam) {
     const configured = physicalExamResults.find((item) => item.caseId === caseData.id && item.examId === matchedExam.examId);
     if (configured && configured.studentVisibleAfterSelection) {
-      return { input: text, result: configured.result, at: new Date().toISOString() };
+      return { input: text, result: configured.result, at: new Date().toISOString(), examId: matchedExam.examId, provenance: "configured_case_result" };
     }
+    const simulated = simulatedPhysicalExamResult(matchedExam, "zh");
+    if (simulated) return { input: text, at: new Date().toISOString(), examId: matchedExam.examId, ...simulated };
   }
-  return { input: text, result: "未匹配到适用于当前患者的已配置查体项目。", at: new Date().toISOString() };
+  return { input: text, result: "该病例未提供此项结果，暂不能据此判断。", at: new Date().toISOString(), examId: matchedExam?.examId, provenance: "not_provided" };
 }
 
 export function applicablePhysicalExamIds(caseData: CaseData) {

@@ -643,3 +643,12 @@
 - 远程：Actions run`30192739538`在Node 22.14.0 success，完整Playwright 95 passed/7 intentional skipped/0 failed，82页build、bundle、secret与clean gate通过。Vercel deployment`5608228884`绑定同一SHA并success；PR #1保持Open/Draft，Pages按规则skipped。
 - 真实commit-specific Preview黑盒8/8：P003零轮提交的session-init从`409`安全恢复为`200`并保持第二阶段；P001一轮中文/英文、双向切换、刷新、快速双击、DeepSeek `live_ai`与history-log均通过。没有输出或保留保护凭据、Cookie、Authorization、token或签名。
 - 回滚使用普通`git revert 2923e8a`，随后重跑第一阶段竞态、session/attempt、安全、Playwright与构建扫描；禁止reset、rebase或force push。长期QA应从包含本记录的最终Production HEAD复测P003零轮、P001中英文一轮、双向切换、刷新、双击、Redis短暂故障和第二阶段持久化。
+
+### 第一阶段本地持久存储兼容候选（2026-07-27）
+
+- 基线Production与commit-specific Preview为`0d50a79f858dc15819458dc1a267f8d02323a61c`。基线Preview的第一阶段功能场景通过，唯一现存套件失败为session初始化P95性能门槛，故未把用户旧截图直接归因于当前部署。
+- 新增可直接使用的同源全栈：`pnpm run dev:full`，URL `http://127.0.0.1:3000`；包含Next、真实`/api/**`、进程内生成的专用签名、本地Redis持久attempt、session/history-log和安全Patient mock。停止为`Ctrl+C`或`pnpm run dev:full:stop`。
+- 该环境捕获并修复Redis Lua空数组兼容根因；P003零轮、P001一轮、中文/英文/双向切换、刷新、双击、Redis失败恢复和第二阶段保持均通过。合法提交保持1 request、1 request ID、1 timeline。
+- Redis暂时不可用现与缺配置区分；不关闭或放宽session、attempt、stage、case、language、origin、签名及幂等校验。
+- 本地完整门禁通过：行为与医学治理、Playwright 95/7/0、Node 22.14 TypeScript/ESLint、两种82页构建、两次26资产bundle、依赖与secret扫描、`data/**`零差异。
+- 候选仍需小步提交、普通push、精确新HEAD的Actions/Vercel与真实Preview复测。PR继续Draft，不合并main、不部署Production。

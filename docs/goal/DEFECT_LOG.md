@@ -690,3 +690,13 @@
 - **回归证据**：新增竞态测试先得到session-init数量`1`而失败，修复后desktop/mobile均得到`409→200`，且stage-feedback/request ID/timeline均`1/1/1`。Redis首次503时stage-feedback为0，显式恢复后init与提交各一次。相关Playwright desktop/mobile各15/15。
 - **远程证据**：代码HEAD`2923e8a3dc065c06edf0679ad9b87f96f07c88e0`；Actions run`30192739538` Node 22.14 success，Playwright 95/7/0，82页build、bundle、secret、clean gate通过；Vercel deployment`5608228884`与真实Preview黑盒8/8通过。PR保持Draft。
 - **治理边界**：`data/**`零差异；未修改医学事实、审核状态、`needs_revision`、419条决定、HEM-P0-001/023或360分规则。
+
+### HEM-P1-067 本地持久attempt在Redis Lua往返后阶段提交500
+
+- **状态**：`ENGINEERING FIXED LOCAL / REMOTE VERIFICATION PENDING`。
+- **复现**：Node 22.14真实同源本地全栈，P003零轮提交；`init-attempt=200`后`stage-feedback=500`，安全错误`state.events.map is not a function`。
+- **根因**：Redis 7.4 Lua `cjson`把空数组重新编码为空对象；持久attempt的`events/completedStages/orders`失去数组类型。旧内存mock不经过该边界，无法发现。
+- **修复**：存储加载边界仅把“零键普通对象”恢复为空数组；任何非空或其他畸形结构返回`attempt_state_*_invalid`。Redis网络故障与缺配置分离，前者显示可恢复网络提示。
+- **证据**：本地全栈5/5；P003与P001成功，双向语言切换、刷新、快速双击和Redis503→恢复通过；完整行为、Playwright 95/7/0、Node 22类型/lint、双build、bundle、audit、secret通过。
+- **线上边界**：基线`0d50a79`的最新commit-specific Preview功能提交未复现该500；新候选尚未部署，不能登记为远程关闭。
+- **治理**：`data/**`零差异，未修改事实、审批、`needs_revision`、HEM-P0-001/023或360分。

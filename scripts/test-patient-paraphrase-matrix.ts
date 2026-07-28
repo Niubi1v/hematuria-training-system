@@ -23,6 +23,13 @@ const { generatePatientAnswer, initSession } = require("../server/patientSession
 const { isBilingualConflict } = require("../server/bilingualConflictQuarantine.js") as {
   isBilingualConflict(caseId: string, field: string): boolean;
 };
+const { patientFactOntology } = require("../src/lib/patientIntentCatalog.js") as {
+  patientFactOntology: Array<{
+    key: string;
+    domain: string;
+    lexicon: Record<string, readonly string[]>;
+  }>;
+};
 
 type Language = "zh" | "en";
 type Value = boolean | "unknown";
@@ -127,6 +134,34 @@ const contracts: IntentContract[] = [
   }
 ];
 
+// Extend the existing 42-case matrix from the shared ontology rather than
+// maintaining a second static paraphrase fixture. Each canonical fact supplies
+// medical, patient, regional, negated, choice, typo, and bilingual expressions.
+let ontologyGeneratedQuestions = 0;
+for (const contract of contracts) {
+  const ontology = patientFactOntology.find((definition) =>
+    definition.domain === "canonical_priority" && definition.key === contract.intent);
+  assert.ok(ontology, `missing ontology definition for ${contract.intent}`);
+  const generatedZh = [
+    ...ontology.lexicon.zhMedical,
+    ...ontology.lexicon.zhPatient,
+    ...ontology.lexicon.zhRegional,
+    ...ontology.lexicon.negatedZh,
+    ...ontology.lexicon.choiceZh,
+    ...ontology.lexicon.typosZh
+  ].map((question) => `${question}？`);
+  const generatedEn = [
+    ...ontology.lexicon.enMedical,
+    ...ontology.lexicon.enPatient,
+    ...ontology.lexicon.negatedEn,
+    ...ontology.lexicon.choiceEn
+  ].map((question) => `${question}?`);
+  const before = contract.questions.zh.length + contract.questions.en.length;
+  contract.questions.zh = [...new Set([...contract.questions.zh, ...generatedZh])];
+  contract.questions.en = [...new Set([...contract.questions.en, ...generatedEn])];
+  ontologyGeneratedQuestions += contract.questions.zh.length + contract.questions.en.length - before;
+}
+
 function unknown(text: string, language: Language) {
   return language === "en"
     ? /not sure|cannot recall|do not recall|did not clearly notice|have not been able to say|do not know|have not (?:kept|paid|counted)|did not (?:look|measure|pay)|cannot say for sure/i.test(text)
@@ -187,28 +222,28 @@ async function main() {
             if (quarantined) {
               quarantineAnswers += 1;
               if (answer.fallbackReason !== "medical_bilingual_conflict_pending_review" || answer.matchedSlotIds?.length) {
-                failures.push(`${displayId}/${language}/${contract.intent}: medical conflict escaped quarantine`);
+                failures.push(`${displayId}/${language}/${contract.intent}/${question}: medical conflict escaped quarantine`);
               }
-              if (!unknown(answer.replyText, language)) failures.push(`${displayId}/${language}/${contract.intent}: quarantine answer became deterministic`);
+              if (!unknown(answer.replyText, language)) failures.push(`${displayId}/${language}/${contract.intent}/${question}: quarantine answer became deterministic`);
               continue;
             }
 
             if (value === "unknown") {
               if (unknown(answer.replyText, language)) correctUnknowns += 1;
-              else failures.push(`${displayId}/${language}/${contract.intent}: unknown fact became deterministic`);
-              if (answer.matchedSlotIds?.length) failures.push(`${displayId}/${language}/${contract.intent}: unknown fact became collectable`);
+              else failures.push(`${displayId}/${language}/${contract.intent}/${question}: unknown fact became deterministic`);
+              if (answer.matchedSlotIds?.length) failures.push(`${displayId}/${language}/${contract.intent}/${question}: unknown fact became collectable`);
             } else {
               knownAnswers += 1;
-              if (!answer.matchedSlotIds?.includes(contract.sourceSlot)) failures.push(`${displayId}/${language}/${contract.intent}: known fact was not collectable`);
+              if (!answer.matchedSlotIds?.includes(contract.sourceSlot)) failures.push(`${displayId}/${language}/${contract.intent}/${question}: known fact was not collectable`);
               if (unknown(answer.replyText, language)) {
                 erroneousUnknowns += 1;
-                failures.push(`${displayId}/${language}/${contract.intent}: known fact answered unknown`);
+                failures.push(`${displayId}/${language}/${contract.intent}/${question}: known fact answered unknown`);
               }
               if (!polarity(answer.replyText, language, value as boolean)) {
                 polarityErrors += 1;
-                failures.push(`${displayId}/${language}/${contract.intent}: polarity mismatch`);
+                failures.push(`${displayId}/${language}/${contract.intent}/${question}: polarity mismatch`);
               }
-              if (contract.forbidden.test(answer.replyText)) failures.push(`${displayId}/${language}/${contract.intent}: leaked an unrelated fact`);
+              if (contract.forbidden.test(answer.replyText)) failures.push(`${displayId}/${language}/${contract.intent}/${question}: leaked an unrelated fact`);
             }
           }
         }
@@ -221,6 +256,7 @@ async function main() {
   const summary = {
     cases: publicCases.length,
     intents: contracts.length,
+    ontologyGeneratedQuestions,
     totalQuestions,
     canonicalHits,
     canonicalHitRate: Number((canonicalHits / totalQuestions).toFixed(4)),

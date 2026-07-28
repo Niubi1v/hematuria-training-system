@@ -139,7 +139,11 @@ async function main() {
   assert.equal(response.statusCode, 200);
   response = await call({ action: "order", caseId: "P008", attemptId, mode: "free", language: "en", input: "CBC" }, response.token);
   assert.equal(response.statusCode, 200);
-  assert.equal((response.payload.results as unknown[]).length, 1, "P008 CBC must retain one exact configured report");
+  assert.equal((response.payload.results as unknown[]).length, 0, "P008 unavailable CBC placeholder must not be presented as a report");
+  assert.deepEqual(
+    (response.payload.orderOutcomes as Array<{ status: string; provenance: string }>).map((item) => [item.status, item.provenance]),
+    [["not_provided", "source_not_available"]]
+  );
   assert.equal(containsCjk(JSON.stringify(response.payload)), false, "English API payload must not expose CJK");
 
   console.log(JSON.stringify({

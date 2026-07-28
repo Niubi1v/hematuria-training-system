@@ -10,6 +10,10 @@ const { matchCanonicalPatientFacts } = require("../server/canonicalFacts.js") as
     factValues?: Record<string, boolean | string>;
   };
 };
+const { matchPatientFactOntology, patientFactOntology } = require("../src/lib/patientIntentCatalog.js") as {
+  matchPatientFactOntology(question: string, language: Language, domains?: string[]): Array<{ intentKey: string }>;
+  patientFactOntology: Array<{ key: string; lexicon: Record<string, readonly string[]> }>;
+};
 const { generatePatientAnswer, initSession } = require("../server/patientSession.js") as {
   initSession(input: { caseId: string; attemptId: string; language: "zh" | "en" }): Promise<{ sessionId: string }>;
   generatePatientAnswer(input: { sessionId: string; caseId: string; studentInput: string; language: "zh" | "en" }): Promise<{
@@ -17,6 +21,7 @@ const { generatePatientAnswer, initSession } = require("../server/patientSession
     matchedSlotIds?: string[];
     matchedFacts?: string[];
     fallbackReason?: string;
+    answerPlans?: Array<{ intent: string; renderedAnswer: string }>;
   }>;
 };
 
@@ -89,6 +94,36 @@ function hasExpectedPolarity(text: string, language: Language, value: ExpectedVa
 }
 
 async function main() {
+  const requiredOntologyFacts = [
+    "dysuria", "urinary_frequency", "urinary_urgency", "nocturia", "hesitancy", "weak_stream",
+    "incomplete_emptying", "urinary_retention", "gross_hematuria", "microscopic_hematuria",
+    "initial_hematuria", "terminal_hematuria", "whole_stream_hematuria", "intermittent_hematuria",
+    "urine_color", "blood_clots", "flank_pain", "fever", "foamy_urine", "edema",
+    "previous_stone", "previous_urinary_infection", "previous_malignancy", "previous_kidney_disease",
+    "medication_list", "surgery_history", "allergy_history", "smoking_history", "alcohol_history", "family_history",
+    "hematuria_onset"
+  ];
+  for (const fact of requiredOntologyFacts) {
+    const definition = patientFactOntology.find((item) => item.key === fact);
+    assert.ok(definition, `missing canonical ontology fact: ${fact}`);
+    assert.deepEqual(
+      Object.keys(definition.lexicon).sort(),
+      ["choiceEn", "choiceZh", "confusableWith", "enMedical", "enPatient", "negatedEn", "negatedZh", "typosZh", "zhMedical", "zhPatient", "zhRegional"].sort(),
+      `${fact} must use the common lexicon schema`
+    );
+  }
+  const ontologyProbes = [
+    ["拉尿的时候痛不痛？", "zh", "dysuria"],
+    ["Does it hurt to pee?", "en", "dysuria"],
+    ["以前得过结石或者肿瘤吗？", "zh", "previous_stone"],
+    ["以前得过结石或者肿瘤吗？", "zh", "previous_malignancy"],
+    ["Have you had kidney disease before?", "en", "previous_kidney_disease"],
+    ["小便起尿要等一会吗？", "zh", "hesitancy"]
+  ] as const;
+  for (const [question, language, expected] of ontologyProbes) {
+    assert.ok(matchPatientFactOntology(question, language).some((item) => item.intentKey === expected), `${question} -> ${expected}`);
+  }
+
   const sessions = new Map<string, string>();
   const failures: string[] = [];
   let canonicalHits = 0;
@@ -115,14 +150,15 @@ async function main() {
       studentInput: probe.question,
       language: probe.language
     });
-    if (probe.expectedValue !== "unknown" && isUnknown(answer.replyText, probe.language)) {
+    const intentAnswer = answer.answerPlans?.find((plan) => plan.intent === probe.intent)?.renderedAnswer || answer.replyText;
+    if (probe.expectedValue !== "unknown" && isUnknown(intentAnswer, probe.language)) {
       erroneousUnknowns += 1;
       failures.push(`${key} '${probe.question}' incorrectly answered unknown: ${answer.fallbackReason || "no_reason"}`);
     }
     const expectedAnswerValue = probe.intent === "terminal_hematuria" && /不是只有最后/.test(probe.question)
       ? false
       : probe.expectedValue;
-    if (!hasExpectedPolarity(answer.replyText, probe.language, expectedAnswerValue)) {
+    if (!hasExpectedPolarity(intentAnswer, probe.language, expectedAnswerValue)) {
       polarityErrors += 1;
       failures.push(`${key} '${probe.question}' answer polarity mismatch`);
     }

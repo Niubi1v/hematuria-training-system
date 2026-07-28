@@ -6,17 +6,36 @@ const {
   parseClassifierResponse,
   resetPatientIntentClassifierState
 } = require("../server/patientIntentClassifier.js");
-const { matchPriorityCanonicalIntents } = require("../src/lib/patientIntentCatalog.js");
+const { matchPriorityCanonicalIntents, patientFactOntology } = require("../src/lib/patientIntentCatalog.js");
+const { UNKNOWN_REASON_CODES } = require("../src/lib/patientFactState.js");
 const { projectCanonicalPatientFacts } = require("../server/canonicalFacts.js");
 const { matchStructuredFacts } = require("../server/structuredFacts.js");
 const cases = require("../data/cases.json");
 
+function classifierJson(
+  intent: string | null,
+  confidence: number,
+  needsClarification = false,
+  overrides: Record<string, unknown> = {}
+) {
+  const requestedSlot = intent === null
+    ? null
+    : patientFactOntology.find((definition: { key: string }) => definition.key === intent)?.sourceSlotId || null;
+  return JSON.stringify({
+    intent,
+    topic: intent,
+    clauses: [{ text: "source clause", intent, requestedSlot, confidence, needsClarification }],
+    contextReference: { inherited: false, sourceIntent: null },
+    ...overrides
+  });
+}
+
 async function main() {
   assert.ok(INTENT_WHITELIST.includes("dysuria"));
   assert.ok(INTENT_WHITELIST.includes("whole_stream_hematuria"));
-  assert.equal(parseClassifierResponse('{"intent":"dysuria","confidence":0.96,"needsClarification":false}')?.intent, "dysuria");
-  assert.equal(parseClassifierResponse('{"intent":"diagnosis","confidence":0.99,"needsClarification":false}'), null);
-  assert.equal(parseClassifierResponse('{"intent":"dysuria","confidence":0.99,"needsClarification":false,"answer":"yes"}'), null);
+  assert.equal(parseClassifierResponse(classifierJson("dysuria", 0.96))?.intent, "dysuria");
+  assert.equal(parseClassifierResponse(classifierJson("diagnosis", 0.99)), null);
+  assert.equal(parseClassifierResponse(classifierJson("dysuria", 0.99, false, { answer: "yes" })), null);
   assert.equal(parseClassifierResponse("not json"), null);
 
   for (const question of ["小便痛不痛？", "没有尿痛吧？", "全程都是红的吗？", "从开始到最后都红吗？"]) {
@@ -33,14 +52,24 @@ async function main() {
     callProvider: async (input: Record<string, unknown>) => {
       providerCalls += 1;
       capturedInput = input;
-      return { text: '{"intent":"dysuria","confidence":0.96,"needsClarification":false}' };
+      return { text: classifierJson("dysuria", 0.96) };
     }
   });
   assert.equal(accepted.accepted, true);
   assert.equal(accepted.intent, "dysuria");
   assert.equal(providerCalls, 1);
-  assert.deepEqual(Object.keys(capturedInput?.userPayload as object).sort(), ["allowedIntents", "classificationId", "language", "question"]);
-  assert.doesNotMatch(JSON.stringify(capturedInput), /caseId|diagnosis|score|patientAnswer|reviewerStatus/i, "classifier input must not contain case data or answers");
+  assert.deepEqual(
+    Object.keys(capturedInput?.userPayload as object).sort(),
+    ["allowedIntents", "classificationId", "conversationState", "language", "outputContract", "question", "recentUserQuestions"]
+  );
+  assert.equal(capturedInput?.thinkingMode, "disabled");
+  assert.equal(capturedInput?.reasoningEffort, undefined);
+  assert.deepEqual(capturedInput?.responseFormat, { type: "json_object" });
+  assert.doesNotMatch(
+    JSON.stringify(capturedInput?.userPayload),
+    /caseId|score|patientAnswer|reviewerStatus/i,
+    "classifier input must not contain case data or answers"
+  );
   const projected = projectCanonicalPatientFacts("P001", [accepted.intent], "zh", "排泄尿液时会产生灼热样感觉吗？");
   assert.deepEqual(projected?.matchedFacts, ["dysuria"]);
   assert.notEqual(projected?.factValues?.dysuria, undefined, "the answer polarity must be read from the canonical case fact");
@@ -64,7 +93,7 @@ async function main() {
   const first = classifyPatientIntent({ question: "排泄尿液的时候会灼热吗？", language: "zh", enabled: true, callProvider: singleflightProvider });
   const second = classifyPatientIntent({ question: "排泄尿液的时候会灼热吗？", language: "zh", enabled: true, callProvider: singleflightProvider });
   await new Promise((resolve) => setImmediate(resolve));
-  resolveProvider?.({ text: '{"intent":"dysuria","confidence":0.97,"needsClarification":false}' });
+  resolveProvider?.({ text: classifierJson("dysuria", 0.97) });
   const [firstResult, secondResult] = await Promise.all([first, second]);
   assert.equal(firstResult.accepted, true);
   assert.equal(secondResult.accepted, true);
@@ -75,7 +104,7 @@ async function main() {
     question: "小便时是不是哪里有点怪？",
     language: "zh",
     enabled: true,
-    callProvider: async () => ({ text: '{"intent":"dysuria","confidence":0.70,"needsClarification":true}' })
+    callProvider: async () => ({ text: classifierJson("dysuria", 0.70, true) })
   });
   assert.equal(lowConfidence.accepted, false);
   assert.equal(lowConfidence.reason, "semantic_low_confidence");
@@ -103,33 +132,79 @@ async function main() {
   try {
     const { generatePatientAnswer } = require("../server/patientSession.js");
     let deterministicNetworkCalls = 0;
-    let deterministicProviderPayload: Record<string, unknown> | undefined;
     globalThis.fetch = async (_url, options) => {
       deterministicNetworkCalls += 1;
-      const requestBody = JSON.parse(String(options?.body || "{}"));
-      deterministicProviderPayload = JSON.parse(String(requestBody.messages?.[1]?.content || "{}"));
-      return new Response(JSON.stringify({ choices: [{ message: { content: "没有，小便时不痛。" } }] }), { status: 200, headers: { "Content-Type": "application/json" } });
+      const requestBody = JSON.parse(String(options?.body || "{}")) as { messages?: Array<{ content?: string }> };
+      const payload = JSON.parse(String(requestBody.messages?.[1]?.content || "{}")) as { currentAllowedAnswer?: string };
+      return new Response(JSON.stringify({ choices: [{ message: { content: payload.currentAllowedAnswer || "" } }] }), { status: 200, headers: { "Content-Type": "application/json" } });
     };
     const deterministicAnswer = await generatePatientAnswer({ sessionId: `deterministic-${Date.now()}`, caseId: "P002", studentInput: "小便痛不痛？", language: "zh" });
     assert.deepEqual(deterministicAnswer.matchedFacts, ["dysuria"]);
-    assert.equal(deterministicNetworkCalls, 1, "a deterministic alias may use one answer rewrite, but must not add a semantic-classifier call");
-    assert.equal("classificationId" in (deterministicProviderPayload || {}), false);
-    assert.ok("currentAllowedAnswer" in (deterministicProviderPayload || {}), "the one provider call must be the constrained answer rewrite");
+    assert.equal(deterministicAnswer.isFallback, false);
+    assert.equal(deterministicAnswer.provider, "deepseek");
+    assert.equal(deterministicNetworkCalls, 1, "deterministic routing must naturalize only the governed answer");
 
     resetPatientIntentClassifierState();
     let integrationProviderCalls = 0;
-    globalThis.fetch = async () => {
+    let classifierRequestBody: Record<string, unknown> | undefined;
+    globalThis.fetch = async (_url, options) => {
       integrationProviderCalls += 1;
-      const content = integrationProviderCalls === 1
-        ? '{"intent":"dysuria","confidence":0.97,"needsClarification":false}'
-        : "没有，小便时不痛。";
-      return new Response(JSON.stringify({ choices: [{ message: { content } }] }), { status: 200, headers: { "Content-Type": "application/json" } });
+      const requestBody = JSON.parse(String(options?.body || "{}")) as Record<string, unknown>;
+      if (!("response_format" in requestBody)) {
+        const messages = requestBody.messages as Array<{ content?: string }> | undefined;
+        const payload = JSON.parse(String(messages?.[1]?.content || "{}")) as { currentAllowedAnswer?: string };
+        return new Response(JSON.stringify({
+          choices: [{ message: { content: payload.currentAllowedAnswer || "" } }]
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      classifierRequestBody = requestBody;
+      return new Response(JSON.stringify({
+        choices: [{
+          message: {
+            reasoning_content: "private chain of thought",
+            content: classifierJson("dysuria", 0.97)
+          }
+        }]
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
     };
     const semanticAnswer = await generatePatientAnswer({ sessionId: "", caseId: "P002", studentInput: semanticQuestion, language: "zh" });
     assert.deepEqual(semanticAnswer.matchedFacts, ["dysuria"]);
-    assert.equal(semanticAnswer.answerSource, "case_bilingual_slot_semantic_classification");
+    assert.equal(semanticAnswer.answerSource, "governed_fact_semantic_classification");
+    assert.equal(semanticAnswer.isFallback, false);
+    assert.equal(semanticAnswer.provider, "deepseek");
+    assert.equal(semanticAnswer.model, "test-model");
+    assert.equal(semanticAnswer.classifierProvider, "deepseek");
+    assert.equal(semanticAnswer.classifierModel, "test-model");
     assert.match(semanticAnswer.replyText, /没有|不痛/);
-    assert.equal(integrationProviderCalls, 2, "semantic classification and optional natural-language rewrite are separate bounded calls");
+    assert.doesNotMatch(semanticAnswer.replyText, /private chain of thought/);
+    assert.equal(integrationProviderCalls, 2, "DeepSeek must classify once and naturalize only the governed answer once");
+    assert.equal(classifierRequestBody?.model, "test-model");
+    assert.deepEqual(classifierRequestBody?.thinking, { type: "disabled" });
+    assert.equal("reasoning_effort" in (classifierRequestBody || {}), false);
+    assert.deepEqual(classifierRequestBody?.response_format, { type: "json_object" });
+    assert.equal(
+      typeof classifierRequestBody?.temperature,
+      "number",
+      "disabled-thinking request may retain deterministic sampling controls"
+    );
+
+    resetPatientIntentClassifierState();
+    let clarificationProviderCalls = 0;
+    globalThis.fetch = async () => {
+      clarificationProviderCalls += 1;
+      return new Response(JSON.stringify({ choices: [{ message: { content: classifierJson("dysuria", 0.50, true) } }] }), { status: 200, headers: { "Content-Type": "application/json" } });
+    };
+    const ambiguousAnswer = await generatePatientAnswer({
+      sessionId: "",
+      caseId: "P002",
+      studentInput: "排泄尿液的时候某处怪怪的吗？",
+      language: "zh"
+    });
+    assert.equal(clarificationProviderCalls, 1, "low-confidence fallback must only classify, never generate an answer");
+    assert.equal(ambiguousAnswer.answerSource, "unknown");
+    assert.equal(ambiguousAnswer.fallbackReason, "semantic_low_confidence");
+    assert.equal(ambiguousAnswer.unknownReasonCodes?.unresolved_intent, UNKNOWN_REASON_CODES.INTENT_AMBIGUOUS);
+    assert.match(ambiguousAnswer.replyText, /具体.*哪一方面/);
   } finally {
     globalThis.fetch = originalFetch;
     delete process.env.PATIENT_SEMANTIC_CLASSIFIER_ENABLED;
@@ -149,7 +224,7 @@ async function main() {
       enabled: true,
       callProvider: async () => {
         rateCalls += 1;
-        return { text: '{"intent":"dysuria","confidence":0.50,"needsClarification":true}' };
+        return { text: classifierJson("dysuria", 0.50, true) };
       }
     });
   }

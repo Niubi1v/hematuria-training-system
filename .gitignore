@@ -19,5 +19,6 @@ work/dev.log
 work/dev.err.log
 work/mainland-certs/
 work/mainland-backups/
+work/dev-fullstack.pid
 work/teacher-package-*/
 outputs/*.zip

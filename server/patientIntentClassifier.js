@@ -1,9 +1,15 @@
 const crypto = require("node:crypto");
 const { callLLM, getLLMProviderConfig } = require("./llmClient.runtime.js");
-const { normalizeIntentQuestion, priorityIntentDefinitions } = require("../src/lib/patientIntentCatalog.js");
+const { normalizeIntentQuestion, patientFactOntology } = require("../src/lib/patientIntentCatalog.js");
 
-const INTENT_WHITELIST = Object.freeze(priorityIntentDefinitions.map((definition) => definition.key));
+const CLASSIFIER_DEFINITIONS = Object.freeze(patientFactOntology
+  .filter((definition) => definition.domain !== "safe_missing"));
+const INTENT_WHITELIST = Object.freeze(CLASSIFIER_DEFINITIONS
+  .map((definition) => definition.key));
 const INTENT_SET = new Set(INTENT_WHITELIST);
+const INTENT_TO_SLOT = new Map(
+  CLASSIFIER_DEFINITIONS.map((definition) => [definition.key, definition.sourceSlotId || null])
+);
 const CACHE_TTL_MS = 15 * 60 * 1000;
 const CACHE_MAX = 500;
 const WINDOW_MS = 60 * 1000;
@@ -16,6 +22,14 @@ globalThis.__hematuriaPatientIntentClassifierCache = cache;
 globalThis.__hematuriaPatientIntentClassifierInflight = inflight;
 globalThis.__hematuriaPatientIntentClassifierRequests = requestTimes;
 
+function patientThinkingConfig(env = process.env) {
+  const requested = String(env.PATIENT_DEEPSEEK_THINKING || "disabled").toLowerCase();
+  const mode = ["disabled", "high", "max"].includes(requested) ? requested : "disabled";
+  return mode === "disabled"
+    ? { mode, thinkingMode: "disabled", reasoningEffort: undefined }
+    : { mode, thinkingMode: "enabled", reasoningEffort: mode };
+}
+
 function semanticClassifierEnabled(env = process.env) {
   const config = getLLMProviderConfig();
   return env.PATIENT_SEMANTIC_CLASSIFIER_ENABLED === "true"
@@ -26,13 +40,16 @@ function mightAskCanonicalFact(question, language = "zh") {
   const normalized = normalizeIntentQuestion(question);
   if (!normalized || normalized.length > 240) return false;
   if (language === "en") {
-    return /\b(?:urine|urination|urinate|pee|passing urine|blood|red|pain|hurt|burn|fever|temperature|swelling|stream|flow|bladder|night|clot|flank|back)\b/i.test(normalized);
+    return /\b(?:urine|urination|urinate|pee|passing urine|blood|red|pain|hurt|burn|fever|temperature|swelling|stream|flow|bladder|night|clot|flank|back|medicine|medication|drug|history|disease|smoke|alcohol|drink)\b/i.test(normalized);
   }
-  return /尿|小便|排尿|撒尿|解手|血|红|痛|疼|烧|发热|发烧|肿|腰|血块|夜里|起夜|憋不住/.test(normalized);
+  return /尿|小便|排尿|撒尿|解手|血|红|痛|疼|烧|发热|发烧|肿|腰|血块|夜里|起夜|憋不住|药|病|既往|以前|抽烟|吸烟|喝酒|饮酒/.test(normalized);
 }
 
-function classificationId(question, language) {
-  return crypto.createHash("sha256").update(`${language}:${normalizeIntentQuestion(question)}`).digest("hex").slice(0, 20);
+function classificationId(question, language, recentUserQuestions = []) {
+  return crypto.createHash("sha256")
+    .update(`${language}:${normalizeIntentQuestion(question)}:${recentUserQuestions.map(normalizeIntentQuestion).join("|")}`)
+    .digest("hex")
+    .slice(0, 20);
 }
 
 function parseClassifierResponse(text) {
@@ -44,11 +61,46 @@ function parseClassifierResponse(text) {
   }
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
   const keys = Object.keys(parsed).sort();
-  if (keys.join(",") !== "confidence,intent,needsClarification") return null;
-  if (!INTENT_SET.has(parsed.intent)) return null;
-  if (typeof parsed.confidence !== "number" || !Number.isFinite(parsed.confidence) || parsed.confidence < 0 || parsed.confidence > 1) return null;
-  if (typeof parsed.needsClarification !== "boolean") return null;
-  return { intent: parsed.intent, confidence: parsed.confidence, needsClarification: parsed.needsClarification };
+  if (keys.join(",") !== "clauses,contextReference,intent,topic") return null;
+  if (parsed.intent !== null && !INTENT_SET.has(parsed.intent)) return null;
+  if (parsed.topic !== null && !INTENT_SET.has(parsed.topic)) return null;
+  if (!Array.isArray(parsed.clauses) || !parsed.clauses.length || parsed.clauses.length > 8) return null;
+  const clauses = [];
+  for (const clause of parsed.clauses) {
+    if (!clause || typeof clause !== "object" || Array.isArray(clause)) return null;
+    if (Object.keys(clause).sort().join(",") !== "confidence,intent,needsClarification,requestedSlot,text") return null;
+    if (typeof clause.text !== "string" || !clause.text.trim() || clause.text.length > 240) return null;
+    if (clause.intent !== null && !INTENT_SET.has(clause.intent)) return null;
+    const expectedSlot = clause.intent === null ? null : INTENT_TO_SLOT.get(clause.intent);
+    if (clause.requestedSlot !== expectedSlot) return null;
+    if (
+      typeof clause.confidence !== "number"
+      || !Number.isFinite(clause.confidence)
+      || clause.confidence < 0
+      || clause.confidence > 1
+      || typeof clause.needsClarification !== "boolean"
+    ) return null;
+    clauses.push({
+      text: clause.text.trim(),
+      intent: clause.intent,
+      requestedSlot: clause.requestedSlot,
+      confidence: clause.confidence,
+      needsClarification: clause.needsClarification
+    });
+  }
+  if (!parsed.contextReference || typeof parsed.contextReference !== "object" || Array.isArray(parsed.contextReference)) return null;
+  if (Object.keys(parsed.contextReference).sort().join(",") !== "inherited,sourceIntent") return null;
+  if (typeof parsed.contextReference.inherited !== "boolean") return null;
+  if (parsed.contextReference.sourceIntent !== null && !INTENT_SET.has(parsed.contextReference.sourceIntent)) return null;
+  return {
+    intent: parsed.intent,
+    topic: parsed.topic,
+    clauses,
+    contextReference: {
+      inherited: parsed.contextReference.inherited,
+      sourceIntent: parsed.contextReference.sourceIntent
+    }
+  };
 }
 
 function prune(now = Date.now()) {
@@ -65,9 +117,40 @@ function resetPatientIntentClassifierState() {
   requestTimes.splice(0, requestTimes.length);
 }
 
-async function classifyPatientIntent({ question, language = "zh", callProvider = callLLM, enabled = semanticClassifierEnabled() }) {
-  if (!enabled || !mightAskCanonicalFact(question, language)) return { accepted: false, reason: enabled ? "not_a_canonical_fact_question" : "classifier_disabled", providerCalls: 0 };
-  const key = `${language}:${normalizeIntentQuestion(question)}`;
+async function classifyPatientIntent({
+  question,
+  language = "zh",
+  conversationHistory = [],
+  conversationState = null,
+  callProvider = callLLM,
+  enabled = semanticClassifierEnabled()
+}) {
+  const recentUserQuestions = (Array.isArray(conversationHistory) ? conversationHistory : [])
+    .filter((entry) => ["student", "user"].includes(String(entry?.role || "").toLowerCase()))
+    .slice(-6)
+    .map((entry) => String(entry?.text || ""))
+    .filter(Boolean);
+  const safeConversationState = conversationState && typeof conversationState === "object"
+    ? {
+        currentTopic: String(conversationState.currentTopic || "").slice(0, 80),
+        currentEntity: String(conversationState.currentEntity || "").slice(0, 80),
+        requestedSlot: String(conversationState.requestedSlot || "").slice(0, 80),
+        lastResolvedFact: String(conversationState.lastResolvedFact?.intent || "").slice(0, 80)
+      }
+    : null;
+  const contextualEllipsis = (recentUserQuestions.length > 0 || Boolean(safeConversationState?.currentTopic)) && (
+    language === "en"
+      ? /^(?:what about that|how long|when did it start|did you have that before|does that hurt)\??$/i.test(String(question).trim())
+      : /^(?:那)?(?:多少天|多久了|疼吗|以前有过吗|从什么时候开始|一直这样吗)[？?]?$/.test(String(question).trim())
+  );
+  if (!enabled || (!mightAskCanonicalFact(question, language) && !contextualEllipsis)) {
+    return {
+      accepted: false,
+      reason: enabled ? "not_a_canonical_fact_question" : "classifier_disabled",
+      providerCalls: 0
+    };
+  }
+  const key = `${language}:${normalizeIntentQuestion(question)}:${recentUserQuestions.map(normalizeIntentQuestion).join("|")}:${JSON.stringify(safeConversationState)}`;
   const now = Date.now();
   prune(now);
   const cached = cache.get(key);
@@ -78,29 +161,88 @@ async function classifyPatientIntent({ question, language = "zh", callProvider =
   const task = (async () => {
     requestTimes.push(Date.now());
     try {
+      const thinking = patientThinkingConfig();
       const result = await callProvider({
-        systemPrompt: `Classify one patient question into exactly one allowed canonical intent. Return strict JSON with exactly the keys intent, confidence, needsClarification. Never answer the question and never infer a patient fact. Allowed intents: ${INTENT_WHITELIST.join(", ")}. If ambiguous, set needsClarification true and keep confidence below ${ACCEPTANCE_THRESHOLD}.`,
+        systemPrompt: `Classify a patient question without answering it. Return strict JSON with exactly the top-level keys intent, topic, clauses, contextReference. intent and topic must be an allowed intent or null. clauses must preserve every clause in source order and each item must have exactly text, intent, requestedSlot, confidence, needsClarification. requestedSlot must be the ontology slot mapped to the selected intent, or null when intent is null. contextReference must have exactly inherited and sourceIntent. Never generate, infer, or modify patient facts, diagnoses, scores, or final answers. Allowed intent-to-slot mappings: ${CLASSIFIER_DEFINITIONS.map((definition) => `${definition.key}:${definition.sourceSlotId || "null"}`).join(", ")}. If any clause is ambiguous, use a null intent and requestedSlot, or needsClarification true with confidence below ${ACCEPTANCE_THRESHOLD}.`,
         userPayload: {
-          classificationId: classificationId(question, language),
+          classificationId: classificationId(question, language, recentUserQuestions),
           language,
           question: String(question),
-          allowedIntents: INTENT_WHITELIST
+          recentUserQuestions,
+          conversationState: safeConversationState,
+          allowedIntents: INTENT_WHITELIST,
+          outputContract: {
+            intent: "allowed intent or null",
+            topic: "allowed intent or null",
+            clauses: [{ text: "source clause", intent: "allowed intent or null", requestedSlot: "ontology slot or null", confidence: "0..1", needsClarification: "boolean" }],
+            contextReference: { inherited: "boolean", sourceIntent: "allowed intent or null" }
+          }
         },
-        temperature: 0,
-        maxTokens: 80,
+        maxTokens: 300,
         maxRetries: 0,
-        timeoutMs: 2500
+        timeoutMs: Math.max(
+          30000,
+          Math.min(Number(process.env.PATIENT_DEEPSEEK_TIMEOUT_MS) || 30000, 90000)
+        ),
+        thinkingMode: thinking.thinkingMode,
+        reasoningEffort: thinking.reasoningEffort,
+        responseFormat: { type: "json_object" }
       });
       const parsed = parseClassifierResponse(result?.text);
-      const accepted = Boolean(parsed && !parsed.needsClarification && parsed.confidence >= ACCEPTANCE_THRESHOLD);
+      const acceptedClauses = parsed?.clauses.filter(
+        (clause) => clause.intent && !clause.needsClarification && clause.confidence >= ACCEPTANCE_THRESHOLD
+      ) || [];
+      const accepted = Boolean(
+        parsed
+        && acceptedClauses.length === parsed.clauses.length
+        && acceptedClauses.length > 0
+      );
+      const confidence = acceptedClauses.length
+        ? Math.min(...acceptedClauses.map((clause) => clause.confidence))
+        : Math.max(0, ...(parsed?.clauses || []).map((clause) => clause.confidence));
       const value = accepted
-        ? { accepted: true, intent: parsed.intent, confidence: parsed.confidence, needsClarification: false, reason: "semantic_whitelist_match", providerCalls: 1 }
-        : { accepted: false, confidence: parsed?.confidence || 0, needsClarification: parsed?.needsClarification !== false, reason: parsed ? "semantic_low_confidence" : "semantic_response_invalid", providerCalls: 1 };
+        ? {
+            accepted: true,
+            intent: parsed.intent || acceptedClauses[0].intent,
+            intents: [...new Set(acceptedClauses.map((clause) => clause.intent))],
+            topic: parsed.topic,
+            clauses: parsed.clauses,
+            contextReference: parsed.contextReference,
+            thinkingMode: thinking.mode,
+            provider: result?.provider || getLLMProviderConfig().provider,
+            model: result?.model || getLLMProviderConfig().model,
+            durationMs: Number(result?.durationMs || 0),
+            confidence,
+            reason: "semantic_whitelist_match",
+            providerCalls: 1
+          }
+        : {
+            accepted: false,
+            confidence,
+            needsClarification: true,
+            topic: parsed?.topic || null,
+            clauses: parsed?.clauses || [],
+            contextReference: parsed?.contextReference || null,
+            thinkingMode: thinking.mode,
+            provider: result?.provider || getLLMProviderConfig().provider,
+            model: result?.model || getLLMProviderConfig().model,
+            durationMs: Number(result?.durationMs || 0),
+            reason: parsed ? "semantic_low_confidence" : "semantic_response_invalid",
+            providerCalls: 1
+          };
       cache.set(key, { value, expiresAt: Date.now() + CACHE_TTL_MS });
       prune();
       return value;
-    } catch {
-      return { accepted: false, reason: "semantic_provider_unavailable", providerCalls: 1 };
+    } catch (error) {
+      const status = Number(error?.status || 0);
+      const timedOut = error?.name === "AbortError" || /abort|timeout/i.test(String(error?.message || ""));
+      return {
+        accepted: false,
+        reason: timedOut
+          ? "semantic_provider_timeout"
+          : status > 0 ? "semantic_provider_http_error" : "semantic_provider_unavailable",
+        providerCalls: 1
+      };
     } finally {
       inflight.delete(key);
     }
@@ -115,6 +257,7 @@ module.exports = {
   classifyPatientIntent,
   mightAskCanonicalFact,
   parseClassifierResponse,
+  patientThinkingConfig,
   resetPatientIntentClassifierState,
   semanticClassifierEnabled
 };

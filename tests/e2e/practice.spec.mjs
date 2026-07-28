@@ -69,7 +69,7 @@ async function routeTrainingApiThroughHandler(page, observations = [], options =
       body: JSON.stringify({
         sessionId: `stage-session-${body.attemptId}`, caseId: body.caseId,
         language: body.language, mode: body.runtimeMode || "free",
-        patientOpeningStatement: body.language === "en" ? "Hello doctor. My urine has looked red." : "医生您好，我发现尿液发红。",
+        patientOpeningStatement: body.language === "en" ? "Hello doctor. I came in for a consultation." : "医生您好，我来看一下。",
         sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(),
         deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available",
         profileSource: "local-simulation", cacheHit: false
@@ -163,6 +163,109 @@ test("case route renders seven locked stages and no disease tag", async ({ page 
   await expect(page.locator("aside button")).toHaveCount(7);
   await expect(page.getByText(/Case tags|疾病标签|膀胱结石/)).toHaveCount(0);
   await expect(page.getByText(/漏问项|得分点/)).toHaveCount(0);
+});
+
+test("@ui-clinical-stage3 male case hides initial answers and restores released canonical reports", async ({ page }) => {
+  const observations = [];
+  await routeTrainingApiThroughHandler(page, observations);
+  await page.route("**/api/agent-chat/**", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({
+      replyText: "我发现小便颜色变红。",
+      matchedSlotIds: ["chief_complaint"],
+      matchedFacts: ["chief_complaint=小便颜色变红"],
+      provider: "deepseek",
+      generationSource: "live_ai",
+      isFallback: false
+    })
+  }));
+  await page.goto("/cases/P001/");
+
+  const visibleInfo = page.locator("aside section").filter({ hasText: "当前可见资料" });
+  await expect(visibleInfo).toContainText("65 / 男");
+  await expect(visibleInfo).not.toContainText("主诉");
+  await expect(page.getByRole("log", { name: "模拟问诊对话" })).toContainText("医生您好，我来看一下。");
+  await expect(page.getByLabel("患者服务已连接")).toHaveAttribute("title", "患者服务已连接");
+  await expect(page.getByText(/人工智能服务|live_ai|ai_cache|rule_fallback|DeepSeek/)).toHaveCount(0);
+
+  await page.getByRole("textbox", { name: "输入问诊问题" }).fill("哪里不舒服？");
+  await page.getByRole("button", { name: "发送", exact: true }).click();
+  await expect(page.getByRole("log", { name: "模拟问诊对话" })).toContainText("我发现小便颜色变红。");
+  await enterInvestigationStage(page, "zh");
+
+  await expect(page.getByRole("button", { name: "直肠指检/前列腺", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "妇科查体/阴道出血", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "检查", exact: true }).click();
+  await expect(page.getByText("彩超男性生殖系统（阴囊、睾丸、输精管）+精索静脉", { exact: true })).toBeVisible();
+  await expect(page.getByText("彩超女性生殖系统", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("前列腺MR平扫", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "阴囊", exact: true }).click();
+  await expect(page.getByText("阴囊、睾丸及附睾未见明显异常。", { exact: true })).toBeVisible();
+
+  const orderInput = page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜");
+  await orderInput.fill("尿常规；血常规；彩超泌尿系（双肾、输尿管及膀胱）+残余尿");
+  await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
+  await expect(page.getByTestId("report-card")).toHaveCount(3);
+  await expect(page.getByTestId("order-outcome")).toHaveCount(3);
+  await expect(page.getByText("检查与开单阶段", { exact: true })).toBeVisible();
+  await expect(page.getByText("第2阶段", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("开单服务暂时不可用，未释放报告。")).toHaveCount(0);
+
+  await page.reload();
+  await expect(page.getByTestId("report-card")).toHaveCount(3);
+  await expect(page.getByTestId("order-outcome")).toHaveCount(3);
+  const orderCountBeforeDoubleClick = observations.filter((item) => item.action === "order").length;
+  await orderInput.fill("X光膀胱造影");
+  await page.getByRole("button", { name: "开立并返回结果", exact: true }).evaluate((button) => {
+    button.click();
+    button.click();
+  });
+  await expect.poll(() => observations.filter((item) => item.action === "order").length).toBe(orderCountBeforeDoubleClick + 1);
+  await expect(page.getByText(/X光膀胱造影：该病例未提供此项结果，暂不能据此判断。/)).toBeVisible();
+});
+
+test("@ui-clinical-stage3 female case shows only applicable examination and imaging entries", async ({ page }) => {
+  await routeTrainingApiThroughHandler(page, []);
+  await page.route("**/api/agent-chat/**", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({
+      replyText: "我发现小便颜色发红。",
+      matchedSlotIds: ["chief_complaint"],
+      matchedFacts: ["chief_complaint=小便颜色发红"],
+      provider: "deepseek",
+      generationSource: "live_ai",
+      isFallback: false
+    })
+  }));
+  await page.goto("/cases/P002/");
+
+  const visibleInfo = page.locator("aside section").filter({ hasText: "当前可见资料" });
+  await expect(visibleInfo).toContainText("67 / 女");
+  await expect(visibleInfo).not.toContainText("主诉");
+  await expect(page.getByRole("log", { name: "模拟问诊对话" })).toContainText("医生您好，我来看一下。");
+  await expect(page.getByLabel("患者服务已连接")).toBeVisible();
+
+  await page.getByRole("textbox", { name: "输入问诊问题" }).fill("为什么来看？");
+  await page.getByRole("button", { name: "发送", exact: true }).click();
+  await enterInvestigationStage(page, "zh");
+
+  await expect(page.getByRole("button", { name: "妇科查体/阴道出血", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "直肠指检/前列腺", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "检查", exact: true }).click();
+  await expect(page.getByText("彩超女性生殖系统", { exact: true })).toBeVisible();
+  await expect(page.getByText("彩超男性生殖系统（阴囊、睾丸、输精管）+精索静脉", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("前列腺MR平扫", { exact: true })).toHaveCount(0);
+
+  await page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜").fill("尿常规；血常规；彩超泌尿系（双肾、输尿管及膀胱）+残余尿");
+  await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
+  await expect(page.getByTestId("report-card")).toHaveCount(3);
+  await expect(page.getByTestId("order-outcome")).toHaveCount(3);
+  await page.reload();
+  await expect(page.getByTestId("report-card")).toHaveCount(3);
+  await expect(page.getByTestId("order-outcome")).toHaveCount(3);
+  await expect(page.getByText(/未返回结果|开单服务暂时不可用/)).toHaveCount(0);
 });
 
 test("case catalog switches public complaint language", async ({ page }) => {
@@ -266,7 +369,8 @@ test("saved English preference initializes one English patient session and openi
   await page.goto("/cases/P034/");
 
   const conversation = page.getByRole("log", { name: "Simulated patient conversation" });
-  await expect(conversation).toContainText("Hello doctor. My urine has looked red.");
+  await expect(conversation).toContainText("Hello doctor. I came in for a consultation.");
+  await expect(conversation).not.toContainText("My urine has looked red.");
   await expect(conversation).not.toContainText("医生您好");
   await expect.poll(() => observations.filter((item) => item.action === "session-init").length).toBe(1);
   expect(observations.filter((item) => item.action === "session-init")).toEqual([
@@ -416,6 +520,7 @@ test("rapid final-stage completion creates one debrief request and one report", 
   });
 
   await expect(page.getByTestId("final-report")).toBeVisible();
+  await expect(page.getByTestId("final-percentage-score")).toHaveText(/0\s*\/\s*100/);
   expect(debriefRequests).toHaveLength(1);
   expect(new Set(debriefRequests).size).toBe(1);
   expect(scoreRequests).toHaveLength(1);
@@ -426,9 +531,9 @@ test("rapid final-stage completion creates one debrief request and one report", 
   }, { seededAttemptId: attemptId })).toBe(1);
 });
 
-test("stage submission waits for the training attempt while the AI patient is preparing", async ({ page }) => {
+test("stage submission waits for the training attempt while the patient service is preparing", async ({ page }) => {
   const observations = [];
-  await routeTrainingApiThroughHandler(page, observations, { initAttemptDelayMs: 800, sessionInitDelayMs: 1800 });
+  await routeTrainingApiThroughHandler(page, observations, { initAttemptDelayMs: 800, sessionInitDelayMs: 5000 });
   await page.goto("/cases/P001/");
 
   const initializing = page.getByRole("button", { name: "正在初始化训练会话……", exact: true });
@@ -438,7 +543,7 @@ test("stage submission waits for the training attempt while the AI patient is pr
 
   const submit = page.getByRole("button", { name: "提交本阶段", exact: true });
   await expect(submit).toBeEnabled();
-  await expect(page.getByText("人工智能患者正在准备中……", { exact: false })).toBeVisible();
+  await expect(page.getByText("患者服务连接中……", { exact: false })).toBeVisible();
   await submit.click();
   await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
   expect(observations.filter((item) => item.action === "init-attempt")).toHaveLength(1);
@@ -473,12 +578,12 @@ test("patient session refreshes once after stage feedback rotates the attempt to
     const saved = storageKey ? JSON.parse(localStorage.getItem(storageKey) || "null") : null;
     return saved?.timeline?.filter((item) => item.type === "submit" && item.stageNo === 1).length ?? 0;
   })).toBe(1);
-  await expect(page.getByRole("button", { name: "Reconnect AI", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Reconnect", exact: true })).toHaveCount(0);
 });
 
 test("P003 replaces a legacy cross-deployment token before zero-round stage submission", async ({ page }) => {
   const observations = [];
-  await routeTrainingApiThroughHandler(page, observations, { sessionInitDelayMs: 1200 });
+  await routeTrainingApiThroughHandler(page, observations, { sessionInitDelayMs: 5000 });
   const attemptId = "p003-legacy-preview-attempt";
   await page.addInitScript(({ seededAttemptId }) => {
     const attempt = {
@@ -496,7 +601,7 @@ test("P003 replaces a legacy cross-deployment token before zero-round stage subm
 
   await page.goto("/cases/P003/");
   await expect.poll(() => observations.filter((item) => item.action === "init-attempt").length).toBe(1);
-  await expect(page.getByText("人工智能患者正在准备中……", { exact: false })).toBeVisible();
+  await expect(page.getByText("患者服务连接中……", { exact: false })).toBeVisible();
   await expect(page.getByRole("button", { name: "提交本阶段", exact: true })).toBeEnabled();
 
   await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
@@ -737,9 +842,10 @@ test("English investigation presentation fails closed without exposing untransla
 
   await page.getByPlaceholder("Example: urinalysis and sediment, CTU, cystoscopy").fill("CBC");
   await page.getByRole("button", { name: "Order and return results", exact: true }).click();
-  const report = page.getByTestId("report-card");
-  await expect(report).toBeVisible();
-  await expect(report).not.toContainText(/[\u3400-\u9fff]/u);
+  await expect(page.getByTestId("report-card")).toHaveCount(0);
+  const unavailable = page.getByText("CBC: this case does not provide the result, so no conclusion can be made from it.", { exact: true });
+  await expect(unavailable).toBeVisible();
+  await expect(unavailable).not.toContainText(/[\u3400-\u9fff]/u);
   expect(observations.filter((item) => item.action === "order")).toEqual([
     expect.objectContaining({ status: 200, tokenPresent: true })
   ]);
@@ -1345,11 +1451,11 @@ test("rule fallback keeps reconnection available and recovery replaces the reply
   await page.goto("/cases/P001/");
   await page.getByPlaceholder("输入问诊问题").fill("您吸烟吗？");
   await page.getByRole("button", { name: "发送" }).click();
-  await expect(page.getByText("当前由规则库回答，可随时重新连接AI。")).toBeVisible();
-  const reconnect = page.getByRole("button", { name: "重新连接AI", exact: true });
+  await expect(page.getByText("患者服务正在使用安全离线回答，可随时重新连接。")).toBeVisible();
+  const reconnect = page.getByRole("button", { name: "重新连接", exact: true });
   expect(await reconnect.count()).toBe(1);
   await reconnect.evaluate((button) => { button.click(); button.click(); });
-  await expect(page.getByText("已重新连接AI")).toBeVisible();
+  await expect(page.getByText("患者服务已重新连接")).toBeVisible();
   const conversation = page.getByRole("log", { name: "模拟问诊对话" });
   await expect(conversation.getByText("您吸烟吗？", { exact: true })).toHaveCount(1);
   await expect(conversation.getByText("我吸烟，大约每天一包。", { exact: true })).toHaveCount(1);
@@ -1440,12 +1546,12 @@ test("offline reconnect sends no request and can recover after the online event"
   await context.setOffline(true);
   await expect(page.getByText("当前处于离线状态，既有训练记录已保留。")).toBeVisible();
   const before = healthCalls;
-  await page.getByRole("button", { name: "重新连接AI", exact: true }).click();
+  await page.getByRole("button", { name: "重新连接", exact: true }).click();
   expect(healthCalls).toBe(before);
   await context.setOffline(false);
-  await expect(page.getByText("网络已恢复，可以重新连接AI。")).toBeVisible();
-  await page.getByRole("button", { name: "重新连接AI", exact: true }).click();
-  await expect(page.getByText("已重新连接AI")).toBeVisible();
+  await expect(page.getByText("网络已恢复，可以重新连接患者服务。")).toBeVisible();
+  await page.getByRole("button", { name: "重新连接", exact: true }).click();
+  await expect(page.getByText("患者服务已重新连接")).toBeVisible();
   expect(healthCalls).toBeGreaterThan(before);
 });
 

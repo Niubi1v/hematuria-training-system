@@ -316,6 +316,7 @@ export type OrderResultItem = {
   availableAt?: "immediate" | "delayed";
   prerequisites?: string[];
   sourceVersion?: string;
+  provenance?: "configured_case_result" | "simulated_normal" | "not_provided";
   diagnosis: string;
   diseaseType: string;
   orderCategory: string;

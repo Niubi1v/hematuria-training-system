@@ -15,13 +15,20 @@ const { BILINGUAL_CONFLICT_REASON, filterQuarantinedEvents } = require("../serve
 const { setServerTiming } = require("../server/performanceTiming.js");
 const { parseJsonBody } = require("../server/requestSecurity.js");
 const {
+  buildStudentOrderCatalog,
+  orderApplicableForSex,
+  orderResultIsReportable,
   presentExamResult,
   presentMatchedOrder,
   presentOrderCatalogItem,
-  presentOrderResult
+  presentOrderResult,
+  simulatedPhysicalExamResult,
+  splitOrderInput,
+  sourceOrderId
 } = require("../shared/dataAgentPresentation.js");
 
-const catalog = [...labs, ...imaging, ...procedures, ...perioperative];
+const sourceCatalog = [...labs, ...imaging, ...procedures, ...perioperative];
+const catalog = buildStudentOrderCatalog(sourceCatalog);
 const allowedActions = new Set(["init-attempt", "validate-attempt", "history-log", "exam", "order", "mdt", "stage-feedback", "score"]);
 const stageNumbers = { history: 1, orders: 2, diagnosis: 3, consult: 4, treatment: 5, perioperative: 6, debrief: 7 };
 const requests = globalThis.__hematuriaTrainingRate || new Map();
@@ -146,80 +153,147 @@ function reconcileSubmittedHistory(caseData, state, submission, at) {
   appendEvents(state, reconciled);
 }
 
-function splitOrders(text) {
-  return [...new Set(String(text || "").split(/[；;、,，\n]|\s+and\s+/i).map((item) => item.trim()).filter(Boolean))];
-}
-
-function findOrders(input) {
-  return splitOrders(input).flatMap((part) => {
+function resolveOrders(input, sex) {
+  const segments = splitOrderInput(input);
+  const matches = segments.map((part) => {
     const key = normalize(part);
-    const order = catalog.find((item) => String(item.orderId).toLowerCase() === String(part).toLowerCase()
+    const legacyExact = sourceCatalog.find((item) => String(item.orderId).toLowerCase() === String(part).toLowerCase());
+    const order = legacyExact || catalog.find((item) => String(item.orderId).toLowerCase() === String(part).toLowerCase()
       || [item.displayName, ...(item.synonyms || [])].some((name) => normalize(name) === key));
-    return order ? [order] : [];
-  }).filter((item, index, all) => all.findIndex((other) => other.orderId === item.orderId) === index);
+    return order && orderApplicableForSex(order, sex) ? { input: part, order } : { input: part };
+  });
+  const orders = matches.flatMap((item) => item.order ? [item.order] : [])
+    .filter((item, index, all) => all.findIndex((other) => sourceOrderId(other) === sourceOrderId(item)) === index);
+  return { segments, matches, orders };
 }
 
-function handleExam(caseId, input, language) {
+function physicalExamApplicable(item, sex) {
+  if (!item) return false;
+  if (item.examId.startsWith("PE2")) return sex !== "女";
+  if (item.examId.startsWith("PE3")) return sex !== "男";
+  return true;
+}
+
+function handleExam(caseData, input, language) {
   const exact = normalize(input);
-  const item = examItems.find((candidate) => [candidate.displayName, ...(candidate.synonyms || [])].some((name) => normalize(name) === exact));
-  const configured = item && examResults.find((result) => result.caseId === caseId && result.examId === item.examId && result.studentVisibleAfterSelection);
+  const item = examItems.find((candidate) => [candidate.displayName, ...(candidate.synonyms || [])].some((name) => normalize(name) === exact)
+    && physicalExamApplicable(candidate, caseData.sex));
+  const configured = item && examResults.find((result) => result.caseId === caseData.id && result.examId === item.examId && result.studentVisibleAfterSelection);
+  const simulated = item && !configured ? simulatedPhysicalExamResult(item, language) : null;
   const presented = presentExamResult(configured?.result || "", language);
   return {
     input, examId: item?.examId, at: new Date().toISOString(),
     result: configured
       ? presented.text
-      : (language === "en" ? "No configured result is available for this examination." : "当前查体项目暂无可返回结果。"),
-    translationStatus: configured ? presented.translationStatus : "not_available"
+      : simulated?.result || (language === "en" ? "This case does not provide this examination result, so no conclusion can be made from it." : "该病例未提供此项结果，暂不能据此判断。"),
+    translationStatus: configured ? presented.translationStatus : simulated ? "policy_approved_simulation" : "not_available",
+    provenance: configured ? "configured_case_result" : simulated?.provenance || "not_provided",
+    ...(simulated || {})
   };
 }
 
-function handleOrder(caseId, input, previousOrderIds, language) {
-  const resolvedOrders = findOrders(input);
+function handleOrder(caseData, input, previousOrderIds, language) {
+  const resolution = resolveOrders(input, caseData.sex);
+  const resolvedOrders = resolution.orders;
   const unavailableOrders = language === "en"
     ? resolvedOrders.filter((item) => !presentOrderCatalogItem(item, language).translationAvailable)
     : [];
   const orders = resolvedOrders.filter((item) => !unavailableOrders.includes(item));
   const previous = new Set(previousOrderIds);
-  const duplicateOrderIds = orders.map((item) => item.orderId).filter((id) => previous.has(id));
-  const available = new Set([...previous, ...orders.map((item) => item.orderId)]);
-  const configured = orders.flatMap((order) => {
-    const result = structuredResults.find((item) => item.caseId === caseId && item.orderId === order.orderId);
+  const duplicateOrderIds = orders.map(sourceOrderId).filter((id) => previous.has(id));
+  const available = new Set([...previous, ...orders.map(sourceOrderId)]);
+  const sourceRows = orders.flatMap((order) => {
+    const result = structuredResults.find((item) => item.caseId === caseData.id && item.orderId === sourceOrderId(order));
     return result ? [{ order, result }] : [];
   });
-  const configuredByOrderId = new Map(configured.map((item) => [item.order.orderId, item.result]));
-  const unmetPrerequisites = [...new Set(configured.flatMap(({ result }) => (result.prerequisites || []).filter((id) => !available.has(id))))];
+  const sourceRowsByOrderId = new Map(sourceRows.map((item) => [sourceOrderId(item.order), item.result]));
+  const reportable = sourceRows.filter(({ result }) => orderResultIsReportable(result));
+  const unmetPrerequisites = [...new Set(sourceRows.flatMap(({ result }) => (result.prerequisites || []).filter((id) => !available.has(id))))];
   const acceptedOrderIds = orders.filter((order) => {
-    if (duplicateOrderIds.includes(order.orderId)) return false;
-    const result = configuredByOrderId.get(order.orderId);
+    const canonicalId = sourceOrderId(order);
+    if (duplicateOrderIds.includes(canonicalId)) return false;
+    const result = sourceRowsByOrderId.get(canonicalId);
     return !result || (result.prerequisites || []).every((id) => available.has(id));
-  }).map((order) => order.orderId);
+  }).map(sourceOrderId);
   const pendingPrerequisiteOrderIds = orders
-    .filter((order) => !duplicateOrderIds.includes(order.orderId)
-      && !acceptedOrderIds.includes(order.orderId))
-    .map((order) => order.orderId);
-  const results = configured.filter(({ order }) => acceptedOrderIds.includes(order.orderId)).map(({ order, result }) => ({
-      caseId,
-      orderId: order.orderId,
+    .filter((order) => !duplicateOrderIds.includes(sourceOrderId(order))
+      && !acceptedOrderIds.includes(sourceOrderId(order)))
+    .map(sourceOrderId);
+  const results = reportable.filter(({ order }) => acceptedOrderIds.includes(sourceOrderId(order))).map(({ order, result }) => ({
+      caseId: caseData.id,
+      orderId: sourceOrderId(order),
       resultId: result.resultId,
       status: result.status,
       ...presentOrderResult(order, result, language),
+      provenance: "configured_case_result",
       teachingExplanation: language === "en" ? "Released only for this exact case and placed order." : "仅按当前病例与已开立医嘱精确释放。"
     }));
+  const orderOutcomes = resolution.matches.map(({ input: requestedName, order }) => {
+    if (!order) {
+      return {
+        orderId: "",
+        displayName: requestedName,
+        status: "unrecognized",
+        provenance: "not_provided",
+        message: language === "en"
+          ? `${requestedName}: no canonical order match was found. Check the order name.`
+          : `${requestedName}：未匹配到规范医嘱，请核对项目名称。`
+      };
+    }
+    const canonicalId = sourceOrderId(order);
+    const displayName = presentMatchedOrder(order, language).displayName;
+    if (unavailableOrders.includes(order)) {
+      return {
+        orderId: canonicalId, displayName, status: "unavailable", provenance: "review_required",
+        message: "This order is unavailable until its English name has been reviewed."
+      };
+    }
+    if (duplicateOrderIds.includes(canonicalId)) {
+      return {
+        orderId: canonicalId, displayName, status: "duplicate", provenance: "configured_case_result",
+        message: language === "en" ? `${displayName}: already ordered; no duplicate report was released.` : `${displayName}：已开立过，本次不重复释放报告。`
+      };
+    }
+    const result = sourceRowsByOrderId.get(canonicalId);
+    const missingPrerequisites = (result?.prerequisites || []).filter((id) => !available.has(id));
+    if (missingPrerequisites.length) {
+      return {
+        orderId: canonicalId, displayName, status: "prerequisite_missing", provenance: "configured_case_result",
+        message: language === "en"
+          ? `${displayName}: prerequisite missing (${missingPrerequisites.join(", ")}); the report remains locked.`
+          : `${displayName}：缺少前置条件（${missingPrerequisites.join("、")}），暂不释放报告。`
+      };
+    }
+    if (orderResultIsReportable(result)) {
+      return {
+        orderId: canonicalId, displayName, status: "reported", provenance: "configured_case_result", resultId: result.resultId,
+        message: language === "en" ? `${displayName}: the case-source report was returned.` : `${displayName}：已返回病例现有 source 报告。`
+      };
+    }
+    return {
+      orderId: canonicalId,
+      displayName,
+      status: "not_provided",
+      provenance: result ? `source_${result.status}` : "not_provided",
+      message: result?.status === "not_performed"
+        ? (language === "en" ? `${displayName}: this examination was not performed in the case, so no report exists.` : `${displayName}：本病例未实施该项目，因此无报告。`)
+        : (language === "en" ? `${displayName}: this case does not provide the result, so no conclusion can be made from it.` : `${displayName}：该病例未提供此项结果，暂不能据此判断。`)
+    };
+  });
   const at = new Date().toISOString();
+  const notProvidedCount = orderOutcomes.filter((item) => item.status === "not_provided").length;
+  const unrecognizedCount = orderOutcomes.filter((item) => item.status === "unrecognized").length;
   return {
-    id: `${caseId}-${Date.now()}`, input, matched: orders.length > 0,
-    matchedOrders: orders.map((item) => presentMatchedOrder(item, language)), results,
+    id: `${caseData.id}-${Date.now()}`, input, matched: orders.length > 0,
+    matchedOrders: orders.map((item) => presentMatchedOrder(item, language)), results, orderOutcomes,
     duplicateOrderIds, acceptedOrderIds, pendingPrerequisiteOrderIds, unmetPrerequisites,
     unavailableOrderCount: unavailableOrders.length,
-    selectedOrderCount: splitOrders(input).length,
+    selectedOrderCount: resolution.segments.length,
     recognizedOrderCount: orders.length, returnedReportCount: results.length, at, placedAt: at, stageNo: 2,
     status: results.length ? "reported" : "no-result",
-    message: unavailableOrders.length && !orders.length
-      ? "This order is unavailable until its English name has been reviewed."
-      : unmetPrerequisites.length
-      ? (language === "en" ? `Prerequisites missing: ${unmetPrerequisites.join(", ")}. No report was released.` : `缺少前置条件：${unmetPrerequisites.join("、")}，未返回报告。`)
-      : orders.length ? (language === "en" ? "Order recognized; only configured reports were returned." : "医嘱已识别，仅返回已配置的对应报告。")
-        : (language === "en" ? "No exact order match was found." : "未精确匹配到规范医嘱。")
+    message: language === "en"
+      ? `${orders.length} order(s) recognized: ${results.length} case-source report(s) returned, ${notProvidedCount} result(s) not provided${unrecognizedCount ? `, ${unrecognizedCount} unrecognized` : ""}. See each order below.`
+      : `已识别${orders.length}项医嘱：返回${results.length}项病例现有报告，${notProvidedCount}项病例未提供结果${unrecognizedCount ? `，${unrecognizedCount}项未识别` : ""}。请查看逐项状态。`
   };
 }
 
@@ -274,16 +348,23 @@ function score(caseId, events, language) {
   return { total, max: 360, items, redFlags: critical.map((event) => event.text), ragGuardrails: [], scoringVersion: "360-event-v1", caseVersion: row.caseVersion, generatedAt: new Date().toISOString(), reportVersion: 3, calculation: `${items.map((item) => `${item.score}/${item.max}`).join(" + ")} = ${total}/360` };
 }
 
-function standardFor(caseData, stageKey) {
-  return ({
+function standardFor(caseData, stageKey, language) {
+  const standard = ({
     history: caseData.standardSummary || "",
     orders: [caseData.clinical?.requiredLabs, caseData.clinical?.specialTests, caseData.clinical?.imagingAndProcedures].filter(Boolean).join("\n"),
     diagnosis: [caseData.diagnosis, caseData.clinical?.mustDifferentials].filter(Boolean).join("\n"),
     consult: [caseData.clinical?.consultDepartments, caseData.clinical?.consultQuestions].filter(Boolean).join("\n"),
     treatment: [caseData.clinical?.immediateTreatment, caseData.clinical?.definitiveTreatment, caseData.clinical?.followUp].filter(Boolean).join("\n"),
-    perioperative: caseData.perioperativePlan || caseData.clinical?.perioperative || "",
+    perioperative: caseData.standardManagement?.perioperative || caseData.perioperativePlan || caseData.clinical?.perioperative || "",
     debrief: caseData.teachingPoints?.join("\n") || ""
   })[stageKey] || "";
+  if (stageKey !== "perioperative" || !standard) return standard;
+  const signoffPending = caseData.medicalReviewImport?.licensedExpertSignoffPending === true
+    || ["pending", "needs_revision"].includes(String(caseData.medicalReview?.status || ""));
+  if (!signoffPending) return standard;
+  return language === "en"
+    ? `Reference points from the case's existing management pathway (licensed-expert signoff pending; do not treat as an approved definitive plan):\n${standard}`
+    : `病例现有管理路径参考要点（尚待持证专家终签，不应视为已批准的确定性方案）：\n${standard}`;
 }
 
 function stageFeedback(caseData, stageKey, validation, state, language) {
@@ -307,7 +388,7 @@ function stageFeedback(caseData, stageKey, validation, state, language) {
     hits: matched.map((item) => item.event.text || item.requirement.label || item.requirement.key).filter(Boolean).slice(0, 8),
     misses: missing.map((item) => item.label || item.key).filter(Boolean).slice(0, 8),
     warnings: validation.warnings,
-    standardAnswer: formalLocked ? "" : standardFor(caseData, stageKey),
+    standardAnswer: formalLocked ? "" : standardFor(caseData, stageKey, language),
     practiceOnly: state.practiceOnly,
     comment: language === "en"
       ? "Clinical significance: omissions may affect localization, safety, or decision quality. Revise the listed items and resubmit. This formative result does not change the final 360 score."
@@ -381,12 +462,12 @@ module.exports = async function handler(req, res) {
       });
     }
     if (body.action === "exam") {
-      const result = handleExam(caseData.id, body.input, language);
+      const result = handleExam(caseData, body.input, language);
       if (result.examId) appendEvents(state, [{ eventId: `srv-${state.sequence + 1}-exam-${result.examId}`, type: "physical_exam_performed", actionId: result.examId, stageNo: 2, at, text: result.input, metadata: { validated: true } }]);
       return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: result });
     }
     if (body.action === "order") {
-      const result = handleOrder(caseData.id, body.input, state.orders, language);
+      const result = handleOrder(caseData, body.input, state.orders, language);
       const newOrderIds = result.acceptedOrderIds.filter((id) => !state.orders.includes(id));
       state.orders = [...new Set([...state.orders, ...newOrderIds])];
       const orderEvents = result.matchedOrders
@@ -436,7 +517,7 @@ module.exports = async function handler(req, res) {
       : /idempotency_key_required|invalid_request_digest/.test(code) ? 400
         : /stage|mode|language|stale|already_exists|idempotency_key_reused/.test(code) ? 409
           : /token|mismatch|completed|not_found/.test(code) ? 401
-            : /secret|store_unavailable/.test(code) ? 503 : 500;
+            : /secret|store_(?:temporarily_)?unavailable/.test(code) ? 503 : 500;
     return res.status(status).json({ error: code });
   }
 };
