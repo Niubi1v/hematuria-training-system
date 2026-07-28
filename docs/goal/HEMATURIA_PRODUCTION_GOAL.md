@@ -10,14 +10,14 @@
 
 ## 当前已确认基线
 
-- 本轮完成度审计从已同步且工作树干净的`3a16f9314d1b3cf50e30bc41dcfeaf19f4fa77a8`开始，ahead/behind为`0/0`；已验收应用代码树为其父提交`51f9c6fc8543ac0b6a5907fc65974cd72027f67b`，后续仅更新审计文档时不得改变该应用证据边界。
-- Draft PR #1保持Open/Draft；最终Actions run `29547532678`在Node 22.14下completed/success，完整72项Playwright步骤用时8分06秒，82页build、bundle、repository secret scan和clean gate均通过，Pages deploy按Draft规则skipped。
+- 当前完整远程工程门禁HEAD为`42cef081e8d2ea1c25de7d7742a46b3fbf56ce43`，ahead/behind为`0/0`；已验收应用代码树为其父应用里程碑`f5ab5539c10c6c8a62f99312dbdb37c722d845a9`。纯文档提交的CI证明仓库门禁，不替代应用里程碑的真实交互证据。
+- Draft PR #1保持Open/Draft；Actions run `30356885044`在Node 22.14下completed/success，Playwright 99 passed/7 justified skipped/0 failed，82页build、24资产bundle、repository secret scan和clean gate均通过，Pages deploy按Draft规则skipped。
 - 42例均保持 `needs_revision`、`formalUseAllowed=false`。
 - 医学审核队列为572条审核追踪项：153条来源追踪项和419条模拟补充事实。419条不得自动 approved；42例不得批量解除 `needs_revision`。
 - 151条 `source` 记录的辅助字段“是否程序或AI补充”为“是”，与153/419来源分离口径冲突。主 provenance、queue 和审批状态当前未被自动改变，但该冲突是正式签署与发布前的P0阻断。
 - HEM-P0-023的18条双语医学极性冲突已从确定性Patient上下文和评分隔离，裁决包已生成但医学真值、审核人和日期仍为空；不得自动翻转或批准。
-- 当前行为/安全/医学治理链、42例×双语七阶段、15-intent/190-alias Patient矩阵、69 JSON幂等、82页双环境构建、25个JS资源bundle扫描及323个tracked/candidate repository扫描均有可重复证据；`data/**`零差异。
-- 受保护Vercel Preview已在应用HEAD `51f9c6f`完成health、P003零轮、P001中英文、双向切换、刷新、双击、history-log、10次session及中英文各5次真实DeepSeek；安全runner 8/8且专用输出扫描后删除。Production正式alias、Production 10+5+5和公开Pages新基线仍未获授权或部署，Preview证据不得替代Production。
+- 当前行为/安全/医学治理链、42例×双语七阶段、Patient canonical/复合问句矩阵、生成幂等、82页构建、24个JS资源bundle扫描及383个tracked/candidate repository扫描均有可重复证据；`data/**`零差异。
+- 受保护Vercel Preview已在应用HEAD `f5ab553`完成P003零轮、P001中英文、双向切换、刷新、双击、history-log、10次session及中英文各5次真实DeepSeek Flash；文档HEAD `42cef08`的health再次返回HTTP 200及精确SHA。Production正式alias、Production 10+5+5和公开Pages新基线仍未获授权或部署，Preview证据不得替代Production。
 
 ## 不可回退边界
 
