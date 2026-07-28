@@ -91,8 +91,10 @@ async function main() {
     "dynamic Patient Agent must not send the whole patient profile to the per-question LLM call"
   );
   assert(dynamicSessionSource.includes("classifyPatientIntent"), "dynamic Patient Agent must retain a bounded semantic classifier fallback");
-  assert(!dynamicSessionSource.includes("currentAllowedAnswer:"), "DeepSeek must not receive a patient answer for rewriting");
-  assert(!dynamicSessionSource.includes("patientPrompt ="), "DeepSeek must not generate the final patient answer");
+  assert(dynamicSessionSource.includes("currentAllowedAnswer:"), "DeepSeek naturalization must receive only the governed answer for the current turn");
+  assert(dynamicSessionSource.includes("requiredDirectAnswers:"), "DeepSeek naturalization must preserve every governed direct answer");
+  assert(dynamicSessionSource.includes("preservesGovernedAnswer"), "provider output must be rejected when governed facts are not preserved");
+  assert(dynamicSessionSource.includes("patientNaturalizerPrompt"), "DeepSeek may naturalize the governed answer through the bounded patient prompt");
   assert(dynamicSessionSource.includes("localCompleteProfile(rawPatientFacingProfile)"), "session initialization must deterministically complete the authoritative local profile");
   assert(!dynamicSessionSource.includes("rawPatientFacingProfile: runtimeProfile"), "per-question LLM calls must not receive the raw or completed profile");
   assert(dynamicSessionSource.includes('fallbackReason: "diagnosis_boundary"'), "diagnosis requests must be blocked before slot matching");

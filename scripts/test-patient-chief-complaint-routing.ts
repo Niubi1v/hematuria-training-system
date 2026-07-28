@@ -21,7 +21,7 @@ const originalFetch = globalThis.fetch;
 let providerCalls = 0;
 globalThis.fetch = async (_input, init) => {
   providerCalls += 1;
-  throw new Error(`deterministic chief-complaint routing invoked provider: ${String(init?.body || "")}`);
+  throw new Error(`synthetic chief-complaint provider outage: ${Boolean(init?.body)}`);
 };
 
 async function main() {
@@ -55,7 +55,8 @@ async function main() {
         language: "en"
       });
       if (!answer.isFallback
-        || answer.provider !== "rule"
+        || answer.provider !== "deepseek"
+        || answer.fallbackReason !== "provider_unavailable"
         || !answer.matchedSlotIds?.includes("chief_complaint")) {
         plannerFailures.push(
           `${caseData.id}:reason=${answer.fallbackReason || "none"}:hits=${(answer.filter?.hits || []).join("+")}:tooLong=${Boolean(answer.filter?.tooLong)}`
@@ -89,7 +90,7 @@ async function main() {
 
   assert.deepEqual(routeFailures, []);
   assert.deepEqual(plannerFailures, []);
-  assert.equal(providerCalls, 0);
+  assert.equal(providerCalls, cases.length);
   console.log("Patient chief-complaint routing gates passed.", {
     bilingualRoutes: cases.length * 2,
     deterministicPlannerControls: cases.length,

@@ -132,20 +132,32 @@ async function main() {
   try {
     const { generatePatientAnswer } = require("../server/patientSession.js");
     let deterministicNetworkCalls = 0;
-    globalThis.fetch = async () => {
+    globalThis.fetch = async (_url, options) => {
       deterministicNetworkCalls += 1;
-      return new Response(JSON.stringify({ choices: [{ message: { content: "没有，小便时不痛。" } }] }), { status: 200, headers: { "Content-Type": "application/json" } });
+      const requestBody = JSON.parse(String(options?.body || "{}")) as { messages?: Array<{ content?: string }> };
+      const payload = JSON.parse(String(requestBody.messages?.[1]?.content || "{}")) as { currentAllowedAnswer?: string };
+      return new Response(JSON.stringify({ choices: [{ message: { content: payload.currentAllowedAnswer || "" } }] }), { status: 200, headers: { "Content-Type": "application/json" } });
     };
     const deterministicAnswer = await generatePatientAnswer({ sessionId: `deterministic-${Date.now()}`, caseId: "P002", studentInput: "小便痛不痛？", language: "zh" });
     assert.deepEqual(deterministicAnswer.matchedFacts, ["dysuria"]);
-    assert.equal(deterministicNetworkCalls, 0, "deterministic routing must never invoke DeepSeek");
+    assert.equal(deterministicAnswer.isFallback, false);
+    assert.equal(deterministicAnswer.provider, "deepseek");
+    assert.equal(deterministicNetworkCalls, 1, "deterministic routing must naturalize only the governed answer");
 
     resetPatientIntentClassifierState();
     let integrationProviderCalls = 0;
     let classifierRequestBody: Record<string, unknown> | undefined;
     globalThis.fetch = async (_url, options) => {
       integrationProviderCalls += 1;
-      classifierRequestBody = JSON.parse(String(options?.body || "{}"));
+      const requestBody = JSON.parse(String(options?.body || "{}")) as Record<string, unknown>;
+      if (!("response_format" in requestBody)) {
+        const messages = requestBody.messages as Array<{ content?: string }> | undefined;
+        const payload = JSON.parse(String(messages?.[1]?.content || "{}")) as { currentAllowedAnswer?: string };
+        return new Response(JSON.stringify({
+          choices: [{ message: { content: payload.currentAllowedAnswer || "" } }]
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      classifierRequestBody = requestBody;
       return new Response(JSON.stringify({
         choices: [{
           message: {
@@ -158,13 +170,14 @@ async function main() {
     const semanticAnswer = await generatePatientAnswer({ sessionId: "", caseId: "P002", studentInput: semanticQuestion, language: "zh" });
     assert.deepEqual(semanticAnswer.matchedFacts, ["dysuria"]);
     assert.equal(semanticAnswer.answerSource, "governed_fact_semantic_classification");
-    assert.equal(semanticAnswer.provider, "rule");
-    assert.equal(semanticAnswer.model, "local-rule");
+    assert.equal(semanticAnswer.isFallback, false);
+    assert.equal(semanticAnswer.provider, "deepseek");
+    assert.equal(semanticAnswer.model, "test-model");
     assert.equal(semanticAnswer.classifierProvider, "deepseek");
     assert.equal(semanticAnswer.classifierModel, "test-model");
     assert.match(semanticAnswer.replyText, /没有|不痛/);
     assert.doesNotMatch(semanticAnswer.replyText, /private chain of thought/);
-    assert.equal(integrationProviderCalls, 1, "DeepSeek may classify once but must not generate or rewrite the patient answer");
+    assert.equal(integrationProviderCalls, 2, "DeepSeek must classify once and naturalize only the governed answer once");
     assert.equal(classifierRequestBody?.model, "test-model");
     assert.deepEqual(classifierRequestBody?.thinking, { type: "disabled" });
     assert.equal("reasoning_effort" in (classifierRequestBody || {}), false);
