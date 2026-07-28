@@ -36,13 +36,14 @@ let contextualEllipsisChecks = 0;
 
 globalThis.fetch = async () => {
   providerCalls += 1;
-  throw new Error("deterministic Patient routing must not invoke the provider");
+  throw new Error("synthetic provider outage");
 };
 
 async function expectPlanner(input: Parameters<typeof generatePatientAnswer>[0]) {
   const result = await generatePatientAnswer(input);
-  assert.equal(result.isFallback, true, `${input.caseId}/${input.studentInput} should use the governed answer planner`);
-  assert.equal(result.provider, "rule", `${input.caseId}/${input.studentInput} should not identify DeepSeek as the answer author`);
+  assert.equal(result.isFallback, true, `${input.caseId}/${input.studentInput} should preserve the governed answer when the provider fails`);
+  assert.equal(result.provider, "deepseek", `${input.caseId}/${input.studentInput} should identify the attempted provider without marking the answer live`);
+  assert.equal(result.fallbackReason, "provider_unavailable");
   return result;
 }
 
@@ -249,7 +250,7 @@ async function main() {
     });
     assert.match(repeatedClarification.replyText, /clarif|which part|what.*mean/i);
 
-    assert.equal(providerCalls, 0, "deterministic and contextual Patient turns must not invoke DeepSeek");
+    assert(providerCalls > 0, "governed contextual Patient turns must invoke the configured naturalizer");
     assert.equal(contextualEllipsisChecks, 5);
     console.log(`PATIENT_CONTEXT_EVIDENCE ${JSON.stringify({
       contextualEllipsisChecks,
