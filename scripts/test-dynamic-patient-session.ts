@@ -153,6 +153,59 @@ async function main() {
   assert(!/sk-[A-Za-z0-9_-]{12,}/.test(source), "build/source should not contain real API keys");
   assert(source.includes("LLM_API_KEY"), "source should document backend LLM_API_KEY env var");
 
+  const providerEnvironment = [
+    "LLM_ENABLE_AI_PATIENT",
+    "LLM_API_KEY",
+    "LLM_API_BASE_URL",
+    "LLM_PROVIDER",
+    "LLM_MODEL",
+    "LLM_STREAMING_ENABLED",
+    "PATIENT_DEEPSEEK_THINKING"
+  ] as const;
+  const previousProviderEnvironment = new Map(providerEnvironment.map((key) => [key, process.env[key]]));
+  const providerRequests: Array<Record<string, unknown>> = [];
+  try {
+    process.env.LLM_ENABLE_AI_PATIENT = "true";
+    process.env.LLM_API_KEY = "synthetic-live-patient-key";
+    process.env.LLM_API_BASE_URL = "https://api.deepseek.com";
+    process.env.LLM_PROVIDER = "deepseek";
+    process.env.LLM_MODEL = "deepseek-v4-flash";
+    process.env.LLM_STREAMING_ENABLED = "false";
+    process.env.PATIENT_DEEPSEEK_THINKING = "disabled";
+    globalThis.fetch = async (_input, init) => {
+      const providerRequest = JSON.parse(String(init?.body || "{}")) as Record<string, unknown>;
+      providerRequests.push(providerRequest);
+      const messages = providerRequest.messages as Array<{ content?: string }>;
+      const payload = JSON.parse(String(messages?.[1]?.content || "{}")) as { currentAllowedAnswer?: string };
+      return new Response(JSON.stringify({
+        choices: [{ message: { content: String(payload.currentAllowedAnswer || "") } }]
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    };
+    const liveSession = await initSession({ caseId: "P001", mode: "training", language: "en" });
+    const liveAnswer = await generatePatientAnswer({
+      sessionId: liveSession.sessionId,
+      caseId: "P001",
+      studentInput: "When did your urine turn red?",
+      conversationHistory: [],
+      language: "en"
+    });
+    assert(liveAnswer.isFallback === false, "a configured successful provider must remain a live answer");
+    assert(liveAnswer.provider === "deepseek", `unexpected live provider: ${liveAnswer.provider}`);
+    assert(liveAnswer.model === "deepseek-v4-flash", `unexpected live model: ${liveAnswer.model}`);
+    assert(liveAnswer.runtimeTrace?.generationSource === "live_ai", `unexpected generation source: ${liveAnswer.runtimeTrace?.generationSource}`);
+    assert(liveAnswer.runtimeTrace?.providerConfigured === true, "live trace must mark the provider configured");
+    assert(liveAnswer.runtimeTrace?.providerHttpSuccess === true, "live trace must mark the provider request successful");
+    assert(liveAnswer.runtimeTrace?.thinkingExecuted === false, "Flash must not execute thinking by default");
+    assert((providerRequests[0]?.thinking as { type?: string } | undefined)?.type === "disabled", "DeepSeek thinking must be disabled");
+  } finally {
+    globalThis.fetch = originalFetch;
+    for (const key of providerEnvironment) {
+      const value = previousProviderEnvironment.get(key);
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+
   process.env.LLM_ENABLE_AI_AGENTS = previousEnable;
   console.log("Dynamic Patient Session tests passed.");
 }

@@ -37,6 +37,7 @@ const { initSession, generatePatientAnswer } = require("../server/patientSession
       generationSource: string;
       thinkingMode: string;
       thinkingApplied: boolean;
+      thinkingExecuted: boolean;
     };
   }>;
 };
@@ -127,12 +128,18 @@ async function runThinkingAB() {
       const requestBody = JSON.parse(String(options?.body || "{}")) as Record<string, unknown>;
       requestBodies.push(requestBody);
       const messages = requestBody.messages as Array<{ content?: string }> | undefined;
-      const input = JSON.parse(String(messages?.[1]?.content || "{}")) as { question?: string };
+      const input = JSON.parse(String(messages?.[1]?.content || "{}")) as {
+        question?: string;
+        currentAllowedAnswer?: string;
+      };
+      const content = input.currentAllowedAnswer
+        ? input.currentAllowedAnswer
+        : ambiguousContextResponse(String(input.question || ""));
       return new Response(JSON.stringify({
         choices: [{
           message: {
             reasoning_content: "private reasoning must never reach the patient",
-            content: ambiguousContextResponse(String(input.question || ""))
+            content
           }
         }]
       }), { status: 200, headers: { "Content-Type": "application/json" } });
@@ -174,9 +181,10 @@ async function runThinkingAB() {
             assert.equal(answer.contextResolution?.inherited, true, `${mode}/${caseId} previous episode must inherit the complaint topic`);
           }
           if (turn === 11) {
-            assert.equal(answer.runtimeTrace?.generationSource, "rule_fallback");
+            assert.equal(answer.runtimeTrace?.generationSource, "mock");
             assert.equal(answer.runtimeTrace?.thinkingMode, mode);
-            assert.equal(answer.runtimeTrace?.thinkingApplied, false);
+            assert.equal(answer.runtimeTrace?.thinkingApplied, mode === "max");
+            assert.equal(answer.runtimeTrace?.thinkingExecuted, mode === "max");
             assert.doesNotMatch(answer.replyText, /private reasoning/i);
           }
           evidence.push({
@@ -214,15 +222,17 @@ async function runThinkingAB() {
       }
     }
 
-    const disabledRequests = requestBodies.filter(
+    const classifierRequests = requestBodies.filter((body) => "response_format" in body);
+    const disabledClassifierRequests = classifierRequests.filter(
       (body) => (body.thinking as { type?: string } | undefined)?.type === "disabled"
     );
-    const maxRequests = requestBodies.filter(
+    const maxClassifierRequests = classifierRequests.filter(
       (body) => (body.thinking as { type?: string } | undefined)?.type === "enabled"
         && body.reasoning_effort === "max"
     );
-    assert.equal(disabledRequests.length, caseIds.length);
-    assert.equal(maxRequests.length, caseIds.length);
+    assert.equal(disabledClassifierRequests.length, caseIds.length);
+    assert.equal(maxClassifierRequests.length, caseIds.length);
+    assert(requestBodies.length > classifierRequests.length, "governed answers must use the configured Patient provider");
     for (const body of requestBodies) {
       assert.equal(body.model, "deepseek-v4-pro");
       assert.equal("top_p" in body, false);
@@ -241,8 +251,8 @@ async function runThinkingAB() {
       cases: caseIds.length,
       turnsPerCase: multiTurnQuestions.length,
       responses: evidence.length,
-      disabledClassifierCalls: disabledRequests.length,
-      maxClassifierCalls: maxRequests.length,
+      disabledClassifierCalls: disabledClassifierRequests.length,
+      maxClassifierCalls: maxClassifierRequests.length,
       erroneousUnknowns: 0,
       contextLosses: 0,
       reasoningLeaks: 0

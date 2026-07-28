@@ -144,8 +144,13 @@ async function askLiveQuestion(page, language, question) {
     historyStatus: history.status(),
     generationSource: payload.generationSource,
     provider: payload.provider,
+    model: payload.usedModel,
     isFallback: payload.isFallback,
     fallbackReason: payload.fallbackReason,
+    providerConfigured: payload.providerConfigured,
+    providerHttpSuccess: payload.providerHttpSuccess,
+    thinkingExecuted: payload.thinkingExecuted,
+    thinkingMode: payload.thinkingMode,
     uiDispatchMs,
     answerMs,
     clickToAnswerMs,
@@ -226,6 +231,11 @@ for (const language of ["zh", "en"]) {
           expect(answer.generationSource).toBe("live_ai");
           expect(answer.isFallback).toBe(false);
           expect(String(answer.provider || "").toLowerCase()).toBe("deepseek");
+          expect(answer.model).toBe("deepseek-v4-flash");
+          expect(answer.providerConfigured).toBe(true);
+          expect(answer.providerHttpSuccess).toBe(true);
+          expect(answer.thinkingExecuted).toBe(false);
+          expect(answer.thinkingMode).toBe("disabled");
           expect(answer.patientTiming.provider).toBeDefined();
           expect(answer.patientTiming.firsttoken).toBeDefined();
           expect(answer.historyTiming.history).toBeDefined();
