@@ -283,6 +283,17 @@ async function main() {
       const linkedMedications = medications.filter(
         (item) => /高血压|降压/.test(`${item.name} ${item.indication}`) || controlledNames.has(item.name)
       );
+      const bareMedicationFollowup = await generatePatientAnswer({
+        sessionId: `hypertension-bare-medication-${currentCase.id}`,
+        caseId: currentCase.id,
+        studentInput: "吃什么药？",
+        language: "zh",
+        conversationHistory: hypertensionHistory
+      });
+      assert.equal(bareMedicationFollowup.contextResolution?.inherited, true, `${currentCase.id} bare medication follow-up did not inherit hypertension`);
+      assert.equal(bareMedicationFollowup.contextResolution?.reason, "contextual_medication_name");
+      assert.ok(bareMedicationFollowup.matchedFacts?.includes("medication_name"));
+      assert.notEqual(bareMedicationFollowup.fallbackReason, "classifier_disabled");
       const highBloodPressureMedication = await generatePatientAnswer({
         sessionId: `hypertension-medication-${currentCase.id}`,
         caseId: currentCase.id,

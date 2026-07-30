@@ -26,6 +26,7 @@ globalThis.fetch = async (_input, init) => {
 
 async function main() {
   const naturalEnglish = "Please describe the main problem that brought you here in your own words.";
+  const conciseEnglish = "What brought you in today?";
   const naturalChinese = "请用自己的话说说这次最主要的不舒服是什么？";
   const routeFailures: string[] = [];
   const plannerFailures: string[] = [];
@@ -34,7 +35,8 @@ async function main() {
     for (const caseData of cases) {
       for (const [language, question] of [
         ["zh", naturalChinese],
-        ["en", naturalEnglish]
+        ["en", naturalEnglish],
+        ["en", conciseEnglish]
       ] as const) {
         const matched = matchCanonicalPatientFacts(caseData.id, question, language);
         if (!matched?.matchedSlotIds?.includes("chief_complaint")) {
@@ -92,7 +94,7 @@ async function main() {
   assert.deepEqual(plannerFailures, []);
   assert.equal(providerCalls, cases.length);
   console.log("Patient chief-complaint routing gates passed.", {
-    bilingualRoutes: cases.length * 2,
+    bilingualRoutes: cases.length * 3,
     deterministicPlannerControls: cases.length,
     ordinaryPhraseControls: ordinaryPatientPhrases.length,
     forbiddenPhraseControls: forbiddenPhrases.length

@@ -207,8 +207,8 @@ function defineOntologyFact(definition) {
 const canonicalLegacyIntentDefinitions = [
   {
     key: "chief_complaint", sourceSlotId: "chief_complaint", domain: "canonical_legacy", labelZh: "主诉", labelEn: "Chief complaint",
-    aliases: { zh: ["哪里不舒服", "为什么来", "主诉", "怎么回事"], en: ["what brings you", "main complaint", "what is wrong"] },
-    pattern: /哪里不舒服|为什么来|主诉|怎么回事|用自己的话.*(?:不舒服|经过|为什么)|what brings you|what is wrong|main complaint|main problem.*brought you|in your own words.*(?:why|what happened)|describe.*(?:main problem|what happened).*(?:brought you|in your own words)|why you came/i
+    aliases: { zh: ["哪里不舒服", "为什么来", "主诉", "怎么回事"], en: ["what brings you", "what brought you in", "main complaint", "what is wrong"] },
+    pattern: /哪里不舒服|为什么来|主诉|怎么回事|用自己的话.*(?:不舒服|经过|为什么)|what brings you|what brought you(?: in)?|what is wrong|main complaint|main problem.*brought you|in your own words.*(?:why|what happened)|describe.*(?:main problem|what happened).*(?:brought you|in your own words)|why you came/i
   },
   {
     key: "gross_hematuria", sourceSlotId: "hematuria_visibility", domain: "canonical_legacy", labelZh: "肉眼血尿", labelEn: "Gross hematuria",
@@ -590,8 +590,8 @@ function resolveContextualPatientQuestion(question, conversationHistory = [], la
         ? /hypertension|high blood pressure|antihypertensive/i.test(String(value))
         : /高血压|降压药/.test(String(value)));
     const medicationNameFollowup = language === "en"
-      ? /^(?:(?:what is|what's) (?:the )?(?:specific )?name|what.*(?:take|taking).*(?:hypertension|high blood pressure))\??$/i.test(original)
-      : /^(?:(?:那|这个|这种药)?具体(?:的)?(?:药)?名(?:称|字)?(?:是什么|叫什么)?|高血压.*(?:吃|服|用).*什么药|(?:吃|服|用)(?:的)?什么降压药)[呢吗]?[？?]?$/.test(compacted);
+      ? /^(?:(?:what is|what's) (?:the )?(?:specific )?name|what.*(?:take|taking).*(?:hypertension|high blood pressure)|what (?:medicine|medication) do you take)\??$/i.test(original)
+      : /^(?:(?:那|这个|这种药)?具体(?:的)?(?:药)?名(?:称|字)?(?:是什么|叫什么)?|高血压.*(?:吃|服|用).*什么药|(?:吃|服|用)(?:的)?什么(?:降压)?药)[呢吗]?[？?]?$/.test(compacted);
     if (medicationNameFollowup) {
       return {
         question: language === "en"
