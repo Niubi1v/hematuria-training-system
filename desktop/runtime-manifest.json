@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "platform": "windows-x86_64",
+  "node": {
+    "version": "22.14.0",
+    "fileName": "node.exe",
+    "url": "https://nodejs.org/download/release/v22.14.0/win-x64/node.exe",
+    "size": 83344536,
+    "sha256": "33b1bc1a8aca11fd5a4f2699e51019c63c0af30cf437701d07af69be7706771b",
+    "bundledInInstaller": true
+  },
+  "llamaCpp": {
+    "version": "b10176",
+    "archiveName": "llama-b10176-bin-win-cpu-x64.zip",
+    "url": "https://github.com/ggml-org/llama.cpp/releases/download/b10176/llama-b10176-bin-win-cpu-x64.zip",
+    "archiveSize": 18341585,
+    "sha256": "cf556f9c7e6c986961f96baf8067cd535c0574f1103b55e0f31fa3c7bfbf11ba",
+    "entryPoint": "llama-server.exe",
+    "files": [
+      {
+        "path": "ggml.dll",
+        "size": 86016,
+        "sha256": "3a010886b9de65b14ef994dc412c4203d92bf39d51b63d0b16ffaa34f408aa99"
+      },
+      {
+        "path": "ggml-base.dll",
+        "size": 772096,
+        "sha256": "af66a7e6725c4316aa75b932102779c2bfed07a83a31ccb72f97b9ed8d18713b"
+      },
+      {
+        "path": "ggml-cpu-alderlake.dll",
+        "size": 1180160,
+        "sha256": "ae0a78bd6f70ffa0912c1c2248a815b2d347fe8d3b0ccd9c2ada91e1d0c3d782"
+      },
+      {
+        "path": "ggml-cpu-cannonlake.dll",
+        "size": 1395200,
+        "sha256": "5a617f1e31e180a970f4a8771c4841a1364285573b2d1bb935fe1e843a018eb2"
+      },
+      {
+        "path": "ggml-cpu-cascadelake.dll",
+        "size": 1381376,
+        "sha256": "115e0df0fa5abd703abb0f1b7dd7175f74fd5ad65862b3eeb231b7782fa60515"
+      },
+      {
+        "path": "ggml-cpu-cooperlake.dll",
+        "size": 1382400,
+        "sha256": "eb3569e34b105e221fcfa5ce0e52e8212d2559b1a0263d9ac57a0159061b7642"
+      },
+      {
+        "path": "ggml-cpu-haswell.dll",
+        "size": 1184768,
+        "sha256": "4135bd2451268d6cf9992312a32ee1604a8a8dedaa1a9fc798f64be1af95b6ec"
+      },
+      {
+        "path": "ggml-cpu-icelake.dll",
+        "size": 1388032,
+        "sha256": "cdf19817a3cc048b6b324b7641906879b4aad1408c215b6646647f84b6652271"
+      },
+      {
+        "path": "ggml-cpu-ivybridge.dll",
+        "size": 1073664,
+        "sha256": "87261243bfe155df5faf98c523351f40b0f0c688e3014bb13c7a132509930b9f"
+      },
+      {
+        "path": "ggml-cpu-piledriver.dll",
+        "size": 1077760,
+        "sha256": "4b059c29bcc6badb72b03a234448b159260fc2335e49d95e2a40c0df781f331c"
+      },
+      {
+        "path": "ggml-cpu-sandybridge.dll",
+        "size": 1053696,
+        "sha256": "8f6db345ea15434111d30629eefaeaae8fd5a290e480473ec13dde75ecef4e20"
+      },
+      {
+        "path": "ggml-cpu-sapphirerapids.dll",
+        "size": 1659392,
+        "sha256": "17ffedd64dbd40f1f5597fed047b4a664479cfb75e9c314216cf3cc1fef2ae3d"
+      },
+      {
+        "path": "ggml-cpu-skylakex.dll",
+        "size": 1389056,
+        "sha256": "7124f3666c850c65c5b2eb75cf5976206ac9bc0c6e2f0b4bab1d85801978fe0f"
+      },
+      {
+        "path": "ggml-cpu-sse42.dll",
+        "size": 876544,
+        "sha256": "dc91eedc2aba850c2f843412a7b5b1abdd6659e3e3dc5f89acd6feb5d6aa2155"
+      },
+      {
+        "path": "ggml-cpu-x64.dll",
+        "size": 869376,
+        "sha256": "308cc14e23c65d0d03d6c571b325b5c04e6339c9d477d07c97f52407584c999a"
+      },
+      {
+        "path": "ggml-cpu-zen4.dll",
+        "size": 1389056,
+        "sha256": "9da30e40f65c6312c64996ebff1762c84d5908a27bbf7832ef86ca9e9b41cbed"
+      },
+      {
+        "path": "libomp140.x86_64.dll",
+        "size": 661856,
+        "sha256": "4a20c1e5c115c29771a12324513eb109badac72180f79481527ad79d996ffb33"
+      },
+      {
+        "path": "llama.dll",
+        "size": 2758144,
+        "sha256": "da9f1a3cc6759e10a95915d1dd2a757440c1552abbdd2a207a9676178df28624"
+      },
+      {
+        "path": "llama-common.dll",
+        "size": 7956992,
+        "sha256": "eaef2375c6051870d648e487920cecf3f75b237bdcfbfc0c541fb589d326aa03"
+      },
+      {
+        "path": "llama-server.exe",
+        "size": 9216,
+        "sha256": "8ebc3ca9373e5e9dbc1bd24958a3505174a4286d5931b26bd6134660ab84ade9"
+      },
+      {
+        "path": "llama-server-impl.dll",
+        "size": 9901568,
+        "sha256": "b796e282c2be7338bcc227eed8530a4075bdaa0d223f0ef7f1dfb8beeed2023b"
+      },
+      {
+        "path": "mtmd.dll",
+        "size": 1325056,
+        "sha256": "79fe0cbcf80ba4b3c0fd5edfa8fea37369589dde366cce382ce06cec52aad2fa"
+      }
+    ],
+    "bundledInInstaller": true
+  },
+  "buildTools": {
+    "nsis": {
+      "version": "3.11",
+      "fileName": "nsis-3.11.zip",
+      "sourceUrl": "https://github.com/tauri-apps/binary-releases/releases/download/nsis-3.11/nsis-3.11.zip",
+      "url": "https://gh-proxy.com/https://github.com/tauri-apps/binary-releases/releases/download/nsis-3.11/nsis-3.11.zip",
+      "size": 2361546,
+      "sha1": "ef7ff767e5cbd9edd22add3a32c9b8f4500bb10d",
+      "sha256": "c7d27f780ddb6cffb4730138cd1591e841f4b7edb155856901cdf5f214394fa1"
+    },
+    "nsisTauriUtils": {
+      "version": "0.5.3",
+      "fileName": "nsis_tauri_utils-v0.5.3.dll",
+      "sourceUrl": "https://github.com/tauri-apps/nsis-tauri-utils/releases/download/nsis_tauri_utils-v0.5.3/nsis_tauri_utils.dll",
+      "url": "https://gh-proxy.com/https://github.com/tauri-apps/nsis-tauri-utils/releases/download/nsis_tauri_utils-v0.5.3/nsis_tauri_utils.dll",
+      "size": 34304,
+      "sha1": "75197fee3c6a814fe035788d1c34ead39349b860",
+      "sha256": "5ba143b5db4a87d32d6e7802e033330aae56cbceabe0d1e3ba41948385ad4709"
+    }
+  },
+  "model": {
+    "repository": "ggml-org/Qwen3-1.7B-GGUF",
+    "fileName": "Qwen3-1.7B-Q4_K_M.gguf",
+    "url": "https://huggingface.co/ggml-org/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf?download=true",
+    "fallbackUrls": [
+      "https://hf-mirror.com/ggml-org/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf?download=true"
+    ],
+    "size": 1282439264,
+    "sha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
+    "bundledInInstaller": false,
+    "thinkingMode": "disabled"
+  }
+}

@@ -1,0 +1,25 @@
+Hematuria Training System desktop runtime notices
+==================================================
+
+This repository pins runtime downloads in runtime-manifest.json. The installer
+contains the Node.js runtime and llama.cpp CPU binaries, but never the model.
+
+Node.js 22.14.0
+  Project: https://nodejs.org/
+  License: MIT and bundled third-party notices
+  Source/license archive: https://nodejs.org/download/release/v22.14.0/
+
+llama.cpp b10176
+  Project: https://github.com/ggml-org/llama.cpp
+  License: MIT
+  Source: https://github.com/ggml-org/llama.cpp/tree/b10176
+
+Qwen3-1.7B-Q4_K_M.gguf (optional user download; not bundled)
+  Project: https://huggingface.co/ggml-org/Qwen3-1.7B-GGUF
+  Upstream model: https://huggingface.co/Qwen/Qwen3-1.7B
+  License: Apache-2.0
+
+The build tooling must preserve the license files distributed with downloaded
+runtime archives. See runtime-manifest.json for immutable sizes and SHA-256
+digests.
+

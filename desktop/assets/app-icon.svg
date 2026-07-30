@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Hematuria clinical training</title>
+  <rect width="512" height="512" rx="112" fill="#235E68"/>
+  <path d="M256 82c-71 99-120 163-120 244 0 67 54 122 120 122s120-55 120-122c0-81-49-145-120-244Z" fill="#F7FAFA"/>
+  <path d="M210 223v67h92v-67h42v194h-42v-83h-92v83h-42V223h42Z" fill="#235E68"/>
+  <circle cx="350" cy="161" r="42" fill="#B93B47"/>
+  <path d="M350 132c-17 24-28 39-28 58a28 28 0 0 0 56 0c0-19-11-34-28-58Z" fill="#F7FAFA"/>
+</svg>
