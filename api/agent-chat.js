@@ -6,6 +6,7 @@ const { readLLMResponse } = require("../server/llmClient.runtime.js");
 const { verifySessionCapability } = require("../server/sessionCapability.js");
 const { normalizeAttemptMode } = require("../server/trainingState.js");
 const { executeIdempotentAgentRequest } = require("../server/agentRequestStore.js");
+const { desktopPatientEvidence } = require("../server/desktopRuntimeEvidence.js");
 
 const blockedTeacherKeys = ["diagnosis", "imaging", "pathology", "treatment", "teacherOnlyData", "case_card", "scoring"];
 const PUBLIC_AGENT_ID = "standardized_patient";
@@ -213,6 +214,7 @@ async function buildAgentResponse(body, agentId, caseData, startedAt) {
             ? "rule_fallback"
             : patient.cacheHit ? "ai_cache" : "live_ai"
         ));
+    const desktopEvidence = desktopPatientEvidence(patient);
     return {
       statusCode: 200,
       timings: { app: Date.now() - startedAt, provider: patient.providerDurationMs, firsttoken: patient.providerFirstTokenMs },
@@ -239,6 +241,7 @@ async function buildAgentResponse(body, agentId, caseData, startedAt) {
         providerHttpSuccess: Boolean(patient.runtimeTrace?.providerHttpSuccess),
         thinkingExecuted: Boolean(patient.runtimeTrace?.thinkingExecuted),
         thinkingMode: String(patient.runtimeTrace?.thinkingMode || "disabled"),
+        ...(desktopEvidence ? { desktopEvidence } : {}),
         ...(body.debug ? { debug: { responseAccepted: Boolean(patient.filter?.ok), rewriteTriggered: Boolean(patient.rewriteTriggered), cacheHit: Boolean(patient.cacheHit), deploymentCommit: process.env.VERCEL_GIT_COMMIT_SHA || "local" } } : {})
       }
     };

@@ -239,13 +239,17 @@ try {
     headers: {
       Origin: allowedOrigin,
       "Access-Control-Request-Method": "GET",
-      "Access-Control-Request-Headers": "X-Hematuria-Desktop-Token"
+      "Access-Control-Request-Headers": "X-Hematuria-Desktop-Token, X-Training-State"
     }
   });
   assert.equal(preflight.status, 204);
   assert.match(
     String(preflight.headers.get("access-control-allow-headers")),
     /X-Hematuria-Desktop-Token/i
+  );
+  assert.match(
+    String(preflight.headers.get("access-control-allow-headers")),
+    /X-Training-State/i
   );
 
   const rejectedOrigin = await fetch(`${first.ready.origin}/api/health/`, {

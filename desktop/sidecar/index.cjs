@@ -34,6 +34,11 @@ let shuttingDown = false;
 let localAiState = { status: "initializing" };
 let localAiReconfiguration = Promise.resolve();
 const openSockets = new Set();
+const nativeFetch = globalThis.fetch.bind(globalThis);
+const networkAudit = {
+  loopbackRequestCount: 0,
+  cloudRequestCount: 0
+};
 
 function fatalConfiguration(message) {
   process.stderr.write(`${JSON.stringify({ event: "desktop_sidecar_configuration_error", code: message })}\n`);
@@ -54,6 +59,29 @@ function safeLog(event, metadata = {}) {
   }
   process.stderr.write(`${JSON.stringify({ event, ...allowed })}\n`);
 }
+
+function auditedHttpUrl(input) {
+  try {
+    const value = input instanceof Request ? input.url : input;
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:" ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+globalThis.fetch = async function desktopLoopbackFetch(input, init) {
+  const url = auditedHttpUrl(input);
+  if (url) {
+    const loopback = url.hostname === "127.0.0.1" || url.hostname === "[::1]";
+    if (!loopback) {
+      networkAudit.cloudRequestCount += 1;
+      throw new TypeError("desktop_external_network_blocked");
+    }
+    networkAudit.loopbackRequestCount += 1;
+  }
+  return nativeFetch(input, init);
+};
 
 function installDesktopEnvironment(trainingSecret) {
   const origins = [...allowedOrigins].join(",");
@@ -357,6 +385,20 @@ function desktopSettingsSnapshot(store) {
   };
 }
 
+function installDesktopRuntimeEvidence(store) {
+  globalThis.__hematuriaDesktopRuntimeEvidence = () => {
+    const { modelFilePath } = selectedModel(store);
+    const llamaServerReady = localAiState.status === "ready"
+      && Boolean(llamaChild)
+      && llamaChild.exitCode === null;
+    return {
+      llamaServerReady,
+      localModelReady: llamaServerReady && isRegularFile(modelFilePath),
+      cloudRequestCount: networkAudit.cloudRequestCount
+    };
+  };
+}
+
 function desktopSettingsHandler(store) {
   return async (req, res) => {
     if (req.method === "GET") return res.status(200).json(desktopSettingsSnapshot(store));
@@ -392,6 +434,15 @@ function desktopSettingsHandler(store) {
   };
 }
 
+function desktopEvidenceHandler() {
+  return async (req, res) => {
+    if (req.method !== "GET") return res.status(405).json({ error: "method_not_allowed" });
+    const snapshot = globalThis.__hematuriaDesktopRuntimeEvidence?.();
+    if (!snapshot) return res.status(503).json({ error: "desktop_evidence_unavailable" });
+    return res.status(200).json(snapshot);
+  };
+}
+
 async function loadHandlers(store) {
   const entries = {
     "/api/health": "api/health.js",
@@ -409,6 +460,7 @@ async function loadHandlers(store) {
     handlers.set(route, imported.default);
   }
   handlers.set("/api/desktop/settings", desktopSettingsHandler(store));
+  handlers.set("/api/desktop/evidence", desktopEvidenceHandler());
   return handlers;
 }
 
@@ -437,7 +489,7 @@ function setCorsHeaders(req, res) {
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "Content-Type, X-Request-Id, X-Idempotency-Key, X-Hematuria-Desktop-Token"
+    "Content-Type, X-Request-Id, X-Idempotency-Key, X-Training-State, X-Hematuria-Desktop-Token"
   );
   res.setHeader("Access-Control-Max-Age", "600");
 }
@@ -620,6 +672,7 @@ async function main() {
   const databaseSchemaVersion = sqliteStore.getDesktopSchemaVersion();
   const trainingSecret = sqliteStore.getOrCreateDesktopSecret();
   installDesktopEnvironment(trainingSecret);
+  installDesktopRuntimeEvidence(sqliteStore);
   const localAi = await reconfigureLocalAi(sqliteStore);
   const handlers = await loadHandlers(sqliteStore);
 

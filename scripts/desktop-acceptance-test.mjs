@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 
 const scriptsDirectory = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptsDirectory, "..");
+const realLocalAi = process.argv.includes("--real-local-ai");
 const appRootArgument = process.argv.indexOf("--app-root");
 const appRoot = appRootArgument >= 0
   ? path.resolve(repoRoot, String(process.argv[appRootArgument + 1] || ""))
@@ -19,9 +20,37 @@ const temporaryRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "hematuria-deskto
 const databasePath = path.join(temporaryRoot, "hematuria.sqlite3");
 const children = new Set();
 const sourceCounts = new Map();
+const answerSourceCounts = new Map();
+let contextAppliedCount = 0;
+let finalRuntimeEvidence = null;
+const manifest = JSON.parse(await fsp.readFile(path.join(repoRoot, "desktop", "runtime-manifest.json"), "utf8"));
+const llamaPath = path.join(repoRoot, "desktop-runtime", "llama", manifest.llamaCpp.entryPoint);
+const defaultModelPath = path.join(
+  process.env.LOCALAPPDATA || "",
+  "cn.hematuria.training.desktop",
+  "models",
+  manifest.model.fileName
+);
+const modelPath = process.env.HEMATURIA_DESKTOP_MODEL_PATH || defaultModelPath;
 
 assert.ok(fs.existsSync(sidecarEntry), `Staged desktop sidecar is missing: ${sidecarEntry}. Run desktop:stage first.`);
 assert.ok(Number(process.versions.node.split(".")[0]) >= 22, "Desktop acceptance requires Node.js 22 or newer.");
+if (realLocalAi) {
+  assert.ok(fs.existsSync(llamaPath), `llama-server is missing: ${llamaPath}`);
+  assert.ok(fs.existsSync(modelPath), `Qwen model is missing: ${modelPath}`);
+  assert.equal(fs.statSync(modelPath).size, manifest.model.size, "Qwen model size mismatch");
+}
+
+async function sha256File(filePath) {
+  const hash = crypto.createHash("sha256");
+  for await (const chunk of fs.createReadStream(filePath)) hash.update(chunk);
+  return hash.digest("hex");
+}
+
+const modelSha256 = realLocalAi ? await sha256File(modelPath) : "";
+if (realLocalAi) {
+  assert.equal(modelSha256, manifest.model.sha256, "Qwen model SHA256 mismatch");
+}
 
 function randomSecret() {
   return crypto.randomBytes(32).toString("base64url");
@@ -31,7 +60,7 @@ function requestId(label) {
   return `${label}-${crypto.randomBytes(8).toString("hex")}`;
 }
 
-function readFirstLine(stream, timeoutMs = 20_000) {
+function readFirstLine(stream, timeoutMs = realLocalAi ? 180_000 : 20_000) {
   return new Promise((resolve, reject) => {
     let buffer = "";
     const timeout = setTimeout(() => finish(new Error("sidecar_handshake_timeout")), timeoutMs);
@@ -90,7 +119,12 @@ async function launchSidecar() {
       HEMATURIA_DESKTOP_ALLOWED_ORIGINS: allowedOrigin,
       HEMATURIA_DESKTOP_BEARER: bearer,
       HEMATURIA_DESKTOP_HANDSHAKE: handshake,
-      HEMATURIA_DESKTOP_DISABLE_LOCAL_AI: "1"
+      ...(realLocalAi
+        ? {
+            HEMATURIA_LLAMA_SERVER_PATH: llamaPath,
+            HEMATURIA_DESKTOP_MODEL_PATH: modelPath
+          }
+        : { HEMATURIA_DESKTOP_DISABLE_LOCAL_AI: "1" })
     },
     windowsHide: true,
     stdio: ["pipe", "pipe", "pipe"]
@@ -114,9 +148,9 @@ async function launchSidecar() {
   assert.equal(ready.handshake, handshake);
   assert.equal(ready.pid, child.pid);
   assert.equal(ready.databaseSchemaVersion, 1);
-  assert.equal(ready.localAi?.status, "disabled");
+  assert.equal(ready.localAi?.status, realLocalAi ? "ready" : "disabled");
   assert.match(ready.origin, /^http:\/\/127\.0\.0\.1:\d+$/);
-  return { bearer, child, diagnostics: () => diagnostics, origin: ready.origin };
+  return { bearer, child, diagnostics: () => diagnostics, origin: ready.origin, ready };
 }
 
 async function stopSidecar(runtime) {
@@ -142,7 +176,7 @@ async function requestJson(runtime, pathname, {
       ...(idempotencyKey ? { "X-Idempotency-Key": idempotencyKey } : {})
     },
     body: body === undefined ? undefined : JSON.stringify(body),
-    signal: AbortSignal.timeout(15_000)
+    signal: AbortSignal.timeout(realLocalAi ? 120_000 : 15_000)
   });
   let payload = {};
   try {
@@ -196,7 +230,7 @@ async function initPatientSession(runtime, caseId, language, attemptId, stateTok
   assert.equal(result.payload.caseId, caseId);
   assert.equal(result.payload.attemptId, attemptId);
   assert.equal(result.payload.language, language);
-  assert.equal(result.payload.aiStatus, "degraded");
+  assert.equal(result.payload.aiStatus, realLocalAi ? "available" : "degraded");
   assert.ok(String(result.payload.sessionId || ""), `${caseId}/${language} session capability is required`);
   return String(result.payload.sessionId);
 }
@@ -207,18 +241,48 @@ function recordSourceContract(reply, expectedFact, label) {
   if (expectedFact) {
     assert.ok(reply.matchedFacts.includes(expectedFact), `${label} must resolve ${expectedFact}`);
   }
-  assert.equal(reply.classificationSource, "deterministic", `${label} must not claim local_ai while the model is disabled`);
-  assert.equal(reply.classifierStatus, "not_invoked", `${label} classifier status must be truthful`);
-  assert.equal(reply.providerConfigured, false, `${label} must not report a configured model provider`);
-  assert.equal(reply.providerHttpSuccess, false, `${label} must not report a provider HTTP call`);
   assert.equal(reply.thinkingMode, "disabled", `${label} must keep thinking disabled`);
   assert.equal(reply.thinkingExecuted, false, `${label} must not execute model thinking`);
-  assert.equal(reply.isFallback, true, `${label} must identify the safe rule path`);
-  assert.equal(reply.provider, "rule", `${label} must use the existing Patient rule path`);
   assert.ok(
     ["governed_planner", "safety_boundary"].includes(reply.generationSource),
     `${label} generation must remain under the governed planner or an explicit safety boundary`
   );
+  assert.notEqual(reply.factSource, "local_ai", `${label} must keep model output outside the fact authority path`);
+  assert.ok(reply.desktopEvidence, `${label} must include authenticated desktop runtime evidence`);
+  assert.equal(reply.desktopEvidence.cloudRequestCount, 0, `${label} must make no cloud request`);
+  assert.equal(reply.desktopEvidence.modelFactAuthority, false, `${label} must deny model fact authority`);
+  if (expectedFact) {
+    assert.equal(reply.desktopEvidence.ontologyApplied, true, `${label} must use the governed ontology`);
+    assert.equal(reply.desktopEvidence.nineStateApplied, true, `${label} must use the nine-state fact model`);
+    assert.equal(reply.desktopEvidence.answerPlannerApplied, true, `${label} must use the answer planner`);
+  }
+  if (realLocalAi) {
+    assert.equal(reply.classificationSource, "local_ai", `${label} must invoke the local classifier`);
+    assert.ok(["accepted", "rejected"].includes(reply.classifierStatus), `${label} classifier status must be truthful`);
+    assert.equal(reply.providerConfigured, true, `${label} must report the configured loopback provider`);
+    assert.equal(reply.providerHttpSuccess, true, `${label} must complete a real llama-server request`);
+    assert.equal(reply.desktopEvidence.llamaServerReady, true, `${label} llama-server must be ready`);
+    assert.equal(reply.desktopEvidence.localModelReady, true, `${label} Qwen model must be loaded`);
+    if (reply.classifierStatus === "accepted") {
+      assert.equal(reply.desktopEvidence.answerSource, "local_ai", `${label} accepted metadata must report local_ai`);
+      assert.equal(reply.isFallback, false, `${label} accepted metadata must use the local route`);
+      assert.equal(reply.provider, "local", `${label} accepted metadata must name the local provider`);
+    } else {
+      assert.equal(reply.desktopEvidence.answerSource, "rule_fallback", `${label} rejected metadata must fall back safely`);
+      assert.equal(reply.isFallback, true, `${label} rejected metadata must identify fallback`);
+      assert.equal(reply.provider, "rule", `${label} rejected metadata must use the governed rule answer`);
+    }
+  } else {
+    assert.equal(reply.classificationSource, "deterministic", `${label} must not claim local_ai while the model is disabled`);
+    assert.equal(reply.classifierStatus, "not_invoked", `${label} classifier status must be truthful`);
+    assert.equal(reply.providerConfigured, false, `${label} must not report a configured model provider`);
+    assert.equal(reply.providerHttpSuccess, false, `${label} must not report a provider HTTP call`);
+    assert.equal(reply.isFallback, true, `${label} must identify the safe rule path`);
+    assert.equal(reply.provider, "rule", `${label} must use the existing Patient rule path`);
+    assert.equal(reply.desktopEvidence.llamaServerReady, false, `${label} must report llama unavailable`);
+    assert.equal(reply.desktopEvidence.localModelReady, false, `${label} must report model unavailable`);
+    assert.equal(reply.desktopEvidence.answerSource, "rule_fallback", `${label} must report rule_fallback`);
+  }
   if (reply.generationSource === "safety_boundary") {
     assert.ok(
       [
@@ -231,6 +295,9 @@ function recordSourceContract(reply, expectedFact, label) {
   }
   const sourceKey = `${reply.generationSource}/${reply.classificationSource}/${reply.classifierStatus}`;
   sourceCounts.set(sourceKey, (sourceCounts.get(sourceKey) || 0) + 1);
+  const answerSource = String(reply.desktopEvidence.answerSource || "unknown");
+  answerSourceCounts.set(answerSource, (answerSourceCounts.get(answerSource) || 0) + 1);
+  if (reply.desktopEvidence.contextApplied) contextAppliedCount += 1;
 }
 
 async function askPatient(runtime, {
@@ -435,7 +502,13 @@ try {
   assert.equal(health.payload.trainingStateConfigured, true);
   assert.equal(health.payload.durableAttemptStoreConfigured, true);
   assert.equal(health.payload.durableAttemptStoreCredentialSource, "desktop_sqlite");
-  assert.equal(health.payload.patientServiceConfigured, false, "the acceptance run intentionally disables the local model");
+  assert.equal(
+    health.payload.patientServiceConfigured,
+    realLocalAi,
+    realLocalAi
+      ? "the real offline run must configure the local patient classifier"
+      : "the fallback acceptance run intentionally disables the local model"
+  );
 
   const zhInterview = await runInterview(runtime, {
     caseId: "P001",
@@ -525,6 +598,10 @@ try {
     stateToken: p003Submission.stateToken,
     label: "P003 zero-round"
   });
+  finalRuntimeEvidence = (await requestJson(runtime, "/api/desktop/evidence/", { method: "GET" })).payload;
+  assert.equal(finalRuntimeEvidence.llamaServerReady, realLocalAi);
+  assert.equal(finalRuntimeEvidence.localModelReady, realLocalAi);
+  assert.equal(finalRuntimeEvidence.cloudRequestCount, 0);
   await stopSidecar(runtime);
 
   const { DatabaseSync } = await import("node:sqlite");
@@ -566,15 +643,37 @@ try {
   }
 
   const sourceSummary = Object.fromEntries([...sourceCounts.entries()].sort(([left], [right]) => left.localeCompare(right)));
+  const answerSourceSummary = Object.fromEntries([...answerSourceCounts.entries()].sort(([left], [right]) => left.localeCompare(right)));
+  if (realLocalAi) {
+    assert.ok((answerSourceCounts.get("local_ai") || 0) > 0, "the real model run must accept at least one local classification");
+    assert.ok(contextAppliedCount > 0, "the real model run must apply conversation context to a follow-up");
+  } else {
+    assert.ok((answerSourceCounts.get("rule_fallback") || 0) > 0, "the disabled model run must use rule_fallback");
+  }
+  const offlineEvidence = {
+    llamaServerReady: finalRuntimeEvidence.llamaServerReady,
+    localModelReady: finalRuntimeEvidence.localModelReady,
+    answerSource: realLocalAi ? "local_ai" : "rule_fallback",
+    cloudRequestCount: finalRuntimeEvidence.cloudRequestCount
+  };
   process.stdout.write(`${JSON.stringify({
     status: "PASS",
+    mode: realLocalAi ? "real_local_ai_offline" : "rule_fallback",
     stagedAppRoot: path.relative(repoRoot, appRoot).replaceAll("\\", "/"),
+    ...(realLocalAi ? { model: manifest.model.fileName, modelSha256Verified: modelSha256 === manifest.model.sha256 } : {}),
     attempts: { p001Zh: "stage2", p001En: "stage2", p003ZeroRound: "stage2" },
     questions: zhTurns.length + enTurns.length,
     restoredSession: true,
     persistentIdempotency: true,
-    sources: sourceSummary
+    contextAppliedCount,
+    sources: sourceSummary,
+    answerSources: answerSourceSummary,
+    offlineEvidence
   }, null, 2)}\n`);
+  process.stdout.write(`llamaServerReady=${offlineEvidence.llamaServerReady}\n`);
+  process.stdout.write(`localModelReady=${offlineEvidence.localModelReady}\n`);
+  process.stdout.write(`answerSource=${offlineEvidence.answerSource}\n`);
+  process.stdout.write(`cloudRequestCount=${offlineEvidence.cloudRequestCount}\n`);
 } finally {
   for (const child of children) {
     try {
