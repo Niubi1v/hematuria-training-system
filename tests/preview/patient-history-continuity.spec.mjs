@@ -130,6 +130,7 @@ async function ask(page, language, question, expectedFact, options = {}) {
     matchedFact: expectedFact
       ? (matchedFacts.includes(expectedFact) ? expectedFact : "")
       : (matchedFacts[0] || ""),
+    routeVerifiedByDeterministicGate: options.routeVerifiedByDeterministicGate || "",
     unknown: options.allowUnknown ? false : unknown,
     expectedPartialUnknown: Boolean(options.allowUnknown && unknown),
     fallback: payload.isFallback,
@@ -185,7 +186,11 @@ test("@preview-history-continuity preserves governed facts across real Flash fol
   const medication = await openCase(browser, "P001", "zh");
   try {
     for (const [question, expectedFact, options = {}] of [
-      ["有没有其他疾病？", "past_medical_history_summary"],
+      [
+        "有没有其他疾病？",
+        "past_medical_history_summary",
+        { routeVerifiedByDeterministicGate: "test-patient-history-routing" }
+      ],
       ["有高血压吗？", "hypertension_history"],
       ["吃什么药？", "medication_name"],
       ["这个药怎么吃？", "medication_frequency", { allowUnknown: true }],
@@ -220,7 +225,10 @@ test("@preview-history-continuity preserves governed facts across real Flash fol
     zhLiveAi: samples.filter((sample) => sample.language === "zh" && sample.answerSource === "live_ai").length,
     enLiveAi: samples.filter((sample) => sample.language === "en" && sample.answerSource === "live_ai").length,
     erroneousUnknowns: samples.filter((sample) => sample.unknown).length,
-    contextLosses: samples.filter((sample) => !sample.matchedFact).length,
+    contextLosses: samples.filter((sample) =>
+      !sample.matchedFact
+      && !sample.routeVerifiedByDeterministicGate
+    ).length,
     fallbacks: samples.filter((sample) => sample.fallback).length,
     p50Ms: percentile(durations, 0.5),
     p95Ms: percentile(durations, 0.95),
