@@ -1,0 +1,9 @@
+Start-Online-Demo.cmd
+Start-Online-Demo.ps1
+Start-Local-Demo.ps1
+Stop-Local-Demo.ps1
+README_导师演示.txt
+VERSION.json
+VERIFY-DEMO.ps1
+CHANGELOG_导师版.txt
+PACKAGE_MANIFEST.txt

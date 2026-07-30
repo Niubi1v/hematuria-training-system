@@ -1,0 +1,7 @@
+2026-07-30
+- 基于 Production HEAD 910d0b3bbcaf8cd22c1a854cba57b2bf50a2203d 建立导师演示包。
+- 新增 commit-specific Vercel Preview 一键入口，优先 Edge 应用模式。
+- 新增网络、health 与部署 SHA 检查；不写入 Cookie、密码、密钥或 API Key。
+- 明确来源合同：live_ai=云端 DeepSeek；rule_fallback=安全规则降级；未包含 local_ai。
+- 本地网页演示版因现有全栈脚本依赖 Docker/Redis，且便携闭环会违反包边界，标记为 BLOCKED。
+- 在线黑盒：11 passed、2 skipped；连续问诊专项：1 passed。

@@ -1,0 +1,20 @@
+{
+  "productionHead": "910d0b3bbcaf8cd22c1a854cba57b2bf50a2203d",
+  "previewUrl": "https://hematuria-training-system-k4zt0b0fd-niubi1vs-projects.vercel.app/",
+  "previewDeploymentSha": "910d0b3bbcaf8cd22c1a854cba57b2bf50a2203d",
+  "packageDate": "2026-07-30",
+  "timezone": "Asia/Shanghai",
+  "onlineModeSource": "live_ai: cloud DeepSeek via protected commit-specific Vercel Preview",
+  "localModeSource": "BLOCKED: no portable local web runtime delivered; existing full-stack launcher requires Docker and Redis",
+  "includesLocalAI": false,
+  "fileSHA256": {
+    "CHANGELOG_导师版.txt": "03448e3af7274faa53123fbbb7f40a1c879ea518f98fc7ad07300b1ad69603eb",
+    "PACKAGE_MANIFEST.txt": "604cdfdb59fa0c52aa17588cd72bec1bf6dfdb143c4fadf5eb4b635e38e44d29",
+    "README_导师演示.txt": "9e34045ff78c6f833d348bdf9a5eb8db8c3a9aca536acef779b9dcad923b67a7",
+    "Start-Local-Demo.ps1": "902bc58d293eea707c5a6da4fd054118fe0107745c8e623d17bb3ec38cc0a47b",
+    "Start-Online-Demo.cmd": "8e4c412eb56235a472ed35712bde32ee24884204a79a14bf63cc36954c94e5b2",
+    "Start-Online-Demo.ps1": "b702b10581f979258f0b66fed2ea9a290664492c50e55bc079c1b09e830b7962",
+    "Stop-Local-Demo.ps1": "e9616f122120e5a8d5be72132206cd1b5808112d1fb1568a261477f4b1b0061e",
+    "VERIFY-DEMO.ps1": "c5b01eea5288d65be949f301e35e8ce6c535c3a2c9753ad64283327983e9c7ba"
+  }
+}
