@@ -64,6 +64,7 @@
     "test:first-stage:local": "node scripts/run-local-fullstack-tests.mjs",
     "test:e2e:preview": "node scripts/run-preview-blackbox.mjs",
     "test:e2e:preview:stability": "node scripts/run-preview-blackbox.mjs --grep @preview-stability",
+    "test:e2e:preview:history-continuity": "node scripts/run-preview-blackbox.mjs --grep @preview-history-continuity",
     "test:preview-config": "node scripts/test-preview-blackbox-config.mjs",
     "test:preview-output-security": "node scripts/test-preview-output-security.mjs",
     "test:bundle": "tsx scripts/scan-static-bundle.ts",
