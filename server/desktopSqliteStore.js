@@ -228,6 +228,12 @@ function registerAttempt({
         attempt_key, request_id, request_digest, status_code, payload_json, token, created_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?)
     `).run(attemptKey, requestId, requestDigest, statusCode, JSON.stringify(payload), String(token || ""), now);
+    database.prepare(`
+      INSERT INTO training_records(
+        record_id, session_id, attempt_id, case_id, status, score, completed_at, created_at
+      ) VALUES (?, NULL, ?, ?, 'active', NULL, NULL, ?)
+      ON CONFLICT(record_id) DO NOTHING
+    `).run(attemptKey, String(attemptId), String(caseId), now);
     return { kind: "created" };
   });
 }
@@ -304,6 +310,23 @@ function commitAttempt({
       ) VALUES (?, ?, ?, ?, ?, ?, ?)
     `).run(attemptKey, requestId, requestDigest, statusCode, JSON.stringify(payload), String(token || ""), now);
     database.prepare(`
+      INSERT INTO training_records(
+        record_id, session_id, attempt_id, case_id, status, score, completed_at, created_at
+      ) VALUES (?, NULL, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(record_id) DO UPDATE SET
+        status = excluded.status,
+        score = excluded.score,
+        completed_at = excluded.completed_at
+    `).run(
+      attemptKey,
+      String(state.attemptId),
+      String(state.caseId),
+      String(state.status || "active"),
+      state.finalScore === undefined || state.finalScore === null ? null : Number(state.finalScore),
+      state.completedAt ? Date.parse(state.completedAt) : null,
+      now
+    );
+    database.prepare(`
       DELETE FROM attempt_requests
       WHERE attempt_key = ? AND request_id IN (
         SELECT request_id
@@ -363,7 +386,7 @@ function cleanOptionalText(value, maxLength = 160) {
 }
 
 function upsertDesktopSessionMetadata(metadata) {
-  const sessionId = cleanOptionalText(metadata?.sessionId);
+  const sessionId = cleanOptionalText(metadata?.sessionId, 2048);
   if (!sessionId) throw new Error("desktop_session_id_required");
   const now = Date.now();
   const { database } = openStore();
@@ -392,7 +415,7 @@ function upsertDesktopSessionMetadata(metadata) {
 }
 
 function getDesktopSessionMetadata(sessionId) {
-  const normalized = cleanOptionalText(sessionId);
+  const normalized = cleanOptionalText(sessionId, 2048);
   if (!normalized) throw new Error("desktop_session_id_required");
   const { database } = openStore();
   const row = database.prepare(`

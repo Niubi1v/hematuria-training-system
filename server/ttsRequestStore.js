@@ -20,9 +20,11 @@ function boundedInteger(value, fallback, maximum) {
 
 function storeMode() {
   const configured = String(process.env.TTS_REQUEST_STORE_MODE || process.env.AGENT_REQUEST_STORE_MODE || process.env.TRAINING_ATTEMPT_STORE_MODE || "").toLowerCase();
-  if (configured === "memory") return process.env.VERCEL || process.env.NODE_ENV === "production" ? "unavailable" : "memory";
+  const desktopRuntime = process.env.HEMATURIA_RUNTIME_TARGET === "desktop";
+  if (configured === "memory") return (process.env.VERCEL || process.env.NODE_ENV === "production") && !desktopRuntime ? "unavailable" : "memory";
   if (configured === "upstash") return "upstash";
   if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) return "upstash";
+  if (desktopRuntime) return "memory";
   if (process.env.VERCEL || process.env.NODE_ENV === "production") return "unavailable";
   return "memory";
 }

@@ -85,20 +85,18 @@ const multiTurnQuestions = [
 ];
 
 function ambiguousContextResponse(question: string) {
+  void question;
   return JSON.stringify({
     intent: null,
-    topic: "alcohol_history",
-    clauses: [{
-      text: question,
-      intent: null,
-      requestedSlot: null,
-      confidence: 0.4,
-      needsClarification: true
-    }],
+    currentTopic: "alcohol_history",
+    currentEntity: "alcohol",
+    requestedSlot: null,
     contextReference: {
       inherited: true,
       sourceIntent: "alcohol_history"
-    }
+    },
+    clauses: [{ intent: null, requestedSlot: null }],
+    naturalizationStyle: "clarification"
   });
 }
 

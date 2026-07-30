@@ -60,8 +60,11 @@ function createAttemptState({ attemptId, caseId, mode, language }) {
     currentStage: 1,
     completedStages: [],
     orders: [],
+    releasedReports: [],
     events: [],
-    submissions: {}
+    submissions: {},
+    finalScore: null,
+    scoringVersion: ""
   };
 }
 

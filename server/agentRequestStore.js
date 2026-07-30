@@ -91,6 +91,7 @@ function storeMode() {
   if (configured === "upstash") return "upstash";
   const credentials = resolveRedisRestCredentials();
   if (credentials.url && credentials.token) return "upstash";
+  if (process.env.HEMATURIA_RUNTIME_TARGET === "desktop") return "memory";
   if (process.env.VERCEL || process.env.NODE_ENV === "production") return "unavailable";
   return "memory";
 }

@@ -37,6 +37,9 @@ function normalizeStoredState(value) {
   state.completedStages = restoreLuaEmptyArray(state.completedStages, "completed_stages");
   state.orders = restoreLuaEmptyArray(state.orders, "orders");
   state.events = restoreLuaEmptyArray(state.events, "events");
+  state.releasedReports = state.releasedReports === undefined
+    ? []
+    : restoreLuaEmptyArray(state.releasedReports, "released_reports");
   state.submissions = restoreLuaEmptyObject(state.submissions, "submissions");
   return state;
 }

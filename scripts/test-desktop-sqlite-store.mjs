@@ -26,6 +26,7 @@ function state(attemptId, overrides = {}) {
     status: "active",
     completedStages: [],
     orders: [],
+    releasedReports: [],
     events: [],
     submissions: {},
     ...overrides

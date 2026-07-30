@@ -476,6 +476,12 @@ module.exports = async function handler(req, res) {
         .map((order) => ({ eventId: `srv-${state.sequence + 1}-order-${order.orderId}`, type: "order_placed", actionId: order.orderId, stageNo: 2, at, text: order.displayName, metadata: { validated: true, duplicate: result.duplicateOrderIds.includes(order.orderId) } }));
       const resultEvents = result.results.map((item) => ({ eventId: `srv-${state.sequence + 1}-result-${item.resultId}`, type: "result_returned", actionId: item.orderId, stageNo: 2, at, text: item.impression || item.result, metadata: { validated: true } }));
       appendEvents(state, [...orderEvents, ...resultEvents]);
+      const releasedReports = Array.isArray(state.releasedReports) ? state.releasedReports : [];
+      const knownResultIds = new Set(releasedReports.map((item) => item.resultId));
+      state.releasedReports = [
+        ...releasedReports,
+        ...result.results.filter((item) => item.resultId && !knownResultIds.has(item.resultId))
+      ];
       return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: result });
     }
     if (body.action === "mdt") {
@@ -506,6 +512,8 @@ module.exports = async function handler(req, res) {
       const report = score(caseData.id, state.events, language);
       state.status = "completed";
       state.completedAt = at;
+      state.finalScore = report.total;
+      state.scoringVersion = report.scoringVersion;
       setServerTiming(res, { score: Date.now() - startedAt });
       return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: report });
     }

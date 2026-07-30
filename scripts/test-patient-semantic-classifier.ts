@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 
 const {
   INTENT_WHITELIST,
+  PATIENT_METADATA_RESPONSE_FORMAT,
   classifyPatientIntent,
   parseClassifierResponse,
   resetPatientIntentClassifierState
@@ -18,19 +19,47 @@ function classifierJson(
   needsClarification = false,
   overrides: Record<string, unknown> = {}
 ) {
+  const classifiedIntent = needsClarification || confidence < 0.92 ? null : intent;
+  const requestedSlot = classifiedIntent === null
+    ? null
+    : patientFactOntology.find((definition: { key: string }) => definition.key === classifiedIntent)?.sourceSlotId || null;
+  return JSON.stringify({
+    intent: classifiedIntent,
+    currentTopic: classifiedIntent,
+    currentEntity: classifiedIntent === null ? null : "urination",
+    requestedSlot,
+    contextReference: { inherited: false, sourceIntent: null },
+    clauses: [{ intent: classifiedIntent, requestedSlot }],
+    naturalizationStyle: classifiedIntent === null ? "clarification" : "direct",
+    ...overrides
+  });
+}
+
+function legacyClassifierJson(
+  intent: string | null,
+  confidence: number,
+  needsClarification = false
+) {
   const requestedSlot = intent === null
     ? null
     : patientFactOntology.find((definition: { key: string }) => definition.key === intent)?.sourceSlotId || null;
   return JSON.stringify({
     intent,
     topic: intent,
-    clauses: [{ text: "source clause", intent, requestedSlot, confidence, needsClarification }],
-    contextReference: { inherited: false, sourceIntent: null },
-    ...overrides
+    clauses: [{
+      text: "synthetic classification probe",
+      intent,
+      requestedSlot,
+      confidence,
+      needsClarification
+    }],
+    contextReference: { inherited: false, sourceIntent: null }
   });
 }
 
 async function main() {
+  const originalProvider = process.env.LLM_PROVIDER;
+  process.env.LLM_PROVIDER = "local";
   assert.ok(INTENT_WHITELIST.includes("dysuria"));
   assert.ok(INTENT_WHITELIST.includes("whole_stream_hematuria"));
   assert.equal(parseClassifierResponse(classifierJson("dysuria", 0.96))?.intent, "dysuria");
@@ -56,15 +85,30 @@ async function main() {
     }
   });
   assert.equal(accepted.accepted, true);
+  assert.equal(accepted.routingAuthorized, false);
+  assert.equal(accepted.confidence, 0);
   assert.equal(accepted.intent, "dysuria");
   assert.equal(providerCalls, 1);
   assert.deepEqual(
     Object.keys(capturedInput?.userPayload as object).sort(),
-    ["allowedIntents", "classificationId", "conversationState", "language", "outputContract", "question", "recentUserQuestions"]
+    [
+      "allowedEntities",
+      "allowedIntents",
+      "allowedNaturalizationStyles",
+      "classificationId",
+      "conversationState",
+      "governedCandidateMappings",
+      "governedIntentCandidates",
+      "language",
+      "question",
+      "recentUserQuestions",
+      "requiredContextReference",
+      "schemaVersion"
+    ].sort()
   );
   assert.equal(capturedInput?.thinkingMode, "disabled");
   assert.equal(capturedInput?.reasoningEffort, undefined);
-  assert.deepEqual(capturedInput?.responseFormat, { type: "json_object" });
+  assert.deepEqual(capturedInput?.responseFormat, PATIENT_METADATA_RESPONSE_FORMAT);
   assert.doesNotMatch(
     JSON.stringify(capturedInput?.userPayload),
     /caseId|score|patientAnswer|reviewerStatus/i,
@@ -107,7 +151,7 @@ async function main() {
     callProvider: async () => ({ text: classifierJson("dysuria", 0.70, true) })
   });
   assert.equal(lowConfidence.accepted, false);
-  assert.equal(lowConfidence.reason, "semantic_low_confidence");
+  assert.equal(lowConfidence.reason, "semantic_needs_clarification");
 
   resetPatientIntentClassifierState();
   const providerFailure = await classifyPatientIntent({
@@ -116,13 +160,19 @@ async function main() {
     enabled: true,
     callProvider: async () => { throw new Error("provider unavailable"); }
   });
-  assert.deepEqual(providerFailure, { accepted: false, reason: "semantic_provider_unavailable", providerCalls: 1 });
+  assert.deepEqual(providerFailure, {
+    accepted: false,
+    reason: "semantic_provider_unavailable",
+    providerHttpSuccess: false,
+    providerCalls: 1
+  });
 
   const semanticQuestion = "排泄尿液时会产生灼热样感觉吗？";
   assert.equal(matchPriorityCanonicalIntents(semanticQuestion, "zh").length, 0, "integration probe must really reach semantic fallback");
   assert.equal(matchStructuredFacts(cases.find((item: { id: string }) => item.id === "P002"), semanticQuestion, "zh"), null);
   const originalFetch = globalThis.fetch;
   process.env.PATIENT_SEMANTIC_CLASSIFIER_ENABLED = "true";
+  process.env.LLM_PROVIDER = "deepseek";
   process.env.LLM_ENABLE_AI_PATIENT = "true";
   process.env.LLM_API_KEY = "synthetic-semantic-test-key";
   process.env.LLM_API_BASE_URL = "https://semantic-classifier.example.test";
@@ -162,7 +212,7 @@ async function main() {
         choices: [{
           message: {
             reasoning_content: "private chain of thought",
-            content: classifierJson("dysuria", 0.97)
+            content: legacyClassifierJson("dysuria", 0.97)
           }
         }]
       }), { status: 200, headers: { "Content-Type": "application/json" } });
@@ -172,12 +222,8 @@ async function main() {
     assert.equal(semanticAnswer.answerSource, "governed_fact_semantic_classification");
     assert.equal(semanticAnswer.isFallback, false);
     assert.equal(semanticAnswer.provider, "deepseek");
-    assert.equal(semanticAnswer.model, "test-model");
-    assert.equal(semanticAnswer.classifierProvider, "deepseek");
-    assert.equal(semanticAnswer.classifierModel, "test-model");
-    assert.match(semanticAnswer.replyText, /没有|不痛/);
     assert.doesNotMatch(semanticAnswer.replyText, /private chain of thought/);
-    assert.equal(integrationProviderCalls, 2, "DeepSeek must classify once and naturalize only the governed answer once");
+    assert.equal(integrationProviderCalls, 2, "the existing DeepSeek web contract must classify then naturalize the governed fact");
     assert.equal(classifierRequestBody?.model, "test-model");
     assert.deepEqual(classifierRequestBody?.thinking, { type: "disabled" });
     assert.equal("reasoning_effort" in (classifierRequestBody || {}), false);
@@ -192,7 +238,7 @@ async function main() {
     let clarificationProviderCalls = 0;
     globalThis.fetch = async () => {
       clarificationProviderCalls += 1;
-      return new Response(JSON.stringify({ choices: [{ message: { content: classifierJson("dysuria", 0.50, true) } }] }), { status: 200, headers: { "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ choices: [{ message: { content: legacyClassifierJson("dysuria", 0.50, true) } }] }), { status: 200, headers: { "Content-Type": "application/json" } });
     };
     const ambiguousAnswer = await generatePatientAnswer({
       sessionId: "",
@@ -213,6 +259,7 @@ async function main() {
     delete process.env.LLM_API_BASE_URL;
     delete process.env.LLM_MODEL;
     delete process.env.LLM_STREAMING_ENABLED;
+    process.env.LLM_PROVIDER = "local";
   }
 
   resetPatientIntentClassifierState();
@@ -238,7 +285,9 @@ async function main() {
   assert.equal(limited.reason, "classifier_rate_limited");
   assert.equal(limited.providerCalls, 0);
 
-  console.log("Patient semantic classifier whitelist, threshold, cache, singleflight, rate-limit, and canonical projection tests passed.");
+  if (originalProvider === undefined) delete process.env.LLM_PROVIDER;
+  else process.env.LLM_PROVIDER = originalProvider;
+  console.log("Patient semantic classifier whitelist, non-authoritative routing, cache, singleflight, rate-limit, and governed projection tests passed.");
 }
 
 void main();

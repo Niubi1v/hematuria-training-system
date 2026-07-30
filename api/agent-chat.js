@@ -173,10 +173,30 @@ async function buildAgentResponse(body, agentId, caseData, startedAt) {
       const publicProbe = { ...probe };
       delete publicProbe.providerDurationMs;
       delete publicProbe.providerFirstTokenMs;
+      const probeProvider = String(probe.provider || "").toLowerCase();
+      const probeClassificationSource = probe.isFallback
+        ? "none"
+        : probeProvider === "local"
+          ? "local_ai"
+          : probeProvider === "deepseek"
+            ? "deepseek_live_ai"
+            : "live_ai";
       return {
         statusCode: 200,
         timings: { app: Date.now() - startedAt, provider: probe.providerDurationMs, firsttoken: probe.providerFirstTokenMs },
-        payload: { agentId, replyText: "", matchedSlotIds: [], matchedFacts: [], safetyFlags: [], answerSource: probe.isFallback ? "rule" : probe.provider, confidence: 1, ...publicProbe }
+        payload: {
+          agentId,
+          replyText: "",
+          matchedSlotIds: [],
+          matchedFacts: [],
+          safetyFlags: [],
+          answerSource: probe.isFallback ? "rule" : probe.provider,
+          generationSource: "none",
+          classificationSource: probeClassificationSource,
+          classifierStatus: probe.isFallback ? "rejected" : "accepted",
+          confidence: 1,
+          ...publicProbe
+        }
       };
     }
     const patient = await generatePatientAnswer({
@@ -186,9 +206,13 @@ async function buildAgentResponse(body, agentId, caseData, startedAt) {
       conversationHistory: body.conversationHistory || [],
       language: body.language || "zh"
     });
-    const generationSource = patient.isFallback
-      ? (safetyBoundaryFallback(patient) ? "safety_boundary" : "rule_fallback")
-      : patient.cacheHit ? "ai_cache" : "live_ai";
+    const generationSource = safetyBoundaryFallback(patient)
+      ? "safety_boundary"
+      : String(patient.runtimeTrace?.generationSource || (
+          patient.isFallback
+            ? "rule_fallback"
+            : patient.cacheHit ? "ai_cache" : "live_ai"
+        ));
     return {
       statusCode: 200,
       timings: { app: Date.now() - startedAt, provider: patient.providerDurationMs, firsttoken: patient.providerFirstTokenMs },
@@ -203,6 +227,8 @@ async function buildAgentResponse(body, agentId, caseData, startedAt) {
         safetyFlags: patient.safetyFlags || [],
         isFallback: Boolean(patient.isFallback),
         generationSource,
+        classificationSource: String(patient.runtimeTrace?.classificationSource || "none"),
+        classifierStatus: String(patient.runtimeTrace?.classifierStatus || "not_invoked"),
         matchedSlotIds: patient.matchedSlotIds || [],
         matchedFacts: patient.matchedFacts || [],
         answerSource: patient.answerSource || (patient.isFallback ? "rule" : patient.provider),

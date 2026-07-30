@@ -1,7 +1,12 @@
 const crypto = require("node:crypto");
 const chiefComplaintWording = require("../data/chief_complaint_wording_runtime.json");
 const cases = require("../data/cases.json");
-const { callLLM, getLLMProviderConfig } = require("./llmClient.runtime.js");
+const {
+  callLLM,
+  getLLMProviderConfig,
+  isLocalProvider,
+  providerCredentialsAvailable
+} = require("./llmClient.runtime.js");
 const { BILINGUAL_CONFLICT_REASON, quarantineForMatchedSlots, uncertainConflictReply } = require("./bilingualConflictQuarantine.js");
 const { matchStructuredFacts } = require("./structuredFacts.js");
 const { matchCanonicalPatientFacts, projectCanonicalPatientFacts } = require("./canonicalFacts.js");
@@ -17,10 +22,19 @@ const {
   classifierReasonCode,
   renderAnswerPlan
 } = require("../src/lib/patientFactState.js");
-const { classifyPatientIntent, patientThinkingConfig } = require("./patientIntentClassifier.js");
+const {
+  INTENT_WHITELIST,
+  classifyPatientIntent,
+  patientThinkingConfig
+} = require("./patientIntentClassifier.js");
 const { auditPatientPrompt, estimateTokens, promptAuditEnabled } = require("./patientPromptAudit.js");
 const safeLogger = require("./safeLogger.js");
 const { createSessionCapability, verifySessionCapability } = require("./sessionCapability.js");
+const {
+  getDesktopSessionMetadata,
+  storeMode,
+  upsertDesktopSessionMetadata
+} = require("./trainingAttemptStore.js");
 
 const sessionCache = globalThis.__hematuriaSessionCache || new Map();
 const answerCache = globalThis.__hematuriaAnswerCache || new Map();
@@ -372,17 +386,27 @@ function buildTeacherOnlyData(caseData) {
   };
 }
 
-async function initSession({ caseId, attemptId, mode = "training", capabilityMode = mode, language = "zh", debug = false, forceRefresh = false }) {
-  const caseData = getCaseById(caseId);
-  if (!caseData) throw new Error(`Unknown caseId: ${caseId}`);
+function initialConversationState() {
+  return {
+    currentTopic: "",
+    currentEntity: "",
+    requestedSlot: "",
+    lastResolvedFact: null,
+    lastAnswerPlan: null
+  };
+}
+
+function buildPatientSessionRecord(caseData, language, {
+  createdAt = Date.now(),
+  expiresAt = createdAt + SESSION_TTL_MS,
+  forceRefresh = false
+} = {}) {
   const rawPatientFacingProfile = buildRawPatientFacingProfile(caseData, language);
   validateRequiredProfileFacts(caseData, rawPatientFacingProfile);
   const completedPatientFacingProfile = localCompleteProfile(rawPatientFacingProfile);
   const teacherOnlyData = buildTeacherOnlyData(caseData);
-  const createdAt = Date.now();
-  const expiresAt = createdAt + SESSION_TTL_MS;
   const config = getLLMProviderConfig();
-  const profileRecord = {
+  return {
     rawPatientFacingProfile,
     completedPatientFacingProfile,
     teacherOnlyFieldList: teacherOnlyKeys.filter((key) => teacherOnlyData[key]),
@@ -397,23 +421,38 @@ async function initSession({ caseId, attemptId, mode = "training", capabilityMod
     },
     isFallback: false,
     providerReachable: null,
-    conversationState: {
-      currentTopic: "",
-      currentEntity: "",
-      requestedSlot: "",
-      lastResolvedFact: null,
-      lastAnswerPlan: null
-    },
+    conversationState: initialConversationState(),
     createdAt,
     expiresAt,
     deploymentSha: DEPLOYMENT_SHA,
     apiVersion: API_VERSION
   };
-  const sessionId = createSessionCapability({ attemptId: String(attemptId || crypto.randomUUID()), caseId: caseData.id, language, mode: capabilityMode, expiresAt });
+}
+
+async function initSession({ caseId, attemptId, mode = "training", capabilityMode = mode, language = "zh", debug = false, forceRefresh = false }) {
+  const caseData = getCaseById(caseId);
+  if (!caseData) throw new Error(`Unknown caseId: ${caseId}`);
+  const createdAt = Date.now();
+  const expiresAt = createdAt + SESSION_TTL_MS;
+  const profileRecord = buildPatientSessionRecord(caseData, language, { createdAt, expiresAt, forceRefresh });
+  const completedPatientFacingProfile = profileRecord.completedPatientFacingProfile;
+  const config = getLLMProviderConfig();
+  const effectiveAttemptId = String(attemptId || crypto.randomUUID());
+  const sessionId = createSessionCapability({ attemptId: effectiveAttemptId, caseId: caseData.id, language, mode: capabilityMode, expiresAt });
   cacheSet(sessionCache, sessionId, profileRecord, SESSION_TTL_MS, SESSION_CACHE_MAX);
+  if (storeMode() === "sqlite") {
+    upsertDesktopSessionMetadata({
+      sessionId,
+      attemptId: effectiveAttemptId,
+      caseId: caseData.id,
+      language: language === "en" ? "en" : "zh",
+      mode: String(capabilityMode || mode),
+      status: "active"
+    });
+  }
   return {
     sessionId,
-    attemptId: String(attemptId || ""),
+    attemptId: effectiveAttemptId,
     caseId: caseData.id,
     language,
     mode,
@@ -431,12 +470,58 @@ async function initSession({ caseId, attemptId, mode = "training", capabilityMod
 
 function getSession(sessionId, caseId, profile) {
   if (profile) return { completedPatientFacingProfile: profile, debug: { cacheHit: false } };
+  let claims;
   try {
-    verifySessionCapability(sessionId, { caseId });
+    claims = verifySessionCapability(sessionId, { caseId });
   } catch {
     return null;
   }
-  return cacheGet(sessionCache, sessionId, SESSION_CACHE_MAX) || null;
+  const cached = cacheGet(sessionCache, sessionId, SESSION_CACHE_MAX);
+  if (cached) return cached;
+  if (storeMode() !== "sqlite") return null;
+  try {
+    const metadata = getDesktopSessionMetadata(sessionId);
+    const expectedLanguage = claims.language === "en" ? "en" : "zh";
+    if (
+      !metadata
+      || metadata.status !== "active"
+      || metadata.attemptId !== claims.attemptId
+      || String(metadata.caseId || "").toLowerCase() !== String(claims.caseId || "").toLowerCase()
+      || metadata.language !== expectedLanguage
+      || metadata.mode !== claims.mode
+    ) {
+      safeLogger.warn("desktop_patient_session_restore_rejected", {
+        caseId: String(caseId || "").slice(0, 20),
+        reason: metadata ? "metadata_mismatch" : "metadata_missing"
+      });
+      return null;
+    }
+    const caseData = getCaseById(claims.caseId);
+    if (!caseData) return null;
+    const restored = buildPatientSessionRecord(caseData, expectedLanguage, {
+      createdAt: Number(metadata.createdAt || Date.now()),
+      expiresAt: Number(claims.expiresAt)
+    });
+    cacheSet(
+      sessionCache,
+      sessionId,
+      restored,
+      Math.max(1, Math.min(SESSION_TTL_MS, Number(claims.expiresAt) - Date.now())),
+      SESSION_CACHE_MAX
+    );
+    safeLogger.debug("desktop_patient_session_restored", {
+      caseId: String(caseData.id || "").slice(0, 20),
+      language: expectedLanguage,
+      status: "active"
+    });
+    return restored;
+  } catch {
+    safeLogger.warn("desktop_patient_session_restore_failed", {
+      caseId: String(caseId || "").slice(0, 20),
+      reason: "store_unavailable"
+    });
+    return null;
+  }
 }
 
 function providerFallbackReason(error) {
@@ -449,7 +534,34 @@ function providerFallbackReason(error) {
 
 async function probePatientProvider() {
   const config = getLLMProviderConfig();
-  if (!config.enabled || !config.apiKey || !config.baseUrl || !config.model) return { isFallback: true, provider: config.provider, model: config.model, fallbackReason: "provider_not_configured" };
+  if (!config.enabled || !providerCredentialsAvailable(config) || !config.baseUrl || !config.model) {
+    return { isFallback: true, provider: config.provider, model: config.model, fallbackReason: "provider_not_configured" };
+  }
+  if (isLocalProvider(config.provider)) {
+    const metadataProbe = await classifyPatientIntent({
+      question: "小便时会痛吗？",
+      language: "zh",
+      conversationHistory: [],
+      conversationState: null,
+      enabled: true,
+      forceMetadata: true
+    });
+    if (!metadataProbe.metadataValid) {
+      return {
+        isFallback: true,
+        provider: config.provider,
+        model: config.model,
+        fallbackReason: metadataProbe.reason || "semantic_response_invalid"
+      };
+    }
+    return {
+      isFallback: false,
+      provider: config.provider,
+      model: config.model,
+      fallbackReason: "",
+      providerDurationMs: Number(metadataProbe.durationMs || 0)
+    };
+  }
   const timeoutMs = Math.max(
     30000,
     Math.min(
@@ -679,6 +791,36 @@ function mergePatientFactMatches(canonical, structured) {
   };
 }
 
+function governedIntentKeys(matched) {
+  return [...new Set(
+    (matched?.answerPlans || [])
+      .map((plan) => String(plan?.intent || ""))
+      .filter((intent) => INTENT_WHITELIST.includes(intent))
+  )];
+}
+
+function localMetadataMatchesGovernedRoute(semanticDecision, matched) {
+  if (!semanticDecision?.accepted || !semanticDecision.metadataValid) return false;
+  const governed = governedIntentKeys(matched).sort();
+  const classified = [...new Set(semanticDecision.intents || [])].sort();
+  return governed.length > 0
+    && governed.length === classified.length
+    && governed.every((intent, index) => intent === classified[index]);
+}
+
+function publicLocalMetadata(semanticDecision) {
+  if (!semanticDecision?.metadataValid) return null;
+  return {
+    intent: semanticDecision.intent ?? null,
+    currentTopic: semanticDecision.currentTopic ?? null,
+    currentEntity: semanticDecision.currentEntity ?? null,
+    requestedSlot: semanticDecision.requestedSlot ?? null,
+    contextReference: semanticDecision.contextReference,
+    clauses: semanticDecision.clauses,
+    naturalizationStyle: semanticDecision.naturalizationStyle
+  };
+}
+
 function semanticProjectionQuestion(definition, language) {
   return definition?.aliases?.[language]?.[0]
     || (language === "en" ? definition?.labelEn : definition?.labelZh)
@@ -692,7 +834,12 @@ function projectSemanticPatientFacts(caseId, caseData, semanticDecision, languag
     if (!definition) continue;
     let current = null;
     if (definition.domain === "canonical_priority") {
-      current = projectCanonicalPatientFacts(caseId, [intent], language, semanticDecision.clauses?.[0]?.text || "");
+      current = projectCanonicalPatientFacts(
+        caseId,
+        [intent],
+        language,
+        semanticDecision.clauses?.[0]?.text || ""
+      );
     } else {
       const projectionQuestion = semanticProjectionQuestion(definition, language);
       current = definition.domain === "structured_history"
@@ -704,7 +851,10 @@ function projectSemanticPatientFacts(caseId, caseData, semanticDecision, languag
   if (!projected) return null;
   return {
     ...projected,
-    confidence: Math.min(Number(projected.confidence ?? 1), Number(semanticDecision.confidence ?? 0)),
+    confidence: Math.min(
+      Number(projected.confidence ?? 1),
+      Number(semanticDecision.confidence ?? 0)
+    ),
     answerSource: projected.answerSource === "pending_review"
       ? "pending_review"
       : "governed_fact_semantic_classification",
@@ -773,29 +923,78 @@ function recordConversationState(session, result, traceInput = {}) {
   }
   const configured = getLLMProviderConfig();
   const classifierInvoked = Number(traceInput.semanticDecision?.providerCalls || 0) > 0;
-  const providerInvoked = Boolean(traceInput.providerInvoked || !result?.isFallback);
+  const localProvider = isLocalProvider(configured.provider);
+  const localMetadataApplied = Boolean(traceInput.localMetadataApplied || result?.localMetadataApplied);
+  const providerInvoked = Boolean(
+    traceInput.providerInvoked
+    || (!localProvider && !result?.isFallback)
+  );
   const activeModel = String(result?.model || traceInput.semanticDecision?.model || configured.model || "");
   const isMock = /(?:test|synthetic|mock)/i.test(activeModel)
     || /\.test(?:\/|$)/i.test(String(configured.baseUrl || ""));
   const thinkingMode = String(result?.thinkingMode || traceInput.semanticDecision?.thinkingMode || patientThinkingConfig().mode);
+  const governedPlannerRendered = Boolean(
+    resolvedPlan
+    || (Array.isArray(result?.answerPlans) && result.answerPlans.length > 0)
+    || (Array.isArray(result?.matchedSlotIds) && result.matchedSlotIds.length > 0)
+  );
   const generationSource = result?.cacheHit
-    ? "ai_cache"
-    : providerInvoked
-      ? (isMock ? "mock" : "live_ai")
-      : "rule_fallback";
+      ? "ai_cache"
+      : providerInvoked
+        ? (
+            isMock
+              ? "mock"
+              : String(configured.provider || "").toLowerCase() === "deepseek"
+                ? "deepseek_live_ai"
+                : "live_ai"
+          )
+        : governedPlannerRendered
+          ? "governed_planner"
+          : "rule_fallback";
+  const configuredProvider = String(configured.provider || "").toLowerCase();
+  const classificationSource = classifierInvoked
+    ? localProvider
+      ? "local_ai"
+      : configuredProvider === "deepseek"
+        ? "deepseek_live_ai"
+        : "live_ai"
+    : governedPlannerRendered
+      ? "deterministic"
+      : "none";
+  const classifierReason = String(traceInput.semanticDecision?.reason || "");
+  const classifierStatus = !classifierInvoked
+    ? "not_invoked"
+    : localMetadataApplied
+      ? "accepted"
+      : /timeout/.test(classifierReason)
+        ? "timeout"
+        : "rejected";
   const runtimeTrace = {
     caseId: String(traceInput.caseId || "").slice(0, 20),
     model: activeModel || configured.model,
     generationSource,
-    providerConfigured: Boolean(configured.enabled && configured.apiKey && configured.baseUrl && configured.model),
-    providerHttpSuccess: providerInvoked,
+    classificationSource,
+    classifierStatus,
+    providerConfigured: Boolean(
+      configured.enabled
+      && providerCredentialsAvailable(configured)
+      && configured.baseUrl
+      && configured.model
+    ),
+    providerHttpSuccess: localProvider
+      ? Boolean(traceInput.semanticDecision?.providerHttpSuccess)
+      : providerInvoked,
     thinkingMode,
-    thinkingApplied: thinkingMode !== "disabled" && (providerInvoked || classifierInvoked),
-    thinkingExecuted: thinkingMode !== "disabled" && providerInvoked,
-    fallbackReason: String(result?.fallbackReason || (providerInvoked ? "" : "deterministic_route")),
+    thinkingApplied: !localProvider && thinkingMode !== "disabled" && (providerInvoked || classifierInvoked),
+    thinkingExecuted: !localProvider && thinkingMode !== "disabled" && providerInvoked,
+    fallbackReason: String(
+      result?.fallbackReason
+      || (localMetadataApplied || providerInvoked ? "" : "deterministic_route")
+    ),
     intent: String(resolvedPlan?.intent || ""),
     currentTopic: String(session?.conversationState?.currentTopic || ""),
     requestedSlot: String(session?.conversationState?.requestedSlot || ""),
+    naturalizationStyle: String(traceInput.semanticDecision?.naturalizationStyle || ""),
     answerSource: String(result?.answerSource || ""),
     durationMs: Number(result?.providerDurationMs || traceInput.semanticDecision?.durationMs || 0)
   };
@@ -876,10 +1075,36 @@ async function naturalizeGovernedPatientAnswer({
   runtimeProfile,
   matched,
   fallback,
-  semanticDecision
+  semanticDecision,
+  localMetadataApplied = false
 }) {
   const config = getLLMProviderConfig();
-  if (!runtimeProfile || !config.enabled || !config.apiKey || !config.baseUrl || !config.model) {
+  if (isLocalProvider(config.provider)) {
+    const metadata = localMetadataApplied ? publicLocalMetadata(semanticDecision) : null;
+    return {
+      ...fallback,
+      provider: metadata ? config.provider : "rule",
+      model: metadata ? config.model : "local-rule",
+      isFallback: !metadata,
+      filter: { ok: true, hits: [] },
+      fallbackReason: metadata
+        ? ""
+        : fallback.fallbackReason || semanticDecision?.reason || "local_metadata_not_applied",
+      allowedAnswer: fallback.replyText,
+      localMetadataApplied: Boolean(metadata),
+      ...(metadata ? { localMetadata: metadata } : {}),
+      providerDurationMs: Number(semanticDecision?.durationMs || 0),
+      thinkingMode: "disabled",
+      thinkingExecuted: false
+    };
+  }
+  if (
+    !runtimeProfile
+    || !config.enabled
+    || !providerCredentialsAvailable(config)
+    || !config.baseUrl
+    || !config.model
+  ) {
     return {
       ...fallback,
       provider: config.provider,
@@ -1081,18 +1306,43 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   if (!isExplicitHistoryQuestion && !isTemporalFindingQuestion && hasAny(studentInput, language === "en" ? reportWordsEn : reportWords)) {
     return { replyText: language === "en" ? "I cannot explain the exact results. Please check the formal report." : "我说不清楚，得看检查报告。", provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, safetyFlags: ["blocked_report_request"], matchedSlotIds: [], matchedFacts: [], answerSource: "rule", confidence: 1, fallbackReason: "report_boundary", clauseOutcomes: [{ intent: null, sourceSlotId: null, status: "rejected_boundary", factState: FACT_STATES.MISSING, unknownReason: null }], contextResolution };
   }
+  const configuredProvider = getLLMProviderConfig();
+  const localStructuredMode = isLocalProvider(configuredProvider.provider);
   let semanticDecision = null;
-  if (!matched) {
+  let localMetadataApplied = false;
+  const deterministicMetadataEligible = localStructuredMode
+    && governedIntentKeys(matched).length > 0;
+  if (!matched || deterministicMetadataEligible) {
     semanticDecision = await classifyPatientIntent({
       question: routedInput,
       language,
       conversationHistory,
-      conversationState: session?.conversationState
+      conversationState: session?.conversationState,
+      governedIntentCandidates: deterministicMetadataEligible ? governedIntentKeys(matched) : [],
+      forceMetadata: deterministicMetadataEligible
     });
-    if (semanticDecision.accepted) {
-      matched = projectSemanticPatientFacts(caseId, caseData, semanticDecision, language);
-      canonical = matched;
-      structured = null;
+    if (!matched && semanticDecision.accepted) {
+      if (localStructuredMode) {
+        semanticDecision = {
+          ...semanticDecision,
+          accepted: false,
+          routingAuthorized: false,
+          reason: "semantic_route_requires_governed_match"
+        };
+      } else {
+        matched = projectSemanticPatientFacts(caseId, caseData, semanticDecision, language);
+        canonical = matched;
+        structured = null;
+      }
+    }
+    if (localStructuredMode && matched) {
+      localMetadataApplied = localMetadataMatchesGovernedRoute(semanticDecision, matched);
+      if (semanticDecision?.accepted && !localMetadataApplied) {
+        semanticDecision = {
+          ...semanticDecision,
+          reason: "local_metadata_conflict_with_deterministic_route"
+        };
+      }
     }
   }
   // Vercel的会话初始化与问答可能落到不同Serverless实例；每问均从当前病例重建安全档案，
@@ -1101,7 +1351,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   const runtimeProfile = authoritativeProfile || session?.completedPatientFacingProfile || completedPatientFacingProfile;
   const naturalClarification = !matched && isNaturalClarificationRequest(studentInput, language);
   const classifierNeedsClarification = !matched
-    && ["semantic_low_confidence", "semantic_response_invalid"].includes(semanticDecision?.reason);
+    && ["semantic_needs_clarification", "semantic_low_confidence", "semantic_response_invalid"].includes(semanticDecision?.reason);
   const contextualRecap = Boolean(matched) && isContextualRecap(studentInput, language);
   const genericFallback = naturalClarification || classifierNeedsClarification
     ? clarificationReply(language)
@@ -1202,7 +1452,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
       fallbackReason: "unsafe_deterministic_answer"
     };
   }
-  if (semanticDecision && !semanticDecision.accepted && !naturalClarification) {
+  if (!matched && semanticDecision && !semanticDecision.accepted && !naturalClarification) {
     if (promptAuditEnabled()) {
       auditPatientPrompt({
         caseId, language, canonicalIntents: [], matcherLayer: "semantic_classifier", matcherConfidence: semanticDecision.confidence || 0,
@@ -1249,12 +1499,14 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     runtimeProfile,
     matched,
     fallback: governedFallback,
-    semanticDecision
+    semanticDecision,
+    localMetadataApplied
   });
   return recordConversationState(session, result, {
     caseId,
     semanticDecision,
-    providerInvoked: !result.isFallback
+    providerInvoked: !localStructuredMode && !result.isFallback,
+    localMetadataApplied
   });
 }
 

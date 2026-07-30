@@ -1,6 +1,26 @@
 const { enterProviderCircuit, recordProviderFailure, recordProviderSuccess } = require("./providerCircuitStore.js");
 const safeLogger = require("./safeLogger.js");
 const RETIRED_DEEPSEEK_MODELS = new Set(["deepseek-chat", "deepseek-reasoner"]);
+const DEFAULT_LOCAL_MODEL = "Qwen3-1.7B";
+
+function isLocalProvider(provider) {
+  return String(provider || "").toLowerCase() === "local";
+}
+
+function isLoopbackLLMBaseUrl(baseUrl) {
+  try {
+    const parsed = new URL(String(baseUrl || ""));
+    const hostname = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+    return (parsed.protocol === "http:" || parsed.protocol === "https:")
+      && ["127.0.0.1", "localhost", "::1"].includes(hostname);
+  } catch {
+    return false;
+  }
+}
+
+function providerCredentialsAvailable(config) {
+  return isLocalProvider(config?.provider) || Boolean(config?.apiKey);
+}
 
 function isDeepSeekProvider(provider, baseUrl) {
   return String(provider || "").toLowerCase() === "deepseek"
@@ -14,24 +34,25 @@ function currentModelName(provider, baseUrl, configuredModel) {
     : model;
 }
 
-function getLLMProviderConfig() {
-  const endpointType = process.env.LLM_ENDPOINT_TYPE || "chat_completions";
-  const provider = process.env.LLM_PROVIDER || "deepseek";
-  const baseUrl = process.env.LLM_API_BASE_URL || "https://api.deepseek.com";
+function getLLMProviderConfig(env = process.env) {
+  const endpointType = env.LLM_ENDPOINT_TYPE || "chat_completions";
+  const provider = env.LLM_PROVIDER || "deepseek";
+  const local = isLocalProvider(provider);
+  const baseUrl = env.LLM_API_BASE_URL || (local ? "http://127.0.0.1:8080/v1" : "https://api.deepseek.com");
   return {
     provider,
-    apiKey: process.env.LLM_API_KEY,
+    apiKey: env.LLM_API_KEY,
     baseUrl,
-    model: currentModelName(provider, baseUrl, process.env.LLM_MODEL || "deepseek-v4-flash"),
+    model: currentModelName(provider, baseUrl, env.LLM_MODEL || (local ? DEFAULT_LOCAL_MODEL : "deepseek-v4-flash")),
     endpointType,
-    streaming: process.env.LLM_STREAMING_ENABLED === undefined
-      ? endpointType === "chat_completions"
-      : process.env.LLM_STREAMING_ENABLED === "true",
-    temperature: Number(process.env.LLM_TEMPERATURE || 0.2),
-    maxTokens: Number(process.env.LLM_MAX_TOKENS || 500),
-    timeoutMs: Number(process.env.LLM_REQUEST_TIMEOUT_MS || 30000),
-    thinkingMode: process.env.LLM_THINKING_MODE || "disabled",
-    enabled: process.env.LLM_ENABLE_AI_AGENTS === "true" || process.env.LLM_ENABLE_AI_PATIENT === "true"
+    streaming: env.LLM_STREAMING_ENABLED === undefined
+      ? endpointType === "chat_completions" && !local
+      : env.LLM_STREAMING_ENABLED === "true",
+    temperature: Number(env.LLM_TEMPERATURE || (local ? 0 : 0.2)),
+    maxTokens: Number(env.LLM_MAX_TOKENS || (local ? 320 : 500)),
+    timeoutMs: Number(env.LLM_REQUEST_TIMEOUT_MS || (local ? 60000 : 30000)),
+    thinkingMode: local ? "disabled" : env.LLM_THINKING_MODE || "disabled",
+    enabled: env.LLM_ENABLE_AI_AGENTS === "true" || env.LLM_ENABLE_AI_PATIENT === "true"
   };
 }
 
@@ -40,6 +61,15 @@ function deepSeekThinking(config, thinkingMode = config.thinkingMode, reasoningE
   return {
     thinking: { type: thinkingMode },
     ...(thinkingMode === "enabled" && reasoningEffort ? { reasoning_effort: reasoningEffort } : {})
+  };
+}
+
+function localGenerationControls(config) {
+  if (!isLocalProvider(config.provider)) return {};
+  return {
+    chat_template_kwargs: {
+      enable_thinking: false
+    }
   };
 }
 
@@ -136,14 +166,19 @@ async function callLLM({
 }) {
   const config = getLLMProviderConfig();
   if (!config.enabled) throw new Error("LLM agent mode is disabled");
-  if (!config.apiKey) throw new Error("Missing LLM_API_KEY");
+  if (!providerCredentialsAvailable(config)) throw new Error("Missing LLM_API_KEY");
   if (!config.baseUrl) throw new Error("Missing LLM_API_BASE_URL");
   if (!config.model) throw new Error("Missing LLM_MODEL");
+  if (isLocalProvider(config.provider) && !isLoopbackLLMBaseUrl(config.baseUrl)) {
+    throw new Error("Local LLM base URL must use loopback");
+  }
 
   const requestId = `llm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const startedAt = Date.now();
   const retryLimit = Number.isInteger(Number(maxRetries)) ? Math.max(0, Math.min(Number(maxRetries), 2)) : 2;
-  const requestTimeoutLimitMs = process.env.NODE_ENV === "production" ? 30_000 : 90_000;
+  const requestTimeoutLimitMs = isLocalProvider(config.provider) || process.env.HEMATURIA_RUNTIME_TARGET === "desktop"
+    ? 90_000
+    : process.env.NODE_ENV === "production" ? 30_000 : 90_000;
   const requestTimeoutMs = Math.max(
     1000,
     Math.min(Number(timeoutMs) || Number(config.timeoutMs) || 15_000, requestTimeoutLimitMs)
@@ -165,10 +200,16 @@ async function callLLM({
     try {
       const response = await fetch(joinUrl(config.baseUrl, config.endpointType), {
         method: "POST",
-        headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json; charset=utf-8", Accept: config.streaming ? "text/event-stream" : "application/json", "X-Request-Id": requestId },
+        headers: {
+          ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
+          "Content-Type": "application/json; charset=utf-8",
+          Accept: config.streaming ? "text/event-stream" : "application/json",
+          "X-Request-Id": requestId
+        },
         body: JSON.stringify({
           model: config.model,
           ...deepSeekThinking(config, thinkingMode ?? config.thinkingMode, reasoningEffort ?? process.env.LLM_REASONING_EFFORT),
+          ...localGenerationControls(config),
           ...((thinkingMode ?? config.thinkingMode) === "enabled"
             ? {}
             : { temperature: temperature ?? config.temperature }),
@@ -236,8 +277,12 @@ async function callLLM({
 }
 
 module.exports = {
+  DEFAULT_LOCAL_MODEL,
   callLLM,
   currentModelName,
   getLLMProviderConfig,
+  isLocalProvider,
+  isLoopbackLLMBaseUrl,
+  providerCredentialsAvailable,
   readLLMResponse
 };
