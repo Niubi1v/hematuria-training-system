@@ -41,7 +41,7 @@ export type OrderResultLog = {
   id: string;
   input: string;
   matched: boolean;
-  matchedOrders: Array<{ orderId: string; displayName: string }>;
+  matchedOrders: Array<{ orderId: string; displayName: string; translationAvailable?: boolean }>;
   results: Array<{
     caseId: string;
     orderId: string;
@@ -56,6 +56,17 @@ export type OrderResultLog = {
     abnormalFlags?: string[];
     abnormalLevel: string;
     teachingExplanation: string;
+    metadataStatus?: "complete" | "awaiting_reviewed_metadata";
+    translationStatus?: string;
+    provenance?: "configured_case_result" | "simulated_normal" | "not_provided";
+  }>;
+  orderOutcomes?: Array<{
+    orderId: string;
+    displayName: string;
+    status: "reported" | "not_provided" | "prerequisite_missing" | "duplicate" | "unrecognized" | "unavailable";
+    provenance: string;
+    resultId?: string;
+    message: string;
   }>;
   pendingResults?: OrderResultLog["results"];
   message: string;
@@ -65,13 +76,27 @@ export type OrderResultLog = {
   stageNo?: number;
   status?: "ordered" | "reported" | "no-result";
   duplicateOrderIds?: string[];
+  acceptedOrderIds?: string[];
+  pendingPrerequisiteOrderIds?: string[];
   unmetPrerequisites?: string[];
+  unavailableOrderCount?: number;
   selectedOrderCount?: number;
   recognizedOrderCount?: number;
   returnedReportCount?: number;
 };
 
-export type ExamResultLog = { input: string; result: string; at: string; examId?: string };
+export type ExamResultLog = {
+  input: string;
+  result: string;
+  at: string;
+  examId?: string;
+  translationStatus?: string;
+  provenance?: "configured_case_result" | "simulated_normal" | "not_provided";
+  affectsDiagnosis?: false;
+  affectsScore?: false;
+  reviewerStatus?: "not_required";
+  simulationPolicyId?: string;
+};
 
 export type MdtOpinion = {
   department: string;

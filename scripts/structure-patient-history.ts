@@ -1,22 +1,49 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { CaseData, StructuredAlcoholHistory, StructuredHistory, StructuredMedication, StructuredPatientFact, StructuredSmokingHistory } from "../src/lib/types";
+import historyMedicalPolicy from "../data/history_medical_reconciliation.json";
 
 type MutableCase = CaseData & Record<string, unknown>;
 type QcRow = { caseId: string; field: string; before: string; after: string; reason: string; provenance: string; teacherReviewRequired: boolean };
 
 const dataDir = path.join(process.cwd(), "data");
 const placeholders = /未诉|需主动询问|需追问|不详|没有特别注意|原表未记录|训练中若被问及|未提供/;
-const medicineNames = ["缬沙坦", "阿司匹林", "氯吡格雷", "华法林", "利伐沙班", "达比加群", "阿哌沙班", "达格列净", "二甲双胍", "胰岛素", "氨氯地平", "硝苯地平", "贝那普利", "厄贝沙坦", "氯沙坦", "他汀", "非那雄胺", "坦索罗辛", "抗生素", "降压药"];
-const medicationNamesEn: Record<string, string> = { 缬沙坦: "valsartan", 阿司匹林: "aspirin", 氯吡格雷: "clopidogrel", 华法林: "warfarin", 利伐沙班: "rivaroxaban", 达比加群: "dabigatran", 阿哌沙班: "apixaban", 达格列净: "dapagliflozin", 二甲双胍: "metformin", 胰岛素: "insulin", 氨氯地平: "amlodipine", 硝苯地平: "nifedipine", 贝那普利: "benazepril", 厄贝沙坦: "irbesartan", 氯沙坦: "losartan", 他汀: "a statin", 非那雄胺: "finasteride", 坦索罗辛: "tamsulosin", 抗生素: "an antibiotic", 降压药: "an antihypertensive" };
+const medicineNames = ["缬沙坦", "阿司匹林", "氯吡格雷", "华法林", "利伐沙班", "达比加群", "阿哌沙班", "达格列净", "二甲双胍", "胰岛素", "氨氯地平", "硝苯地平", "贝那普利", "厄贝沙坦", "氯沙坦", "他汀", "非那雄胺", "坦索罗辛", "别嘌醇", "布洛芬", "复方止痛药", "抗生素", "降压药", "降糖药"];
+const medicationNamesEn: Record<string, string> = { 缬沙坦: "valsartan", 阿司匹林: "aspirin", 氯吡格雷: "clopidogrel", 华法林: "warfarin", 利伐沙班: "rivaroxaban", 达比加群: "dabigatran", 阿哌沙班: "apixaban", 达格列净: "dapagliflozin", 二甲双胍: "metformin", 胰岛素: "insulin", 氨氯地平: "amlodipine", 硝苯地平: "nifedipine", 贝那普利: "benazepril", 厄贝沙坦: "irbesartan", 氯沙坦: "losartan", 他汀: "a statin", 非那雄胺: "finasteride", 坦索罗辛: "tamsulosin", 别嘌醇: "allopurinol", 布洛芬: "ibuprofen", 复方止痛药: "combination painkillers", 抗生素: "an antibiotic", 降压药: "an antihypertensive", 降糖药: "diabetes medication" };
+type MedicationResolution = {
+  caseId: string;
+  field: string;
+  authoritativeValue: string;
+  patientValueZh: string;
+  patientValueEn: string;
+  riskFactorAnticoagulants?: string;
+};
+const sourceMedicationOverrides = new Map<string, MedicationResolution>(
+  historyMedicalPolicy.sourcePrecedenceResolutions
+    .filter((item) => item.field === "medication")
+    .map((item) => [item.caseId, item as MedicationResolution])
+);
+const sourcePrecedenceOnly = process.env.HISTORY_SOURCE_PRECEDENCE_ONLY === "1"
+  || process.argv.includes("--source-precedence-only");
 
 function read<T>(file: string): T { return JSON.parse(fs.readFileSync(path.join(dataDir, file), "utf8")); }
 function write(file: string, value: unknown) { fs.writeFileSync(path.join(dataDir, file), `${JSON.stringify(value, null, 2)}\n`, "utf8"); }
 function clean(value: unknown) { return String(value || "").replace(/吸烟：吸烟：/g, "吸烟：").replace(/饮酒：饮酒：/g, "饮酒：").replace(/手术术/g, "手术").replace(/ng\/m(?!L)/g, "ng/mL").replace(/\s+/g, " ").trim(); }
 type SourceFacts = { pastHistory: string; personalHistory: string; familyHistory: string; medication: string; riskFactors: CaseData["riskFactors"]; patientFacingProfile: unknown };
 function immutableSource(c: MutableCase): SourceFacts {
-  if (c.sourceFacts && typeof c.sourceFacts === "object") return c.sourceFacts as SourceFacts;
-  const source = { pastHistory: clean(c.pastHistory), personalHistory: clean(c.personalHistory), familyHistory: clean(c.familyHistory), medication: clean(c.medication), riskFactors: JSON.parse(JSON.stringify(c.riskFactors || {})), patientFacingProfile: JSON.parse(JSON.stringify(c.patientFacingProfile || {})) };
+  const source = c.sourceFacts && typeof c.sourceFacts === "object"
+    ? JSON.parse(JSON.stringify(c.sourceFacts)) as SourceFacts
+    : { pastHistory: clean(c.pastHistory), personalHistory: clean(c.personalHistory), familyHistory: clean(c.familyHistory), medication: clean(c.medication), riskFactors: JSON.parse(JSON.stringify(c.riskFactors || {})), patientFacingProfile: JSON.parse(JSON.stringify(c.patientFacingProfile || {})) };
+  const medicationResolution = sourceMedicationOverrides.get(c.id);
+  if (medicationResolution) {
+    source.medication = medicationResolution.authoritativeValue;
+    if (medicationResolution.riskFactorAnticoagulants) {
+      source.riskFactors = {
+        ...(source.riskFactors || {}),
+        anticoagulants: medicationResolution.riskFactorAnticoagulants
+      };
+    }
+  }
   c.sourceFacts = source;
   return source;
 }
@@ -106,8 +133,14 @@ function alcohol(c: MutableCase): StructuredAlcoholHistory {
   if (usable && !negative && positive) return { status: /已戒|戒酒/.test(raw) ? "former" : "current", type, amount, frequency, years, patientAnswerZh: `喝酒，${[type, amount || (/偶尔|少量|应酬/.test(raw) ? "偶尔少量" : "")].filter(Boolean).join("，") || "平时会喝一些"}。`, patientAnswerEn: frequency === "occasional" ? "I drink alcohol occasionally in small amounts." : `I drink ${typeEn}${amountEn ? `, about ${amountEn}` : ""}.`, provenance: "source", teacherReviewRequired: false };
   return { status: "never", type: "", amount: "0", frequency: "never", years: 0, patientAnswerZh: "我平时不喝酒。", patientAnswerEn: "I do not drink alcohol.", provenance: usable && negative ? "source" : "author_added_for_simulation", teacherReviewRequired: !(usable && negative) };
 }
-function extractMedications(corpus: string, medicationSource: string): StructuredMedication[] {
-  const found = medicineNames.filter((name) => corpus.includes(name)).filter((name) => name !== "降压药" || !medicineNames.some((specific) => specific !== "降压药" && /缬沙坦|氨氯地平|硝苯地平|贝那普利|厄贝沙坦|氯沙坦/.test(specific) && corpus.includes(specific)));
+function extractMedications(corpus: string, medicationSource: string, caseId: string): StructuredMedication[] {
+  const overrideApplies = sourceMedicationOverrides.has(caseId);
+  const medicationClauses = medicationSource.split(/[。；;]/).map((item) => item.trim()).filter(Boolean);
+  const found = medicineNames
+    .filter((name) => overrideApplies
+      ? medicationClauses.some((clause) => clause.includes(name) && !/(?:否认|没有|未服|不服|停用)[^。；]*$/.test(clause))
+      : corpus.includes(name))
+    .filter((name) => name !== "降压药" || !medicineNames.some((specific) => specific !== "降压药" && /缬沙坦|氨氯地平|硝苯地平|贝那普利|厄贝沙坦|氯沙坦/.test(specific) && (overrideApplies ? medicationSource : corpus).includes(specific)));
   return [...new Set(found)].map((name) => {
     if (name === "降压药") return { name, dose: "", frequency: "每日", indication: "高血压", provenance: "source", teacherReviewRequired: false };
     const clause = medicationSource.split(/[。；]/).find((part) => part.includes(name)) || "";
@@ -119,7 +152,7 @@ function extractMedications(corpus: string, medicationSource: string): Structure
 function createHistory(c: MutableCase): StructuredHistory {
   const corpus = sourceText(c);
   const source = immutableSource(c);
-  const meds = extractMedications(corpus, source.medication);
+  const meds = extractMedications(corpus, source.medication, c.id);
   const medZh = meds.length ? `我长期服用${meds.map((m) => `${m.name}${m.dose ? `（${m.dose}）` : ""}`).join("、")}。` : "我没有长期服药。";
   const medEn = meds.length ? `I regularly take ${meds.map((m) => medicationNamesEn[m.name] || m.name).join(" and ")}.` : "I do not take any long-term medication.";
   const sh = smoking(c, corpus);
@@ -162,7 +195,11 @@ function createHistory(c: MutableCase): StructuredHistory {
     surgeryHistory: surgeryFact(corpus),
     transfusionHistory: transfusionFact(corpus),
     allergyHistory,
-    anticoagulantUse: anticoagulant ? { status: "present", patientAnswerZh: `我在服用${meds.filter((m) => /华法林|利伐沙班|达比加群|阿哌沙班/.test(m.name)).map((m) => m.name).join("、")}。`, patientAnswerEn: "I take an anticoagulant.", provenance: "source", teacherReviewRequired: false } : authoredFact("我没有服用华法林、利伐沙班等抗凝药。", "I do not take anticoagulants."),
+    anticoagulantUse: anticoagulant
+      ? { status: "present", patientAnswerZh: `我在服用${meds.filter((m) => /华法林|利伐沙班|达比加群|阿哌沙班/.test(m.name)).map((m) => m.name).join("、")}。`, patientAnswerEn: "I take an anticoagulant.", provenance: "source", teacherReviewRequired: false }
+      : sourceMedicationOverrides.has(c.id) && /否认[^。；]*(?:华法林|利伐沙班|抗凝药)/.test(source.medication)
+        ? { status: "absent", patientAnswerZh: "我没有服用华法林、利伐沙班等抗凝药。", patientAnswerEn: "I do not take anticoagulants.", provenance: "source", teacherReviewRequired: false }
+        : authoredFact("我没有服用华法林、利伐沙班等抗凝药。", "I do not take anticoagulants."),
     antiplateletUse: antiPlatelet ? { status: "present", patientAnswerZh: `我在服用${meds.filter((m) => /阿司匹林|氯吡格雷/.test(m.name)).map((m) => m.name).join("、")}。`, patientAnswerEn: "I take antiplatelet medication.", provenance: "source", teacherReviewRequired: false } : authoredFact("我没有服用阿司匹林或氯吡格雷。", "I do not take antiplatelet medication."),
     familyHistory,
     menstrualHistory: c.sex === "女" ? authoredFact("月经情况正常，这次尿色异常不是在月经期。", "My periods are regular, and this episode did not occur during menstruation.") : { status: "absent", patientAnswerZh: "我是男性，不涉及月经。", patientAnswerEn: "I am male, so menstruation does not apply.", provenance: "source", teacherReviewRequired: false },
@@ -171,14 +208,93 @@ function createHistory(c: MutableCase): StructuredHistory {
   };
 }
 
+function applySourcePrecedence(c: MutableCase) {
+  const resolution = sourceMedicationOverrides.get(c.id);
+  if (!resolution) return c;
+  const source = immutableSource(c);
+  const medicationList = extractMedications(sourceText(c), source.medication, c.id);
+  const medicationAnswerZh = resolution.patientValueZh;
+  const medicationAnswerEn = resolution.patientValueEn;
+  const anticoagulants = medicationList.filter((item) => /华法林|利伐沙班|达比加群|阿哌沙班/.test(item.name));
+  const antiplatelets = medicationList.filter((item) => /阿司匹林|氯吡格雷/.test(item.name));
+  const resolvedAnticoagulantUse = anticoagulants.length
+    ? {
+        status: "present" as const,
+        patientAnswerZh: `我在服用${anticoagulants.map((item) => item.name).join("、")}。`,
+        patientAnswerEn: "I take an anticoagulant.",
+        provenance: "source",
+        teacherReviewRequired: false
+      }
+    : /否认[^。；]*(?:抗凝|华法林|利伐沙班|达比加群|阿哌沙班)/.test(source.medication)
+      ? {
+          status: "absent" as const,
+          patientAnswerZh: "我没有服用华法林、利伐沙班等抗凝药。",
+          patientAnswerEn: "I do not take anticoagulants.",
+          provenance: "source",
+          teacherReviewRequired: false
+        }
+      : c.structuredHistory?.anticoagulantUse;
+  const resolvedAntiplateletUse = antiplatelets.length
+    ? {
+        status: "present" as const,
+        patientAnswerZh: `我在服用${antiplatelets.map((item) => item.name).join("、")}。`,
+        patientAnswerEn: "I take antiplatelet medication.",
+        provenance: "source",
+        teacherReviewRequired: false
+      }
+    : /否认[^。；]*(?:抗血小板|阿司匹林|氯吡格雷)/.test(source.medication)
+      ? {
+          status: "absent" as const,
+          patientAnswerZh: "我没有服用阿司匹林或氯吡格雷。",
+          patientAnswerEn: "I do not take antiplatelet medication.",
+          provenance: "source",
+          teacherReviewRequired: false
+        }
+      : c.structuredHistory?.antiplateletUse;
+  c.medication = medicationAnswerZh
+    .replace(/^我(?:长期|在)?服用/, "")
+    .replace(/[，,]但.*$/, "")
+    .replace(/，具体.*$/, "")
+    .replace(/。$/, "");
+  if (resolution.riskFactorAnticoagulants) {
+    c.riskFactors = {
+      ...(c.riskFactors || {}),
+      anticoagulants: resolution.riskFactorAnticoagulants
+    };
+  }
+  c.structuredHistory = {
+    ...c.structuredHistory,
+    anticoagulantUse: resolution.riskFactorAnticoagulants
+      ? resolvedAnticoagulantUse
+      : c.structuredHistory?.anticoagulantUse,
+    antiplateletUse: resolution.riskFactorAnticoagulants
+      ? resolvedAntiplateletUse
+      : c.structuredHistory?.antiplateletUse,
+    medicationList,
+    medicationAnswerZh,
+    medicationAnswerEn
+  } as StructuredHistory;
+  return c;
+}
+
 const qc: QcRow[] = [];
 for (const file of ["cases.json", "cases_42.json"]) {
   const cases = read<MutableCase[]>(file).map((c) => {
+    if (sourcePrecedenceOnly) return applySourcePrecedence(c);
     const before = JSON.stringify(c.structuredHistory || {});
     c.structuredHistory = createHistory(c);
     c.schemaVersion = "2.2.0";
     c.caseVersion = `${String(c.caseVersion || (c.id.startsWith("HX-ADD") ? "HX-ADD" : "V2")).replace(/-2\.1$/, "")}-2.2`;
     c.medication = c.structuredHistory.medicationAnswerZh.replace(/^我长期服用/, "").replace(/。$/, "") || c.medication;
+    if (sourceMedicationOverrides.has(c.id)) {
+      const resolution = sourceMedicationOverrides.get(c.id);
+      if (resolution?.riskFactorAnticoagulants) {
+        c.riskFactors = {
+          ...(c.riskFactors || {}),
+          anticoagulants: resolution.riskFactorAnticoagulants
+        };
+      }
+    }
     c.personalHistory = [c.structuredHistory.smokingHistory.patientAnswerZh, c.structuredHistory.alcoholHistory.patientAnswerZh, c.structuredHistory.occupationalExposure.patientAnswerZh].join("；");
     c.familyHistory = c.structuredHistory.familyHistory.patientAnswerZh;
     if (c.structuredHistory.surgeryHistory.status === "present") c.pastHistory = clean(c.pastHistory)
@@ -193,9 +309,11 @@ for (const file of ["cases.json", "cases_42.json"]) {
   });
   write(file, cases);
 }
-write("case_history_qc_report.json", qc);
-const grouped = new Map<string, QcRow[]>();
-qc.forEach((row) => grouped.set(row.caseId, [...(grouped.get(row.caseId) || []), row]));
-const md = ["# 42例结构化病史QC报告", "", `生成版本：${process.env.CASE_LIBRARY_BUILD_ID || "deterministic"}`, "", "说明：source 表示原病例明确记载；author_added_for_simulation 表示为保证标准化病人可回答而补全，必须由教师复核。", "", "| 病例 | 修改字段 | 修改后患者答案 | 原因 | 教师复核 |", "|---|---|---|---|---|", ...qc.map((r) => `| ${r.caseId} | ${r.field} | ${r.after.replace(/\|/g, "、")} | ${r.reason} | 是 |`)];
-fs.writeFileSync(path.join(process.cwd(), "CASE_DATA_QC_REPORT.md"), `${md.join("\n")}\n`, "utf8");
-console.log(`Structured histories generated for 42 cases; ${qc.length} authored facts require teacher review.`);
+if (sourcePrecedenceOnly) {
+  console.log(`Applied ${sourceMedicationOverrides.size} source-precedence medication correction(s) to both case files.`);
+} else {
+  write("case_history_qc_report.json", qc);
+  const md = ["# 42例结构化病史QC报告", "", `生成版本：${process.env.CASE_LIBRARY_BUILD_ID || "deterministic"}`, "", "说明：source 表示原病例明确记载；author_added_for_simulation 表示为保证标准化病人可回答而补全，必须由教师复核。", "", "| 病例 | 修改字段 | 修改后患者答案 | 原因 | 教师复核 |", "|---|---|---|---|---|", ...qc.map((r) => `| ${r.caseId} | ${r.field} | ${r.after.replace(/\|/g, "、")} | ${r.reason} | 是 |`)];
+  fs.writeFileSync(path.join(process.cwd(), "CASE_DATA_QC_REPORT.md"), `${md.join("\n")}\n`, "utf8");
+  console.log(`Structured histories generated for 42 cases; ${qc.length} authored facts require teacher review.`);
+}

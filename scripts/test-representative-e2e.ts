@@ -13,7 +13,12 @@ for (const id of representativeIds) {
   const caseData = byId.get(id);
   assert.ok(caseData, `Missing representative case ${id}`);
   const smoking = generatePatientReply({ caseData: caseData!, userQuestion: "抽烟吗？", mode: "rule" });
-  assert.ok(smoking.matchedSlotIds.includes("LIFE_SMOKING"), `${id} smoking slot missing`);
+  if (smoking.blockedTeacherFields.includes("smokingHistory")) {
+    assert.deepEqual(smoking.matchedSlotIds, [], `${id} unreviewed smoking history must remain uncollected`);
+    assert.match(smoking.replyText, /记不太清|没(?:有)?特别注意|不太清楚/, `${id} unreviewed smoking history must be naturally uncertain`);
+  } else {
+    assert.ok(smoking.matchedSlotIds.includes("LIFE_SMOKING"), `${id} reviewed smoking slot missing`);
+  }
   assert.ok(!/未诉|需追问|诊断|CT提示/.test(smoking.replyText), `${id} patient reply leaked`);
   const emptyOrders = matchOrderResults(caseData!, "尿常规");
   assert.ok(!emptyOrders.results.some((item) => /CTU/i.test(item.orderCategory)), `${id} leaked unopened CTU`);

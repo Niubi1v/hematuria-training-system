@@ -3,6 +3,7 @@ import questionSlotsJson from "../../data/question_slots.json";
 import type { CaseData, CollectedMap, InterviewAnswer, InterviewSlot, KeyPointId } from "./types";
 import { matchStructuredPatientQuestion } from "./structuredPatientReply";
 import bilingualPatientSlotsJson from "../../data/patient_slots_bilingual.json";
+import historyMedicalPolicy from "../../data/history_medical_reconciliation.json";
 import { matchCanonicalSlots, type CanonicalSlotId } from "./canonicalSlots";
 
 export type PatientReplyResult = {
@@ -12,7 +13,7 @@ export type PatientReplyResult = {
   blockedTeacherFields: string[];
   safetyFlags: string[];
   matchedFacts?: string[];
-  answerSource?: "source" | "author_added_for_simulation" | "mixed" | "rule";
+  answerSource?: "source" | "author_added_for_simulation" | "mixed" | "pending_review" | "rule";
   confidence?: number;
   fallbackReason?: string;
 };
@@ -97,6 +98,17 @@ const reportQuestionWordsEn = ["ct result", "ct scan result", "ultrasound result
 
 type BilingualSlotAnswer = { patientAnswerZh: string; patientAnswerEn: string; provenance: string; teacherReviewRequired: boolean };
 const bilingualPatientSlots = bilingualPatientSlotsJson as Record<string, Partial<Record<CanonicalSlotId, BilingualSlotAnswer>>>;
+const blockedCanonicalKeys = new Set(
+  historyMedicalPolicy.blockedMedicalHistory
+    .filter((item) => "canonicalSlotId" in item)
+    .map((item) => `${item.caseId}:${(item as { canonicalSlotId: string }).canonicalSlotId}`)
+);
+
+function pendingMedicalAnswer(language: "zh" | "en") {
+  return language === "en"
+    ? "I did not pay close attention to that before."
+    : "这个我之前没特别注意。";
+}
 
 const semanticToKeyPoint: Record<string, KeyPointId | undefined> = {
   onset: "onset",
@@ -555,23 +567,37 @@ export function generatePatientReply({
   // Specific structured history questions take precedence over broad canonical slots.
   // This prevents "hypertension?" from returning an entire combined past-history paragraph.
   const structured = matchStructuredPatientQuestion(caseData, question, language);
-  if (structured) return { ...structured, revealedFields: structured.matchedFacts, blockedTeacherFields: [] };
+  if (structured) {
+    return {
+      ...structured,
+      matchedSlotIds: structured.collectableSlotIds,
+      matchedFacts: structured.collectableFacts,
+      revealedFields: structured.collectableFacts,
+      blockedTeacherFields: structured.matchedFacts.filter((fact) => !structured.collectableFacts.includes(fact))
+    };
+  }
 
   const canonicalMatches = matchCanonicalSlots(question, language);
   if (canonicalMatches.length) {
-    const answers = canonicalMatches.map((slotId) => bilingualPatientSlots[caseData.id]?.[slotId])
-      .filter((item): item is BilingualSlotAnswer => Boolean(item))
-      .map((item) => language === "en" ? item.patientAnswerEn : item.patientAnswerZh)
+    const blockedMatches = canonicalMatches.filter((slotId) => blockedCanonicalKeys.has(`${caseData.id}:${slotId}`));
+    const collectableMatches = canonicalMatches.filter((slotId) => !blockedMatches.includes(slotId));
+    const answers = canonicalMatches.map((slotId) => {
+      if (blockedMatches.includes(slotId)) return pendingMedicalAnswer(language);
+      const item = bilingualPatientSlots[caseData.id]?.[slotId];
+      return item ? (language === "en" ? item.patientAnswerEn : item.patientAnswerZh) : "";
+    })
       .filter(Boolean);
     if (answers.length) {
       return {
         replyText: [...new Set(answers)].join("\n"),
-        matchedSlotIds: canonicalMatches,
-        revealedFields: canonicalMatches,
-        blockedTeacherFields: [],
+        matchedSlotIds: collectableMatches,
+        revealedFields: collectableMatches,
+        blockedTeacherFields: blockedMatches,
         safetyFlags: [],
-        matchedFacts: canonicalMatches,
-        answerSource: "source"
+        matchedFacts: collectableMatches,
+        answerSource: blockedMatches.length ? "pending_review" : "source",
+        confidence: blockedMatches.length ? 0 : 0.99,
+        fallbackReason: blockedMatches.length ? "medical_history_pending_review" : ""
       };
     }
   }

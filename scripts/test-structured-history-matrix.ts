@@ -7,7 +7,9 @@ const cases = casesJson as CaseData[];
 const questions = [
   "你吸烟吗？", "吸烟多少年？", "每天吸多少支？", "喝酒吗？", "抽烟吗，喝酒吗？", "做什么工作？", "接触染料或化工品吗？",
   "有高血压吗？", "有糖尿病吗？", "以前得过结石吗？", "以前有尿路感染吗？", "做过手术吗？", "输过血吗？", "有什么过敏吗？",
-  "平时都吃什么药？", "吃抗凝药或抗血小板药吗？", "家里有人有类似病吗？"
+  "有没有高血压、糖尿病？", "有没有其他疾病？", "平时都吃什么药？", "具体药名是什么？", "高血压吃什么药？",
+  "吃的什么降压药？", "剂量多少？", "一天吃几次？", "这个药怎么吃？", "还有没有其他药？",
+  "吃抗凝药或抗血小板药吗？", "家里有人有类似病吗？"
 ];
 const forbidden = ["未诉", "需追问", "需主动询问", "根据原始病史", "根据病例资料", "训练中若被问及", "原表未记录", "评分点", "CT提示", "最终诊断"];
 
@@ -18,14 +20,26 @@ for (const caseData of cases) {
     const first = generatePatientReply({ caseData, userQuestion: question, language: "zh", mode: "rule" });
     const second = generatePatientReply({ caseData, userQuestion: question, language: "zh", mode: "rule" });
     assert.equal(first.replyText, second.replyText, `${caseData.id} reply must be deterministic: ${question}`);
-    assert.ok(first.matchedSlotIds.length, `${caseData.id} did not match slot: ${question}`);
-    assert.ok(first.matchedFacts?.length, `${caseData.id} did not return facts: ${question}`);
+    if (first.fallbackReason === "medical_history_pending_review") {
+      assert.ok(first.blockedTeacherFields.length, `${caseData.id} unreviewed fact must be visible to governance: ${question}`);
+      assert.ok(
+        (first.matchedFacts || []).every((fact) => !first.blockedTeacherFields.includes(fact)),
+        `${caseData.id} blocked fact must remain outside scoring: ${question}`
+      );
+    } else {
+      assert.ok(first.matchedSlotIds.length, `${caseData.id} did not match slot: ${question}`);
+      assert.ok(first.matchedFacts?.length, `${caseData.id} did not return facts: ${question}`);
+    }
     assert.ok(!/^[-•*#]/m.test(first.replyText), `${caseData.id} returned markdown bullets: ${first.replyText}`);
     assert.ok(forbidden.every((word) => !first.replyText.includes(word)), `${caseData.id} leaked placeholder/backend text: ${first.replyText}`);
     assert.ok(!/CTU|膀胱镜结果|病理结果|癌栓|最终诊断/.test(first.replyText), `${caseData.id} leaked report or diagnosis: ${first.replyText}`);
   }
   const compound = generatePatientReply({ caseData, userQuestion: "抽烟吗，喝酒吗？", language: "zh", mode: "rule" });
-  assert.ok(compound.matchedSlotIds.includes("LIFE_SMOKING") && compound.matchedSlotIds.includes("LIFE_ALCOHOL"), `${caseData.id} compound question incomplete`);
+  if (compound.fallbackReason === "medical_history_pending_review") {
+    assert.ok(compound.blockedTeacherFields.length, `${caseData.id} compound unreviewed facts must remain governed`);
+  } else {
+    assert.ok(compound.matchedSlotIds.includes("LIFE_SMOKING") && compound.matchedSlotIds.includes("LIFE_ALCOHOL"), `${caseData.id} compound question incomplete`);
+  }
   const zhSmoking = generatePatientReply({ caseData, userQuestion: "抽烟吗？", language: "zh", mode: "rule" });
   const enSmoking = generatePatientReply({ caseData, userQuestion: "Do you smoke?", language: "en", mode: "rule" });
   assert.equal(zhSmoking.answerSource, enSmoking.answerSource, `${caseData.id} zh/en provenance mismatch`);

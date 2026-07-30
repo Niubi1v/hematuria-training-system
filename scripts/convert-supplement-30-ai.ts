@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import * as XLSX from "xlsx";
+import { readWorkbookFile } from "./lib/safe-workbook";
 
 const input = process.argv[2] ?? "work/source/supplement_30_ai.xlsx";
 const outputDir = process.argv[3] ?? "data";
@@ -325,7 +326,7 @@ function makeMdt(row: Row) {
 }
 
 function main() {
-  const workbook = XLSX.readFile(input);
+  const workbook = readWorkbookFile(input);
   const totalRows = rows(workbook, "总表_42病例").filter((row) => isV2(rowId(row)) || isAdd(rowId(row)));
   const addRows = totalRows.filter((row) => isAdd(rowId(row)));
   const qaRows = rows(workbook, "问诊槽位答案_补充30").filter((row) => isAdd(get(row, "case_id")));

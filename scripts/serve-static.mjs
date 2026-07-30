@@ -5,6 +5,7 @@ import { extname, join, normalize, resolve, sep } from "node:path";
 const root = resolve(process.cwd(), "out");
 const port = Number(process.env.PORT || 4173);
 const host = process.env.HOST || "127.0.0.1";
+const basePath = `/${String(process.env.BASE_PATH || "").replace(/^\/+|\/+$/g, "")}`.replace(/^\/$/, "");
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -26,7 +27,12 @@ function insideRoot(filePath) {
 }
 
 function resolveRequest(url = "/") {
-  const cleanPath = decodeURIComponent(url.split("?")[0] || "/");
+  let cleanPath = decodeURIComponent(url.split("?")[0] || "/");
+  if (basePath) {
+    if (cleanPath === basePath) cleanPath = "/";
+    else if (cleanPath.startsWith(`${basePath}/`)) cleanPath = cleanPath.slice(basePath.length);
+    else return undefined;
+  }
   const candidates = [];
   const direct = resolve(root, `.${cleanPath}`);
 
@@ -47,18 +53,19 @@ if (!existsSync(root)) {
 }
 
 createServer((req, res) => {
-  const filePath = resolveRequest(req.url) || join(root, "404.html");
+  const resolvedPath = resolveRequest(req.url);
+  const filePath = resolvedPath || join(root, "404.html");
   if (!existsSync(filePath)) {
     res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
     res.end("Not found");
     return;
   }
 
-  res.writeHead(200, {
+  res.writeHead(resolvedPath ? 200 : 404, {
     "content-type": mimeTypes[extname(filePath)] || "application/octet-stream",
     "cache-control": "no-store"
   });
   createReadStream(filePath).pipe(res);
 }).listen(port, host, () => {
-  console.log(`Static preview: http://${host}:${port}`);
+  console.log(`Static preview: http://${host}:${port}${basePath || "/"}`);
 });

@@ -311,9 +311,12 @@ export type OrderResultItem = {
   referenceRange?: string;
   impression?: string;
   abnormalFlags?: string[];
+  metadataStatus?: "complete" | "awaiting_reviewed_metadata";
+  translationStatus?: string;
   availableAt?: "immediate" | "delayed";
   prerequisites?: string[];
   sourceVersion?: string;
+  provenance?: "configured_case_result" | "simulated_normal" | "not_provided";
   diagnosis: string;
   diseaseType: string;
   orderCategory: string;

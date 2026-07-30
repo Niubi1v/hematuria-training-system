@@ -40,6 +40,12 @@ export const canonicalSlotIds = [
 
 export type CanonicalSlotId = typeof canonicalSlotIds[number];
 
+const { asksIndependentGeneralPain, matchPatientFactOntology, matchPriorityCanonicalIntents } = require("./patientIntentCatalog.js") as {
+  asksIndependentGeneralPain(question: string, language: "zh" | "en"): boolean;
+  matchPatientFactOntology(question: string, language: "zh" | "en", domains: string[]): Array<{ sourceSlotId: CanonicalSlotId | null }>;
+  matchPriorityCanonicalIntents(question: string, language: "zh" | "en"): Array<{ intentKey: string; sourceSlotId: CanonicalSlotId }>;
+};
+
 type SlotDefinition = {
   id: CanonicalSlotId;
   zh: RegExp;
@@ -49,7 +55,7 @@ type SlotDefinition = {
 };
 
 export const canonicalSlotDefinitions: SlotDefinition[] = [
-  { id: "chief_complaint", zh: /哪里不舒服|为什么来|主诉|怎么回事|详细说说/, en: /what brings you|what is wrong|main complaint|tell me what happened/i, labelZh: "主诉", labelEn: "Chief complaint" },
+  { id: "chief_complaint", zh: /哪里不舒服|为什么来|主诉|怎么回事|详细说说/, en: /what brings you|what brought you(?: in)?|what is wrong|main complaint|tell me what happened/i, labelZh: "主诉", labelEn: "Chief complaint" },
   { id: "hematuria_visibility", zh: /肉眼|镜下|看得见|尿潜血|尿隐血/, en: /visible blood|see.*blood|gross hematuria|microscopic|urine test.*blood/i, labelZh: "血尿可见性", labelEn: "Visible or microscopic hematuria" },
   { id: "hematuria_onset", zh: /什么时候|多久|几天|几周|几个月|起病|开始出现/, en: /when did|how long|when.*start|onset/i, labelZh: "起病时间", labelEn: "Onset" },
   { id: "hematuria_frequency", zh: /间断|持续|每次|频率|反复|次数/, en: /intermittent|continuous|every time|how often|frequency|recurrent/i, labelZh: "频率与演变", labelEn: "Frequency and course" },
@@ -89,8 +95,17 @@ export const canonicalSlotDefinitions: SlotDefinition[] = [
 ];
 
 export function matchCanonicalSlots(question: string, language: "zh" | "en") {
-  const matches = canonicalSlotDefinitions.filter((definition) => (language === "en" ? definition.en : definition.zh).test(question));
-  const ids = matches.map((definition) => definition.id);
+  const priority = matchPriorityCanonicalIntents(question, language);
+  const ontologyMatches = matchPatientFactOntology(question, language, ["canonical_legacy"]);
+  const ids = [
+    ...priority.map((item) => item.sourceSlotId),
+    ...ontologyMatches
+      .map((definition) => definition.sourceSlotId)
+      .filter((slotId): slotId is CanonicalSlotId => Boolean(slotId && canonicalSlotIds.includes(slotId)))
+  ];
+  if (priority.some((item) => item.sourceSlotId === "dysuria") && !asksIndependentGeneralPain(question, language)) {
+    return [...new Set(ids.filter((id) => id !== "pain"))];
+  }
   return [...new Set(ids)];
 }
 

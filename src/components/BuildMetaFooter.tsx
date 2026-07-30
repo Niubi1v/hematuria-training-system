@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { readStringStorage } from "@/src/lib/safeStorage";
 
 const buildMeta = {
-  appVersion: process.env.NEXT_PUBLIC_APP_VERSION || "2.4.0-dev",
+  appVersion: process.env.NEXT_PUBLIC_APP_VERSION || "2.4.2-dev",
   gitSha: process.env.NEXT_PUBLIC_GIT_SHA || "local",
   buildTime: process.env.NEXT_PUBLIC_BUILD_TIME || "local development build",
   caseLibraryVersion: process.env.NEXT_PUBLIC_CASE_LIBRARY_VERSION || "42-case-2.4",
@@ -13,7 +14,7 @@ const buildMeta = {
 export default function BuildMetaFooter() {
   const [lang, setLang] = useState<"zh" | "en">("zh");
   useEffect(() => {
-    if (localStorage.getItem("hematuria-language") === "en") setLang("en");
+    if (readStringStorage("hematuria-language").value === "en") setLang("en");
     const listener = (event: Event) => setLang((event as CustomEvent<"zh" | "en">).detail);
     window.addEventListener("hematuria-language-change", listener);
     return () => window.removeEventListener("hematuria-language-change", listener);

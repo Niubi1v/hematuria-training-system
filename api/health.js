@@ -1,7 +1,10 @@
 function allowedOrigins() {
-  return String(process.env.AGENT_API_ALLOWED_ORIGIN || process.env.TRAINING_API_ALLOWED_ORIGINS || process.env.TTS_ALLOWED_ORIGINS || "")
+  return String(process.env.AGENT_API_ALLOWED_ORIGINS || process.env.AGENT_API_ALLOWED_ORIGIN || process.env.PATIENT_AGENT_ALLOWED_ORIGIN || process.env.TRAINING_API_ALLOWED_ORIGINS || process.env.TTS_ALLOWED_ORIGINS || "")
     .split(",").map((value) => value.trim()).filter(Boolean);
 }
+
+const { signingSecretConfigured } = require("../server/trainingState.js");
+const { attemptStoreCredentialSource, durableAttemptStoreConfigured } = require("../server/trainingAttemptStore.js");
 
 module.exports = function handler(req, res) {
   const origin = String(req.headers?.origin || "");
@@ -19,7 +22,9 @@ module.exports = function handler(req, res) {
     deploymentSha: process.env.VERCEL_GIT_COMMIT_SHA || process.env.NEXT_PUBLIC_GIT_SHA || "unknown",
     buildTime: process.env.NEXT_PUBLIC_BUILD_TIME || "unknown",
     patientServiceConfigured: Boolean(process.env.LLM_API_KEY && process.env.LLM_API_BASE_URL && process.env.LLM_MODEL),
-    trainingStateConfigured: Boolean(process.env.TRAINING_STATE_SECRET || process.env.LLM_API_KEY),
+    trainingStateConfigured: signingSecretConfigured() && (!process.env.VERCEL || durableAttemptStoreConfigured()),
+    durableAttemptStoreConfigured: durableAttemptStoreConfigured(),
+    durableAttemptStoreCredentialSource: attemptStoreCredentialSource(),
     cloudTtsConfigured: Boolean(process.env.AZURE_SPEECH_KEY && process.env.AZURE_SPEECH_REGION),
     allowedOriginConfigured: allowed.length > 0,
     apiVersion: "2.6.0"

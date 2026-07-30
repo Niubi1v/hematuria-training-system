@@ -16,5 +16,6 @@ yarn-debug.log*
 yarn-error.log*
 work/dev.log
 work/dev.err.log
+work/dev-fullstack.pid
 work/teacher-package-*/
 outputs/*.zip

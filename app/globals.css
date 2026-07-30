@@ -4,6 +4,28 @@
 
 :root {
   color-scheme: light;
+  --color-page: 246 249 250;
+  --color-surface: 255 255 255;
+  --color-surface-subtle: 240 246 247;
+  --color-ink: 22 34 43;
+  --color-muted: 79 94 105;
+  --color-primary: 22 101 132;
+  --color-primary-strong: 13 78 105;
+  --color-accent: 13 126 105;
+  --color-success: 39 117 82;
+  --color-warning: 161 98 7;
+  --color-danger: 180 46 56;
+  --color-info: 25 103 157;
+  --color-line: 211 222 228;
+  --radius-control: 0.5rem;
+  --radius-card: 0.75rem;
+  --shadow-soft: 0 8px 24px rgb(22 34 43 / 0.06);
+  --shadow-raised: 0 16px 44px rgb(22 34 43 / 0.1);
+  --duration-fast: 140ms;
+  --duration-normal: 200ms;
+  --z-header: 40;
+  --z-sticky: 30;
+  --z-dialog: 50;
 }
 
 html {
@@ -12,8 +34,11 @@ html {
 
 body {
   margin: 0;
-  background: #f7fafb;
-  color: #17202a;
+  min-width: 320px;
+  background: rgb(var(--color-page));
+  color: rgb(var(--color-ink));
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  line-height: 1.5;
 }
 
 button,
@@ -36,6 +61,10 @@ button:disabled {
   cursor: not-allowed;
 }
 
+::selection {
+  background: rgb(var(--color-primary) / 0.18);
+}
+
 p,
 dd,
 td,
@@ -45,9 +74,81 @@ a {
 }
 
 .medical-band {
-  background:
-    linear-gradient(90deg, rgba(29, 111, 143, 0.08), rgba(17, 128, 106, 0.08)),
-    #ffffff;
+  background: rgb(var(--color-surface-subtle));
+}
+
+@layer components {
+  .ui-card {
+    @apply rounded-xl border border-clinic-line bg-white shadow-soft;
+  }
+
+  .ui-button {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none disabled:opacity-55;
+    transition-duration: var(--duration-fast);
+  }
+
+  .ui-button-primary {
+    @apply ui-button bg-clinic-blue text-white hover:bg-clinic-teal active:bg-clinic-ink;
+  }
+
+  .ui-button-secondary {
+    @apply ui-button border border-clinic-line bg-white text-clinic-ink hover:border-clinic-blue hover:text-clinic-blue active:bg-clinic-paper;
+  }
+
+  .ui-button-quiet {
+    @apply ui-button text-clinic-muted hover:bg-clinic-paper hover:text-clinic-blue;
+  }
+
+  .ui-input {
+    @apply min-h-11 rounded-lg border border-clinic-line bg-white px-3 py-2 text-clinic-ink outline-none transition focus:border-clinic-blue focus:ring-2 focus:ring-clinic-blue/15;
+  }
+
+  .ui-segmented {
+    @apply inline-flex items-center rounded-lg border border-clinic-line bg-white p-1;
+  }
+
+  .ui-segment {
+    @apply min-h-9 rounded-md px-3 py-1 text-sm font-medium text-clinic-muted transition-colors hover:text-clinic-blue;
+  }
+
+  .ui-segment-active {
+    @apply bg-clinic-blue text-white hover:text-white;
+  }
+
+  .ui-status {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium;
+  }
+
+  .ui-status-info {
+    @apply ui-status bg-sky-50 text-sky-800;
+  }
+
+  .ui-status-success {
+    @apply ui-status bg-emerald-50 text-emerald-800;
+  }
+
+  .ui-status-warning {
+    @apply ui-status bg-amber-50 text-amber-900;
+  }
+
+  .ui-status-danger {
+    @apply ui-status bg-rose-50 text-rose-800;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 @media print {
@@ -63,6 +164,10 @@ a {
   body {
     background: #ffffff;
     color: #000000;
+  }
+
+  @page {
+    margin: 14mm;
   }
 
   main,

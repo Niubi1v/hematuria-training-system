@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import { createRequire } from "node:module";
 
+process.env.TRAINING_STATE_SECRET = "unit-test-training-state-secret-with-adequate-length";
+
 const require = createRequire(import.meta.url);
 const {
   initSession,
@@ -20,6 +22,7 @@ const {
   filterPatientOutput: (text: string) => { ok: boolean; hits: string[] };
   getSession: (sessionId: string, caseId: string) => { completedPatientFacingProfile?: Record<string, unknown> } | null;
 };
+const cases = require("../data/cases.json") as Array<{ id: string }>;
 
 function assert(condition: unknown, message: string) {
   if (!condition) throw new Error(message);
@@ -45,14 +48,23 @@ async function main() {
   assert(!("completedPatientFacingProfile" in session), "session/init must not return the patient profile to the browser");
   assert(!("teacherOnlyData" in session), "session/init must not return teacher-only data");
   assert(session.patientOpeningStatement, "session/init should return patientOpeningStatement");
-  assert(session.patientOpeningStatement.includes("小便颜色变红3月余") || session.patientOpeningStatement.includes("血尿3月余"), `opening should use simplified complaint: ${session.patientOpeningStatement}`);
-  assertNotContains(session.patientOpeningStatement, ["无痛", "肉眼", "全程"], "session opening complaint");
+  assert(session.patientOpeningStatement === "医生您好，我来看一下。", `opening must remain neutral: ${session.patientOpeningStatement}`);
+  assertNotContains(session.patientOpeningStatement, ["血尿", "尿红", "小便", "3月", "无痛", "肉眼", "全程"], "session opening complaint");
   assert(session.apiVersion === "2.6.0", `session/init should expose API version: ${session.apiVersion}`);
   assert(session.deploymentSha, "session/init should expose deployment SHA");
   assert(Date.parse(session.sessionExpiresAt) > Date.parse(session.sessionCreatedAt), "session should have a future expiration");
   assert(["local-reviewed", "local-simulation"].includes(session.profileSource), "session should declare a local profile source");
   const refreshed = await initSession({ caseId: "P001", mode: "training", language: "zh", forceRefresh: true });
   assert(refreshed.sessionId !== session.sessionId, "forceRefresh must create a new sessionId");
+
+  for (const caseItem of cases) {
+    const englishSession = await initSession({ caseId: caseItem.id, mode: "training", language: "en" });
+    const opening = String(englishSession.patientOpeningStatement || "");
+    assert(opening.length > 0, `${caseItem.id} English session should have an opening statement`);
+    assert(!/[\u3400-\u9fff]/u.test(opening), `${caseItem.id} English opening must not contain Chinese text: ${opening}`);
+    assert(/\b(?:hello|hi|doctor)\b/i.test(opening), `${caseItem.id} English opening should be a natural patient greeting: ${opening}`);
+    assert(!/hematuria|blood|urine|day|week|month|year/i.test(opening), `${caseItem.id} English opening must not reveal the complaint or duration: ${opening}`);
+  }
   globalThis.fetch = originalFetch;
 
   const profileText = JSON.stringify(getSession(session.sessionId, "P001")?.completedPatientFacingProfile || {});
@@ -85,6 +97,26 @@ async function main() {
     language: "zh"
   });
   assertNotContains(color.replyText, ["CT", "占位", "诊断", "肿瘤", "癌栓"], "color");
+
+  const teacherMetaCases = [
+    { caseId: "P004", question: "有血块吗？" },
+    { caseId: "P005", question: "血尿是全程的吗？" },
+    { caseId: "P006", question: "血尿是全程的吗？" }
+  ];
+  for (const testCase of teacherMetaCases) {
+    const caseSession = await initSession({ caseId: testCase.caseId, mode: "training", language: "zh" });
+    const answer = await generatePatientAnswer({
+      sessionId: caseSession.sessionId,
+      caseId: testCase.caseId,
+      studentInput: testCase.question,
+      conversationHistory: [],
+      language: "zh"
+    });
+    const publicFilter = filterPatientOutput(answer.replyText);
+    assert(publicFilter.ok, `${testCase.caseId} deterministic answer must pass the patient-facing output filter: ${JSON.stringify(publicFilter)}`);
+    assertNotContains(answer.replyText, ["未主动诉", "需追问", "评分点", "教师提示"], `${testCase.caseId} deterministic answer`);
+    assert((answer.matchedSlotIds || []).length === 0, `${testCase.caseId} blocked deterministic fact must not be marked as collected`);
+  }
 
   const ct = await generatePatientAnswer({
     sessionId: session.sessionId,
@@ -120,6 +152,86 @@ async function main() {
   ].map((file) => fs.readFileSync(file, "utf8")).join("\n");
   assert(!/sk-[A-Za-z0-9_-]{12,}/.test(source), "build/source should not contain real API keys");
   assert(source.includes("LLM_API_KEY"), "source should document backend LLM_API_KEY env var");
+
+  const providerEnvironment = [
+    "LLM_ENABLE_AI_PATIENT",
+    "LLM_API_KEY",
+    "LLM_API_BASE_URL",
+    "LLM_PROVIDER",
+    "LLM_MODEL",
+    "LLM_STREAMING_ENABLED",
+    "PATIENT_DEEPSEEK_THINKING"
+  ] as const;
+  const previousProviderEnvironment = new Map(providerEnvironment.map((key) => [key, process.env[key]]));
+  const providerRequests: Array<Record<string, unknown>> = [];
+  try {
+    process.env.LLM_ENABLE_AI_PATIENT = "true";
+    process.env.LLM_API_KEY = "synthetic-live-patient-key";
+    process.env.LLM_API_BASE_URL = "https://api.deepseek.com";
+    process.env.LLM_PROVIDER = "deepseek";
+    process.env.LLM_MODEL = "deepseek-v4-flash";
+    process.env.LLM_STREAMING_ENABLED = "false";
+    process.env.PATIENT_DEEPSEEK_THINKING = "disabled";
+    globalThis.fetch = async (_input, init) => {
+      const providerRequest = JSON.parse(String(init?.body || "{}")) as Record<string, unknown>;
+      providerRequests.push(providerRequest);
+      const messages = providerRequest.messages as Array<{ content?: string }>;
+      const payload = JSON.parse(String(messages?.[1]?.content || "{}")) as { currentAllowedAnswer?: string };
+      return new Response(JSON.stringify({
+        choices: [{ message: { content: String(payload.currentAllowedAnswer || "") } }]
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    };
+    const liveSession = await initSession({ caseId: "P001", mode: "training", language: "en" });
+    const liveAnswer = await generatePatientAnswer({
+      sessionId: liveSession.sessionId,
+      caseId: "P001",
+      studentInput: "When did your urine turn red?",
+      conversationHistory: [],
+      language: "en"
+    });
+    assert(liveAnswer.isFallback === false, "a configured successful provider must remain a live answer");
+    assert(liveAnswer.provider === "deepseek", `unexpected live provider: ${liveAnswer.provider}`);
+    assert(liveAnswer.model === "deepseek-v4-flash", `unexpected live model: ${liveAnswer.model}`);
+    assert(liveAnswer.runtimeTrace?.generationSource === "live_ai", `unexpected generation source: ${liveAnswer.runtimeTrace?.generationSource}`);
+    assert(liveAnswer.runtimeTrace?.providerConfigured === true, "live trace must mark the provider configured");
+    assert(liveAnswer.runtimeTrace?.providerHttpSuccess === true, "live trace must mark the provider request successful");
+    assert(liveAnswer.runtimeTrace?.thinkingExecuted === false, "Flash must not execute thinking by default");
+    assert((providerRequests[0]?.thinking as { type?: string } | undefined)?.type === "disabled", "DeepSeek thinking must be disabled");
+
+    let correctionCalls = 0;
+    globalThis.fetch = async (_input, init) => {
+      correctionCalls += 1;
+      const providerRequest = JSON.parse(String(init?.body || "{}")) as Record<string, unknown>;
+      const messages = providerRequest.messages as Array<{ content?: string }>;
+      const payload = JSON.parse(String(messages?.[1]?.content || "{}")) as { currentAllowedAnswer?: string };
+      const content = correctionCalls === 1
+        ? "I came because a urine test found blood yesterday, and I am adding enough harmless wording to exceed the patient-line limit."
+        : String(payload.currentAllowedAnswer || "");
+      return new Response(JSON.stringify({
+        choices: [{ message: { content } }]
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    };
+    const correctionSession = await initSession({ caseId: "HX-ADD-025", mode: "training", language: "en" });
+    const correctedAnswer = await generatePatientAnswer({
+      sessionId: correctionSession.sessionId,
+      caseId: "HX-ADD-025",
+      studentInput: "Please tell me in your own words why you came today.",
+      conversationHistory: [],
+      language: "en"
+    });
+    assert(correctionCalls === 2, "a safe but fact-incomplete paraphrase should receive exactly one bounded correction");
+    assert(correctedAnswer.isFallback === false, "a corrected governed answer should remain live");
+    assert(correctedAnswer.runtimeTrace?.generationSource === "live_ai", "a corrected governed answer should remain live_ai");
+    assert(/menstruation/i.test(correctedAnswer.replyText), "the correction must restore the omitted governed fact");
+    assert(/\b1 day\b/i.test(correctedAnswer.replyText), "the correction must restore the governed duration");
+  } finally {
+    globalThis.fetch = originalFetch;
+    for (const key of providerEnvironment) {
+      const value = previousProviderEnvironment.get(key);
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
 
   process.env.LLM_ENABLE_AI_AGENTS = previousEnable;
   console.log("Dynamic Patient Session tests passed.");

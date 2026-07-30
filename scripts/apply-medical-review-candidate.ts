@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import * as XLSX from "xlsx";
 import type { CaseData, StructuredPatientFact } from "../src/lib/types";
+import { readWorkbookBuffer } from "./lib/safe-workbook";
 
 type Row = Record<string, unknown>;
 type MutableCase = CaseData & Record<string, unknown>;
@@ -348,7 +349,7 @@ function updateReviewQueue(queueRows: Row[], sourceRows: Row[], patchRows: Row[]
 assert(fs.existsSync(workbookPath), `Missing medical-review workbook: ${workbookPath}`);
 const workbookBytes = fs.readFileSync(workbookPath);
 const workbookHash = createHash("sha256").update(workbookBytes).digest("hex");
-const workbook = XLSX.read(workbookBytes, { type: "buffer", cellFormula: true });
+const workbook = readWorkbookBuffer(workbookBytes, { cellFormula: true });
 const requiredSheets = ["审核概览", "专家审核队列", "来源事实核对", "审核说明", "病例级终审", "参考文献", "系统应用补丁"];
 for (const sheetName of requiredSheets) assert(workbook.SheetNames.includes(sheetName), `Workbook is missing ${sheetName}`);
 const queueRows = rows(workbook, "专家审核队列");

@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import * as XLSX from "xlsx";
 import type { ConsultCatalogItem, OrderCatalogItem, OrderPackage, UiReleaseRule } from "../src/lib/types";
+import { readWorkbookFile } from "./lib/safe-workbook";
 
 const input = process.argv[2] ?? "work/source/frontend_order_consult_fix.xlsx";
 const outputDir = process.argv[3] ?? "data";
@@ -130,7 +131,7 @@ function makeReleaseRule(row: Row): UiReleaseRule {
 }
 
 function main() {
-  const workbook = XLSX.readFile(input);
+  const workbook = readWorkbookFile(input);
   const labs = sheetRows(workbook, "开单检验项目库").map(makeLab).filter((item) => item.orderId && item.displayName);
   const imaging = sheetRows(workbook, "开单检查项目库").map(makeImaging).filter((item) => item.orderId && item.displayName);
   const labsOnly = labs.filter((item) => item.primaryCategory === "检验");

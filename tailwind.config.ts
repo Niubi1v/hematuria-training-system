@@ -6,17 +6,21 @@ const config: Config = {
     extend: {
       colors: {
         clinic: {
-          ink: "#17202a",
-          muted: "#59636f",
-          blue: "#1d6f8f",
-          teal: "#11806a",
-          green: "#2f7d59",
-          line: "#d9e2e8",
-          paper: "#f7fafb"
+          ink: "rgb(var(--color-ink) / <alpha-value>)",
+          muted: "rgb(var(--color-muted) / <alpha-value>)",
+          blue: "rgb(var(--color-primary) / <alpha-value>)",
+          teal: "rgb(var(--color-accent) / <alpha-value>)",
+          green: "rgb(var(--color-success) / <alpha-value>)",
+          line: "rgb(var(--color-line) / <alpha-value>)",
+          paper: "rgb(var(--color-page) / <alpha-value>)"
         }
       },
       boxShadow: {
-        soft: "0 14px 40px rgba(23, 32, 42, 0.08)"
+        soft: "var(--shadow-soft)",
+        raised: "var(--shadow-raised)"
+      },
+      borderRadius: {
+        clinic: "var(--radius-card)"
       }
     }
   },
