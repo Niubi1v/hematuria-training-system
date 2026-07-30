@@ -113,8 +113,14 @@ export function initializeStorageVersion(version: string) {
   try {
     const previous = window.localStorage.getItem(versionKey);
     if (previous && previous !== version) {
-      Object.keys(window.localStorage).forEach((key) => {
-        if (key.startsWith("hematuria-session-") || key.startsWith("hematuria-ai-session-")) window.localStorage.removeItem(key);
+      listStorageKeys("local").keys.forEach((key) => {
+        if (
+          key.startsWith("hematuria-session-")
+          || key.startsWith("hematuria-ai-session-")
+          || key.startsWith("hematuria-ai-patient-session-")
+        ) {
+          window.localStorage.removeItem(key);
+        }
       });
     }
     window.localStorage.setItem(versionKey, version);

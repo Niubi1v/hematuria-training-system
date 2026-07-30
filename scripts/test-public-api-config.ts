@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { publicApiConfig, resolvePublicApiBaseUrl } from "../src/lib/apiConfig";
+import { desktopRuntimeConfig, publicApiConfig, resolvePublicApiBaseUrl } from "../src/lib/apiConfig";
 
 assert.deepEqual(publicApiConfig, {
   baseUrl: "",
@@ -62,5 +62,7 @@ assert.throws(
   () => resolvePublicApiBaseUrl("https://api.example.test/api", { NODE_ENV: "production" }),
   /origin without an API path/
 );
+
+assert.equal(desktopRuntimeConfig(), null, "web tests must not infer a desktop runtime without a host injection");
 
 console.log("Public API configuration passed for Vercel same-origin preview and fail-closed static production builds.");

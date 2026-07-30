@@ -1,3 +1,5 @@
+import { desktopRuntimeConfig } from "./apiConfig";
+
 export type ApiFailureKind =
   | "network" | "offline" | "not-deployed" | "backend-outdated" | "timeout" | "rate-limited"
   | "not-configured" | "provider-timeout" | "provider-rate-limited" | "provider-unavailable"
@@ -101,12 +103,23 @@ function endpointPath(url: string) {
   return new URL(url, "http://same-origin.invalid").pathname;
 }
 
+function desktopRequestHeaders(url: string): Record<string, string> {
+  const runtime = desktopRuntimeConfig();
+  if (!runtime) return {};
+  const parsed = new URL(url, runtime.apiBaseUrl);
+  if (parsed.origin !== runtime.apiBaseUrl) return {};
+  return { "X-Hematuria-Desktop-Token": runtime.authToken };
+}
+
 export async function fetchWithRecovery(url: string, init: RecoveryOptions = {}) {
   const { timeoutMs = 15_000, retries = 2, requestId = createRequestId(init.endpointName || "api"), endpointName = endpointPath(url), ...requestInit } = init;
   let lastError: ApiRequestError | null = null;
   const startedAt = Date.now();
   for (let attempt = 0; attempt <= retries; attempt += 1) {
-    if (typeof navigator !== "undefined" && navigator.onLine === false) throw new ApiRequestError("offline", undefined, "browser_offline", requestId);
+    const localDesktopRequest = Boolean(desktopRuntimeConfig());
+    if (!localDesktopRequest && typeof navigator !== "undefined" && navigator.onLine === false) {
+      throw new ApiRequestError("offline", undefined, "browser_offline", requestId);
+    }
     const controller = new AbortController();
     const externalSignal = requestInit.signal;
     const abortFromExternal = () => controller.abort();
@@ -116,7 +129,11 @@ export async function fetchWithRecovery(url: string, init: RecoveryOptions = {})
     try {
       const response = await fetch(url, {
         ...requestInit,
-        headers: { ...Object.fromEntries(new Headers(requestInit.headers).entries()), "X-Request-Id": requestId },
+        headers: {
+          ...Object.fromEntries(new Headers(requestInit.headers).entries()),
+          ...desktopRequestHeaders(url),
+          "X-Request-Id": requestId
+        },
         signal: controller.signal,
         cache: "no-store"
       });

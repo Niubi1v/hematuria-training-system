@@ -49,9 +49,8 @@ import {
   reportStatusPresentation,
   safeStudentFacingText
 } from "@/shared/dataAgentPresentation.js";
-import { patientOpeningForCase } from "@/src/lib/chiefComplaint";
 import { ApiRequestError, createIdempotencyKey, createRequestId, fetchWithRecovery, requestJson, studentFacingApiMessage } from "@/src/lib/apiClient";
-import { publicApiConfig } from "@/src/lib/apiConfig";
+import { desktopRuntimeConfig, publicApiConfig } from "@/src/lib/apiConfig";
 import { ATTEMPT_SUMMARY_KEY, createAttemptSummary, isAttemptSummary, type AttemptSummary } from "@/src/lib/catalogProgress";
 import { isConnectionFailureFallback, isSafetyFallback, mergeRecoveredCoverage, recordConnectionTransition, validCachedSession, type AiConnectionStatus, type CachedPatientSession, type ConnectionTransition } from "@/src/lib/aiRecovery";
 import { initializeStorageVersion, readJsonStorage, removeBrowserStorageEntries, writeJsonStorage } from "@/src/lib/safeStorage";
@@ -77,6 +76,7 @@ import type {
   PhysicalExamItem
 } from "@/src/lib/types";
 import FormattedText from "./FormattedText";
+import DesktopModelSettings from "./DesktopModelSettings";
 
 type TrainingMode = "free" | "osce" | "demo" | "rct" | "random";
 type LanguageCode = "zh" | "en";
@@ -122,7 +122,9 @@ type PatientReplyApiResponse = {
   model?: string;
   usedModel?: string;
   isFallback: boolean;
-  generationSource?: "live_ai" | "ai_cache" | "rule_fallback" | "safety_boundary" | "mock";
+  generationSource?: "deepseek_live_ai" | "live_ai" | "ai_cache" | "governed_planner" | "rule_fallback" | "safety_boundary" | "mock" | "none";
+  classificationSource?: "deepseek_live_ai" | "live_ai" | "local_ai" | "deterministic" | "none";
+  classifierStatus?: "accepted" | "rejected" | "timeout" | "not_invoked";
   factSource?: string;
   matchedFacts?: string[];
   answerSource?: string;
@@ -433,8 +435,10 @@ function nextStage(stageNo: AgentStageNo): AgentStageNo | null {
   return stageNo < 7 ? ((stageNo + 1) as AgentStageNo) : null;
 }
 
-function patientOpening(caseData: StudentVisibleCase, lang: LanguageCode) {
-  return patientOpeningForCase(caseData.id, undefined, lang);
+function patientOpening(lang: LanguageCode) {
+  return lang === "en"
+    ? "Hello doctor. I came in for a consultation."
+    : "医生您好，我来看一下。";
 }
 
 function studentStageLabel(stageNo: number, lang: LanguageCode) {
@@ -821,6 +825,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const aiGenerationRef = useRef(0);
   const reconnectPromiseRef = useRef<Promise<boolean> | null>(null);
   const practiceDeployment = process.env.NEXT_PUBLIC_DEPLOYMENT_TIER !== "formal";
+  const isDesktopRuntime = Boolean(desktopRuntimeConfig());
 
   useEffect(() => {
     const previous = previousAiStatusRef.current;
@@ -988,7 +993,9 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }
 
   useEffect(() => {
-    const storageInit = initializeStorageVersion("2.2.0");
+    // Invalidate pre-desktop patient-session caches whose opening statement
+    // could contain a chief complaint. Attempt state remains intact.
+    const storageInit = initializeStorageVersion("2.4.2-desktop-poc.1");
     if (storageInit.error) setStorageWarning("浏览器存储不可用，本次训练可能无法断点续训。");
     let savedLang: LanguageCode | null = null;
     let savedAiMode: AiMode | null = null;
@@ -1069,7 +1076,15 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     if (saved.answers) setAnswers({ ...emptyAnswers, ...saved.answers });
     if (saved.submitted) setSubmitted(saved.submitted);
     if (saved.finalReport) setFinalReport(saved.finalReport);
-    if (saved.messages) setMessages(saved.messages);
+    if (saved.messages) {
+      // Preserve the dialogue and training progress while replacing legacy
+      // pre-desktop opening text that could disclose the chief complaint.
+      setMessages(saved.messages.map((message, index) => (
+        index === 0 && message.role === "patient"
+          ? { ...message, text: patientOpening(targetLang) }
+          : message
+      )));
+    }
     if (saved.askedSlots) setAskedSlots(saved.askedSlots);
     if (saved.collected) setCollected(saved.collected);
     if (saved.examLogs) setExamLogs(saved.examLogs);
@@ -1102,17 +1117,18 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }, []);
 
   useEffect(() => {
+    if (isDesktopRuntime) return;
     const handleOffline = () => { setAiStatus("offline"); setReconnectNotice(lang === "en" ? "You are offline. Existing training records are preserved." : "当前处于离线状态，既有训练记录已保留。"); };
     const handleOnline = () => { setAiStatus((current) => current === "offline" ? "unknown" : current); setReconnectNotice(lang === "en" ? "Network restored. You can reconnect the patient service." : "网络已恢复，可以重新连接患者服务。"); };
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
     if (!navigator.onLine) handleOffline();
     return () => { window.removeEventListener("offline", handleOffline); window.removeEventListener("online", handleOnline); };
-  }, [lang]);
+  }, [isDesktopRuntime, lang]);
 
   useEffect(() => {
     if (!attemptReady) return;
-    setMessages((current) => current.length ? current : [{ role: "patient", text: patientOpening(caseData, lang) }]);
+    setMessages((current) => current.length ? current : [{ role: "patient", text: patientOpening(lang) }]);
   }, [attemptReady, caseData, lang]);
 
   useEffect(() => {
@@ -1128,12 +1144,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       setMessages((current) => {
         const hasStudentMessage = current.some((message) => message.role === "student");
         if (hasStudentMessage) return current;
-        return [{ role: "patient", text: cached.patientOpeningStatement || patientOpening(caseData, lang) }];
+        return [{ role: "patient", text: cached.patientOpeningStatement || patientOpening(lang) }];
       });
       return;
     }
     try { localStorage.removeItem(cacheKey); } catch { /* Session continues in memory. */ }
-    if (!navigator.onLine) { setAiStatus("offline"); return; }
+    if (!isDesktopRuntime && !navigator.onLine) { setAiStatus("offline"); return; }
     setSessionInitLoading(true);
     setSessionInitError("");
     setAiStatus("checking");
@@ -1182,7 +1198,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       setMessages((current) => {
         const hasStudentMessage = current.some((message) => message.role === "student");
         if (hasStudentMessage) return current;
-        return [{ role: "patient", text: result.patientOpeningStatement || patientOpening(caseData, lang) }];
+        return [{ role: "patient", text: result.patientOpeningStatement || patientOpening(lang) }];
       });
     }).catch((error) => {
       if (cancelled || request.controller.signal.aborted || generation !== aiGenerationRef.current) return;
@@ -1195,7 +1211,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     return () => {
       cancelled = true;
     };
-  }, [aiMode, attempt.attemptId, attemptReady, caseData, ensureTrainingStateToken, healthResolved, lang, runtimeMode, serviceHealth?.apiVersion, serviceHealth?.deploymentSha, serviceHealth?.gitSha]);
+  }, [aiMode, attempt.attemptId, attemptReady, caseData, ensureTrainingStateToken, healthResolved, isDesktopRuntime, lang, runtimeMode, serviceHealth?.apiVersion, serviceHealth?.deploymentSha, serviceHealth?.gitSha]);
 
   useEffect(() => {
     try { localStorage.setItem("hematuria-language", lang); } catch { setStorageWarning("语言偏好无法保存。 "); }
@@ -1449,7 +1465,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     setPendingFailedQuestion(null);
     setReconnectNotice("");
     window.dispatchEvent(new CustomEvent("hematuria-language-change", { detail: next }));
-    setMessages([{ role: "patient", text: patientOpening(caseData, next) }]);
+    setMessages([{ role: "patient", text: patientOpening(next) }]);
   }
 
   function updateAnswer<K extends keyof FullProcessAnswers>(key: K, value: FullProcessAnswers[K]) {
@@ -1695,7 +1711,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   function reconnectAiPatient() {
     if (reconnectPromiseRef.current) return reconnectPromiseRef.current;
     const promise = (async () => {
-      if (!navigator.onLine) {
+      if (!isDesktopRuntime && !navigator.onLine) {
         setAiStatus("offline");
         setReconnectNotice(studentFacingApiMessage("offline", lang));
         return false;
@@ -2036,13 +2052,17 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }
 
   return (
-    <main className="mx-auto max-w-[1500px] px-4 py-4 sm:px-5 sm:py-5">
-      <div className="mb-3 grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
+    <main className="desktop-workbench mx-auto max-w-[1600px] px-4 py-4 sm:px-5 sm:py-5">
+      <div className="workbench-topbar mb-3 grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-clinic-blue">
             <span>{caseData.displayCaseId || caseData.id}</span>
             <span className={`ui-status ${isOsce ? "ui-status-danger" : "ui-status-success"}`}>
-              {isOsce ? `${t(lang, "osceMode")} ${formatDuration(osceTimeLeft)}` : t(lang, "freeTraining")}
+              {isOsce
+                ? `${t(lang, "osceMode")} ${formatDuration(osceTimeLeft)}`
+                : isDesktopRuntime
+                  ? (lang === "en" ? "Exam-style practice" : "考试式练习")
+                  : t(lang, "freeTraining")}
             </span>
           </div>
           <h1 className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">{t(lang, "appTitle")}</h1>
@@ -2054,6 +2074,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             <button type="button" onClick={() => setLanguage("zh")} className={`ui-segment ${lang === "zh" ? "ui-segment-active" : ""}`}>{t(lang, "zh")}</button>
             <button type="button" onClick={() => setLanguage("en")} className={`ui-segment ${lang === "en" ? "ui-segment-active" : ""}`}>{t(lang, "en")}</button>
           </div>
+          <DesktopModelSettings />
           <span
             aria-live="polite"
             aria-label={patientServiceLabel}
@@ -2117,8 +2138,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         <span className="inline-flex items-center gap-2"><Menu size={18} />{t(lang, "mobileNavigation")}</span>
         <span>{activeStageNo}/7</span>
       </button>
-      <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)] min-[1380px]:grid-cols-[260px_minmax(0,1fr)_260px]">
-        <aside className={`${mobileNavOpen ? "block" : "hidden"} space-y-3 lg:block`}>
+      <div className="workbench-grid grid gap-4 lg:grid-cols-[232px_minmax(0,1fr)] min-[1200px]:grid-cols-[220px_minmax(0,1fr)_260px]">
+        <aside className={`workbench-sidebar ${mobileNavOpen ? "block" : "hidden"} space-y-3 lg:block`}>
           <section className="rounded-lg border border-clinic-line bg-white p-4">
             <div className="mb-3 flex items-center gap-2 text-sm font-medium text-clinic-blue"><Languages size={16} /> {t(lang, "stageNavigation")}</div>
             <div className="space-y-2">
@@ -2156,7 +2177,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           </section>
         </aside>
 
-        <section className="rounded-xl border border-clinic-line bg-white p-4 shadow-soft sm:p-5">
+        <section className="workbench-main rounded-xl border border-clinic-line bg-white p-4 shadow-soft sm:p-5">
           <div className="mb-3 border-b border-clinic-line pb-3">
             <p className="text-sm font-medium text-clinic-blue">{activeAgent.agentName[lang]}</p>
             <h2 className="mt-1 text-lg font-semibold sm:text-xl">{activeAgent.mainWindowFunction[lang]}</h2>
@@ -2165,7 +2186,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
 
           <fieldset disabled={osceLocked && activeStageNo !== 7} className="min-w-0 border-0 p-0 disabled:opacity-75">
           {activeStageNo === 1 && (
-            <div>
+            <div className="history-stage">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold">{t(lang, "patientAgent")}</h3>
                 <button type="button" onClick={() => setSpeechSettingsOpen(true)} disabled={!speechOutputSupported} className="inline-flex min-h-11 items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm text-clinic-muted hover:border-clinic-blue disabled:opacity-50">
@@ -2218,7 +2239,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                   {lang === "en" ? "Start interview and enable audio" : "开始问诊并启用语音"}
                 </button>
               )}
-              <div className="relative">
+              <div className="history-dialogue relative">
               <div
                 ref={chatScrollRef}
                 role="log"
@@ -2230,12 +2251,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                   chatPinnedToBottomRef.current = nearBottom;
                   if (nearBottom) setChatHasNewMessage(false);
                 }}
-                className="mt-3 h-[220px] overflow-y-auto rounded-lg border border-clinic-line bg-clinic-paper p-3 sm:h-[320px] sm:p-4 lg:h-[390px]"
+                className="history-transcript mt-3 h-[220px] overflow-y-auto rounded-lg border border-clinic-line bg-clinic-paper p-3 sm:h-[320px] sm:p-4 lg:h-[390px]"
               >
                 <div className="space-y-3">
                 {messages.map((message, index) => (
                   <div key={`${message.role}-${index}`} className={`flex ${message.role === "student" ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[88%] whitespace-pre-line rounded-xl px-3 py-2.5 text-sm leading-6 sm:max-w-[78%] sm:px-4 sm:py-3 ${message.role === "student" ? "bg-clinic-blue text-white" : "border border-clinic-line bg-white text-clinic-ink"}`}>
+                    <div className={`history-message max-w-[88%] whitespace-pre-line rounded-xl px-3 py-2.5 text-sm leading-6 sm:max-w-[78%] sm:px-4 sm:py-3 ${message.role === "student" ? "bg-clinic-blue text-white" : "border border-clinic-line bg-white text-clinic-ink"}`}>
                       <span className={`mb-1 block text-[11px] font-semibold leading-4 ${message.role === "student" ? "text-white/80" : "text-clinic-muted"}`}>{message.role === "student" ? (lang === "en" ? "You · clinician" : "你 · 医生") : (lang === "en" ? "Standardized patient" : "标准化患者")}</span>
                       <span className="block">{message.text}</span>
                     </div>
@@ -2251,10 +2272,14 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
               </div>
               {chatHasNewMessage && <button type="button" onClick={scrollChatToBottom} className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-clinic-line bg-white px-3 py-1.5 text-xs font-semibold text-clinic-blue shadow-soft">{lang === "en" ? "New message · go to latest" : "有新消息 · 回到底部"}</button>}
               </div>
-              <div ref={chatComposerRef} data-testid="chat-composer" data-reserve={chatComposerReserve} className="relative z-30 mt-3 scroll-mb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] rounded-xl border border-clinic-line bg-white/95 p-2 shadow-raised backdrop-blur-sm sm:sticky sm:bottom-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
+              <label className="history-summary mt-5 block">
+                <span className="font-medium">{t(lang, "historySummary")}</span>
+                <textarea value={answers.historySummary} onChange={(event) => updateAnswer("historySummary", event.target.value)} rows={4} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" />
+              </label>
+              <div ref={chatComposerRef} data-testid="chat-composer" data-reserve={chatComposerReserve} className="history-composer relative z-30 mt-3 scroll-mb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] rounded-xl border border-clinic-line bg-white/95 p-1.5 shadow-raised backdrop-blur-sm sm:sticky sm:bottom-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
                 <textarea
                   value={question}
-                  rows={2}
+                  rows={1}
                   onFocus={ensureMobileComposerVisible}
                   onChange={(event) => {
                     setQuestion(event.target.value);
@@ -2266,11 +2291,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                       void submitQuestion();
                     }
                   }}
-                  className="ui-input block min-h-[68px] w-full resize-none"
+                  className="ui-input block min-h-11 max-h-[44px] w-full resize-none"
                   placeholder={t(lang, "inputQuestion")}
                   aria-label={t(lang, "inputQuestion")}
                 />
-                <div className="mt-2 flex items-center justify-between gap-2">
+                <div className="mt-1 flex items-center justify-between gap-2">
                   <p className="hidden text-xs text-clinic-muted sm:block">{lang === "en" ? "Enter to send · Shift+Enter for a new line" : "Enter 发送 · Shift+Enter 换行"}</p>
                   <div className="ml-auto flex items-center gap-2">
                 <button type="button" aria-label={t(lang, "voiceAsk")} title={t(lang, "voiceAsk")} onClick={startVoiceInput} disabled={!speechInputSupported || listening} className="ui-button-secondary px-3">
@@ -2282,10 +2307,6 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                   </div>
                 </div>
               </div>
-              <label className="mt-5 block">
-                <span className="font-medium">{t(lang, "historySummary")}</span>
-                <textarea value={answers.historySummary} onChange={(event) => updateAnswer("historySummary", event.target.value)} rows={5} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" />
-              </label>
             </div>
           )}
 
@@ -2556,11 +2577,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           {showStageFeedback && activeEvaluation && <FeedbackBox evaluation={activeEvaluation} lang={lang} />}
         </section>
 
-        <aside className="hidden space-y-4 min-[1380px]:block">
+        <aside className="workbench-drawer hidden space-y-4 min-[1200px]:block">
           <section className="rounded-lg border border-clinic-line bg-white p-5">
             <h2 className="font-semibold">{t(lang, "trainingState")}</h2>
             <div className="mt-3 space-y-2 text-sm text-clinic-muted">
-              <p>{isOsce ? t(lang, "osceMode") : t(lang, "freeTraining")}</p>
+              <p>{isOsce ? t(lang, "osceMode") : isDesktopRuntime ? (lang === "en" ? "Exam-style practice" : "考试式练习") : t(lang, "freeTraining")}</p>
               {isOsce && <p>{formatDuration(osceTimeLeft)}</p>}
               <p>{studentStageLabel(activeStageNo, lang)}：{activeAgent.agentName[lang]}</p>
               <p>{Object.keys(submitted).length} / 7 {t(lang, "completed")}</p>

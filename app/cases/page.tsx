@@ -1,6 +1,13 @@
 import publicCases from "@/data/cases_public.json";
-import CaseCatalogClient from "@/src/components/CaseCatalogClient";
+import CaseCatalogClient, { type PublicCase } from "@/src/components/CaseCatalogClient";
 
 export default function CaseListPage() {
-  return <CaseCatalogClient cases={publicCases as Parameters<typeof CaseCatalogClient>[0]["cases"]} />;
+  const blindCases: PublicCase[] = publicCases.map((value) => ({
+    id: String(value.id || ""),
+    displayCaseId: String(value.displayCaseId || value.id || ""),
+    age: String(value.age || ""),
+    sex: String(value.sex || ""),
+    sexEn: String(value.sexEn || "")
+  }));
+  return <CaseCatalogClient cases={blindCases} />;
 }

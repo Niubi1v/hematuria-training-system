@@ -7,7 +7,7 @@ import evaluatorRubricJson from "../data/evaluator_rubric.json";
 import { emptyRctRecord, validateRctRecord, type RctRecord } from "../src/components/RctResearchClient";
 import { validateCaseLibrary } from "../src/lib/caseSchema";
 import { matchOrderResults, score360 } from "../src/lib/multiAgents";
-import { readJsonStorage, writeJsonStorage } from "../src/lib/safeStorage";
+import { initializeStorageVersion, readJsonStorage, writeJsonStorage } from "../src/lib/safeStorage";
 import type { CaseData, EvaluatorRubricItem } from "../src/lib/types";
 
 const cases = casesJson as CaseData[];
@@ -63,6 +63,11 @@ assert.doesNotMatch(clinicalSource, />DeepSeek AI</, "生产界面不得展示�
 assert.match(clinicalSource, /function percentageScore\(rawScore: number\)[\s\S]{0,120}rawScore \/ 360/, "学生端百分制必须只按原始得分除以360换算");
 assert.match(clinicalSource, /data-testid="final-percentage-score"[\s\S]{0,240}\/ 100/, "学生端主分数必须显示为百分制");
 assert.match(clinicalSource, /createAttemptSummary\(attempt, report\.total, report\.max\)/, "存储仍须保留服务端原始360分报告");
+assert.match(
+  clinicalSource,
+  /index === 0 && message\.role === "patient"[\s\S]{0,180}patientOpening\(targetLang\)/,
+  "legacy persisted dialogue must replace only its first Patient opening with the blind-safe greeting"
+);
 
 class MemoryStorage {
   private map = new Map<string, string>();
@@ -81,6 +86,22 @@ storage.setItem("broken", "{not-json");
 const recovered = readJsonStorage("broken", { safe: true });
 assert.equal(recovered.recovered, true, "损坏缓存应自动恢复");
 assert.deepEqual(recovered.value, { safe: true });
+storage.setItem("hematuria-storage-version", "legacy");
+storage.setItem("hematuria-ai-patient-session-attempt-P001-en-practice", JSON.stringify({
+  patientOpeningStatement: "legacy chief complaint"
+}));
+storage.setItem("hematuria-training-attempt-P001", JSON.stringify({ currentStage: 1 }));
+assert.equal(initializeStorageVersion("2.4.2-desktop-poc.1").migrated, true);
+assert.equal(
+  storage.getItem("hematuria-ai-patient-session-attempt-P001-en-practice"),
+  null,
+  "desktop privacy migration must remove legacy Patient session openings"
+);
+assert.notEqual(
+  storage.getItem("hematuria-training-attempt-P001"),
+  null,
+  "desktop privacy migration must preserve training-stage state"
+);
 
 const now = new Date().toISOString();
 const validRct: RctRecord = { ...emptyRctRecord, participantId: "STU_001", consentStatus: "已同意", consentDate: "2026-07-10", eligibilityStatus: "纳入", grade: "临床医学四年级", randomizationStratum: "四年级", sequenceNumber: "R001", raterCode: "RATER01", createdAt: now, updatedAt: now };

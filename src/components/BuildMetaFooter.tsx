@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { readStringStorage } from "@/src/lib/safeStorage";
 
 const buildMeta = {
@@ -12,6 +13,7 @@ const buildMeta = {
 };
 
 export default function BuildMetaFooter() {
+  const pathname = usePathname();
   const [lang, setLang] = useState<"zh" | "en">("zh");
   useEffect(() => {
     if (readStringStorage("hematuria-language").value === "en") setLang("en");
@@ -22,6 +24,7 @@ export default function BuildMetaFooter() {
   const labels = lang === "en"
     ? ["App version", "Git commit", "Build time", "Case library", "Scoring rules"]
     : ["应用版本", "代码版本", "构建时间", "病例库版本", "评分规则版本"];
+  if (/^\/cases\/[^/]+\/?$/.test(pathname)) return null;
   return (
     <footer className="border-t border-clinic-line bg-white px-5 py-4 text-xs text-clinic-muted">
       <div className="mx-auto flex max-w-7xl flex-wrap gap-x-5 gap-y-1" data-testid="build-metadata">

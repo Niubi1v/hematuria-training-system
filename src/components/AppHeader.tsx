@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { readStringStorage } from "@/src/lib/safeStorage";
+import DesktopModelSettings from "./DesktopModelSettings";
 
 const links = [
   { href: "/", zh: "首页", en: "Home", exact: true },
@@ -23,16 +24,20 @@ export default function AppHeader() {
   useEffect(() => {
     document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
   }, [lang]);
+  if (/^\/cases\/[^/]+\/?$/.test(pathname)) return null;
   return (
-    <header className="sticky top-0 z-40 border-b border-clinic-line bg-white/95 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-3 px-5 py-2 sm:flex-nowrap sm:py-3">
-        <Link href="/" className="shrink-0 text-sm font-semibold tracking-tight text-clinic-ink sm:text-lg">{lang === "en" ? "Hematuria Clinical Reasoning" : "血尿临床思维训练"}</Link>
-        <nav aria-label={lang === "en" ? "Main navigation" : "主导航"} className="flex w-full gap-1 overflow-x-auto pt-1 text-sm text-clinic-muted sm:w-auto sm:pt-0">
-          {links.map((item) => {
-            const active = item.exact ? pathname === "/" : pathname.startsWith(item.href);
-            return <Link aria-current={active ? "page" : undefined} key={item.href} href={item.href} className={`min-h-10 shrink-0 rounded-lg px-3 py-2 font-medium focus:outline-none focus:ring-2 focus:ring-clinic-blue ${active ? "bg-clinic-paper text-clinic-blue" : "hover:bg-clinic-paper hover:text-clinic-blue"}`}>{lang === "en" ? item.en : item.zh}</Link>;
-          })}
-        </nav>
+    <header className="app-toolbar sticky top-0 z-40 border-b border-clinic-line bg-white/95 backdrop-blur-sm">
+      <div className="mx-auto flex h-[55px] max-w-[1440px] items-center justify-between gap-x-3 px-5">
+        <Link href="/" className="shrink-0 text-sm font-semibold tracking-tight text-clinic-ink sm:text-base">{lang === "en" ? "Hematuria Clinical Training" : "血尿临床问诊训练"}</Link>
+        <div className="flex min-w-0 items-center gap-2">
+          <nav aria-label={lang === "en" ? "Main navigation" : "主导航"} className="flex w-full gap-1 overflow-x-auto pt-1 text-sm text-clinic-muted sm:w-auto sm:pt-0">
+            {links.map((item) => {
+              const active = item.exact ? pathname === "/" : pathname.startsWith(item.href);
+              return <Link aria-current={active ? "page" : undefined} key={item.href} href={item.href} className={`min-h-10 shrink-0 rounded-lg px-3 py-2 font-medium focus:outline-none focus:ring-2 focus:ring-clinic-blue ${active ? "bg-clinic-paper text-clinic-blue" : "hover:bg-clinic-paper hover:text-clinic-blue"}`}>{lang === "en" ? item.en : item.zh}</Link>;
+            })}
+          </nav>
+          <DesktopModelSettings />
+        </div>
       </div>
     </header>
   );

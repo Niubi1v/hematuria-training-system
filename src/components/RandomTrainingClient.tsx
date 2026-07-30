@@ -1,21 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import publicCases from "@/data/cases_public.json";
 import { publicCaseHref } from "@/src/lib/publicRoutes";
 
-export default function RandomTrainingClient() {
+type BlindRandomCase = {
+  id: string;
+  displayCaseId: string;
+};
+
+export default function RandomTrainingClient({ cases }: { cases: BlindRandomCase[] }) {
   const [message, setMessage] = useState("正在随机抽取练习病例...");
 
   useEffect(() => {
-    if (!publicCases.length) {
+    if (!cases.length) {
       setMessage("病例库为空，请先导入病例。");
       return;
     }
-    const selected = publicCases[Math.floor(Math.random() * publicCases.length)];
+    const selected = cases[Math.floor(Math.random() * cases.length)];
     setMessage("已抽取病例，正在进入七阶段训练...");
     window.location.replace(publicCaseHref(selected.displayCaseId || selected.id, { mode: "random" }));
-  }, []);
+  }, [cases]);
 
   return (
     <main className="mx-auto flex min-h-[60vh] max-w-3xl items-center justify-center px-5 py-10">
