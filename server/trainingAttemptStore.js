@@ -58,14 +58,22 @@ function pruneIdempotency(record) {
   }
 }
 
+function desktopStore() {
+  return require("./desktopSqliteStore.js");
+}
+
 function attemptStoreCredentialSource() {
-  return storeMode() === "upstash" ? resolveRedisRestCredentials().source : "none";
+  const mode = storeMode();
+  if (mode === "upstash") return resolveRedisRestCredentials().source;
+  if (mode === "sqlite") return "desktop_sqlite";
+  return "none";
 }
 
 function storeMode() {
   const configured = String(process.env.TRAINING_ATTEMPT_STORE_MODE || "").toLowerCase();
   if (configured === "memory") return "memory";
   if (configured === "upstash") return "upstash";
+  if (configured === "sqlite" || configured === "desktop") return "sqlite";
   const credentials = resolveRedisRestCredentials();
   if (credentials.url && credentials.token) return "upstash";
   if (process.env.VERCEL || process.env.NODE_ENV === "production") return "unavailable";
@@ -75,6 +83,13 @@ function storeMode() {
 function assertStoreConfigured() {
   const mode = storeMode();
   if (mode === "unavailable") throw new Error("training_attempt_store_unavailable");
+  if (mode === "sqlite") {
+    try {
+      desktopStore().desktopDatabasePath();
+    } catch {
+      throw new Error("training_attempt_store_unavailable");
+    }
+  }
   const credentials = resolveRedisRestCredentials();
   if (mode === "upstash" && (!credentials.url || !credentials.token)) {
     throw new Error("training_attempt_store_unavailable");
@@ -83,6 +98,14 @@ function assertStoreConfigured() {
 }
 
 function durableAttemptStoreConfigured() {
+  if (storeMode() === "sqlite") {
+    try {
+      desktopStore().desktopDatabasePath();
+      return true;
+    } catch {
+      return false;
+    }
+  }
   const credentials = resolveRedisRestCredentials();
   return storeMode() === "upstash" && Boolean(credentials.url && credentials.token);
 }
@@ -190,6 +213,23 @@ async function registerAttempt({ state, token, requestId, requestDigest, payload
     memoryAttempts.set(key, record);
     return { duplicate: false, statusCode, payload: clone(payload), token };
   }
+  if (mode === "sqlite") {
+    const result = desktopStore().registerAttempt({
+      attemptKey: key,
+      caseId: state.caseId,
+      attemptId: state.attemptId,
+      state: clone(state),
+      tokenHash: digest(token),
+      requestId: id,
+      requestDigest,
+      payload: clone(payload),
+      token,
+      statusCode
+    });
+    if (result.kind === "created") return { duplicate: false, statusCode, payload: clone(payload), token };
+    if (result.kind === "duplicate") return cachedResult(result.cached);
+    return resultError(result.kind);
+  }
   const raw = await upstash(["EVAL", REGISTER_SCRIPT, 1, key, id, requestDigest, JSON.stringify(record), ATTEMPT_TTL_SECONDS]);
   const result = JSON.parse(raw);
   if (result.kind === "created") return { duplicate: false, statusCode, payload: clone(payload), token };
@@ -214,6 +254,17 @@ async function loadAttempt({ caseId, attemptId, token, requestId, requestDigest 
     if (record.currentTokenHash !== tokenHash) return resultError("stale");
     return { duplicate: false, state: clone(record.state) };
   }
+  if (mode === "sqlite") {
+    const result = desktopStore().loadAttempt({
+      attemptKey: key,
+      requestId: id,
+      requestDigest,
+      tokenHash
+    });
+    if (result.kind === "active") return { duplicate: false, state: normalizeStoredState(result.state) };
+    if (result.kind === "duplicate") return cachedResult(result.cached);
+    return resultError(result.kind);
+  }
   const raw = await upstash(["EVAL", LOAD_SCRIPT, 1, key, id, requestDigest, tokenHash]);
   const result = JSON.parse(raw);
   if (result.kind === "active") return { duplicate: false, state: normalizeStoredState(result.state) };
@@ -227,6 +278,12 @@ async function validateCurrentAttempt({ caseId, attemptId, token }) {
   let record;
   if (mode === "memory") {
     record = memoryAttempts.get(key);
+  } else if (mode === "sqlite") {
+    const result = desktopStore().validateCurrentAttempt({ attemptKey: key, tokenHash: digest(token) });
+    if (result.kind !== "active") return resultError(result.kind);
+    const state = normalizeStoredState(result.state);
+    if (state.status !== "active") throw new Error("attempt_already_completed");
+    return state;
   } else {
     const raw = await upstash(["GET", key]);
     record = raw ? JSON.parse(raw) : null;
@@ -258,6 +315,22 @@ async function commitAttempt({ state, previousToken, nextToken, requestId, reque
     pruneIdempotency(record);
     return { duplicate: false, statusCode, payload: clone(payload), token: nextToken };
   }
+  if (mode === "sqlite") {
+    const result = desktopStore().commitAttempt({
+      attemptKey: key,
+      state: clone(state),
+      previousTokenHash: digest(previousToken),
+      nextTokenHash: digest(nextToken),
+      requestId: id,
+      requestDigest,
+      payload: clone(payload),
+      token: nextToken,
+      statusCode
+    });
+    if (result.kind === "committed") return { duplicate: false, statusCode, payload: clone(payload), token: nextToken };
+    if (result.kind === "duplicate") return cachedResult(result.cached);
+    return resultError(result.kind);
+  }
   const raw = await upstash(["EVAL", COMMIT_SCRIPT, 1, key, id, requestDigest, digest(previousToken), JSON.stringify(state), digest(nextToken), JSON.stringify(cached), ATTEMPT_TTL_SECONDS]);
   const result = JSON.parse(raw);
   if (result.kind === "committed") return { duplicate: false, statusCode, payload: clone(payload), token: nextToken };
@@ -269,15 +342,50 @@ function resetMemoryAttemptStore() {
   memoryAttempts.clear();
 }
 
+function getDesktopSetting(key) {
+  return desktopStore().getDesktopSetting(key);
+}
+
+function setDesktopSetting(key, value) {
+  return desktopStore().setDesktopSetting(key, value);
+}
+
+function getOrCreateDesktopSecret() {
+  return desktopStore().getOrCreateDesktopSecret();
+}
+
+function upsertDesktopSessionMetadata(metadata) {
+  return desktopStore().upsertDesktopSessionMetadata(metadata);
+}
+
+function getDesktopSessionMetadata(sessionId) {
+  return desktopStore().getDesktopSessionMetadata(sessionId);
+}
+
+function saveTrainingRecordSnapshot(snapshot) {
+  return desktopStore().saveTrainingRecordSnapshot(snapshot);
+}
+
+function getTrainingRecordSnapshot(recordId) {
+  return desktopStore().getTrainingRecordSnapshot(recordId);
+}
+
 module.exports = {
   attemptStoreCredentialSource,
   assertStoreConfigured,
   commitAttempt,
   digest,
   durableAttemptStoreConfigured,
+  getDesktopSessionMetadata,
+  getDesktopSetting,
+  getOrCreateDesktopSecret,
+  getTrainingRecordSnapshot,
   loadAttempt,
   registerAttempt,
   resetMemoryAttemptStore,
+  saveTrainingRecordSnapshot,
+  setDesktopSetting,
   storeMode,
+  upsertDesktopSessionMetadata,
   validateCurrentAttempt
 };
