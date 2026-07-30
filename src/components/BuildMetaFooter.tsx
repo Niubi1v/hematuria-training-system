@@ -4,14 +4,6 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { readStringStorage } from "@/src/lib/safeStorage";
 
-const buildMeta = {
-  appVersion: process.env.NEXT_PUBLIC_APP_VERSION || "2.4.2-dev",
-  gitSha: process.env.NEXT_PUBLIC_GIT_SHA || "local",
-  buildTime: process.env.NEXT_PUBLIC_BUILD_TIME || "local development build",
-  caseLibraryVersion: process.env.NEXT_PUBLIC_CASE_LIBRARY_VERSION || "42-case-2.4",
-  scoringVersion: process.env.NEXT_PUBLIC_SCORING_VERSION || "360-event-v1"
-};
-
 export default function BuildMetaFooter() {
   const pathname = usePathname();
   const [lang, setLang] = useState<"zh" | "en">("zh");
@@ -21,18 +13,15 @@ export default function BuildMetaFooter() {
     window.addEventListener("hematuria-language-change", listener);
     return () => window.removeEventListener("hematuria-language-change", listener);
   }, []);
-  const labels = lang === "en"
-    ? ["App version", "Git commit", "Build time", "Case library", "Scoring rules"]
-    : ["应用版本", "代码版本", "构建时间", "病例库版本", "评分规则版本"];
   if (/^\/cases\/[^/]+\/?$/.test(pathname)) return null;
   return (
     <footer className="border-t border-clinic-line bg-white px-5 py-4 text-xs text-clinic-muted">
-      <div className="mx-auto flex max-w-7xl flex-wrap gap-x-5 gap-y-1" data-testid="build-metadata">
-        <span>{labels[0]}：{buildMeta.appVersion}</span>
-        <span>{labels[1]}：{buildMeta.gitSha}</span>
-        <span>{labels[2]}：{buildMeta.buildTime}</span>
-        <span>{labels[3]}：{buildMeta.caseLibraryVersion}</span>
-        <span>{labels[4]}：{buildMeta.scoringVersion}</span>
+      <div className="mx-auto max-w-7xl" data-testid="teaching-disclaimer">
+        <span>
+          {lang === "en"
+            ? "For medical education and simulated training only. Not for real-patient diagnosis or treatment decisions."
+            : "仅用于医学教学与模拟训练，不用于真实患者的诊断或治疗决策。"}
+        </span>
       </div>
     </footer>
   );

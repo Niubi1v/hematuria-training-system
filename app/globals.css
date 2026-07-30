@@ -4,25 +4,26 @@
 
 :root {
   color-scheme: light;
-  --color-page: 244 245 246;
+  --color-page: 246 249 250;
   --color-surface: 255 255 255;
-  --color-surface-subtle: 241 243 244;
-  --color-ink: 23 33 38;
-  --color-muted: 83 96 102;
-  --color-primary: 35 94 104;
-  --color-primary-strong: 25 75 84;
-  --color-accent: 25 75 84;
+  --color-surface-subtle: 240 246 247;
+  --color-accent-subtle: 231 242 246;
+  --color-ink: 22 34 43;
+  --color-muted: 79 94 105;
+  --color-primary: 22 101 132;
+  --color-primary-strong: 10 59 80;
+  --color-accent: 13 78 105;
   --color-success: 39 117 82;
   --color-warning: 161 98 7;
   --color-danger: 180 46 56;
   --color-info: 25 103 157;
-  --color-line: 221 225 227;
-  --radius-control: 0.5rem;
-  --radius-card: 0.75rem;
+  --color-line: 221 227 229;
+  --radius-control: 0.375rem;
+  --radius-card: 0.5rem;
   --shadow-soft: 0 1px 2px rgb(23 33 38 / 0.05);
   --shadow-raised: 0 12px 32px rgb(23 33 38 / 0.12);
-  --duration-fast: 140ms;
-  --duration-normal: 200ms;
+  --duration-fast: 120ms;
+  --duration-normal: 180ms;
   --z-header: 40;
   --z-sticky: 30;
   --z-dialog: 50;
@@ -53,7 +54,7 @@ a:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid #176b8a;
+  outline: 2px solid #235e68;
   outline-offset: 2px;
 }
 
@@ -79,17 +80,17 @@ a {
 
 .home-shell {
   display: grid;
-  min-height: calc(100vh - 55px);
+  min-height: calc(100vh - 56px);
   max-width: 1440px;
   margin: 0 auto;
-  grid-template-columns: 218px minmax(0, 1fr);
+  grid-template-columns: 224px minmax(0, 1fr);
 }
 
 .home-sidebar {
   position: sticky;
-  top: 55px;
+  top: 56px;
   display: flex;
-  height: calc(100vh - 55px);
+  height: calc(100vh - 56px);
   flex-direction: column;
   border-right: 1px solid rgb(var(--color-line));
   background: rgb(var(--color-surface-subtle));
@@ -132,7 +133,7 @@ a {
   justify-content: space-between;
   gap: 28px;
   border: 1px solid rgb(var(--color-line));
-  border-radius: 12px;
+  border-radius: 8px;
   background: rgb(var(--color-surface));
   padding: clamp(22px, 4vw, 38px);
 }
@@ -144,7 +145,7 @@ a {
   align-items: center;
   gap: 13px;
   border: 1px solid rgb(var(--color-line));
-  border-radius: 10px;
+  border-radius: 8px;
   background: rgb(var(--color-surface));
   padding: 14px 16px;
   transition: border-color var(--duration-fast), background var(--duration-fast);

@@ -17,6 +17,13 @@ export type PublicCase = {
 
 type LanguageCode = "zh" | "en";
 
+function caseLabel(caseId: string, lang: LanguageCode) {
+  const normalized = String(caseId || "").trim().toUpperCase();
+  const match = /^P0*(\d+)$/.exec(normalized);
+  const number = match ? String(Number(match[1])).padStart(2, "0") : normalized;
+  return lang === "en" ? `Case ${number}` : `病例 ${number}`;
+}
+
 export default function CaseCatalogClient({ cases }: { cases: PublicCase[] }) {
   const [lang, setLang] = useState<LanguageCode>("zh");
   const [search, setSearch] = useState("");
@@ -46,7 +53,7 @@ export default function CaseCatalogClient({ cases }: { cases: PublicCase[] }) {
     <main className="mx-auto max-w-[1440px] px-5 py-7 sm:py-9">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="home-eyebrow">{lang === "en" ? "BLIND CASE LIBRARY" : "盲选病例库"}</p>
+          <p className="home-eyebrow">{lang === "en" ? "CASE SELECTION" : "病例选择"}</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight">{lang === "en" ? "Choose a training case" : "选择训练病例"}</h1>
           <p className="mt-2 text-sm text-clinic-muted">
             {lang === "en" ? "Cards disclose only the case number, age, sex, and your local progress." : "病例卡仅显示编号、年龄、性别和本机训练进度。"}
@@ -58,13 +65,13 @@ export default function CaseCatalogClient({ cases }: { cases: PublicCase[] }) {
             <button type="button" onClick={() => setLang("zh")} className={`ui-segment ${lang === "zh" ? "ui-segment-active" : ""}`}>中文</button>
             <button type="button" onClick={() => setLang("en")} className={`ui-segment ${lang === "en" ? "ui-segment-active" : ""}`}>English</button>
           </div>
-          <a className="ui-button-primary" href={publicPageHref("random")}><Shuffle size={16} />{lang === "en" ? "Random case" : "随机抽题"}</a>
+          <a className="ui-button-primary" href={publicPageHref("random")}><Shuffle size={16} />{lang === "en" ? "Random case" : "随机抽取病例"}</a>
         </div>
       </div>
 
       {storageUnavailable && (
         <div role="status" className="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          {lang === "en" ? "Local progress is temporarily unavailable; blind case selection still works." : "本机进度暂不可用，但仍可盲选病例。"}
+          {lang === "en" ? "Local progress is temporarily unavailable; case selection still works." : "本机进度暂不可用，但仍可选择病例。"}
         </div>
       )}
 
@@ -84,7 +91,7 @@ export default function CaseCatalogClient({ cases }: { cases: PublicCase[] }) {
           return (
             <a key={item.id} data-case-id={item.id} href={publicCaseHref(item.displayCaseId || item.id)} className="blind-case-card group">
               <div className="flex items-start justify-between gap-3">
-                <span className="text-base font-semibold text-clinic-ink">{item.displayCaseId || item.id}</span>
+                <span className="text-base font-semibold text-clinic-ink">{caseLabel(item.displayCaseId || item.id, lang)}</span>
                 {state === "completed"
                   ? <CheckCircle2 size={17} className="text-emerald-700" aria-label={lang === "en" ? "Completed" : "已完成"} />
                   : state === "in-progress"

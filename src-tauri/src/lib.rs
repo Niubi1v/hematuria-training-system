@@ -532,7 +532,7 @@ fn setup(app: &mut tauri::App) -> Result<(), Box<dyn Error>> {
         .map_err(std::io::Error::other)?;
 
     tauri::WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
-        .title("Hematuria Training System")
+        .title("血尿临床问诊训练系统")
         .inner_size(1280.0, 820.0)
         .min_inner_size(960.0, 640.0)
         .center()

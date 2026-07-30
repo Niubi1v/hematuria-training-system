@@ -171,8 +171,8 @@ function stageSubmissionFailureMessage(error: unknown, language: LanguageCode) {
   const reason = trainingFailureReason(error);
   if (reason === "configuration_error") {
     return language === "en"
-      ? "The training record service is not configured, so this stage cannot be submitted. Ask an administrator to configure the Preview attempt store and retry."
-      : "训练记录服务未配置，当前无法提交阶段。请管理员完成 Preview 持久存储配置后重试。";
+      ? "Training records are temporarily unavailable, so this stage cannot be submitted. Please retry later."
+      : "训练记录暂时不可用，当前无法提交阶段，请稍后重试。";
   }
   if (reason === "attempt_not_found") {
     return language === "en"
@@ -182,17 +182,17 @@ function stageSubmissionFailureMessage(error: unknown, language: LanguageCode) {
   if (reason === "token_expired") {
     return language === "en"
       ? "This training attempt has expired. Start a new attempt before submitting."
-      : "本次训练凭据已过期，请重新开始训练后再提交。";
+      : "本次训练已过期，请重新开始训练后再提交。";
   }
   if (reason === "token_missing") {
     return language === "en"
-      ? "The training session response did not include a valid credential. Reinitialize the training session before submitting."
-      : "训练会话响应缺少有效凭据，请重新初始化训练会话后再提交。";
+      ? "This training session is not ready. Prepare it again before submitting."
+      : "本次训练尚未准备完成，请重新准备后再提交。";
   }
   if (reason === "stage_mismatch") {
     return language === "en"
-      ? "The submitted stage does not match the server stage. Refresh to restore the current stage."
-      : "提交阶段与服务端当前阶段不一致，请刷新页面恢复后重试。";
+      ? "The submitted stage no longer matches the current training stage. Refresh and retry."
+      : "提交阶段与当前训练阶段不一致，请刷新后重试。";
   }
   if (reason === "network_error") {
     return language === "en"
@@ -201,8 +201,8 @@ function stageSubmissionFailureMessage(error: unknown, language: LanguageCode) {
   }
   if (reason === "origin_mismatch") {
     return language === "en"
-      ? "This Preview is connected to a mismatched training API. Refresh after the Preview redeploys."
-      : "当前 Preview 连接了不匹配的训练API，请在 Preview 重新部署后刷新页面。";
+      ? "This application version cannot submit training records. Update the application and retry."
+      : "当前应用版本无法提交训练记录，请更新应用后重试。";
   }
   if (reason === "rate_limit") {
     return language === "en" ? "Training requests are temporarily rate-limited. Wait briefly and retry." : "训练请求暂时受限，请稍候再试。";
@@ -219,8 +219,8 @@ function orderSubmissionFailureMessage(error: unknown, language: LanguageCode) {
   const reason = trainingFailureReason(error);
   if (reason === "configuration_error") {
     return language === "en"
-      ? "The training record service is not configured, so this order cannot be saved. Ask an administrator to check the attempt store."
-      : "训练记录服务未配置，医嘱无法保存。请管理员检查训练记录存储配置。";
+      ? "Training records are temporarily unavailable, so this order cannot be saved. Please retry later."
+      : "训练记录暂时不可用，医嘱无法保存，请稍后重试。";
   }
   if (reason === "attempt_not_found" || reason === "token_expired" || reason === "token_missing") {
     return language === "en"
@@ -229,13 +229,13 @@ function orderSubmissionFailureMessage(error: unknown, language: LanguageCode) {
   }
   if (reason === "stage_mismatch" || reason === "state_mismatch") {
     return language === "en"
-      ? "The server stage changed. Refresh to restore the latest stage, then place the order again."
-      : "服务端阶段状态已变化，请刷新恢复最新阶段后再次开单。";
+      ? "The training stage changed. Refresh to restore the latest stage, then place the order again."
+      : "训练阶段已变化，请刷新恢复最新阶段后再次开单。";
   }
   if (reason === "origin_mismatch") {
     return language === "en"
-      ? "This page is connected to a mismatched order API. Refresh after the application is updated."
-      : "当前页面连接了不匹配的开单接口，请在应用更新后刷新重试。";
+      ? "This application version cannot save orders. Update the application and retry."
+      : "当前应用版本无法保存医嘱，请更新应用后重试。";
   }
   if (reason === "rate_limit") {
     return language === "en" ? "Orders are being submitted too quickly. Wait briefly and retry." : "开单请求过于频繁，请稍候重试。";
@@ -451,8 +451,12 @@ function percentageScore(rawScore: number) {
 }
 
 function caseDisplay(caseData: StudentVisibleCase, lang: LanguageCode) {
+  const internalCaseId = /^P(\d+)$/.exec(caseData.id);
+  const caseNumber = internalCaseId
+    ? String(Number(internalCaseId[1])).padStart(2, "0")
+    : caseData.displayCaseId || caseData.id;
   return {
-    title: lang === "en" ? `Training case ${caseData.displayCaseId || caseData.id}` : `训练病例 ${caseData.displayCaseId || caseData.id}`,
+    title: lang === "en" ? `Case ${caseNumber}` : `病例 ${caseNumber}`,
     age: caseData.age,
     sex: lang === "en" ? caseData.sexEn || (caseData.sex === "女" ? "Female" : "Male") : caseData.sex
   };
@@ -1119,7 +1123,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   useEffect(() => {
     if (isDesktopRuntime) return;
     const handleOffline = () => { setAiStatus("offline"); setReconnectNotice(lang === "en" ? "You are offline. Existing training records are preserved." : "当前处于离线状态，既有训练记录已保留。"); };
-    const handleOnline = () => { setAiStatus((current) => current === "offline" ? "unknown" : current); setReconnectNotice(lang === "en" ? "Network restored. You can reconnect the patient service." : "网络已恢复，可以重新连接患者服务。"); };
+    const handleOnline = () => { setAiStatus((current) => current === "offline" ? "unknown" : current); setReconnectNotice(lang === "en" ? "Network restored. You can resume the interview." : "网络已恢复，可以继续问诊。"); };
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
     if (!navigator.onLine) handleOffline();
@@ -1606,7 +1610,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     const text = (textOverride ?? question).trim();
     if (!text || patientReplyLoading || patientSubmitLockRef.current) return;
     if (!aiSessionId) {
-      setReconnectNotice(lang === "en" ? "The patient service is connecting..." : "患者服务连接中……");
+      setReconnectNotice(lang === "en" ? "Preparing the interview..." : "正在准备问诊……");
       return;
     }
     patientSubmitLockRef.current = true;
@@ -1650,7 +1654,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       } else if (isConnectionFailureFallback(aiResult.fallbackReason)) {
         pendingReason = aiResult.fallbackReason || "provider_unavailable";
         setAiStatus("degraded");
-        setReconnectNotice(lang === "en" ? "The patient service is using its safe offline response path. You can reconnect." : "患者服务正在使用安全离线回答，可随时重新连接。");
+        setReconnectNotice(lang === "en" ? "Interview assistance is temporarily unavailable. You can continue safely and retry later." : "问诊辅助暂时不可用，仍可安全继续并稍后重试。");
       } else if (isSafetyFallback(aiResult.fallbackReason)) {
         setAiStatus((current) => current === "connected" ? current : "unknown");
       } else {
@@ -1701,8 +1705,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     setAiStatus("connected");
     setSessionInitError("");
     setPendingFailedQuestion(null);
-    setReconnectNotice(lang === "en" ? "Patient service reconnected" : "患者服务已重新连接");
-    globalThis.setTimeout(() => setReconnectNotice((current) => /Patient service reconnected|患者服务已重新连接/.test(current) ? "" : current), 1800);
+    setReconnectNotice(lang === "en" ? "Interview resumed" : "问诊已恢复");
+    globalThis.setTimeout(() => setReconnectNotice((current) => /Interview resumed|问诊已恢复/.test(current) ? "" : current), 1800);
     addTimeline("technical", eventLabel, lang === "en" ? "The failed patient reply was replaced without duplicating the question." : "已替换失败患者回答，未重复提问或计分。", 1);
     void speak(aiResult.replyText);
     return true;
@@ -1762,8 +1766,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           }
           setAiStatus("connected");
           setSessionInitError("");
-          setReconnectNotice(lang === "en" ? "Patient service reconnected" : "患者服务已重新连接");
-          globalThis.setTimeout(() => setReconnectNotice((current) => /Patient service reconnected|患者服务已重新连接/.test(current) ? "" : current), 1800);
+          setReconnectNotice(lang === "en" ? "Interview resumed" : "问诊已恢复");
+          globalThis.setTimeout(() => setReconnectNotice((current) => /Interview resumed|问诊已恢复/.test(current) ? "" : current), 1800);
         }
         return true;
       } catch (error) {
@@ -2016,20 +2020,13 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     reports: orderLogs.reduce((sum, log) => sum + log.results.length, 0)
   };
   const healthNotice = healthCheckFailed
-    ? (lang === "en" ? "Service status could not be confirmed. Text practice remains available." : "暂时无法确认服务状态，仍可继续文字练习。")
+    ? (lang === "en" ? "Interview readiness could not be confirmed. Text practice remains available." : "暂时无法确认问诊准备状态，仍可继续文字练习。")
     : (serviceHealth?.patientServiceConfigured === false || serviceHealth?.trainingStateConfigured === false)
       ? (lang === "en" ? "Some online functions are unavailable. Text practice remains available." : "部分在线功能暂不可用，仍可继续文字练习。")
       : "";
-  const connectionMessage = reconnectNotice || sessionInitError || ((sessionInitLoading || !aiSessionId) ? (lang === "en" ? "The patient service is connecting..." : "患者服务连接中……") : "") || healthNotice;
+  const connectionMessage = reconnectNotice || sessionInitError || ((sessionInitLoading || !aiSessionId) ? (lang === "en" ? "Preparing the interview..." : "正在准备问诊……") : "") || healthNotice;
   const connectionIsBusy = sessionInitLoading || !aiSessionId || aiStatus === "reconnecting";
   const showReconnect = aiMode !== "rule" && (["degraded", "offline", "error", "reconnecting"].includes(aiStatus) || /reconnect|重新连接/i.test(reconnectNotice));
-  const patientServiceConnected = Boolean(aiSessionId)
-    && !healthCheckFailed
-    && !["offline", "error"].includes(aiStatus);
-  const patientServiceLabel = patientServiceConnected
-    ? (lang === "en" ? "Patient service connected" : "患者服务已连接")
-    : (lang === "en" ? "Patient service disconnected" : "患者服务未连接");
-
   function scrollChatToBottom() {
     const panel = chatScrollRef.current;
     if (!panel) return;
@@ -2044,7 +2041,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       <main className="mx-auto max-w-4xl px-5 py-10">
         <section className="rounded-lg border border-clinic-line bg-white p-6 shadow-soft">
           <h1 className="text-2xl font-semibold text-clinic-ink">病例数据加载失败</h1>
-          <p className="mt-3 text-clinic-muted">未在本地病例库中找到 {initialCaseData.id}。</p>
+          <p className="mt-3 text-clinic-muted">未找到 {caseDisplay(initialCaseData, "zh").title}。</p>
           <Link href="/cases/" className="mt-5 inline-flex rounded-md bg-clinic-blue px-4 py-2 font-medium text-white">病例库</Link>
         </section>
       </main>
@@ -2056,7 +2053,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       <div className="workbench-topbar mb-3 grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-clinic-blue">
-            <span>{caseData.displayCaseId || caseData.id}</span>
+            <span>{display.title}</span>
             <span className={`ui-status ${isOsce ? "ui-status-danger" : "ui-status-success"}`}>
               {isOsce
                 ? `${t(lang, "osceMode")} ${formatDuration(osceTimeLeft)}`
@@ -2065,7 +2062,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                   : t(lang, "freeTraining")}
             </span>
           </div>
-          <h1 className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">{t(lang, "appTitle")}</h1>
+          <h1 className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">{lang === "en" ? "Hematuria Clinical Interview Training System" : "血尿临床问诊训练系统"}</h1>
           <p className="mt-1 hidden text-sm text-clinic-muted md:block">{t(lang, "appSubtitle")}</p>
           <p className="mt-1 line-clamp-2 text-sm text-clinic-muted lg:hidden">{display.age || "-"} / {display.sex || "-"}</p>
         </div>
@@ -2075,15 +2072,6 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             <button type="button" onClick={() => setLanguage("en")} className={`ui-segment ${lang === "en" ? "ui-segment-active" : ""}`}>{t(lang, "en")}</button>
           </div>
           <DesktopModelSettings />
-          <span
-            aria-live="polite"
-            aria-label={patientServiceLabel}
-            title={patientServiceLabel}
-            className={`ui-status ${patientServiceConnected ? "ui-status-success" : "ui-status-danger"}`}
-          >
-            <span aria-hidden="true" className={`h-2.5 w-2.5 rounded-full ${patientServiceConnected ? "bg-emerald-600" : "bg-rose-600"}`} />
-            {patientServiceLabel}
-          </span>
           {logSyncStatus !== "idle" && <div role="status" aria-live="polite" className={`ui-status ${logSyncStatus === "failed" ? "ui-status-warning" : "ui-status-info"}`}>
             <span>{logSyncStatus === "verified"
               ? (lang === "en" ? "Scoring synced" : "评分已同步")
@@ -2123,7 +2111,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         <div role="alert" className="mb-4 flex items-start justify-between gap-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <span>{trainingAttemptError}</span>
           <button type="button" onClick={() => void ensureTrainingStateToken(true).catch(() => undefined)} className="font-medium underline">
-            {lang === "en" ? "Reinitialize training session" : "重新初始化训练会话"}
+            {lang === "en" ? "Prepare again" : "重新准备"}
           </button>
         </div>
       )}
@@ -2138,7 +2126,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         <span className="inline-flex items-center gap-2"><Menu size={18} />{t(lang, "mobileNavigation")}</span>
         <span>{activeStageNo}/7</span>
       </button>
-      <div className="workbench-grid grid gap-4 lg:grid-cols-[232px_minmax(0,1fr)] min-[1200px]:grid-cols-[220px_minmax(0,1fr)_260px]">
+      <div className="workbench-grid grid gap-4 lg:grid-cols-[224px_minmax(0,1fr)] min-[1200px]:grid-cols-[224px_minmax(0,1fr)_288px]">
         <aside className={`workbench-sidebar ${mobileNavOpen ? "block" : "hidden"} space-y-3 lg:block`}>
           <section className="rounded-lg border border-clinic-line bg-white p-4">
             <div className="mb-3 flex items-center gap-2 text-sm font-medium text-clinic-blue"><Languages size={16} /> {t(lang, "stageNavigation")}</div>
@@ -2153,15 +2141,15 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                     type="button"
                     disabled={locked}
                     onClick={() => openStage(agent.stageNo)}
-                    className={`w-full rounded-md border p-3 text-left transition ${active ? "border-clinic-blue bg-clinic-blue text-white" : completed ? "border-emerald-200 bg-emerald-50 text-emerald-900" : locked ? "cursor-not-allowed border-clinic-line bg-slate-50 text-clinic-muted opacity-60" : "border-clinic-line bg-white hover:border-clinic-blue"}`}
+                    className={`w-full rounded-md border p-3 text-left transition ${active ? "border-clinic-line border-l-2 border-l-clinic-blue bg-clinic-paper text-clinic-ink" : completed ? "border-emerald-200 bg-emerald-50 text-emerald-900" : locked ? "cursor-not-allowed border-clinic-line bg-slate-50 text-clinic-muted opacity-60" : "border-clinic-line bg-white hover:border-clinic-blue"}`}
                   >
                     <div className="flex items-start gap-2">
-                      <span className={`mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${active ? "bg-white/20" : "bg-clinic-paper"}`}>
+                      <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white">
                         {locked ? <LockKeyhole size={14} /> : completed ? <CheckCircle2 size={14} /> : <AgentIcon stageNo={agent.stageNo} />}
                       </span>
                       <span>
                         <span className="block text-sm font-semibold leading-5">{agent.leftNavLabel[lang]}</span>
-                        <span className={`mt-1 block text-xs leading-5 ${active ? "text-white" : "text-clinic-muted"}`}>{agent.competency[lang]}</span>
+                        <span className="mt-1 block text-xs leading-5 text-clinic-muted">{agent.competency[lang]}</span>
                       </span>
                     </div>
                   </button>
@@ -2188,7 +2176,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           {activeStageNo === 1 && (
             <div className="history-stage">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-lg font-semibold">{t(lang, "patientAgent")}</h3>
+                <h3 className="text-lg font-semibold">{lang === "en" ? "Patient interview" : "患者问诊"}</h3>
                 <button type="button" onClick={() => setSpeechSettingsOpen(true)} disabled={!speechOutputSupported} className="inline-flex min-h-11 items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm text-clinic-muted hover:border-clinic-blue disabled:opacity-50">
                   <Settings2 size={16} /> {t(lang, "voiceSettings")}
                   <span className="sr-only">{autoSpeak ? speechStateLabel() : t(lang, "speechOff")}</span>

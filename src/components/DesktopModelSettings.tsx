@@ -32,20 +32,6 @@ const emptySettings: DesktopSettings = {
   version: 0
 };
 
-function statusLabel(status: DesktopSettings["llamaStatus"], lang: "zh" | "en") {
-  const labels: Record<DesktopSettings["llamaStatus"], readonly [string, string]> = {
-    initializing: ["正在初始化", "Initializing"],
-    disabled: ["已关闭", "Disabled"],
-    model_missing: ["模型未放置", "Model not installed"],
-    runtime_missing: ["运行时缺失", "Runtime missing"],
-    starting: ["正在启动", "Starting"],
-    ready: ["本地 AI 就绪", "Local AI ready"],
-    startup_failed: ["启动失败", "Startup failed"],
-    stopped: ["已停止", "Stopped"]
-  };
-  return labels[status]?.[lang === "en" ? 1 : 0] || (lang === "en" ? "Unavailable" : "不可用");
-}
-
 export default function DesktopModelSettings() {
   const desktopRuntime = desktopRuntimeConfig();
   const [open, setOpen] = useState(false);
@@ -78,7 +64,7 @@ export default function DesktopModelSettings() {
       setSettings(next);
       setDraftDirectory(next.modelDirectory);
     } catch {
-      setMessage(lang === "en" ? "Local model settings are temporarily unavailable." : "本地模型设置暂时不可用。");
+      setMessage(lang === "en" ? "Settings are temporarily unavailable." : "设置暂时不可用。");
     } finally {
       setLoading(false);
     }
@@ -100,10 +86,10 @@ export default function DesktopModelSettings() {
       setSettings(next);
       setDraftDirectory(next.modelDirectory);
       setMessage(next.localAiEnabled && !next.modelPresent
-        ? (lang === "en" ? "Model file was not found; safe rules remain active." : "未找到模型文件，当前继续使用安全规则。")
+        ? (lang === "en" ? "The required file was not found. Interview practice remains available." : "未找到所需文件，仍可继续问诊训练。")
         : (lang === "en" ? "Settings saved." : "设置已保存。"));
     } catch {
-      setMessage(lang === "en" ? "Settings could not be saved; safe rules remain active." : "设置保存失败，当前仍可使用安全规则。");
+      setMessage(lang === "en" ? "Settings could not be saved. Interview practice remains available." : "设置保存失败，仍可继续问诊训练。");
     } finally {
       setLoading(false);
     }
@@ -119,43 +105,41 @@ export default function DesktopModelSettings() {
           setOpen(true);
           void loadSettings();
         }}
-        aria-label={lang === "en" ? "Local model settings" : "本地模型设置"}
+        aria-label={lang === "en" ? "Interview assistance settings" : "问诊辅助设置"}
       >
         <Bot size={16} />
-        <span className="hidden lg:inline">{lang === "en" ? "Local AI" : "本地 AI"}</span>
+        <span className="hidden lg:inline">{lang === "en" ? "Assistance settings" : "辅助设置"}</span>
       </button>
       {open && (
-        <div role="dialog" aria-modal="true" aria-label={lang === "en" ? "Local model settings" : "本地模型设置"} className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+        <div role="dialog" aria-modal="true" aria-label={lang === "en" ? "Interview assistance settings" : "问诊辅助设置"} className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
           <section className="w-full max-w-xl rounded-xl border border-clinic-line bg-white p-5 shadow-raised">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="home-eyebrow">{lang === "en" ? "LOCAL MODEL" : "本地模型"}</p>
-                <h2 className="mt-2 text-xl font-semibold">Qwen3-1.7B Q4_K_M</h2>
+                <p className="home-eyebrow">{lang === "en" ? "INTERVIEW ASSISTANCE" : "问诊辅助"}</p>
+                <h2 className="mt-2 text-xl font-semibold">{lang === "en" ? "Assistance settings" : "辅助设置"}</h2>
               </div>
               <button type="button" onClick={() => setOpen(false)} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md hover:bg-clinic-paper" aria-label={lang === "en" ? "Close" : "关闭"}><X size={18} /></button>
             </div>
 
             <div className="mt-5 rounded-lg bg-clinic-paper p-4 text-sm leading-6">
               <div className="flex items-center justify-between gap-3">
-                <span className="font-medium">{lang === "en" ? "Runtime status" : "运行状态"}</span>
-                <span className={`ui-status ${ready ? "ui-status-success" : settings.llamaStatus === "startup_failed" || settings.llamaStatus === "runtime_missing" ? "ui-status-danger" : "ui-status-info"}`}>
-                  {statusLabel(settings.llamaStatus, lang)}
+                <span className="font-medium">{lang === "en" ? "Assistance" : "辅助功能"}</span>
+                <span className={`ui-status ${ready ? "ui-status-success" : "ui-status-info"}`}>
+                  {ready ? (lang === "en" ? "Available" : "可用") : (lang === "en" ? "Not ready" : "未就绪")}
                 </span>
               </div>
               <p className="mt-2 text-xs text-clinic-muted">
                 {lang === "en"
-                  ? "When unavailable or disabled, the governed Patient Agent automatically uses rule_fallback."
-                  : "本地模型不可用或关闭时，受治理的 Patient Agent 会自动使用 rule_fallback。"}
+                  ? "Interview practice remains available when this assistance is turned off or not ready."
+                  : "辅助功能关闭或未就绪时，仍可继续问诊训练。"}
               </p>
             </div>
 
             <label className="mt-5 block text-sm">
-              <span className="inline-flex items-center gap-2 font-medium"><FolderCog size={16} />{lang === "en" ? "Model directory" : "模型目录"}</span>
-              <input className="ui-input mt-2 w-full" value={draftDirectory} onChange={(event) => setDraftDirectory(event.target.value)} placeholder="C:\...\models" spellCheck={false} />
+              <span className="inline-flex items-center gap-2 font-medium"><FolderCog size={16} />{lang === "en" ? "File directory" : "文件目录"}</span>
+              <input className="ui-input mt-2 w-full" value={draftDirectory} onChange={(event) => setDraftDirectory(event.target.value)} placeholder="C:\...\files" spellCheck={false} />
             </label>
-            <p className="mt-2 break-all text-xs text-clinic-muted">
-              {lang === "en" ? "Expected file: " : "需要文件："}Qwen3-1.7B-Q4_K_M.gguf
-            </p>
+            <p className="mt-2 text-xs text-clinic-muted">{lang === "en" ? "Choose the directory described in the installation guide." : "请选择安装说明中指定的文件目录。"}</p>
 
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <button type="button" disabled={loading || !draftDirectory.trim()} onClick={() => void saveSettings(settings.localAiEnabled)} className="ui-button-primary">
@@ -163,7 +147,7 @@ export default function DesktopModelSettings() {
                 {lang === "en" ? "Save directory" : "保存目录"}
               </button>
               <button type="button" disabled={loading} onClick={() => void saveSettings(!settings.localAiEnabled)} className="ui-button-secondary">
-                <Power size={16} />{settings.localAiEnabled ? (lang === "en" ? "Disable local AI" : "关闭本地 AI") : (lang === "en" ? "Enable local AI" : "启用本地 AI")}
+                <Power size={16} />{settings.localAiEnabled ? (lang === "en" ? "Turn off assistance" : "关闭辅助") : (lang === "en" ? "Turn on assistance" : "开启辅助")}
               </button>
               {loading && <span role="status" className="text-xs text-clinic-muted">{lang === "en" ? "Applying settings..." : "正在应用设置……"}</span>}
             </div>

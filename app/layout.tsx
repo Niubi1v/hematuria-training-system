@@ -4,8 +4,8 @@ import AppHeader from "@/src/components/AppHeader";
 import BuildMetaFooter from "@/src/components/BuildMetaFooter";
 
 export const metadata: Metadata = {
-  title: "血尿多智能体临床思维训练平台",
-  description: "用于医学教学与临床思维训练的血尿7阶段智能体教学平台"
+  title: "血尿临床问诊训练系统",
+  description: "用于医学教学的七阶段血尿临床问诊与临床思维训练系统"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
