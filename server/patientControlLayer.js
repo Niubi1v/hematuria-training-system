@@ -25,6 +25,12 @@ const withheldFactStates = new Set([
   FACT_STATES.MEDICAL_CONFLICT
 ]);
 
+const unknownPermittedFactStates = new Set([
+  FACT_STATES.PARTIALLY_KNOWN,
+  FACT_STATES.PATIENT_NOT_AWARE,
+  ...withheldFactStates
+]);
+
 function compact(value) {
   return String(value || "").toLowerCase().replace(/[\s\p{P}\p{S}]+/gu, "");
 }
@@ -118,7 +124,9 @@ function classifyPatientResponseErrors({ result, contextResolution, language = "
   if ((plans.length && !preservesAnswer) || safetyFlags.some((flag) => /ai_response_blocked|deterministic_answer_blocked/.test(flag))) errors.add("off_script");
   if (plans.length && normalizedAllowed && !normalizedReply.includes(normalizedAllowed)
     && !plans.some((plan) => normalizedReply.includes(compact(plan?.directAnswer)))) errors.add("tangential");
-  if (plans.some((plan) => knownFactStates.has(plan?.factState)) && containsUnknownReply(reply, language)) errors.add("wrong_unknown");
+  if (plans.some((plan) => knownFactStates.has(plan?.factState))
+    && !plans.some((plan) => unknownPermittedFactStates.has(plan?.factState))
+    && containsUnknownReply(reply, language)) errors.add("wrong_unknown");
   if (contextResolution?.inherited === true && plans.length === 0) errors.add("context_lost");
   if (hasPolarityError(reply, plans, language)) errors.add("polarity_error");
 

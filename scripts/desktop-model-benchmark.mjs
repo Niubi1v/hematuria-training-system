@@ -287,10 +287,13 @@ try {
       const governedContextInherited = answer.contextResolution?.inherited === true;
       const modelContextInherited = contextReference?.inherited === true;
       const contextLost = expected.requiresContext
-        ? !(governedContextInherited || modelContextInherited)
+        ? governedFinalIntent !== expected.expectedIntent || governedFinalSlot !== expected.expectedSlot
         : false;
       const erroneousUnknown = !expected.allowsUnknown
         && ["fact_missing", "intent_ambiguous", "classifier_unavailable"].includes(String(unknown || ""));
+      const responseErrors = Array.isArray(answer.runtimeTrace?.responseErrors)
+        ? answer.runtimeTrace.responseErrors.filter((item) => typeof item === "string")
+        : [];
       turnEvidence.push({
         language: set.language,
         turn: index + 1,
@@ -319,7 +322,8 @@ try {
         governedFinalIntentMatch: governedFinalIntent === expected.expectedIntent,
         governedFinalSlotMatch: governedFinalSlot === expected.expectedSlot,
         erroneousUnknown,
-        contextLost
+        contextLost,
+        responseErrors
       });
       conversationHistory.push(
         { role: "student", text: question },
@@ -334,6 +338,12 @@ try {
   const localAcceptedCount = turnEvidence.filter((turn) => turn.answerSource === "local_ai").length;
   const governedFinalIntentMatches = turnEvidence.filter((turn) => turn.governedFinalIntentMatch).length;
   const governedFinalSlotMatches = turnEvidence.filter((turn) => turn.governedFinalSlotMatch).length;
+  const errorCategories = Object.fromEntries([
+    "tangential", "oversharing", "role_breaking", "off_script", "wrong_unknown", "context_lost", "polarity_error"
+  ].map((category) => [
+    category,
+    turnEvidence.filter((turn) => turn.responseErrors.includes(category)).length
+  ]));
   assert.equal(turnEvidence.length, 16, "benchmark must cover the same eight turns in zh and en");
   assert.equal(cloudRequestCount, 0, "desktop model benchmark must remain loopback-only");
   assert.equal(new URL(origin).hostname, "127.0.0.1", "llama-server must listen on IPv4 loopback");
@@ -402,6 +412,7 @@ try {
     unknownCount: turnEvidence.filter((turn) => turn.unknown).length,
     erroneousUnknownCount: turnEvidence.filter((turn) => turn.erroneousUnknown).length,
     contextLostCount: turnEvidence.filter((turn) => turn.contextLost === true).length,
+    errorCategories,
     governedContextAppliedCount: turnEvidence.filter((turn) => turn.governedContextInherited).length,
     modelContextDeclaredCount: turnEvidence.filter((turn) => turn.modelContextInherited).length,
     fallbackCount,

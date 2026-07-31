@@ -70,6 +70,21 @@ const wrongUnknown = classifyPatientResponseErrors({
 });
 assert(wrongUnknown.includes("wrong_unknown"));
 
+const legitimatePartialUnknown = classifyPatientResponseErrors({
+  result: {
+    replyText: "I am not sure how often I take it.",
+    allowedAnswer: "I am not sure how often I take it.",
+    answerPlans: [
+      { factState: "exact_value", directAnswer: "valsartan" },
+      { factState: "partially_known", directAnswer: "not sure" }
+    ]
+  },
+  contextResolution: { inherited: true },
+  language: "en",
+  filter: { hits: [], tooLong: false }
+});
+assert(!legitimatePartialUnknown.includes("wrong_unknown"));
+
 const contextLost = classifyPatientResponseErrors({
   result: { answerPlans: [], replyText: "请再说具体一点。", safetyFlags: [] },
   contextResolution: { inherited: true },
