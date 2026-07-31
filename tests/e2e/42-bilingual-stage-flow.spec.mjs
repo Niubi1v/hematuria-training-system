@@ -18,20 +18,20 @@ const labels = {
     finish: "完成训练并生成最终报告",
     noConsult: "暂不需要会诊",
     diagnosis: "最可能诊断",
-    evidence: "诊断依据",
-    differentials: "至少 3 个鉴别诊断",
-    analysis: "各鉴别诊断的支持点与反对点",
+    evidence: "诊断依据（从已采集证据中选择）",
+    differential: (index) => `鉴别诊断 ${index}`,
+    support: (index) => `鉴别诊断 ${index} 支持证据`,
     reflection: "学习反思"
   },
   en: {
     submit: "Submit stage",
-    next: "Next Agent",
+    next: "Next stage",
     finish: "Finish training and generate final report",
     noConsult: "No consultation for now",
     diagnosis: "Most likely diagnosis",
-    evidence: "Diagnostic evidence",
-    differentials: "At least 3 differential diagnoses",
-    analysis: "Supportive and opposing points for each differential",
+    evidence: "Diagnostic evidence from collected findings",
+    differential: (index) => `Differential diagnosis ${index}`,
+    support: (index) => `Differential ${index} supporting evidence`,
     reflection: "Reflection"
   }
 };
@@ -143,21 +143,32 @@ async function submitAndAdvance(page, language) {
 async function completeSevenStages(page, caseId, language) {
   const copy = labels[language];
   await page.goto(`/cases/${caseId}/`);
-  await expect(page.getByText(caseId, { exact: true }).first()).toBeVisible();
+  const caseNumber = String(Number(caseId.replace(/^P/, ""))).padStart(2, "0");
+  await expect(page.getByText(language === "en" ? `Case ${caseNumber}` : `病例 ${caseNumber}`, { exact: true }).first()).toBeVisible();
 
+  await page.getByRole("textbox", { name: language === "en" ? "History summary" : "病史小结" }).fill(language === "en" ? "Collected history item one.\nCollected history item two." : "已采集病史项目一。\n已采集病史项目二。");
   await submitAndAdvance(page, language);
   await submitAndAdvance(page, language);
+  await expect(page.getByTestId("diagnosis-builder")).toBeVisible();
 
   await page.getByLabel(copy.diagnosis, { exact: true }).fill(language === "en" ? "Training diagnosis" : "训练用诊断");
-  await page.getByLabel(copy.evidence, { exact: true }).fill(language === "en" ? "Sufficient training evidence." : "这里填写足够长度的训练依据。" );
-  await page.getByLabel(copy.differentials, { exact: true }).fill(language === "en" ? "Option one; Option two; Option three" : "选项一；选项二；选项三");
-  await page.getByLabel(copy.analysis, { exact: true }).fill(language === "en" ? "Each option has supporting and opposing training points." : "每个选项均填写支持点与反对点作为训练占位。" );
+  const diagnosticEvidence = page.getByRole("group", { name: copy.evidence, exact: true });
+  await diagnosticEvidence.getByRole("checkbox").nth(0).check();
+  await diagnosticEvidence.getByRole("checkbox").nth(1).check();
+  for (let index = 1; index <= 3; index += 1) {
+    await page.getByLabel(copy.differential(index), { exact: true }).fill(language === "en" ? `Training option ${index}` : `训练选项${index}`);
+    await page.getByRole("group", { name: copy.support(index), exact: true }).getByRole("checkbox").first().check();
+  }
   await submitAndAdvance(page, language);
+  await expect(page.getByTestId("consultation-builder")).toBeVisible();
 
   await page.getByRole("radio", { name: copy.noConsult, exact: true }).check();
   await submitAndAdvance(page, language);
+  await expect(page.getByTestId("treatment-order-workbench")).toBeVisible();
   await submitAndAdvance(page, language);
+  await expect(page.getByTestId("perioperative-checklist")).toBeVisible();
   await submitAndAdvance(page, language);
+  await expect(page.getByTestId("complete-training")).toBeVisible();
 
   await page.getByLabel(copy.reflection, { exact: true }).fill(language === "en"
     ? "I will improve the structure of my next training attempt."
@@ -166,7 +177,7 @@ async function completeSevenStages(page, caseId, language) {
   await page.getByRole("button", { name: copy.finish, exact: true }).click();
   await expect(page.getByTestId("final-report")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByTestId("final-percentage-score")).toContainText("/ 100");
-  await expect(page.locator("footer")).toContainText("360-event-v1");
+  await expect(page.getByTestId("raw-360-details")).not.toHaveAttribute("open", "");
 }
 
 test("42 cases complete all seven UI stages in Chinese and English @full-stage-matrix", async ({ browser }, testInfo) => {

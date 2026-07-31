@@ -129,7 +129,7 @@ async function routeTrainingApiThroughHandler(page, observations = [], options =
 
 async function submitFirstStage(page, language) {
   const label = language === "en" ? "Submit stage" : "提交本阶段";
-  const nextLabel = language === "en" ? "Next Agent" : "进入下一阶段";
+  const nextLabel = language === "en" ? "Next stage" : "进入下一阶段";
   await page.getByRole("button", { name: label, exact: true }).click();
   await expect(page.getByRole("button", { name: nextLabel, exact: true })).toBeVisible();
 }
@@ -138,8 +138,8 @@ async function enterInvestigationStage(page, language) {
   await page.getByRole("textbox", { name: language === "en" ? "History summary" : "病史小结" })
     .fill(language === "en" ? "Focused history completed." : "已完成重点病史采集。");
   await submitFirstStage(page, language);
-  await page.getByRole("button", { name: language === "en" ? "Next Agent" : "进入下一阶段", exact: true }).click();
-  await expect(page.getByText(language === "en" ? "Investigation Agent: orders and reports" : "检查决策智能体：医嘱与报告", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: language === "en" ? "Next stage" : "进入下一阶段", exact: true }).click();
+  await expect(page.getByRole("heading", { name: language === "en" ? "Investigation and ordering" : "检查与开单", exact: true })).toBeVisible();
 }
 
 async function mockTrainingState(page) {
@@ -152,14 +152,14 @@ async function mockTrainingState(page) {
 
 test("public deployment exposes practice navigation without teacher answers", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "血尿临床思维训练系统" })).toBeVisible();
-  await expect(page.getByText("不可用于正式 OSCE")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "血尿临床问诊训练系统" })).toBeVisible();
+  await expect(page.getByTestId("teaching-disclaimer")).toContainText("仅用于医学教学与模拟训练，不用于真实患者的诊断或治疗决策");
   await expect(page.getByRole("link", { name: /教师/ })).toHaveCount(0);
 });
 
 test("case route renders seven locked stages and no disease tag", async ({ page }) => {
   await page.goto("/cases/P008/");
-  await expect(page.getByText("P008", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("病例 08", { exact: true }).first()).toBeVisible();
   await expect(page.locator("aside button")).toHaveCount(7);
   await expect(page.getByText(/Case tags|疾病标签|膀胱结石/)).toHaveCount(0);
   await expect(page.getByText(/漏问项|得分点/)).toHaveCount(0);
@@ -186,7 +186,7 @@ test("@ui-clinical-stage3 male case hides initial answers and restores released 
   await expect(visibleInfo).toContainText("65 / 男");
   await expect(visibleInfo).not.toContainText("主诉");
   await expect(page.getByRole("log", { name: "模拟问诊对话" })).toContainText("医生您好，我来看一下。");
-  await expect(page.getByLabel("患者服务已连接")).toHaveAttribute("title", "患者服务已连接");
+  await expect(page.getByTestId("patient-service-status")).toHaveText("患者服务可用");
   await expect(page.getByText(/人工智能服务|live_ai|ai_cache|rule_fallback|DeepSeek/)).toHaveCount(0);
 
   await page.getByRole("textbox", { name: "输入问诊问题" }).fill("哪里不舒服？");
@@ -208,7 +208,7 @@ test("@ui-clinical-stage3 male case hides initial answers and restores released 
   await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
   await expect(page.getByTestId("report-card")).toHaveCount(3);
   await expect(page.getByTestId("order-outcome")).toHaveCount(3);
-  await expect(page.getByText("检查与开单阶段", { exact: true })).toBeVisible();
+  await expect(page.getByText("第2阶段 · 检查与开单", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("第2阶段", { exact: true })).toHaveCount(0);
   await expect(page.getByText("开单服务暂时不可用，未释放报告。")).toHaveCount(0);
 
@@ -222,7 +222,7 @@ test("@ui-clinical-stage3 male case hides initial answers and restores released 
     button.click();
   });
   await expect.poll(() => observations.filter((item) => item.action === "order").length).toBe(orderCountBeforeDoubleClick + 1);
-  await expect(page.getByText(/X光膀胱造影：该病例未提供此项结果，暂不能据此判断。/)).toBeVisible();
+  await expect(page.getByText(/X光膀胱造影：结果正在医学内容审核中，本次训练不将其作为诊断或评分依据。/)).toBeVisible();
 });
 
 test("@ui-clinical-stage3 female case shows only applicable examination and imaging entries", async ({ page }) => {
@@ -245,7 +245,7 @@ test("@ui-clinical-stage3 female case shows only applicable examination and imag
   await expect(visibleInfo).toContainText("67 / 女");
   await expect(visibleInfo).not.toContainText("主诉");
   await expect(page.getByRole("log", { name: "模拟问诊对话" })).toContainText("医生您好，我来看一下。");
-  await expect(page.getByLabel("患者服务已连接")).toBeVisible();
+  await expect(page.getByTestId("patient-service-status")).toHaveText("患者服务可用");
 
   await page.getByRole("textbox", { name: "输入问诊问题" }).fill("为什么来看？");
   await page.getByRole("button", { name: "发送", exact: true }).click();
@@ -408,10 +408,10 @@ test("P001 stage one submission advances across language switches and refresh", 
   expect(englishSession?.attemptId).toBe(englishStage?.attemptId);
   expect(englishSession?.attemptId).not.toBe(firstZhSession?.attemptId);
 
-  await page.getByRole("button", { name: "Next Agent", exact: true }).click();
-  await expect(page.getByText("Investigation Agent", { exact: true }).first()).toBeVisible();
+  await page.getByRole("button", { name: "Next stage", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Investigation and ordering", exact: true })).toBeVisible();
   await page.reload();
-  await expect(page.getByText("Investigation Agent", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Investigation and ordering", exact: true })).toBeVisible();
 
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "中文" }).click();
@@ -561,7 +561,7 @@ test("patient session refreshes once after stage feedback rotates the attempt to
   const submit = page.getByRole("button", { name: "Submit stage", exact: true });
   await expect(submit).toBeEnabled();
   await submit.click();
-  await expect(page.getByRole("button", { name: "Next Agent", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Next stage", exact: true })).toBeVisible();
 
   await expect.poll(() => observations.filter((item) => item.action === "session-init").length).toBe(2);
   expect(observations.filter((item) => item.action === "session-init")).toEqual([
@@ -773,7 +773,7 @@ test("a transient durable attempt store failure recovers without a doomed stage 
   const submit = page.getByRole("button", { name: "Submit stage", exact: true });
   await expect(submit).toBeEnabled();
   await submit.click();
-  await expect(page.getByRole("button", { name: "Next Agent", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Next stage", exact: true })).toBeVisible();
   expect(observations.filter((item) => item.action === "init-attempt")).toEqual([
     expect.objectContaining({ status: 503, error: "training_attempt_store_unavailable" }),
     expect.objectContaining({ status: 200, error: "" })
@@ -833,7 +833,7 @@ test("English investigation presentation fails closed without exposing untransla
   await page.goto("/cases/P008/");
   await enterInvestigationStage(page, "en");
 
-  const investigation = page.getByText("Investigation Agent: orders and reports", { exact: true }).locator("..");
+  const investigation = page.locator(".workbench-main");
   const visibleControls = await investigation.locator("h3, h4, label, input[placeholder]").allTextContents();
   expect(visibleControls.join(" ")).not.toMatch(/[\u3400-\u9fff]/u);
   const untranslatedOrders = page.getByText("Awaiting reviewed order-name translation", { exact: true });
@@ -843,7 +843,7 @@ test("English investigation presentation fails closed without exposing untransla
   await page.getByPlaceholder("Example: urinalysis and sediment, CTU, cystoscopy").fill("CBC");
   await page.getByRole("button", { name: "Order and return results", exact: true }).click();
   await expect(page.getByTestId("report-card")).toHaveCount(0);
-  const unavailable = page.getByText("CBC: this case does not provide the result, so no conclusion can be made from it.", { exact: true });
+  const unavailable = page.getByText("CBC: the result is awaiting medical content review and is excluded from diagnosis and scoring for this attempt.", { exact: true });
   await expect(unavailable).toBeVisible();
   await expect(unavailable).not.toContainText(/[\u3400-\u9fff]/u);
   expect(observations.filter((item) => item.action === "order")).toEqual([
@@ -1077,9 +1077,9 @@ test("stage one safely recovers when the signed browser token outlives the serve
   expect(observations.filter((item) => item.action === "init-attempt")).toHaveLength(2);
   await expect(page.getByRole("alert").filter({ hasText: "阶段提交失败" })).toHaveCount(0);
   await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
-  await expect(page.getByText("检查决策智能体", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "检查与开单", exact: true })).toBeVisible();
   await page.reload();
-  await expect(page.getByText("检查决策智能体", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "检查与开单", exact: true })).toBeVisible();
 });
 
 test("missing Preview attempt store reports a configuration blocker", async ({ page }) => {
@@ -1170,7 +1170,7 @@ test("mobile interview keeps multiline input visible without horizontal overflow
   expect(overflow).toBe(false);
 });
 
-test("interview composer reserves its measured space across viewports and languages", async ({ page }, testInfo) => {
+test("interview composer and desktop workbench fit target Windows viewports and 125 percent scaling", async ({ page }, testInfo) => {
   testInfo.setTimeout(90_000);
   const chineseOpening = "医生您好，我是因为小便颜色变红3月余来看病的。";
   const englishOpening = "Hello doctor. I came in because my urine has looked red for more than three months.";
@@ -1184,7 +1184,11 @@ test("interview composer reserves its measured space across viewports and langua
 
   const viewports = testInfo.project.name === "mobile-chromium"
     ? [{ width: 360, height: 800 }, { width: 390, height: 844 }]
-    : [{ width: 1280, height: 720 }, { width: 1440, height: 900 }];
+    : [
+        { width: 1093, height: 614 }, // 1366x768 at Windows 125% effective CSS viewport.
+        { width: 1366, height: 768 },
+        { width: 1440, height: 900 }
+      ];
   for (const viewport of viewports) {
     for (const language of ["zh", "en"]) {
       await page.setViewportSize(viewport);
@@ -1212,6 +1216,11 @@ test("interview composer reserves its measured space across viewports and langua
             spacerDisplay: getComputedStyle(document.querySelector('[data-testid="chat-composer-spacer"]')).display,
             composerHeight: composerElement?.getBoundingClientRect().height ?? 0,
             overflow: document.documentElement.scrollWidth > window.innerWidth,
+            mainRight: document.querySelector(".workbench-main")?.getBoundingClientRect().right ?? Number.POSITIVE_INFINITY,
+            mainHeight: document.querySelector(".workbench-main")?.getBoundingClientRect().height ?? 0,
+            drawerDisplay: getComputedStyle(document.querySelector(".workbench-drawer")).display,
+            drawerRight: document.querySelector(".workbench-drawer")?.getBoundingClientRect().right ?? Number.POSITIVE_INFINITY,
+            drawerWidth: document.querySelector(".workbench-drawer")?.getBoundingClientRect().width ?? 0,
             className: composerElement?.className ?? ""
           };
         })
@@ -1228,6 +1237,13 @@ test("interview composer reserves its measured space across viewports and langua
       }
       expect(layout.className).toContain("safe-area-inset-bottom");
       expect(layout.overflow).toBe(false);
+      expect(Math.ceil(layout.mainRight)).toBeLessThanOrEqual(viewport.width + 1);
+      expect(layout.mainHeight).toBeGreaterThan(240);
+      if (viewport.width >= 1040) {
+        expect(layout.drawerDisplay).not.toBe("none");
+        expect(Math.ceil(layout.drawerRight)).toBeLessThanOrEqual(viewport.width + 1);
+        expect(layout.drawerWidth).toBeGreaterThanOrEqual(220);
+      }
     }
   }
 
