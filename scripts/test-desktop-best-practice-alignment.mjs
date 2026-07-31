@@ -102,6 +102,7 @@ const metrics = {
   responseErrors: Object.fromEntries([
     "tangential", "oversharing", "role_breaking", "off_script", "wrong_unknown", "context_lost", "polarity_error"
   ].map((item) => [item, 0])),
+  answerSources: { local_ai: 0, rule_fallback: 0 },
   orders: 0,
   actionResultMatches: 0,
   feedbackItems: 0,
@@ -134,6 +135,9 @@ for (const journey of journeys) {
       language: journey.language
     });
     const evaluated = expectedPatientTurn(answer, probe);
+    const localAccepted = answer.runtimeTrace?.classificationSource === "local_ai"
+      && answer.runtimeTrace?.classifierStatus === "accepted";
+    metrics.answerSources[localAccepted ? "local_ai" : "rule_fallback"] += 1;
     metrics.patientTurns += 1;
     if (evaluated.correct) metrics.factCorrect += 1;
     if (evaluated.contextual) {
@@ -335,6 +339,8 @@ for (const journey of journeys) {
 }
 
 assert.equal(metrics.factCorrect, metrics.patientTurns);
+assert.equal(metrics.answerSources.local_ai, 0);
+assert.equal(metrics.answerSources.rule_fallback, metrics.patientTurns);
 assert.equal(metrics.contextContinuous, metrics.contextualTurns);
 assert.equal(metrics.actionResultMatches, metrics.orders);
 assert.equal(metrics.traceableFeedbackItems, metrics.feedbackItems);
@@ -348,6 +354,7 @@ console.log(`BEST_PRACTICE_ALIGNMENT ${JSON.stringify({
   factAccuracy: { correct: metrics.factCorrect, total: metrics.patientTurns, rate: metrics.factCorrect / metrics.patientTurns },
   contextContinuity: { correct: metrics.contextContinuous, total: metrics.contextualTurns, rate: metrics.contextContinuous / metrics.contextualTurns },
   responseErrors: metrics.responseErrors,
+  modelDisabledAnswerSources: metrics.answerSources,
   actionResultMatch: { correct: metrics.actionResultMatches, total: metrics.orders, rate: metrics.actionResultMatches / metrics.orders },
   evidenceFeedbackTraceability: { correct: metrics.traceableFeedbackItems, total: metrics.feedbackItems, rate: metrics.traceableFeedbackItems / metrics.feedbackItems },
   sevenStageCompletion: { correct: metrics.completedJourneys, total: metrics.journeys, rate: metrics.completedJourneys / metrics.journeys },
