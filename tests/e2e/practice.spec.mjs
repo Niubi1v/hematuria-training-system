@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { mkdir } from "node:fs/promises";
 import { createRequire } from "node:module";
+import path from "node:path";
 
 process.env.TRAINING_STATE_SECRET = "playwright-training-state-secret-with-adequate-length";
 const require = createRequire(import.meta.url);
@@ -186,7 +188,7 @@ test("@ui-clinical-stage3 male case hides initial answers and restores released 
   await expect(visibleInfo).toContainText("65 / 男");
   await expect(visibleInfo).not.toContainText("主诉");
   await expect(page.getByRole("log", { name: "模拟问诊对话" })).toContainText("医生您好，我来看一下。");
-  await expect(page.getByTestId("patient-service-status")).toHaveText("患者服务可用");
+  await expect(page.getByTestId("patient-service-status")).toHaveText("问诊对话可用");
   await expect(page.getByText(/人工智能服务|live_ai|ai_cache|rule_fallback|DeepSeek/)).toHaveCount(0);
 
   await page.getByRole("textbox", { name: "输入问诊问题" }).fill("哪里不舒服？");
@@ -222,7 +224,7 @@ test("@ui-clinical-stage3 male case hides initial answers and restores released 
     button.click();
   });
   await expect.poll(() => observations.filter((item) => item.action === "order").length).toBe(orderCountBeforeDoubleClick + 1);
-  await expect(page.getByText(/X光膀胱造影：结果正在医学内容审核中，本次训练不将其作为诊断或评分依据。/)).toBeVisible();
+  await expect(page.getByText(/X光膀胱造影：等待医学审核，当前不进入诊断、治疗或评分证据。/)).toBeVisible();
 });
 
 test("@ui-clinical-stage3 female case shows only applicable examination and imaging entries", async ({ page }) => {
@@ -245,7 +247,7 @@ test("@ui-clinical-stage3 female case shows only applicable examination and imag
   await expect(visibleInfo).toContainText("67 / 女");
   await expect(visibleInfo).not.toContainText("主诉");
   await expect(page.getByRole("log", { name: "模拟问诊对话" })).toContainText("医生您好，我来看一下。");
-  await expect(page.getByTestId("patient-service-status")).toHaveText("患者服务可用");
+  await expect(page.getByTestId("patient-service-status")).toHaveText("问诊对话可用");
 
   await page.getByRole("textbox", { name: "输入问诊问题" }).fill("为什么来看？");
   await page.getByRole("button", { name: "发送", exact: true }).click();
@@ -1239,11 +1241,12 @@ test("interview composer and desktop workbench fit target Windows viewports and 
       expect(layout.overflow).toBe(false);
       expect(Math.ceil(layout.mainRight)).toBeLessThanOrEqual(viewport.width + 1);
       expect(layout.mainHeight).toBeGreaterThan(240);
-      if (viewport.width >= 1040) {
+      if (viewport.width >= 1180) {
         expect(layout.drawerDisplay).not.toBe("none");
         expect(Math.ceil(layout.drawerRight)).toBeLessThanOrEqual(viewport.width + 1);
         expect(layout.drawerWidth).toBeGreaterThanOrEqual(220);
       }
+      if (viewport.width >= 1040 && viewport.width < 1180) expect(layout.drawerDisplay).toBe("none");
     }
   }
 
@@ -1258,6 +1261,165 @@ test("interview composer and desktop workbench fit target Windows viewports and 
       const box = await input.boundingBox();
       return box ? Math.ceil(box.y + box.height) : Number.POSITIVE_INFINITY;
     }).toBeLessThanOrEqual(640);
+  }
+});
+
+test("desktop UI quality flow keeps stage actions visible and student copy implementation-free", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "One desktop project covers all required viewport sizes.");
+  testInfo.setTimeout(180_000);
+  const screenshotDir = process.env.UI_QUALITY_SCREENSHOT_DIR || "";
+  const phase = process.env.UI_QUALITY_SCREENSHOT_PHASE || "review";
+  const baselineCapture = phase === "before";
+  await routeTrainingApiThroughHandler(page, []);
+  await page.route("**/api/agent-chat/**", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({
+      replyText: "我平时吸烟，最近发现尿色发红。",
+      matchedSlotIds: ["smoking", "chief_complaint"],
+      matchedFacts: ["smoking=current"],
+      provider: "local-test",
+      generationSource: "test",
+      isFallback: false
+    })
+  }));
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/cases/P001/");
+  await page.getByRole("textbox", { name: "输入问诊问题" }).fill("平时吸烟吗？");
+  await page.getByRole("button", { name: "发送", exact: true }).click();
+  await page.getByRole("textbox", { name: "病史小结" }).fill("已完成重点病史采集。小便颜色发红，已询问相关危险因素。");
+  await submitFirstStage(page, "zh");
+  await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
+  await page.getByRole("button", { name: "直肠指检/前列腺", exact: true }).click();
+  await page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜").fill("尿常规；血常规");
+  await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
+  await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
+  await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
+
+  const diagnosisBuilder = page.getByTestId("diagnosis-builder");
+  await diagnosisBuilder.getByRole("textbox", { name: "最可能诊断", exact: true }).fill("待定诊断");
+  const primaryEvidence = diagnosisBuilder.locator("fieldset").first().locator('input[type="checkbox"]');
+  expect(await primaryEvidence.count()).toBeGreaterThan(1);
+  await primaryEvidence.nth(0).check();
+  await primaryEvidence.nth(1).check();
+  for (let index = 0; index < 3; index += 1) {
+    const card = diagnosisBuilder.getByTestId("differential-card").nth(index);
+    await card.getByRole("textbox", { name: `鉴别诊断 ${index + 1}`, exact: true }).fill(`鉴别诊断示例 ${index + 1}`);
+    await card.locator("fieldset").first().locator('input[type="checkbox"]').first().check();
+  }
+  await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
+  await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
+  await page.getByLabel("暂不需要会诊").check();
+  await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
+  await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
+  await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
+  await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
+  await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
+  await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
+  await page.getByRole("textbox", { name: "学习反思" }).fill("本次训练需要继续改进问诊顺序、证据整合和医嘱表达。");
+  await page.getByTestId("complete-training").click();
+  await expect(page.getByTestId("final-report")).toBeVisible();
+
+  if (screenshotDir) await mkdir(screenshotDir, { recursive: true });
+  const viewports = [
+    { name: "125pct", width: 1093, height: 614 },
+    { name: "1366x768", width: 1366, height: 768 },
+    { name: "1440x900", width: 1440, height: 900 },
+    { name: "390x844", width: 390, height: 844 }
+  ];
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport);
+    for (const stage of [3, 4, 5, 6, 7]) {
+      await page.evaluate((nextStage) => {
+        const pointerKey = Object.keys(localStorage).find((key) => key.startsWith("hematuria-attempt-pointer-v3:P001:free:zh"));
+        const pointer = pointerKey ? JSON.parse(localStorage.getItem(pointerKey) || "null") : null;
+        const stateKey = pointer?.attemptId ? `hematuria-attempt-v3:P001:free:zh:${pointer.attemptId}` : "";
+        const state = stateKey ? JSON.parse(localStorage.getItem(stateKey) || "null") : null;
+        if (stateKey && state) localStorage.setItem(stateKey, JSON.stringify({ ...state, activeStageNo: nextStage }));
+      }, stage);
+      await page.reload();
+      const stageSurface = stage === 3
+        ? page.getByTestId("diagnosis-builder")
+        : stage === 4
+          ? page.getByTestId("consultation-builder")
+          : stage === 5
+            ? page.getByTestId("treatment-order-workbench")
+            : stage === 6
+              ? page.getByTestId("perioperative-checklist")
+              : page.getByTestId("final-report");
+      await expect(stageSurface).toBeVisible();
+      const layout = await page.evaluate(() => ({
+        overflow: document.documentElement.scrollWidth > window.innerWidth,
+        action: (document.querySelector(".workbench-actions") || Array.from(document.querySelectorAll("fieldset > div")).find((element) => /提交本阶段|训练会话|进入下一阶段/.test(element.textContent || "")))?.getBoundingClientRect().toJSON()
+      }));
+      if (screenshotDir) await page.screenshot({ path: path.join(screenshotDir, `${phase}-${viewport.name}-stage${stage}.png`), fullPage: false });
+      expect(layout.overflow, `${viewport.name}/stage-${stage}`).toBe(false);
+      if (!baselineCapture) {
+        expect(layout.action, `${viewport.name}/stage-${stage} action`).toBeTruthy();
+        expect(Math.ceil(layout.action.bottom), `${viewport.name}/stage-${stage} action bottom`).toBeLessThanOrEqual(viewport.height + 1);
+      }
+    }
+  }
+
+  if (!baselineCapture) {
+    expect(await page.locator("body").innerText()).not.toMatch(/原始360分|raw 360-point|EV-[A-Za-z0-9-]+|answerSource|factState|\bintent\b|\bProvider\b|\bAI\b/);
+    await expect(page.getByTestId("score-details")).toBeVisible();
+    const axe = await new AxeBuilder({ page }).analyze();
+    expect(axe.violations.filter((item) => item.impact === "critical" || item.impact === "serious")).toEqual([]);
+  }
+});
+
+test("desktop assistance settings fit the Windows 125 percent viewport", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "Desktop runtime settings are covered in the desktop project.");
+  const screenshotDir = process.env.UI_QUALITY_SCREENSHOT_DIR || "";
+  const phase = process.env.UI_QUALITY_SCREENSHOT_PHASE || "review";
+  const baselineCapture = phase === "before";
+  await page.addInitScript(() => {
+    globalThis.__HEMATURIA_DESKTOP_RUNTIME__ = {
+      runtimeTarget: "desktop",
+      apiBaseUrl: "http://127.0.0.1:43000",
+      authToken: "playwright_desktop_runtime_token_12345678901234567890",
+      debugRuntime: true
+    };
+  });
+  await page.route("**/api/desktop/settings", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({
+      modelMode: "lightweight", modelAlias: "Qwen3-1.7B", modelDirectory: "C:\\TrainingResources",
+      modelFilePath: "", modelPresent: false, localAiEnabled: false, llamaStatus: "model_missing",
+      modelValidation: "not_checked", version: 1
+    })
+  }));
+  await page.setViewportSize({ width: 1093, height: 614 });
+  await page.goto("/cases/P001/");
+  await page.getByRole("button", { name: "问诊辅助设置" }).click();
+  const dialog = page.getByRole("dialog", { name: "问诊辅助设置" });
+  await expect(dialog).toBeVisible();
+  if (!baselineCapture) {
+    await expect(dialog.getByRole("heading", { name: "辅助设置" })).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "关闭" })).toBeVisible();
+    await expect(dialog.getByText(/本地模型|Qwen|运行时别名|answerSource|factState|intent|Provider|AI/)).toHaveCount(0);
+  }
+  const box = await dialog.boundingBox();
+  expect(box).toBeTruthy();
+  if (!baselineCapture) {
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    expect(Math.ceil(box.y + box.height)).toBeLessThanOrEqual(614);
+  }
+  if (screenshotDir) {
+    await mkdir(screenshotDir, { recursive: true });
+    await page.screenshot({ path: path.join(screenshotDir, `${phase}-125pct-settings.png`), fullPage: false });
+  }
+  if (!baselineCapture) {
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
   }
 });
 
