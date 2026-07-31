@@ -104,6 +104,7 @@ function validateTreatment(caseData, submission, at, sequence, stageKey = "treat
 function matchHistoryQuestion(caseId, question, at, sequence) {
   const facts = canonicalSlots[caseId] || {};
   const patterns = {
+    chief_complaint: /哪里不舒服|怎么不舒服|为什么来看|主要症状|主诉|what brings you|where do you feel unwell|main complaint/i,
     hematuria_visibility: /肉眼|镜下|看得见|gross|microscopic|visible blood/i, hematuria_onset: /什么时候|多久|起病|how long|when.*start|onset/i,
     hematuria_frequency: /间断|持续|反复|频率|intermittent|continuous|how often/i, hematuria_phase: /全程|起始|终末|最后几滴|一直红|whole stream|throughout|terminal|last drops/i,
     urine_color: /颜色|鲜红|暗红|洗肉水|茶色|酱油|colou?r|bright red|dark red|tea|cola/i, clots: /血块|凝血块|clots?/i,

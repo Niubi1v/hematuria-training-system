@@ -582,6 +582,7 @@ function desktopEvidenceHandler(evidence) {
 
 function desktopAttemptResumeHandler(store, trainingState) {
   const validModes = new Set(["free", "osce", "rct", "public-practice", "formal-attempt"]);
+  const evidence = require(path.join(appRoot, "server", "evidenceGraph.js"));
   return async (req, res) => {
     if (req.method !== "POST") return res.status(405).json({ error: "method_not_allowed" });
     if (requestHeader(req, "content-type").split(";")[0].trim().toLowerCase() !== "application/json") {
@@ -636,13 +637,15 @@ function desktopAttemptResumeHandler(store, trainingState) {
     }
 
     res.setHeader("X-Training-State", token);
+    evidence.ensureEvidenceGraph(stored.state, stored.state.caseId);
     return res.status(200).json({
       attemptId: stored.state.attemptId,
       caseId: stored.state.caseId,
       mode: stored.state.mode,
       language: stored.state.language,
       currentStage: Number(stored.state.currentStage),
-      status: stored.state.status
+      status: stored.state.status,
+      evidenceOptions: evidence.studentEvidenceOptions(stored.state, stored.state.language)
     });
   };
 }

@@ -312,12 +312,14 @@ try {
     "attemptId",
     "caseId",
     "currentStage",
+    "evidenceOptions",
     "language",
     "mode",
     "status"
   ].sort());
   assert.equal(resumedPayload.currentStage, 1);
   assert.equal(resumedPayload.status, "active");
+  assert.deepEqual(resumedPayload.evidenceOptions, []);
   assert.equal("token" in resumedPayload, false);
 
   const wrongResumeIdentity = await authorizedFetch(first, "/api/desktop/attempt/resume/", {

@@ -9,8 +9,21 @@ const procedures = require("../data/order_catalog_procedures.json");
 const perioperative = require("../data/order_catalog_perioperative.json");
 const mdtTriggers = require("../data/mdt_triggers.json");
 const consultCatalog = require("../data/consult_catalog.json");
+const patientSlots = require("../data/patient_slots_bilingual.json");
 const { matchHistoryQuestion, normalize, validateStage } = require("../server/clinicalAssessment.js");
 const { advanceAttemptToken, appendEvents, createAttemptState, normalizeAttemptMode, signAttemptState, verifyAttemptState } = require("../server/trainingState.js");
+const {
+  buildClinicalTrajectory,
+  clearLearnerDiagnosisRelations,
+  ensureEvidenceGraph,
+  evidenceNodeForEvent,
+  pruneEvidenceGraph,
+  recordDiagnosisRelations,
+  safeText,
+  studentEvidenceOptions,
+  syncEvidenceEvents,
+  validateEvidenceIds
+} = require("../server/evidenceGraph.js");
 const { commitAttempt, digest, loadAttempt, registerAttempt } = require("../server/trainingAttemptStore.js");
 const { BILINGUAL_CONFLICT_REASON, filterQuarantinedEvents } = require("../server/bilingualConflictQuarantine.js");
 const { setServerTiming } = require("../server/performanceTiming.js");
@@ -151,7 +164,16 @@ function reconcileSubmittedHistory(caseData, state, submission, at) {
     existingSlotIds.add(event.slotId);
     return true;
   });
-  appendEvents(state, reconciled);
+  appendClinicalEvents(state, caseData.id, reconciled, Object.fromEntries(reconciled.map((event) => [event.eventId, {
+    triggerAction: "patient_interview",
+    rawQuestion: event.text,
+    result: languageForState(state) === "en" ? `Patient-reported evidence collected for ${event.slotId}.` : `已采集患者自述证据：${event.slotId}。`,
+    provenance: "case_truth_ontology"
+  }])));
+}
+
+function languageForState(state) {
+  return state?.language === "en" ? "en" : "zh";
 }
 
 function resolveOrders(input, sex) {
@@ -194,6 +216,94 @@ function handleExam(caseData, input, language) {
     scoringEligible: Boolean(configured),
     ...(simulated || {})
   };
+}
+
+function appendClinicalEvents(state, caseId, events, contextByEventId = {}) {
+  appendEvents(state, events);
+  syncEvidenceEvents(state, caseId, events, contextByEventId);
+  return state;
+}
+
+function submissionSummary(stageKey, submission, language) {
+  const value = (field) => safeText(submission?.[field], 600);
+  const labels = language === "en"
+    ? { history: "History submitted", orders: "Investigations submitted", diagnosis: "Diagnosis submitted", consult: "Consultation submitted", treatment: "Treatment orders submitted", perioperative: "Perioperative plan submitted", debrief: "Reflection submitted" }
+    : { history: "已提交病史阶段", orders: "已提交检查阶段", diagnosis: "已提交诊断", consult: "已提交会诊", treatment: "已提交治疗医嘱", perioperative: "已提交围术期方案", debrief: "已提交复盘" };
+  const details = ({
+    diagnosis: [value("diagnosis"), value("differentials"), value("confirmatoryTests")],
+    consult: [value("consultDepartments"), value("consultPurpose"), value("consultQuestions")],
+    treatment: [value("immediateTreatment"), value("admissionTreatment"), value("definitiveTreatment"), value("followUp")],
+    perioperative: [value("perioperativePreparation")]
+  })[stageKey] || [];
+  return safeText([labels[stageKey] || stageKey, ...details].filter(Boolean).join("："), 900);
+}
+
+function submissionEvent(state, stageKey, submission, language, at) {
+  const stageNo = stageNumbers[stageKey];
+  return {
+    eventId: `srv-${state.sequence + 1}-submission-${stageKey}`,
+    type: "submission_recorded",
+    actionId: stageKey,
+    stageNo,
+    at,
+    text: submissionSummary(stageKey, submission, language),
+    metadata: { validated: false, provenance: "learner_submission" }
+  };
+}
+
+function diagnosisSelections(submission) {
+  const value = submission?.evidenceSelections;
+  return value && typeof value === "object" && !Array.isArray(value) ? value : null;
+}
+
+function trustedEvidenceText(state, evidenceIds, caseData, language) {
+  const ids = validateEvidenceIds(state, evidenceIds || [], { sourceStages: [1, 2] });
+  const nodes = new Map((state.evidenceGraph || []).map((node) => [node.evidenceId, node]));
+  const row = rubrics.find((item) => item.caseId === caseData.id);
+  const requirements = (row?.dimensions || []).flatMap((dimension) => dimension.requirements);
+  return ids.map((id) => {
+    const node = nodes.get(id);
+    const labels = (node?.rubricMappings || []).map((mapping) => requirements.find((requirement) => requirement.id === mapping))
+      .filter(Boolean).map((requirement) => publicRequirementLabel(requirement, language));
+    const patientFact = node?.sourceStage === 1 ? patientSlots[caseData.id]?.[node.canonicalFactOrAction] : null;
+    const questionTriggeredPatientResult = patientFact
+      ? safeText(language === "en" ? patientFact.patientAnswerEn : patientFact.patientAnswerZh, 300)
+      : "";
+    const releasedResult = node?.sourceStage === 2 && node?.eventType === "result_returned" ? node.result : "";
+    return [...new Set([...labels, node?.canonicalFactOrAction, questionTriggeredPatientResult, releasedResult].filter(Boolean))].join("：");
+  }).join("；");
+}
+
+function enrichDiagnosisSubmission(state, submission, caseData, language) {
+  const selections = diagnosisSelections(submission);
+  if (!selections) return submission;
+  const primaryEvidenceIds = validateEvidenceIds(state, selections.primary?.evidenceIds || [], { sourceStages: [1, 2] });
+  const differentials = Array.isArray(selections.differentials) ? selections.differentials.slice(0, 3) : [];
+  const differentialEvidence = differentials.map((row) => [
+    trustedEvidenceText(state, row?.supportEvidenceIds || [], caseData, language),
+    trustedEvidenceText(state, row?.opposeEvidenceIds || [], caseData, language)
+  ].filter(Boolean).join("；")).join("；");
+  return {
+    ...submission,
+    diagnosticEvidence: trustedEvidenceText(state, primaryEvidenceIds, caseData, language),
+    differentialAnalysis: differentialEvidence || submission.differentialAnalysis
+  };
+}
+
+function attachDiagnosisEvidenceIds(events, submission) {
+  const selections = diagnosisSelections(submission);
+  if (!selections) return events;
+  const differentials = Array.isArray(selections.differentials) ? selections.differentials.slice(0, 3) : [];
+  return events.map((event) => {
+    let evidenceIds = [];
+    if (event.type === "diagnosis_supported" && event.actionId === "primary") evidenceIds = selections.primary?.evidenceIds || [];
+    const differentialMatch = /^differential_(\d+)$/.exec(String(event.actionId || ""));
+    if (differentialMatch) {
+      const row = differentials[Number(differentialMatch[1]) - 1] || {};
+      evidenceIds = [...(row.supportEvidenceIds || []), ...(row.opposeEvidenceIds || [])];
+    }
+    return evidenceIds.length ? { ...event, metadata: { ...(event.metadata || {}), evidenceIds: [...new Set(evidenceIds)] } } : event;
+  });
 }
 
 function handleOrder(caseData, input, previousOrderIds, language) {
@@ -341,6 +451,14 @@ function expectedConsultDepartmentSet(value) {
   return expected;
 }
 
+function validatedConsultRequests(state, consultRequests) {
+  if (!Array.isArray(consultRequests)) return consultRequests;
+  return consultRequests.slice(0, 20).map((item) => ({
+    ...item,
+    evidenceIds: validateEvidenceIds(state, item?.evidenceIds || [], { maximum: 30, sourceStages: [1, 2, 3] })
+  }));
+}
+
 function handleMdt(caseData, departments, purpose, language, consultRequests) {
   const trigger = mdtTriggers.find((item) => item.caseId === caseData.id);
   const expected = [caseData.clinical?.consultDepartments, trigger?.departments].filter(Boolean).join("；");
@@ -352,6 +470,9 @@ function handleMdt(caseData, departments, purpose, language, consultRequests) {
         department: String(item.department || "").trim().slice(0, 80),
         purpose: String(item.purpose || "").trim().slice(0, 500),
         question: String(item.question || "").trim().slice(0, 500),
+        evidenceIds: Array.isArray(item.evidenceIds)
+          ? item.evidenceIds.map((value) => String(value || "").trim()).filter(Boolean).slice(0, 30)
+          : [],
         evidence: Array.isArray(item.evidence)
           ? item.evidence.map((value) => String(value || "").trim().slice(0, 300)).filter(Boolean).slice(0, 30)
           : []
@@ -363,17 +484,18 @@ function handleMdt(caseData, departments, purpose, language, consultRequests) {
         department: String(department || "").trim().slice(0, 80),
         purpose: String(purpose || "").trim().slice(0, 500),
         question: String(purpose || "").trim().slice(0, 500),
+        evidenceIds: [],
         evidence: []
       }))
       .filter((item) => item.department);
   const accepted = normalizedRequests.map((item) => item.department)
     .filter((department) => expectedDepartments.has(normalizeConsultDepartment(department)));
   const focused = normalizedRequests.length > 0 && normalizedRequests.every((item) => item.purpose.length >= 6 && item.question.length >= 6);
-  const evidenceProvided = normalizedRequests.length > 0 && normalizedRequests.every((item) => item.evidence.length > 0);
+  const evidenceProvided = normalizedRequests.length > 0 && normalizedRequests.every((item) => item.evidenceIds.length > 0 || item.evidence.length > 0);
   const referenceIntegration = String(trigger?.purpose || caseData.clinical?.consultQuestions || "").trim();
   const opinions = normalizedRequests.map((item) => {
     const isExpected = expectedDepartments.has(normalizeConsultDepartment(item.department));
-    const evidenceCount = item.evidence.length;
+    const evidenceCount = item.evidenceIds.length || item.evidence.length;
     return {
       department: item.department,
       opinion: language === "en"
@@ -394,7 +516,8 @@ function handleMdt(caseData, departments, purpose, language, consultRequests) {
       necessity: isExpected
         ? (language === "en" ? "Relevant to this case at the current stage." : "与本病例当前阶段相关，建议会诊。")
         : (language === "en" ? "Not routinely required from the current evidence; reconsider if a specific trigger emerges." : "依据当前证据并非常规必需；出现明确触发条件时再考虑。"),
-      mdtIntegration: referenceIntegration || (language === "en" ? "Use the submitted purpose and released evidence for MDT integration." : "以提交的会诊目的和已释放证据形成MDT整合。")
+      mdtIntegration: referenceIntegration || (language === "en" ? "Use the submitted purpose and released evidence for MDT integration." : "以提交的会诊目的和已释放证据形成MDT整合。"),
+      evidenceIds: item.evidenceIds
     };
   });
   return { opinions, accepted, focused, evidenceProvided, requests: normalizedRequests };
@@ -471,7 +594,7 @@ function publicRequirementLabel(requirement, language) {
   return language === "en" ? "Case-relevant clinical requirement" : "病例相关临床要点";
 }
 
-function score(caseId, events, language) {
+function score(caseId, events, language, evidenceGraph = []) {
   const row = rubrics.find((item) => item.caseId === caseId);
   if (!row) throw new Error("missing_scoring_rubric");
   const requiredOrderIds = new Set((row.dimensions.find((item) => item.id === "orders")?.requirements || []).map((item) => item.key).filter(Boolean));
@@ -484,7 +607,8 @@ function score(caseId, events, language) {
       const max = allocate(dimension.max, dimension.requirements.length, index);
       const event = events.find((candidate) => candidate.type === requirement.eventType && candidate.metadata?.validated === true
         && (!requirement.key || candidate.slotId === requirement.key || candidate.actionId === requirement.key));
-      return { rubricItemId: requirement.id, status: event ? "earned" : "missed", score: event ? max : 0, max, eventId: event?.eventId, evidenceText: event?.text || event?.actionId || event?.slotId, timestamp: event?.at };
+      const evidenceId = event ? evidenceGraph.find((node) => node.eventId === event.eventId)?.evidenceId : undefined;
+      return { rubricItemId: requirement.id, status: event ? "earned" : "missed", score: event ? max : 0, max, eventId: event?.eventId, evidenceId, evidenceText: event?.text || event?.actionId || event?.slotId, timestamp: event?.at };
     });
     let itemScore = rubricItems.reduce((sum, item) => sum + item.score, 0);
     if (dimension.id === "orders") itemScore = Math.max(0, itemScore - duplicates.length * 2 - overuse.length * 3);
@@ -495,7 +619,7 @@ function score(caseId, events, language) {
     });
     return {
       label: labels[dimension.id]?.[language === "en" ? 1 : 0] || dimension.label, max: dimension.max, score: itemScore,
-      evidence: rubricItems.filter((item) => item.status === "earned").map((item) => item.evidenceText || ""), misses,
+      evidence: rubricItems.filter((item) => item.status === "earned").map((item) => `${item.evidenceId ? `[${item.evidenceId}] ` : ""}${item.evidenceText || ""}`), misses,
       sequenceIssues: [], overuse: dimension.id === "orders" ? overuse.map((event) => event.actionId) : [],
       criticalErrors: dimension.id === "treatment" ? critical.map((event) => event.text) : [],
       improvements: misses.slice(0, 4).map((item) => language === "en" ? `Address: ${item}` : `下次训练补充：${item}`),
@@ -541,12 +665,32 @@ function stageFeedback(caseData, stageKey, validation, state, language) {
   const missing = requirements.filter((requirement) => !evidenceFor(requirement));
   const score = requirements.length ? Math.round(matched.length / requirements.length * 10) : 0;
   const formalLocked = state.mode === "formal-attempt" && state.status !== "completed";
+  const submissionNode = [...(state.evidenceGraph || [])].reverse().find((node) => node.eventType === "submission_recorded" && node.canonicalFactOrAction === stageKey);
+  const referencesForEvent = (event) => [...new Set([
+    ...(Array.isArray(event?.metadata?.evidenceIds) ? event.metadata.evidenceIds : []),
+    evidenceNodeForEvent(state, event?.eventId)?.evidenceId
+  ].filter(Boolean))];
+  const feedbackEvidence = {
+    hits: matched.map((item) => ({
+      text: item.event.text || publicRequirementLabel(item.requirement, language),
+      evidenceIds: referencesForEvent(item.event)
+    })).slice(0, 8),
+    misses: missing.map((item) => ({
+      text: publicRequirementLabel(item, language),
+      evidenceIds: submissionNode ? [submissionNode.evidenceId] : []
+    })).slice(0, 8),
+    warnings: validation.warnings.map((text) => ({
+      text,
+      evidenceIds: submissionNode ? [submissionNode.evidenceId] : []
+    })).slice(0, 8)
+  };
   return {
     stageKey, max: 10, score,
     hits: matched.map((item) => item.event.text || publicRequirementLabel(item.requirement, language)).filter(Boolean).slice(0, 8),
     misses: missing.map((item) => publicRequirementLabel(item, language)).filter(Boolean).slice(0, 8),
     warnings: validation.warnings,
     standardAnswer: formalLocked ? "" : standardFor(caseData, stageKey, language),
+    feedbackEvidence,
     practiceOnly: state.practiceOnly,
     comment: language === "en"
       ? "Clinical significance: omissions may affect localization, safety, or decision quality. Revise the listed items and resubmit. This formative result does not change the final 360 score."
@@ -574,7 +718,7 @@ module.exports = async function handler(req, res) {
       if (mode === "formal-attempt") assertFormalAllowed(caseData);
       const state = createAttemptState({ attemptId: body.attemptId, caseId: caseData.id, mode, language });
       const token = signAttemptState(state);
-      const payload = { attemptId: state.attemptId, caseId: state.caseId, mode: state.mode, practiceOnly: state.practiceOnly };
+      const payload = { attemptId: state.attemptId, caseId: state.caseId, mode: state.mode, practiceOnly: state.practiceOnly, evidenceOptions: [] };
       const stored = await registerAttempt({ state, token, requestId, requestDigest, payload });
       return sendStored(res, stored);
     }
@@ -584,6 +728,7 @@ module.exports = async function handler(req, res) {
     const loaded = await loadAttempt({ caseId: caseData.id, attemptId: String(body.attemptId || ""), token: previousToken, requestId, requestDigest });
     if (loaded.duplicate) return sendStored(res, loaded);
     const state = loaded.state;
+    ensureEvidenceGraph(state, caseData.id);
     if (state.mode !== claims.mode || state.language !== claims.language || Number(state.tokenSequence || 0) !== Number(claims.tokenSequence || 0)) {
       throw new Error("attempt_state_mismatch");
     }
@@ -598,7 +743,8 @@ module.exports = async function handler(req, res) {
         mode: state.mode,
         language: state.language,
         currentStage: Number(state.currentStage || 1),
-        status: state.status
+        status: state.status,
+        evidenceOptions: studentEvidenceOptions(state, language)
       });
     }
     if (body.action === "stage-feedback" && !stageNumbers[body.stageKey]) return res.status(400).json({ error: "invalid_stage" });
@@ -612,17 +758,26 @@ module.exports = async function handler(req, res) {
       if (quarantine.quarantinedSlotIds.length) {
         console.warn("training_fact_quarantined", { caseId: caseData.id, slotIds: quarantine.quarantinedSlotIds, reason: BILINGUAL_CONFLICT_REASON });
       }
-      appendEvents(state, quarantine.events);
+      const historyContexts = Object.fromEntries(quarantine.events.map((event) => [event.eventId, {
+        triggerAction: "patient_interview",
+        rawQuestion: body.question,
+        result: language === "en" ? `Patient-reported evidence collected for ${event.slotId}.` : `已采集患者自述证据：${event.slotId}。`,
+        provenance: "case_truth_ontology"
+      }]));
+      appendClinicalEvents(state, caseData.id, quarantine.events, historyContexts);
       setServerTiming(res, { history: Date.now() - startedAt });
       return commitResponse(res, {
         state, previousToken, requestId, requestDigest,
-        payload: { recorded: true, requestId, quarantinedSlotIds: quarantine.quarantinedSlotIds, reason: quarantine.reason }
+        payload: { recorded: true, requestId, quarantinedSlotIds: quarantine.quarantinedSlotIds, reason: quarantine.reason, evidenceOptions: studentEvidenceOptions(state, language) }
       });
     }
     if (body.action === "exam") {
       const result = handleExam(caseData, body.input, language);
-      if (result.examId) appendEvents(state, [{ eventId: `srv-${state.sequence + 1}-exam-${result.examId}`, type: "physical_exam_performed", actionId: result.examId, stageNo: 2, at, text: result.input, metadata: { validated: true } }]);
-      return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: result });
+      if (result.examId) {
+        const event = { eventId: `srv-${state.sequence + 1}-exam-${result.examId}`, type: "physical_exam_performed", actionId: result.examId, stageNo: 2, at, text: result.input, metadata: { validated: true, provenance: result.provenance } };
+        appendClinicalEvents(state, caseData.id, [event], { [event.eventId]: { triggerAction: result.input, result: result.result, provenance: result.provenance } });
+      }
+      return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: { ...result, evidenceOptions: studentEvidenceOptions(state, language) } });
     }
     if (body.action === "order") {
       const result = handleOrder(caseData, body.input, state.orders, language);
@@ -644,46 +799,74 @@ module.exports = async function handler(req, res) {
           provenance: item.provenance || "unknown"
         }
       }));
-      appendEvents(state, [...orderEvents, ...resultEvents]);
+      const orderContexts = Object.fromEntries([
+        ...orderEvents.map((event) => [event.eventId, { triggerAction: event.text, result: language === "en" ? "Order placed." : "已开立医嘱。", provenance: "canonical_order_action" }]),
+        ...resultEvents.map((event) => [event.eventId, { triggerAction: event.actionId, result: event.text, provenance: event.metadata.provenance }])
+      ]);
+      appendClinicalEvents(state, caseData.id, [...orderEvents, ...resultEvents], orderContexts);
       const releasedReports = Array.isArray(state.releasedReports) ? state.releasedReports : [];
       const knownResultIds = new Set(releasedReports.map((item) => item.resultId));
       state.releasedReports = [
         ...releasedReports,
         ...result.results.filter((item) => item.resultId && !knownResultIds.has(item.resultId))
       ];
-      return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: result });
+      return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: { ...result, evidenceOptions: studentEvidenceOptions(state, language) } });
     }
     if (body.action === "mdt") {
-      const result = handleMdt(caseData, body.departments, body.purpose, language, body.consultRequests);
+      const consultRequests = validatedConsultRequests(state, body.consultRequests);
+      const result = handleMdt(caseData, body.departments, body.purpose, language, consultRequests);
       const events = [];
       if (result.accepted.length) events.push({ eventId: `srv-${state.sequence + 1}-mdt-department`, type: "consult_requested", actionId: "department", stageNo: 4, at, text: result.accepted.join("；"), metadata: { validated: true } });
       if (result.focused) ["trigger", "question"].forEach((actionId) => events.push({ eventId: `srv-${state.sequence + 1}-mdt-${actionId}`, type: "consult_requested", actionId, stageNo: 4, at, text: result.requests.map((item) => `${item.department}:${item.question || item.purpose}`).join("；"), metadata: { validated: true } }));
-      if (result.evidenceProvided) events.push({ eventId: `srv-${state.sequence + 1}-mdt-evidence`, type: "consult_requested", actionId: "evidence", stageNo: 4, at, text: result.requests.map((item) => `${item.department}:${item.evidence.length}`).join("；"), metadata: { validated: true } });
-      appendEvents(state, events);
+      if (result.evidenceProvided) events.push({ eventId: `srv-${state.sequence + 1}-mdt-evidence`, type: "consult_requested", actionId: "evidence", stageNo: 4, at, text: result.requests.map((item) => `${item.department}:${item.evidenceIds.length || item.evidence.length}`).join("；"), metadata: { validated: true, evidenceIds: result.requests.flatMap((item) => item.evidenceIds) } });
+      appendClinicalEvents(state, caseData.id, events, Object.fromEntries(events.map((event) => [event.eventId, {
+        triggerAction: "consultation_request",
+        result: event.text,
+        provenance: "learner_consultation_request"
+      }])));
       return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: result.opinions });
     }
     if (body.action === "stage-feedback") {
       const submittedStage = stageNumbers[body.stageKey];
       if (state.submissions[body.stageKey]) {
         state.events = state.events.filter((event) => event.stageNo < submittedStage || (submittedStage <= 2 && ["slot_answered", "physical_exam_performed", "order_placed", "result_returned"].includes(event.type)));
+        pruneEvidenceGraph(state);
+        if (body.stageKey === "diagnosis") clearLearnerDiagnosisRelations(state);
         Object.keys(state.submissions).forEach((key) => { if (stageNumbers[key] >= submittedStage) delete state.submissions[key]; });
         state.completedStages = (state.completedStages || []).filter((stage) => stage < submittedStage);
         state.currentStage = submittedStage;
       }
       if (body.stageKey === "history") reconcileSubmittedHistory(caseData, state, body.submission || {}, at);
-      const validation = validateStage(caseData, body.stageKey, body.submission || {});
-      appendEvents(state, validation.events);
+      const rawSubmission = body.submission || {};
+      if (body.stageKey === "diagnosis") recordDiagnosisRelations(state, diagnosisSelections(rawSubmission));
+      const validationSubmission = body.stageKey === "diagnosis" ? enrichDiagnosisSubmission(state, rawSubmission, caseData, language) : rawSubmission;
+      const rawValidation = validateStage(caseData, body.stageKey, validationSubmission);
+      const validation = {
+        ...rawValidation,
+        events: body.stageKey === "diagnosis" ? attachDiagnosisEvidenceIds(rawValidation.events, rawSubmission) : rawValidation.events
+      };
+      const recordedSubmission = submissionEvent(state, body.stageKey, rawSubmission, language, at);
+      appendClinicalEvents(state, caseData.id, [...validation.events, recordedSubmission], {
+        [recordedSubmission.eventId]: {
+          triggerAction: `${body.stageKey}_submission`,
+          result: recordedSubmission.text,
+          provenance: "learner_submission"
+        }
+      });
       state.submissions[body.stageKey] = { submittedAt: at, warnings: validation.warnings };
       state.completedStages = [...new Set([...(state.completedStages || []), submittedStage])].sort((a, b) => a - b);
       state.currentStage = submittedStage + 1;
-      return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: stageFeedback(caseData, body.stageKey, validation, state, language) });
+      const feedback = stageFeedback(caseData, body.stageKey, validation, state, language);
+      feedback.evidenceOptions = studentEvidenceOptions(state, language);
+      return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: feedback });
     }
     if (body.action === "score") {
-      const report = score(caseData.id, state.events, language);
+      const report = score(caseData.id, state.events, language, state.evidenceGraph);
       state.status = "completed";
       state.completedAt = at;
       state.finalScore = report.total;
       state.scoringVersion = report.scoringVersion;
+      report.clinicalTrajectory = buildClinicalTrajectory(state, report, language);
       setServerTiming(res, { score: Date.now() - startedAt });
       return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: report });
     }
@@ -693,6 +876,7 @@ module.exports = async function handler(req, res) {
       : /invalid_json_body/.test(code) ? 400
         : /formal|approved/.test(code) ? 403
       : /idempotency_key_required|invalid_request_digest/.test(code) ? 400
+        : /invalid_evidence_reference/.test(code) ? 422
         : /stage|mode|language|stale|already_exists|idempotency_key_reused/.test(code) ? 409
           : /token|mismatch|completed|not_found/.test(code) ? 401
             : /secret|store_(?:temporarily_)?unavailable/.test(code) ? 503 : 500;

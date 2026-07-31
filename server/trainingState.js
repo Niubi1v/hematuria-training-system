@@ -61,6 +61,7 @@ function createAttemptState({ attemptId, caseId, mode, language }) {
     completedStages: [],
     orders: [],
     releasedReports: [],
+    evidenceGraph: [],
     events: [],
     submissions: {},
     finalScore: null,

@@ -1,5 +1,16 @@
 import type { StageKey } from "./types";
 
+export type StudentEvidenceOption = {
+  evidenceId: string;
+  sourceStage: number;
+  label: string;
+};
+
+export type FeedbackEvidenceItem = {
+  text: string;
+  evidenceIds: string[];
+};
+
 export type FullProcessAnswers = {
   historySummary: string;
   physicalExam: string;
@@ -35,6 +46,12 @@ export type StageEvaluation = {
   standardAnswer: string;
   comment: string;
   practiceOnly?: boolean;
+  feedbackEvidence?: {
+    hits: FeedbackEvidenceItem[];
+    misses: FeedbackEvidenceItem[];
+    warnings: FeedbackEvidenceItem[];
+  };
+  evidenceOptions?: StudentEvidenceOption[];
 };
 
 export type OrderResultLog = {
@@ -78,6 +95,7 @@ export type OrderResultLog = {
   returnedAt?: string;
   stageNo?: number;
   status?: "ordered" | "reported" | "no-result";
+  evidenceOptions?: StudentEvidenceOption[];
   duplicateOrderIds?: string[];
   acceptedOrderIds?: string[];
   pendingPrerequisiteOrderIds?: string[];
@@ -100,6 +118,7 @@ export type ExamResultLog = {
   affectsScore?: false;
   reviewerStatus?: "not_required";
   simulationPolicyId?: string;
+  evidenceOptions?: StudentEvidenceOption[];
 };
 
 export type MdtOpinion = {
@@ -113,6 +132,7 @@ export type MdtOpinion = {
   residentQuestion?: string;
   necessity?: string;
   mdtIntegration?: string;
+  evidenceIds?: string[];
 };
 
 export type Evaluator360Report = {
@@ -129,7 +149,7 @@ export type Evaluator360Report = {
     criticalErrors: string[];
     improvements: string[];
     comment: string;
-    rubricItems?: Array<{ rubricItemId: string; status: string; score: number; max: number; eventId?: string; evidenceText?: string; timestamp?: string }>;
+    rubricItems?: Array<{ rubricItemId: string; status: string; score: number; max: number; eventId?: string; evidenceId?: string; evidenceText?: string; timestamp?: string }>;
   }>;
   redFlags: string[];
   ragGuardrails: string[];
@@ -138,4 +158,24 @@ export type Evaluator360Report = {
   generatedAt: string;
   reportVersion: number;
   calculation?: string;
+  clinicalTrajectory?: {
+    questions: ClinicalTrajectoryEntry[];
+    acquiredEvidence: ClinicalTrajectoryEntry[];
+    examinationsAndOrders: ClinicalTrajectoryEntry[];
+    diagnosisFormation: ClinicalTrajectoryEntry[];
+    consultations: ClinicalTrajectoryEntry[];
+    treatmentOrders: ClinicalTrajectoryEntry[];
+    perioperativeManagement: ClinicalTrajectoryEntry[];
+    decisionTransitions: Array<{ decisionEvidenceId: string; fromStage: number; toStage: number; reason: string }>;
+    omissions: Array<{ domain: string; label: string; rubricItemId: string }>;
+  };
+};
+
+export type ClinicalTrajectoryEntry = {
+  evidenceId: string;
+  stage: number;
+  action: string;
+  canonical: string;
+  result: string;
+  provenance: string;
 };

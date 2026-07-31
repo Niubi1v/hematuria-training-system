@@ -66,7 +66,7 @@ import {
   type TtsPlaybackState,
   type TtsProviderPreference
 } from "@/src/lib/tts";
-import type { Evaluator360Report, ExamResultLog, FullProcessAnswers, MdtOpinion, OrderResultLog, StageEvaluation } from "@/src/lib/trainingContracts";
+import type { Evaluator360Report, ExamResultLog, FullProcessAnswers, MdtOpinion, OrderResultLog, StageEvaluation, StudentEvidenceOption } from "@/src/lib/trainingContracts";
 import type {
   ChatMessage,
   CollectedMap,
@@ -457,16 +457,39 @@ function compactLine(value: string) {
   return value.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").replace(/\|\|/g, "／").trim();
 }
 
+function extractStudentEvidenceOptions(value: unknown): StudentEvidenceOption[] | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const raw = (value as { evidenceOptions?: unknown }).evidenceOptions;
+  if (!Array.isArray(raw)) return null;
+  return raw.flatMap((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+    const candidate = item as Partial<StudentEvidenceOption>;
+    const evidenceId = safeText(candidate.evidenceId);
+    const label = safeText(candidate.label);
+    const sourceStage = Number(candidate.sourceStage);
+    if (!/^EV-[A-Za-z0-9-]{1,80}$/.test(evidenceId) || !label || !Number.isInteger(sourceStage) || sourceStage < 1 || sourceStage > 7) return [];
+    return [{ evidenceId, label, sourceStage }];
+  });
+}
+
+function normalizeEvidenceSelection(selected: string[], options: EvidenceOption[]) {
+  const byId = new Map(options.map((option) => [option.id, option.id]));
+  const byLabel = new Map(options.map((option) => [option.label, option.id]));
+  return unique(selected.map((value) => byId.get(value) || byLabel.get(value) || ""));
+}
+
 function parseEvidenceAnswer(value: string) {
   const lines = String(value || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  const selected = lines.filter((line) => line.startsWith("【证据】")).map((line) => line.slice(4).trim());
+  const selected = lines
+    .filter((line) => line.startsWith("【证据ID】") || line.startsWith("【证据】"))
+    .map((line) => line.replace(/^【证据(?:ID)?】/, "").trim());
   const note = lines.find((line) => line.startsWith("【补充说明】"))?.slice(6).trim()
     || (selected.length ? "" : lines.join("\n"));
   return { selected: unique(selected), note };
 }
 
 function serializeEvidenceAnswer(selected: string[], note: string) {
-  return [...unique(selected).map((item) => `【证据】${compactLine(item)}`), ...(note.trim() ? [`【补充说明】${compactLine(note)}`] : [])].join("\n");
+  return [...unique(selected).map((item) => `【证据ID】${compactLine(item)}`), ...(note.trim() ? [`【补充说明】${compactLine(note)}`] : [])].join("\n");
 }
 
 function parseDifferentialRows(namesText: string, analysisText: string): DifferentialRow[] {
@@ -834,6 +857,19 @@ function FeedbackBox({ evaluation, lang }: { evaluation: StageEvaluation; lang: 
             miss: t(lang, "missingRiskItems"),
             warning: lang === "en" ? "Points to review" : "需复核项目"
           };
+  const detailed = {
+    hits: evaluation.feedbackEvidence?.hits || evaluation.hits.map((text) => ({ text, evidenceIds: [] })),
+    misses: evaluation.feedbackEvidence?.misses || evaluation.misses.map((text) => ({ text, evidenceIds: [] })),
+    warnings: evaluation.feedbackEvidence?.warnings || evaluation.warnings.map((text) => ({ text, evidenceIds: [] }))
+  };
+  const feedbackList = (items: typeof detailed.hits) => items.length
+    ? <ul className="mt-2 space-y-2 text-clinic-muted">{items.map((item, index) => (
+        <li key={`${item.text}-${index}`}>
+          <span>{item.text}</span>
+          {item.evidenceIds.length > 0 && <span className="mt-1 block font-mono text-[11px] text-clinic-blue">{lang === "en" ? "Evidence" : "证据"}：{item.evidenceIds.join("、")}</span>}
+        </li>
+      ))}</ul>
+    : <p className="mt-2 text-clinic-muted">{t(lang, "none")}</p>;
   return (
     <section className="mt-5 rounded-lg border border-clinic-line bg-clinic-paper p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -847,15 +883,15 @@ function FeedbackBox({ evaluation, lang }: { evaluation: StageEvaluation; lang: 
       <div className="mt-3 grid gap-3 md:grid-cols-3">
         <div className="rounded-lg bg-white p-3 text-sm">
           <p className="inline-flex items-center gap-2 font-semibold text-emerald-800"><CircleCheck size={16} aria-hidden="true" />{feedbackCopy.hit}</p>
-          <p className="mt-2 text-clinic-muted">{evaluation.hits.join("；") || t(lang, "none")}</p>
+          {feedbackList(detailed.hits)}
         </div>
         <div className="rounded-lg bg-white p-3 text-sm">
           <p className="inline-flex items-center gap-2 font-semibold text-amber-900"><AlertTriangle size={16} aria-hidden="true" />{feedbackCopy.miss}</p>
-          <p className="mt-2 text-clinic-muted">{evaluation.misses.join("；") || t(lang, "none")}</p>
+          {feedbackList(detailed.misses)}
         </div>
         <div className="rounded-lg bg-white p-3 text-sm">
           <p className="inline-flex items-center gap-2 font-semibold text-rose-900"><CircleAlert size={16} aria-hidden="true" />{feedbackCopy.warning}</p>
-          <p className="mt-2 text-clinic-muted">{evaluation.warnings.join("；") || t(lang, "none")}</p>
+          {feedbackList(detailed.warnings)}
         </div>
       </div>
       <details className="mt-3 text-sm">
@@ -872,6 +908,15 @@ function FinalReport({ report, lang }: { report: Evaluator360Report; lang: Langu
   const strengths = report.items.filter((item) => item.max > 0 && item.score / item.max >= 0.8).map((item) => item.label);
   const priorities = report.items.filter((item) => item.criticalErrors.length || item.misses.length || item.improvements.length).map((item) => item.label);
   const displayedScore = percentageScore(report.total);
+  const trajectoryGroups = report.clinicalTrajectory ? [
+    [lang === "en" ? "Questions asked" : "问过什么", report.clinicalTrajectory.questions],
+    [lang === "en" ? "Evidence acquired" : "获得的证据", report.clinicalTrajectory.acquiredEvidence],
+    [lang === "en" ? "Examinations and orders" : "检查与医嘱", report.clinicalTrajectory.examinationsAndOrders],
+    [lang === "en" ? "Diagnosis formation" : "诊断形成", report.clinicalTrajectory.diagnosisFormation],
+    [lang === "en" ? "Consultation decisions" : "会诊决策", report.clinicalTrajectory.consultations],
+    [lang === "en" ? "Treatment orders" : "治疗医嘱", report.clinicalTrajectory.treatmentOrders],
+    [lang === "en" ? "Perioperative management" : "围术期管理", report.clinicalTrajectory.perioperativeManagement]
+  ] as const : [];
   return (
     <section data-testid="final-report" className="rounded-xl border border-clinic-line bg-white p-5 print:border-0 print:p-0">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -902,6 +947,29 @@ function FinalReport({ report, lang }: { report: Evaluator360Report; lang: Langu
           <p className="mt-2 text-sm leading-6 text-amber-950">{priorities.slice(0, 4).join(lang === "en" ? ", " : "、") || (lang === "en" ? "Maintain the current approach." : "保持当前操作方法。")}</p>
         </section>
       </div>
+      {report.clinicalTrajectory && <section data-testid="clinical-trajectory" className="mt-5 rounded-lg border border-clinic-line bg-clinic-paper p-4">
+        <h4 className="font-semibold text-clinic-blue">{lang === "en" ? "Complete clinical trajectory" : "完整临床轨迹复盘"}</h4>
+        <p className="mt-1 text-sm text-clinic-muted">{lang === "en" ? "Each item is linked to evidence actually recorded in this attempt." : "每项均引用本次训练中真实记录的证据编号。"}</p>
+        <div className="mt-3 grid gap-3 lg:grid-cols-2">
+          {trajectoryGroups.map(([label, entries]) => <details key={label} className="rounded-lg bg-white p-3" open={entries.length > 0}>
+            <summary className="cursor-pointer font-medium">{label}（{entries.length}）</summary>
+            {entries.length > 0 ? <ol className="mt-2 space-y-2 text-sm leading-6">{entries.map((entry) => <li key={`${label}-${entry.evidenceId}`}>
+              <p>{safeText(entry.action)}{entry.result ? ` — ${safeText(entry.result)}` : ""}</p>
+              <p className="font-mono text-[11px] text-clinic-blue">{entry.evidenceId}</p>
+            </li>)}</ol> : <p className="mt-2 text-sm text-clinic-muted">{t(lang, "none")}</p>}
+          </details>)}
+        </div>
+        <div className="mt-3 grid gap-3 lg:grid-cols-2">
+          <section className="rounded-lg bg-white p-3 text-sm">
+            <h5 className="font-medium">{lang === "en" ? "Decisions that advanced the pathway" : "改变后续流程的决策"}</h5>
+            {report.clinicalTrajectory.decisionTransitions.length > 0 ? <ul className="mt-2 space-y-2">{report.clinicalTrajectory.decisionTransitions.map((item) => <li key={item.decisionEvidenceId}>{item.reason}<span className="ml-2 font-mono text-[11px] text-clinic-blue">{item.decisionEvidenceId}</span></li>)}</ul> : <p className="mt-2 text-clinic-muted">{t(lang, "none")}</p>}
+          </section>
+          <section className="rounded-lg bg-white p-3 text-sm">
+            <h5 className="font-medium">{lang === "en" ? "Key omissions" : "关键步骤遗漏"}</h5>
+            {report.clinicalTrajectory.omissions.length > 0 ? <ul className="mt-2 space-y-1">{report.clinicalTrajectory.omissions.slice(0, 24).map((item) => <li key={`${item.domain}-${item.rubricItemId}`}>{item.domain} · {item.label}</li>)}</ul> : <p className="mt-2 text-clinic-muted">{t(lang, "none")}</p>}
+          </section>
+        </div>
+      </section>}
       <details data-testid="raw-360-details" className="mt-5 rounded-lg border border-clinic-line bg-clinic-paper p-4">
         <summary className="cursor-pointer font-semibold text-clinic-blue">{lang === "en" ? "Scoring details (raw 360-point scale)" : "评分详情（原始360分）"}</summary>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -970,6 +1038,7 @@ async function requestDesktopAttemptResume(body: { attemptId: string; caseId: st
     language: LanguageCode;
     currentStage: number;
     status: string;
+    evidenceOptions?: StudentEvidenceOption[];
   };
   const normalizedMode = body.mode === "osce" || body.mode === "rct" ? "formal-attempt" : "public-practice";
   if (payload.attemptId !== body.attemptId || payload.caseId !== body.caseId || ![body.mode, normalizedMode].includes(payload.mode) || payload.language !== body.language) {
@@ -994,8 +1063,8 @@ function EvidenceChecklist({ options, selected, onChange, lang, ariaLabel }: {
             <input
               type="checkbox"
               className="mt-1"
-              checked={selected.includes(option.label)}
-              onChange={() => onChange(selected.includes(option.label) ? selected.filter((item) => item !== option.label) : [...selected, option.label])}
+              checked={selected.includes(option.id)}
+              onChange={() => onChange(selected.includes(option.id) ? selected.filter((item) => item !== option.id) : [...selected, option.id])}
             />
             <span>{option.label}</span>
           </label>
@@ -1095,6 +1164,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [orderSubmitting, setOrderSubmitting] = useState(false);
   const [mdtOpinions, setMdtOpinions] = useState<MdtOpinion[]>([]);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
+  const [serverEvidenceOptions, setServerEvidenceOptions] = useState<StudentEvidenceOption[]>([]);
   const [osceTimeLeft, setOsceTimeLeft] = useState(20 * 60);
   const [speechInputSupported, setSpeechInputSupported] = useState(false);
   const [speechOutputSupported, setSpeechOutputSupported] = useState(false);
@@ -1228,24 +1298,21 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   })).filter((group) => group.items.length > 0), []);
 
   const evidenceOptions = useMemo<EvidenceOption[]>(() => {
-    const options: EvidenceOption[] = [];
-    messages.forEach((message, index) => {
-      if (message.role !== "student") return;
-      const patient = messages.slice(index + 1).find((item) => item.role === "patient");
-      if (!patient) return;
-      options.push({ id: `history-dialogue-${index}`, label: `${lang === "en" ? "Interview" : "问诊"}：${compactLine(message.text)} → ${compactLine(patient.text)}` });
-    });
-    examLogs.filter((item) => item.scoringEligible !== false && item.affectsDiagnosis !== false && item.provenance !== "medical_review_pending").forEach((item, index) => {
-      options.push({ id: `exam-${item.examId || index}`, label: `${lang === "en" ? "Examination" : "查体"}：${compactLine(item.input)} — ${compactLine(item.result)}` });
-    });
-    orderLogs.flatMap((log) => log.results).filter((item) => item.scoringEligible !== false && item.provenance !== "medical_review_pending").forEach((item, index) => {
-      options.push({ id: `report-${item.resultId || `${item.orderId}-${index}`}`, label: `${lang === "en" ? "Report" : "检查"}：${compactLine(item.orderCategory)} — ${compactLine(item.impression || item.result)}` });
-    });
-    return [...new Map(options.map((item) => [item.label, item])).values()];
-  }, [examLogs, lang, messages, orderLogs]);
+    return serverEvidenceOptions.map((item) => ({
+      id: item.evidenceId,
+      label: `[${item.evidenceId}] ${item.label}`
+    }));
+  }, [serverEvidenceOptions]);
 
-  const diagnosisEvidence = useMemo(() => parseEvidenceAnswer(answers.diagnosticEvidence), [answers.diagnosticEvidence]);
-  const differentialRows = useMemo(() => parseDifferentialRows(answers.differentials, answers.differentialAnalysis), [answers.differentialAnalysis, answers.differentials]);
+  const diagnosisEvidence = useMemo(() => {
+    const parsed = parseEvidenceAnswer(answers.diagnosticEvidence);
+    return { ...parsed, selected: normalizeEvidenceSelection(parsed.selected, evidenceOptions) };
+  }, [answers.diagnosticEvidence, evidenceOptions]);
+  const differentialRows = useMemo(() => parseDifferentialRows(answers.differentials, answers.differentialAnalysis).map((row) => ({
+    ...row,
+    support: normalizeEvidenceSelection(row.support, evidenceOptions),
+    oppose: normalizeEvidenceSelection(row.oppose, evidenceOptions)
+  })), [answers.differentialAnalysis, answers.differentials, evidenceOptions]);
   const testPlans = useMemo(() => parseTestPlans(answers.confirmatoryTests), [answers.confirmatoryTests]);
   const availableTestOptions = useMemo(() => orderCatalog
     .filter((item) => orderApplicableForSex(item, caseData.sex))
@@ -1256,8 +1323,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const consultQuestionsByDepartment = useMemo(() => parseDepartmentField(answers.consultQuestions, answers.consultDepartments), [answers.consultDepartments, answers.consultQuestions]);
   const consultEvidenceByDepartment = useMemo(() => {
     const raw = parseDepartmentField(answers.consultSummary, answers.consultDepartments);
-    return Object.fromEntries(Object.entries(raw).map(([department, value]) => [department, unique(value.split(" || "))]));
-  }, [answers.consultDepartments, answers.consultSummary]);
+    return Object.fromEntries(Object.entries(raw).map(([department, value]) => [department, normalizeEvidenceSelection(unique(value.split(" || ")), evidenceOptions)]));
+  }, [answers.consultDepartments, answers.consultSummary, evidenceOptions]);
   const perioperativeState = useMemo(() => parsePerioperative(answers.perioperativePreparation), [answers.perioperativePreparation]);
   const visibleTimeline = useMemo(() => sanitizeTimeline(timeline, lang), [lang, timeline]);
 
@@ -1281,11 +1348,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       if (saved) {
         try {
           const validationId = createIdempotencyKey(attemptId, "training-validate", caseData.id, runtimeMode, lang);
-          const validated = await requestTrainingAction<{ currentStage: number; status: string }>({
+          const validated = await requestTrainingAction<{ currentStage: number; status: string; evidenceOptions?: StudentEvidenceOption[] }>({
             action: "validate-attempt", caseId: caseData.id, attemptId,
             language: lang, mode: runtimeMode, requestId: validationId
           }, saved, validationId, 0);
           trainingStateTokenRef.current = { attemptId, token: validated.stateToken };
+          setServerEvidenceOptions(extractStudentEvidenceOptions(validated.payload) || []);
           trainingInitFailureRef.current = null;
           try {
             sessionStorage.setItem(storageKey, validated.stateToken);
@@ -1313,6 +1381,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             language: lang
           });
           trainingStateTokenRef.current = { attemptId, token: resumed.stateToken };
+          setServerEvidenceOptions(extractStudentEvidenceOptions(resumed.payload) || []);
           trainingInitFailureRef.current = null;
           const restoredStage = Math.max(1, Math.min(7, Number(resumed.payload.currentStage) || 1)) as AgentStageNo;
           setActiveStageNo(restoredStage);
@@ -1328,11 +1397,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         }
       }
       const initRequestId = createIdempotencyKey(attempt.attemptId, "training-init", caseData.id, runtimeMode, lang);
-      const initialized = await requestTrainingAction<{ attemptId: string }>({
+      const initialized = await requestTrainingAction<{ attemptId: string; evidenceOptions?: StudentEvidenceOption[] }>({
         action: "init-attempt", caseId: caseData.id, attemptId: attempt.attemptId,
         language: lang, mode: runtimeMode, requestId: initRequestId
       }, "", initRequestId, 0);
       trainingStateTokenRef.current = { attemptId, token: initialized.stateToken };
+      setServerEvidenceOptions(extractStudentEvidenceOptions(initialized.payload) || []);
       trainingInitFailureRef.current = null;
       setTrainingAttemptStatus("ready");
       try {
@@ -1387,6 +1457,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         result = await requestTrainingAction<T>(requestBody, token, requestId, 0);
       }
       trainingStateTokenRef.current = { attemptId: attempt.attemptId, token: result.stateToken };
+      const nextEvidenceOptions = extractStudentEvidenceOptions(result.payload);
+      if (nextEvidenceOptions) setServerEvidenceOptions(nextEvidenceOptions);
       try {
         sessionStorage.setItem(trainingStateStorageKey(attempt.attemptId, publicApiConfig.baseUrl, window.location.origin), result.stateToken);
         sessionStorage.removeItem(legacyTrainingStateStorageKey(attempt.attemptId));
@@ -1466,6 +1538,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       orderLogs?: OrderResultLog[];
       mdtOpinions?: MdtOpinion[];
       timeline?: TimelineEvent[];
+      serverEvidenceOptions?: StudentEvidenceOption[];
       pendingHistoryLogs?: PendingHistoryLog[];
       osceTimeLeft?: number;
     } & StoredAttemptState;
@@ -1506,6 +1579,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     }
     if (saved.mdtOpinions) setMdtOpinions(saved.mdtOpinions);
     if (saved.timeline) setTimeline(sanitizeTimeline(saved.timeline, targetLang));
+    if (saved.serverEvidenceOptions) setServerEvidenceOptions(extractStudentEvidenceOptions({ evidenceOptions: saved.serverEvidenceOptions }) || []);
     if (saved.pendingHistoryLogs) setPendingHistoryLogs(saved.pendingHistoryLogs);
     if (typeof saved.osceTimeLeft === "number") setOsceTimeLeft(saved.osceTimeLeft);
     setAttemptReady(true);
@@ -1693,6 +1767,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       orderLogs,
       mdtOpinions,
       timeline,
+      serverEvidenceOptions,
       pendingHistoryLogs,
       osceTimeLeft
     });
@@ -1713,7 +1788,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     if (!persisted) setStorageWarning(lang === "en"
       ? "Autosave is temporarily unavailable. Keep this page open and retry after browser storage recovers."
       : "自动保存暂时不可用，请保持页面打开并在浏览器存储恢复后重试。");
-  }, [activeStageNo, answers, askedSlots, attempt, attemptReady, caseData.id, collected, examLogs, finalReport, lang, mdtOpinions, messages, orderLogs, osceTimeLeft, pendingHistoryLogs, submitted, timeline]);
+  }, [activeStageNo, answers, askedSlots, attempt, attemptReady, caseData.id, collected, examLogs, finalReport, lang, mdtOpinions, messages, orderLogs, osceTimeLeft, pendingHistoryLogs, serverEvidenceOptions, submitted, timeline]);
 
   useEffect(() => {
     if (!isOsce || activeStageNo === 7 || finalReport) return;
@@ -2323,7 +2398,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       department,
       purpose: consultPurposeByDepartment[department] || "",
       question: consultQuestionsByDepartment[department] || "",
-      evidence: consultEvidenceByDepartment[department] || []
+      evidenceIds: consultEvidenceByDepartment[department] || []
     }));
   }
 
@@ -2341,7 +2416,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       }
     }
     const requests = activeStageNo === 4 && answers.consultNeeded === "需要会诊" ? consultRequests() : [];
-    if (activeStageNo === 4 && answers.consultNeeded === "需要会诊" && (!requests.length || requests.some((request) => !request.purpose.trim() || !request.question.trim() || request.evidence.length === 0))) {
+    if (activeStageNo === 4 && answers.consultNeeded === "需要会诊" && (!requests.length || requests.some((request) => !request.purpose.trim() || !request.question.trim() || request.evidenceIds.length === 0))) {
       alert(lang === "en" ? "For each selected department, enter the purpose, question, and at least one collected evidence item." : "请为每个已选科室填写会诊目的、希望解决的问题，并提供至少1条已采集证据。");
       return;
     }
@@ -2354,7 +2429,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     try {
       let submittedMdtOpinions: MdtOpinion[] | null = null;
       if (activeStageNo === 4 && answers.consultNeeded === "需要会诊") {
-        const purpose = requests.map((request) => `${request.department}：目的${request.purpose}；问题${request.question}；证据${request.evidence.join("、")}`).join("；");
+        const purpose = requests.map((request) => `${request.department}：目的${request.purpose}；问题${request.question}；证据${request.evidenceIds.join("、")}`).join("；");
         submittedMdtOpinions = await trainingAction<MdtOpinion[]>({
           action: "mdt",
           departments: answers.consultDepartments,
@@ -2369,6 +2444,16 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         submission: {
           ...answers,
           answerText,
+          ...(activeStageNo === 3 ? {
+            evidenceSelections: {
+              primary: { diagnosis: answers.diagnosis, evidenceIds: diagnosisEvidence.selected },
+              differentials: differentialRows.map((row) => ({
+                diagnosis: row.name,
+                supportEvidenceIds: row.support,
+                opposeEvidenceIds: row.oppose
+              }))
+            }
+          } : {}),
           ...(activeStageNo === 1 ? { askedQuestions: messages.filter((message) => message.role === "student").map((message) => message.text) } : {})
         }
       });
@@ -2975,6 +3060,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                     {item.necessity && <p><span className="font-medium">{lang === "en" ? "Current necessity: " : "当前会诊是否必要："}</span>{safeText(item.necessity)}</p>}
                     {item.suggestedHandling && <p><span className="font-medium">{lang === "en" ? "Next step: " : "建议处理："}</span>{safeText(item.suggestedHandling)}</p>}
                     {item.riskReminder && <p className="text-amber-800"><span className="font-medium">{lang === "en" ? "Risk reminder: " : "风险提示："}</span>{safeText(item.riskReminder)}</p>}
+                    {item.evidenceIds && item.evidenceIds.length > 0 && <p className="font-mono text-[11px] text-clinic-blue">{lang === "en" ? "Evidence" : "证据"}：{item.evidenceIds.join("、")}</p>}
                   </div>
                 ))}
                 </div>
