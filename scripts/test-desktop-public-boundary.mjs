@@ -53,7 +53,12 @@ assert.match(homeSource, /病例 \$\{number\}/, "recent training must present a 
 assert.match(catalogSource, /病例 \$\{number\}/, "case cards must present a learner-facing case number");
 assert.match(
   trainingSource,
-  /String\(Number\(internalCaseId\[1\]\)\)\.padStart\(2, "0"\)/,
+  /const publicIdentifier = caseData\.displayCaseId \|\| caseData\.id;/,
+  "training workbench must derive its learner-facing identifier from the public case ID"
+);
+assert.match(
+  trainingSource,
+  /String\(Number\(publicCaseId\[1\]\)\)\.padStart\(2, "0"\)/,
   "training workbench must present P001 as learner-facing case 01"
 );
 assert.doesNotMatch(
