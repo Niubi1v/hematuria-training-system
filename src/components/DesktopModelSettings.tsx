@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, FolderCog, LoaderCircle, Power, X } from "lucide-react";
+import { FolderCog, LoaderCircle, Power, SlidersHorizontal, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { requestJson } from "@/src/lib/apiClient";
 import { desktopRuntimeConfig, publicApiConfig } from "@/src/lib/apiConfig";
@@ -27,21 +27,6 @@ type DesktopSettings = {
   version: number;
 };
 
-type DesktopEvidence = {
-  answerSource: "local_ai" | "rule_fallback" | null;
-  llamaServerReady: boolean;
-  localModelReady: boolean;
-  model: "Qwen3-1.7B" | "Qwen3-4B";
-  cloudRequestCount: number;
-  fallbackReason: string | null;
-  intent: string | null;
-  requestedSlot: string | null;
-  factState: string | null;
-  unknown: string | null;
-  latency: number;
-  responseErrors: Array<"tangential" | "oversharing" | "role_breaking" | "off_script" | "wrong_unknown" | "context_lost" | "polarity_error">;
-};
-
 const emptySettings: DesktopSettings = {
   modelMode: "lightweight",
   modelAlias: "Qwen3-1.7B",
@@ -61,7 +46,6 @@ export default function DesktopModelSettings() {
   const [settings, setSettings] = useState<DesktopSettings>(emptySettings);
   const [draftDirectory, setDraftDirectory] = useState("");
   const [draftModelMode, setDraftModelMode] = useState<DesktopSettings["modelMode"]>("lightweight");
-  const [evidence, setEvidence] = useState<DesktopEvidence | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -73,28 +57,13 @@ export default function DesktopModelSettings() {
   }, []);
 
   useEffect(() => {
-    if (!open || !desktopRuntime?.debugRuntime) return;
-    let active = true;
-    const refresh = async () => {
-      try {
-        const snapshot = await requestJson<DesktopEvidence>(`${desktopRuntime.apiBaseUrl}/api/desktop/evidence`, undefined, {
-          method: "GET",
-          timeoutMs: 5_000,
-          retries: 0,
-          endpointName: "desktop-evidence"
-        });
-        if (active) setEvidence(snapshot);
-      } catch {
-        if (active) setEvidence(null);
-      }
+    if (!open) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
     };
-    void refresh();
-    const timer = window.setInterval(() => void refresh(), 2_000);
-    return () => {
-      active = false;
-      window.clearInterval(timer);
-    };
-  }, [desktopRuntime?.apiBaseUrl, desktopRuntime?.debugRuntime, open]);
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [open]);
 
   if (!desktopRuntime) return null;
   const endpoint = `${publicApiConfig.baseUrl}/api/desktop/settings`;
@@ -137,7 +106,7 @@ export default function DesktopModelSettings() {
       setDraftDirectory(next.modelDirectory);
       setDraftModelMode(next.modelMode);
       setMessage(next.llamaStatus === "model_invalid" || next.modelValidation === "checksum_mismatch"
-        ? (lang === "en" ? "The selected model failed integrity verification. Reinstall that model file before retrying." : "所选模型完整性校验失败，请重新安装该模型文件后再试。")
+        ? (lang === "en" ? "The selected resource failed integrity verification. Reinstall that resource file before retrying." : "所选资源完整性校验失败，请重新安装该资源文件后再试。")
         : next.localAiEnabled && !next.modelPresent
         ? (lang === "en" ? "The required file was not found. Interview practice remains available." : "未找到所需文件，仍可继续问诊训练。")
         : (lang === "en" ? "Settings saved." : "设置已保存。"));
@@ -160,18 +129,19 @@ export default function DesktopModelSettings() {
         }}
         aria-label={lang === "en" ? "Interview assistance settings" : "问诊辅助设置"}
       >
-        <Bot size={16} />
+        <SlidersHorizontal size={16} aria-hidden="true" />
         <span className="hidden lg:inline">{lang === "en" ? "Assistance settings" : "辅助设置"}</span>
       </button>
       {open && (
-        <div role="dialog" aria-modal="true" aria-label={lang === "en" ? "Interview assistance settings" : "问诊辅助设置"} className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-          <section className="w-full max-w-xl rounded-xl border border-clinic-line bg-white p-5 shadow-raised">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/30 p-3 sm:p-6">
+          <div className="flex min-h-full items-start justify-center sm:items-center">
+          <section role="dialog" aria-modal="true" aria-label={lang === "en" ? "Interview assistance settings" : "问诊辅助设置"} className="max-h-[calc(100dvh-1.5rem)] w-full max-w-xl overflow-y-auto rounded-xl border border-clinic-line bg-white p-5 shadow-raised sm:max-h-[calc(100dvh-3rem)]">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="home-eyebrow">{lang === "en" ? "INTERVIEW ASSISTANCE" : "问诊辅助"}</p>
                 <h2 className="mt-2 text-xl font-semibold">{lang === "en" ? "Assistance settings" : "辅助设置"}</h2>
               </div>
-              <button type="button" onClick={() => setOpen(false)} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md hover:bg-clinic-paper" aria-label={lang === "en" ? "Close" : "关闭"}><X size={18} /></button>
+              <button type="button" onClick={() => setOpen(false)} className="ui-button-quiet min-w-11 px-0" aria-label={lang === "en" ? "Close" : "关闭"}><X size={18} aria-hidden="true" /></button>
             </div>
 
             <div className="mt-5 rounded-lg bg-clinic-paper p-4 text-sm leading-6">
@@ -181,7 +151,7 @@ export default function DesktopModelSettings() {
                   {ready
                     ? (lang === "en" ? "Available" : "可用")
                     : settings.llamaStatus === "starting"
-                      ? (lang === "en" ? "Starting local patient service…" : "正在启动本地患者服务……")
+                      ? (lang === "en" ? "Preparing interview assistance…" : "正在准备问诊辅助……")
                       : (lang === "en" ? "Not ready" : "未就绪")}
                 </span>
               </div>
@@ -199,48 +169,17 @@ export default function DesktopModelSettings() {
             <p className="mt-2 text-xs text-clinic-muted">{lang === "en" ? "Choose the directory described in the installation guide." : "请选择安装说明中指定的文件目录。"}</p>
 
             <label className="mt-5 block text-sm">
-              <span className="font-medium">{lang === "en" ? "Local model" : "本地模型"}</span>
+              <span className="font-medium">{lang === "en" ? "Local resource profile" : "本地资源方案"}</span>
               <select
                 className="ui-input mt-2 w-full"
                 value={draftModelMode}
                 onChange={(event) => setDraftModelMode(event.target.value as DesktopSettings["modelMode"])}
               >
-                <option value="lightweight">{lang === "en" ? "Lightweight · Qwen3 1.7B (recommended first)" : "轻量 · Qwen3 1.7B（建议先用）"}</option>
-                <option value="standard">{lang === "en" ? "Standard · Qwen3 4B (higher resource use)" : "标准 · Qwen3 4B（占用更多资源）"}</option>
+                <option value="lightweight">{lang === "en" ? "Lightweight (recommended)" : "轻量（推荐）"}</option>
+                <option value="standard">{lang === "en" ? "Standard (higher resource use)" : "标准（占用更多资源）"}</option>
               </select>
             </label>
-            <p className="mt-2 text-xs text-clinic-muted">
-              {lang === "en"
-                ? `Selected runtime alias: ${settings.modelAlias}`
-                : `当前运行时别名：${settings.modelAlias}`}
-            </p>
-
-            {desktopRuntime.debugRuntime && (
-              <section className="mt-5 rounded-lg border border-clinic-line p-4" aria-label={lang === "en" ? "Development diagnostics" : "开发诊断"}>
-                <h3 className="text-sm font-semibold">{lang === "en" ? "Development diagnostics" : "开发诊断"}</h3>
-                <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                  {([
-                    ["answerSource", evidence?.answerSource],
-                    ["llamaServerReady", evidence?.llamaServerReady],
-                    ["localModelReady", evidence?.localModelReady],
-                    ["model", evidence?.model],
-                    ["cloudRequestCount", evidence?.cloudRequestCount],
-                    ["fallbackReason", evidence?.fallbackReason],
-                    ["intent", evidence?.intent],
-                    ["requestedSlot", evidence?.requestedSlot],
-                    ["factState", evidence?.factState],
-                    ["unknown", evidence?.unknown],
-                    ["latency", evidence ? `${evidence.latency} ms` : null],
-                    ["responseErrors", evidence?.responseErrors.join(",") || "none"]
-                  ] as Array<[string, string | number | boolean | null | undefined]>).map(([key, value]) => (
-                    <div key={key} className="contents">
-                      <dt className="text-clinic-muted">{key}</dt>
-                      <dd className="break-all font-mono text-clinic-ink">{value === null || value === undefined ? "—" : String(value)}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </section>
-            )}
+            <p className="mt-2 text-xs text-clinic-muted">{lang === "en" ? "Use the lightweight profile first; choose standard only when the device has sufficient resources." : "建议先使用轻量方案；设备资源充足时再选择标准方案。"}</p>
 
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <button type="button" disabled={loading || !draftDirectory.trim()} onClick={() => void saveSettings(settings.localAiEnabled)} className="ui-button-primary">
@@ -252,8 +191,9 @@ export default function DesktopModelSettings() {
               </button>
               {loading && <span role="status" className="text-xs text-clinic-muted">{lang === "en" ? "Applying settings..." : "正在应用设置……"}</span>}
             </div>
-            {message && <p role="status" className="mt-4 text-sm text-clinic-muted">{message}</p>}
+            {message && <p role="status" className="mt-4 rounded-lg bg-clinic-paper px-3 py-2 text-sm text-clinic-muted">{message}</p>}
           </section>
+          </div>
         </div>
       )}
     </>

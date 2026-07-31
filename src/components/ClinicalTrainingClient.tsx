@@ -686,6 +686,19 @@ function percentageScore(rawScore: number) {
   return Math.round((rawScore / 360) * 1000) / 10;
 }
 
+function studentScoreText(value: unknown, lang: LanguageCode) {
+  return safeText(value)
+    .replace(/(?:原始|最终)?\s*360\s*分(?:制)?/g, lang === "en" ? "percentage result" : "最终百分制结果")
+    .replace(/(?:raw|final)?\s*360[- ]point(?:\s+(?:scale|score))?/gi, lang === "en" ? "percentage result" : "最终百分制结果");
+}
+
+function studentEvidenceLabel(value: unknown) {
+  return safeText(value)
+    .replace(/\b[A-Z]{2,}(?:-[A-Z0-9]+)+\b\s*[—–-]?\s*/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 function caseDisplay(caseData: StudentVisibleCase, lang: LanguageCode) {
   const publicIdentifier = caseData.displayCaseId || caseData.id;
   const publicCaseId = /^P(\d+)$/.exec(publicIdentifier);
@@ -889,7 +902,6 @@ function FeedbackBox({ evaluation, lang }: { evaluation: StageEvaluation; lang: 
     ? <ul className="mt-2 space-y-2 text-clinic-muted">{items.map((item, index) => (
         <li key={`${item.text}-${index}`}>
           <span>{item.text}</span>
-          {item.evidenceIds.length > 0 && <span className="mt-1 block font-mono text-[11px] text-clinic-blue">{lang === "en" ? "Evidence" : "证据"}：{item.evidenceIds.join("、")}</span>}
         </li>
       ))}</ul>
     : <p className="mt-2 text-clinic-muted">{t(lang, "none")}</p>;
@@ -899,10 +911,10 @@ function FeedbackBox({ evaluation, lang }: { evaluation: StageEvaluation; lang: 
         <h3 className="font-semibold text-clinic-blue">{t(lang, "stageFeedback")}</h3>
         <div className="flex items-center gap-2">
           {evaluation.practiceOnly && <span className="rounded-full bg-amber-50 px-2 py-1 text-xs text-amber-800">{lang === "en" ? "Practice-only feedback" : "仅练习反馈"}</span>}
-          <span className="rounded-full bg-white px-3 py-1 text-sm font-medium text-clinic-blue">{evaluation.score}/{evaluation.max}</span>
+          <span className="rounded-full bg-white px-3 py-1 text-sm font-medium text-clinic-blue">{evaluation.max > 0 ? Math.round((evaluation.score / evaluation.max) * 100) : 0}%</span>
         </div>
       </div>
-      <p className="mt-3 text-sm leading-6">{evaluation.comment}</p>
+      <p className="mt-3 text-sm leading-6">{studentScoreText(evaluation.comment, lang)}</p>
       <div className="mt-3 grid gap-3 md:grid-cols-3">
         <div className="rounded-lg bg-white p-3 text-sm">
           <p className="inline-flex items-center gap-2 font-semibold text-emerald-800"><CircleCheck size={16} aria-hidden="true" />{feedbackCopy.hit}</p>
@@ -921,7 +933,7 @@ function FeedbackBox({ evaluation, lang }: { evaluation: StageEvaluation; lang: 
         <summary className="cursor-pointer font-medium text-clinic-blue">{evaluation.stageKey === "perioperative"
           ? (lang === "en" ? "Reference answer / key points" : "参考答案 / 参考要点")
           : t(lang, "standardReference")}</summary>
-        <FormattedText text={evaluation.standardAnswer} />
+        <FormattedText text={studentScoreText(evaluation.standardAnswer, lang)} />
       </details>
     </section>
   );
@@ -972,20 +984,19 @@ function FinalReport({ report, lang }: { report: Evaluator360Report; lang: Langu
       </div>
       {report.clinicalTrajectory && <section data-testid="clinical-trajectory" className="mt-5 rounded-lg border border-clinic-line bg-clinic-paper p-4">
         <h4 className="font-semibold text-clinic-blue">{lang === "en" ? "Complete clinical trajectory" : "完整临床轨迹复盘"}</h4>
-        <p className="mt-1 text-sm text-clinic-muted">{lang === "en" ? "Each item is linked to evidence actually recorded in this attempt." : "每项均引用本次训练中真实记录的证据编号。"}</p>
+        <p className="mt-1 text-sm text-clinic-muted">{lang === "en" ? "Review the actions and results recorded during this attempt." : "按本次训练中实际记录的操作与结果进行复盘。"}</p>
         <div className="mt-3 grid gap-3 lg:grid-cols-2">
           {trajectoryGroups.map(([label, entries]) => <details key={label} className="rounded-lg bg-white p-3" open={entries.length > 0}>
             <summary className="cursor-pointer font-medium">{label}（{entries.length}）</summary>
             {entries.length > 0 ? <ol className="mt-2 space-y-2 text-sm leading-6">{entries.map((entry) => <li key={`${label}-${entry.evidenceId}`}>
               <p>{safeText(entry.action)}{entry.result ? ` — ${safeText(entry.result)}` : ""}</p>
-              <p className="font-mono text-[11px] text-clinic-blue">{entry.evidenceId}</p>
             </li>)}</ol> : <p className="mt-2 text-sm text-clinic-muted">{t(lang, "none")}</p>}
           </details>)}
         </div>
         <div className="mt-3 grid gap-3 lg:grid-cols-2">
           <section className="rounded-lg bg-white p-3 text-sm">
             <h5 className="font-medium">{lang === "en" ? "Decisions that advanced the pathway" : "改变后续流程的决策"}</h5>
-            {report.clinicalTrajectory.decisionTransitions.length > 0 ? <ul className="mt-2 space-y-2">{report.clinicalTrajectory.decisionTransitions.map((item) => <li key={item.decisionEvidenceId}>{item.reason}<span className="ml-2 font-mono text-[11px] text-clinic-blue">{item.decisionEvidenceId}</span></li>)}</ul> : <p className="mt-2 text-clinic-muted">{t(lang, "none")}</p>}
+            {report.clinicalTrajectory.decisionTransitions.length > 0 ? <ul className="mt-2 space-y-2">{report.clinicalTrajectory.decisionTransitions.map((item) => <li key={item.decisionEvidenceId}>{item.reason}</li>)}</ul> : <p className="mt-2 text-clinic-muted">{t(lang, "none")}</p>}
           </section>
           <section className="rounded-lg bg-white p-3 text-sm">
             <h5 className="font-medium">{lang === "en" ? "Key omissions" : "关键步骤遗漏"}</h5>
@@ -993,12 +1004,12 @@ function FinalReport({ report, lang }: { report: Evaluator360Report; lang: Langu
           </section>
           <section className="rounded-lg bg-white p-3 text-sm lg:col-span-2" data-testid="unnecessary-investigations">
             <h5 className="font-medium">{lang === "en" ? "Potentially unnecessary investigations" : "可能的不必要检查"}</h5>
-            {(report.clinicalTrajectory.unnecessaryInvestigations || []).length > 0 ? <ul className="mt-2 space-y-2">{(report.clinicalTrajectory.unnecessaryInvestigations || []).map((item) => <li key={item.evidenceId}>{safeText(item.result)}<span className="ml-2 font-mono text-[11px] text-clinic-blue">{item.evidenceId}</span></li>)}</ul> : <p className="mt-2 text-clinic-muted">{t(lang, "none")}</p>}
+            {(report.clinicalTrajectory.unnecessaryInvestigations || []).length > 0 ? <ul className="mt-2 space-y-2">{(report.clinicalTrajectory.unnecessaryInvestigations || []).map((item) => <li key={item.evidenceId}>{safeText(item.result)}</li>)}</ul> : <p className="mt-2 text-clinic-muted">{t(lang, "none")}</p>}
           </section>
         </div>
       </section>}
-      <details data-testid="raw-360-details" className="mt-5 rounded-lg border border-clinic-line bg-clinic-paper p-4">
-        <summary className="cursor-pointer font-semibold text-clinic-blue">{lang === "en" ? "Scoring details (raw 360-point scale)" : "评分详情（原始360分）"}</summary>
+      <details data-testid="score-details" className="mt-5 rounded-lg border border-clinic-line bg-clinic-paper p-4">
+        <summary className="cursor-pointer font-semibold text-clinic-blue">{lang === "en" ? "Domain performance details" : "分项表现详情"}</summary>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {report.items.map((item) => {
             const pct = item.max > 0 ? Math.round((item.score / item.max) * 100) : 0;
@@ -1006,9 +1017,9 @@ function FinalReport({ report, lang }: { report: Evaluator360Report; lang: Langu
               <div key={item.label} className="break-inside-avoid rounded-lg border border-clinic-line bg-white p-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="font-medium">{item.label}</p>
-                  <span className="text-sm text-clinic-blue">{item.score}/{item.max}</span>
+                  <span className="text-sm font-medium text-clinic-blue">{pct}%</span>
                 </div>
-                <div role="progressbar" aria-label={`${item.label} ${item.score}/${item.max}`} aria-valuemin={0} aria-valuemax={item.max} aria-valuenow={item.score} className="mt-3 h-2 overflow-hidden rounded-full bg-clinic-paper">
+                <div role="progressbar" aria-label={`${item.label} ${pct}%`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} className="mt-3 h-2 overflow-hidden rounded-full bg-clinic-paper">
                   <div className="h-full rounded-full bg-clinic-teal" style={{ width: `${pct}%` }} />
                 </div>
                 <p className="mt-2 text-sm text-clinic-muted">{item.comment}</p>
@@ -1327,7 +1338,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const evidenceOptions = useMemo<EvidenceOption[]>(() => {
     return serverEvidenceOptions.map((item) => ({
       id: item.evidenceId,
-      label: `[${item.evidenceId}] ${item.label}`
+      label: studentEvidenceLabel(item.label)
     }));
   }, [serverEvidenceOptions]);
 
@@ -2048,7 +2059,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     const labels: Record<TtsPlaybackState, { zh: string; en: string }> = {
       idle: { zh: "空闲", en: "Idle" }, loading: { zh: "正在准备语音", en: "Preparing audio" },
       playing: { zh: "朗读中", en: "Speaking" }, paused: { zh: "已暂停", en: "Paused" },
-      "fallback-browser": { zh: "云语音失败，使用浏览器语音", en: "Cloud failed; using browser voice" },
+      "fallback-browser": { zh: "语音播放方式已自动切换", en: "Playback method switched automatically" },
       "fallback-text": { zh: "仅文字模式", en: "Text only" }, failed: { zh: "语音失败", en: "Audio failed" }
     };
     return labels[speechState][lang];
@@ -2141,7 +2152,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         const browserFallback = speakWithBrowser(clean, locale, generation);
         if (!ttsFallbackNotifiedRef.current) {
           setSpeechNotice(browserFallback
-            ? (lang === "en" ? "Cloud audio is unavailable; browser voice is being used." : "云语音暂时不可用，已切换为浏览器语音。")
+            ? (lang === "en" ? "The preferred playback method is unavailable; another available method is now in use." : "首选播放方式暂不可用，已自动切换到可用方式。")
             : (lang === "en" ? "Audio is unavailable; continuing in text-only mode." : "语音暂时不可用，已切换为仅文字模式。"));
           ttsFallbackNotifiedRef.current = true;
         }
@@ -2498,7 +2509,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         setMdtOpinions(submittedMdtOpinions || []);
         if (submittedMdtOpinions?.length) addTimeline("mdt", lang === "en" ? "Consultation feedback returned" : "会诊反馈已返回", answers.consultDepartments.join("；"), 4);
       }
-      addTimeline("submit", lang === "en" ? "Stage submitted" : "提交阶段", `${stageName(activeStageNo, lang)}：${evaluation.score}/${evaluation.max}`, activeStageNo);
+      addTimeline("submit", lang === "en" ? "Stage submitted" : "提交阶段", `${stageName(activeStageNo, lang)}：${evaluation.max > 0 ? Math.round((evaluation.score / evaluation.max) * 100) : 0}%`, activeStageNo);
     } catch (error) {
       const message = stageSubmissionFailureMessage(error, lang);
       const reason = trainingFailureReason(error);
@@ -2607,10 +2618,10 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const showReconnect = aiMode !== "rule" && (["degraded", "offline", "error", "reconnecting"].includes(aiStatus) || /reconnect|重新连接/i.test(reconnectNotice));
   const patientServiceAvailable = Boolean(aiSessionId) && !["offline", "error"].includes(aiStatus);
   const patientServiceLabel = connectionIsBusy
-    ? (lang === "en" ? "Starting local patient service" : "正在启动本地患者服务")
+    ? (lang === "en" ? "Preparing interview environment" : "正在准备问诊环境")
     : patientServiceAvailable
-      ? (lang === "en" ? "Patient service available" : "患者服务可用")
-      : (lang === "en" ? "Patient service unavailable" : "患者服务不可用");
+      ? (lang === "en" ? "Interview dialogue available" : "问诊对话可用")
+      : (lang === "en" ? "Interview dialogue unavailable" : "问诊对话暂不可用");
   function scrollChatToBottom() {
     const panel = chatScrollRef.current;
     if (!panel) return;
@@ -2702,18 +2713,18 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           </button>
         </div>
       )}
-      <div className="workbench-connection mb-3 min-h-9" aria-live="polite">
-        {connectionMessage && <div role="status" className={`flex min-h-9 flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm ${connectionIsBusy ? "border-sky-200 bg-sky-50 text-sky-900" : "border-amber-200 bg-amber-50 text-amber-950"}`}>
+      {connectionMessage && trainingAttemptStatus !== "failed" && <div className="workbench-connection mb-3" aria-live="polite">
+        <div role="status" className={`flex min-h-9 flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm ${connectionIsBusy ? "border-sky-200 bg-sky-50 text-sky-900" : "border-amber-200 bg-amber-50 text-amber-950"}`}>
           <span>{connectionMessage}</span>
           {showReconnect && aiStatus !== "reconnecting" && <button type="button" onClick={() => void reconnectAiPatient()} className="font-semibold underline underline-offset-2">{lang === "en" ? "Reconnect" : "重新连接"}</button>}
-        </div>}
-      </div>
+        </div>
+      </div>}
 
       <button type="button" aria-expanded={mobileNavOpen} onClick={() => setMobileNavOpen((value) => !value)} className="mb-3 inline-flex w-full items-center justify-between rounded-md border border-clinic-line bg-white px-4 py-3 font-medium lg:hidden">
         <span className="inline-flex items-center gap-2"><Menu size={18} />{t(lang, "mobileNavigation")}</span>
         <span>{activeStageNo}/7</span>
       </button>
-      <div className="workbench-grid grid gap-4 lg:grid-cols-[190px_minmax(0,1fr)] min-[1040px]:grid-cols-[190px_minmax(0,1fr)_240px]">
+      <div className="workbench-grid grid gap-4 lg:grid-cols-[190px_minmax(0,1fr)] min-[1180px]:grid-cols-[190px_minmax(0,1fr)_240px]">
         <aside className={`workbench-sidebar ${mobileNavOpen ? "block" : "hidden"} space-y-3 lg:block`}>
           <section className="rounded-lg border border-clinic-line bg-white p-4">
             <div className="mb-3 flex items-center gap-2 text-sm font-medium text-clinic-blue"><Languages size={16} /> {lang === "en" ? "Seven stages" : "七阶段"}</div>
@@ -2777,7 +2788,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                       <button type="button" onClick={() => setSpeechSettingsOpen(false)} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md px-2 py-1 text-sm hover:bg-clinic-paper" aria-label={t(lang, "close")}>×</button>
                     </div>
                     <label className="mt-4 flex items-center justify-between gap-3 text-sm"><span>{t(lang, "autoRead")}</span><input type="checkbox" checked={autoSpeak} onChange={(event) => setAutoSpeak(event.target.checked)} /></label>
-                    <label className="mt-4 block text-sm"><span>{t(lang, "speechProvider")}</span><select value={speechProvider} onChange={(event) => setSpeechProvider(event.target.value as TtsProviderPreference)} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2"><option value="auto">{lang === "en" ? "Automatic (cloud with browser fallback)" : "自动（云语音，浏览器降级）"}</option><option value="browser">{t(lang, "browserVoice")}</option><option value="disabled">{t(lang, "disabled")}</option></select></label>
+                    <label className="mt-4 block text-sm"><span>{lang === "en" ? "Playback method" : "播放方式"}</span><select value={speechProvider} onChange={(event) => setSpeechProvider(event.target.value as TtsProviderPreference)} className="ui-input mt-2 w-full"><option value="auto">{lang === "en" ? "Automatic (recommended)" : "自动（推荐）"}</option><option value="browser">{lang === "en" ? "System voice" : "系统语音"}</option><option value="disabled">{t(lang, "disabled")}</option></select></label>
                     <label className="mt-4 block text-sm"><span>{t(lang, "voiceTone")}</span><select value={manualVoiceOverrides[voiceKey]?.voiceURI || ""} onChange={(event) => setManualVoiceOverrides((current) => {
                       const next = { ...current };
                       if (!event.target.value) delete next[voiceKey];
@@ -3094,7 +3105,6 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                     {item.necessity && <p><span className="font-medium">{lang === "en" ? "Current necessity: " : "当前会诊是否必要："}</span>{safeText(item.necessity)}</p>}
                     {item.suggestedHandling && <p><span className="font-medium">{lang === "en" ? "Next step: " : "建议处理："}</span>{safeText(item.suggestedHandling)}</p>}
                     {item.riskReminder && <p className="text-amber-800"><span className="font-medium">{lang === "en" ? "Risk reminder: " : "风险提示："}</span>{safeText(item.riskReminder)}</p>}
-                    {item.evidenceIds && item.evidenceIds.length > 0 && <p className="font-mono text-[11px] text-clinic-blue">{lang === "en" ? "Evidence" : "证据"}：{item.evidenceIds.join("、")}</p>}
                   </div>
                 ))}
                 </div>
@@ -3108,7 +3118,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             <div data-testid="treatment-order-workbench" className="space-y-4">
               <div>
                 <h3 className="text-lg font-semibold text-clinic-blue">{lang === "en" ? "Treatment order workbench" : "治疗医嘱工作台"}</h3>
-                <p className="mt-1 text-sm leading-6 text-clinic-muted">{lang === "en" ? "Enter learner-authored orders. Prescription facts are not generated by AI." : "请填写学习者拟定的医嘱；处方事实不由AI生成。"}</p>
+                <p className="mt-1 text-sm leading-6 text-clinic-muted">{lang === "en" ? "Enter the orders you would issue. The system will not fill in prescription content for you." : "请独立填写拟定医嘱；系统不会代填处方内容。"}</p>
               </div>
               <div className="grid gap-4 xl:grid-cols-2">
                 <OrderListEditor testId="treatment-emergency" label={lang === "en" ? "Emergency / admission management" : "急诊/入院处理"} value={answers.immediateTreatment} onChange={(value) => updateAnswer("immediateTreatment", value)} placeholder={lang === "en" ? "One order per row" : "每行一条医嘱"} />
@@ -3168,7 +3178,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
               </>}</div>
               <section className="mt-5 rounded-lg border border-clinic-line bg-clinic-paper p-4">
                 <h4 className="font-semibold">{t(lang, "timeline")}</h4>
-                <div className="mt-3 max-h-[360px] space-y-3 overflow-auto">
+                <div className="mt-3 space-y-3">
                   {visibleTimeline.map((item) => (
                     <div key={item.id} className="rounded-md bg-white p-3 text-sm leading-6">
                       <p className="font-medium text-clinic-blue">{shortTime(item.at, lang)} · {studentStageLabel(item.stageNo, lang)} · {item.label}</p>
@@ -3200,9 +3210,22 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             </div>
           )}
 
-          <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-clinic-line pt-4">
+          <div className="workbench-actions mt-5 flex flex-wrap items-center gap-3 border-t border-clinic-line pt-4">
+            <p className="min-w-0 flex-1 text-sm text-clinic-muted" role="status">
+              {activeStageNo === 3
+                ? (lang === "en" ? `${diagnosisEvidence.selected.length} diagnostic findings · ${differentialRows.filter((row) => row.name.trim()).length}/3 differentials` : `诊断依据 ${diagnosisEvidence.selected.length} 条 · 鉴别诊断 ${differentialRows.filter((row) => row.name.trim()).length}/3 项`)
+                : activeStageNo === 4
+                  ? (answers.consultNeeded === "暂不需要会诊" ? (lang === "en" ? "No consultation selected for now" : "当前选择：暂不需要会诊") : (lang === "en" ? `${answers.consultDepartments.length} departments selected` : `已选择 ${answers.consultDepartments.length} 个会诊科室`))
+                  : activeStageNo === 5
+                    ? (lang === "en" ? `${[answers.immediateTreatment, answers.admissionTreatment, answers.definitiveTreatment, answers.patientEducation, answers.mdtRevisedPlan, answers.followUp].filter((value) => value.trim()).length} order sections completed` : `已填写 ${[answers.immediateTreatment, answers.admissionTreatment, answers.definitiveTreatment, answers.patientEducation, answers.mdtRevisedPlan, answers.followUp].filter((value) => value.trim()).length} 类医嘱`)
+                    : activeStageNo === 6
+                      ? (lang === "en" ? `${perioperativeState.selected.length}/${perioperativeItems[lang].length} checklist items selected` : `清单已选 ${perioperativeState.selected.length}/${perioperativeItems[lang].length} 项`)
+                      : activeStageNo === 7
+                        ? (lang === "en" ? "Complete the reflection before generating the review" : "完成反思后生成复盘")
+                        : (activeEvaluation ? (lang === "en" ? "This stage has been submitted" : "本阶段已提交") : (lang === "en" ? "Review the current stage before submitting" : "提交前请复核本阶段内容"))}
+            </p>
             {activeStageNo === 7 ? (
-              <button data-testid="complete-training" disabled={Boolean(finalReport) || stageSubmitting || trainingAttemptStatus !== "ready"} onClick={completeTraining} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white hover:bg-clinic-teal disabled:cursor-not-allowed disabled:opacity-50">
+              <button data-testid="complete-training" disabled={Boolean(finalReport) || stageSubmitting || trainingAttemptStatus !== "ready"} onClick={completeTraining} className="ui-button-primary">
                 <CheckCircle2 size={16} /> {finalReport
                   ? (lang === "en" ? "Training completed" : "训练已完成")
                   : stageSubmitting
@@ -3212,7 +3235,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                       : t(lang, "finishTraining")}
               </button>
             ) : (
-              <button disabled={osceLocked || stageSubmitting || trainingAttemptStatus !== "ready"} onClick={submitStage} className="inline-flex items-center gap-2 rounded-md bg-clinic-blue px-4 py-2 font-medium text-white hover:bg-clinic-teal disabled:cursor-not-allowed disabled:opacity-50">
+              <button disabled={osceLocked || stageSubmitting || trainingAttemptStatus !== "ready"} onClick={submitStage} className="ui-button-primary">
                 <CheckCircle2 size={16} /> {trainingAttemptStatus === "initializing"
                   ? (lang === "en" ? "Initializing training session..." : "正在初始化训练会话……")
                   : trainingAttemptStatus === "failed"
@@ -3228,7 +3251,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
               <button onClick={() => {
                 const next = nextStage(activeStageNo);
                 if (next) openStage(next);
-              }} className="inline-flex items-center gap-2 rounded-md border border-clinic-line px-4 py-2 font-medium hover:border-clinic-blue">
+              }} className="ui-button-secondary">
                 <ClipboardList size={16} /> {lang === "en" ? "Next stage" : "进入下一阶段"}
               </button>
             )}
@@ -3238,7 +3261,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           {showStageFeedback && activeEvaluation && <FeedbackBox evaluation={activeEvaluation} lang={lang} />}
         </section>
 
-        <aside className="workbench-drawer hidden space-y-4 min-[1040px]:block">
+        <aside tabIndex={0} aria-label={lang === "en" ? "Attempt details and timeline" : "训练资料与时间线"} className="workbench-drawer hidden space-y-4 min-[1180px]:block">
           <section className="rounded-lg border border-clinic-line bg-white p-5">
             <h2 className="font-semibold">{t(lang, "trainingState")}</h2>
             <div className="mt-3 space-y-2 text-sm text-clinic-muted">
