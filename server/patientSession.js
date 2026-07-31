@@ -29,6 +29,10 @@ const {
 } = require("./patientIntentClassifier.js");
 const { auditPatientPrompt, estimateTokens, promptAuditEnabled } = require("./patientPromptAudit.js");
 const safeLogger = require("./safeLogger.js");
+const {
+  classifyPatientResponseErrors,
+  createPatientControlContext
+} = require("./patientControlLayer.js");
 const { createSessionCapability, verifySessionCapability } = require("./sessionCapability.js");
 const {
   getDesktopSessionMetadata,
@@ -983,6 +987,15 @@ function recordConversationState(session, result, traceInput = {}) {
   const classifierRequestedSlot = semanticMetadataValid
     ? String(traceInput.semanticDecision?.requestedSlot || "")
     : "";
+  const responseErrors = classifyPatientResponseErrors({
+    result,
+    contextResolution: result?.contextResolution,
+    language: traceInput.language || "zh",
+    filter: result?.filter,
+    preservesAnswer: result?.allowedAnswer
+      ? preservesGovernedAnswer(result.replyText, result.allowedAnswer, result.answerPlans || [])
+      : true
+  });
   const runtimeTrace = {
     caseId: String(traceInput.caseId || "").slice(0, 20),
     model: activeModel || configured.model,
@@ -1016,7 +1029,8 @@ function recordConversationState(session, result, traceInput = {}) {
     governedRequestedSlot: String(session?.conversationState?.requestedSlot || ""),
     naturalizationStyle: String(traceInput.semanticDecision?.naturalizationStyle || ""),
     answerSource: String(result?.answerSource || ""),
-    durationMs: Number(result?.providerDurationMs || traceInput.semanticDecision?.durationMs || 0)
+    durationMs: Number(result?.providerDurationMs || traceInput.semanticDecision?.durationMs || 0),
+    responseErrors
   };
   safeLogger.debug("patient_runtime_trace", runtimeTrace);
   return {
@@ -1096,7 +1110,8 @@ async function naturalizeGovernedPatientAnswer({
   matched,
   fallback,
   semanticDecision,
-  localMetadataApplied = false
+  localMetadataApplied = false,
+  patientControl
 }) {
   const config = getLLMProviderConfig();
   if (isLocalProvider(config.provider)) {
@@ -1147,7 +1162,7 @@ async function naturalizeGovernedPatientAnswer({
     patientContext: {
       age: readProfileField(runtimeProfile, "age"),
       gender: readProfileField(runtimeProfile, "gender"),
-      communicationStyle: readProfileField(runtimeProfile, "patient_persona.cooperation_style")
+      personaStyle: patientControl.personaStyle
     },
     studentInput,
     conversationHistory: conversationHistory.slice(-6),
@@ -1510,6 +1525,11 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     contextResolution,
     quarantinedSlotIds: matched?.quarantinedSlotIds || []
   };
+  const patientControl = createPatientControlContext({
+    result: governedFallback,
+    runtimeProfile,
+    language
+  });
   const result = await naturalizeGovernedPatientAnswer({
     sessionId,
     caseId,
@@ -1520,13 +1540,15 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     matched,
     fallback: governedFallback,
     semanticDecision,
-    localMetadataApplied
+    localMetadataApplied,
+    patientControl
   });
   return recordConversationState(session, result, {
     caseId,
     semanticDecision,
     providerInvoked: !localStructuredMode && !result.isFallback,
-    localMetadataApplied
+    localMetadataApplied,
+    language
   });
 }
 

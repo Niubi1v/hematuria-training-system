@@ -39,6 +39,7 @@ type DesktopEvidence = {
   factState: string | null;
   unknown: string | null;
   latency: number;
+  responseErrors: Array<"tangential" | "oversharing" | "role_breaking" | "off_script" | "wrong_unknown" | "context_lost" | "polarity_error">;
 };
 
 const emptySettings: DesktopSettings = {
@@ -229,7 +230,8 @@ export default function DesktopModelSettings() {
                     ["requestedSlot", evidence?.requestedSlot],
                     ["factState", evidence?.factState],
                     ["unknown", evidence?.unknown],
-                    ["latency", evidence ? `${evidence.latency} ms` : null]
+                    ["latency", evidence ? `${evidence.latency} ms` : null],
+                    ["responseErrors", evidence?.responseErrors.join(",") || "none"]
                   ] as Array<[string, string | number | boolean | null | undefined]>).map(([key, value]) => (
                     <div key={key} className="contents">
                       <dt className="text-clinic-muted">{key}</dt>

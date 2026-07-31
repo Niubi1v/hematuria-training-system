@@ -21,6 +21,15 @@ const UNKNOWN_REASONS = new Set([
   "classifier_unavailable"
 ]);
 const MODEL_ALIASES = new Set(["Qwen3-1.7B", "Qwen3-4B"]);
+const RESPONSE_ERRORS = new Set([
+  "tangential",
+  "oversharing",
+  "role_breaking",
+  "off_script",
+  "wrong_unknown",
+  "context_lost",
+  "polarity_error"
+]);
 let lastPatientEvidence = null;
 
 function safeToken(value, maxLength = 120) {
@@ -97,7 +106,10 @@ function desktopPatientEvidence(patient, options = {}) {
     requestedSlot: safeToken(patient?.runtimeTrace?.requestedSlot),
     factState,
     unknown: UNKNOWN_REASONS.has(unknownCandidate) ? unknownCandidate : null,
-    latency
+    latency,
+    responseErrors: Array.isArray(patient?.runtimeTrace?.responseErrors)
+      ? patient.runtimeTrace.responseErrors.filter((value) => RESPONSE_ERRORS.has(String(value)))
+      : []
   };
   lastPatientEvidence = Object.freeze({ ...evidence });
   return evidence;
@@ -115,7 +127,8 @@ function desktopEvidenceSnapshot() {
       requestedSlot: null,
       factState: null,
       unknown: null,
-      latency: 0
+      latency: 0,
+      responseErrors: []
     };
   }
   return {

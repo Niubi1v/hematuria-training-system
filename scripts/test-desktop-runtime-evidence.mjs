@@ -31,7 +31,8 @@ function patient({
       fallbackReason,
       intent,
       requestedSlot,
-      durationMs
+      durationMs,
+      responseErrors: []
     },
     contextResolution: { inherited },
     answerPlans: [{ intent, sourceSlotId: requestedSlot, factState, unknownReason }]
@@ -61,7 +62,8 @@ try {
     requestedSlot: null,
     factState: null,
     unknown: null,
-    latency: 0
+    latency: 0,
+    responseErrors: []
   });
   assert.deepEqual(desktopPatientEvidence(patient()), {
     llamaServerReady: true,
@@ -74,7 +76,8 @@ try {
     requestedSlot: "SMOKING",
     factState: "exact_value",
     unknown: null,
-    latency: 321
+    latency: 321,
+    responseErrors: []
   });
   assert.equal(desktopEvidenceSnapshot().intent, "smoking_history");
 
