@@ -113,6 +113,7 @@ async function routeTrainingApiThroughHandler(page, observations = [], options =
       url: request.url(),
       score: result.payload?.score,
       hits: result.payload?.hits || [],
+      submittedEvidenceIds: body.submission?.evidenceSelections?.primary?.evidenceIds || [],
       startedAt, endedAt: Date.now(), durationMs: Date.now() - startedAt,
       tokenPresent: Boolean(request.headers()["x-training-state"])
     });
@@ -142,6 +143,32 @@ async function enterInvestigationStage(page, language) {
   await submitFirstStage(page, language);
   await page.getByRole("button", { name: language === "en" ? "Next stage" : "进入下一阶段", exact: true }).click();
   await expect(page.getByRole("heading", { name: language === "en" ? "Investigation and ordering" : "检查与开单", exact: true })).toBeVisible();
+}
+
+const studentInternalFieldPattern = /slot_answered|answerSource|factState|requestedSlot|\bintent\b|\bprovider\b|\bprovenance\b|\bEV-[A-Za-z0-9-]+\b|\b(?:LAB|IMG|MED)-[A-Za-z0-9-]+\b|\bPE(?:-[A-Za-z0-9-]+|\d+)\b|\b[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)+\b/i;
+
+async function expectStudentCopyPublic(page) {
+  expect(await page.locator("body").innerText()).not.toMatch(studentInternalFieldPattern);
+}
+
+async function fillDiagnosisBuilder(page, language) {
+  const diagnosisBuilder = page.getByTestId("diagnosis-builder");
+  await diagnosisBuilder.getByRole("textbox", { name: language === "en" ? "Most likely diagnosis" : "最可能诊断", exact: true }).fill(language === "en" ? "Working diagnosis" : "待定诊断");
+  const primaryEvidence = diagnosisBuilder.locator("fieldset").first().locator('input[type="checkbox"]');
+  expect(await primaryEvidence.count()).toBeGreaterThan(1);
+  await primaryEvidence.nth(0).check();
+  await primaryEvidence.nth(1).check();
+  for (let index = 0; index < 3; index += 1) {
+    const card = diagnosisBuilder.getByTestId("differential-card").nth(index);
+    await card.getByRole("textbox", { name: language === "en" ? `Differential diagnosis ${index + 1}` : `鉴别诊断 ${index + 1}`, exact: true }).fill(language === "en" ? `Differential ${index + 1}` : `鉴别诊断示例 ${index + 1}`);
+    await card.locator("fieldset").first().locator('input[type="checkbox"]').first().check();
+  }
+}
+
+async function captureDefectScreenshot(page, directory, name) {
+  if (!directory) return;
+  await mkdir(directory, { recursive: true });
+  await page.screenshot({ path: path.join(directory, name), fullPage: false });
 }
 
 async function mockTrainingState(page) {
@@ -728,8 +755,9 @@ test("an init response without a signed training token never enables stage submi
   await routeTrainingApiThroughHandler(page, observations, { omitTrainingStateHeaderForActions: ["init-attempt"] });
   await page.goto("/cases/P003/");
 
-  await expect(page.getByRole("alert").filter({ hasText: "训练会话响应缺少有效凭据" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "训练会话尚未就绪", exact: true })).toBeDisabled();
+  await expect(page.locator("main").getByRole("alert")).toContainText("本次训练尚未准备完成");
+  await expect(page.getByTestId("stage-preparing-state")).toContainText("需要重新准备");
+  await expect(page.getByTestId("next-stage")).toHaveCount(0);
   expect(observations.filter((item) => item.action === "init-attempt")).toHaveLength(1);
   expect(observations.filter((item) => item.action === "stage-feedback")).toHaveLength(0);
 });
@@ -739,7 +767,7 @@ test("failed training attempt initialization never sends stage feedback and retr
   await routeTrainingApiThroughHandler(page, observations, { initAttemptDelayMs: 300, initAttemptFailures: 1, initAttemptFailureStatus: 502, initAttemptFailureCode: "network_error" });
   await page.goto("/cases/P001/");
 
-  const retry = page.getByRole("button", { name: "重新初始化训练会话", exact: true });
+  const retry = page.getByRole("button", { name: "重新准备", exact: true });
   await expect(retry).toBeVisible();
   await expect(page.getByRole("alert").filter({ hasText: "网络连接失败" })).toBeVisible();
   expect(observations.filter((item) => item.action === "init-attempt")).toEqual([
@@ -766,9 +794,9 @@ test("a transient durable attempt store failure recovers without a doomed stage 
   });
   await page.goto("/cases/P003/");
 
-  const retry = page.getByRole("button", { name: "Reinitialize training session", exact: true });
+  const retry = page.getByRole("button", { name: "Prepare again", exact: true });
   await expect(retry).toBeVisible();
-  await expect(page.getByRole("button", { name: "Training session unavailable", exact: true })).toBeDisabled();
+  await expect(page.getByTestId("stage-preparing-state")).toContainText("Preparation required");
   expect(observations.filter((item) => item.action === "stage-feedback")).toHaveLength(0);
 
   await retry.click();
@@ -800,6 +828,48 @@ test("AI session failure does not invalidate a ready training attempt", async ({
     expect.objectContaining({ status: 200, tokenPresent: true })
   ]);
   await expect(page.getByRole("alert").filter({ hasText: "阶段提交失败" })).toHaveCount(0);
+});
+
+test("@ui-state-regression initialization, failure, and submitted actions are mutually exclusive", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "State contract is captured once.");
+  const screenshotDir = process.env.UI_DEFECT_SCREENSHOT_DIR || "";
+  await page.setViewportSize({ width: 390, height: 844 });
+  await routeTrainingApiThroughHandler(page, [], {
+    initAttemptDelayMs: 500,
+    initAttemptFailures: 1,
+    initAttemptFailureStatus: 503,
+    initAttemptFailureCode: "training_attempt_store_unavailable",
+    sessionInitFailureCode: "provider_unavailable"
+  });
+  await page.goto("/cases/P001/");
+
+  await expect(page.getByTestId("stage-preparing-state")).toContainText(/正在准备|需要重新准备/);
+  await expect(page.getByTestId("next-stage")).toHaveCount(0);
+  await expect(page.locator("main").getByRole("alert")).toHaveCount(1);
+  await expect(page.locator(".workbench-connection")).toHaveCount(0);
+  const retry = page.getByRole("button", { name: "重新准备", exact: true });
+  await expect(retry).toBeVisible();
+  expect(await retry.evaluate((element) => getComputedStyle(element).whiteSpace)).toBe("nowrap");
+  expect((await page.getByTestId("stage-preparing-state").boundingBox())?.width).toBeLessThan(200);
+  await captureDefectScreenshot(page, screenshotDir, "p001-zh-recovery-390x844.png");
+
+  await retry.click();
+  await expect(page.getByRole("button", { name: "提交本阶段", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "请先完成", exact: true })).toBeDisabled();
+  await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
+  await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "提交本阶段", exact: true })).toHaveCount(0);
+  await expect(page.getByText("训练会话尚未就绪", { exact: true })).toHaveCount(0);
+
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "English", exact: true }).click();
+  const englishSubmit = page.getByRole("button", { name: "Submit stage", exact: true });
+  const englishIncomplete = page.getByRole("button", { name: "Complete this stage first", exact: true });
+  await expect(englishSubmit).toBeEnabled();
+  await expect(englishIncomplete).toBeDisabled();
+  expect(await englishSubmit.evaluate((element) => getComputedStyle(element).whiteSpace)).toBe("nowrap");
+  expect(await englishIncomplete.evaluate((element) => getComputedStyle(element).whiteSpace)).toBe("nowrap");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
 });
 
 test("one fallback patient round submits through the same ready training attempt", async ({ page }) => {
@@ -1105,9 +1175,9 @@ test("missing Preview attempt store reports a configuration blocker", async ({ p
     });
   });
   await page.goto("/cases/P001/");
-  await expect(page.getByRole("alert").filter({ hasText: "训练记录服务" })).toContainText("训练记录服务未配置，当前无法提交阶段");
-  await expect(page.getByRole("button", { name: "重新初始化训练会话", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "训练会话尚未就绪", exact: true })).toBeDisabled();
+  await expect(page.locator("main").getByRole("alert")).toContainText("训练记录暂时不可用，当前无法提交阶段");
+  await expect(page.getByRole("button", { name: "重新准备", exact: true })).toBeVisible();
+  await expect(page.getByTestId("stage-preparing-state")).toContainText("需要重新准备");
   expect(actions).toEqual(["init-attempt"]);
   await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toHaveCount(0);
 });
@@ -1264,13 +1334,12 @@ test("interview composer and desktop workbench fit target Windows viewports and 
   }
 });
 
-test("desktop UI quality flow keeps stage actions visible and student copy implementation-free", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop-chromium", "One desktop project covers all required viewport sizes.");
+test("@ui-defect-regression P001 Chinese seven-stage contract keeps public labels and coherent actions", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "One desktop project captures the required contract evidence.");
   testInfo.setTimeout(180_000);
-  const screenshotDir = process.env.UI_QUALITY_SCREENSHOT_DIR || "";
-  const phase = process.env.UI_QUALITY_SCREENSHOT_PHASE || "review";
-  const baselineCapture = phase === "before";
-  await routeTrainingApiThroughHandler(page, []);
+  const screenshotDir = process.env.UI_DEFECT_SCREENSHOT_DIR || "";
+  const observations = [];
+  await routeTrainingApiThroughHandler(page, observations);
   await page.route("**/api/agent-chat/**", (route) => route.fulfill({
     status: 200,
     contentType: "application/json",
@@ -1284,7 +1353,7 @@ test("desktop UI quality flow keeps stage actions visible and student copy imple
     })
   }));
 
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setViewportSize({ width: 1093, height: 614 });
   await page.goto("/cases/P001/");
   await page.getByRole("textbox", { name: "输入问诊问题" }).fill("平时吸烟吗？");
   await page.getByRole("button", { name: "发送", exact: true }).click();
@@ -1298,81 +1367,109 @@ test("desktop UI quality flow keeps stage actions visible and student copy imple
   await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
 
-  const diagnosisBuilder = page.getByTestId("diagnosis-builder");
-  await diagnosisBuilder.getByRole("textbox", { name: "最可能诊断", exact: true }).fill("待定诊断");
-  const primaryEvidence = diagnosisBuilder.locator("fieldset").first().locator('input[type="checkbox"]');
-  expect(await primaryEvidence.count()).toBeGreaterThan(1);
-  await primaryEvidence.nth(0).check();
-  await primaryEvidence.nth(1).check();
-  for (let index = 0; index < 3; index += 1) {
-    const card = diagnosisBuilder.getByTestId("differential-card").nth(index);
-    await card.getByRole("textbox", { name: `鉴别诊断 ${index + 1}`, exact: true }).fill(`鉴别诊断示例 ${index + 1}`);
-    await card.locator("fieldset").first().locator('input[type="checkbox"]').first().check();
-  }
+  const smokingEvidence = page.getByText("问诊：吸烟史——已采集", { exact: true }).first();
+  await expect(smokingEvidence).toBeVisible();
+  await expectStudentCopyPublic(page);
+  await smokingEvidence.evaluate((element) => element.scrollIntoView({ block: "center" }));
+  await captureDefectScreenshot(page, screenshotDir, "p001-zh-stage3-1093x614.png");
+  await fillDiagnosisBuilder(page, "zh");
   await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
   await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "提交本阶段", exact: true })).toHaveCount(0);
+  expect(observations.find((item) => item.action === "stage-feedback" && item.stageKey === "diagnosis")?.submittedEvidenceIds).toHaveLength(2);
+  expect(observations.find((item) => item.action === "stage-feedback" && item.stageKey === "diagnosis")?.submittedEvidenceIds.every((id) => /^EV-/.test(id))).toBe(true);
+  await page.reload();
+  await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
+  await expect(page.getByText("训练会话尚未就绪", { exact: true })).toHaveCount(0);
+  await expect(page.locator("main").getByRole("alert")).toHaveCount(0);
   await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
   await page.getByLabel("暂不需要会诊").check();
   await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
   await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByTestId("treatment-order-workbench")).toBeVisible();
+  const finalTreatmentInput = page.getByTestId("treatment-discharge").locator("input").first();
+  await finalTreatmentInput.fill("门诊复查");
+  await finalTreatmentInput.scrollIntoViewIfNeeded();
+  const mobileGeometry = await page.evaluate(() => {
+    const input = document.querySelector('[data-testid="treatment-discharge"] input')?.getBoundingClientRect();
+    const actions = document.querySelector(".workbench-actions")?.getBoundingClientRect();
+    return { input: input?.toJSON(), actions: actions?.toJSON(), overflow: document.documentElement.scrollWidth > window.innerWidth };
+  });
+  expect(mobileGeometry.overflow).toBe(false);
+  expect(mobileGeometry.input).toBeTruthy();
+  expect(mobileGeometry.actions).toBeTruthy();
+  expect(Math.ceil(mobileGeometry.input.bottom)).toBeLessThanOrEqual(Math.ceil(mobileGeometry.actions.top));
+  await expect(page.getByRole("button", { name: "请先完成", exact: true })).toBeDisabled();
+  await captureDefectScreenshot(page, screenshotDir, "p001-zh-stage5-390x844.png");
+  await expectStudentCopyPublic(page);
   await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
   await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
+  await page.getByRole("checkbox").first().check();
   await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
   await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
+  await page.setViewportSize({ width: 1366, height: 768 });
   await page.getByRole("textbox", { name: "学习反思" }).fill("本次训练需要继续改进问诊顺序、证据整合和医嘱表达。");
   await page.getByTestId("complete-training").click();
   await expect(page.getByTestId("final-report")).toBeVisible();
+  await expectStudentCopyPublic(page);
+  await expect(page.getByTestId("training-complete-state")).toContainText("已完成");
+  await expect(page.getByText("训练会话尚未就绪", { exact: true })).toHaveCount(0);
+  await captureDefectScreenshot(page, screenshotDir, "p001-zh-stage7-1366x768.png");
+  await page.reload();
+  await expect(page.getByTestId("final-report")).toBeVisible();
+  await expect(page.getByTestId("training-complete-state")).toBeVisible();
+  await expectStudentCopyPublic(page);
+  const axe = await new AxeBuilder({ page }).analyze();
+  expect(axe.violations.filter((item) => item.impact === "critical" || item.impact === "serious")).toEqual([]);
+});
 
-  if (screenshotDir) await mkdir(screenshotDir, { recursive: true });
-  const viewports = [
-    { name: "125pct", width: 1093, height: 614 },
-    { name: "1366x768", width: 1366, height: 768 },
-    { name: "1440x900", width: 1440, height: 900 },
-    { name: "390x844", width: 390, height: 844 }
-  ];
-  for (const viewport of viewports) {
-    await page.setViewportSize(viewport);
-    for (const stage of [3, 4, 5, 6, 7]) {
-      await page.evaluate((nextStage) => {
-        const pointerKey = Object.keys(localStorage).find((key) => key.startsWith("hematuria-attempt-pointer-v3:P001:free:zh"));
-        const pointer = pointerKey ? JSON.parse(localStorage.getItem(pointerKey) || "null") : null;
-        const stateKey = pointer?.attemptId ? `hematuria-attempt-v3:P001:free:zh:${pointer.attemptId}` : "";
-        const state = stateKey ? JSON.parse(localStorage.getItem(stateKey) || "null") : null;
-        if (stateKey && state) localStorage.setItem(stateKey, JSON.stringify({ ...state, activeStageNo: nextStage }));
-      }, stage);
-      await page.reload();
-      const stageSurface = stage === 3
-        ? page.getByTestId("diagnosis-builder")
-        : stage === 4
-          ? page.getByTestId("consultation-builder")
-          : stage === 5
-            ? page.getByTestId("treatment-order-workbench")
-            : stage === 6
-              ? page.getByTestId("perioperative-checklist")
-              : page.getByTestId("final-report");
-      await expect(stageSurface).toBeVisible();
-      const layout = await page.evaluate(() => ({
-        overflow: document.documentElement.scrollWidth > window.innerWidth,
-        action: (document.querySelector(".workbench-actions") || Array.from(document.querySelectorAll("fieldset > div")).find((element) => /提交本阶段|训练会话|进入下一阶段/.test(element.textContent || "")))?.getBoundingClientRect().toJSON()
-      }));
-      if (screenshotDir) await page.screenshot({ path: path.join(screenshotDir, `${phase}-${viewport.name}-stage${stage}.png`), fullPage: false });
-      expect(layout.overflow, `${viewport.name}/stage-${stage}`).toBe(false);
-      if (!baselineCapture) {
-        expect(layout.action, `${viewport.name}/stage-${stage} action`).toBeTruthy();
-        expect(Math.ceil(layout.action.bottom), `${viewport.name}/stage-${stage} action bottom`).toBeLessThanOrEqual(viewport.height + 1);
-      }
-    }
-  }
+test("@ui-defect-regression P001 English stages 1-3 use natural evidence labels", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "English contract evidence is captured once on desktop.");
+  testInfo.setTimeout(120_000);
+  const screenshotDir = process.env.UI_DEFECT_SCREENSHOT_DIR || "";
+  const observations = [];
+  await page.addInitScript(() => localStorage.setItem("hematuria-language", "en"));
+  await routeTrainingApiThroughHandler(page, observations);
+  await page.route("**/api/agent-chat/**", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({
+      replyText: "I smoke, and the change started this morning.",
+      matchedSlotIds: ["smoking", "hematuria_onset"],
+      matchedFacts: ["smoking=current", "onset=today"],
+      provider: "local-test",
+      generationSource: "test",
+      isFallback: false
+    })
+  }));
 
-  if (!baselineCapture) {
-    expect(await page.locator("body").innerText()).not.toMatch(/原始360分|raw 360-point|EV-[A-Za-z0-9-]+|answerSource|factState|\bintent\b|\bProvider\b|\bAI\b/);
-    await expect(page.getByTestId("score-details")).toBeVisible();
-    const axe = await new AxeBuilder({ page }).analyze();
-    expect(axe.violations.filter((item) => item.impact === "critical" || item.impact === "serious")).toEqual([]);
-  }
+  await page.setViewportSize({ width: 1093, height: 614 });
+  await page.goto("/cases/P001/");
+  await page.getByRole("textbox", { name: "Enter an interview question" }).fill("Do you smoke, and when did this start?");
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByRole("textbox", { name: "History summary" }).fill("Focused history completed.");
+  await submitFirstStage(page, "en");
+  await page.getByRole("button", { name: "Next stage", exact: true }).click();
+  await page.getByRole("button", { name: "Submit stage", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Next stage", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Next stage", exact: true }).click();
+
+  await expect(page.getByText("History: Smoking history — obtained", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("History: Onset — obtained", { exact: true }).first()).toBeVisible();
+  await expectStudentCopyPublic(page);
+  await fillDiagnosisBuilder(page, "en");
+  await page.getByRole("button", { name: "Submit stage", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Next stage", exact: true })).toBeVisible();
+  const diagnosisSubmission = observations.find((item) => item.action === "stage-feedback" && item.stageKey === "diagnosis");
+  expect(diagnosisSubmission?.submittedEvidenceIds).toHaveLength(2);
+  expect(diagnosisSubmission?.submittedEvidenceIds.every((id) => /^EV-/.test(id))).toBe(true);
+  await expectStudentCopyPublic(page);
+  await captureDefectScreenshot(page, screenshotDir, "p001-en-stage3-1093x614.png");
 });
 
 test("desktop assistance settings fit the Windows 125 percent viewport", async ({ page }, testInfo) => {
