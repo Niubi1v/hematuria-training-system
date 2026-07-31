@@ -19,7 +19,7 @@ try {
     $checked += 1
     Write-Host "通过：$relative"
   }
-  Write-Host "导师包完整性验证通过，共检查$checked个关键文件。" -ForegroundColor Green
+  Write-Host "导师包完整性验证通过，共检查${checked}个关键文件。" -ForegroundColor Green
   exit 0
 } catch {
   Write-Host "导师包验证失败：$($_.Exception.Message)" -ForegroundColor Red
