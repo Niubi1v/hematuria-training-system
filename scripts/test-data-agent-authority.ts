@@ -239,7 +239,7 @@ async function testPrerequisiteRecovery() {
     response = await order(recovery.attemptId, item.caseId, language, item.orderId, response);
     assert.equal(resultIds(response.payload).includes(item.resultId), item.status === "final");
     if (item.status !== "final") {
-      const expectedStatus = item.status === "not_performed" ? "not_provided" : "medical_review_pending";
+      const expectedStatus = item.status === "not_performed" ? "not_performed" : "medical_review_pending";
       assert.equal(
         ((response.payload.orderOutcomes || []) as Array<{ orderId: string; status: string }>).some((outcome) => outcome.orderId === item.orderId && outcome.status === expectedStatus),
         true

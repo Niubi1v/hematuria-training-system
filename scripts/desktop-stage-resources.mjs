@@ -61,6 +61,10 @@ await fs.mkdir(path.join(appDestination, "desktop"), { recursive: true });
 await Promise.all([
   fs.copyFile(manifestPath, path.join(appDestination, "desktop", "runtime-manifest.json")),
   fs.copyFile(
+    path.join(repoRoot, "desktop", "clinical-content-triage-runtime.json"),
+    path.join(appDestination, "desktop", "clinical-content-triage-runtime.json")
+  ),
+  fs.copyFile(
     path.join(repoRoot, "desktop", "THIRD_PARTY_NOTICES.txt"),
     path.join(appDestination, "desktop", "THIRD_PARTY_NOTICES.txt")
   )

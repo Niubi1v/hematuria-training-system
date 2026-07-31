@@ -661,6 +661,22 @@ function studentStageLabel(stageNo: number, lang: LanguageCode) {
   return lang === "en" ? `Stage ${safeStage} · ${stageName(safeStage, lang)}` : `第${safeStage}阶段 · ${stageName(safeStage, lang)}`;
 }
 
+function orderOutcomeLabel(status: string, lang: LanguageCode) {
+  const labels: Record<string, [string, string]> = {
+    reported: ["报告已返回", "Report returned"],
+    no_indication: ["无明确适应证", "No clear indication"],
+    not_performed: ["未实施", "Not performed"],
+    no_specimen: ["未取材", "No specimen collected"],
+    medical_review_pending: ["等待医学审核", "Awaiting medical review"],
+    prerequisite_missing: ["前置条件未满足", "Prerequisite not met"],
+    duplicate: ["已重复", "Duplicate order"],
+    unrecognized: ["未识别", "Not recognized"],
+    unavailable: ["暂不可用", "Unavailable"],
+    not_provided: ["未实施", "Not performed"]
+  };
+  return (labels[status] || ["状态已更新", "Status updated"])[lang === "en" ? 1 : 0];
+}
+
 function percentageScore(rawScore: number) {
   return Math.round((rawScore / 360) * 1000) / 10;
 }
@@ -968,6 +984,10 @@ function FinalReport({ report, lang }: { report: Evaluator360Report; lang: Langu
           <section className="rounded-lg bg-white p-3 text-sm">
             <h5 className="font-medium">{lang === "en" ? "Key omissions" : "关键步骤遗漏"}</h5>
             {report.clinicalTrajectory.omissions.length > 0 ? <ul className="mt-2 space-y-1">{report.clinicalTrajectory.omissions.slice(0, 24).map((item) => <li key={`${item.domain}-${item.rubricItemId}`}>{item.domain} · {item.label}</li>)}</ul> : <p className="mt-2 text-clinic-muted">{t(lang, "none")}</p>}
+          </section>
+          <section className="rounded-lg bg-white p-3 text-sm lg:col-span-2" data-testid="unnecessary-investigations">
+            <h5 className="font-medium">{lang === "en" ? "Potentially unnecessary investigations" : "可能的不必要检查"}</h5>
+            {(report.clinicalTrajectory.unnecessaryInvestigations || []).length > 0 ? <ul className="mt-2 space-y-2">{(report.clinicalTrajectory.unnecessaryInvestigations || []).map((item) => <li key={item.evidenceId}>{safeText(item.result)}<span className="ml-2 font-mono text-[11px] text-clinic-blue">{item.evidenceId}</span></li>)}</ul> : <p className="mt-2 text-clinic-muted">{t(lang, "none")}</p>}
           </section>
         </div>
       </section>}
@@ -2940,11 +2960,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                             <div data-testid="order-outcome" key={`${log.id}-${outcome.orderId || outcome.displayName}-${index}`} className={`rounded-md border px-3 py-2 text-sm ${
                               outcome.status === "reported"
                                 ? "border-emerald-200 bg-emerald-50 text-emerald-950"
-                                : outcome.status === "not_provided" || outcome.status === "medical_review_pending" || outcome.status === "prerequisite_missing"
+                                : outcome.status === "no_indication" || outcome.status === "not_performed" || outcome.status === "no_specimen" || outcome.status === "not_provided" || outcome.status === "medical_review_pending" || outcome.status === "prerequisite_missing"
                                   ? "border-amber-200 bg-amber-50 text-amber-950"
                                   : "border-clinic-line bg-clinic-paper text-clinic-muted"
                             }`}>
-                              <span>{safeStudentFacingText(outcome.message, lang, ENGLISH_RESULT_PLACEHOLDER)}</span>
+                              <p className="font-medium">{orderOutcomeLabel(outcome.status, lang)}</p>
+                              <p className="mt-1">{safeStudentFacingText(outcome.message, lang, ENGLISH_RESULT_PLACEHOLDER)}</p>
                             </div>
                           ))}
                         </div>

@@ -38,7 +38,7 @@ export type OrderResultLog = {
   orderOutcomes?: Array<{
     orderId: string;
     displayName: string;
-    status: "reported" | "not_provided" | "medical_review_pending" | "prerequisite_missing" | "duplicate" | "unrecognized";
+    status: "reported" | "no_indication" | "not_performed" | "no_specimen" | "not_provided" | "medical_review_pending" | "prerequisite_missing" | "duplicate" | "unrecognized";
     provenance: string;
     reviewStatus?: "pending_human_medical_review" | "not_required";
     scoringEligible?: boolean;
@@ -52,7 +52,7 @@ export type ExamResultLog = {
   result: string;
   at: string;
   examId?: string;
-  provenance?: "configured_case_result" | "simulated_normal" | "not_provided" | "medical_review_pending";
+  provenance?: "configured_case_result" | "case_source_projection" | "simulated_normal" | "not_provided" | "medical_review_pending" | "source_not_collected" | "source_not_performed" | "source_not_available" | "medical_conflict" | "source_projection_match_failed";
   scoringEligible?: boolean;
   affectsDiagnosis?: false;
   affectsScore?: false;

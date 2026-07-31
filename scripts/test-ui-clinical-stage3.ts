@@ -161,8 +161,8 @@ async function main() {
   const missingOutcomes = response.payload.orderOutcomes as Array<{ displayName: string; status: string; provenance: string; message: string }>;
   assert.equal(missingOutcomes.length, 2);
   assert(missingOutcomes.every((item) => item.status === "medical_review_pending"));
-  assert(missingOutcomes.every((item) => ["source_not_available", "not_provided"].includes(item.provenance)));
-  assert(missingOutcomes.some((item) => item.displayName === "X光膀胱造影" && /医学内容审核中/.test(item.message)));
+  assert(missingOutcomes.every((item) => ["source_not_available", "medical_review_pending"].includes(item.provenance)));
+  assert(missingOutcomes.some((item) => item.displayName === "X光膀胱造影" && /等待医学审核/.test(item.message)));
 
   const safeSimulation = await investigationAttempt("P001");
   response = await call({
@@ -192,7 +192,7 @@ async function main() {
   assert.equal(response.statusCode, 200);
   assert.equal(response.payload.provenance, "medical_review_pending");
   assert.equal(response.payload.scoringEligible, false);
-  assert.equal(response.payload.result, "该项目结果正在医学内容审核中，本次训练不将其作为诊断或评分依据。");
+  assert.equal(response.payload.result, "该项目等待医学审核，本次训练不将其作为诊断、治疗或评分依据。");
 
   const female = await investigationAttempt("P002");
   response = await call({
@@ -205,7 +205,7 @@ async function main() {
 }, female.token);
   assert.equal(response.statusCode, 200);
   assert.equal(response.payload.examId, undefined);
-  assert.equal(response.payload.result, "该项目结果正在医学内容审核中，本次训练不将其作为诊断或评分依据。");
+  assert.equal(response.payload.result, "该项目等待医学审核，本次训练不将其作为诊断、治疗或评分依据。");
   assert.equal(response.payload.provenance, "medical_review_pending");
   assert.notEqual(response.payload.provenance, "simulated_normal");
   assert.doesNotMatch(String(response.payload.result), /\d|正常|阴性/);

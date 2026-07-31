@@ -20,6 +20,7 @@ function evidenceIdForEvent(caseId, eventId) {
 }
 
 function rubricMappingsForEvent(caseId, event) {
+  if (event?.metadata?.validated !== true || event?.metadata?.scoringEligible === false) return [];
   const row = rubrics.find((item) => item.caseId === caseId);
   if (!row) return [];
   return row.dimensions.flatMap((dimension) => dimension.requirements
@@ -50,6 +51,10 @@ function nodeFromEvent(caseId, event, context = {}, previous = null) {
     canonicalFactOrAction: canonical,
     result,
     provenance: safeText(context.provenance || defaultProvenance(event), 120),
+    scoringEligible: context.scoringEligible === true || event?.metadata?.scoringEligible === true,
+    diagnosticEligible: context.diagnosticEligible === false || event?.metadata?.diagnosticEligible === false ? false : true,
+    outcomeStatus: safeText(context.outcomeStatus || event?.metadata?.outcomeStatus, 80),
+    possibleUnnecessary: context.possibleUnnecessary === true || event?.metadata?.possibleUnnecessary === true,
     diagnosisRelations: Array.isArray(previous?.diagnosisRelations) ? previous.diagnosisRelations : [],
     rubricMappings: rubricMappingsForEvent(caseId, event)
   };
@@ -62,7 +67,7 @@ function ensureEvidenceGraph(state, caseId) {
     if (!event?.eventId) continue;
     const previous = byEventId.get(event.eventId) || null;
     const node = nodeFromEvent(caseId, event, {}, previous);
-    byEventId.set(event.eventId, previous ? { ...node, ...previous, rubricMappings: node.rubricMappings } : node);
+    byEventId.set(event.eventId, previous ? { ...previous, ...node, diagnosisRelations: previous.diagnosisRelations || [], rubricMappings: node.rubricMappings } : node);
   }
   state.evidenceGraph = [...byEventId.values()];
   return state.evidenceGraph;
@@ -97,6 +102,10 @@ function publicEvidenceGraph(state, { includeRubricMappings = false } = {}) {
     canonicalFactOrAction: node.canonicalFactOrAction,
     result: node.result,
     provenance: node.provenance,
+    scoringEligible: node.scoringEligible,
+    diagnosticEligible: node.diagnosticEligible,
+    outcomeStatus: node.outcomeStatus,
+    possibleUnnecessary: node.possibleUnnecessary,
     diagnosisRelations: node.diagnosisRelations,
     ...(includeRubricMappings ? { rubricMappings: node.rubricMappings } : {})
   }));
@@ -107,6 +116,7 @@ function studentEvidenceOptions(state, language = "zh") {
   const completed = state.status === "completed";
   return (state.evidenceGraph || [])
     .filter((node) => completed || Number(node.sourceStage) < currentStage)
+    .filter((node) => node.diagnosticEligible !== false)
     .filter((node) => ["slot_answered", "physical_exam_performed", "result_returned", "diagnosis_supported"].includes(node.eventType))
     .map((node) => {
       const prefix = language === "en"
@@ -134,7 +144,7 @@ function validateEvidenceIds(state, values, { maximum = 60, sourceStages = null 
   const allowed = new Map((state.evidenceGraph || []).map((node) => [node.evidenceId, node]));
   for (const evidenceId of unique) {
     const node = allowed.get(evidenceId);
-    if (!node || (sourceStages && !sourceStages.includes(Number(node.sourceStage)))) throw new Error("invalid_evidence_reference");
+    if (!node || node.diagnosticEligible === false || (sourceStages && !sourceStages.includes(Number(node.sourceStage)))) throw new Error("invalid_evidence_reference");
   }
   return unique;
 }
@@ -195,8 +205,8 @@ function buildClinicalTrajectory(state, report, language = "zh") {
   const submissions = graph.filter((node) => node.eventType === "submission_recorded");
   return {
     questions: entries((node) => node.sourceStage === 1 && node.eventType === "slot_answered"),
-    acquiredEvidence: entries((node) => node.sourceStage <= 2 && ["slot_answered", "physical_exam_performed", "result_returned"].includes(node.eventType)),
-    examinationsAndOrders: entries((node) => node.sourceStage === 2 && ["physical_exam_performed", "order_placed", "result_returned"].includes(node.eventType)),
+    acquiredEvidence: entries((node) => node.sourceStage <= 2 && node.diagnosticEligible !== false && ["slot_answered", "physical_exam_performed", "result_returned"].includes(node.eventType)),
+    examinationsAndOrders: entries((node) => node.sourceStage === 2 && ["physical_exam_performed", "order_placed", "result_returned", "order_outcome"].includes(node.eventType)),
     diagnosisFormation: entries((node) => node.sourceStage === 3),
     consultations: entries((node) => node.sourceStage === 4),
     treatmentOrders: entries((node) => node.sourceStage === 5),
@@ -207,6 +217,7 @@ function buildClinicalTrajectory(state, report, language = "zh") {
       toStage: node.sourceStage + 1,
       reason: language === "en" ? "The submitted stage unlocked the next clinical step." : "该阶段提交后解锁下一临床步骤。"
     })),
+    unnecessaryInvestigations: entries((node) => node.sourceStage === 2 && node.eventType === "order_outcome" && node.possibleUnnecessary === true),
     omissions: (report?.items || []).flatMap((item) => {
       const missed = (item.rubricItems || []).filter((rubric) => rubric.status === "missed");
       return missed.map((rubric, index) => ({

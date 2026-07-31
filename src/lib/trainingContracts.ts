@@ -75,13 +75,13 @@ export type OrderResultLog = {
     teachingExplanation: string;
     metadataStatus?: "complete" | "awaiting_reviewed_metadata";
     translationStatus?: string;
-    provenance?: "configured_case_result" | "simulated_normal" | "not_provided" | "medical_review_pending";
+    provenance?: "configured_case_result" | "case_source_projection" | "simulated_normal" | "not_provided" | "medical_review_pending" | "source_not_collected" | "source_not_performed" | "source_not_available" | "medical_conflict" | "source_projection_match_failed";
     scoringEligible?: boolean;
   }>;
   orderOutcomes?: Array<{
     orderId: string;
     displayName: string;
-    status: "reported" | "not_provided" | "medical_review_pending" | "prerequisite_missing" | "duplicate" | "unrecognized" | "unavailable";
+    status: "reported" | "no_indication" | "not_performed" | "no_specimen" | "not_provided" | "medical_review_pending" | "prerequisite_missing" | "duplicate" | "unrecognized" | "unavailable";
     provenance: string;
     reviewStatus?: "pending_human_medical_review" | "not_required";
     scoringEligible?: boolean;
@@ -112,7 +112,7 @@ export type ExamResultLog = {
   at: string;
   examId?: string;
   translationStatus?: string;
-  provenance?: "configured_case_result" | "simulated_normal" | "not_provided" | "medical_review_pending";
+  provenance?: "configured_case_result" | "case_source_projection" | "simulated_normal" | "not_provided" | "medical_review_pending" | "source_not_collected" | "source_not_performed" | "source_not_available" | "medical_conflict" | "source_projection_match_failed";
   scoringEligible?: boolean;
   affectsDiagnosis?: false;
   affectsScore?: false;
@@ -166,6 +166,7 @@ export type Evaluator360Report = {
     consultations: ClinicalTrajectoryEntry[];
     treatmentOrders: ClinicalTrajectoryEntry[];
     perioperativeManagement: ClinicalTrajectoryEntry[];
+    unnecessaryInvestigations?: ClinicalTrajectoryEntry[];
     decisionTransitions: Array<{ decisionEvidenceId: string; fromStage: number; toStage: number; reason: string }>;
     omissions: Array<{ domain: string; label: string; rubricItemId: string }>;
   };

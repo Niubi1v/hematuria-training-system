@@ -316,7 +316,7 @@ export type OrderResultItem = {
   availableAt?: "immediate" | "delayed";
   prerequisites?: string[];
   sourceVersion?: string;
-  provenance?: "configured_case_result" | "simulated_normal" | "not_provided";
+  provenance?: "configured_case_result" | "case_source_projection" | "simulated_normal" | "not_provided" | "medical_review_pending" | "source_not_collected" | "source_not_performed" | "source_not_available" | "medical_conflict" | "source_projection_match_failed";
   diagnosis: string;
   diseaseType: string;
   orderCategory: string;

@@ -25,6 +25,7 @@ const {
   validateEvidenceIds
 } = require("../server/evidenceGraph.js");
 const { commitAttempt, digest, loadAttempt, registerAttempt } = require("../server/trainingAttemptStore.js");
+const { desktopClinicalContent } = require("../server/desktopClinicalContentProjection.js");
 const { BILINGUAL_CONFLICT_REASON, filterQuarantinedEvents } = require("../server/bilingualConflictQuarantine.js");
 const { setServerTiming } = require("../server/performanceTiming.js");
 const { parseJsonBody } = require("../server/requestSecurity.js");
@@ -202,19 +203,31 @@ function handleExam(caseData, input, language) {
   const item = examItems.find((candidate) => [candidate.displayName, ...(candidate.synonyms || [])].some((name) => normalize(name) === exact)
     && physicalExamApplicable(candidate, caseData.sex));
   const configured = item && examResults.find((result) => result.caseId === caseData.id && result.examId === item.examId && result.studentVisibleAfterSelection);
-  const simulated = item && !configured ? simulatedPhysicalExamResult(item, language) : null;
-  const presented = presentExamResult(configured?.result || "", language);
+  const triaged = item && !configured ? desktopClinicalContent({
+    caseId: caseData.id,
+    itemIds: [item.examId],
+    displayName: item.displayName
+  }) : null;
+  const simulated = item && !configured && !triaged ? simulatedPhysicalExamResult(item, language) : null;
+  const sourceResult = configured?.result || triaged?.result || simulated?.result || "";
+  const presented = presentExamResult(sourceResult, language);
+  const reported = Boolean(sourceResult);
+  const reviewMessage = language === "en"
+    ? "This result is awaiting medical content review and is excluded from diagnosis and scoring for this attempt."
+    : "该项目等待医学审核，本次训练不将其作为诊断、治疗或评分依据。";
   return {
     input, examId: item?.examId, at: new Date().toISOString(),
-    result: configured
-      ? presented.text
-      : simulated?.result || (language === "en"
-        ? "This result is awaiting medical content review and is not used for diagnosis or scoring in this training attempt."
-        : "该项目结果正在医学内容审核中，本次训练不将其作为诊断或评分依据。"),
-    translationStatus: configured ? presented.translationStatus : simulated ? "policy_approved_simulation" : "not_available",
-    provenance: configured ? "configured_case_result" : simulated?.provenance || "medical_review_pending",
+    result: reported ? presented.text : reviewMessage,
+    status: reported ? "reported" : "medical_review_pending",
+    translationStatus: configured || triaged ? presented.translationStatus : simulated ? "policy_approved_simulation" : "not_available",
+    provenance: configured ? "configured_case_result" : triaged?.provenance || simulated?.provenance || "medical_review_pending",
     scoringEligible: Boolean(configured),
-    ...(simulated || {})
+    diagnosticEligible: configured ? true : triaged?.diagnosticEligible === true,
+    affectsDiagnosis: configured ? true : triaged?.affectsDiagnosis ?? simulated?.affectsDiagnosis ?? false,
+    affectsScore: configured ? true : false,
+    reviewStatus: triaged?.reviewerStatus || simulated?.reviewerStatus || (reported ? "not_required" : "pending_human_medical_review"),
+    ...(simulated || {}),
+    ...(triaged ? { triageClassification: triaged.classification } : {})
   };
 }
 
@@ -321,6 +334,15 @@ function handleOrder(caseData, input, previousOrderIds, language) {
     return result ? [{ order, result }] : [];
   });
   const sourceRowsByOrderId = new Map(sourceRows.map((item) => [sourceOrderId(item.order), item.result]));
+  const triageRowsByOrderId = new Map(orders.map((order) => {
+    const canonicalId = sourceOrderId(order);
+    const triaged = desktopClinicalContent({
+      caseId: caseData.id,
+      itemIds: [order.catalogId, order.orderId, canonicalId],
+      displayName: order.displayName
+    });
+    return [canonicalId, triaged];
+  }));
   const reportable = sourceRows.filter(({ result }) => orderResultIsReportable(result));
   const unmetPrerequisites = [...new Set(sourceRows.flatMap(({ result }) => (result.prerequisites || []).filter((id) => !available.has(id))))];
   const acceptedOrderIds = orders.filter((order) => {
@@ -333,7 +355,7 @@ function handleOrder(caseData, input, previousOrderIds, language) {
     .filter((order) => !duplicateOrderIds.includes(sourceOrderId(order))
       && !acceptedOrderIds.includes(sourceOrderId(order)))
     .map(sourceOrderId);
-  const results = reportable.filter(({ order }) => acceptedOrderIds.includes(sourceOrderId(order))).map(({ order, result }) => ({
+  const configuredResults = reportable.filter(({ order }) => acceptedOrderIds.includes(sourceOrderId(order))).map(({ order, result }) => ({
       caseId: caseData.id,
       orderId: sourceOrderId(order),
       resultId: result.resultId,
@@ -343,6 +365,41 @@ function handleOrder(caseData, input, previousOrderIds, language) {
       scoringEligible: true,
       teachingExplanation: language === "en" ? "Released only for this exact case and placed order." : "仅按当前病例与已开立医嘱精确释放。"
     }));
+  const configuredResultOrderIds = new Set(configuredResults.map((item) => item.orderId));
+  const projectedResults = orders.flatMap((order) => {
+    const canonicalId = sourceOrderId(order);
+    const sourceResult = sourceRowsByOrderId.get(canonicalId);
+    const triaged = triageRowsByOrderId.get(canonicalId);
+    if (!acceptedOrderIds.includes(canonicalId)
+      || configuredResultOrderIds.has(canonicalId)
+      || sourceResult?.status === "not_performed"
+      || triaged?.classification !== "source_projection") return [];
+    const projected = {
+      caseId: caseData.id,
+      orderId: canonicalId,
+      resultId: `TRIAGE-${caseData.id}-${triaged.itemId}`,
+      status: "final",
+      value: triaged.result,
+      result: triaged.result,
+      unit: "",
+      referenceRange: "",
+      impression: "",
+      abnormalFlags: [],
+      prerequisites: []
+    };
+    return [{
+      ...presentOrderResult(order, projected, language),
+      provenance: "case_source_projection",
+      scoringEligible: false,
+      diagnosticEligible: true,
+      affectsScore: false,
+      sourceMatchSha256: triaged.sourceMatchSha256,
+      teachingExplanation: language === "en"
+        ? "Released from a mechanically verified case-source projection; excluded from scoring."
+        : "由病例 source 机械一致性核验后逐项释放，不参与评分。"
+    }];
+  });
+  const results = [...configuredResults, ...projectedResults];
   const orderOutcomes = resolution.matches.map(({ input: requestedName, order }) => {
     if (!order) {
       return {
@@ -370,6 +427,7 @@ function handleOrder(caseData, input, previousOrderIds, language) {
       };
     }
     const result = sourceRowsByOrderId.get(canonicalId);
+    const triaged = triageRowsByOrderId.get(canonicalId);
     const missingPrerequisites = (result?.prerequisites || []).filter((id) => !available.has(id));
     if (missingPrerequisites.length) {
       return {
@@ -385,24 +443,73 @@ function handleOrder(caseData, input, previousOrderIds, language) {
         message: language === "en" ? `${displayName}: the case-source report was returned.` : `${displayName}：已返回病例现有 source 报告。`
       };
     }
+    if (result?.status === "not_performed") {
+      return {
+        orderId: canonicalId, displayName, status: "not_performed", provenance: "source_not_performed",
+        scoringEligible: false, diagnosticEligible: false, possibleUnnecessary: true,
+        message: language === "en"
+          ? `${displayName}: this examination was not performed in the case, so no report exists.`
+          : `${displayName}：本病例未实施该项目，因此无报告。`
+      };
+    }
+    if (triaged?.classification === "source_projection") {
+      const projected = projectedResults.find((item) => item.orderId === canonicalId);
+      return {
+        orderId: canonicalId, displayName, status: "reported", provenance: "case_source_projection",
+        resultId: projected?.resultId,
+        scoringEligible: false, diagnosticEligible: true,
+        message: language === "en"
+          ? `${displayName}: a mechanically verified case-source projection was returned.`
+          : `${displayName}：已返回经 source 机械一致性核验的病例结果。`
+      };
+    }
+    if (triaged?.classification === "no_specimen") {
+      const pathology = triaged.domain === "pathology" || /病理|活检|标本/u.test(String(triaged.displayName || ""));
+      return {
+        orderId: canonicalId, displayName, status: "no_specimen", provenance: triaged.provenance,
+        scoringEligible: false, diagnosticEligible: false, possibleUnnecessary: true,
+        message: language === "en"
+          ? `${displayName}: no specimen was collected, so no report exists.`
+          : pathology
+            ? `${displayName}：未取材，因此无病理报告。`
+            : `${displayName}：本病例未采集该标本，因此无结果。`
+      };
+    }
+    if (triaged?.classification === "no_indication") {
+      return {
+        orderId: canonicalId, displayName, status: "no_indication", provenance: triaged.provenance,
+        scoringEligible: false, diagnosticEligible: false, possibleUnnecessary: true,
+        message: language === "en"
+          ? `${displayName}: there is no clear indication in this case; the examination was not performed and no report exists.`
+          : `${displayName}：当前病例无明确开立适应证；本病例未实施该检查，因此无报告。`
+      };
+    }
+    if (triaged?.classification === "medical_conflict" || triaged?.classification === "medical_review_pending") {
+      return {
+        orderId: canonicalId, displayName, status: "medical_review_pending", provenance: triaged.provenance,
+        reviewStatus: "pending_human_medical_review", scoringEligible: false, diagnosticEligible: false,
+        message: language === "en"
+          ? `${displayName}: the case-specific result is awaiting medical review and remains isolated from diagnosis, treatment, and scoring.`
+          : `${displayName}：等待医学审核，当前不进入诊断、治疗或评分证据。`
+      };
+    }
     return {
       orderId: canonicalId,
       displayName,
-      status: result?.status === "not_performed" ? "not_provided" : "medical_review_pending",
-      provenance: result?.status === "not_performed"
-        ? "source_not_performed"
-        : result?.status === "not_available" ? "source_not_available" : "not_provided",
-      reviewStatus: result?.status === "not_performed" ? "not_required" : "pending_human_medical_review",
+      status: "medical_review_pending",
+      provenance: result?.status === "not_available" ? "source_not_available" : "medical_review_pending",
+      reviewStatus: "pending_human_medical_review",
       scoringEligible: false,
-      message: result?.status === "not_performed"
-        ? (language === "en" ? `${displayName}: this examination was not performed in the case, so no report exists.` : `${displayName}：本病例未实施该项目，因此无报告。`)
-        : (language === "en"
-          ? `${displayName}: the result is awaiting medical content review and is excluded from diagnosis and scoring for this attempt.`
-          : `${displayName}：结果正在医学内容审核中，本次训练不将其作为诊断或评分依据。`)
+      diagnosticEligible: false,
+      message: language === "en"
+        ? `${displayName}: the result is awaiting medical content review and is excluded from diagnosis, treatment, and scoring for this attempt.`
+        : `${displayName}：等待医学审核，当前不进入诊断、治疗或评分证据。`
     };
   });
   const at = new Date().toISOString();
-  const notProvidedCount = orderOutcomes.filter((item) => item.status === "not_provided").length;
+  const noSpecimenCount = orderOutcomes.filter((item) => item.status === "no_specimen").length;
+  const noIndicationCount = orderOutcomes.filter((item) => item.status === "no_indication").length;
+  const notPerformedCount = orderOutcomes.filter((item) => item.status === "not_performed").length;
   const medicalReviewPendingCount = orderOutcomes.filter((item) => item.status === "medical_review_pending").length;
   const unrecognizedCount = orderOutcomes.filter((item) => item.status === "unrecognized").length;
   return {
@@ -414,8 +521,8 @@ function handleOrder(caseData, input, previousOrderIds, language) {
     recognizedOrderCount: orders.length, returnedReportCount: results.length, at, placedAt: at, stageNo: 2,
     status: results.length ? "reported" : "no-result",
     message: language === "en"
-      ? `${orders.length} order(s) recognized: ${results.length} case-source report(s) returned, ${medicalReviewPendingCount} awaiting medical review, ${notProvidedCount} not performed${unrecognizedCount ? `, ${unrecognizedCount} unrecognized` : ""}. See each order below.`
-      : `已识别${orders.length}项医嘱：返回${results.length}项病例现有报告，${medicalReviewPendingCount}项等待医学内容审核，${notProvidedCount}项病例未实施${unrecognizedCount ? `，${unrecognizedCount}项未识别` : ""}。请查看逐项状态。`
+      ? `${orders.length} order(s) recognized: ${results.length} report(s) returned, ${noIndicationCount} without a clear indication, ${notPerformedCount} not performed, ${noSpecimenCount} without a specimen, and ${medicalReviewPendingCount} awaiting medical review${unrecognizedCount ? `, ${unrecognizedCount} unrecognized` : ""}. See each order below.`
+      : `已识别${orders.length}项医嘱：返回${results.length}项报告，${noIndicationCount}项无明确适应证，${notPerformedCount}项未实施，${noSpecimenCount}项未取材，${medicalReviewPendingCount}项等待医学审核${unrecognizedCount ? `，${unrecognizedCount}项未识别` : ""}。请查看逐项状态。`
   };
 }
 
@@ -774,8 +881,8 @@ module.exports = async function handler(req, res) {
     if (body.action === "exam") {
       const result = handleExam(caseData, body.input, language);
       if (result.examId) {
-        const event = { eventId: `srv-${state.sequence + 1}-exam-${result.examId}`, type: "physical_exam_performed", actionId: result.examId, stageNo: 2, at, text: result.input, metadata: { validated: true, provenance: result.provenance } };
-        appendClinicalEvents(state, caseData.id, [event], { [event.eventId]: { triggerAction: result.input, result: result.result, provenance: result.provenance } });
+        const event = { eventId: `srv-${state.sequence + 1}-exam-${result.examId}`, type: "physical_exam_performed", actionId: result.examId, stageNo: 2, at, text: result.input, metadata: { validated: result.scoringEligible === true, scoringEligible: result.scoringEligible === true, diagnosticEligible: result.diagnosticEligible === true, provenance: result.provenance } };
+        appendClinicalEvents(state, caseData.id, [event], { [event.eventId]: { triggerAction: result.input, result: result.result, provenance: result.provenance, scoringEligible: result.scoringEligible === true, diagnosticEligible: result.diagnosticEligible === true } });
       }
       return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: { ...result, evidenceOptions: studentEvidenceOptions(state, language) } });
     }
@@ -796,14 +903,35 @@ module.exports = async function handler(req, res) {
         text: item.impression || item.result,
         metadata: {
           validated: item.provenance === "configured_case_result" && item.scoringEligible !== false,
+          scoringEligible: item.scoringEligible === true,
+          diagnosticEligible: item.diagnosticEligible !== false,
           provenance: item.provenance || "unknown"
         }
       }));
+      const outcomeEvents = result.orderOutcomes
+        .filter((item) => item.orderId && !["reported", "duplicate", "unrecognized", "unavailable"].includes(item.status))
+        .map((item) => ({
+          eventId: `srv-${state.sequence + 1}-outcome-${item.orderId}`,
+          type: "order_outcome",
+          actionId: item.orderId,
+          stageNo: 2,
+          at,
+          text: item.message,
+          metadata: {
+            validated: false,
+            scoringEligible: false,
+            diagnosticEligible: false,
+            provenance: item.provenance || "unknown",
+            outcomeStatus: item.status,
+            possibleUnnecessary: item.possibleUnnecessary === true
+          }
+        }));
       const orderContexts = Object.fromEntries([
         ...orderEvents.map((event) => [event.eventId, { triggerAction: event.text, result: language === "en" ? "Order placed." : "已开立医嘱。", provenance: "canonical_order_action" }]),
-        ...resultEvents.map((event) => [event.eventId, { triggerAction: event.actionId, result: event.text, provenance: event.metadata.provenance }])
+        ...resultEvents.map((event) => [event.eventId, { triggerAction: event.actionId, result: event.text, provenance: event.metadata.provenance, scoringEligible: event.metadata.scoringEligible, diagnosticEligible: event.metadata.diagnosticEligible }]),
+        ...outcomeEvents.map((event) => [event.eventId, { triggerAction: event.actionId, result: event.text, provenance: event.metadata.provenance, scoringEligible: false, diagnosticEligible: false, outcomeStatus: event.metadata.outcomeStatus, possibleUnnecessary: event.metadata.possibleUnnecessary }])
       ]);
-      appendClinicalEvents(state, caseData.id, [...orderEvents, ...resultEvents], orderContexts);
+      appendClinicalEvents(state, caseData.id, [...orderEvents, ...resultEvents, ...outcomeEvents], orderContexts);
       const releasedReports = Array.isArray(state.releasedReports) ? state.releasedReports : [];
       const knownResultIds = new Set(releasedReports.map((item) => item.resultId));
       state.releasedReports = [

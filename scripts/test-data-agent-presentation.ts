@@ -105,7 +105,7 @@ for (const language of ["zh", "en"] as const) {
   const final = reportStatusPresentation({ status: "final", abnormalFlags: [], abnormalLevel: "final" }, language);
   assert.equal(final.state, "reported");
   assert.equal(final.label, language === "en" ? "Reported" : "已出报告");
-  assert.equal(reportStatusPresentation({ status: "not_available" }, language).label, language === "en" ? "Not available in this case" : "当前病例未提供");
+  assert.equal(reportStatusPresentation({ status: "not_available" }, language).label, language === "en" ? "Awaiting medical review" : "等待医学审核");
   assert.equal(reportStatusPresentation({ status: "not_performed" }, language).label, language === "en" ? "Not performed" : "未实施");
 }
 

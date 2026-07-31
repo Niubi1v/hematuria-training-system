@@ -14,7 +14,7 @@ const primaryCategoryLabels = Object.freeze({
 
 const statusLabels = Object.freeze({
   final: Object.freeze({ zh: "已出报告", en: "Reported" }),
-  not_available: Object.freeze({ zh: "当前病例未提供", en: "Not available in this case" }),
+  not_available: Object.freeze({ zh: "等待医学审核", en: "Awaiting medical review" }),
   not_performed: Object.freeze({ zh: "未实施", en: "Not performed" }),
   needs_review: Object.freeze({ zh: "待审核", en: "Awaiting review" })
 });
