@@ -271,6 +271,7 @@ try {
     "localModelReady",
     "model",
     "requestedSlot",
+    "responseErrors",
     "unknown"
   ].sort());
   assert.equal((await authorizedFetch(second, "/api/desktop/evidence/")).status, 404);

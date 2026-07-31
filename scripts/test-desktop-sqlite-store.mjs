@@ -28,6 +28,7 @@ function state(attemptId, overrides = {}) {
     orders: [],
     releasedReports: [],
     events: [],
+    evidenceGraph: [],
     submissions: {},
     ...overrides
   };
@@ -128,7 +129,21 @@ async function main() {
 
   const resumableState = state("attempt-resume", {
     expiresAt: Date.now() + 60_000,
-    currentStage: 3
+    currentStage: 3,
+    evidenceGraph: [{
+      evidenceId: "EV-P003-SQLITE",
+      eventId: "sqlite-evidence-event",
+      caseId: "P003",
+      sourceStage: 2,
+      eventType: "result_returned",
+      triggerAction: "LAB-UR-001",
+      rawQuestion: "",
+      canonicalFactOrAction: "LAB-UR-001",
+      result: "released measurement",
+      provenance: "configured_case_result",
+      diagnosisRelations: [],
+      rubricMappings: []
+    }]
   });
   await store.registerAttempt({
     state: resumableState,
