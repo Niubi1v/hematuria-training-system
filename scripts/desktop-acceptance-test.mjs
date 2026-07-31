@@ -5,10 +5,12 @@ import fsp from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
 const scriptsDirectory = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptsDirectory, "..");
+const require = createRequire(import.meta.url);
 const realLocalAi = process.argv.includes("--real-local-ai");
 const appRootArgument = process.argv.indexOf("--app-root");
 const appRoot = appRootArgument >= 0
@@ -21,15 +23,19 @@ const databasePath = path.join(temporaryRoot, "hematuria.sqlite3");
 const children = new Set();
 const sourceCounts = new Map();
 const answerSourceCounts = new Map();
+const turnDiagnostics = [];
 let contextAppliedCount = 0;
 let finalRuntimeEvidence = null;
 const manifest = JSON.parse(await fsp.readFile(path.join(repoRoot, "desktop", "runtime-manifest.json"), "utf8"));
+const modelMode = String(process.env.HEMATURIA_DESKTOP_MODEL_MODE || manifest.defaultModelMode || "lightweight");
+const selectedModel = manifest.models?.[modelMode];
+assert.ok(selectedModel, `Unknown desktop model mode: ${modelMode}`);
 const llamaPath = path.join(repoRoot, "desktop-runtime", "llama", manifest.llamaCpp.entryPoint);
 const defaultModelPath = path.join(
   process.env.LOCALAPPDATA || "",
   "cn.hematuria.training.desktop",
   "models",
-  manifest.model.fileName
+  selectedModel.fileName
 );
 const modelPath = process.env.HEMATURIA_DESKTOP_MODEL_PATH || defaultModelPath;
 
@@ -38,7 +44,7 @@ assert.ok(Number(process.versions.node.split(".")[0]) >= 22, "Desktop acceptance
 if (realLocalAi) {
   assert.ok(fs.existsSync(llamaPath), `llama-server is missing: ${llamaPath}`);
   assert.ok(fs.existsSync(modelPath), `Qwen model is missing: ${modelPath}`);
-  assert.equal(fs.statSync(modelPath).size, manifest.model.size, "Qwen model size mismatch");
+  assert.equal(fs.statSync(modelPath).size, selectedModel.size, "Qwen model size mismatch");
 }
 
 async function sha256File(filePath) {
@@ -49,8 +55,25 @@ async function sha256File(filePath) {
 
 const modelSha256 = realLocalAi ? await sha256File(modelPath) : "";
 if (realLocalAi) {
-  assert.equal(modelSha256, manifest.model.sha256, "Qwen model SHA256 mismatch");
+  assert.equal(modelSha256, selectedModel.sha256, "Qwen model SHA256 mismatch");
 }
+
+function seedDesktopModelSelection() {
+  const previousDatabasePath = process.env.HEMATURIA_DESKTOP_DATABASE_PATH;
+  process.env.HEMATURIA_DESKTOP_DATABASE_PATH = databasePath;
+  try {
+    const store = require(path.join(appRoot, "server", "desktopSqliteStore.js"));
+    store.setDesktopSetting("localAi.modelMode", modelMode);
+    store.setDesktopSetting("localAi.modelDirectory", path.dirname(modelPath));
+    store.setDesktopSetting("localAi.enabled", realLocalAi);
+    store.closeDesktopSqliteStore();
+  } finally {
+    if (previousDatabasePath === undefined) delete process.env.HEMATURIA_DESKTOP_DATABASE_PATH;
+    else process.env.HEMATURIA_DESKTOP_DATABASE_PATH = previousDatabasePath;
+  }
+}
+
+seedDesktopModelSelection();
 
 function randomSecret() {
   return crypto.randomBytes(32).toString("base64url");
@@ -119,6 +142,8 @@ async function launchSidecar() {
       HEMATURIA_DESKTOP_ALLOWED_ORIGINS: allowedOrigin,
       HEMATURIA_DESKTOP_BEARER: bearer,
       HEMATURIA_DESKTOP_HANDSHAKE: handshake,
+      HEMATURIA_DESKTOP_DEBUG_RUNTIME: "1",
+      HEMATURIA_DESKTOP_MODEL_MODE: modelMode,
       ...(realLocalAi
         ? {
             HEMATURIA_LLAMA_SERVER_PATH: llamaPath,
@@ -148,9 +173,26 @@ async function launchSidecar() {
   assert.equal(ready.handshake, handshake);
   assert.equal(ready.pid, child.pid);
   assert.equal(ready.databaseSchemaVersion, 1);
-  assert.equal(ready.localAi?.status, realLocalAi ? "ready" : "disabled");
+  assert.equal(ready.localAi?.status, realLocalAi ? "starting" : "disabled");
   assert.match(ready.origin, /^http:\/\/127\.0\.0\.1:\d+$/);
-  return { bearer, child, diagnostics: () => diagnostics, origin: ready.origin, ready };
+  const runtime = { bearer, child, diagnostics: () => diagnostics, origin: ready.origin, ready };
+  if (realLocalAi) {
+    const deadline = Date.now() + 180_000;
+    let status = "starting";
+    while (Date.now() < deadline) {
+      const settings = await requestJson(runtime, "/api/desktop/settings/", { method: "GET" });
+      assert.equal(settings.payload.modelMode, modelMode, "sidecar must honor the selected model mode");
+      assert.equal(settings.payload.modelAlias, selectedModel.alias, "sidecar must expose the selected model alias");
+      status = String(settings.payload.llamaStatus || "");
+      if (status === "ready") break;
+      if (["model_invalid", "model_missing", "runtime_missing", "startup_failed"].includes(status)) {
+        throw new Error(`desktop_local_ai_start_failed:${status}:${settings.payload.modelValidation || "unknown"}`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+    assert.equal(status, "ready", "desktop local model did not become ready");
+  }
+  return runtime;
 }
 
 async function stopSidecar(runtime) {
@@ -235,12 +277,26 @@ async function initPatientSession(runtime, caseId, language, attemptId, stateTok
   return String(result.payload.sessionId);
 }
 
-function recordSourceContract(reply, expectedFact, label) {
+function recordSourceContract(reply, expectation, label, language, turnNumber) {
+  const {
+    expectedIntent,
+    expectedSlot,
+    matchedFact = expectedIntent,
+    allowsUnknown = false,
+    requiresContext = false
+  } = expectation;
   assert.ok(String(reply.replyText || "").trim(), `${label} must return a non-empty governed answer`);
   assert.ok(Array.isArray(reply.matchedFacts), `${label} must expose matchedFacts`);
-  if (expectedFact) {
-    assert.ok(reply.matchedFacts.includes(expectedFact), `${label} must resolve ${expectedFact}`);
+  if (matchedFact) {
+    assert.ok(reply.matchedFacts.includes(matchedFact), `${label} must resolve ${matchedFact}`);
   }
+  assert.equal(
+    reply.usedModel,
+    realLocalAi ? selectedModel.alias : "local-rule",
+    realLocalAi
+      ? `${label} must report the selected validator model even when rejected`
+      : `${label} must not claim that a disabled model was used`
+  );
   assert.equal(reply.thinkingMode, "disabled", `${label} must keep thinking disabled`);
   assert.equal(reply.thinkingExecuted, false, `${label} must not execute model thinking`);
   assert.ok(
@@ -249,21 +305,38 @@ function recordSourceContract(reply, expectedFact, label) {
   );
   assert.notEqual(reply.factSource, "local_ai", `${label} must keep model output outside the fact authority path`);
   assert.ok(reply.desktopEvidence, `${label} must include authenticated desktop runtime evidence`);
+  assert.deepEqual(Object.keys(reply.desktopEvidence).sort(), [
+    "answerSource", "cloudRequestCount", "factState", "fallbackReason", "intent", "latency",
+    "llamaServerReady", "localModelReady", "model", "requestedSlot", "unknown"
+  ].sort(), `${label} diagnostics must remain on the safe whitelist`);
   assert.equal(reply.desktopEvidence.cloudRequestCount, 0, `${label} must make no cloud request`);
-  assert.equal(reply.desktopEvidence.modelFactAuthority, false, `${label} must deny model fact authority`);
-  if (expectedFact) {
-    assert.equal(reply.desktopEvidence.ontologyApplied, true, `${label} must use the governed ontology`);
-    assert.equal(reply.desktopEvidence.nineStateApplied, true, `${label} must use the nine-state fact model`);
-    assert.equal(reply.desktopEvidence.answerPlannerApplied, true, `${label} must use the answer planner`);
-  }
+  assert.equal(reply.desktopEvidence.model, selectedModel.alias, `${label} must report the selected model`);
+  assert.ok(Number.isSafeInteger(reply.desktopEvidence.latency), `${label} must report bounded latency`);
+  const actualIntent = String(reply.desktopEvidence.intent || "");
+  const actualSlot = String(reply.desktopEvidence.requestedSlot || "");
+  const intentMatch = actualIntent === expectedIntent;
+  const slotMatch = actualSlot === expectedSlot;
+  assert.ok(String(reply.desktopEvidence.factState || ""), `${label} must report the nine-state classification`);
+  const unknown = String(reply.desktopEvidence.unknown || "") || null;
+  const erroneousUnknown = !allowsUnknown
+    && ["fact_missing", "intent_ambiguous", "classifier_unavailable"].includes(String(unknown || ""));
+  assert.equal(erroneousUnknown, false, `${label} must not turn an available governed fact into unknown`);
+  const contextLost = Boolean(requiresContext && (
+    !intentMatch
+    || !slotMatch
+    || reply.desktopEvidence.fallbackReason === "local_context_reference_mismatch"
+  ));
+  if (requiresContext && !contextLost) contextAppliedCount += 1;
   if (realLocalAi) {
     assert.equal(reply.classificationSource, "local_ai", `${label} must invoke the local classifier`);
-    assert.ok(["accepted", "rejected"].includes(reply.classifierStatus), `${label} classifier status must be truthful`);
+    assert.ok(["accepted", "rejected", "timeout"].includes(reply.classifierStatus), `${label} classifier status must be truthful`);
     assert.equal(reply.providerConfigured, true, `${label} must report the configured loopback provider`);
-    assert.equal(reply.providerHttpSuccess, true, `${label} must complete a real llama-server request`);
     assert.equal(reply.desktopEvidence.llamaServerReady, true, `${label} llama-server must be ready`);
     assert.equal(reply.desktopEvidence.localModelReady, true, `${label} Qwen model must be loaded`);
     if (reply.classifierStatus === "accepted") {
+      assert.equal(intentMatch, true, `${label} accepted local metadata must report intent ${expectedIntent}`);
+      assert.equal(slotMatch, true, `${label} accepted local metadata must report slot ${expectedSlot}`);
+      assert.equal(reply.providerHttpSuccess, true, `${label} accepted metadata must complete a real llama-server request`);
       assert.equal(reply.desktopEvidence.answerSource, "local_ai", `${label} accepted metadata must report local_ai`);
       assert.equal(reply.isFallback, false, `${label} accepted metadata must use the local route`);
       assert.equal(reply.provider, "local", `${label} accepted metadata must name the local provider`);
@@ -271,8 +344,11 @@ function recordSourceContract(reply, expectedFact, label) {
       assert.equal(reply.desktopEvidence.answerSource, "rule_fallback", `${label} rejected metadata must fall back safely`);
       assert.equal(reply.isFallback, true, `${label} rejected metadata must identify fallback`);
       assert.equal(reply.provider, "rule", `${label} rejected metadata must use the governed rule answer`);
+      assert.ok(String(reply.desktopEvidence.fallbackReason || ""), `${label} rejected metadata must expose its safe rejection reason`);
     }
   } else {
+    assert.equal(intentMatch, true, `${label} deterministic fallback must preserve governed intent ${expectedIntent}`);
+    assert.equal(slotMatch, true, `${label} deterministic fallback must preserve governed slot ${expectedSlot}`);
     assert.equal(reply.classificationSource, "deterministic", `${label} must not claim local_ai while the model is disabled`);
     assert.equal(reply.classifierStatus, "not_invoked", `${label} classifier status must be truthful`);
     assert.equal(reply.providerConfigured, false, `${label} must not report a configured model provider`);
@@ -297,7 +373,26 @@ function recordSourceContract(reply, expectedFact, label) {
   sourceCounts.set(sourceKey, (sourceCounts.get(sourceKey) || 0) + 1);
   const answerSource = String(reply.desktopEvidence.answerSource || "unknown");
   answerSourceCounts.set(answerSource, (answerSourceCounts.get(answerSource) || 0) + 1);
-  if (reply.desktopEvidence.contextApplied) contextAppliedCount += 1;
+  turnDiagnostics.push({
+    language,
+    turn: turnNumber,
+    answerSource,
+    classifierStatus: String(reply.classifierStatus || ""),
+    intent: actualIntent,
+    requestedSlot: actualSlot,
+    factState: String(reply.desktopEvidence.factState || ""),
+    unknown,
+    fallbackReason: reply.desktopEvidence.fallbackReason || null,
+    llamaServerReady: reply.desktopEvidence.llamaServerReady,
+    localModelReady: reply.desktopEvidence.localModelReady,
+    model: reply.desktopEvidence.model,
+    cloudRequestCount: reply.desktopEvidence.cloudRequestCount,
+    latency: reply.desktopEvidence.latency,
+    intentMatch,
+    slotMatch,
+    erroneousUnknown,
+    contextLost
+  });
 }
 
 async function askPatient(runtime, {
@@ -306,11 +401,12 @@ async function askPatient(runtime, {
   attemptId,
   sessionId,
   question,
-  expectedFact,
+  expectation,
   conversationHistory,
   askedSlotIds,
   askedQuestions,
-  label
+  label,
+  turnNumber
 }) {
   const id = requestId(`${caseId}-${language}-patient`);
   const result = await requestJson(runtime, "/api/agent-chat/", {
@@ -326,11 +422,12 @@ async function askPatient(runtime, {
       studentInput: question,
       conversationHistory: conversationHistory.slice(-6),
       askedSlotIds,
-      askedQuestions
+      askedQuestions,
+      debug: true
     },
     idempotencyKey: id
   });
-  recordSourceContract(result.payload, expectedFact, label);
+  recordSourceContract(result.payload, expectation, label, language, turnNumber);
   return result.payload;
 }
 
@@ -375,11 +472,12 @@ async function runInterview(runtime, { caseId, language, attemptId, turns }) {
       attemptId,
       sessionId,
       question: turn.question,
-      expectedFact: turn.expectedFact,
+      expectation: turn,
       conversationHistory,
       askedSlotIds,
       askedQuestions,
-      label: `${caseId}/${language}/turn-${index + 1}`
+      label: `${caseId}/${language}/turn-${index + 1}`,
+      turnNumber: index + 1
     });
     conversationHistory.push(
       { role: "student", text: turn.question },
@@ -471,28 +569,288 @@ async function validateStageTwo(runtime, { caseId, language, attemptId, stateTok
   assert.equal(result.stateToken, stateToken, `${label} validation must not rotate the token`);
 }
 
+async function submitStageFeedback(runtime, {
+  caseId,
+  language,
+  attemptId,
+  stateToken,
+  stageKey,
+  submission,
+  doubleSubmit = false,
+  fixedRequestId = requestId(`${caseId}-${language}-stage-${stageKey}`)
+}) {
+  const body = {
+    action: "stage-feedback",
+    caseId,
+    attemptId,
+    mode: "free",
+    language,
+    stageKey,
+    submission,
+    requestId: fixedRequestId
+  };
+  const send = () => requestJson(runtime, "/api/training-action/", {
+    body,
+    stateToken,
+    idempotencyKey: fixedRequestId
+  });
+  const results = doubleSubmit ? await Promise.all([send(), send()]) : [await send()];
+  for (const result of results) {
+    assert.equal(result.payload.stageKey, stageKey, `${stageKey} feedback must identify the submitted stage`);
+    assert.ok(result.stateToken, `${stageKey} feedback must rotate the state token`);
+    assert.doesNotMatch(JSON.stringify(result.payload), /undefined/, `${stageKey} feedback must not expose undefined`);
+    assert.ok(Array.isArray(result.payload.hits), `${stageKey} feedback must return hit items`);
+    assert.ok(Array.isArray(result.payload.misses), `${stageKey} feedback must return missing items`);
+    assert.ok(Array.isArray(result.payload.warnings), `${stageKey} feedback must return warning items`);
+  }
+  if (doubleSubmit) {
+    assert.equal(results[0].stateToken, results[1].stateToken, `${stageKey} rapid duplicate must replay one committed token`);
+    assert.deepEqual(results[0].payload, results[1].payload, `${stageKey} rapid duplicate must replay one result`);
+  }
+  return {
+    body,
+    originalToken: stateToken,
+    requestId: fixedRequestId,
+    payload: results[0].payload,
+    stateToken: results[0].stateToken
+  };
+}
+
+async function placeIndependentOrder(runtime, { caseId, language, attemptId, stateToken }) {
+  const id = requestId(`${caseId}-${language}-single-order`);
+  const result = await requestJson(runtime, "/api/training-action/", {
+    body: {
+      action: "order",
+      caseId,
+      attemptId,
+      mode: "free",
+      language,
+      input: "尿常规",
+      requestId: id
+    },
+    stateToken,
+    idempotencyKey: id
+  });
+  const outcomes = result.payload.orderOutcomes;
+  assert.ok(Array.isArray(outcomes), "stage 2 must return independent per-order outcomes");
+  assert.equal(outcomes.length, 1, "one requested order must produce exactly one outcome");
+  assert.equal(outcomes[0].orderId, "LAB-UR-001", "urinalysis must resolve to its canonical order");
+  assert.equal(outcomes[0].status, "reported", "P001 urinalysis must return its configured case-source report");
+  assert.equal(outcomes[0].provenance, "configured_case_result", "the critical urinalysis report must retain source provenance");
+  assert.equal(result.payload.returnedReportCount, 1, "the independent order must return one report");
+  assert.doesNotMatch(JSON.stringify(result.payload), /undefined/, "stage 2 order result must not expose undefined");
+  return { payload: result.payload, stateToken: result.stateToken };
+}
+
+async function requestStructuredConsultation(runtime, { caseId, language, attemptId, stateToken }) {
+  const id = requestId(`${caseId}-${language}-mdt`);
+  const consultRequests = [{
+    department: "影像科",
+    purpose: "复核本次训练已释放的影像与检查证据",
+    question: "现有已释放证据能否支持下一步检查决策？",
+    evidence: ["已采集病史", "已释放尿常规报告"]
+  }];
+  const result = await requestJson(runtime, "/api/training-action/", {
+    body: {
+      action: "mdt",
+      caseId,
+      attemptId,
+      mode: "free",
+      language,
+      departments: ["影像科"],
+      purpose: "基于已释放证据明确下一步检查问题",
+      consultRequests,
+      requestId: id
+    },
+    stateToken,
+    idempotencyKey: id
+  });
+  assert.equal(Array.isArray(result.payload), true, "stage 4 must return department-specific consultation feedback");
+  assert.equal(result.payload.length, 1, "one external department request must return one opinion");
+  assert.equal(result.payload.some((item) => /泌尿外科|urology/i.test(String(item.department || ""))), false, "stage 4 must not self-consult urology");
+  for (const opinion of result.payload) {
+    assert.ok(opinion.opinion && opinion.neededInfo && opinion.necessity && opinion.mdtIntegration, "stage 4 feedback must be actionable and integrated");
+  }
+  assert.doesNotMatch(JSON.stringify(result.payload), /undefined|请提供当前阶段已获得的证据/, "stage 4 must not expose internal or generic placeholder text");
+  return { consultRequests, payload: result.payload, stateToken: result.stateToken };
+}
+
+async function scoreCompletedAttempt(runtime, { caseId, language, attemptId, stateToken }) {
+  const fixedRequestId = requestId(`${caseId}-${language}-score`);
+  const body = {
+    action: "score",
+    caseId,
+    attemptId,
+    mode: "free",
+    language,
+    requestId: fixedRequestId
+  };
+  const send = () => requestJson(runtime, "/api/training-action/", {
+    body,
+    stateToken,
+    idempotencyKey: fixedRequestId
+  });
+  const results = await Promise.all([send(), send()]);
+  assert.equal(results[0].stateToken, results[1].stateToken, "rapid score double-click must replay one committed token");
+  assert.deepEqual(results[0].payload, results[1].payload, "rapid score double-click must replay one final report");
+  assert.equal(results[0].payload.max, 360, "final report must retain the governed 360-point denominator");
+  assert.ok(Number.isFinite(results[0].payload.total), "final report must contain a numeric score");
+  assert.ok(results[0].payload.total >= 0 && results[0].payload.total <= 360, "final score must remain within the governed range");
+  assert.doesNotMatch(JSON.stringify(results[0].payload), /undefined/, "final report must not expose undefined");
+  return {
+    body,
+    originalToken: stateToken,
+    requestId: fixedRequestId,
+    payload: results[0].payload,
+    stateToken: results[0].stateToken,
+    percentage: Math.round((results[0].payload.total / results[0].payload.max) * 1000) / 10
+  };
+}
+
+async function completeFallbackSevenStages(runtime, { caseId, language, attemptId, stateToken }) {
+  assert.equal(realLocalAi, false, "the full fallback flow must run with the local model disabled");
+  const order = await placeIndependentOrder(runtime, { caseId, language, attemptId, stateToken });
+  let stage = await submitStageFeedback(runtime, {
+    caseId,
+    language,
+    attemptId,
+    stateToken: order.stateToken,
+    stageKey: "orders",
+    submission: { selectedOrders: ["尿常规"], releasedReportCount: 1 }
+  });
+
+  stage = await submitStageFeedback(runtime, {
+    caseId,
+    language,
+    attemptId,
+    stateToken: stage.stateToken,
+    stageKey: "diagnosis",
+    submission: {
+      diagnosis: "待依据已采集证据形成工作诊断",
+      diagnosticEvidence: "【证据】已采集病史\n【证据】已释放尿常规报告\n【补充说明】仅使用本次训练已采集证据",
+      differentials: "泌尿系感染\n泌尿系结石\n肾小球性疾病",
+      differentialAnalysis: [
+        "【鉴别1】泌尿系感染\n【支持证据】已采集病史\n【不支持证据】尚无充分证据",
+        "【鉴别2】泌尿系结石\n【支持证据】已释放检查报告\n【不支持证据】尚无充分证据",
+        "【鉴别3】肾小球性疾病\n【支持证据】已释放尿常规报告\n【不支持证据】尚无充分证据"
+      ].join("\n---\n"),
+      confirmatoryTests: "【检查】尿常规【目的】复核已释放结果\n【检查】泌尿系影像【目的】依据临床需要进一步定位"
+    }
+  });
+  assert.ok(String(stage.payload.standardAnswer || ""), "stage 3 must return reference points after submission");
+
+  const consultation = await requestStructuredConsultation(runtime, {
+    caseId,
+    language,
+    attemptId,
+    stateToken: stage.stateToken
+  });
+  stage = await submitStageFeedback(runtime, {
+    caseId,
+    language,
+    attemptId,
+    stateToken: consultation.stateToken,
+    stageKey: "consult",
+    submission: {
+      consultNeeded: "需要会诊",
+      consultDepartments: ["影像科"],
+      consultPurpose: "【影像科】复核本次训练已释放的影像与检查证据",
+      consultQuestions: "【影像科】现有已释放证据能否支持下一步检查决策？",
+      consultSummary: "【影像科】已采集病史 || 已释放尿常规报告"
+    }
+  });
+  assert.doesNotMatch(String(stage.payload.standardAnswer || ""), /泌尿外科|urology/i, "stage 4 reference must not recommend urology self-consultation");
+
+  stage = await submitStageFeedback(runtime, {
+    caseId,
+    language,
+    attemptId,
+    stateToken: stage.stateToken,
+    stageKey: "treatment",
+    submission: {
+      immediateTreatment: "评估生命体征与急症风险\n根据病情决定门诊观察或入院",
+      admissionTreatment: "【药物医嘱】由学习者依据适应证核对后开立\n【检验医嘱】复核必要检验\n【影像/操作医嘱】仅依据已释放证据安排",
+      definitiveTreatment: "根据已采集证据、风险评估和会诊意见制定手术或介入计划",
+      patientEducation: "记录出入量并监测症状变化，出现危险信号及时复评",
+      mdtRevisedPlan: "【停药/禁忌】任何停药或抗栓调整前先核对适应证与风险",
+      followUp: "安排复诊并复核症状、检查报告和后续计划"
+    }
+  });
+  assert.ok(String(stage.payload.standardAnswer || ""), "stage 5 must return the case reference pathway after submission");
+
+  const perioperativeChecklist = [
+    "手术适应证确认", "麻醉评估", "心肺风险", "肾功能与液体管理", "抗菌药物与感染控制",
+    "备血", "凝血与抗凝/抗血小板", "VTE预防", "导管、引流和支架", "术后监测",
+    "并发症预防", "ERAS", "随访与患者教育"
+  ].map((item) => `【清单】${item}`).join("\n");
+  stage = await submitStageFeedback(runtime, {
+    caseId,
+    language,
+    attemptId,
+    stateToken: stage.stateToken,
+    stageKey: "perioperative",
+    submission: { perioperativePreparation: perioperativeChecklist }
+  });
+  assert.ok(String(stage.payload.standardAnswer || ""), "stage 6 must return case reference points after submission");
+
+  stage = await submitStageFeedback(runtime, {
+    caseId,
+    language,
+    attemptId,
+    stateToken: stage.stateToken,
+    stageKey: "debrief",
+    submission: {
+      debriefReflection: "本次训练仅依据已采集和已释放证据完成结构化决策；后续需复核遗漏证据、风险项目和随访安排。"
+    }
+  });
+  const score = await scoreCompletedAttempt(runtime, {
+    caseId,
+    language,
+    attemptId,
+    stateToken: stage.stateToken
+  });
+  assert.ok(score.percentage >= 0 && score.percentage <= 100, "student-facing percentage must remain within 0-100");
+  return { order: order.payload, score, stateToken: score.stateToken };
+}
+
+async function resumeDesktopAttempt(runtime, { caseId, language, attemptId }) {
+  const result = await requestJson(runtime, "/api/desktop/attempt/resume/", {
+    body: { attemptId, caseId, language, mode: "free" }
+  });
+  assert.ok(result.stateToken, "desktop resume must return the durable current token");
+  return result;
+}
+
 const zhTurns = [
-  { question: "哪里不舒服？", expectedFact: "chief_complaint" },
-  { question: "多久了？", expectedFact: "hematuria_onset" },
-  // P001's reconciled summary contains review-governed history, so its
-  // student-collectable matchedFacts may intentionally remain empty.
-  { question: "有没有其他疾病？", expectedFact: null },
-  { question: "高血压吃什么药？", expectedFact: "medication_name" },
-  { question: "怎么吃？", expectedFact: "medication_frequency" }
+  { question: "哪里不舒服？", expectedIntent: "chief_complaint", expectedSlot: "chief_complaint" },
+  { question: "多久了？", expectedIntent: "hematuria_onset", expectedSlot: "hematuria_onset", requiresContext: true },
+  // Review-governed history may be a truthful unknown and need not be
+  // student-collectable, but the intent and nine-state result remain observable.
+  { question: "有没有其他疾病？", expectedIntent: "past_medical_history_summary", expectedSlot: "PAST_ALL", matchedFact: null, allowsUnknown: true },
+  { question: "高血压吃什么药？", expectedIntent: "medication_name", expectedSlot: "MED_ALL" },
+  { question: "这个药怎么吃？", expectedIntent: "medication_frequency", expectedSlot: "MED_ALL", requiresContext: true },
+  { question: "还有其他药吗？", expectedIntent: "other_medications", expectedSlot: "MED_ALL", matchedFact: null, allowsUnknown: true, requiresContext: true },
+  { question: "抽烟吗？", expectedIntent: "smoking_history", expectedSlot: "LIFE_SMOKING", matchedFact: null, allowsUnknown: true },
+  { question: "喝酒吗？", expectedIntent: "alcohol_history", expectedSlot: "LIFE_ALCOHOL", matchedFact: null, allowsUnknown: true }
 ];
 
 const enTurns = [
-  { question: "What brings you in?", expectedFact: "chief_complaint" },
-  { question: "How long has it been going on?", expectedFact: "hematuria_onset" },
-  { question: "Do you have any other diseases?", expectedFact: null },
-  { question: "What medicine do you take for high blood pressure?", expectedFact: "medication_name" },
-  { question: "How do you take it?", expectedFact: "medication_frequency" }
+  { question: "What brings you in?", expectedIntent: "chief_complaint", expectedSlot: "chief_complaint" },
+  { question: "How long has it been going on?", expectedIntent: "hematuria_onset", expectedSlot: "hematuria_onset", requiresContext: true },
+  { question: "Do you have any other diseases?", expectedIntent: "past_medical_history_summary", expectedSlot: "PAST_ALL", matchedFact: null, allowsUnknown: true },
+  { question: "What medicine do you take for high blood pressure?", expectedIntent: "medication_name", expectedSlot: "MED_ALL" },
+  { question: "How do you take it?", expectedIntent: "medication_frequency", expectedSlot: "MED_ALL", requiresContext: true },
+  { question: "Do you take any other medications?", expectedIntent: "other_medications", expectedSlot: "MED_ALL", matchedFact: null, allowsUnknown: true, requiresContext: true },
+  { question: "Do you smoke?", expectedIntent: "smoking_history", expectedSlot: "LIFE_SMOKING", matchedFact: null, allowsUnknown: true },
+  { question: "Do you drink alcohol?", expectedIntent: "alcohol_history", expectedSlot: "LIFE_ALCOHOL", matchedFact: null, allowsUnknown: true }
 ];
 
 const suffix = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
 const p001ZhAttemptId = `desktop-p001-zh-${suffix}`;
 const p001EnAttemptId = `desktop-p001-en-${suffix}`;
 const p003AttemptId = `desktop-p003-zh-${suffix}`;
+let fallbackSevenStage = null;
+let completedRestartVerified = false;
 
 try {
   let runtime = await launchSidecar();
@@ -549,18 +907,14 @@ try {
     label: "P001 Chinese after restart"
   });
 
-  await askPatient(runtime, {
-    caseId: "P001",
-    language: "zh",
-    attemptId: p001ZhAttemptId,
-    sessionId: zhInterview.sessionId,
-    question: "还有没有其他药？",
-    expectedFact: "other_medications",
-    conversationHistory: zhInterview.conversationHistory,
-    askedSlotIds: zhInterview.askedSlotIds,
-    askedQuestions: zhInterview.askedQuestions,
-    label: "P001/zh/restored-session"
-  });
+  if (!realLocalAi) {
+    fallbackSevenStage = await completeFallbackSevenStages(runtime, {
+      caseId: "P001",
+      language: "zh",
+      attemptId: p001ZhAttemptId,
+      stateToken: persistedReplay.stateToken
+    });
+  }
 
   const enInterview = await runInterview(runtime, {
     caseId: "P001",
@@ -604,6 +958,28 @@ try {
   assert.equal(finalRuntimeEvidence.cloudRequestCount, 0);
   await stopSidecar(runtime);
 
+  if (!realLocalAi) {
+    runtime = await launchSidecar();
+    const completedResume = await resumeDesktopAttempt(runtime, {
+      caseId: "P001",
+      language: "zh",
+      attemptId: p001ZhAttemptId
+    });
+    assert.equal(completedResume.payload.currentStage, 8, "completed P001 must restore at the report stage");
+    assert.equal(completedResume.payload.status, "completed", "completed P001 must restore as completed");
+    assert.equal(completedResume.stateToken, fallbackSevenStage.stateToken, "completed resume must return the current durable token");
+
+    const scoreReplay = await requestJson(runtime, "/api/training-action/", {
+      body: fallbackSevenStage.score.body,
+      stateToken: fallbackSevenStage.score.originalToken,
+      idempotencyKey: fallbackSevenStage.score.requestId
+    });
+    assert.equal(scoreReplay.stateToken, fallbackSevenStage.score.stateToken, "final score idempotency must survive a sidecar restart");
+    assert.deepEqual(scoreReplay.payload, fallbackSevenStage.score.payload, "restarted score replay must return the same final report");
+    completedRestartVerified = true;
+    await stopSidecar(runtime);
+  }
+
   const { DatabaseSync } = await import("node:sqlite");
   const database = new DatabaseSync(databasePath, { readOnly: true });
   try {
@@ -618,13 +994,17 @@ try {
     assert.equal(attemptRows.length, 3, "all three acceptance attempts must be durable");
     for (const row of attemptRows) {
       const state = JSON.parse(row.state_json);
-      assert.equal(Number(state.currentStage), 2, `${row.attempt_id} must persist stage two`);
-      assert.equal(
-        (state.completedStages || []).filter((stage) => Number(stage) === 1).length,
-        1,
-        `${row.attempt_id} must persist one stage-one completion`
-      );
+      const completedFallbackAttempt = !realLocalAi && row.attempt_id === p001ZhAttemptId;
+      assert.equal(Number(state.currentStage), completedFallbackAttempt ? 8 : 2, `${row.attempt_id} must persist its current stage`);
+      assert.equal(state.status, completedFallbackAttempt ? "completed" : "active", `${row.attempt_id} must persist its status`);
+      const expectedStages = completedFallbackAttempt ? [1, 2, 3, 4, 5, 6, 7] : [1];
+      assert.deepEqual(state.completedStages, expectedStages, `${row.attempt_id} must persist each completed stage exactly once`);
       assert.ok(state.submissions?.history, `${row.attempt_id} must persist its history submission`);
+      if (completedFallbackAttempt) {
+        assert.ok(state.submissions?.orders && state.submissions?.diagnosis && state.submissions?.consult, "completed fallback flow must persist stages 2-4");
+        assert.ok(state.submissions?.treatment && state.submissions?.perioperative && state.submissions?.debrief, "completed fallback flow must persist stages 5-7");
+        assert.equal(Number(state.finalScore), fallbackSevenStage.score.payload.total, "completed fallback flow must persist its final score");
+      }
     }
     const stageRequest = database.prepare(`
       SELECT COUNT(*) AS count
@@ -632,6 +1012,14 @@ try {
       WHERE request_id = ?
     `).get(zhSubmission.requestId);
     assert.equal(Number(stageRequest?.count), 1, "rapid and restarted replays must occupy one idempotency record");
+    if (!realLocalAi) {
+      const scoreRequest = database.prepare(`
+        SELECT COUNT(*) AS count
+        FROM attempt_requests
+        WHERE request_id = ?
+      `).get(fallbackSevenStage.score.requestId);
+      assert.equal(Number(scoreRequest?.count), 1, "rapid and restarted score replays must occupy one idempotency record");
+    }
     const restoredSession = database.prepare(`
       SELECT status
       FROM desktop_sessions
@@ -644,30 +1032,44 @@ try {
 
   const sourceSummary = Object.fromEntries([...sourceCounts.entries()].sort(([left], [right]) => left.localeCompare(right)));
   const answerSourceSummary = Object.fromEntries([...answerSourceCounts.entries()].sort(([left], [right]) => left.localeCompare(right)));
+  assert.equal(turnDiagnostics.length, 16, "acceptance must record exactly eight safe diagnostic rows per language");
+  assert.ok(contextAppliedCount > 0, "follow-up intent and slot context must be retained");
   if (realLocalAi) {
     assert.ok((answerSourceCounts.get("local_ai") || 0) > 0, "the real model run must accept at least one local classification");
-    assert.ok(contextAppliedCount > 0, "the real model run must apply conversation context to a follow-up");
   } else {
     assert.ok((answerSourceCounts.get("rule_fallback") || 0) > 0, "the disabled model run must use rule_fallback");
   }
   const offlineEvidence = {
     llamaServerReady: finalRuntimeEvidence.llamaServerReady,
     localModelReady: finalRuntimeEvidence.localModelReady,
-    answerSource: realLocalAi ? "local_ai" : "rule_fallback",
+    answerSource: finalRuntimeEvidence.answerSource,
     cloudRequestCount: finalRuntimeEvidence.cloudRequestCount
   };
+  if (!realLocalAi) assert.equal(offlineEvidence.answerSource, "rule_fallback", "disabled local AI must never be presented as local_ai");
   process.stdout.write(`${JSON.stringify({
     status: "PASS",
     mode: realLocalAi ? "real_local_ai_offline" : "rule_fallback",
     stagedAppRoot: path.relative(repoRoot, appRoot).replaceAll("\\", "/"),
-    ...(realLocalAi ? { model: manifest.model.fileName, modelSha256Verified: modelSha256 === manifest.model.sha256 } : {}),
-    attempts: { p001Zh: "stage2", p001En: "stage2", p003ZeroRound: "stage2" },
+    modelMode,
+    model: selectedModel.fileName,
+    ...(realLocalAi ? { modelSha256Verified: modelSha256 === selectedModel.sha256 } : {}),
+    attempts: { p001Zh: realLocalAi ? "stage2" : "completed", p001En: "stage2", p003ZeroRound: "stage2" },
     questions: zhTurns.length + enTurns.length,
     restoredSession: true,
+    completedRestartVerified,
     persistentIdempotency: true,
     contextAppliedCount,
+    ...(fallbackSevenStage ? {
+      fallbackSevenStage: {
+        status: "completed",
+        stage2OrderStatus: fallbackSevenStage.order.orderOutcomes[0].status,
+        finalReportGenerated: true,
+        percentage: fallbackSevenStage.score.percentage
+      }
+    } : {}),
     sources: sourceSummary,
     answerSources: answerSourceSummary,
+    turnDiagnostics,
     offlineEvidence
   }, null, 2)}\n`);
   process.stdout.write(`llamaServerReady=${offlineEvidence.llamaServerReady}\n`);

@@ -270,6 +270,54 @@ function validateCurrentAttempt({ attemptKey, tokenHash }) {
   });
 }
 
+function resumeAttempt({ attemptKey, caseId, attemptId, mode, language }) {
+  const expected = {
+    attemptKey: String(attemptKey || ""),
+    caseId: String(caseId || ""),
+    attemptId: String(attemptId || ""),
+    mode: String(mode || ""),
+    language: String(language || "")
+  };
+  if (Object.values(expected).some((value) => !value)) throw new Error("desktop_attempt_identity_required");
+  const { database } = openStore();
+  const row = database.prepare(`
+    SELECT case_id, attempt_id, state_json, expires_at
+    FROM attempts
+    WHERE attempt_key = ?
+  `).get(expected.attemptKey);
+  if (!row) return { kind: "missing" };
+  if (!Number.isSafeInteger(row.expires_at) || row.expires_at <= Date.now()) {
+    return { kind: "expired" };
+  }
+  if (row.case_id !== expected.caseId || row.attempt_id !== expected.attemptId) {
+    return { kind: "identity_mismatch" };
+  }
+
+  let state;
+  try {
+    state = JSON.parse(row.state_json);
+  } catch {
+    return { kind: "invalid_state" };
+  }
+  if (!state || typeof state !== "object" || Array.isArray(state)) return { kind: "invalid_state" };
+  if (
+    state.caseId !== expected.caseId
+    || state.attemptId !== expected.attemptId
+    || state.mode !== expected.mode
+    || state.language !== expected.language
+  ) {
+    return { kind: "identity_mismatch" };
+  }
+  if (!Number.isSafeInteger(state.expiresAt) || state.expiresAt <= Date.now()) {
+    return { kind: "expired" };
+  }
+  if (!["active", "completed"].includes(state.status)) return { kind: "not_resumable" };
+  if (!Number.isSafeInteger(Number(state.currentStage)) || Number(state.currentStage) < 1 || Number(state.currentStage) > 8) {
+    return { kind: "invalid_state" };
+  }
+  return { kind: "active", state: clone(state) };
+}
+
 function commitAttempt({
   attemptKey,
   state,
@@ -511,6 +559,7 @@ module.exports = {
   getTrainingRecordSnapshot,
   loadAttempt,
   registerAttempt,
+  resumeAttempt,
   saveTrainingRecordSnapshot,
   setDesktopSetting,
   upsertDesktopSessionMetadata,

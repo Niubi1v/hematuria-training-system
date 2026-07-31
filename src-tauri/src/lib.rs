@@ -1,14 +1,14 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{
     env,
     error::Error,
-    fs::{self, File},
+    fs::{self, File, OpenOptions},
     io::{BufRead, BufReader, Write},
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
     sync::{mpsc, Mutex},
     thread,
-    time::{Duration, Instant},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 use tauri::{Manager, WebviewUrl};
 
@@ -17,6 +17,11 @@ const SIDECAR_STARTUP_TIMEOUT: Duration = Duration::from_secs(150);
 const SIDECAR_GRACEFUL_SHUTDOWN: Duration = Duration::from_secs(3);
 const DESKTOP_ORIGINS: &str =
     "http://tauri.localhost,https://tauri.localhost,tauri://localhost";
+const WINDOW_STATE_VERSION: u32 = 1;
+const WINDOW_STATE_FILE: &str = "window-state-v1.json";
+const MIN_WINDOW_WIDTH: u32 = 960;
+const MIN_WINDOW_HEIGHT: u32 = 640;
+const MAX_WINDOW_DIMENSION: u32 = 16_384;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -35,13 +40,154 @@ struct RuntimeLayout {
     llama_server: PathBuf,
 }
 
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct PersistedWindowState {
+    version: u32,
+    x: i32,
+    y: i32,
+    width: u32,
+    height: u32,
+    maximized: bool,
+}
+
+impl PersistedWindowState {
+    fn valid(&self) -> bool {
+        self.version == WINDOW_STATE_VERSION
+            && (MIN_WINDOW_WIDTH..=MAX_WINDOW_DIMENSION).contains(&self.width)
+            && (MIN_WINDOW_HEIGHT..=MAX_WINDOW_DIMENSION).contains(&self.height)
+            && self.x.unsigned_abs() <= 100_000
+            && self.y.unsigned_abs() <= 100_000
+    }
+}
+
+fn load_window_state(path: &Path) -> Result<Option<PersistedWindowState>, String> {
+    let bytes = match fs::read(path) {
+        Ok(bytes) => bytes,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(_) => return Err("desktop_window_state_read_failed".to_string()),
+    };
+    if bytes.len() > 4096 {
+        return Err("desktop_window_state_too_large".to_string());
+    }
+    let state: PersistedWindowState = serde_json::from_slice(&bytes)
+        .map_err(|_| "desktop_window_state_invalid".to_string())?;
+    if !state.valid() {
+        return Err("desktop_window_state_invalid".to_string());
+    }
+    Ok(Some(state))
+}
+
+#[cfg(windows)]
+fn replace_file_atomically(source: &Path, destination: &Path) -> Result<(), String> {
+    use std::os::windows::ffi::OsStrExt;
+    const MOVEFILE_REPLACE_EXISTING: u32 = 0x1;
+    const MOVEFILE_WRITE_THROUGH: u32 = 0x8;
+    #[link(name = "Kernel32")]
+    extern "system" {
+        fn MoveFileExW(
+            existing_file_name: *const u16,
+            new_file_name: *const u16,
+            flags: u32,
+        ) -> i32;
+    }
+    let source_wide: Vec<u16> = source.as_os_str().encode_wide().chain(Some(0)).collect();
+    let destination_wide: Vec<u16> = destination
+        .as_os_str()
+        .encode_wide()
+        .chain(Some(0))
+        .collect();
+    let replaced = unsafe {
+        MoveFileExW(
+            source_wide.as_ptr(),
+            destination_wide.as_ptr(),
+            MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH,
+        )
+    };
+    if replaced == 0 {
+        return Err("desktop_window_state_replace_failed".to_string());
+    }
+    Ok(())
+}
+
+#[cfg(not(windows))]
+fn replace_file_atomically(source: &Path, destination: &Path) -> Result<(), String> {
+    fs::rename(source, destination)
+        .map_err(|_| "desktop_window_state_replace_failed".to_string())
+}
+
+fn persist_window_state_atomic(path: &Path, state: &PersistedWindowState) -> Result<(), String> {
+    if !state.valid() {
+        return Err("desktop_window_state_invalid".to_string());
+    }
+    let parent = path
+        .parent()
+        .ok_or_else(|| "desktop_window_state_parent_missing".to_string())?;
+    fs::create_dir_all(parent)
+        .map_err(|_| "desktop_window_state_directory_failed".to_string())?;
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|_| "desktop_window_state_clock_invalid".to_string())?
+        .as_nanos();
+    let temporary = parent.join(format!(
+        ".{WINDOW_STATE_FILE}.tmp-{}-{nonce}",
+        std::process::id()
+    ));
+    let result = (|| {
+        let mut file = OpenOptions::new()
+            .create_new(true)
+            .write(true)
+            .open(&temporary)
+            .map_err(|_| "desktop_window_state_temporary_open_failed".to_string())?;
+        let payload = serde_json::to_vec(state)
+            .map_err(|_| "desktop_window_state_serialize_failed".to_string())?;
+        file.write_all(&payload)
+            .map_err(|_| "desktop_window_state_write_failed".to_string())?;
+        file.sync_all()
+            .map_err(|_| "desktop_window_state_sync_failed".to_string())?;
+        drop(file);
+        replace_file_atomically(&temporary, path)?;
+        Ok(())
+    })();
+    if result.is_err() {
+        let _ = fs::remove_file(&temporary);
+    }
+    result
+}
+
+fn window_state_intersects_monitor<R: tauri::Runtime>(
+    window: &tauri::WebviewWindow<R>,
+    state: &PersistedWindowState,
+) -> bool {
+    let Ok(monitors) = window.available_monitors() else {
+        return false;
+    };
+    let window_left = i64::from(state.x);
+    let window_top = i64::from(state.y);
+    let window_right = window_left + i64::from(state.width);
+    let window_bottom = window_top + i64::from(state.height);
+    monitors.iter().any(|monitor| {
+        let position = monitor.position();
+        let size = monitor.size();
+        let monitor_left = i64::from(position.x);
+        let monitor_top = i64::from(position.y);
+        let monitor_right = monitor_left + i64::from(size.width);
+        let monitor_bottom = monitor_top + i64::from(size.height);
+        window_left < monitor_right
+            && window_right > monitor_left
+            && window_top < monitor_bottom
+            && window_bottom > monitor_top
+    })
+}
+
 #[derive(Default)]
 struct LifecycleState {
     sidecar: Mutex<Option<ManagedSidecar>>,
+    window_state_path: Mutex<Option<PathBuf>>,
 }
 
 impl LifecycleState {
-    fn install(&self, sidecar: ManagedSidecar) -> Result<(), String> {
+    fn install(&self, sidecar: ManagedSidecar, window_state_path: PathBuf) -> Result<(), String> {
         let mut guard = self
             .sidecar
             .lock()
@@ -50,7 +196,38 @@ impl LifecycleState {
             return Err("desktop_sidecar_already_started".to_string());
         }
         *guard = Some(sidecar);
+        *self
+            .window_state_path
+            .lock()
+            .map_err(|_| "desktop_window_state_path_poisoned".to_string())? =
+            Some(window_state_path);
         Ok(())
+    }
+
+    fn persist_window<R: tauri::Runtime>(&self, window: &tauri::Window<R>) -> Result<(), String> {
+        let path = self
+            .window_state_path
+            .lock()
+            .map_err(|_| "desktop_window_state_path_poisoned".to_string())?
+            .clone()
+            .ok_or_else(|| "desktop_window_state_path_missing".to_string())?;
+        let position = window
+            .outer_position()
+            .map_err(|_| "desktop_window_position_unavailable".to_string())?;
+        let size = window
+            .inner_size()
+            .map_err(|_| "desktop_window_size_unavailable".to_string())?;
+        let state = PersistedWindowState {
+            version: WINDOW_STATE_VERSION,
+            x: position.x,
+            y: position.y,
+            width: size.width,
+            height: size.height,
+            maximized: window
+                .is_maximized()
+                .map_err(|_| "desktop_window_maximized_state_unavailable".to_string())?,
+        };
+        persist_window_state_atomic(&path, &state)
     }
 
     fn shutdown(&self) {
@@ -258,6 +435,17 @@ fn configured_absolute_path(name: &str) -> Result<Option<PathBuf>, String> {
     Ok(Some(path))
 }
 
+fn desktop_data_directory(app: &tauri::App) -> Result<PathBuf, String> {
+    configured_absolute_path("HEMATURIA_DESKTOP_DATA_DIR")?.map_or_else(
+        || {
+            app.path()
+                .app_local_data_dir()
+                .map_err(|error| format!("desktop_local_data_dir_unavailable:{error}"))
+        },
+        Ok,
+    )
+}
+
 fn first_existing(candidates: impl IntoIterator<Item = PathBuf>) -> Option<PathBuf> {
     candidates.into_iter().find(|candidate| candidate.exists())
 }
@@ -376,6 +564,9 @@ fn sanitized_child_environment(
     if let Some(disabled) = env::var_os("HEMATURIA_DESKTOP_DISABLE_LOCAL_AI") {
         command.env("HEMATURIA_DESKTOP_DISABLE_LOCAL_AI", disabled);
     }
+    if cfg!(debug_assertions) {
+        command.env("HEMATURIA_DESKTOP_DEBUG_RUNTIME", "1");
+    }
     Ok(())
 }
 
@@ -430,12 +621,11 @@ fn wait_for_ready(
         .map_err(|_| "desktop_sidecar_startup_timeout".to_string())?
 }
 
-fn start_sidecar(app: &tauri::App) -> Result<(ManagedSidecar, ReadyMessage, String), String> {
+fn start_sidecar(
+    app: &tauri::App,
+    data_dir: &Path,
+) -> Result<(ManagedSidecar, ReadyMessage, String), String> {
     let layout = resolve_runtime_layout(app)?;
-    let data_dir = configured_absolute_path("HEMATURIA_DESKTOP_DATA_DIR")?
-        .unwrap_or(app.path().app_local_data_dir().map_err(|error| {
-            format!("desktop_local_data_dir_unavailable:{error}")
-        })?);
     let logs_dir = data_dir.join("logs");
     fs::create_dir_all(&logs_dir)
         .map_err(|error| format!("desktop_data_dir_create_failed:{error}"))?;
@@ -509,11 +699,16 @@ fn start_sidecar(app: &tauri::App) -> Result<(ManagedSidecar, ReadyMessage, Stri
     Ok((ManagedSidecar { child, job }, ready, bearer))
 }
 
-fn runtime_initialization_script(origin: &str, bearer: &str) -> Result<String, String> {
+fn runtime_initialization_script(
+    origin: &str,
+    bearer: &str,
+    debug_runtime: bool,
+) -> Result<String, String> {
     let value = serde_json::json!({
         "runtimeTarget": "desktop",
         "apiBaseUrl": origin,
-        "authToken": bearer
+        "authToken": bearer,
+        "debugRuntime": debug_runtime
     });
     let serialized = serde_json::to_string(&value)
         .map_err(|_| "desktop_runtime_injection_serialize_failed".to_string())?;
@@ -523,23 +718,57 @@ fn runtime_initialization_script(origin: &str, bearer: &str) -> Result<String, S
 }
 
 fn setup(app: &mut tauri::App) -> Result<(), Box<dyn Error>> {
+    let data_dir = desktop_data_directory(app).map_err(std::io::Error::other)?;
+    fs::create_dir_all(&data_dir).map_err(|error| {
+        std::io::Error::other(format!("desktop_data_dir_create_failed:{error}"))
+    })?;
+    let window_state_path = data_dir.join(WINDOW_STATE_FILE);
+    let restored_window_state = match load_window_state(&window_state_path) {
+        Ok(state) => state,
+        Err(code) => {
+            eprintln!("{{\"event\":\"desktop_window_state_ignored\",\"code\":\"{code}\"}}");
+            None
+        }
+    };
     let (sidecar, ready, bearer) =
-        start_sidecar(app).map_err(std::io::Error::other)?;
-    let initialization_script =
-        runtime_initialization_script(&ready.origin, &bearer).map_err(std::io::Error::other)?;
+        start_sidecar(app, &data_dir).map_err(std::io::Error::other)?;
+    let initialization_script = runtime_initialization_script(
+        &ready.origin,
+        &bearer,
+        cfg!(debug_assertions),
+    )
+    .map_err(std::io::Error::other)?;
     app.state::<LifecycleState>()
-        .install(sidecar)
+        .install(sidecar, window_state_path)
         .map_err(std::io::Error::other)?;
 
-    tauri::WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
+    let mut builder = tauri::WebviewWindowBuilder::new(
+        app,
+        "main",
+        WebviewUrl::App("index.html".into()),
+    )
         .title("血尿临床问诊训练系统")
         .inner_size(1280.0, 820.0)
         .min_inner_size(960.0, 640.0)
         .center()
         .resizable(true)
         .devtools(cfg!(debug_assertions))
-        .initialization_script(initialization_script)
-        .build()?;
+        .initialization_script(initialization_script);
+    if restored_window_state.is_none() {
+        builder = builder.maximized(true);
+    }
+    let window = builder.build()?;
+    if let Some(state) = restored_window_state {
+        window.set_size(tauri::PhysicalSize::new(state.width, state.height))?;
+        if window_state_intersects_monitor(&window, &state) {
+            window.set_position(tauri::PhysicalPosition::new(state.x, state.y))?;
+        } else {
+            window.center()?;
+        }
+        if state.maximized {
+            window.maximize()?;
+        }
+    }
     Ok(())
 }
 
@@ -549,9 +778,75 @@ pub fn run() {
         .setup(setup)
         .on_window_event(|window, event| {
             if matches!(event, tauri::WindowEvent::CloseRequested { .. }) {
-                window.state::<LifecycleState>().shutdown();
+                let lifecycle = window.state::<LifecycleState>();
+                if let Err(code) = lifecycle.persist_window(window) {
+                    eprintln!("{{\"event\":\"desktop_window_state_save_failed\",\"code\":\"{code}\"}}");
+                }
+                lifecycle.shutdown();
             }
         })
         .run(tauri::generate_context!())
         .expect("failed to run the hematuria desktop application");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn temporary_directory(label: &str) -> PathBuf {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("test clock")
+            .as_nanos();
+        env::temp_dir().join(format!(
+            "hematuria-desktop-window-{label}-{}-{nonce}",
+            std::process::id()
+        ))
+    }
+
+    #[test]
+    fn missing_window_state_is_a_first_launch() {
+        let directory = temporary_directory("missing");
+        let path = directory.join(WINDOW_STATE_FILE);
+        assert_eq!(load_window_state(&path).expect("missing state"), None);
+    }
+
+    #[test]
+    fn window_state_is_atomically_replaced_and_restored() {
+        let directory = temporary_directory("roundtrip");
+        let path = directory.join(WINDOW_STATE_FILE);
+        let first = PersistedWindowState {
+            version: WINDOW_STATE_VERSION,
+            x: 40,
+            y: 50,
+            width: 1280,
+            height: 820,
+            maximized: true,
+        };
+        let second = PersistedWindowState {
+            maximized: false,
+            width: 1440,
+            height: 900,
+            ..first
+        };
+        persist_window_state_atomic(&path, &first).expect("first save");
+        persist_window_state_atomic(&path, &second).expect("replacement save");
+        assert_eq!(load_window_state(&path).expect("load"), Some(second));
+        let entries = fs::read_dir(&directory).expect("state directory").count();
+        assert_eq!(entries, 1, "temporary state files must not remain");
+        fs::remove_dir_all(directory).expect("test cleanup");
+    }
+
+    #[test]
+    fn invalid_window_state_is_rejected() {
+        let invalid = PersistedWindowState {
+            version: WINDOW_STATE_VERSION,
+            x: 0,
+            y: 0,
+            width: MIN_WINDOW_WIDTH - 1,
+            height: MIN_WINDOW_HEIGHT,
+            maximized: false,
+        };
+        assert!(!invalid.valid());
+    }
 }

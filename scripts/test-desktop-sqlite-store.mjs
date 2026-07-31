@@ -126,6 +126,86 @@ async function main() {
   assert.equal(loaded.duplicate, false);
   assert.deepEqual(loaded.state, initialState);
 
+  const resumableState = state("attempt-resume", {
+    expiresAt: Date.now() + 60_000,
+    currentStage: 3
+  });
+  await store.registerAttempt({
+    state: resumableState,
+    token: "resume-token",
+    requestId: "register-resume",
+    requestDigest: requestDigest("f"),
+    payload: { registered: true }
+  });
+  const resumeKey = `hematuria:attempt:v1:${store.digest("p003:attempt-resume")}`;
+  assert.deepEqual(sqlite.resumeAttempt({
+    attemptKey: resumeKey,
+    caseId: "P003",
+    attemptId: "attempt-resume",
+    mode: "public-practice",
+    language: "zh"
+  }), { kind: "active", state: resumableState });
+  assert.equal(sqlite.resumeAttempt({
+    attemptKey: resumeKey,
+    caseId: "P003",
+    attemptId: "attempt-resume",
+    mode: "formal-attempt",
+    language: "zh"
+  }).kind, "identity_mismatch");
+  assert.equal(sqlite.resumeAttempt({
+    attemptKey: resumeKey,
+    caseId: "P003",
+    attemptId: "attempt-resume",
+    mode: "public-practice",
+    language: "en"
+  }).kind, "identity_mismatch");
+  assert.equal(sqlite.resumeAttempt({
+    attemptKey: `hematuria:attempt:v1:${store.digest("p003:missing-resume")}`,
+    caseId: "P003",
+    attemptId: "missing-resume",
+    mode: "public-practice",
+    language: "zh"
+  }).kind, "missing");
+
+  const expiredState = state("attempt-expired-resume", {
+    expiresAt: Date.now() - 1,
+    currentStage: 1
+  });
+  await store.registerAttempt({
+    state: expiredState,
+    token: "expired-resume-token",
+    requestId: "register-expired-resume",
+    requestDigest: requestDigest("0"),
+    payload: { registered: true }
+  });
+  assert.equal(sqlite.resumeAttempt({
+    attemptKey: `hematuria:attempt:v1:${store.digest("p003:attempt-expired-resume")}`,
+    caseId: "P003",
+    attemptId: "attempt-expired-resume",
+    mode: "public-practice",
+    language: "zh"
+  }).kind, "expired");
+
+  const completedResumeState = state("attempt-completed-resume", {
+    expiresAt: Date.now() + 60_000,
+    currentStage: 8,
+    status: "completed"
+  });
+  await store.registerAttempt({
+    state: completedResumeState,
+    token: "completed-resume-token",
+    requestId: "register-completed-resume",
+    requestDigest: requestDigest("9"),
+    payload: { registered: true }
+  });
+  assert.deepEqual(sqlite.resumeAttempt({
+    attemptKey: `hematuria:attempt:v1:${store.digest("p003:attempt-completed-resume")}`,
+    caseId: "P003",
+    attemptId: "attempt-completed-resume",
+    mode: "public-practice",
+    language: "zh"
+  }), { kind: "active", state: completedResumeState });
+
   const committedState = state("attempt-main", { completedStages: [1] });
   const commitPayload = { stage: 1, accepted: true };
   const committed = await store.commitAttempt({
