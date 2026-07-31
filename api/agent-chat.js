@@ -34,6 +34,12 @@ function safetyBoundaryFallback(patient) {
     || (patient.safetyFlags || []).some((flag) => flag.startsWith("blocked_") || flag === "ai_response_blocked");
 }
 
+function desktopDiagnosticsRequested(body) {
+  return body?.debug === true
+    && process.env.HEMATURIA_RUNTIME_TARGET === "desktop"
+    && process.env.HEMATURIA_DESKTOP_DEBUG_RUNTIME === "1";
+}
+
 function getProviderConfig() {
   const endpointType = process.env.LLM_ENDPOINT_TYPE || "chat_completions";
   return {
@@ -214,14 +220,16 @@ async function buildAgentResponse(body, agentId, caseData, startedAt) {
             ? "rule_fallback"
             : patient.cacheHit ? "ai_cache" : "live_ai"
         ));
-    const desktopEvidence = desktopPatientEvidence(patient);
+    const desktopEvidence = desktopDiagnosticsRequested(body)
+      ? desktopPatientEvidence(patient, { latency: Date.now() - startedAt })
+      : null;
     return {
       statusCode: 200,
       timings: { app: Date.now() - startedAt, provider: patient.providerDurationMs, firsttoken: patient.providerFirstTokenMs },
       payload: {
         agentId,
         replyText: patient.replyText,
-        usedModel: patient.model,
+        usedModel: patient.runtimeTrace?.model || patient.model,
         provider: patient.provider,
         visibleToStudent: true,
         revealedDataKeys: [],
@@ -242,7 +250,6 @@ async function buildAgentResponse(body, agentId, caseData, startedAt) {
         thinkingExecuted: Boolean(patient.runtimeTrace?.thinkingExecuted),
         thinkingMode: String(patient.runtimeTrace?.thinkingMode || "disabled"),
         ...(desktopEvidence ? { desktopEvidence } : {}),
-        ...(body.debug ? { debug: { responseAccepted: Boolean(patient.filter?.ok), rewriteTriggered: Boolean(patient.rewriteTriggered), cacheHit: Boolean(patient.cacheHit), deploymentCommit: process.env.VERCEL_GIT_COMMIT_SHA || "local" } } : {})
       }
     };
   }

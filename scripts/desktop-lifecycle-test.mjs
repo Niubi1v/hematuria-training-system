@@ -80,7 +80,7 @@ function waitForExit(child, timeoutMs = 10_000) {
   });
 }
 
-async function launch(name) {
+async function launch(name, { debugRuntime = true } = {}) {
   const dataDirectory = path.join(temporaryRoot, name);
   const modelPath = path.join(dataDirectory, "models", "Qwen3-1.7B-Q4_K_M.gguf");
   const llamaPidFile = path.join(dataDirectory, "fake-llama.pid");
@@ -105,6 +105,7 @@ async function launch(name) {
       HEMATURIA_LLAMA_SERVER_PATH: process.execPath,
       HEMATURIA_LLAMA_SERVER_PREFIX_ARGS: JSON.stringify([fakeLlamaEntry]),
       HEMATURIA_DESKTOP_TEST_MODE: "1",
+      ...(debugRuntime ? { HEMATURIA_DESKTOP_DEBUG_RUNTIME: "1" } : {}),
       HEMATURIA_DESKTOP_TEST_LLAMA_PID_FILE: llamaPidFile,
       HEMATURIA_DESKTOP_ALLOWED_ORIGINS: allowedOrigin,
       HEMATURIA_DESKTOP_BEARER: bearer,
@@ -131,9 +132,10 @@ async function launch(name) {
   assert.equal(ready.handshake, handshake);
   assert.equal(ready.pid, child.pid);
   assert.equal(ready.databaseSchemaVersion, 1);
-  assert.equal(ready.localAi.status, "ready");
+  assert.equal(ready.localAi.status, "starting");
   assert.match(ready.origin, /^http:\/\/127\.0\.0\.1:\d+$/);
   assert.equal(await fs.stat(path.join(dataDirectory, "hematuria.sqlite3")).then((value) => value.isFile()), true);
+  await eventually(async () => fs.stat(llamaPidFile).then((value) => value.isFile()).catch(() => false), 20_000);
   const llamaPid = Number(await fs.readFile(llamaPidFile, "utf8"));
   assert.equal(processExists(llamaPid), true);
   return { bearer, child, dataDirectory, diagnostics: () => diagnostics, llamaPid, ready };
@@ -153,7 +155,15 @@ async function authorizedFetch(runtime, pathname = "/api/health/", options = {})
 
 try {
   const first = await launch("first");
-  const second = await launch("second");
+  const second = await launch("second", { debugRuntime: false });
+  await eventually(async () => {
+    const response = await authorizedFetch(first, "/api/desktop/settings/");
+    return response.ok && (await response.json()).llamaStatus === "ready";
+  }, 20_000);
+  await eventually(async () => {
+    const response = await authorizedFetch(second, "/api/desktop/settings/");
+    return response.ok && (await response.json()).llamaStatus === "ready";
+  }, 20_000);
   assert.notEqual(first.ready.origin, second.ready.origin, "each launch must use a fresh random port");
   assert.notEqual(first.bearer, second.bearer, "each launch must use a fresh bearer");
 
@@ -178,12 +188,18 @@ try {
   assert.deepEqual(Object.keys(settingsPayload).sort(), [
     "llamaStatus",
     "localAiEnabled",
+    "modelAlias",
     "modelDirectory",
     "modelFilePath",
+    "modelMode",
     "modelPresent",
+    "modelValidation",
     "version"
   ].sort());
   assert.equal(settingsPayload.modelPresent, true);
+  assert.equal(settingsPayload.modelMode, "lightweight");
+  assert.equal(settingsPayload.modelAlias, "Qwen3-1.7B");
+  assert.ok(["pending", "verified"].includes(settingsPayload.modelValidation));
   assert.equal(settingsPayload.localAiEnabled, true);
   assert.equal(settingsPayload.llamaStatus, "ready");
   assert.equal(settingsPayload.version, 1);
@@ -202,6 +218,12 @@ try {
     body: JSON.stringify({ modelDirectory: "relative-models" })
   });
   assert.equal(relativeDirectory.status, 400);
+  const invalidModelMode = await authorizedFetch(first, "/api/desktop/settings/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ modelMode: "attacker-controlled" })
+  });
+  assert.equal(invalidModelMode.status, 400);
 
   const originalLlamaPid = first.llamaPid;
   const disabledSettings = await authorizedFetch(first, "/api/desktop/settings/", {
@@ -216,23 +238,112 @@ try {
   const alternateModelDirectory = path.join(first.dataDirectory, "alternate-models");
   await fs.mkdir(alternateModelDirectory, { recursive: true });
   await fs.writeFile(
-    path.join(alternateModelDirectory, "Qwen3-1.7B-Q4_K_M.gguf"),
+    path.join(alternateModelDirectory, "Qwen3-4B-Q4_K_M.gguf"),
     "replacement-lifecycle-test-model-placeholder",
     "utf8"
   );
   const restartedSettings = await authorizedFetch(first, "/api/desktop/settings/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ modelDirectory: alternateModelDirectory, localAiEnabled: true })
+    body: JSON.stringify({ modelDirectory: alternateModelDirectory, modelMode: "standard", localAiEnabled: true })
   });
   assert.equal(restartedSettings.status, 200);
   const restartedPayload = await restartedSettings.json();
   assert.equal(restartedPayload.modelDirectory, path.normalize(alternateModelDirectory));
+  assert.equal(restartedPayload.modelMode, "standard");
+  assert.equal(restartedPayload.modelAlias, "Qwen3-4B");
   assert.equal(restartedPayload.modelPresent, true);
   assert.equal(restartedPayload.llamaStatus, "ready");
   first.llamaPid = Number(await fs.readFile(path.join(first.dataDirectory, "fake-llama.pid"), "utf8"));
   assert.notEqual(first.llamaPid, originalLlamaPid);
   assert.equal(processExists(first.llamaPid), true);
+
+  const debugEvidence = await authorizedFetch(first, "/api/desktop/evidence/");
+  assert.equal(debugEvidence.status, 200);
+  assert.deepEqual(Object.keys(await debugEvidence.json()).sort(), [
+    "answerSource",
+    "cloudRequestCount",
+    "factState",
+    "fallbackReason",
+    "intent",
+    "latency",
+    "llamaServerReady",
+    "localModelReady",
+    "model",
+    "requestedSlot",
+    "unknown"
+  ].sort());
+  assert.equal((await authorizedFetch(second, "/api/desktop/evidence/")).status, 404);
+
+  const resumeAttemptId = "desktop-resume-lifecycle";
+  const initRequestId = "desktop-resume-init";
+  const initializedAttempt = await authorizedFetch(first, "/api/training-action/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Idempotency-Key": initRequestId
+    },
+    body: JSON.stringify({
+      action: "init-attempt",
+      attemptId: resumeAttemptId,
+      caseId: "P001",
+      mode: "free",
+      language: "zh",
+      requestId: initRequestId
+    })
+  });
+  assert.equal(initializedAttempt.status, 200);
+  const initializedToken = initializedAttempt.headers.get("x-training-state");
+  assert.ok(initializedToken);
+  const resumedAttempt = await authorizedFetch(first, "/api/desktop/attempt/resume/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      attemptId: resumeAttemptId,
+      caseId: "P001",
+      mode: "free",
+      language: "zh"
+    })
+  });
+  assert.equal(resumedAttempt.status, 200);
+  assert.equal(resumedAttempt.headers.get("x-training-state"), initializedToken);
+  const resumedPayload = await resumedAttempt.json();
+  assert.deepEqual(Object.keys(resumedPayload).sort(), [
+    "attemptId",
+    "caseId",
+    "currentStage",
+    "language",
+    "mode",
+    "status"
+  ].sort());
+  assert.equal(resumedPayload.currentStage, 1);
+  assert.equal(resumedPayload.status, "active");
+  assert.equal("token" in resumedPayload, false);
+
+  const wrongResumeIdentity = await authorizedFetch(first, "/api/desktop/attempt/resume/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      attemptId: resumeAttemptId,
+      caseId: "P001",
+      mode: "free",
+      language: "en"
+    })
+  });
+  assert.equal(wrongResumeIdentity.status, 409);
+  assert.deepEqual(await wrongResumeIdentity.json(), { error: "attempt_identity_mismatch" });
+  const missingResume = await authorizedFetch(first, "/api/desktop/attempt/resume/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      attemptId: "desktop-resume-missing",
+      caseId: "P001",
+      mode: "free",
+      language: "zh"
+    })
+  });
+  assert.equal(missingResume.status, 404);
+  assert.deepEqual(await missingResume.json(), { error: "attempt_not_found" });
 
   const preflight = await fetch(`${first.ready.origin}/api/health/`, {
     method: "OPTIONS",
@@ -284,9 +395,20 @@ try {
   assert.match(rustLifecycleSource, /let job = JobObject::create\(\)\?/);
   assert.doesNotMatch(rustLifecycleSource, /JobObject::create\(\)\.ok\(\)/);
   assert.match(rustLifecycleSource, /taskkill/);
+  assert.match(rustLifecycleSource, /window-state-v1\.json/);
+  assert.match(rustLifecycleSource, /persist_window_state_atomic/);
+  assert.match(rustLifecycleSource, /builder = builder\.maximized\(true\)/);
+  assert.ok(
+    rustLifecycleSource.indexOf("lifecycle.persist_window(window)")
+      < rustLifecycleSource.indexOf("lifecycle.shutdown()"),
+    "window state must be persisted before sidecar shutdown"
+  );
   const sidecarSource = await fs.readFile(sidecarEntry, "utf8");
   assert.match(sidecarSource, /\/v1\/models/);
   assert.match(sidecarSource, /for \(let attempt = 0; attempt < 3; attempt \+= 1\)/);
+  assert.match(sidecarSource, /resetPatientIntentClassifierState\(\)/, "model reconfiguration must clear classifier state");
+  assert.match(sidecarSource, /\/api\/desktop\/attempt\/resume/);
+  assert.match(sidecarSource, /Access-Control-Expose-Headers/);
   const tauriConfig = JSON.parse(await fs.readFile(path.join(repoRoot, "src-tauri", "tauri.conf.json"), "utf8"));
   assert.equal(tauriConfig.build.frontendDist, "../out");
   assert.deepEqual(tauriConfig.bundle.targets, ["nsis"]);

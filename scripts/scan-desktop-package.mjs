@@ -25,7 +25,8 @@ const EXPECTED_DATA_FILES = new Set([
   "mdt_triggers.json",
   "patient_slots_bilingual.json",
   "history_medical_reconciliation.json",
-  "chief_complaint_wording_runtime.json"
+  "chief_complaint_wording_runtime.json",
+  "consult_catalog.json"
 ]);
 const TEXT_EXTENSIONS = new Set([
   ".bat", ".cjs", ".cmd", ".conf", ".css", ".html", ".ini", ".js", ".json",
@@ -173,14 +174,20 @@ function verifyDataWhitelist(entries, rootPrefix, findings) {
 function verifyRuntimeManifest(text, displayPath, entries, findings) {
   try {
     const manifest = JSON.parse(text);
-    if (manifest?.model?.bundledInInstaller !== false) {
-      findings.push({ reason: "model_must_not_be_bundled", file: displayPath });
+    const models = manifest?.models || {};
+    if (Object.keys(models).sort().join(",") !== "lightweight,standard") {
+      findings.push({ reason: "model_modes_manifest_invalid", file: displayPath });
     }
-    const modelFileName = String(manifest?.model?.fileName || "").toLowerCase();
-    if (!modelFileName.endsWith(".gguf")) {
-      findings.push({ reason: "model_manifest_filename_invalid", file: displayPath });
-    } else if (entries.some((entry) => path.posix.basename(normalizedPath(entry)).toLowerCase() === modelFileName)) {
-      findings.push({ reason: "manifest_model_file_is_packaged", file: modelFileName });
+    for (const [mode, model] of Object.entries(models)) {
+      if (model?.bundledInInstaller !== false) {
+        findings.push({ reason: "model_must_not_be_bundled", file: `${displayPath}:${mode}` });
+      }
+      const modelFileName = String(model?.fileName || "").toLowerCase();
+      if (!modelFileName.endsWith(".gguf")) {
+        findings.push({ reason: "model_manifest_filename_invalid", file: `${displayPath}:${mode}` });
+      } else if (entries.some((entry) => path.posix.basename(normalizedPath(entry)).toLowerCase() === modelFileName)) {
+        findings.push({ reason: "manifest_model_file_is_packaged", file: modelFileName });
+      }
     }
     return manifest;
   } catch {
@@ -474,6 +481,13 @@ async function scanArtifactReceipt(artifacts, expectedManifest) {
     || receipt?.model?.bytes !== expectedManifest.model.size
     || receipt?.model?.sha256 !== expectedManifest.model.sha256
     || receipt?.model?.bundledInInstaller !== false
+    || Object.entries(expectedManifest.models).some(([mode, model]) => (
+      receipt?.models?.[mode]?.fileName !== model.fileName
+      || receipt?.models?.[mode]?.alias !== model.alias
+      || receipt?.models?.[mode]?.bytes !== model.size
+      || receipt?.models?.[mode]?.sha256 !== model.sha256
+      || receipt?.models?.[mode]?.bundledInInstaller !== false
+    ))
     || receipt?.runtimeManifest?.nodeVersion !== expectedManifest.node.version
     || receipt?.runtimeManifest?.llamaCppVersion !== expectedManifest.llamaCpp.version
     || receipt?.runtimeManifest?.pinnedLlamaFiles !== expectedManifest.llamaCpp.files.length

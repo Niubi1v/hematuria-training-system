@@ -150,9 +150,39 @@
       "sha256": "5ba143b5db4a87d32d6e7802e033330aae56cbceabe0d1e3ba41948385ad4709"
     }
   },
+  "defaultModelMode": "lightweight",
+  "models": {
+    "lightweight": {
+      "repository": "ggml-org/Qwen3-1.7B-GGUF",
+      "fileName": "Qwen3-1.7B-Q4_K_M.gguf",
+      "alias": "Qwen3-1.7B",
+      "url": "https://huggingface.co/ggml-org/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf?download=true",
+      "fallbackUrls": [
+        "https://hf-mirror.com/ggml-org/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf?download=true"
+      ],
+      "size": 1282439264,
+      "sha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
+      "bundledInInstaller": false,
+      "thinkingMode": "disabled"
+    },
+    "standard": {
+      "repository": "ggml-org/Qwen3-4B-GGUF",
+      "fileName": "Qwen3-4B-Q4_K_M.gguf",
+      "alias": "Qwen3-4B",
+      "url": "https://huggingface.co/ggml-org/Qwen3-4B-GGUF/resolve/main/Qwen3-4B-Q4_K_M.gguf?download=true",
+      "fallbackUrls": [
+        "https://hf-mirror.com/ggml-org/Qwen3-4B-GGUF/resolve/main/Qwen3-4B-Q4_K_M.gguf?download=true"
+      ],
+      "size": 2497280640,
+      "sha256": "ab27b9bfa375a178d6cba48f3ad892b94b7739659dcc7aae8058ce0ffed6b328",
+      "bundledInInstaller": false,
+      "thinkingMode": "disabled"
+    }
+  },
   "model": {
     "repository": "ggml-org/Qwen3-1.7B-GGUF",
     "fileName": "Qwen3-1.7B-Q4_K_M.gguf",
+    "alias": "Qwen3-1.7B",
     "url": "https://huggingface.co/ggml-org/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf?download=true",
     "fallbackUrls": [
       "https://hf-mirror.com/ggml-org/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf?download=true"

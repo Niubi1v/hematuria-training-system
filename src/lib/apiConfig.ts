@@ -8,6 +8,7 @@ export type DesktopRuntimeConfig = Readonly<{
   runtimeTarget: "desktop";
   apiBaseUrl: string;
   authToken: string;
+  debugRuntime: boolean;
 }>;
 
 declare global {
@@ -46,10 +47,14 @@ function validatedDesktopRuntime(): DesktopRuntimeConfig | null {
   if (!/^[A-Za-z0-9_-]{43,}$/.test(String(candidate.authToken || ""))) {
     throw new Error("Desktop API authentication token is invalid.");
   }
+  if (typeof candidate.debugRuntime !== "boolean") {
+    throw new Error("Desktop debug runtime marker is invalid.");
+  }
   return Object.freeze({
     runtimeTarget: "desktop",
     apiBaseUrl: parsed.toString().replace(/\/+$/, ""),
-    authToken: candidate.authToken
+    authToken: candidate.authToken,
+    debugRuntime: candidate.debugRuntime
   });
 }
 

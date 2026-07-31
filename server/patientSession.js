@@ -929,7 +929,11 @@ function recordConversationState(session, result, traceInput = {}) {
     traceInput.providerInvoked
     || (!localProvider && !result?.isFallback)
   );
-  const activeModel = String(result?.model || traceInput.semanticDecision?.model || configured.model || "");
+  const activeModel = String(
+    classifierInvoked
+      ? traceInput.semanticDecision?.model || configured.model || result?.model || ""
+      : result?.model || traceInput.semanticDecision?.model || configured.model || ""
+  );
   const isMock = /(?:test|synthetic|mock)/i.test(activeModel)
     || /\.test(?:\/|$)/i.test(String(configured.baseUrl || ""));
   const thinkingMode = String(result?.thinkingMode || traceInput.semanticDecision?.thinkingMode || patientThinkingConfig().mode);
@@ -962,6 +966,9 @@ function recordConversationState(session, result, traceInput = {}) {
       ? "deterministic"
       : "none";
   const classifierReason = String(traceInput.semanticDecision?.reason || "");
+  const safeClassifierReason = /^[a-z][a-z0-9_]{0,119}$/.test(classifierReason)
+    ? classifierReason
+    : "classifier_rejected";
   const classifierStatus = !classifierInvoked
     ? "not_invoked"
     : localMetadataApplied
@@ -969,6 +976,13 @@ function recordConversationState(session, result, traceInput = {}) {
       : /timeout/.test(classifierReason)
         ? "timeout"
         : "rejected";
+  const semanticMetadataValid = classifierInvoked && traceInput.semanticDecision?.metadataValid === true;
+  const classifierIntent = semanticMetadataValid
+    ? String(traceInput.semanticDecision?.intent || "")
+    : "";
+  const classifierRequestedSlot = semanticMetadataValid
+    ? String(traceInput.semanticDecision?.requestedSlot || "")
+    : "";
   const runtimeTrace = {
     caseId: String(traceInput.caseId || "").slice(0, 20),
     model: activeModel || configured.model,
@@ -988,12 +1002,18 @@ function recordConversationState(session, result, traceInput = {}) {
     thinkingApplied: !localProvider && thinkingMode !== "disabled" && (providerInvoked || classifierInvoked),
     thinkingExecuted: !localProvider && thinkingMode !== "disabled" && providerInvoked,
     fallbackReason: String(
-      result?.fallbackReason
+      (classifierInvoked && !localMetadataApplied ? safeClassifierReason : "")
+      || result?.fallbackReason
       || (localMetadataApplied || providerInvoked ? "" : "deterministic_route")
     ),
-    intent: String(resolvedPlan?.intent || ""),
+    // Development diagnostics report what the local classifier actually
+    // returned. The governed route remains separate and is still the only
+    // authority used by the ontology and answer planner.
+    intent: classifierInvoked ? classifierIntent : String(resolvedPlan?.intent || ""),
+    governedIntent: String(resolvedPlan?.intent || ""),
     currentTopic: String(session?.conversationState?.currentTopic || ""),
-    requestedSlot: String(session?.conversationState?.requestedSlot || ""),
+    requestedSlot: classifierInvoked ? classifierRequestedSlot : String(session?.conversationState?.requestedSlot || ""),
+    governedRequestedSlot: String(session?.conversationState?.requestedSlot || ""),
     naturalizationStyle: String(traceInput.semanticDecision?.naturalizationStyle || ""),
     answerSource: String(result?.answerSource || ""),
     durationMs: Number(result?.providerDurationMs || traceInput.semanticDecision?.durationMs || 0)

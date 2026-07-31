@@ -19,7 +19,14 @@ Qwen3-1.7B-Q4_K_M.gguf (optional user download; not bundled)
   Upstream model: https://huggingface.co/Qwen/Qwen3-1.7B
   License: Apache-2.0
 
+Qwen3-4B-Q4_K_M.gguf (optional user download; not bundled)
+  Project: https://huggingface.co/ggml-org/Qwen3-4B-GGUF
+  Upstream model: https://huggingface.co/Qwen/Qwen3-4B
+  License: Apache-2.0
+
+The lightweight 1.7B and standard 4B files are separate optional downloads.
+Neither model file is copied into the installer or portable application.
+
 The build tooling must preserve the license files distributed with downloaded
 runtime archives. See runtime-manifest.json for immutable sizes and SHA-256
 digests.
-

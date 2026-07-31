@@ -7,6 +7,8 @@ import { desktopRuntimeConfig, publicApiConfig } from "@/src/lib/apiConfig";
 import { readStringStorage } from "@/src/lib/safeStorage";
 
 type DesktopSettings = {
+  modelMode: "lightweight" | "standard";
+  modelAlias: "Qwen3-1.7B" | "Qwen3-4B";
   modelDirectory: string;
   modelFilePath: string;
   modelPresent: boolean;
@@ -15,20 +17,39 @@ type DesktopSettings = {
     | "initializing"
     | "disabled"
     | "model_missing"
+    | "model_invalid"
     | "runtime_missing"
     | "starting"
     | "ready"
     | "startup_failed"
     | "stopped";
+  modelValidation: "pending" | "verified" | "checksum_mismatch" | "not_checked";
   version: number;
 };
 
+type DesktopEvidence = {
+  answerSource: "local_ai" | "rule_fallback" | null;
+  llamaServerReady: boolean;
+  localModelReady: boolean;
+  model: "Qwen3-1.7B" | "Qwen3-4B";
+  cloudRequestCount: number;
+  fallbackReason: string | null;
+  intent: string | null;
+  requestedSlot: string | null;
+  factState: string | null;
+  unknown: string | null;
+  latency: number;
+};
+
 const emptySettings: DesktopSettings = {
+  modelMode: "lightweight",
+  modelAlias: "Qwen3-1.7B",
   modelDirectory: "",
   modelFilePath: "",
   modelPresent: false,
   localAiEnabled: false,
   llamaStatus: "stopped",
+  modelValidation: "not_checked",
   version: 0
 };
 
@@ -38,6 +59,8 @@ export default function DesktopModelSettings() {
   const [lang, setLang] = useState<"zh" | "en">("zh");
   const [settings, setSettings] = useState<DesktopSettings>(emptySettings);
   const [draftDirectory, setDraftDirectory] = useState("");
+  const [draftModelMode, setDraftModelMode] = useState<DesktopSettings["modelMode"]>("lightweight");
+  const [evidence, setEvidence] = useState<DesktopEvidence | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -47,6 +70,30 @@ export default function DesktopModelSettings() {
     window.addEventListener("hematuria-language-change", listener);
     return () => window.removeEventListener("hematuria-language-change", listener);
   }, []);
+
+  useEffect(() => {
+    if (!open || !desktopRuntime?.debugRuntime) return;
+    let active = true;
+    const refresh = async () => {
+      try {
+        const snapshot = await requestJson<DesktopEvidence>(`${desktopRuntime.apiBaseUrl}/api/desktop/evidence`, undefined, {
+          method: "GET",
+          timeoutMs: 5_000,
+          retries: 0,
+          endpointName: "desktop-evidence"
+        });
+        if (active) setEvidence(snapshot);
+      } catch {
+        if (active) setEvidence(null);
+      }
+    };
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), 2_000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [desktopRuntime?.apiBaseUrl, desktopRuntime?.debugRuntime, open]);
 
   if (!desktopRuntime) return null;
   const endpoint = `${publicApiConfig.baseUrl}/api/desktop/settings`;
@@ -63,6 +110,7 @@ export default function DesktopModelSettings() {
       });
       setSettings(next);
       setDraftDirectory(next.modelDirectory);
+      setDraftModelMode(next.modelMode);
     } catch {
       setMessage(lang === "en" ? "Settings are temporarily unavailable." : "设置暂时不可用。");
     } finally {
@@ -76,6 +124,7 @@ export default function DesktopModelSettings() {
     try {
       const next = await requestJson<DesktopSettings>(endpoint, {
         modelDirectory: draftDirectory.trim(),
+        modelMode: draftModelMode,
         localAiEnabled
       }, {
         method: "POST",
@@ -85,7 +134,10 @@ export default function DesktopModelSettings() {
       });
       setSettings(next);
       setDraftDirectory(next.modelDirectory);
-      setMessage(next.localAiEnabled && !next.modelPresent
+      setDraftModelMode(next.modelMode);
+      setMessage(next.llamaStatus === "model_invalid" || next.modelValidation === "checksum_mismatch"
+        ? (lang === "en" ? "The selected model failed integrity verification. Reinstall that model file before retrying." : "所选模型完整性校验失败，请重新安装该模型文件后再试。")
+        : next.localAiEnabled && !next.modelPresent
         ? (lang === "en" ? "The required file was not found. Interview practice remains available." : "未找到所需文件，仍可继续问诊训练。")
         : (lang === "en" ? "Settings saved." : "设置已保存。"));
     } catch {
@@ -125,7 +177,11 @@ export default function DesktopModelSettings() {
               <div className="flex items-center justify-between gap-3">
                 <span className="font-medium">{lang === "en" ? "Assistance" : "辅助功能"}</span>
                 <span className={`ui-status ${ready ? "ui-status-success" : "ui-status-info"}`}>
-                  {ready ? (lang === "en" ? "Available" : "可用") : (lang === "en" ? "Not ready" : "未就绪")}
+                  {ready
+                    ? (lang === "en" ? "Available" : "可用")
+                    : settings.llamaStatus === "starting"
+                      ? (lang === "en" ? "Starting local patient service…" : "正在启动本地患者服务……")
+                      : (lang === "en" ? "Not ready" : "未就绪")}
                 </span>
               </div>
               <p className="mt-2 text-xs text-clinic-muted">
@@ -140,6 +196,49 @@ export default function DesktopModelSettings() {
               <input className="ui-input mt-2 w-full" value={draftDirectory} onChange={(event) => setDraftDirectory(event.target.value)} placeholder="C:\...\files" spellCheck={false} />
             </label>
             <p className="mt-2 text-xs text-clinic-muted">{lang === "en" ? "Choose the directory described in the installation guide." : "请选择安装说明中指定的文件目录。"}</p>
+
+            <label className="mt-5 block text-sm">
+              <span className="font-medium">{lang === "en" ? "Local model" : "本地模型"}</span>
+              <select
+                className="ui-input mt-2 w-full"
+                value={draftModelMode}
+                onChange={(event) => setDraftModelMode(event.target.value as DesktopSettings["modelMode"])}
+              >
+                <option value="lightweight">{lang === "en" ? "Lightweight · Qwen3 1.7B (recommended first)" : "轻量 · Qwen3 1.7B（建议先用）"}</option>
+                <option value="standard">{lang === "en" ? "Standard · Qwen3 4B (higher resource use)" : "标准 · Qwen3 4B（占用更多资源）"}</option>
+              </select>
+            </label>
+            <p className="mt-2 text-xs text-clinic-muted">
+              {lang === "en"
+                ? `Selected runtime alias: ${settings.modelAlias}`
+                : `当前运行时别名：${settings.modelAlias}`}
+            </p>
+
+            {desktopRuntime.debugRuntime && (
+              <section className="mt-5 rounded-lg border border-clinic-line p-4" aria-label={lang === "en" ? "Development diagnostics" : "开发诊断"}>
+                <h3 className="text-sm font-semibold">{lang === "en" ? "Development diagnostics" : "开发诊断"}</h3>
+                <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                  {([
+                    ["answerSource", evidence?.answerSource],
+                    ["llamaServerReady", evidence?.llamaServerReady],
+                    ["localModelReady", evidence?.localModelReady],
+                    ["model", evidence?.model],
+                    ["cloudRequestCount", evidence?.cloudRequestCount],
+                    ["fallbackReason", evidence?.fallbackReason],
+                    ["intent", evidence?.intent],
+                    ["requestedSlot", evidence?.requestedSlot],
+                    ["factState", evidence?.factState],
+                    ["unknown", evidence?.unknown],
+                    ["latency", evidence ? `${evidence.latency} ms` : null]
+                  ] as Array<[string, string | number | boolean | null | undefined]>).map(([key, value]) => (
+                    <div key={key} className="contents">
+                      <dt className="text-clinic-muted">{key}</dt>
+                      <dd className="break-all font-mono text-clinic-ink">{value === null || value === undefined ? "—" : String(value)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            )}
 
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <button type="button" disabled={loading || !draftDirectory.trim()} onClick={() => void saveSettings(settings.localAiEnabled)} className="ui-button-primary">

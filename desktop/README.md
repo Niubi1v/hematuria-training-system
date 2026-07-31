@@ -15,8 +15,9 @@
   [`runtime-manifest.json`](./runtime-manifest.json) 固定版本、归档 SHA-256
   及逐文件大小/SHA-256 白名单；只有 server 所需文件进入安装包，运行时本身
   不进入 Git。
-- 模型固定为 `ggml-org/Qwen3-1.7B-GGUF` 的
-  `Qwen3-1.7B-Q4_K_M.gguf`，不进入安装包或 Git。
+- 提供分离下载的两档模型：默认 `lightweight` 为
+  `ggml-org/Qwen3-1.7B-GGUF` / `Qwen3-1.7B-Q4_K_M.gguf`；`standard` 为
+  `ggml-org/Qwen3-4B-GGUF` / `Qwen3-4B-Q4_K_M.gguf`。两者都不进入安装包或 Git。
 - 默认模型目录：
   `%LOCALAPPDATA%\cn.hematuria.training.desktop\models`
 - 默认数据库：
@@ -32,11 +33,17 @@
 pnpm desktop:model:install
 ```
 
-手工放置时，文件名必须保持为 `Qwen3-1.7B-Q4_K_M.gguf`。可用以下命令核对
-清单中的 SHA-256：
+安装标准 4B 模型：
+
+```powershell
+pnpm desktop:model:install -- --model-mode standard
+```
+
+手工放置时，文件名必须保持清单中的原名。可用以下命令核对 SHA-256：
 
 ```powershell
 Get-FileHash "$env:LOCALAPPDATA\cn.hematuria.training.desktop\models\Qwen3-1.7B-Q4_K_M.gguf" -Algorithm SHA256
+Get-FileHash "$env:LOCALAPPDATA\cn.hematuria.training.desktop\models\Qwen3-4B-Q4_K_M.gguf" -Algorithm SHA256
 ```
 
 ## 一键命令

@@ -12,6 +12,8 @@ const environmentKeys = [
   "TRAINING_STATE_SECRET",
   "TRAINING_ATTEMPT_STORE_MODE",
   "HEMATURIA_DESKTOP_DATABASE_PATH",
+  "HEMATURIA_RUNTIME_TARGET",
+  "HEMATURIA_DESKTOP_DEBUG_RUNTIME",
   "LLM_PROVIDER",
   "LLM_API_BASE_URL",
   "LLM_API_KEY",
@@ -61,6 +63,7 @@ const {
 } = require("../server/patientSession.js");
 const { closeDesktopSqliteStore } = require("../server/desktopSqliteStore.js");
 const agentChatHandler = require("../api/agent-chat.js");
+const originalDesktopRuntimeEvidence = globalThis.__hematuriaDesktopRuntimeEvidence;
 
 function localMetadata(intent = "dysuria", overrides = {}) {
   const requestedSlot = intent === null
@@ -233,6 +236,37 @@ async function main() {
     /caseId|patientAnswer|factValue|reviewerStatus|teacher|score/i
   );
 
+  resetPatientIntentClassifierState();
+  const contextMismatch = await classifyPatientIntent({
+    question: "多久了？",
+    language: "zh",
+    conversationHistory: [{ role: "student", text: "哪里不舒服？" }],
+    conversationState: {
+      currentTopic: "chief_complaint",
+      currentEntity: "chief_complaint",
+      requestedSlot: "chief_complaint",
+      lastResolvedFact: { intent: "chief_complaint" }
+    },
+    governedIntentCandidates: ["hematuria_onset"],
+    enabled: true,
+    forceMetadata: true,
+    callProvider: async () => ({
+      text: JSON.stringify(localMetadata("hematuria_onset", {
+        requestedSlot: "hematuria_onset",
+        currentTopic: "hematuria_onset",
+        currentEntity: "hematuria_onset",
+        clauses: [{ intent: "hematuria_onset", requestedSlot: "hematuria_onset" }],
+        contextReference: { inherited: false, sourceIntent: null }
+      })),
+      provider: "local",
+      model: DEFAULT_LOCAL_MODEL,
+      durationMs: 7
+    })
+  });
+  assert.equal(contextMismatch.accepted, false);
+  assert.equal(contextMismatch.metadataValid, true);
+  assert.equal(contextMismatch.reason, "local_context_reference_mismatch");
+
   const originalFetch = globalThis.fetch;
   try {
     resetPatientIntentClassifierState();
@@ -265,6 +299,18 @@ async function main() {
       JSON.stringify(directUserPayload),
       /caseId|patientAnswer|factValue|reviewerStatus|teacher|score/i
     );
+
+    process.env.LLM_MODEL = "Qwen3-4B";
+    const switchedModel = await classifyPatientIntent({
+      question: "排尿的时候会不会痛？",
+      language: "zh",
+      enabled: true,
+      forceMetadata: true
+    });
+    assert.equal(switchedModel.accepted, true);
+    assert.equal(networkCalls, 2, "switching local models must not reuse the previous model's classifier cache");
+    assert.equal(requestBody.model, "Qwen3-4B");
+    process.env.LLM_MODEL = DEFAULT_LOCAL_MODEL;
 
     resetPatientIntentClassifierState();
     networkCalls = 0;
@@ -327,6 +373,8 @@ async function main() {
     assert.equal(schemaFailure.runtimeTrace.generationSource, "governed_planner");
     assert.equal(schemaFailure.runtimeTrace.classificationSource, "local_ai");
     assert.equal(schemaFailure.runtimeTrace.classifierStatus, "rejected");
+    assert.equal(schemaFailure.runtimeTrace.model, DEFAULT_LOCAL_MODEL);
+    assert.equal(schemaFailure.runtimeTrace.fallbackReason, "semantic_response_invalid");
 
     resetPatientIntentClassifierState();
     networkCalls = 0;
@@ -347,6 +395,8 @@ async function main() {
     assert.equal(disagreement.runtimeTrace.generationSource, "governed_planner");
     assert.equal(disagreement.runtimeTrace.classificationSource, "local_ai");
     assert.equal(disagreement.runtimeTrace.classifierStatus, "rejected");
+    assert.equal(disagreement.runtimeTrace.model, DEFAULT_LOCAL_MODEL);
+    assert.equal(disagreement.runtimeTrace.fallbackReason, "local_metadata_conflict_with_governed_candidates");
 
     resetPatientIntentClassifierState();
     process.env.PATIENT_SEMANTIC_CLASSIFIER_ENABLED = "false";
@@ -413,6 +463,14 @@ async function main() {
       capabilityMode: "public-practice",
       language: "zh"
     });
+    process.env.HEMATURIA_RUNTIME_TARGET = "desktop";
+    process.env.HEMATURIA_DESKTOP_DEBUG_RUNTIME = "1";
+    globalThis.__hematuriaDesktopRuntimeEvidence = () => ({
+      llamaServerReady: true,
+      localModelReady: true,
+      model: DEFAULT_LOCAL_MODEL,
+      cloudRequestCount: 0
+    });
     networkCalls = 0;
     globalThis.fetch = async () => {
       networkCalls += 1;
@@ -430,7 +488,8 @@ async function main() {
         stage: "history",
         language: "zh",
         studentInput: "小便痛不痛？",
-        conversationHistory: []
+        conversationHistory: [],
+        debug: true
       }
     });
     assert.equal(apiLocal.statusCode, 200, JSON.stringify(apiLocal.payload));
@@ -441,6 +500,11 @@ async function main() {
     assert.equal(apiLocal.payload.provider, "local");
     assert.equal(apiLocal.payload.isFallback, false);
     assert.notEqual(apiLocal.payload.answerSource, "local");
+    assert.deepEqual(Object.keys(apiLocal.payload.desktopEvidence).sort(), [
+      "answerSource", "cloudRequestCount", "factState", "fallbackReason", "intent", "latency",
+      "llamaServerReady", "localModelReady", "model", "requestedSlot", "unknown"
+    ].sort());
+    assert.equal(apiLocal.payload.desktopEvidence.model, DEFAULT_LOCAL_MODEL);
 
     resetPatientIntentClassifierState();
     globalThis.fetch = async () => providerResponse(JSON.stringify({
@@ -460,7 +524,8 @@ async function main() {
         stage: "history",
         language: "zh",
         studentInput: "排尿痛不痛？",
-        conversationHistory: []
+        conversationHistory: [],
+        debug: true
       }
     });
     assert.equal(apiFallback.statusCode, 200, JSON.stringify(apiFallback.payload));
@@ -469,6 +534,10 @@ async function main() {
     assert.equal(apiFallback.payload.classifierStatus, "rejected");
     assert.equal(apiFallback.payload.isFallback, true);
     assert.match(apiFallback.payload.replyText, /没有|不痛/);
+    assert.equal(apiFallback.payload.usedModel, DEFAULT_LOCAL_MODEL);
+    assert.equal(apiFallback.payload.desktopEvidence.model, DEFAULT_LOCAL_MODEL);
+    assert.equal(apiFallback.payload.desktopEvidence.answerSource, "rule_fallback");
+    assert.equal(apiFallback.payload.desktopEvidence.fallbackReason, "semantic_response_invalid");
 
     resetPatientIntentClassifierState();
     globalThis.fetch = async () => {
@@ -485,6 +554,8 @@ async function main() {
     assert.equal(timedOut.runtimeTrace.generationSource, "governed_planner");
     assert.equal(timedOut.runtimeTrace.classificationSource, "local_ai");
     assert.equal(timedOut.runtimeTrace.classifierStatus, "timeout");
+    assert.equal(timedOut.runtimeTrace.model, DEFAULT_LOCAL_MODEL);
+    assert.equal(timedOut.runtimeTrace.fallbackReason, "semantic_provider_timeout");
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -565,5 +636,7 @@ try {
     if (value === undefined) delete process.env[key];
     else process.env[key] = value;
   }
+  if (originalDesktopRuntimeEvidence === undefined) delete globalThis.__hematuriaDesktopRuntimeEvidence;
+  else globalThis.__hematuriaDesktopRuntimeEvidence = originalDesktopRuntimeEvidence;
 }
 if (failure) throw failure;

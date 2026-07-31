@@ -14,8 +14,7 @@ const HOST = "127.0.0.1";
 const MAX_BODY_BYTES = 2 * 1024 * 1024;
 const LLAMA_STARTUP_TIMEOUT_MS = 120_000;
 const REQUIRED_SECRET_PATTERN = /^[A-Za-z0-9_-]{43,}$/;
-const DEFAULT_MODEL_FILE = "Qwen3-1.7B-Q4_K_M.gguf";
-const DEFAULT_MODEL_ALIAS = "Qwen3-1.7B";
+const DEFAULT_MODEL_MODE = "lightweight";
 const bearer = String(process.env.HEMATURIA_DESKTOP_BEARER || "");
 const handshake = String(process.env.HEMATURIA_DESKTOP_HANDSHAKE || "");
 const appRoot = path.resolve(String(process.env.HEMATURIA_APP_ROOT || path.join(__dirname, "..", "..")));
@@ -33,6 +32,8 @@ let sqliteStore = null;
 let shuttingDown = false;
 let localAiState = { status: "initializing" };
 let localAiReconfiguration = Promise.resolve();
+let modelModes = null;
+let activeModelAlias = "Qwen3-1.7B";
 const openSockets = new Set();
 const nativeFetch = globalThis.fetch.bind(globalThis);
 const networkAudit = {
@@ -51,6 +52,46 @@ if (!path.isAbsolute(appRoot) || !fs.existsSync(appRoot)) fatalConfiguration("de
 if (!String(process.env.HEMATURIA_DESKTOP_DATA_DIR || "") || !path.isAbsolute(dataDirectory)) {
   fatalConfiguration("desktop_data_directory_invalid");
 }
+
+function loadModelManifest() {
+  let manifest;
+  try {
+    manifest = JSON.parse(fs.readFileSync(path.join(appRoot, "desktop", "runtime-manifest.json"), "utf8"));
+  } catch {
+    fatalConfiguration("desktop_runtime_manifest_invalid");
+  }
+  if (
+    manifest?.schemaVersion !== 1
+    || manifest?.defaultModelMode !== DEFAULT_MODEL_MODE
+    || !manifest?.models
+    || Object.keys(manifest.models).sort().join(",") !== "lightweight,standard"
+  ) {
+    fatalConfiguration("desktop_model_manifest_invalid");
+  }
+  const validated = {};
+  for (const [mode, descriptor] of Object.entries(manifest.models)) {
+    const fileName = String(descriptor?.fileName || "");
+    const alias = String(descriptor?.alias || "");
+    const sha256 = String(descriptor?.sha256 || "");
+    if (
+      path.basename(fileName) !== fileName
+      || !fileName.endsWith(".gguf")
+      || !/^[A-Za-z0-9._-]{1,80}$/.test(alias)
+      || !Number.isSafeInteger(descriptor?.size)
+      || descriptor.size <= 0
+      || !/^[a-f0-9]{64}$/.test(sha256)
+      || descriptor?.bundledInInstaller !== false
+      || descriptor?.thinkingMode !== "disabled"
+    ) {
+      fatalConfiguration(`desktop_model_manifest_${mode}_invalid`);
+    }
+    validated[mode] = Object.freeze({ fileName, alias, size: descriptor.size, sha256 });
+  }
+  return Object.freeze(validated);
+}
+
+modelModes = loadModelManifest();
+activeModelAlias = modelModes[DEFAULT_MODEL_MODE].alias;
 
 function safeLog(event, metadata = {}) {
   const allowed = {};
@@ -107,7 +148,7 @@ function installDesktopEnvironment(trainingSecret) {
 function disableLocalAi() {
   Object.assign(process.env, {
     LLM_PROVIDER: "local",
-    LLM_MODEL: DEFAULT_MODEL_ALIAS,
+    LLM_MODEL: activeModelAlias,
     LLM_ENDPOINT_TYPE: "chat_completions",
     LLM_THINKING_MODE: "disabled",
     LLM_ENABLE_AI_AGENTS: "false",
@@ -125,30 +166,63 @@ function validateModelDirectory(value) {
   return path.normalize(candidate);
 }
 
+function validateModelMode(value) {
+  const mode = String(value || "");
+  if (!Object.hasOwn(modelModes, mode)) throw new Error("desktop_model_mode_invalid");
+  return mode;
+}
+
+function selectedModelMode(store) {
+  const configuredMode = store.getDesktopSetting("localAi.modelMode");
+  return configuredMode === undefined
+    ? DEFAULT_MODEL_MODE
+    : validateModelMode(configuredMode);
+}
+
 function selectedModel(store) {
+  const modelMode = selectedModelMode(store);
+  const descriptor = modelModes[modelMode];
   const environmentModelPath = String(process.env.HEMATURIA_DESKTOP_MODEL_PATH || "");
   if (environmentModelPath) {
     if (!path.isAbsolute(environmentModelPath) || environmentModelPath.includes("\0")) {
       throw new Error("desktop_model_path_invalid");
     }
     const modelFilePath = path.normalize(environmentModelPath);
-    return { modelDirectory: path.dirname(modelFilePath), modelFilePath };
+    return { modelMode, descriptor, modelAlias: descriptor.alias, modelDirectory: path.dirname(modelFilePath), modelFilePath };
   }
   const configuredDirectory = store.getDesktopSetting("localAi.modelDirectory");
   if (configuredDirectory !== undefined) {
     const modelDirectory = validateModelDirectory(configuredDirectory);
-    return { modelDirectory, modelFilePath: path.join(modelDirectory, DEFAULT_MODEL_FILE) };
+    return {
+      modelMode,
+      descriptor,
+      modelAlias: descriptor.alias,
+      modelDirectory,
+      modelFilePath: path.join(modelDirectory, descriptor.fileName)
+    };
   }
   const legacyModelPath = store.getDesktopSetting("localAi.modelPath");
   if (legacyModelPath !== undefined) {
     if (typeof legacyModelPath !== "string" || !path.isAbsolute(legacyModelPath) || legacyModelPath.includes("\0")) {
       throw new Error("desktop_model_path_invalid");
     }
-    const modelFilePath = path.normalize(legacyModelPath);
-    return { modelDirectory: path.dirname(modelFilePath), modelFilePath };
+    const legacyDirectory = path.dirname(path.normalize(legacyModelPath));
+    return {
+      modelMode,
+      descriptor,
+      modelAlias: descriptor.alias,
+      modelDirectory: legacyDirectory,
+      modelFilePath: path.join(legacyDirectory, descriptor.fileName)
+    };
   }
   const modelDirectory = path.join(dataDirectory, "models");
-  return { modelDirectory, modelFilePath: path.join(modelDirectory, DEFAULT_MODEL_FILE) };
+  return {
+    modelMode,
+    descriptor,
+    modelAlias: descriptor.alias,
+    modelDirectory,
+    modelFilePath: path.join(modelDirectory, descriptor.fileName)
+  };
 }
 
 function localAiEnabled(store) {
@@ -162,6 +236,27 @@ function isRegularFile(filePath) {
   } catch {
     return false;
   }
+}
+
+async function validateModelIntegrity(filePath, descriptor) {
+  if (process.env.HEMATURIA_DESKTOP_TEST_MODE === "1") return { ok: true };
+  let stat;
+  try {
+    stat = await fs.promises.stat(filePath);
+  } catch {
+    return { ok: false, reason: "model_missing" };
+  }
+  if (!stat.isFile()) return { ok: false, reason: "model_missing" };
+  if (stat.size !== descriptor.size) return { ok: false, reason: "checksum_mismatch" };
+  const digest = crypto.createHash("sha256");
+  try {
+    for await (const chunk of fs.createReadStream(filePath)) digest.update(chunk);
+  } catch {
+    return { ok: false, reason: "checksum_mismatch" };
+  }
+  return digest.digest("hex") === descriptor.sha256
+    ? { ok: true }
+    : { ok: false, reason: "checksum_mismatch" };
 }
 
 function boundedInteger(value, fallback, minimum, maximum) {
@@ -209,7 +304,7 @@ function llamaChildEnvironment() {
   return childEnvironment;
 }
 
-async function waitForLlama(origin, apiKey, child) {
+async function waitForLlama(origin, apiKey, child, expectedModelAlias) {
   const deadline = Date.now() + LLAMA_STARTUP_TIMEOUT_MS;
   while (Date.now() < deadline) {
     if (child.exitCode !== null) throw new Error("llama_server_exited_during_startup");
@@ -227,7 +322,7 @@ async function waitForLlama(origin, apiKey, child) {
         const payload = await models.json();
         if (
           Array.isArray(payload?.data)
-          && payload.data.some((item) => item?.id === DEFAULT_MODEL_ALIAS)
+          && payload.data.some((item) => item?.id === expectedModelAlias)
         ) {
           return;
         }
@@ -272,11 +367,18 @@ async function terminateChildTree(child) {
 }
 
 async function startLocalAi(store) {
+  const { descriptor, modelAlias, modelFilePath: modelPath } = selectedModel(store);
+  activeModelAlias = modelAlias;
   disableLocalAi();
   if (!localAiEnabled(store)) return { status: "disabled" };
 
-  const { modelFilePath: modelPath } = selectedModel(store);
   if (!isRegularFile(modelPath)) return { status: "model_missing" };
+  const integrity = await validateModelIntegrity(modelPath, descriptor);
+  if (!integrity.ok) {
+    return integrity.reason === "model_missing"
+      ? { status: "model_missing" }
+      : { status: "model_invalid", validationError: "checksum_mismatch" };
+  }
 
   const llamaPath = path.resolve(String(process.env.HEMATURIA_LLAMA_SERVER_PATH || ""));
   if (!String(process.env.HEMATURIA_LLAMA_SERVER_PATH || "") || !isRegularFile(llamaPath)) {
@@ -295,7 +397,7 @@ async function startLocalAi(store) {
     const llamaArguments = [
       ...testOnlyLlamaPrefixArguments(),
       "--model", modelPath,
-      "--alias", DEFAULT_MODEL_ALIAS,
+      "--alias", modelAlias,
       "--host", HOST,
       "--port", String(port),
       "--ctx-size", String(contextSize),
@@ -326,12 +428,12 @@ async function startLocalAi(store) {
     });
 
     try {
-      await waitForLlama(origin, apiKey, child);
+      await waitForLlama(origin, apiKey, child, modelAlias);
       Object.assign(process.env, {
         LLM_PROVIDER: "local",
         LLM_API_BASE_URL: `${origin}/v1`,
         LLM_API_KEY: apiKey,
-        LLM_MODEL: DEFAULT_MODEL_ALIAS,
+        LLM_MODEL: modelAlias,
         LLM_ENDPOINT_TYPE: "chat_completions",
         LLM_STREAMING_ENABLED: "true",
         LLM_THINKING_MODE: "disabled",
@@ -341,7 +443,7 @@ async function startLocalAi(store) {
         LLM_ENABLE_AI_PATIENT: "true"
       });
       safeLog("desktop_llama_ready", { durationMs: Date.now() - startedAt, pid: child.pid, port });
-      return { status: "ready" };
+      return { status: "ready", modelValidation: "verified" };
     } catch (error) {
       lastStartupError = error instanceof Error ? error.message : "startup_failed";
       await terminateChildTree(child);
@@ -365,8 +467,18 @@ async function stopLocalAi() {
 function reconfigureLocalAi(store) {
   const operation = localAiReconfiguration.then(async () => {
     localAiState = { status: "starting" };
-    await stopLocalAi();
-    localAiState = await startLocalAi(store);
+    try {
+      await stopLocalAi();
+      const classifier = require(path.join(appRoot, "server", "patientIntentClassifier.js"));
+      classifier.resetPatientIntentClassifierState();
+      localAiState = await startLocalAi(store);
+    } catch (error) {
+      disableLocalAi();
+      localAiState = { status: "startup_failed" };
+      safeLog("desktop_llama_reconfiguration_failed", {
+        code: error instanceof Error ? error.message : "startup_failed"
+      });
+    }
     return localAiState;
   });
   localAiReconfiguration = operation.catch(() => undefined);
@@ -374,26 +486,42 @@ function reconfigureLocalAi(store) {
 }
 
 function desktopSettingsSnapshot(store) {
-  const { modelDirectory, modelFilePath } = selectedModel(store);
+  const { modelMode, modelAlias, modelDirectory, modelFilePath } = selectedModel(store);
   return {
+    modelMode,
+    modelAlias,
     modelDirectory,
     modelFilePath,
     modelPresent: isRegularFile(modelFilePath),
     localAiEnabled: localAiEnabled(store),
     llamaStatus: localAiState.status,
+    modelValidation: localAiState.modelValidation
+      || localAiState.validationError
+      || (localAiState.status === "starting" ? "pending" : "not_checked"),
     version: PROTOCOL_VERSION
   };
 }
 
+function desktopDebugRuntime() {
+  return process.env.HEMATURIA_DESKTOP_DEBUG_RUNTIME === "1";
+}
+
+function desktopAttemptKey(caseId, attemptId) {
+  const scope = `${String(caseId).toLowerCase()}:${String(attemptId)}`;
+  const digest = crypto.createHash("sha256").update(scope).digest("hex");
+  return `hematuria:attempt:v1:${digest}`;
+}
+
 function installDesktopRuntimeEvidence(store) {
   globalThis.__hematuriaDesktopRuntimeEvidence = () => {
-    const { modelFilePath } = selectedModel(store);
+    const { modelAlias, modelFilePath } = selectedModel(store);
     const llamaServerReady = localAiState.status === "ready"
       && Boolean(llamaChild)
       && llamaChild.exitCode === null;
     return {
       llamaServerReady,
       localModelReady: llamaServerReady && isRegularFile(modelFilePath),
+      model: modelAlias,
       cloudRequestCount: networkAudit.cloudRequestCount
     };
   };
@@ -410,9 +538,10 @@ function desktopSettingsHandler(store) {
     const keys = Object.keys(body);
     if (
       keys.length === 0
-      || keys.some((key) => !["modelDirectory", "localAiEnabled"].includes(key))
+      || keys.some((key) => !["modelDirectory", "modelMode", "localAiEnabled"].includes(key))
       || (body.localAiEnabled !== undefined && typeof body.localAiEnabled !== "boolean")
       || (body.modelDirectory !== undefined && typeof body.modelDirectory !== "string")
+      || (body.modelMode !== undefined && typeof body.modelMode !== "string")
     ) {
       return res.status(400).json({ error: "desktop_settings_payload_invalid" });
     }
@@ -420,26 +549,101 @@ function desktopSettingsHandler(store) {
       if (body.modelDirectory !== undefined) {
         store.setDesktopSetting("localAi.modelDirectory", validateModelDirectory(body.modelDirectory));
       }
+      if (body.modelMode !== undefined) {
+        store.setDesktopSetting("localAi.modelMode", validateModelMode(body.modelMode));
+      }
       if (body.localAiEnabled !== undefined) {
         store.setDesktopSetting("localAi.enabled", body.localAiEnabled);
       }
       await reconfigureLocalAi(store);
       return res.status(200).json(desktopSettingsSnapshot(store));
     } catch (error) {
-      const code = error instanceof Error && error.message === "desktop_model_directory_invalid"
-        ? "desktop_model_directory_invalid"
+      const validationCode = error instanceof Error
+        && ["desktop_model_directory_invalid", "desktop_model_mode_invalid"].includes(error.message)
+        ? error.message
+        : "";
+      const code = validationCode
+        ? validationCode
         : "desktop_settings_update_failed";
-      return res.status(code === "desktop_model_directory_invalid" ? 400 : 500).json({ error: code });
+      return res.status(validationCode ? 400 : 500).json({ error: code });
     }
   };
 }
 
-function desktopEvidenceHandler() {
+function desktopEvidenceHandler(evidence) {
   return async (req, res) => {
+    if (!desktopDebugRuntime()) return res.status(404).json({ error: "not_found" });
     if (req.method !== "GET") return res.status(405).json({ error: "method_not_allowed" });
-    const snapshot = globalThis.__hematuriaDesktopRuntimeEvidence?.();
+    const snapshot = evidence.desktopEvidenceSnapshot();
     if (!snapshot) return res.status(503).json({ error: "desktop_evidence_unavailable" });
     return res.status(200).json(snapshot);
+  };
+}
+
+function desktopAttemptResumeHandler(store, trainingState) {
+  const validModes = new Set(["free", "osce", "rct", "public-practice", "formal-attempt"]);
+  return async (req, res) => {
+    if (req.method !== "POST") return res.status(405).json({ error: "method_not_allowed" });
+    if (requestHeader(req, "content-type").split(";")[0].trim().toLowerCase() !== "application/json") {
+      return res.status(415).json({ error: "content_type_not_supported" });
+    }
+    const body = req.body;
+    if (
+      !body
+      || typeof body !== "object"
+      || Array.isArray(body)
+      || Object.keys(body).sort().join(",") !== "attemptId,caseId,language,mode"
+      || typeof body.caseId !== "string"
+      || !/^[A-Za-z0-9_-]{1,64}$/.test(body.caseId)
+      || typeof body.attemptId !== "string"
+      || !/^[A-Za-z0-9:_-]{1,200}$/.test(body.attemptId)
+      || typeof body.mode !== "string"
+      || !validModes.has(body.mode)
+      || !["zh", "en"].includes(body.language)
+    ) {
+      return res.status(400).json({ error: "desktop_attempt_resume_payload_invalid" });
+    }
+
+    const mode = trainingState.normalizeAttemptMode(body.mode);
+    const attemptKey = desktopAttemptKey(body.caseId, body.attemptId);
+    const stored = store.resumeAttempt({
+      attemptKey,
+      caseId: body.caseId,
+      attemptId: body.attemptId,
+      mode,
+      language: body.language
+    });
+    if (stored.kind === "missing") return res.status(404).json({ error: "attempt_not_found" });
+    if (stored.kind === "expired") return res.status(410).json({ error: "attempt_expired" });
+    if (stored.kind === "identity_mismatch") return res.status(409).json({ error: "attempt_identity_mismatch" });
+    if (stored.kind === "not_resumable") return res.status(409).json({ error: "attempt_not_resumable" });
+    if (stored.kind !== "active") return res.status(500).json({ error: "attempt_resume_failed" });
+
+    const token = trainingState.signAttemptState(stored.state);
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const current = store.validateCurrentAttempt({ attemptKey, tokenHash });
+    if (current.kind !== "active") return res.status(409).json({ error: "attempt_state_mismatch" });
+    try {
+      const claims = trainingState.verifyAttemptState(token, {
+        caseId: body.caseId,
+        attemptId: body.attemptId,
+        mode,
+        allowCompleted: true
+      });
+      if (claims.language !== body.language) throw new Error("attempt_language_mismatch");
+    } catch {
+      return res.status(409).json({ error: "attempt_state_mismatch" });
+    }
+
+    res.setHeader("X-Training-State", token);
+    return res.status(200).json({
+      attemptId: stored.state.attemptId,
+      caseId: stored.state.caseId,
+      mode: stored.state.mode,
+      language: stored.state.language,
+      currentStage: Number(stored.state.currentStage),
+      status: stored.state.status
+    });
   };
 }
 
@@ -460,7 +664,10 @@ async function loadHandlers(store) {
     handlers.set(route, imported.default);
   }
   handlers.set("/api/desktop/settings", desktopSettingsHandler(store));
-  handlers.set("/api/desktop/evidence", desktopEvidenceHandler());
+  const evidence = require(path.join(appRoot, "server", "desktopRuntimeEvidence.js"));
+  handlers.set("/api/desktop/evidence", desktopEvidenceHandler(evidence));
+  const trainingState = require(path.join(appRoot, "server", "trainingState.js"));
+  handlers.set("/api/desktop/attempt/resume", desktopAttemptResumeHandler(store, trainingState));
   return handlers;
 }
 
@@ -491,6 +698,7 @@ function setCorsHeaders(req, res) {
     "Access-Control-Allow-Headers",
     "Content-Type, X-Request-Id, X-Idempotency-Key, X-Training-State, X-Hematuria-Desktop-Token"
   );
+  res.setHeader("Access-Control-Expose-Headers", "X-Training-State");
   res.setHeader("Access-Control-Max-Age", "600");
 }
 
@@ -673,7 +881,10 @@ async function main() {
   const trainingSecret = sqliteStore.getOrCreateDesktopSecret();
   installDesktopEnvironment(trainingSecret);
   installDesktopRuntimeEvidence(sqliteStore);
-  const localAi = await reconfigureLocalAi(sqliteStore);
+  const selected = selectedModel(sqliteStore);
+  activeModelAlias = selected.modelAlias;
+  disableLocalAi();
+  localAiState = localAiEnabled(sqliteStore) ? { status: "starting" } : { status: "disabled" };
   const handlers = await loadHandlers(sqliteStore);
 
   apiServer = createApiServer(handlers);
@@ -687,10 +898,13 @@ async function main() {
     pid: process.pid,
     origin,
     databaseSchemaVersion,
-    localAi
+    localAi: localAiState
   };
   process.stdout.write(`${JSON.stringify(ready)}\n`);
-  safeLog("desktop_sidecar_ready", { status: localAi.status, pid: process.pid });
+  safeLog("desktop_sidecar_ready", { status: localAiState.status, pid: process.pid });
+  if (localAiEnabled(sqliteStore)) {
+    void reconfigureLocalAi(sqliteStore);
+  }
 }
 
 process.once("SIGINT", () => void shutdown(0));

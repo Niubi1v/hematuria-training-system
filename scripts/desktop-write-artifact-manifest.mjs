@@ -75,7 +75,14 @@ const receipt = {
     bytes: runtimeManifest.model.size,
     sha256: runtimeManifest.model.sha256,
     bundledInInstaller: false
-  }
+  },
+  models: Object.fromEntries(Object.entries(runtimeManifest.models).map(([mode, model]) => [mode, {
+    fileName: model.fileName,
+    alias: model.alias,
+    bytes: model.size,
+    sha256: model.sha256,
+    bundledInInstaller: false
+  }]))
 };
 
 await fs.mkdir(artifactRoot, { recursive: true });

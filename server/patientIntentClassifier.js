@@ -388,7 +388,7 @@ async function classifyPatientIntent({
     };
   }
   const key = crypto.createHash("sha256")
-    .update(`${providerConfig.provider}:${localStructuredMode ? "local-metadata-v1" : "legacy-semantic"}:${language}:${normalizeIntentQuestion(question)}:${recentUserQuestions.map(normalizeIntentQuestion).join("|")}:${JSON.stringify(localStructuredMode ? safeConversationState : legacyConversationState)}:${safeGovernedCandidates.join("|")}`)
+    .update(`${providerConfig.provider}:${providerConfig.model}:${providerConfig.baseUrl}:${localStructuredMode ? "local-metadata-v1" : "legacy-semantic"}:${language}:${normalizeIntentQuestion(question)}:${recentUserQuestions.map(normalizeIntentQuestion).join("|")}:${JSON.stringify(localStructuredMode ? safeConversationState : legacyConversationState)}:${safeGovernedCandidates.join("|")}`)
     .digest("hex");
   const now = Date.now();
   prune(now);
@@ -522,13 +522,12 @@ async function classifyPatientIntent({
         prune();
         return value;
       }
-      let parsed = parseClassifierResponse(result?.text);
-      if (
-        parsed?.contextReference?.inherited
-        && parsed.contextReference.sourceIntent !== expectedInheritedIntent
-      ) {
-        parsed = null;
-      }
+      const parsed = parseClassifierResponse(result?.text);
+      const contextReferenceMatches = Boolean(
+        parsed
+        && parsed.contextReference.inherited === requiredContextReference.inherited
+        && parsed.contextReference.sourceIntent === requiredContextReference.sourceIntent
+      );
       const acceptedClauses = parsed?.clauses.filter((clause) => clause.intent) || [];
       const parsedIntentSet = [...new Set(acceptedClauses.map((clause) => clause.intent))].sort();
       const governedIntentSet = [...safeGovernedCandidates].sort();
@@ -539,6 +538,7 @@ async function classifyPatientIntent({
         );
       const accepted = Boolean(
         parsed
+        && contextReferenceMatches
         && acceptedClauses.length === parsed.clauses.length
         && acceptedClauses.length > 0
         && governedCandidatesMatch
@@ -586,9 +586,11 @@ async function classifyPatientIntent({
             provider: result?.provider || providerConfig.provider,
             model: result?.model || providerConfig.model,
             durationMs: Number(result?.durationMs || 0),
-            reason: parsed && !governedCandidatesMatch
-              ? "local_metadata_conflict_with_governed_candidates"
-              : parsed ? "semantic_needs_clarification" : "semantic_response_invalid",
+            reason: parsed && !contextReferenceMatches
+              ? "local_context_reference_mismatch"
+              : parsed && !governedCandidatesMatch
+                ? "local_metadata_conflict_with_governed_candidates"
+                : parsed ? "semantic_needs_clarification" : "semantic_response_invalid",
             providerCalls: 1
           };
       cache.set(key, { value, expiresAt: Date.now() + CACHE_TTL_MS });

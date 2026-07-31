@@ -22,16 +22,31 @@ export function requireWindows() {
 
 export async function readRuntimeManifest() {
   const manifest = JSON.parse(await fsp.readFile(manifestPath, "utf8"));
+  const modelModes = manifest?.models;
   if (
     manifest?.schemaVersion !== 1
     || manifest?.platform !== "windows-x86_64"
     || manifest?.node?.version !== "22.14.0"
     || manifest?.llamaCpp?.version !== "b10176"
+    || manifest?.defaultModelMode !== "lightweight"
+    || !modelModes
+    || Object.keys(modelModes).sort().join(",") !== "lightweight,standard"
     || manifest?.model?.bundledInInstaller !== false
+    || JSON.stringify(manifest.model) !== JSON.stringify(modelModes.lightweight)
   ) {
     throw new Error("desktop_runtime_manifest_invalid");
   }
-  for (const item of [manifest.node, manifest.llamaCpp, manifest.model]) {
+  for (const [mode, item] of Object.entries(modelModes)) {
+    if (
+      item?.bundledInInstaller !== false
+      || item?.thinkingMode !== "disabled"
+      || !/^[A-Za-z0-9._-]{1,80}$/.test(String(item?.alias || ""))
+      || !String(item?.fileName || "").endsWith(".gguf")
+    ) {
+      throw new Error(`desktop_model_manifest_invalid:${mode}`);
+    }
+  }
+  for (const item of [manifest.node, manifest.llamaCpp, ...Object.values(modelModes)]) {
     if (!/^[a-f0-9]{64}$/.test(String(item.sha256 || "")) || !Number.isSafeInteger(item.size || item.archiveSize)) {
       throw new Error("desktop_runtime_manifest_digest_invalid");
     }
