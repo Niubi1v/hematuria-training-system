@@ -666,10 +666,11 @@ function percentageScore(rawScore: number) {
 }
 
 function caseDisplay(caseData: StudentVisibleCase, lang: LanguageCode) {
-  const internalCaseId = /^P(\d+)$/.exec(caseData.id);
-  const caseNumber = internalCaseId
-    ? String(Number(internalCaseId[1])).padStart(2, "0")
-    : caseData.displayCaseId || caseData.id;
+  const publicIdentifier = caseData.displayCaseId || caseData.id;
+  const publicCaseId = /^P(\d+)$/.exec(publicIdentifier);
+  const caseNumber = publicCaseId
+    ? String(Number(publicCaseId[1])).padStart(2, "0")
+    : publicIdentifier;
   return {
     title: lang === "en" ? `Case ${caseNumber}` : `病例 ${caseNumber}`,
     age: caseData.age,
