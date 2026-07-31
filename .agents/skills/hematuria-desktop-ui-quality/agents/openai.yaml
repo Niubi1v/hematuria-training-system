@@ -1,0 +1,4 @@
+interface:
+  display_name: "Hematuria Desktop UI Quality"
+  short_description: "Audit and refine the desktop clinical UI"
+  default_prompt: "Use $hematuria-desktop-ui-quality to audit and refine the desktop clinical training interface."
