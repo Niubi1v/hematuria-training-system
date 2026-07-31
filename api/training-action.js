@@ -8,6 +8,7 @@ const imaging = require("../data/order_catalog_imaging.json");
 const procedures = require("../data/order_catalog_procedures.json");
 const perioperative = require("../data/order_catalog_perioperative.json");
 const mdtTriggers = require("../data/mdt_triggers.json");
+const consultCatalog = require("../data/consult_catalog.json");
 const { matchHistoryQuestion, normalize, validateStage } = require("../server/clinicalAssessment.js");
 const { advanceAttemptToken, appendEvents, createAttemptState, normalizeAttemptMode, signAttemptState, verifyAttemptState } = require("../server/trainingState.js");
 const { commitAttempt, digest, loadAttempt, registerAttempt } = require("../server/trainingAttemptStore.js");
@@ -185,9 +186,12 @@ function handleExam(caseData, input, language) {
     input, examId: item?.examId, at: new Date().toISOString(),
     result: configured
       ? presented.text
-      : simulated?.result || (language === "en" ? "This case does not provide this examination result, so no conclusion can be made from it." : "该病例未提供此项结果，暂不能据此判断。"),
+      : simulated?.result || (language === "en"
+        ? "This result is awaiting medical content review and is not used for diagnosis or scoring in this training attempt."
+        : "该项目结果正在医学内容审核中，本次训练不将其作为诊断或评分依据。"),
     translationStatus: configured ? presented.translationStatus : simulated ? "policy_approved_simulation" : "not_available",
-    provenance: configured ? "configured_case_result" : simulated?.provenance || "not_provided",
+    provenance: configured ? "configured_case_result" : simulated?.provenance || "medical_review_pending",
+    scoringEligible: Boolean(configured),
     ...(simulated || {})
   };
 }
@@ -226,6 +230,7 @@ function handleOrder(caseData, input, previousOrderIds, language) {
       status: result.status,
       ...presentOrderResult(order, result, language),
       provenance: "configured_case_result",
+      scoringEligible: true,
       teachingExplanation: language === "en" ? "Released only for this exact case and placed order." : "仅按当前病例与已开立医嘱精确释放。"
     }));
   const orderOutcomes = resolution.matches.map(({ input: requestedName, order }) => {
@@ -273,15 +278,19 @@ function handleOrder(caseData, input, previousOrderIds, language) {
     return {
       orderId: canonicalId,
       displayName,
-      status: "not_provided",
-      provenance: result ? `source_${result.status}` : "not_provided",
+      status: result?.status === "not_performed" ? "not_provided" : "medical_review_pending",
+      provenance: result?.status === "not_performed" ? "source_not_performed" : "medical_review_pending",
+      scoringEligible: false,
       message: result?.status === "not_performed"
         ? (language === "en" ? `${displayName}: this examination was not performed in the case, so no report exists.` : `${displayName}：本病例未实施该项目，因此无报告。`)
-        : (language === "en" ? `${displayName}: this case does not provide the result, so no conclusion can be made from it.` : `${displayName}：该病例未提供此项结果，暂不能据此判断。`)
+        : (language === "en"
+          ? `${displayName}: the result is awaiting medical content review and is excluded from diagnosis and scoring for this attempt.`
+          : `${displayName}：结果正在医学内容审核中，本次训练不将其作为诊断或评分依据。`)
     };
   });
   const at = new Date().toISOString();
   const notProvidedCount = orderOutcomes.filter((item) => item.status === "not_provided").length;
+  const medicalReviewPendingCount = orderOutcomes.filter((item) => item.status === "medical_review_pending").length;
   const unrecognizedCount = orderOutcomes.filter((item) => item.status === "unrecognized").length;
   return {
     id: `${caseData.id}-${Date.now()}`, input, matched: orders.length > 0,
@@ -292,23 +301,100 @@ function handleOrder(caseData, input, previousOrderIds, language) {
     recognizedOrderCount: orders.length, returnedReportCount: results.length, at, placedAt: at, stageNo: 2,
     status: results.length ? "reported" : "no-result",
     message: language === "en"
-      ? `${orders.length} order(s) recognized: ${results.length} case-source report(s) returned, ${notProvidedCount} result(s) not provided${unrecognizedCount ? `, ${unrecognizedCount} unrecognized` : ""}. See each order below.`
-      : `已识别${orders.length}项医嘱：返回${results.length}项病例现有报告，${notProvidedCount}项病例未提供结果${unrecognizedCount ? `，${unrecognizedCount}项未识别` : ""}。请查看逐项状态。`
+      ? `${orders.length} order(s) recognized: ${results.length} case-source report(s) returned, ${medicalReviewPendingCount} awaiting medical review, ${notProvidedCount} not performed${unrecognizedCount ? `, ${unrecognizedCount} unrecognized` : ""}. See each order below.`
+      : `已识别${orders.length}项医嘱：返回${results.length}项病例现有报告，${medicalReviewPendingCount}项等待医学内容审核，${notProvidedCount}项病例未实施${unrecognizedCount ? `，${unrecognizedCount}项未识别` : ""}。请查看逐项状态。`
   };
 }
 
-function handleMdt(caseData, departments, purpose, language) {
+function isPrimaryUrologyDepartment(value) {
+  return /泌尿外科|urology/i.test(String(value || ""));
+}
+
+function externalConsultDepartments(value) {
+  return String(value || "")
+    .split(/[；;、,，\n]/)
+    .map((item) => item.trim())
+    .filter((item) => item && !isPrimaryUrologyDepartment(item))
+    .join("；");
+}
+
+function normalizeConsultDepartment(value) {
+  return String(value || "").trim().replace(/\s+/g, " ").toLocaleLowerCase();
+}
+
+function expectedConsultDepartmentSet(value) {
+  const source = normalizeConsultDepartment(value);
+  const expected = new Set();
+  for (const item of consultCatalog) {
+    const department = String(item?.department || "").trim();
+    if (!department || isPrimaryUrologyDepartment(department)) continue;
+    const aliases = [department, ...department.split("/")]
+      .map(normalizeConsultDepartment)
+      .filter(Boolean);
+    if (aliases.some((alias) => source.includes(alias))) {
+      expected.add(normalizeConsultDepartment(department));
+    }
+  }
+  return expected;
+}
+
+function handleMdt(caseData, departments, purpose, language, consultRequests) {
   const trigger = mdtTriggers.find((item) => item.caseId === caseData.id);
-  const expected = String(caseData.clinical?.consultDepartments || "");
-  const accepted = (departments || []).filter((department) => expected.includes(department));
-  const focused = String(purpose || "").trim().length >= 8;
-  const opinions = (departments || []).map((department) => ({
-    department,
-    opinion: language === "en" ? `The ${department} consultation will focus on the stated question. Additional conclusions require unlocked evidence.` : `${department}会诊将围绕申请问题评估，进一步结论需结合已获得证据。`,
-    questions: [purpose], expertJudgment: trigger?.expertChallenge || "",
-    neededInfo: language === "en" ? "Provide stage-unlocked clinical evidence." : "请提供当前阶段已获得的临床证据。"
-  }));
-  return { opinions, accepted, focused };
+  const expected = [caseData.clinical?.consultDepartments, trigger?.departments].filter(Boolean).join("；");
+  const expectedDepartments = expectedConsultDepartmentSet(expected);
+  const normalizedRequests = Array.isArray(consultRequests) && consultRequests.length
+    ? consultRequests
+      .filter((item) => item && !isPrimaryUrologyDepartment(item.department))
+      .map((item) => ({
+        department: String(item.department || "").trim().slice(0, 80),
+        purpose: String(item.purpose || "").trim().slice(0, 500),
+        question: String(item.question || "").trim().slice(0, 500),
+        evidence: Array.isArray(item.evidence)
+          ? item.evidence.map((value) => String(value || "").trim().slice(0, 300)).filter(Boolean).slice(0, 30)
+          : []
+      }))
+      .filter((item) => item.department)
+    : (departments || [])
+      .filter((department) => !isPrimaryUrologyDepartment(department))
+      .map((department) => ({
+        department: String(department || "").trim().slice(0, 80),
+        purpose: String(purpose || "").trim().slice(0, 500),
+        question: String(purpose || "").trim().slice(0, 500),
+        evidence: []
+      }))
+      .filter((item) => item.department);
+  const accepted = normalizedRequests.map((item) => item.department)
+    .filter((department) => expectedDepartments.has(normalizeConsultDepartment(department)));
+  const focused = normalizedRequests.length > 0 && normalizedRequests.every((item) => item.purpose.length >= 6 && item.question.length >= 6);
+  const evidenceProvided = normalizedRequests.length > 0 && normalizedRequests.every((item) => item.evidence.length > 0);
+  const referenceIntegration = String(trigger?.purpose || caseData.clinical?.consultQuestions || "").trim();
+  const opinions = normalizedRequests.map((item) => {
+    const isExpected = expectedDepartments.has(normalizeConsultDepartment(item.department));
+    const evidenceCount = item.evidence.length;
+    return {
+      department: item.department,
+      opinion: language === "en"
+        ? `${item.department} can address the submitted question: ${item.question || item.purpose}. ${evidenceCount} collected evidence item(s) accompanied the request.`
+        : `${item.department}可围绕“${item.question || item.purpose}”解决本次会诊问题；会诊单已附${evidenceCount}条已采集证据。`,
+      questions: [item.question || item.purpose].filter(Boolean),
+      expertJudgment: language === "en"
+        ? "The opinion is limited to the evidence already released in this attempt."
+        : "会诊意见仅依据本次训练已释放且已随单提供的证据。",
+      neededInfo: language === "en"
+        ? `Add objective history, examination, laboratory, or imaging evidence still needed to resolve: ${item.question || item.purpose}. Do not use unreleased results.`
+        : `建议围绕“${item.question || item.purpose}”补充尚未获得的客观病史、查体、检验或影像证据，不得使用未释放结果。`,
+      suggestedHandling: referenceIntegration || (language === "en" ? "Integrate the consultation around the submitted purpose and released evidence." : "围绕会诊目的和已释放证据形成整合意见。"),
+      riskReminder: language === "en"
+        ? "A consultation cannot replace emergency assessment or evidence-based decisions."
+        : "会诊不能替代急症识别，也不能替代基于病例证据的诊疗决策。",
+      residentQuestion: item.question || item.purpose,
+      necessity: isExpected
+        ? (language === "en" ? "Relevant to this case at the current stage." : "与本病例当前阶段相关，建议会诊。")
+        : (language === "en" ? "Not routinely required from the current evidence; reconsider if a specific trigger emerges." : "依据当前证据并非常规必需；出现明确触发条件时再考虑。"),
+      mdtIntegration: referenceIntegration || (language === "en" ? "Use the submitted purpose and released evidence for MDT integration." : "以提交的会诊目的和已释放证据形成MDT整合。")
+    };
+  });
+  return { opinions, accepted, focused, evidenceProvided, requests: normalizedRequests };
 }
 
 function allocate(max, count, index) {
@@ -353,7 +439,7 @@ function standardFor(caseData, stageKey, language) {
     history: caseData.standardSummary || "",
     orders: [caseData.clinical?.requiredLabs, caseData.clinical?.specialTests, caseData.clinical?.imagingAndProcedures].filter(Boolean).join("\n"),
     diagnosis: [caseData.diagnosis, caseData.clinical?.mustDifferentials].filter(Boolean).join("\n"),
-    consult: [caseData.clinical?.consultDepartments, caseData.clinical?.consultQuestions].filter(Boolean).join("\n"),
+    consult: [externalConsultDepartments(caseData.clinical?.consultDepartments), caseData.clinical?.consultQuestions].filter(Boolean).join("\n"),
     treatment: [caseData.clinical?.immediateTreatment, caseData.clinical?.definitiveTreatment, caseData.clinical?.followUp].filter(Boolean).join("\n"),
     perioperative: caseData.standardManagement?.perioperative || caseData.perioperativePlan || caseData.clinical?.perioperative || "",
     debrief: caseData.teachingPoints?.join("\n") || ""
@@ -474,7 +560,18 @@ module.exports = async function handler(req, res) {
         .filter((order) => result.acceptedOrderIds.includes(order.orderId)
           || result.duplicateOrderIds.includes(order.orderId))
         .map((order) => ({ eventId: `srv-${state.sequence + 1}-order-${order.orderId}`, type: "order_placed", actionId: order.orderId, stageNo: 2, at, text: order.displayName, metadata: { validated: true, duplicate: result.duplicateOrderIds.includes(order.orderId) } }));
-      const resultEvents = result.results.map((item) => ({ eventId: `srv-${state.sequence + 1}-result-${item.resultId}`, type: "result_returned", actionId: item.orderId, stageNo: 2, at, text: item.impression || item.result, metadata: { validated: true } }));
+      const resultEvents = result.results.map((item) => ({
+        eventId: `srv-${state.sequence + 1}-result-${item.resultId}`,
+        type: "result_returned",
+        actionId: item.orderId,
+        stageNo: 2,
+        at,
+        text: item.impression || item.result,
+        metadata: {
+          validated: item.provenance === "configured_case_result" && item.scoringEligible !== false,
+          provenance: item.provenance || "unknown"
+        }
+      }));
       appendEvents(state, [...orderEvents, ...resultEvents]);
       const releasedReports = Array.isArray(state.releasedReports) ? state.releasedReports : [];
       const knownResultIds = new Set(releasedReports.map((item) => item.resultId));
@@ -485,10 +582,11 @@ module.exports = async function handler(req, res) {
       return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: result });
     }
     if (body.action === "mdt") {
-      const result = handleMdt(caseData, body.departments, body.purpose, language);
+      const result = handleMdt(caseData, body.departments, body.purpose, language, body.consultRequests);
       const events = [];
       if (result.accepted.length) events.push({ eventId: `srv-${state.sequence + 1}-mdt-department`, type: "consult_requested", actionId: "department", stageNo: 4, at, text: result.accepted.join("；"), metadata: { validated: true } });
-      if (result.focused) ["trigger", "question", "evidence"].forEach((actionId) => events.push({ eventId: `srv-${state.sequence + 1}-mdt-${actionId}`, type: "consult_requested", actionId, stageNo: 4, at, text: body.purpose, metadata: { validated: true } }));
+      if (result.focused) ["trigger", "question"].forEach((actionId) => events.push({ eventId: `srv-${state.sequence + 1}-mdt-${actionId}`, type: "consult_requested", actionId, stageNo: 4, at, text: result.requests.map((item) => `${item.department}:${item.question || item.purpose}`).join("；"), metadata: { validated: true } }));
+      if (result.evidenceProvided) events.push({ eventId: `srv-${state.sequence + 1}-mdt-evidence`, type: "consult_requested", actionId: "evidence", stageNo: 4, at, text: result.requests.map((item) => `${item.department}:${item.evidence.length}`).join("；"), metadata: { validated: true } });
       appendEvents(state, events);
       return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: result.opinions });
     }

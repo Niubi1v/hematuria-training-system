@@ -16,11 +16,11 @@ const p008 = (casesJson as CaseData[]).find((item) => item.id === "P008")!;
 
 const cbc = matchOrderResults(p008, "LAB-BL-001");
 assert(cbc.selectedOrderCount === 1 && cbc.recognizedOrderCount === 1 && cbc.returnedReportCount === 0, "P008 CBC counts must distinguish an order from an available report");
-assert(cbc.orderOutcomes?.[0]?.status === "not_provided" && cbc.orderOutcomes[0].provenance === "source_not_available", "P008 unavailable CBC must remain a per-order source outcome");
+assert(cbc.orderOutcomes?.[0]?.status === "medical_review_pending" && cbc.orderOutcomes[0].provenance === "medical_review_pending" && cbc.orderOutcomes[0].scoringEligible === false, "P008 unavailable CBC must remain a non-scoring per-order medical-review outcome");
 
 const renal = matchOrderResults(p008, "LAB-BL-003");
 assert(renal.results.length === 0, "P008 unavailable renal-function placeholder must not be presented as a report");
-assert(renal.orderOutcomes?.[0]?.status === "not_provided" && renal.orderOutcomes[0].provenance === "source_not_available", "P008 renal-function absence must remain explicit");
+assert(renal.orderOutcomes?.[0]?.status === "medical_review_pending" && renal.orderOutcomes[0].provenance === "medical_review_pending" && renal.orderOutcomes[0].scoringEligible === false, "P008 renal-function absence must remain explicit and excluded from scoring");
 
 const ctuBlocked = matchOrderResults(p008, "IMG-CT-002");
 assert(ctuBlocked.results.length === 0 && ctuBlocked.unmetPrerequisites?.includes("LAB-BL-003"), "CTU must wait for renal-function prerequisite");
@@ -58,9 +58,13 @@ for (const sourceResult of orderResults) {
     assert(mapped.results.some((item) => item.resultId === sourceResult.resultId), `${sourceResult.caseId}/${sourceResult.orderId}: final source report must be released`);
     assert(outcome?.status === "reported" && outcome.provenance === "configured_case_result", `${sourceResult.caseId}/${sourceResult.orderId}: final mapping must preserve source provenance`);
     finalMappings += 1;
-  } else {
+  } else if (sourceResult.status === "not_performed") {
     assert(mapped.results.every((item) => item.resultId !== sourceResult.resultId), `${sourceResult.caseId}/${sourceResult.orderId}: unavailable placeholder must not be presented as a report`);
-    assert(outcome?.status === "not_provided" && outcome.provenance === `source_${sourceResult.status}`, `${sourceResult.caseId}/${sourceResult.orderId}: unavailable source status must remain explicit`);
+    assert(outcome?.status === "not_provided" && outcome.provenance === "source_not_performed", `${sourceResult.caseId}/${sourceResult.orderId}: not-performed source status must remain explicit`);
+    unavailableMappings += 1;
+  } else {
+    assert(mapped.results.every((item) => item.resultId !== sourceResult.resultId), `${sourceResult.caseId}/${sourceResult.orderId}: pending placeholder must not be presented as a report`);
+    assert(outcome?.status === "medical_review_pending" && outcome.provenance === "medical_review_pending" && outcome.scoringEligible === false, `${sourceResult.caseId}/${sourceResult.orderId}: missing source content must remain pending human review and excluded from scoring`);
     unavailableMappings += 1;
   }
 }

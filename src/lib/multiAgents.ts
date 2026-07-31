@@ -38,8 +38,9 @@ export type OrderResultLog = {
   orderOutcomes?: Array<{
     orderId: string;
     displayName: string;
-    status: "reported" | "not_provided" | "prerequisite_missing" | "duplicate" | "unrecognized";
+    status: "reported" | "not_provided" | "medical_review_pending" | "prerequisite_missing" | "duplicate" | "unrecognized";
     provenance: string;
+    scoringEligible?: boolean;
     resultId?: string;
     message: string;
   }>;
@@ -50,7 +51,8 @@ export type ExamResultLog = {
   result: string;
   at: string;
   examId?: string;
-  provenance?: "configured_case_result" | "simulated_normal" | "not_provided";
+  provenance?: "configured_case_result" | "simulated_normal" | "not_provided" | "medical_review_pending";
+  scoringEligible?: boolean;
   affectsDiagnosis?: false;
   affectsScore?: false;
   reviewerStatus?: "not_required";
@@ -66,6 +68,8 @@ export type MdtOpinion = {
   suggestedHandling?: string;
   riskReminder?: string;
   residentQuestion?: string;
+  necessity?: string;
+  mdtIntegration?: string;
 };
 
 export type Evaluator360State = {
@@ -218,19 +222,29 @@ export function matchOrderResults(caseData: CaseData, input: string, context?: {
         message: `${order.displayName}：已返回病例现有 source 报告。`
       };
     }
+    if (result?.status === "not_performed") {
+      return {
+        orderId: canonicalId,
+        displayName: order.displayName,
+        status: "not_provided" as const,
+        provenance: "source_not_performed",
+        scoringEligible: false,
+        message: `${order.displayName}：本病例未实施该项目，因此无报告。`
+      };
+    }
     return {
       orderId: canonicalId,
       displayName: order.displayName,
-      status: "not_provided" as const,
-      provenance: result ? `source_${result.status}` : "not_provided",
-      message: result?.status === "not_performed"
-        ? `${order.displayName}：本病例未实施该项目，因此无报告。`
-        : `${order.displayName}：该病例未提供此项结果，暂不能据此判断。`
+      status: "medical_review_pending" as const,
+      provenance: "medical_review_pending",
+      scoringEligible: false,
+      message: `${order.displayName}：结果正在医学内容审核中，本次训练不将其作为诊断或评分依据。`
     };
   });
 
   const at = new Date().toISOString();
   const notProvidedCount = orderOutcomes.filter((item) => item.status === "not_provided").length;
+  const reviewPendingCount = orderOutcomes.filter((item) => item.status === "medical_review_pending").length;
   return {
     id: `${caseData.id}-${Date.now()}`,
     input: text,
@@ -248,7 +262,7 @@ export function matchOrderResults(caseData: CaseData, input: string, context?: {
     recognizedOrderCount: matchedOrders.length,
     returnedReportCount: matched.length,
     orderOutcomes,
-    message: `已识别${matchedOrders.length}项医嘱：返回${matched.length}项病例现有报告，${notProvidedCount}项病例未提供结果。请查看逐项状态。`
+    message: `已识别${matchedOrders.length}项医嘱：返回${matched.length}项病例现有报告，${notProvidedCount}项未实施，${reviewPendingCount}项等待医学内容审核。请查看逐项状态。`
   };
 }
 
@@ -265,7 +279,14 @@ export function generatePhysicalExamResult(caseData: CaseData, input: string): E
     const simulated = simulatedPhysicalExamResult(matchedExam, "zh");
     if (simulated) return { input: text, at: new Date().toISOString(), examId: matchedExam.examId, ...simulated };
   }
-  return { input: text, result: "该病例未提供此项结果，暂不能据此判断。", at: new Date().toISOString(), examId: matchedExam?.examId, provenance: "not_provided" };
+  return {
+    input: text,
+    result: "该项目结果正在医学内容审核中，本次训练不将其作为诊断或评分依据。",
+    at: new Date().toISOString(),
+    examId: matchedExam?.examId,
+    provenance: "medical_review_pending",
+    scoringEligible: false
+  };
 }
 
 export function applicablePhysicalExamIds(caseData: CaseData) {

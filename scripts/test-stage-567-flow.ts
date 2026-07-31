@@ -9,7 +9,8 @@ assert(/stageNo === 5\) return "treatment"/.test(source), "Stage 5 must map to t
 assert(/stageNo === 6\) return "perioperative"/.test(source), "Stage 6 must map to perioperative");
 assert(/return "debrief"/.test(source), "Stage 7 must map to debrief");
 assert(!/stageNo === 7 && !finalReport\) setFinalReport/.test(source), "Opening stage 7 must not create final report");
-assert(/answers\.debriefReflection\.trim\(\)\.length < 10/.test(source), "Final report requires learner reflection");
+assert(!/answers\.debriefReflection\.trim\(\)\.length\s*</.test(source), "An empty optional reflection must not block final report generation");
+assert(/trainingAction<StageEvaluation>\(\{ action: "stage-feedback", stageKey: "debrief"/.test(source), "Explicit completion must submit stage 7 before scoring");
 assert(/setFinalReport\(report\)/.test(source), "Explicit completion must create final report");
 assert(/if \(finalReport && stageNo !== 7\) return false/.test(source), "Final report must lock prior-stage logs");
 

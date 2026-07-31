@@ -71,15 +71,16 @@ function validateDiagnosis(caseData, submission, at, sequence) {
   return { events, warnings };
 }
 
-function validateTreatment(caseData, submission, at, sequence) {
+function validateTreatment(caseData, submission, at, sequence, stageKey = "treatment") {
   const events = [];
   const warnings = [];
-  const fields = [
-    ["immediate", submission.immediateTreatment, caseData.clinical?.immediateTreatment],
-    ["etiologic", submission.admissionTreatment, `${caseData.clinical?.immediateTreatment || ""} ${caseData.clinical?.definitiveTreatment || ""}`],
-    ["definitive", submission.definitiveTreatment, caseData.clinical?.definitiveTreatment],
-    ["perioperative", submission.perioperativePreparation, caseData.perioperativePlan || caseData.clinical?.perioperative || caseData.clinical?.consultQuestions]
-  ];
+  const fields = stageKey === "perioperative"
+    ? [["perioperative", submission.perioperativePreparation, caseData.perioperativePlan || caseData.clinical?.perioperative || caseData.clinical?.consultQuestions]]
+    : [
+        ["immediate", submission.immediateTreatment, caseData.clinical?.immediateTreatment],
+        ["etiologic", submission.admissionTreatment, `${caseData.clinical?.immediateTreatment || ""} ${caseData.clinical?.definitiveTreatment || ""}`],
+        ["definitive", submission.definitiveTreatment, caseData.clinical?.definitiveTreatment]
+      ];
   for (const [actionId, answer, reference] of fields) {
     if (!meaningful(answer, 8)) continue;
     if (unsafeTreatment.test(String(answer))) {
@@ -91,9 +92,11 @@ function validateTreatment(caseData, submission, at, sequence) {
     if (hits.length >= 2) events.push({ eventId: `srv-${sequence}-treatment-${actionId}`, type: "treatment_action", actionId, stageNo: actionId === "perioperative" ? 6 : 5, at, text: answer, metadata: { validated: true, matches: hits } });
     else warnings.push(`${actionId}处理未与本病例标准路径形成足够对应。`);
   }
-  for (const [actionId, answer, reference] of [["followup", submission.followUp, caseData.clinical?.followUp], ["education", submission.patientEducation, `${caseData.clinical?.followUp || ""} ${caseData.teachingPoints?.join(" ") || ""}`]]) {
-    const hits = conceptMatch(answer, reference);
-    if (hits.length >= 2) events.push({ eventId: `srv-${sequence}-safety-${actionId}`, type: "safety_net_provided", actionId, stageNo: 5, at, text: answer, metadata: { validated: true, matches: hits } });
+  if (stageKey === "treatment") {
+    for (const [actionId, answer, reference] of [["followup", submission.followUp, caseData.clinical?.followUp], ["education", submission.patientEducation, `${caseData.clinical?.followUp || ""} ${caseData.teachingPoints?.join(" ") || ""}`]]) {
+      const hits = conceptMatch(answer, reference);
+      if (hits.length >= 2) events.push({ eventId: `srv-${sequence}-safety-${actionId}`, type: "safety_net_provided", actionId, stageNo: 5, at, text: answer, metadata: { validated: true, matches: hits } });
+    }
   }
   return { events, warnings };
 }
@@ -121,7 +124,7 @@ function validateStage(caseData, stageKey, submission) {
   const at = new Date().toISOString();
   const sequence = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   if (stageKey === "diagnosis") return validateDiagnosis(caseData, submission, at, sequence);
-  if (["treatment", "perioperative"].includes(stageKey)) return validateTreatment(caseData, submission, at, sequence);
+  if (["treatment", "perioperative"].includes(stageKey)) return validateTreatment(caseData, submission, at, sequence, stageKey);
   if (stageKey === "debrief" && meaningful(submission.debriefReflection, 30)) return { events: [{ eventId: `srv-${sequence}-reflection`, type: "reflection_submitted", actionId: "quality", stageNo: 7, at, text: submission.debriefReflection, metadata: { validated: true } }], warnings: [] };
   return { events: [], warnings: meaningful(JSON.stringify(submission), 8) ? [] : ["作答内容不足，暂未形成可验证的临床证据。"] };
 }

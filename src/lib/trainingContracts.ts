@@ -58,13 +58,15 @@ export type OrderResultLog = {
     teachingExplanation: string;
     metadataStatus?: "complete" | "awaiting_reviewed_metadata";
     translationStatus?: string;
-    provenance?: "configured_case_result" | "simulated_normal" | "not_provided";
+    provenance?: "configured_case_result" | "simulated_normal" | "not_provided" | "medical_review_pending";
+    scoringEligible?: boolean;
   }>;
   orderOutcomes?: Array<{
     orderId: string;
     displayName: string;
-    status: "reported" | "not_provided" | "prerequisite_missing" | "duplicate" | "unrecognized" | "unavailable";
+    status: "reported" | "not_provided" | "medical_review_pending" | "prerequisite_missing" | "duplicate" | "unrecognized" | "unavailable";
     provenance: string;
+    scoringEligible?: boolean;
     resultId?: string;
     message: string;
   }>;
@@ -91,7 +93,8 @@ export type ExamResultLog = {
   at: string;
   examId?: string;
   translationStatus?: string;
-  provenance?: "configured_case_result" | "simulated_normal" | "not_provided";
+  provenance?: "configured_case_result" | "simulated_normal" | "not_provided" | "medical_review_pending";
+  scoringEligible?: boolean;
   affectsDiagnosis?: false;
   affectsScore?: false;
   reviewerStatus?: "not_required";
@@ -107,6 +110,8 @@ export type MdtOpinion = {
   suggestedHandling?: string;
   riskReminder?: string;
   residentQuestion?: string;
+  necessity?: string;
+  mdtIntegration?: string;
 };
 
 export type Evaluator360Report = {

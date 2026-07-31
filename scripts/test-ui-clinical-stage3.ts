@@ -113,7 +113,7 @@ async function main() {
 }, attempt.token);
   assert.equal(response.statusCode, 200);
   assert.deepEqual((response.payload.results as Array<{ orderId: string }>).map((item) => item.orderId).sort(), ["IMG-CT-002"]);
-  assert((response.payload.orderOutcomes as Array<{ orderId: string; status: string }>).some((item) => item.orderId === "LAB-BL-003" && item.status === "not_provided"));
+  assert((response.payload.orderOutcomes as Array<{ orderId: string; status: string }>).some((item) => item.orderId === "LAB-BL-003" && item.status === "medical_review_pending"));
   assert((response.payload.matchedOrders as Array<{ displayName: string }>).some((item) => item.displayName === "双肾CTU平扫+增强"));
 
   attempt = await investigationAttempt("P008");
@@ -157,9 +157,9 @@ async function main() {
   assert.equal((response.payload.results as unknown[]).length, 0);
   const missingOutcomes = response.payload.orderOutcomes as Array<{ displayName: string; status: string; provenance: string; message: string }>;
   assert.equal(missingOutcomes.length, 2);
-  assert(missingOutcomes.every((item) => item.status === "not_provided"));
-  assert(missingOutcomes.some((item) => item.displayName === "肾功能/eGFR" && item.provenance === "source_not_available"));
-  assert(missingOutcomes.some((item) => item.displayName === "X光膀胱造影" && /X光膀胱造影：/.test(item.message)));
+  assert(missingOutcomes.every((item) => item.status === "medical_review_pending"));
+  assert(missingOutcomes.every((item) => item.provenance === "medical_review_pending"));
+  assert(missingOutcomes.some((item) => item.displayName === "X光膀胱造影" && /医学内容审核中/.test(item.message)));
 
   const safeSimulation = await investigationAttempt("P001");
   response = await call({
@@ -187,8 +187,9 @@ async function main() {
     input: "腰部包块"
   }, criticalMissing.token);
   assert.equal(response.statusCode, 200);
-  assert.equal(response.payload.provenance, "not_provided");
-  assert.equal(response.payload.result, "该病例未提供此项结果，暂不能据此判断。");
+  assert.equal(response.payload.provenance, "medical_review_pending");
+  assert.equal(response.payload.scoringEligible, false);
+  assert.equal(response.payload.result, "该项目结果正在医学内容审核中，本次训练不将其作为诊断或评分依据。");
 
   const female = await investigationAttempt("P002");
   response = await call({
@@ -201,8 +202,8 @@ async function main() {
 }, female.token);
   assert.equal(response.statusCode, 200);
   assert.equal(response.payload.examId, undefined);
-  assert.equal(response.payload.result, "该病例未提供此项结果，暂不能据此判断。");
-  assert.equal(response.payload.provenance, "not_provided");
+  assert.equal(response.payload.result, "该项目结果正在医学内容审核中，本次训练不将其作为诊断或评分依据。");
+  assert.equal(response.payload.provenance, "medical_review_pending");
   assert.notEqual(response.payload.provenance, "simulated_normal");
   assert.doesNotMatch(String(response.payload.result), /\d|正常|阴性/);
 
@@ -217,7 +218,7 @@ async function main() {
 }, male.token);
   assert.equal(response.statusCode, 200);
   assert.equal(response.payload.examId, undefined);
-  assert.equal(response.payload.provenance, "not_provided");
+  assert.equal(response.payload.provenance, "medical_review_pending");
 
   const perioperativeAttemptId = `ui-stage6-P001-${Date.now()}-${Math.random()}`;
   response = await call({ action: "init-attempt", caseId: "P001", attemptId: perioperativeAttemptId, mode: "free", language: "zh" });

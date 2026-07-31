@@ -26,6 +26,7 @@ const runtimeDataFiles = [
   "order_catalog_procedures.json",
   "order_catalog_perioperative.json",
   "mdt_triggers.json",
+  "consult_catalog.json",
   "patient_slots_bilingual.json",
   "history_medical_reconciliation.json",
   "chief_complaint_wording_runtime.json"
