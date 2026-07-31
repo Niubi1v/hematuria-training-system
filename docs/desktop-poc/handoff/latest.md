@@ -1,109 +1,53 @@
-# 桌面离线版最佳实践对齐交接
+# 桌面医学内容治理分流与导师 Beta 交接
 
-- handoffId：`2f9eb5a3-20260731-235013`
+- handoffId：`155e8ff4-20260801-043929`
 - 状态：`ready_for_review`
 - 分支：`codex/hematuria-desktop-local-ai-poc`
 - Production 基线：`6f22d591332a522c1a85835ba4c39a840f961901`
-- 产品 HEAD：`2f9eb5a3bbc56525b7de6c6e640519a5bc3452b1`
-- 已测试实现 HEAD：`a05ce24ae4cac60025bcc4aa7ef37b7c16c04cf5`
+- 产品/已测试实现 HEAD：`155e8ff4cb641cae4acb8a884b8b3245c18d4fd8`
 - `data/**`：零差异
-- 导师包：本轮未制作
 
-## 架构变化
+## 医学分流
 
-Patient Agent 沿用现有 ontology、structured/canonical history、九态事实、冲突隔离和 answer planner，不建立第二套患者框架。控制层明确拆成三部分：
+输入包：`D:\HematuriaReview\desktop-clinical-content-review-pack-triaged.zip`（215,145 B；SHA256 `832cd6c0935a129258b5844db403f12a471949cabc36caecd6120173e8b68a46`）。
 
-1. Case Truth：现有受治理 answer plan 是唯一事实来源。
-2. Disclosure Policy：按问句触发，处理精确、粗粒度、部分已知、患者不知情和医学冲突。
-3. Persona Style：仅控制语气、紧张程度、语言水平、回答长短、合作方式和记忆清晰度，不携带或改变事实。
+| 分类 | 输入 | 运行时结果 |
+|---|---:|---|
+| auto_apply_after_source_match | 125 | 66 项通过严格 source/result 直接匹配并应用；59 项不匹配，继续 fail-closed |
+| policy_safe_simulated_normal_candidate | 75 | 75 项完成病例 source 冲突检查并应用 |
+| no_specimen_or_not_indicated | 552 | 明确显示无适应证、未实施或未取材，不生成正常数值/病理 |
+| no_report_or_not_indicated | 952 | 明确显示无适应证或未实施，不生成 CT/MR/超声/内镜/核医学报告 |
+| needs_case_specific_medical_review | 902 | 继续 fail-closed |
+| blocked_medical_conflict | 1 | 保留 medical_conflict，不自动裁决 |
 
-开发诊断新增 `tangential`、`oversharing`、`role_breaking`、`off_script`、`wrong_unknown`、`context_lost`、`polarity_error`；学生端不显示这些字段。
+66 项 source projection 使用 `provenance=case_source_projection`、`scoringEligible=false`。75 项安全正常使用 `provenance=simulated_normal`、`affectsDiagnosis=false`、`affectsScore=false`、`scoringEligible=false`、`diagnosticEligible=false`，不进入诊断或评分证据链。
 
-Measurement/Data Agent 保持“学生动作 → canonical action → 精确病例结果 → release condition → provenance → timeline/evidence graph”。Patient Agent 不返回查体、检验、影像或病理；关键结果不由 LLM 生成。
+学生端每项医嘱独立显示“报告已返回、无明确适应证、未实施、未取材、等待医学审核、前置条件未满足”之一。未实施和未取材项目不生成结果事件；不必要检查进入第7阶段轨迹复盘。关键影像、尿检、病理、961项待审核内容（902+59）和1项冲突均未进入确定性诊断、治疗或评分证据，且未由 LLM 生成。
 
-轻量 evidence graph 存在签名 attempt state 与 SQLite JSON 状态中。内部节点记录 evidenceId、阶段、触发动作/原始问句、canonical fact/action、结果、provenance、诊断支持/反对关系和 rubric 映射。学生端只收到当前阶段允许的 evidenceId、阶段与安全标签。
+## 阶段2—7验证
 
-## 量化回归
+P001肿瘤、P002女性肿瘤、P006感染、P009结石及P011肾小球性血尿均完成阶段2—7并生成最终报告；证据节点数分别为23、16、18、15、16。
 
-代表流程包括 P001 中文、P001 英文、P006 感染女性、P009 结石女性和 P002 肿瘤女性：
+- 阶段2：逐项状态、来源、前置条件和时间线净化通过，无 `undefined` 或原始对象。
+- 阶段3：只允许选择已释放且可用于诊断的 evidenceId；安全正常和待审核内容被排除。
+- 阶段4—6：会诊、治疗医嘱和围术期反馈继续引用真实 evidenceId。
+- 阶段7：完成率5/5，百分制和最终报告生成通过，轨迹可指出不必要检查。
 
-| 指标 | 结果 |
-|---|---:|
-| 事实正确率 | 10/10（100%） |
-| 上下文连续性 | 5/5（100%） |
-| action-result 匹配 | 5/5（100%） |
-| 阶段3—7反馈可追溯 | 109/109（100%） |
-| 七阶段完成率 | 5/5（100%） |
-| 轨迹章节覆盖 | 40/40（100%） |
-| 模型关闭后的回答来源 | rule_fallback 10 / local_ai 0 |
+通过的专项包括 triage 清单校验、Data Agent 权限/展示、evidence graph 隔离、阶段2—7、TypeScript、ESLint、Next/Tauri/NSIS构建、打包 sidecar 生命周期、mentor 包内容/secret 扫描及 `data/**` 零差异。
 
-七类患者回答错误均为0。五条流程共形成73个证据节点、35次阶段提交和5份最终360分报告。
+## 导师本地 AI Beta
 
-全量门禁另覆盖42病例双语：服务端84条旅程、588次阶段提交、84份报告；Playwright完成桌面84条旅程及移动端1条代表旅程。
-
-## 阶段2—7
-
-- 阶段2：每项医嘱独立匹配与释放，保留配置来源及前置条件；时间线不显示 `undefined` 或原始对象。
-- 阶段3：最可能诊断与最多3项鉴别均选择服务器签发的 evidenceId；伪造 ID 返回422。
-- 阶段4：移除泌尿外科自会诊；会诊目的、问题和证据逐科室提交，反馈包含病例相关价值、必要性与整合建议。
-- 阶段5：医嘱式治疗工作台；药物事实仍由学生输入，不由 LLM 生成。
-- 阶段6：结构化围术期清单，反馈命中、遗漏、风险和病例参考点。
-- 阶段7：报告显示完整临床轨迹、遗漏、百分制主分和可展开的原360分证据详情。
-
-阶段3—7本轮抽查的109条反馈全部引用了 attempt evidence graph 中真实存在的 evidenceId。
-
-## 本地模型 A/B
-
-两档模型使用完全相同的 P001 中英文16轮问答，模型文件 SHA256 均通过；`llama-server` 只监听 `127.0.0.1`，两次测试 `cloudRequestCount=0`。
-
-| 指标 | Qwen3-1.7B Q4 | Qwen3-4B Q4_K_M |
-|---|---:|---:|
-| 首次加载 | 1,321 ms | 2,100 ms |
-| P50 | 2,926 ms | 3,894 ms |
-| P95 | 4,176 ms | 5,387 ms |
-| 峰值工作集 | 2,421,981,184 B | 5,058,850,816 B |
-| 原始 intent/slot | 15/16 | 15/16 |
-| 验证接受轮准确率 | 15/15 | 15/15 |
-| 最终受治理 intent/slot | 16/16 | 16/16 |
-| fallback | 1/16 | 1/16 |
-| wrong_unknown / context_lost | 0 / 0 | 0 / 0 |
-
-两档模型唯一回退均为 `local_metadata_conflict_with_governed_candidates`，真实标记为 `rule_fallback`。4B没有带来准确率、上下文或回退改善，延迟和内存更高，因此1.7B继续作为默认轻量模式；4B仅保留为可选标准模式。
-
-## SQLite 与生命周期
-
-- SQLite schema v1、WAL、外键、状态恢复与快速重复提交幂等通过。
-- evidence graph 随 attempt JSON 写入用户应用数据目录并可恢复。
-- sidecar 随机端口、回环监听、握手令牌、设置驱动的 llama 重启及退出清理通过。
-- 打包后的业务 sidecar 生命周期专项通过。
-
-## 医学审核包
-
-- 路径：`D:\HematuriaReview\desktop-clinical-content-review-pack.zip`
-- 大小：88,157 B
-- SHA256：`2777518f8853e76201b2f73585071583af986ab71ca109dd3c9fda5ac2cd7081`
-- 内容：42病例、2,607项关键查体/检验/影像/病理候选
-- 状态：`requires_human_medical_review`
-
-这些候选没有写入 `data/**`，不会进入诊断、治疗或评分证据链。它们是正式医学内容使用的人工审核阻塞，但不阻断当前受治理、fail-closed 的练习 POC。
-
-## 构建产物
+推荐模型为 Qwen3-1.7B Q4（非思考模式）。模型只处理 intent/topic/slot/context 和表达风格，不决定病例事实；文件与安装程序仍分离，但导师 ZIP 同包携带。
 
 | 产物 | 大小 | SHA256 |
 |---|---:|---|
-| `D:\HematuriaDesktopArtifacts\hematuria-desktop-portable-0.1.0-windows-x64.zip` | 51,134,411 B | `8f4b71fd0174db7f0bf18a4f77367ad89f2624908ab464837d70b48884757da6` |
-| `D:\HematuriaDesktopArtifacts\hematuria-desktop-setup-0.1.0-windows-x64.exe` | 32,385,311 B | `aca00330daf6035e3c8d0b459930a5624a0b928098a0b4cdcd960c2abb6a68d2` |
-| Tauri 壳 | 3,928,576 B | `49a7bba5ec6639e4a38e6126c3f584eaed549f0a837b6c95edaa9ddcb1ab4023` |
+| `D:\HematuriaDesktopArtifacts\MentorLocalAI\HematuriaTraining-Mentor-LocalAI-Beta.zip` | 1,311,796,605 B | `e9b9724d1863136dbb4e809390b81b54539ffaa308ddfe551d1cff931caf321c` |
+| `D:\HematuriaDesktopArtifacts\MentorLocalAI\HematuriaTraining-Mentor-LocalAI-NSIS.exe` | 32,405,294 B | `b29d4938046291cf58522d7f1223e51b98df174737c7d8e14955288c065346d5` |
+| `D:\HematuriaDesktopArtifacts\MentorLocalAI\HematuriaTraining-Mentor-LocalAI-Portable.zip` | 51,155,901 B | `54f03d710c3af1e876daf0bc2d52bc4d0c2de76ad71c656afbccac82d1323c16` |
+| `D:\HematuriaDesktopArtifacts\MentorLocalAI\Model\Qwen3-1.7B-Q4_K_M.gguf` | 1,282,439,264 B | `d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5` |
 
-组件体积：前端3,210,179 B；业务 sidecar 4,675,533 B；Node 83,344,536 B；llama.cpp 40,771,424 B；便携版解压后132,720,069 B。模型不在安装包中。
+ZIP根目录包含 `启动血尿训练系统.cmd`，README首行为“完整解压后，双击启动血尿训练系统.cmd”。真实全新解压烟雾测试已验证：自动校验同包模型、显示启动进度、启动业务与 llama sidecar、仅监听随机 `127.0.0.1` 端口、无需外部 Node/Docker/Redis/Python/API Key、启动器返回0，主程序退出后无 sidecar 残留。包内86个文件的源码、缓存、日志、trace、禁入文件和 secret 扫描为0项发现。
 
-## 门禁
+## 已知限制
 
-通过：Patient控制层、上下文追问、Data Agent权限、evidence graph反伪造、阶段3—7、360分、42病例双语服务端矩阵、42病例双语桌面UI、移动端七阶段、SQLite、打包sidecar生命周期、TypeScript、ESLint、真实1.7B/4B A/B、Next/Tauri/NSIS、包内容扫描、secret scan及`data/**`零差异。
-
-## 剩余阻塞与下一步
-
-1. 2,607项关键医学候选仍需具名医学负责人裁决；当前继续 fail-closed。
-2. 应由独立轻量验收窗口对本轮新 Tauri 包执行窗口滚动、缩放与真实交互复测；本实现窗口不以浏览器证据替代独立桌面验收。
-
-下一步仅做轻量独立验收，不合并 Production、不自动应用医学候选、不生成新的导师包。
+902项病例特异关键医学内容仍保持 fail-closed，另有59项 source 投影因严格匹配失败而隔离、1项医学冲突未裁决。这些内容需要后续人工医学审核，但不会被伪造，也不阻断当前受治理的导师 Beta 七阶段练习。
