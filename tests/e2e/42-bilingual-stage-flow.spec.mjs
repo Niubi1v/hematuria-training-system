@@ -86,6 +86,33 @@ async function routeTrainingApis(context, observations) {
     });
   });
 
+  await context.route("**/api/agent-chat/**", async (route) => {
+    const body = route.request().postDataJSON();
+    const isOnsetQuestion = /多久|how long|when did/i.test(String(body.question || ""));
+    observations.push({
+      action: "agent-chat",
+      attemptId: body.attemptId,
+      caseId: body.caseId,
+      language: body.language,
+      status: 200
+    });
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        replyText: body.language === "en"
+          ? (isOnsetQuestion ? "It began recently." : "I noticed a change in my urine.")
+          : (isOnsetQuestion ? "最近开始的。" : "我发现小便有变化。"),
+        matchedSlotIds: [isOnsetQuestion ? "hematuria_onset" : "chief_complaint"],
+        matchedFacts: [],
+        provider: "rule",
+        generationSource: "rule_fallback",
+        isFallback: true,
+        fallbackReason: "deterministic_test_fixture"
+      })
+    });
+  });
+
   await context.route("**/api/training-action/**", async (route) => {
     const request = route.request();
     const body = request.postDataJSON();
@@ -145,6 +172,17 @@ async function completeSevenStages(page, caseId, language) {
   await page.goto(`/cases/${caseId}/`);
   const caseNumber = String(Number(caseId.replace(/^P/, ""))).padStart(2, "0");
   await expect(page.getByText(language === "en" ? `Case ${caseNumber}` : `病例 ${caseNumber}`, { exact: true }).first()).toBeVisible();
+
+  const interviewInput = page.getByRole("textbox", { name: language === "en" ? "Enter an interview question" : "输入问诊问题" });
+  const sendButton = page.getByRole("button", { name: language === "en" ? "Send" : "发送", exact: true });
+  for (const question of language === "en"
+    ? ["Where do you feel unwell?", "How long has this been happening?"]
+    : ["哪里不舒服？", "多久了？"]) {
+    await interviewInput.fill(question);
+    await expect(sendButton).toBeEnabled();
+    await sendButton.click();
+    await expect(interviewInput).toHaveValue("");
+  }
 
   await page.getByRole("textbox", { name: language === "en" ? "History summary" : "病史小结" }).fill(language === "en" ? "Collected history item one.\nCollected history item two." : "已采集病史项目一。\n已采集病史项目二。");
   await submitAndAdvance(page, language);

@@ -1229,8 +1229,6 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
 
   const evidenceOptions = useMemo<EvidenceOption[]>(() => {
     const options: EvidenceOption[] = [];
-    const historySummaryItems = answers.historySummary.split(/[\r\n；;]/).map((item) => item.trim()).filter(Boolean);
-    historySummaryItems.forEach((item, index) => options.push({ id: `history-summary-${index}`, label: `${lang === "en" ? "History" : "病史"}：${item}` }));
     messages.forEach((message, index) => {
       if (message.role !== "student") return;
       const patient = messages.slice(index + 1).find((item) => item.role === "patient");
@@ -1244,7 +1242,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       options.push({ id: `report-${item.resultId || `${item.orderId}-${index}`}`, label: `${lang === "en" ? "Report" : "检查"}：${compactLine(item.orderCategory)} — ${compactLine(item.impression || item.result)}` });
     });
     return [...new Map(options.map((item) => [item.label, item])).values()];
-  }, [answers.historySummary, examLogs, lang, messages, orderLogs]);
+  }, [examLogs, lang, messages, orderLogs]);
 
   const diagnosisEvidence = useMemo(() => parseEvidenceAnswer(answers.diagnosticEvidence), [answers.diagnosticEvidence]);
   const differentialRows = useMemo(() => parseDifferentialRows(answers.differentials, answers.differentialAnalysis), [answers.differentialAnalysis, answers.differentials]);

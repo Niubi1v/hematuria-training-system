@@ -66,7 +66,10 @@ export function parseCsv(text) {
 }
 
 function reviewBoolean(value) {
-  return /^(?:true|1|yes|y|是|需要|需审核)$/i.test(String(value || "").trim());
+  return String(value || "")
+    .trim()
+    .split(/[\/／、,，;；|]/)
+    .some((part) => /^(?:true|1|yes|y|是|需要|需审核)$/i.test(part.trim()));
 }
 
 export function buildReviewItems(tables) {

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import imaging from "../data/order_catalog_imaging.json";
 import labs from "../data/order_catalog_labs.json";
@@ -17,6 +18,8 @@ process.env.TRAINING_API_RATE_LIMIT_PER_MINUTE = "100000";
 const require = createRequire(import.meta.url);
 const trainingHandler = require("../api/training-action.js");
 const { resetMemoryAttemptStore } = require("../server/trainingAttemptStore.js");
+const trainingUiSource = readFileSync(new URL("../src/components/ClinicalTrainingClient.tsx", import.meta.url), "utf8");
+assert.doesNotMatch(trainingUiSource, /history-summary-/i, "learner-authored stage-1 summaries must not become selectable collected evidence");
 
 type ApiResponse = {
   statusCode: number;
@@ -158,7 +161,7 @@ async function main() {
   const missingOutcomes = response.payload.orderOutcomes as Array<{ displayName: string; status: string; provenance: string; message: string }>;
   assert.equal(missingOutcomes.length, 2);
   assert(missingOutcomes.every((item) => item.status === "medical_review_pending"));
-  assert(missingOutcomes.every((item) => item.provenance === "medical_review_pending"));
+  assert(missingOutcomes.every((item) => ["source_not_available", "not_provided"].includes(item.provenance)));
   assert(missingOutcomes.some((item) => item.displayName === "X光膀胱造影" && /医学内容审核中/.test(item.message)));
 
   const safeSimulation = await investigationAttempt("P001");
@@ -234,6 +237,18 @@ async function main() {
     }, response.token);
     assert.equal(response.statusCode, 200);
   }
+  response = await call({
+    action: "stage-feedback",
+    caseId: "P001",
+    attemptId: perioperativeAttemptId,
+    mode: "free",
+    language: "zh",
+    stageKey: "perioperative",
+    submission: {}
+  }, response.token);
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(response.payload.misses, ["围术期管理要点"]);
+  assert.doesNotMatch(JSON.stringify(response.payload.misses), /perioperative|department|immediate/i);
   response = await call({
     action: "stage-feedback",
     caseId: "P001",

@@ -279,7 +279,10 @@ function handleOrder(caseData, input, previousOrderIds, language) {
       orderId: canonicalId,
       displayName,
       status: result?.status === "not_performed" ? "not_provided" : "medical_review_pending",
-      provenance: result?.status === "not_performed" ? "source_not_performed" : "medical_review_pending",
+      provenance: result?.status === "not_performed"
+        ? "source_not_performed"
+        : result?.status === "not_available" ? "source_not_available" : "not_provided",
+      reviewStatus: result?.status === "not_performed" ? "not_required" : "pending_human_medical_review",
       scoringEligible: false,
       message: result?.status === "not_performed"
         ? (language === "en" ? `${displayName}: this examination was not performed in the case, so no report exists.` : `${displayName}：本病例未实施该项目，因此无报告。`)
@@ -402,6 +405,72 @@ function allocate(max, count, index) {
   return base + (index < max - base * count ? 1 : 0);
 }
 
+const publicRequirementLabels = Object.freeze({
+  hematuria_onset: ["血尿起病时间", "Onset of haematuria"],
+  hematuria_frequency: ["血尿发作频率", "Frequency of haematuria"],
+  hematuria_visibility: ["肉眼或镜下血尿", "Visible or microscopic haematuria"],
+  urine_color: ["尿液颜色", "Urine colour"],
+  hematuria_phase: ["血尿时相", "Timing within urination"],
+  clots: ["血块情况", "Blood clots"],
+  pain: ["疼痛情况", "Pain assessment"],
+  flank_pain: ["腰腹部疼痛", "Flank or abdominal pain"],
+  dysuria: ["尿痛", "Dysuria"],
+  urinary_frequency: ["尿频", "Urinary frequency"],
+  urinary_urgency: ["尿急", "Urinary urgency"],
+  voiding_difficulty: ["排尿困难", "Voiding difficulty"],
+  retention: ["尿潴留", "Urinary retention"],
+  fever_chills: ["发热与寒战", "Fever and chills"],
+  glomerular_features: ["肾小球性线索", "Glomerular features"],
+  recent_uri: ["近期感染史", "Recent infection"],
+  triggers: ["诱因", "Potential triggers"],
+  smoking: ["吸烟史", "Smoking history"],
+  occupation_exposure: ["职业暴露", "Occupational exposure"],
+  family_history: ["家族史", "Family history"],
+  tumor_history: ["肿瘤史", "Cancer history"],
+  stone_history: ["结石史", "Stone history"],
+  uti_history: ["尿路感染史", "Urinary infection history"],
+  surgery_history: ["手术史", "Surgical history"],
+  urinary_procedure_history: ["泌尿系操作史", "Prior urinary procedures"],
+  medications: ["用药史", "Medication history"],
+  anticoagulant: ["抗凝药使用", "Anticoagulant use"],
+  antiplatelet: ["抗血小板药使用", "Antiplatelet use"],
+  bleeding_tendency: ["出血倾向", "Bleeding tendency"],
+  gynecologic_contamination: ["妇科来源排查", "Possible gynaecologic source"],
+  primary: ["最可能诊断及依据", "Most likely diagnosis and evidence"],
+  confirmation: ["进一步检查计划", "Additional investigation plan"],
+  department: ["会诊科室", "Consulting specialty"],
+  trigger: ["会诊必要性", "Reason consultation is needed"],
+  question: ["希望会诊解决的问题", "Question for the consulting team"],
+  evidence: ["提供给会诊方的证据", "Evidence supplied for consultation"],
+  immediate: ["急诊或入院处理", "Emergency or admission management"],
+  etiologic: ["病因与基础处理", "Aetiologic and supportive management"],
+  definitive: ["确定性治疗计划", "Definitive treatment plan"],
+  followup: ["出院与随访", "Discharge and follow-up"],
+  education: ["患者教育", "Patient education"],
+  perioperative: ["围术期管理要点", "Perioperative management"],
+  quality: ["学习反思", "Learning reflection"]
+});
+
+function publicRequirementLabel(requirement, language) {
+  const key = String(requirement?.key || "");
+  const fixed = publicRequirementLabels[key];
+  if (fixed) return fixed[language === "en" ? 1 : 0];
+  if (requirement?.eventType === "order_placed" && key) {
+    const order = catalog.find((item) => sourceOrderId(item) === key);
+    if (order) return presentMatchedOrder(order, language).displayName;
+  }
+  if (requirement?.eventType === "physical_exam_performed" && key) {
+    const exam = examItems.find((item) => item.examId === key);
+    if (exam) return language === "en"
+      ? ({ PE001: "Temperature", PE002: "Blood pressure" }[key] || "Case-relevant physical examination")
+      : exam.displayName;
+  }
+  if (requirement?.eventType === "diagnosis_supported") return language === "en" ? "Differential diagnoses and evidence" : "鉴别诊断及支持或不支持证据";
+  if (requirement?.eventType === "physical_exam_performed") return language === "en" ? "Case-relevant physical examination" : "病例针对性查体";
+  if (requirement?.eventType === "result_returned") return language === "en" ? "Appropriate use of released results" : "合理利用已释放检查结果";
+  return language === "en" ? "Case-relevant clinical requirement" : "病例相关临床要点";
+}
+
 function score(caseId, events, language) {
   const row = rubrics.find((item) => item.caseId === caseId);
   if (!row) throw new Error("missing_scoring_rubric");
@@ -420,7 +489,10 @@ function score(caseId, events, language) {
     let itemScore = rubricItems.reduce((sum, item) => sum + item.score, 0);
     if (dimension.id === "orders") itemScore = Math.max(0, itemScore - duplicates.length * 2 - overuse.length * 3);
     if (dimension.id === "treatment") itemScore = Math.max(0, itemScore - critical.length * 10);
-    const misses = rubricItems.filter((item) => item.status === "missed").map((item) => item.rubricItemId.replace(/^[^.]+\./, ""));
+    const misses = rubricItems.filter((item) => item.status === "missed").map((item) => {
+      const requirement = dimension.requirements.find((candidate) => candidate.id === item.rubricItemId);
+      return publicRequirementLabel(requirement, language);
+    });
     return {
       label: labels[dimension.id]?.[language === "en" ? 1 : 0] || dimension.label, max: dimension.max, score: itemScore,
       evidence: rubricItems.filter((item) => item.status === "earned").map((item) => item.evidenceText || ""), misses,
@@ -471,8 +543,8 @@ function stageFeedback(caseData, stageKey, validation, state, language) {
   const formalLocked = state.mode === "formal-attempt" && state.status !== "completed";
   return {
     stageKey, max: 10, score,
-    hits: matched.map((item) => item.event.text || item.requirement.label || item.requirement.key).filter(Boolean).slice(0, 8),
-    misses: missing.map((item) => item.label || item.key).filter(Boolean).slice(0, 8),
+    hits: matched.map((item) => item.event.text || publicRequirementLabel(item.requirement, language)).filter(Boolean).slice(0, 8),
+    misses: missing.map((item) => publicRequirementLabel(item, language)).filter(Boolean).slice(0, 8),
     warnings: validation.warnings,
     standardAnswer: formalLocked ? "" : standardFor(caseData, stageKey, language),
     practiceOnly: state.practiceOnly,

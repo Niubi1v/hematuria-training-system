@@ -40,6 +40,7 @@ export type OrderResultLog = {
     displayName: string;
     status: "reported" | "not_provided" | "medical_review_pending" | "prerequisite_missing" | "duplicate" | "unrecognized";
     provenance: string;
+    reviewStatus?: "pending_human_medical_review" | "not_required";
     scoringEligible?: boolean;
     resultId?: string;
     message: string;
@@ -236,7 +237,8 @@ export function matchOrderResults(caseData: CaseData, input: string, context?: {
       orderId: canonicalId,
       displayName: order.displayName,
       status: "medical_review_pending" as const,
-      provenance: "medical_review_pending",
+      provenance: result?.status === "not_available" ? "source_not_available" : "not_provided",
+      reviewStatus: "pending_human_medical_review" as const,
       scoringEligible: false,
       message: `${order.displayName}：结果正在医学内容审核中，本次训练不将其作为诊断或评分依据。`
     };

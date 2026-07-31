@@ -142,7 +142,7 @@ async function main() {
   assert.equal((response.payload.results as unknown[]).length, 0, "P008 unavailable CBC placeholder must not be presented as a report");
   assert.deepEqual(
     (response.payload.orderOutcomes as Array<{ status: string; provenance: string }>).map((item) => [item.status, item.provenance]),
-    [["medical_review_pending", "medical_review_pending"]]
+    [["medical_review_pending", "source_not_available"]]
   );
   assert.equal(containsCjk(JSON.stringify(response.payload)), false, "English API payload must not expose CJK");
 

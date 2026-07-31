@@ -66,6 +66,7 @@ export type OrderResultLog = {
     displayName: string;
     status: "reported" | "not_provided" | "medical_review_pending" | "prerequisite_missing" | "duplicate" | "unrecognized" | "unavailable";
     provenance: string;
+    reviewStatus?: "pending_human_medical_review" | "not_required";
     scoringEligible?: boolean;
     resultId?: string;
     message: string;
