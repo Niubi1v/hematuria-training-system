@@ -1,0 +1,84 @@
+{
+  "handoffId": "6f22d591-20260731-185531",
+  "status": "ready_for_review",
+  "milestone": "desktop-local-ai-poc-final-acceptance",
+  "branch": "codex/hematuria-desktop-local-ai-poc",
+  "baseHead": "6f22d591332a522c1a85835ba4c39a840f961901",
+  "head": "6f22d591332a522c1a85835ba4c39a840f961901",
+  "worktreeCleanBefore": true,
+  "tests": [
+    {"name":"baseline","status":"pass","detail":"clean; local/origin HEAD exact"},
+    {"name":"test:desktop:offline-ai","status":"pass","detail":"10 local_ai; 1 validator rule_fallback; stage2/restart/idempotency pass"},
+    {"name":"exact-eight-question-local-ai-probe","status":"pass_with_evidence_gap","detail":"8/8 local_ai, ready/ready, cloud 0; runtimeTrace.intent not captured"},
+    {"name":"test:desktop:acceptance model-disabled","status":"pass","detail":"11/11 rule_fallback; no local_ai; P001/P003 stage2, restart and idempotency pass"},
+    {"name":"benchmark:desktop:model","status":"pass","detail":"load 1338ms; 20 turns; P50 2835ms; P95 3291ms; peak 2421886976 bytes"},
+    {"name":"desktop runtime/lifecycle/public-boundary/package","status":"pass","detail":"all specialized gates passed"},
+    {"name":"secret scans","status":"pass","detail":"421 tracked/candidate files plus history/archive metadata; no values printed"},
+    {"name":"targeted Playwright visible-UI subset","status":"fail","detail":"4 passed, 3 stale/incompatible assertions failed"}
+  ],
+  "browserAcceptance": [
+    {"item":"home title","status":"pass","evidence":"snapshot shows 血尿临床问诊训练系统"},
+    {"item":"random case and no 盲病例","status":"pass","evidence":"snapshot shows 随机抽取病例; no 盲病例"},
+    {"item":"initial blind history view","status":"pass","evidence":"P001 shows only 65 / 男; no chief complaint/course/evidence"},
+    {"item":"evidence begins at zero","status":"pass","evidence":"questions/answers/exams/orders/reports all 0"},
+    {"item":"stage1 to stage2","status":"pass","evidence":"targeted browser flow"},
+    {"item":"double submit/send and refresh recovery","status":"pass","evidence":"targeted browser flow"},
+    {"item":"internal scroll and fixed input","status":"not_verified","evidence":"real Tauri interaction unavailable"}
+  ],
+  "desktopAcceptance": [
+    {"item":"portable launch","status":"pass","evidence":"real portable executable created Tauri window"},
+    {"item":"NSIS install/launch/uninstall","status":"pass","evidence":"install 0; real process tree; uninstall 0; directory removed"},
+    {"item":"real Tauri display","status":"partial","evidence":"title/window ready verified; in-window capture approval timed out"},
+    {"item":"P003 zero-round","status":"pass","evidence":"real staged sidecar reached stage2"},
+    {"item":"rapid duplicate","status":"pass","evidence":"one persistent idempotency record"},
+    {"item":"SQLite restart","status":"pass","evidence":"stage2 and patient session restored"},
+    {"item":"sidecar cleanup","status":"pass","evidence":"0 launched-tree processes after graceful close"},
+    {"item":"port boundary","status":"pass","evidence":"no 3000/3001/6379; lifecycle confirms random 127.0.0.1"},
+    {"item":"model-disabled full seven stages","status":"not_verified","evidence":"fallback verified through stage2 only"}
+  ],
+  "localAiEvidence": {
+    "networkMode": "controlled local-only sidecar; no cloud provider; physical adapter not disabled",
+    "llamaServerReady": true,
+    "localModelReady": true,
+    "answerSource": "local_ai",
+    "cloudRequestCount": 0,
+    "modelLoadMs": 1338,
+    "p50Ms": 2835,
+    "p95Ms": 3291,
+    "peakWorkingSetBytes": 2421886976,
+    "turns": [
+      {"question":"哪里不舒服？","answerSource":"local_ai","intent":"not_captured","requestedSlot":"chief_complaint","llamaServerReady":true,"localModelReady":true,"cloudRequestCount":0,"unknown":"not_captured","contextLost":false,"latencyMs":4112,"fallbackReason":null},
+      {"question":"多久了？","answerSource":"local_ai","intent":"not_captured","requestedSlot":"hematuria_onset","llamaServerReady":true,"localModelReady":true,"cloudRequestCount":0,"unknown":"not_captured","contextLost":false,"latencyMs":3158,"fallbackReason":null},
+      {"question":"有没有其他疾病？","answerSource":"local_ai","intent":"not_captured","requestedSlot":null,"llamaServerReady":true,"localModelReady":true,"cloudRequestCount":0,"unknown":"not_captured","contextLost":false,"latencyMs":3093,"fallbackReason":null},
+      {"question":"高血压吃什么药？","answerSource":"local_ai","intent":"not_captured","requestedSlot":"MED_ALL","llamaServerReady":true,"localModelReady":true,"cloudRequestCount":0,"unknown":"not_captured","contextLost":false,"latencyMs":2721,"fallbackReason":null},
+      {"question":"这个药怎么吃？","answerSource":"local_ai","intent":"not_captured","requestedSlot":"MED_ALL","llamaServerReady":true,"localModelReady":true,"cloudRequestCount":0,"unknown":"not_captured","contextLost":false,"latencyMs":2708,"fallbackReason":null},
+      {"question":"还有其他药吗？","answerSource":"local_ai","intent":"not_captured","requestedSlot":"MED_ALL","llamaServerReady":true,"localModelReady":true,"cloudRequestCount":0,"unknown":"not_captured","contextLost":false,"latencyMs":2843,"fallbackReason":null},
+      {"question":"抽烟吗？","answerSource":"local_ai","intent":"not_captured","requestedSlot":null,"llamaServerReady":true,"localModelReady":true,"cloudRequestCount":0,"unknown":"not_captured","contextLost":false,"latencyMs":2879,"fallbackReason":null},
+      {"question":"喝酒吗？","answerSource":"local_ai","intent":"not_captured","requestedSlot":null,"llamaServerReady":true,"localModelReady":true,"cloudRequestCount":0,"unknown":"not_captured","contextLost":false,"latencyMs":2956,"fallbackReason":null}
+    ],
+    "validatorFallback":{"observed":true,"answerSource":"rule_fallback","reason":"compound_question_preserves_all_facts","notReportedAsLocalAi":true},
+    "disabledModel":{"llamaServerReady":false,"localModelReady":false,"answerSource":"rule_fallback","cloudRequestCount":0,"answerCounts":{"rule_fallback":11,"local_ai":0}}
+  },
+  "screenshots": [],
+  "artifacts": [
+    {"type":"portable","path":"D:/HematuriaDesktopArtifacts/hematuria-desktop-portable-0.1.0-windows-x64.zip","bytes":51127277,"sha256":"3a7f373888cb2c7d48b36749b1018ab2907fafae57b81d54836b55788cf34e23"},
+    {"type":"nsis","path":"D:/HematuriaDesktopArtifacts/hematuria-desktop-setup-0.1.0-windows-x64.exe","bytes":32387970,"sha256":"d306594af31a45303a23951e98a46c16b82297dc9c4097634c07f66f42819d8b"},
+    {"type":"model","path":"C:/Users/admin/AppData/Local/cn.hematuria.training.desktop/models/Qwen3-1.7B-Q4_K_M.gguf","bytes":1282439264,"sha256":"d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5"},
+    {"type":"installedFootprint","bytes":132732411},
+    {"type":"installedProcessPeakWorkingSet","bytes":2909945856}
+  ],
+  "dataDiff": "zero",
+  "secretScan": "pass: package audit 0 findings; repository/scanner contracts passed; prohibited package content not found",
+  "defects": [
+    {"id":"DESKTOP-ACCEPT-001","severity":"blocking-evidence-gap","summary":"Real Tauri window identified, but desktop-control approval timed out twice; six screenshots and in-window checks missing."},
+    {"id":"DESKTOP-ACCEPT-002","severity":"test-maintenance","summary":"Three Playwright assertions are stale/incompatible: old title, exact P008 label, removed service label."},
+    {"id":"DESKTOP-ACCEPT-003","severity":"evidence-gap","summary":"Exact-eight probe did not capture runtimeTrace.intent or definitive unknown."}
+  ],
+  "blockers": [
+    "Complete six screenshots and real Tauri in-window checks in an approved session.",
+    "Complete model-disabled full seven-stage real-package UI.",
+    "Triage three failing legacy Playwright assertions without product changes for stale selectors.",
+    "Capture runtimeTrace.intent and definitive unknown for the exact eight questions."
+  ],
+  "recommendedNextStep": "Reviewer reruns existing packages in an approved interactive Windows session, captures six compressed screenshots, records runtimeTrace.intent, completes model-disabled seven stages, then separately maintains stale Playwright selectors."
+}
