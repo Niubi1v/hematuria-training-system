@@ -1,84 +1,198 @@
 {
-  "handoffId": "6f22d591-20260731-185531",
+  "handoffId": "2f9eb5a3-20260731-235013",
   "status": "ready_for_review",
-  "milestone": "desktop-local-ai-poc-final-acceptance",
+  "milestone": "desktop-best-practice-alignment",
   "branch": "codex/hematuria-desktop-local-ai-poc",
-  "baseHead": "6f22d591332a522c1a85835ba4c39a840f961901",
-  "head": "6f22d591332a522c1a85835ba4c39a840f961901",
-  "worktreeCleanBefore": true,
-  "tests": [
-    {"name":"baseline","status":"pass","detail":"clean; local/origin HEAD exact"},
-    {"name":"test:desktop:offline-ai","status":"pass","detail":"10 local_ai; 1 validator rule_fallback; stage2/restart/idempotency pass"},
-    {"name":"exact-eight-question-local-ai-probe","status":"pass_with_evidence_gap","detail":"8/8 local_ai, ready/ready, cloud 0; runtimeTrace.intent not captured"},
-    {"name":"test:desktop:acceptance model-disabled","status":"pass","detail":"11/11 rule_fallback; no local_ai; P001/P003 stage2, restart and idempotency pass"},
-    {"name":"benchmark:desktop:model","status":"pass","detail":"load 1338ms; 20 turns; P50 2835ms; P95 3291ms; peak 2421886976 bytes"},
-    {"name":"desktop runtime/lifecycle/public-boundary/package","status":"pass","detail":"all specialized gates passed"},
-    {"name":"secret scans","status":"pass","detail":"421 tracked/candidate files plus history/archive metadata; no values printed"},
-    {"name":"targeted Playwright visible-UI subset","status":"fail","detail":"4 passed, 3 stale/incompatible assertions failed"}
-  ],
-  "browserAcceptance": [
-    {"item":"home title","status":"pass","evidence":"snapshot shows 血尿临床问诊训练系统"},
-    {"item":"random case and no 盲病例","status":"pass","evidence":"snapshot shows 随机抽取病例; no 盲病例"},
-    {"item":"initial blind history view","status":"pass","evidence":"P001 shows only 65 / 男; no chief complaint/course/evidence"},
-    {"item":"evidence begins at zero","status":"pass","evidence":"questions/answers/exams/orders/reports all 0"},
-    {"item":"stage1 to stage2","status":"pass","evidence":"targeted browser flow"},
-    {"item":"double submit/send and refresh recovery","status":"pass","evidence":"targeted browser flow"},
-    {"item":"internal scroll and fixed input","status":"not_verified","evidence":"real Tauri interaction unavailable"}
-  ],
-  "desktopAcceptance": [
-    {"item":"portable launch","status":"pass","evidence":"real portable executable created Tauri window"},
-    {"item":"NSIS install/launch/uninstall","status":"pass","evidence":"install 0; real process tree; uninstall 0; directory removed"},
-    {"item":"real Tauri display","status":"partial","evidence":"title/window ready verified; in-window capture approval timed out"},
-    {"item":"P003 zero-round","status":"pass","evidence":"real staged sidecar reached stage2"},
-    {"item":"rapid duplicate","status":"pass","evidence":"one persistent idempotency record"},
-    {"item":"SQLite restart","status":"pass","evidence":"stage2 and patient session restored"},
-    {"item":"sidecar cleanup","status":"pass","evidence":"0 launched-tree processes after graceful close"},
-    {"item":"port boundary","status":"pass","evidence":"no 3000/3001/6379; lifecycle confirms random 127.0.0.1"},
-    {"item":"model-disabled full seven stages","status":"not_verified","evidence":"fallback verified through stage2 only"}
-  ],
-  "localAiEvidence": {
-    "networkMode": "controlled local-only sidecar; no cloud provider; physical adapter not disabled",
-    "llamaServerReady": true,
-    "localModelReady": true,
-    "answerSource": "local_ai",
-    "cloudRequestCount": 0,
-    "modelLoadMs": 1338,
-    "p50Ms": 2835,
-    "p95Ms": 3291,
-    "peakWorkingSetBytes": 2421886976,
-    "turns": [
-      {"question":"哪里不舒服？","answerSource":"local_ai","intent":"not_captured","requestedSlot":"chief_complaint","llamaServerReady":true,"localModelReady":true,"cloudRequestCount":0,"unknown":"not_captured","contextLost":false,"latencyMs":4112,"fallbackReason":null},
-      {"question":"多久了？","answerSource":"local_ai","intent":"not_captured","requestedSlot":"hematuria_onset","llamaServerReady":true,"localModelReady":true,"cloudRequestCount":0,"unknown":"not_captured","contextLost":false,"latencyMs":3158,"fallbackReason":null},
-      {"question":"有没有其他疾病？","answerSource":"local_ai","intent":"not_captured","requestedSlot":null,"llamaServerReady":true,"localModelReady":true,"cloudRequestCount":0,"unknown":"not_captured","contextLost":false,"latencyMs":3093,"fallbackReason":null},
-      {"question":"高血压吃什么药？","answerSource":"local_ai","intent":"not_captured","requestedSlot":"MED_ALL","llamaServerReady":true,"localModelReady":true,"cloudRequestCount":0,"unknown":"not_captured","contextLost":false,"latencyMs":2721,"fallbackReason":null},
-      {"question":"这个药怎么吃？","answerSource":"local_ai","intent":"not_captured","requestedSlot":"MED_ALL","llamaServerReady":true,"localModelReady":true,"cloudRequestCount":0,"unknown":"not_captured","contextLost":false,"latencyMs":2708,"fallbackReason":null},
-      {"question":"还有其他药吗？","answerSource":"local_ai","intent":"not_captured","requestedSlot":"MED_ALL","llamaServerReady":true,"localModelReady":true,"cloudRequestCount":0,"unknown":"not_captured","contextLost":false,"latencyMs":2843,"fallbackReason":null},
-      {"question":"抽烟吗？","answerSource":"local_ai","intent":"not_captured","requestedSlot":null,"llamaServerReady":true,"localModelReady":true,"cloudRequestCount":0,"unknown":"not_captured","contextLost":false,"latencyMs":2879,"fallbackReason":null},
-      {"question":"喝酒吗？","answerSource":"local_ai","intent":"not_captured","requestedSlot":null,"llamaServerReady":true,"localModelReady":true,"cloudRequestCount":0,"unknown":"not_captured","contextLost":false,"latencyMs":2956,"fallbackReason":null}
-    ],
-    "validatorFallback":{"observed":true,"answerSource":"rule_fallback","reason":"compound_question_preserves_all_facts","notReportedAsLocalAi":true},
-    "disabledModel":{"llamaServerReady":false,"localModelReady":false,"answerSource":"rule_fallback","cloudRequestCount":0,"answerCounts":{"rule_fallback":11,"local_ai":0}}
-  },
-  "screenshots": [],
-  "artifacts": [
-    {"type":"portable","path":"D:/HematuriaDesktopArtifacts/hematuria-desktop-portable-0.1.0-windows-x64.zip","bytes":51127277,"sha256":"3a7f373888cb2c7d48b36749b1018ab2907fafae57b81d54836b55788cf34e23"},
-    {"type":"nsis","path":"D:/HematuriaDesktopArtifacts/hematuria-desktop-setup-0.1.0-windows-x64.exe","bytes":32387970,"sha256":"d306594af31a45303a23951e98a46c16b82297dc9c4097634c07f66f42819d8b"},
-    {"type":"model","path":"C:/Users/admin/AppData/Local/cn.hematuria.training.desktop/models/Qwen3-1.7B-Q4_K_M.gguf","bytes":1282439264,"sha256":"d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5"},
-    {"type":"installedFootprint","bytes":132732411},
-    {"type":"installedProcessPeakWorkingSet","bytes":2909945856}
-  ],
+  "productionBaseHead": "6f22d591332a522c1a85835ba4c39a840f961901",
+  "startingRemoteHead": "9097796f2bb3570b886e46acb6e8806d01980dcd",
+  "productHead": "2f9eb5a3bbc56525b7de6c6e640519a5bc3452b1",
+  "testedImplementationHead": "a05ce24ae4cac60025bcc4aa7ef37b7c16c04cf5",
   "dataDiff": "zero",
-  "secretScan": "pass: package audit 0 findings; repository/scanner contracts passed; prohibited package content not found",
-  "defects": [
-    {"id":"DESKTOP-ACCEPT-001","severity":"blocking-evidence-gap","summary":"Real Tauri window identified, but desktop-control approval timed out twice; six screenshots and in-window checks missing."},
-    {"id":"DESKTOP-ACCEPT-002","severity":"test-maintenance","summary":"Three Playwright assertions are stale/incompatible: old title, exact P008 label, removed service label."},
-    {"id":"DESKTOP-ACCEPT-003","severity":"evidence-gap","summary":"Exact-eight probe did not capture runtimeTrace.intent or definitive unknown."}
+  "mentorPackageCreated": false,
+  "architecture": {
+    "patientControl": {
+      "caseTruth": "Existing ontology, structured/canonical history, nine-state facts, conflict quarantine, and answer planner remain authoritative.",
+      "disclosurePolicy": "Question-triggered release with exact, approximate, partial, patient-unknown, withheld, and conflict handling.",
+      "personaStyle": "Fact-free tone, anxiety, language level, response length, cooperation, and memory clarity; it cannot change Case Truth.",
+      "studentVisibility": "Patient control internals and response error categories are developer-only."
+    },
+    "measurementDataAgent": {
+      "flow": "student action -> canonical action -> exact case result -> release condition -> provenance -> timeline/evidence graph",
+      "priority": [
+        "source",
+        "reviewed_case_projection",
+        "diagnosis_consistent_teaching_simulation",
+        "policy_allowed_simulated_normal",
+        "not_applicable_or_human_review_blocked"
+      ],
+      "boundary": "Patient Agent never releases physical examination, laboratory, imaging, or pathology results; critical results are never generated by the LLM."
+    },
+    "evidenceGraph": {
+      "storage": "Lightweight nodes inside signed attempt state and the existing SQLite JSON state; no graph database.",
+      "internalFields": [
+        "evidenceId",
+        "caseId",
+        "sourceStage",
+        "triggerAction/rawQuestion",
+        "canonicalFactOrAction",
+        "result",
+        "provenance",
+        "diagnosisRelations",
+        "rubricMappings"
+      ],
+      "studentProjection": "Only stage-safe evidenceId, stage, and label are exposed; unreleased results, rubric mappings, provenance internals, and hidden answers are not exposed."
+    }
+  },
+  "patientErrorCounts": {
+    "representativeRuleFallbackTurns": 10,
+    "tangential": 0,
+    "oversharing": 0,
+    "role_breaking": 0,
+    "off_script": 0,
+    "wrong_unknown": 0,
+    "context_lost": 0,
+    "polarity_error": 0
+  },
+  "representativeRegression": {
+    "journeys": [
+      { "caseId": "P001", "language": "zh", "cohort": "tumor", "evidenceNodes": 14, "stageFeedbackItems": 22 },
+      { "caseId": "P001", "language": "en", "cohort": "tumor", "evidenceNodes": 15, "stageFeedbackItems": 22 },
+      { "caseId": "P006", "language": "zh", "cohort": "infection_female", "evidenceNodes": 16, "stageFeedbackItems": 21 },
+      { "caseId": "P009", "language": "zh", "cohort": "stone_female", "evidenceNodes": 14, "stageFeedbackItems": 22 },
+      { "caseId": "P002", "language": "zh", "cohort": "tumor_female", "evidenceNodes": 14, "stageFeedbackItems": 22 }
+    ],
+    "factAccuracy": { "correct": 10, "total": 10, "rate": 1 },
+    "contextContinuity": { "correct": 5, "total": 5, "rate": 1 },
+    "actionResultMatch": { "correct": 5, "total": 5, "rate": 1 },
+    "evidenceFeedbackTraceability": { "correct": 109, "total": 109, "rate": 1 },
+    "sevenStageCompletion": { "correct": 5, "total": 5, "rate": 1 },
+    "trajectoryCoverage": { "populated": 40, "total": 40, "rate": 1 },
+    "modelDisabledAnswerSources": { "local_ai": 0, "rule_fallback": 10 },
+    "stageSubmissions": 35,
+    "scoreReports": 5
+  },
+  "stages": {
+    "stage2": "Per-order Data Agent results retain configured provenance and prerequisites; timeline sanitization excludes undefined and raw objects.",
+    "stage3": "Diagnosis builder accepts primary and up to three differential diagnoses, with server-issued evidence IDs for support/opposition and selected follow-up tests.",
+    "stage4": "Urology self-consult is excluded; each external consult carries purpose, question, and validated evidence IDs, followed by case-related value/necessity/integration feedback.",
+    "stage5": "Order-style treatment workbench keeps medication facts learner-entered and evaluates emergency/admission, medication, tests, procedures, intervention, monitoring, contraindication, and follow-up actions.",
+    "stage6": "Structured perioperative checklist covers indication through follow-up and returns hits, omissions, risks, and case reference points.",
+    "stage7": "Final report includes questions, acquired evidence, examinations/orders, diagnosis formation, consultation, treatment, perioperative management, decision transitions, and omissions. Percentage remains primary; 360-point evidence detail remains available.",
+    "feedbackEvidence": "All 109 evaluated stage 3-7 feedback items referenced one or more IDs present in the authoritative attempt evidence graph."
+  },
+  "models": {
+    "defaultMode": "lightweight",
+    "selection": "Qwen3-1.7B Q4 remains default because Qwen3-4B Q4_K_M produced no accuracy, error, context, or fallback improvement while increasing latency and peak memory.",
+    "lightweight": {
+      "file": "Qwen3-1.7B-Q4_K_M.gguf",
+      "sha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
+      "loadMs": 1321,
+      "p50Ms": 2926,
+      "p95Ms": 4176,
+      "peakWorkingSetBytes": 2421981184,
+      "rawIntentAccuracy": 0.9375,
+      "rawSlotAccuracy": 0.9375,
+      "acceptedTurns": 15,
+      "governedIntentAccuracy": 1,
+      "governedSlotAccuracy": 1,
+      "fallbackCount": 1,
+      "fallbackRate": 0.0625,
+      "wrongUnknown": 0,
+      "contextLost": 0,
+      "cloudRequestCount": 0,
+      "listenHost": "127.0.0.1"
+    },
+    "standard": {
+      "file": "Qwen3-4B-Q4_K_M.gguf",
+      "sha256": "ab27b9bfa375a178d6cba48f3ad892b94b7739659dcc7aae8058ce0ffed6b328",
+      "loadMs": 2100,
+      "p50Ms": 3894,
+      "p95Ms": 5387,
+      "peakWorkingSetBytes": 5058850816,
+      "rawIntentAccuracy": 0.9375,
+      "rawSlotAccuracy": 0.9375,
+      "acceptedTurns": 15,
+      "governedIntentAccuracy": 1,
+      "governedSlotAccuracy": 1,
+      "fallbackCount": 1,
+      "fallbackRate": 0.0625,
+      "wrongUnknown": 0,
+      "contextLost": 0,
+      "cloudRequestCount": 0,
+      "listenHost": "127.0.0.1"
+    },
+    "safeFallbackReason": "The one fallback in each model was local_metadata_conflict_with_governed_candidates and was reported as rule_fallback, never local_ai."
+  },
+  "sqlite": {
+    "schemaVersion": 1,
+    "result": "pass",
+    "evidenceGraphPersistence": "pass",
+    "idempotency": "pass",
+    "restartResume": "pass",
+    "location": "Windows user application data directory"
+  },
+  "tests": [
+    { "name": "patient control and contextual follow-up", "status": "pass", "detail": "5 contextual ellipses, 0 context losses; false wrong_unknown regression covered" },
+    { "name": "Data Agent presentation/authority", "status": "pass", "detail": "60 orders, 257 results, 23 unreviewed English names fail closed, 58 prerequisite recovery scenarios" },
+    { "name": "evidence graph security", "status": "pass", "detail": "forged diagnosis and consultation evidence IDs rejected" },
+    { "name": "representative quantified journeys", "status": "pass", "detail": "5/5 seven-stage journeys, 109/109 feedback references, 40/40 trajectory sections" },
+    { "name": "42-case bilingual server matrix", "status": "pass", "detail": "42 cases, 84 journeys, 588 stage submissions, 84 score reports" },
+    { "name": "42-case bilingual desktop UI plus mobile", "status": "pass", "detail": "84 desktop journeys plus one mobile journey; final percentage and folded 360 detail verified" },
+    { "name": "stage 3/4/5/6/7 and 360 scoring", "status": "pass", "detail": "structured builders/workbenches, explicit stage 7 report, unchanged 360 rules" },
+    { "name": "SQLite and packaged sidecar lifecycle", "status": "pass", "detail": "schema, evidence graph resume, random loopback ports, authentication, restart, child cleanup" },
+    { "name": "TypeScript and ESLint", "status": "pass" },
+    { "name": "real 1.7B/4B local model benchmark", "status": "pass", "detail": "same 16-turn Chinese/English case; SHA verified; cloud request count zero" },
+    { "name": "Next/Tauri/NSIS build", "status": "pass", "detail": "Next 82 static pages; Tauri release and NSIS completed" },
+    { "name": "package and repository secret scans", "status": "pass", "detail": "package audit 0 findings; repository and scanner contracts passed" },
+    { "name": "data directory gate", "status": "pass", "detail": "zero diff from Production baseline" }
   ],
-  "blockers": [
-    "Complete six screenshots and real Tauri in-window checks in an approved session.",
-    "Complete model-disabled full seven-stage real-package UI.",
-    "Triage three failing legacy Playwright assertions without product changes for stale selectors.",
-    "Capture runtimeTrace.intent and definitive unknown for the exact eight questions."
+  "medicalReviewPack": {
+    "path": "D:/HematuriaReview/desktop-clinical-content-review-pack.zip",
+    "bytes": 88157,
+    "sha256": "2777518f8853e76201b2f73585071583af986ab71ca109dd3c9fda5ac2cd7081",
+    "items": 2607,
+    "cases": 42,
+    "status": "requires_human_medical_review",
+    "runtimeApplied": false,
+    "dataDirectoryModified": false,
+    "formalUseImpact": "Pending critical candidates remain excluded from diagnosis, treatment, and scoring evidence until named human medical review is complete."
+  },
+  "artifacts": [
+    {
+      "type": "portable",
+      "path": "D:/HematuriaDesktopArtifacts/hematuria-desktop-portable-0.1.0-windows-x64.zip",
+      "bytes": 51134411,
+      "sha256": "8f4b71fd0174db7f0bf18a4f77367ad89f2624908ab464837d70b48884757da6"
+    },
+    {
+      "type": "nsis",
+      "path": "D:/HematuriaDesktopArtifacts/hematuria-desktop-setup-0.1.0-windows-x64.exe",
+      "bytes": 32385311,
+      "sha256": "aca00330daf6035e3c8d0b459930a5624a0b928098a0b4cdcd960c2abb6a68d2"
+    },
+    {
+      "type": "tauriShell",
+      "path": "src-tauri/target/release/hematuria-desktop.exe",
+      "bytes": 3928576,
+      "sha256": "49a7bba5ec6639e4a38e6126c3f584eaed549f0a837b6c95edaa9ddcb1ab4023"
+    }
   ],
-  "recommendedNextStep": "Reviewer reruns existing packages in an approved interactive Windows session, captures six compressed screenshots, records runtimeTrace.intent, completes model-disabled seven stages, then separately maintains stale Playwright selectors."
+  "packageComponents": {
+    "frontendBytes": 3210179,
+    "businessSidecarBytes": 4675533,
+    "nodeRuntimeBytes": 83344536,
+    "llamaRuntimeBytes": 40771424,
+    "portableUncompressedBytes": 132720069,
+    "modelsBundled": false
+  },
+  "remainingBlockers": [
+    "The 2,607 critical candidate measurements in the medical review pack still require named human medical adjudication before formal clinical-content use; they remain fail-closed and do not block the governed practice POC.",
+    "A separate lightweight acceptance session should interact with the newly built Tauri window and recheck window scrolling/resizing; this implementation session did not replace that independent review with browser evidence."
+  ],
+  "knownNonBlockers": [
+    "The 4B model remains an optional standard mode but is not recommended as default on this machine.",
+    "Next development mode emitted a future allowedDevOrigins warning; production static/Tauri build succeeded.",
+    "No new mentor package was produced in this milestone."
+  ],
+  "recommendedNextStep": "Run the lightweight independent desktop acceptance against this handoff and current artifacts; do not merge Production or apply medical candidates automatically."
 }
