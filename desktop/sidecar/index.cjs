@@ -652,6 +652,7 @@ function desktopAttemptStateHandler(store, trainingState) {
       if (discovered.kind === "missing") return res.status(404).json({ error: "attempt_not_found" });
       const token = trainingState.signAttemptState(discovered.state);
       return res.status(200).json({
+        ...store.getDesktopStateAuthority(),
         attemptId: discovered.state.attemptId,
         currentStage: Number(discovered.state.currentStage),
         status: discovered.state.status,
@@ -674,14 +675,21 @@ function desktopAttemptStateHandler(store, trainingState) {
     });
     if (result.kind === "missing") return res.status(404).json({ error: "attempt_not_found" });
     if (result.kind !== "saved") return res.status(409).json({ error: "attempt_identity_mismatch" });
-    return res.status(200).json({ saved: true });
+    return res.status(200).json({ saved: true, ...store.getDesktopStateAuthority() });
+  };
+}
+
+function desktopStateBootstrapHandler(store) {
+  return async (req, res) => {
+    if (req.method !== "GET") return res.status(405).json({ error: "method_not_allowed" });
+    return res.status(200).json(store.getDesktopStateAuthority());
   };
 }
 
 function desktopProgressHandler(store) {
   return async (req, res) => {
     if (req.method !== "GET") return res.status(405).json({ error: "method_not_allowed" });
-    return res.status(200).json({ progress: store.catalogProgress() });
+    return res.status(200).json({ ...store.getDesktopStateAuthority(), progress: store.catalogProgress() });
   };
 }
 
@@ -744,6 +752,7 @@ function desktopAttemptResumeHandler(store, trainingState) {
     res.setHeader("X-Training-State", token);
     evidence.ensureEvidenceGraph(stored.state, stored.state.caseId);
     return res.status(200).json({
+      ...store.getDesktopStateAuthority(),
       attemptId: stored.state.attemptId,
       caseId: stored.state.caseId,
       mode: stored.state.mode,
@@ -778,6 +787,7 @@ async function loadHandlers(store) {
   const trainingState = require(path.join(appRoot, "server", "trainingState.js"));
   handlers.set("/api/desktop/attempt/resume", desktopAttemptResumeHandler(store, trainingState));
   handlers.set("/api/desktop/attempt/state", desktopAttemptStateHandler(store, trainingState));
+  handlers.set("/api/desktop/state/bootstrap", desktopStateBootstrapHandler(store));
   handlers.set("/api/desktop/progress", desktopProgressHandler(store));
   return handlers;
 }

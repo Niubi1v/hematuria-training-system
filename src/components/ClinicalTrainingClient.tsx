@@ -58,6 +58,8 @@ import { isConnectionFailureFallback, isSafetyFallback, mergeRecoveredCoverage, 
 import { initializeStorageVersion, readJsonStorage, removeBrowserStorageEntries, writeJsonStorage } from "@/src/lib/safeStorage";
 import { attemptPointerKey, attemptStorageKey, createAttempt, isAttemptCompatible, isStoredAttemptStateCompatible, legacyTrainingStateStorageKey, trainingStateStorageKey, type AttemptIdentity, type AttemptMode, type StoredAttemptState } from "@/src/lib/attemptState";
 import { projectStudentScoreText } from "@/src/lib/studentScoreProjection";
+import { bootstrapDesktopStateAuthority, desktopAuthoritiesCompatible, isDesktopStateAuthority, type DesktopStateAuthority } from "@/src/lib/desktopStateAuthority";
+import { publicTrajectoryActionLabel } from "@/src/lib/publicClinicalTrajectory";
 import {
   AZURE_VOICE_BY_PROFILE,
   cleanSpeechText,
@@ -818,7 +820,7 @@ function studentEvidenceLabel(value: unknown, lang: LanguageCode) {
 function clinicalTrajectoryEntryText(entry: Evaluator360Report["clinicalTrajectory"] extends infer T ? T extends { questions: Array<infer E> } ? E : never : never, lang: LanguageCode) {
   const canonical = canonicalSlotLabel(entry.canonical, lang);
   if (entry.stage === 1 && canonical) return lang === "en" ? `History: ${canonical} — obtained` : `问诊：${canonical}——已采集`;
-  const action = studentFacingClinicalText(canonical || entry.action || entry.canonical, lang, lang === "en" ? "Clinical action" : "临床操作");
+  const action = studentFacingClinicalText(canonical || publicTrajectoryActionLabel(entry.action, lang) || entry.canonical, lang, lang === "en" ? "Clinical action" : "临床操作");
   const result = studentFacingClinicalText(entry.result, lang);
   return `${action}${result && result !== action ? ` — ${result}` : ""}`;
 }
@@ -1212,7 +1214,7 @@ async function requestDesktopAttemptResume(body: { attemptId: string; caseId: st
 async function loadDesktopAttemptState(body: { caseId: string; mode: AttemptMode; language: LanguageCode }) {
   const runtime = desktopRuntimeConfig();
   if (!runtime) throw new ApiRequestError("request", 400, "desktop_runtime_missing");
-  return requestJson<{
+  const result = await requestJson<DesktopStateAuthority & {
     attemptId: string;
     currentStage: number;
     status: string;
@@ -1224,12 +1226,14 @@ async function loadDesktopAttemptState(body: { caseId: string; mode: AttemptMode
     retries: 0,
     endpointName: "desktop-attempt-state-load"
   });
+  if (!isDesktopStateAuthority(result)) throw new Error("desktop_state_authority_invalid");
+  return result;
 }
 
 async function saveDesktopAttemptState(attempt: AttemptIdentity, snapshot: PersistedAttemptState) {
   const runtime = desktopRuntimeConfig();
   if (!runtime) return;
-  await requestJson<{ saved: true }>(`${runtime.apiBaseUrl}/api/desktop/attempt/state`, {
+  const result = await requestJson<DesktopStateAuthority & { saved: true }>(`${runtime.apiBaseUrl}/api/desktop/attempt/state`, {
     action: "save",
     attemptId: attempt.attemptId,
     caseId: attempt.caseId,
@@ -1242,6 +1246,7 @@ async function saveDesktopAttemptState(attempt: AttemptIdentity, snapshot: Persi
     retries: 0,
     endpointName: "desktop-attempt-state-save"
   });
+  if (!isDesktopStateAuthority(result)) throw new Error("desktop_state_authority_invalid");
 }
 
 function EvidenceChecklist({ options, selected, onChange, lang, ariaLabel }: {
@@ -1554,7 +1559,9 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       const storageKey = trainingStateStorageKey(attempt.attemptId, publicApiConfig.baseUrl, window.location.origin);
       const legacyStorageKey = legacyTrainingStateStorageKey(attempt.attemptId);
       let saved = "";
-      try { saved = sessionStorage.getItem(storageKey) || sessionStorage.getItem(legacyStorageKey) || ""; } catch { /* Continue with a fresh in-memory token. */ }
+      if (!isDesktopRuntime) {
+        try { saved = sessionStorage.getItem(storageKey) || sessionStorage.getItem(legacyStorageKey) || ""; } catch { /* Continue with a fresh in-memory token. */ }
+      }
       if (saved) {
         try {
           const validationId = createIdempotencyKey(attemptId, "training-validate", caseData.id, runtimeMode, lang);
@@ -1565,10 +1572,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           trainingStateTokenRef.current = { attemptId, token: validated.stateToken };
           setServerEvidenceOptions(extractStudentEvidenceOptions(validated.payload) || []);
           trainingInitFailureRef.current = null;
-          try {
-            sessionStorage.setItem(storageKey, validated.stateToken);
-            sessionStorage.removeItem(legacyStorageKey);
-          } catch { /* The validated token can continue in memory. */ }
+          if (!isDesktopRuntime) {
+            try {
+              sessionStorage.setItem(storageKey, validated.stateToken);
+              sessionStorage.removeItem(legacyStorageKey);
+            } catch { /* The validated token can continue in memory. */ }
+          }
           setTrainingAttemptStatus("ready");
           return validated.stateToken;
         } catch (error) {
@@ -1576,10 +1585,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           const safeStageOneRecovery = stageProgressRef.current.activeStageNo === 1 && !stageProgressRef.current.hasSubmittedStages
             && ["attempt_not_found", "token_expired", "state_mismatch"].includes(reason);
           if (!safeStageOneRecovery) throw error;
-          try {
-            sessionStorage.removeItem(storageKey);
-            sessionStorage.removeItem(legacyStorageKey);
-          } catch { /* Recovery can continue in memory. */ }
+          if (!isDesktopRuntime) {
+            try {
+              sessionStorage.removeItem(storageKey);
+              sessionStorage.removeItem(legacyStorageKey);
+            } catch { /* Recovery can continue in memory. */ }
+          }
         }
       }
       if (!saved && isDesktopRuntime) {
@@ -1595,10 +1606,6 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           trainingInitFailureRef.current = null;
           const restoredStage = Math.max(1, Math.min(7, Number(resumed.payload.currentStage) || 1)) as AgentStageNo;
           setActiveStageNo(restoredStage);
-          try {
-            sessionStorage.setItem(storageKey, resumed.stateToken);
-            sessionStorage.removeItem(legacyStorageKey);
-          } catch { /* The resumed token can continue in memory. */ }
           setTrainingAttemptStatus("ready");
           return resumed.stateToken;
         } catch (error) {
@@ -1615,10 +1622,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       setServerEvidenceOptions(extractStudentEvidenceOptions(initialized.payload) || []);
       trainingInitFailureRef.current = null;
       setTrainingAttemptStatus("ready");
-      try {
-        sessionStorage.setItem(storageKey, initialized.stateToken);
-        sessionStorage.removeItem(legacyStorageKey);
-      } catch { /* Memory fallback. */ }
+      if (!isDesktopRuntime) {
+        try {
+          sessionStorage.setItem(storageKey, initialized.stateToken);
+          sessionStorage.removeItem(legacyStorageKey);
+        } catch { /* Memory fallback. */ }
+      }
       return initialized.stateToken;
     })().catch((error) => {
       const reason = trainingFailureReason(error);
@@ -1659,20 +1668,24 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         trainingInitPromiseRef.current = null;
         setTrainingAttemptStatus("initializing");
         setTrainingAttemptError("");
-        try {
-          sessionStorage.removeItem(trainingStateStorageKey(attempt.attemptId, publicApiConfig.baseUrl, window.location.origin));
-          sessionStorage.removeItem(legacyTrainingStateStorageKey(attempt.attemptId));
-        } catch { /* Recovery can continue in memory. */ }
+        if (!isDesktopRuntime) {
+          try {
+            sessionStorage.removeItem(trainingStateStorageKey(attempt.attemptId, publicApiConfig.baseUrl, window.location.origin));
+            sessionStorage.removeItem(legacyTrainingStateStorageKey(attempt.attemptId));
+          } catch { /* Recovery can continue in memory. */ }
+        }
         token = await ensureTrainingStateToken(true);
         result = await requestTrainingAction<T>(requestBody, token, requestId, 0);
       }
       trainingStateTokenRef.current = { attemptId: attempt.attemptId, token: result.stateToken };
       const nextEvidenceOptions = extractStudentEvidenceOptions(result.payload);
       if (nextEvidenceOptions) setServerEvidenceOptions(nextEvidenceOptions);
-      try {
-        sessionStorage.setItem(trainingStateStorageKey(attempt.attemptId, publicApiConfig.baseUrl, window.location.origin), result.stateToken);
-        sessionStorage.removeItem(legacyTrainingStateStorageKey(attempt.attemptId));
-      } catch { /* Memory fallback. */ }
+      if (!isDesktopRuntime) {
+        try {
+          sessionStorage.setItem(trainingStateStorageKey(attempt.attemptId, publicApiConfig.baseUrl, window.location.origin), result.stateToken);
+          sessionStorage.removeItem(legacyTrainingStateStorageKey(attempt.attemptId));
+        } catch { /* Memory fallback. */ }
+      }
       return result.payload;
     });
     trainingActionQueueRef.current = run.then(() => undefined, () => undefined);
@@ -1725,40 +1738,50 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     let cancelled = false;
     const hydrate = async () => {
       const pointer = attemptPointerKey(initialCaseData.id, attemptMode, targetLang);
-      const savedAttempt = readJsonStorage<unknown>(pointer, null).value;
-      let activeAttempt = isAttemptCompatible(savedAttempt, expectedAttempt)
-        ? savedAttempt
-        : createAttempt(initialCaseData.id, attemptMode, targetLang);
-      const savedResult = readJsonStorage<PersistedAttemptState | null>(attemptStorageKey(activeAttempt), null);
-      let saved: PersistedAttemptState = isStoredAttemptStateCompatible(savedResult.value, activeAttempt) ? savedResult.value : {};
+      let activeAttempt = createAttempt(initialCaseData.id, attemptMode, targetLang);
+      let saved: PersistedAttemptState = {};
+      let savedResult: ReturnType<typeof readJsonStorage<PersistedAttemptState | null>> = { value: null, recovered: false };
       if (isDesktopRuntime) {
         try {
+          const authority = await bootstrapDesktopStateAuthority();
           const durable = await loadDesktopAttemptState({ caseId: initialCaseData.id, mode: attemptMode, language: targetLang });
+          if (!desktopAuthoritiesCompatible(authority, durable)) throw new Error("desktop_state_authority_changed");
           const durableAttempt = durable.snapshot?.attempt;
           if (isAttemptCompatible(durableAttempt, expectedAttempt) && durableAttempt.attemptId === durable.attemptId) {
             activeAttempt = durableAttempt;
             saved = isStoredAttemptStateCompatible(durable.snapshot, durableAttempt) ? durable.snapshot : { attempt: durableAttempt };
             trainingStateTokenRef.current = { attemptId: durableAttempt.attemptId, token: durable.stateToken };
-            try {
-              sessionStorage.setItem(trainingStateStorageKey(durableAttempt.attemptId, publicApiConfig.baseUrl, window.location.origin), durable.stateToken);
-            } catch { /* The durable state remains authoritative. */ }
+          } else {
+            throw new Error("desktop_attempt_snapshot_invalid");
           }
         } catch (error) {
           const missing = error instanceof ApiRequestError && error.status === 404 && error.code === "attempt_not_found";
-          if (!missing) setStorageWarning(targetLang === "en" ? "Saved training state is temporarily unavailable." : "已保存的训练状态暂时不可用。");
+          if (!missing) {
+            setStorageWarning(targetLang === "en" ? "Saved training state is temporarily unavailable." : "已保存的训练状态暂时不可用。");
+            return;
+          }
         }
+      } else {
+        const savedAttempt = readJsonStorage<unknown>(pointer, null).value;
+        activeAttempt = isAttemptCompatible(savedAttempt, expectedAttempt)
+          ? savedAttempt
+          : activeAttempt;
+        savedResult = readJsonStorage<PersistedAttemptState | null>(attemptStorageKey(activeAttempt), null);
+        saved = isStoredAttemptStateCompatible(savedResult.value, activeAttempt) ? savedResult.value : {};
       }
       if (cancelled) return;
       setAttempt(activeAttempt);
-      const pointerWrite = writeJsonStorage(pointer, activeAttempt);
-      if (!pointerWrite.ok) setStorageWarning(targetLang === "en"
-        ? "Browser cache is unavailable. Durable desktop recovery remains enabled."
-        : "浏览器缓存不可用，桌面持久化恢复仍然有效。");
-      writeJsonStorage(attemptStorageKey(activeAttempt), saved);
-      if (savedResult.value && !isStoredAttemptStateCompatible(savedResult.value, activeAttempt) && !isDesktopRuntime) {
-        setStorageWarning(targetLang === "en" ? "An incompatible saved attempt was ignored and a safe session was started." : "已忽略身份不一致的训练记录，并安全创建新会话。");
+      if (!isDesktopRuntime) {
+        const pointerWrite = writeJsonStorage(pointer, activeAttempt);
+        if (!pointerWrite.ok) setStorageWarning(targetLang === "en"
+          ? "Browser cache is unavailable. Keep this page open until storage recovers."
+          : "浏览器缓存不可用，请保持页面打开直至存储恢复。");
+        writeJsonStorage(attemptStorageKey(activeAttempt), saved);
+        if (savedResult.value && !isStoredAttemptStateCompatible(savedResult.value, activeAttempt)) {
+          setStorageWarning(targetLang === "en" ? "An incompatible saved attempt was ignored and a safe session was started." : "已忽略身份不一致的训练记录，并安全创建新会话。");
+        }
+        if (savedResult.recovered) setStorageWarning("检测到损坏的训练缓存，已安全恢复为空白会话。");
       }
-      if (savedResult.recovered && !isDesktopRuntime) setStorageWarning("检测到损坏的训练缓存，已安全恢复为空白会话。");
       if (Number.isInteger(saved.activeStageNo) && Number(saved.activeStageNo) >= 1 && Number(saved.activeStageNo) <= 7) setActiveStageNo(saved.activeStageNo as AgentStageNo);
       if (saved.answers) setAnswers(sanitizeAnswers(saved.answers));
       if (saved.submitted) setSubmitted(saved.submitted);
@@ -1809,7 +1832,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     let cancelled = false;
     const generation = ++aiGenerationRef.current;
     const cacheKey = aiSessionCacheKey(attempt.attemptId, caseData.id, lang, runtimeMode);
-    const cached = readJsonStorage<SessionInitResponse | null>(cacheKey, null).value;
+    const cached = isDesktopRuntime ? null : readJsonStorage<SessionInitResponse | null>(cacheKey, null).value;
     const expectedDeploymentSha = serviceHealth?.deploymentSha || serviceHealth?.gitSha;
     if (validCachedSession(cached, { attemptId: attempt.attemptId, caseId: caseData.id, language: lang, mode: runtimeMode, deploymentSha: expectedDeploymentSha && expectedDeploymentSha !== "unknown" ? expectedDeploymentSha : undefined, apiVersion: EXPECTED_API_VERSION })) {
       setAiSessionId(cached.sessionId);
@@ -1821,7 +1844,9 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       });
       return;
     }
-    try { localStorage.removeItem(cacheKey); } catch { /* Session continues in memory. */ }
+    if (!isDesktopRuntime) {
+      try { localStorage.removeItem(cacheKey); } catch { /* Session continues in memory. */ }
+    }
     if (!isDesktopRuntime && !navigator.onLine) { setAiStatus("offline"); return; }
     setSessionInitLoading(true);
     setSessionInitError("");
@@ -1867,7 +1892,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       if (cancelled || generation !== aiGenerationRef.current) return;
       setAiSessionId(result.sessionId);
       setAiStatus(result.aiStatus === "degraded" ? "degraded" : "unknown");
-      writeJsonStorage(cacheKey, result);
+      if (!isDesktopRuntime) writeJsonStorage(cacheKey, result);
       setMessages((current) => {
         const hasStudentMessage = current.some((message) => message.role === "student");
         if (hasStudentMessage) return current;
@@ -1965,6 +1990,17 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       pendingHistoryLogs,
       osceTimeLeft
     };
+    if (isDesktopRuntime) {
+      desktopSnapshotQueueRef.current = desktopSnapshotQueueRef.current
+        .then(() => ensureTrainingStateToken())
+        .then(() => saveDesktopAttemptState(attempt, snapshot))
+        .then(() => setSaveStatus("saved"))
+        .catch(() => {
+          setSaveStatus("error");
+          setStorageWarning(lang === "en" ? "Desktop autosave is temporarily unavailable." : "桌面自动保存暂时不可用。");
+        });
+      return;
+    }
     const result = writeJsonStorage(attemptStorageKey(attempt), snapshot);
     const pointerResult = result.ok && isAttemptCompatible(attempt, {
       caseId: caseData.id,
@@ -1980,15 +2016,10 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       : { ok: false as const };
     const persisted = result.ok && pointerResult.ok;
     setSaveStatus(persisted ? "saved" : "error");
-    if (isDesktopRuntime) {
-      desktopSnapshotQueueRef.current = desktopSnapshotQueueRef.current
-        .then(() => saveDesktopAttemptState(attempt, snapshot))
-        .catch(() => undefined);
-    }
     if (!persisted) setStorageWarning(lang === "en"
       ? "Autosave is temporarily unavailable. Keep this page open and retry after browser storage recovers."
       : "自动保存暂时不可用，请保持页面打开并在浏览器存储恢复后重试。");
-  }, [activeStageNo, answers, askedSlots, attempt, attemptReady, caseData.id, collected, examLogs, finalReport, isDesktopRuntime, lang, mdtOpinions, messages, orderLogs, osceTimeLeft, pendingHistoryLogs, serverEvidenceOptions, submitted, timeline]);
+  }, [activeStageNo, answers, askedSlots, attempt, attemptReady, caseData.id, collected, ensureTrainingStateToken, examLogs, finalReport, isDesktopRuntime, lang, mdtOpinions, messages, orderLogs, osceTimeLeft, pendingHistoryLogs, serverEvidenceOptions, submitted, timeline]);
 
   useEffect(() => {
     if (!isOsce || activeStageNo === 7 || finalReport) return;
@@ -2119,6 +2150,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   function setLanguage(next: LanguageCode) {
     if (next === lang) return;
     if (timeline.length > 0 && !window.confirm(next === "en" ? "Switching language starts a separate attempt. Continue?" : "切换语言将开始独立训练记录，是否继续？")) return;
+    if (isDesktopRuntime) {
+      try { localStorage.setItem("hematuria-language", next); } catch { /* The reload will retain the current language if preferences are unavailable. */ }
+      allowNavigationRef.current = true;
+      window.location.reload();
+      return;
+    }
     const attemptMode: AttemptMode = runtimeMode === "osce" ? "osce" : runtimeMode === "rct" ? "rct" : "free";
     const nextAttempt = createAttempt(caseData.id, attemptMode, next);
     autoSessionInitRef.current?.controller.abort();
@@ -2458,7 +2495,9 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         if (health.apiVersion !== EXPECTED_API_VERSION) throw new ApiRequestError("backend-outdated", 409, "version_mismatch");
         if (!health.patientServiceConfigured) throw new ApiRequestError("not-configured", 503, "provider_not_configured");
         const cacheKey = aiSessionCacheKey(attempt.attemptId, caseData.id, lang, runtimeMode);
-        try { localStorage.removeItem(cacheKey); } catch { /* New session still works in memory. */ }
+        if (!isDesktopRuntime) {
+          try { localStorage.removeItem(cacheKey); } catch { /* New session still works in memory. */ }
+        }
         const trainingStateToken = await ensureTrainingStateToken();
         const session = await requestSessionInit({
           caseId: caseData.id, runtimeMode, language: lang, debug: aiMode === "debug", attemptId: attempt.attemptId,
@@ -2466,7 +2505,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         });
         if (generation !== aiGenerationRef.current) return false;
         setAiSessionId(session.sessionId);
-        writeJsonStorage(cacheKey, session);
+        if (!isDesktopRuntime) writeJsonStorage(cacheKey, session);
         const pending = pendingFailedQuestion;
         if (pending) {
           const aiResult = await requestAiPatientReply({
@@ -2680,10 +2719,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         trainingInitFailureRef.current = { attemptId: attempt.attemptId, error };
         setTrainingAttemptStatus("failed");
         setTrainingAttemptError(message);
-        try {
-          sessionStorage.removeItem(trainingStateStorageKey(attempt.attemptId, publicApiConfig.baseUrl, window.location.origin));
-          sessionStorage.removeItem(legacyTrainingStateStorageKey(attempt.attemptId));
-        } catch { /* The UI still fails closed. */ }
+        if (!isDesktopRuntime) {
+          try {
+            sessionStorage.removeItem(trainingStateStorageKey(attempt.attemptId, publicApiConfig.baseUrl, window.location.origin));
+            sessionStorage.removeItem(legacyTrainingStateStorageKey(attempt.attemptId));
+          } catch { /* The UI still fails closed. */ }
+        }
       }
       setStorageWarning(message);
     } finally {
@@ -2704,12 +2745,16 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       const report = await generateReport();
       setSubmitted((current) => ({ ...current, 7: evaluation }));
       setFinalReport(report);
-      const summaries = readJsonStorage<unknown>(ATTEMPT_SUMMARY_KEY, []).value;
-      const validatedSummaries: AttemptSummary[] = Array.isArray(summaries) ? summaries.filter(isAttemptSummary) : [];
-      const previous = [...validatedSummaries].reverse().find((item) => item.caseId === caseData.id && item.language === lang && item.attemptId !== attempt.attemptId);
-      setPreviousAttemptScore(previous?.total ?? null);
-      if (!validatedSummaries.some((item) => item.attemptId === attempt.attemptId)) {
-        writeJsonStorage(ATTEMPT_SUMMARY_KEY, [...validatedSummaries, createAttemptSummary(attempt, report.total, report.max)]);
+      if (isDesktopRuntime) {
+        setPreviousAttemptScore(null);
+      } else {
+        const summaries = readJsonStorage<unknown>(ATTEMPT_SUMMARY_KEY, []).value;
+        const validatedSummaries: AttemptSummary[] = Array.isArray(summaries) ? summaries.filter(isAttemptSummary) : [];
+        const previous = [...validatedSummaries].reverse().find((item) => item.caseId === caseData.id && item.language === lang && item.attemptId !== attempt.attemptId);
+        setPreviousAttemptScore(previous?.total ?? null);
+        if (!validatedSummaries.some((item) => item.attemptId === attempt.attemptId)) {
+          writeJsonStorage(ATTEMPT_SUMMARY_KEY, [...validatedSummaries, createAttemptSummary(attempt, report.total, report.max)]);
+        }
       }
       addTimeline("submit", lang === "en" ? "Final report generated" : "完成训练并生成最终报告", `${percentageScore(report.total)} / 100`, 7);
       setStorageWarning("");

@@ -3,9 +3,11 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { DatabaseSync } = require("node:sqlite");
 
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 const MAX_IDEMPOTENCY_RECORDS = 64;
 const ATTEMPT_TTL_MILLISECONDS = 24 * 60 * 60 * 1000;
+const STATE_STORE_ID_KEY = "state_store_id";
+const SERVER_STATE_REVISION_KEY = "server_state_revision";
 
 let activeStore = null;
 
@@ -132,7 +134,15 @@ function migrate(database) {
         FOREIGN KEY (attempt_key) REFERENCES attempts(attempt_key) ON DELETE CASCADE
       ) STRICT;
     `);
-    if (version !== 0 && version !== 1) throw new Error("desktop_database_schema_unsupported");
+    if (![0, 1, 2].includes(version)) throw new Error("desktop_database_schema_unsupported");
+    database.prepare(`
+      INSERT INTO schema_meta(key, value) VALUES (?, ?)
+      ON CONFLICT(key) DO NOTHING
+    `).run(STATE_STORE_ID_KEY, crypto.randomUUID());
+    database.prepare(`
+      INSERT INTO schema_meta(key, value) VALUES (?, '0')
+      ON CONFLICT(key) DO NOTHING
+    `).run(SERVER_STATE_REVISION_KEY);
     database.prepare(`
       INSERT INTO schema_meta(key, value) VALUES ('schema_version', ?)
       ON CONFLICT(key) DO UPDATE SET value = excluded.value
@@ -168,6 +178,34 @@ function closeDesktopSqliteStore() {
   activeStore.database.exec("PRAGMA wal_checkpoint(TRUNCATE)");
   activeStore.database.close();
   activeStore = null;
+}
+
+function readServerStateRevision(database) {
+  const row = database.prepare("SELECT value FROM schema_meta WHERE key = ?").get(SERVER_STATE_REVISION_KEY);
+  const revision = Number(row?.value);
+  if (!Number.isSafeInteger(revision) || revision < 0) throw new Error("desktop_server_state_revision_invalid");
+  return revision;
+}
+
+function bumpServerStateRevision(database) {
+  const next = readServerStateRevision(database) + 1;
+  database.prepare("UPDATE schema_meta SET value = ? WHERE key = ?").run(String(next), SERVER_STATE_REVISION_KEY);
+  return next;
+}
+
+function getDesktopStateAuthority() {
+  const { database } = openStore();
+  const stateStore = database.prepare("SELECT value FROM schema_meta WHERE key = ?").get(STATE_STORE_ID_KEY);
+  const stateStoreId = String(stateStore?.value || "");
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(stateStoreId)) {
+    throw new Error("desktop_state_store_id_invalid");
+  }
+  return {
+    stateStoreId,
+    schemaVersion: readSchemaVersion(database),
+    productHead: String(process.env.NEXT_PUBLIC_GIT_SHA || "desktop-local"),
+    serverStateRevision: readServerStateRevision(database)
+  };
 }
 
 function parseAttemptState(row) {
@@ -241,6 +279,7 @@ function saveAttemptSnapshot({ attemptKey, caseId, attemptId, mode, language, sn
         snapshot_json = excluded.snapshot_json,
         updated_at = excluded.updated_at
     `).run(attemptKey, serialized, Date.now());
+    bumpServerStateRevision(database);
     return { kind: "saved" };
   });
 }
@@ -272,7 +311,8 @@ function catalogProgress() {
 }
 
 function deleteExpiredAttempt(database, attemptKey, now) {
-  database.prepare("DELETE FROM attempts WHERE attempt_key = ? AND expires_at <= ?").run(attemptKey, now);
+  const deleted = database.prepare("DELETE FROM attempts WHERE attempt_key = ? AND expires_at <= ?").run(attemptKey, now);
+  if (deleted.changes > 0) bumpServerStateRevision(database);
 }
 
 function readCachedRequest(database, attemptKey, requestId) {
@@ -343,6 +383,7 @@ function registerAttempt({
       ) VALUES (?, NULL, ?, ?, 'active', NULL, NULL, ?)
       ON CONFLICT(record_id) DO NOTHING
     `).run(attemptKey, String(attemptId), String(caseId), now);
+    bumpServerStateRevision(database);
     return { kind: "created" };
   });
 }
@@ -493,6 +534,7 @@ function commitAttempt({
         LIMIT -1 OFFSET ?
       )
     `).run(attemptKey, attemptKey, MAX_IDEMPOTENCY_RECORDS);
+    bumpServerStateRevision(database);
     return { kind: "committed" };
   });
 }
@@ -664,6 +706,7 @@ module.exports = {
   discoverAttempt,
   desktopDatabasePath,
   getDesktopSchemaVersion,
+  getDesktopStateAuthority,
   getDesktopSessionMetadata,
   getDesktopSetting,
   getOrCreateDesktopSecret,

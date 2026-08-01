@@ -9,6 +9,7 @@ import {
 import { listStorageKeys, readJsonStorage, readStringStorage } from "./safeStorage";
 import { requestJson } from "./apiClient";
 import { desktopRuntimeConfig } from "./apiConfig";
+import { clearUntrustedDesktopTrainingCaches, isDesktopStateAuthority, type DesktopStateAuthority } from "./desktopStateAuthority";
 
 export const ATTEMPT_SUMMARY_KEY = "hematuria-practice-attempt-summaries-v2";
 
@@ -142,14 +143,16 @@ export async function loadAuthoritativeCatalogProgress(apiBaseUrl: string, pageO
   const runtime = desktopRuntimeConfig();
   if (!runtime) return loadCatalogProgress(apiBaseUrl, pageOrigin);
   try {
-    const result = await requestJson<{ progress: CatalogProgress }>(`${runtime.apiBaseUrl}/api/desktop/progress`, undefined, {
+    const result = await requestJson<DesktopStateAuthority & { progress: CatalogProgress }>(`${runtime.apiBaseUrl}/api/desktop/progress`, undefined, {
       method: "GET",
       timeoutMs: 5000,
       retries: 0,
       endpointName: "desktop-progress"
     });
+    if (!isDesktopStateAuthority(result)) throw new Error("desktop_state_authority_invalid");
+    if (!clearUntrustedDesktopTrainingCaches().ok) throw new Error("desktop_training_cache_clear_failed");
     return { progress: result.progress || {}, storageAvailable: true };
   } catch {
-    return loadCatalogProgress(apiBaseUrl, pageOrigin);
+    return { progress: {} as CatalogProgress, storageAvailable: false };
   }
 }
