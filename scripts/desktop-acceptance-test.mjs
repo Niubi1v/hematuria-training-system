@@ -172,7 +172,7 @@ async function launchSidecar() {
   assert.equal(ready.protocolVersion, 1);
   assert.equal(ready.handshake, handshake);
   assert.equal(ready.pid, child.pid);
-  assert.equal(ready.databaseSchemaVersion, 2);
+  assert.equal(ready.databaseSchemaVersion, 3);
   assert.equal(ready.localAi?.status, realLocalAi ? "starting" : "disabled");
   assert.match(ready.origin, /^http:\/\/127\.0\.0\.1:\d+$/);
   const runtime = { bearer, child, diagnostics: () => diagnostics, origin: ready.origin, ready };
@@ -1005,7 +1005,7 @@ try {
   const database = new DatabaseSync(databasePath, { readOnly: true });
   try {
     const schema = database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get();
-    assert.equal(Number(schema?.value), 2);
+    assert.equal(Number(schema?.value), 3);
     const attemptRows = database.prepare(`
       SELECT attempt_id, state_json
       FROM attempts
