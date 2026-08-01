@@ -847,8 +847,8 @@ function stageFeedback(caseData, stageKey, validation, state, language) {
     feedbackEvidence,
     practiceOnly: state.practiceOnly,
     comment: language === "en"
-      ? "Clinical significance: omissions may affect localization, safety, or decision quality. Revise the listed items and resubmit. This formative result does not change the final 360 score."
-      : "临床意义：遗漏可能影响血尿定位、安全识别或决策质量。请根据遗漏和错误点修改后重新提交；本阶段形成性结果不直接改变终末360分。"
+      ? "Clinical significance: omissions may affect localization, safety, or decision quality. Revise the listed items and resubmit. This formative feedback does not affect the final overall result."
+      : "临床意义：遗漏可能影响血尿定位、安全识别或决策质量。请根据遗漏和错误点修改后重新提交；本阶段为形成性反馈，不影响最终综合结果。"
   };
 }
 

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Circle, Clock3, Languages, Search, Shuffle, X } from "lucide-react";
 import { publicCaseHref, publicPageHref } from "@/src/lib/publicRoutes";
 import { publicApiConfig } from "@/src/lib/apiConfig";
-import { loadCatalogProgress } from "@/src/lib/catalogProgress";
+import { loadAuthoritativeCatalogProgress } from "@/src/lib/catalogProgress";
 import { readStringStorage, writeStringStorage } from "@/src/lib/safeStorage";
 
 export type PublicCase = {
@@ -33,9 +33,10 @@ export default function CaseCatalogClient({ cases }: { cases: PublicCase[] }) {
   useEffect(() => {
     const saved = readStringStorage("hematuria-language");
     if (saved.value === "zh" || saved.value === "en") setLang(saved.value);
-    const loaded = loadCatalogProgress(publicApiConfig.baseUrl, window.location.origin);
-    setProgress(loaded.progress);
-    setStorageUnavailable(!saved.ok || !loaded.storageAvailable);
+    void loadAuthoritativeCatalogProgress(publicApiConfig.baseUrl, window.location.origin).then((loaded) => {
+      setProgress(loaded.progress);
+      setStorageUnavailable(!saved.ok || !loaded.storageAvailable);
+    });
   }, []);
 
   useEffect(() => {

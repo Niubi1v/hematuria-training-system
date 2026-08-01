@@ -43,7 +43,7 @@ async function main() {
   assert.equal(store.assertStoreConfigured(), "sqlite");
   assert.equal(store.durableAttemptStoreConfigured(), true);
   assert.equal(store.attemptStoreCredentialSource(), "desktop_sqlite");
-  assert.equal(sqlite.getDesktopSchemaVersion(), 1);
+  assert.equal(sqlite.getDesktopSchemaVersion(), 2);
 
   const schemaDatabase = new DatabaseSync(databasePath);
   const tableNames = schemaDatabase.prepare(`
@@ -55,6 +55,7 @@ async function main() {
     "attempt_requests",
     "attempts",
     "desktop_sessions",
+    "desktop_attempt_snapshots",
     "schema_meta",
     "settings",
     "training_records"
@@ -220,6 +221,34 @@ async function main() {
     mode: "public-practice",
     language: "zh"
   }), { kind: "active", state: completedResumeState });
+
+  const discoveredResume = sqlite.discoverAttempt({
+    caseId: "P003",
+    mode: "public-practice",
+    language: "zh"
+  });
+  assert.equal(discoveredResume.kind, "active");
+  assert.equal(discoveredResume.state.attemptId, "attempt-completed-resume");
+  assert.equal(discoveredResume.snapshot, null);
+  assert.deepEqual(sqlite.saveAttemptSnapshot({
+    attemptKey: discoveredResume.attemptKey,
+    caseId: "P003",
+    attemptId: "attempt-completed-resume",
+    mode: "public-practice",
+    language: "zh",
+    snapshot: {
+      attempt: {
+        attemptId: "attempt-completed-resume",
+        caseId: "P003",
+        mode: "free",
+        language: "zh"
+      },
+      activeStageNo: 7,
+      finalReport: { total: 88, max: 360 }
+    }
+  }), { kind: "saved" });
+  assert.equal(sqlite.discoverAttempt({ caseId: "P003", mode: "public-practice", language: "zh" }).snapshot.finalReport.total, 88);
+  assert.equal(sqlite.catalogProgress().P003, "completed");
 
   const committedState = state("attempt-main", { completedStages: [1] });
   const commitPayload = { stage: 1, accepted: true };
@@ -401,8 +430,22 @@ async function main() {
   assert.deepEqual(persisted.completedStages, [1]);
 
   sqlite.closeDesktopSqliteStore();
+  const versionOnePath = path.join(testDirectory, "version-one.sqlite");
+  fs.copyFileSync(databasePath, versionOnePath);
+  const versionOneDatabase = new DatabaseSync(versionOnePath);
+  versionOneDatabase.exec("DROP TABLE desktop_attempt_snapshots");
+  versionOneDatabase.prepare("UPDATE schema_meta SET value = '1' WHERE key = 'schema_version'").run();
+  versionOneDatabase.close();
+  process.env.HEMATURIA_DESKTOP_DATABASE_PATH = versionOnePath;
+  assert.equal(sqlite.getDesktopSchemaVersion(), 2);
+  sqlite.closeDesktopSqliteStore();
+  const migratedDatabase = new DatabaseSync(versionOnePath);
+  assert.ok(migratedDatabase.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'desktop_attempt_snapshots'").get());
+  migratedDatabase.close();
+
+  process.env.HEMATURIA_DESKTOP_DATABASE_PATH = databasePath;
   const newerSchemaDatabase = new DatabaseSync(databasePath);
-  newerSchemaDatabase.prepare("UPDATE schema_meta SET value = '2' WHERE key = 'schema_version'").run();
+  newerSchemaDatabase.prepare("UPDATE schema_meta SET value = '3' WHERE key = 'schema_version'").run();
   newerSchemaDatabase.close();
   assert.throws(() => sqlite.getDesktopSchemaVersion(), /desktop_database_schema_too_new/);
 

@@ -31,6 +31,8 @@ const RESPONSE_ERRORS = new Set([
   "polarity_error"
 ]);
 let lastPatientEvidence = null;
+let localAiAcceptedCount = 0;
+let ruleFallbackCount = 0;
 
 function safeToken(value, maxLength = 120) {
   const token = String(value || "");
@@ -50,6 +52,10 @@ function runtimeSnapshot() {
       || !MODEL_ALIASES.has(snapshot.model)
       || !Number.isSafeInteger(snapshot.cloudRequestCount)
       || snapshot.cloudRequestCount < 0
+      || typeof snapshot.sessionStartedAt !== "string"
+      || !["lightweight", "standard"].includes(snapshot.modelProfile)
+      || snapshot.runtimeTarget !== "desktop"
+      || typeof snapshot.productHead !== "string"
     ) {
       return null;
     }
@@ -57,6 +63,10 @@ function runtimeSnapshot() {
       llamaServerReady: snapshot.llamaServerReady,
       localModelReady: snapshot.localModelReady,
       model: snapshot.model,
+      modelProfile: snapshot.modelProfile,
+      productHead: snapshot.productHead,
+      runtimeTarget: snapshot.runtimeTarget,
+      sessionStartedAt: snapshot.sessionStartedAt,
       cloudRequestCount: snapshot.cloudRequestCount
     };
   } catch {
@@ -111,8 +121,29 @@ function desktopPatientEvidence(patient, options = {}) {
       ? patient.runtimeTrace.responseErrors.filter((value) => RESPONSE_ERRORS.has(String(value)))
       : []
   };
+  if (localClassificationAccepted) localAiAcceptedCount += 1;
+  else ruleFallbackCount += 1;
   lastPatientEvidence = Object.freeze({ ...evidence });
   return evidence;
+}
+
+function desktopRuntimeSummary() {
+  const runtime = runtimeSnapshot();
+  if (!runtime) return null;
+  return {
+    schemaVersion: 1,
+    sessionStartedAt: runtime.sessionStartedAt,
+    runtimeTarget: runtime.runtimeTarget,
+    model: runtime.model,
+    modelProfile: runtime.modelProfile,
+    productHead: runtime.productHead,
+    llamaServerReady: runtime.llamaServerReady,
+    localModelReady: runtime.localModelReady,
+    localAiAcceptedCount,
+    ruleFallbackCount,
+    cloudRequestCount: runtime.cloudRequestCount,
+    generatedAt: new Date().toISOString()
+  };
 }
 
 function desktopEvidenceSnapshot() {
@@ -139,11 +170,14 @@ function desktopEvidenceSnapshot() {
 
 function resetDesktopPatientEvidenceForTests() {
   lastPatientEvidence = null;
+  localAiAcceptedCount = 0;
+  ruleFallbackCount = 0;
 }
 
 module.exports = {
   desktopEvidenceSnapshot,
   desktopPatientEvidence,
+  desktopRuntimeSummary,
   resetDesktopPatientEvidenceForTests,
   runtimeSnapshot
 };

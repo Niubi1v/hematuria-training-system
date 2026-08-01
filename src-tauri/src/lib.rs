@@ -435,12 +435,13 @@ fn configured_absolute_path(name: &str) -> Result<Option<PathBuf>, String> {
     Ok(Some(path))
 }
 
-fn desktop_data_directory(app: &tauri::App) -> Result<PathBuf, String> {
+fn desktop_data_directory(_app: &tauri::App) -> Result<PathBuf, String> {
     configured_absolute_path("HEMATURIA_DESKTOP_DATA_DIR")?.map_or_else(
         || {
-            app.path()
-                .app_local_data_dir()
-                .map_err(|error| format!("desktop_local_data_dir_unavailable:{error}"))
+            env::var_os("LOCALAPPDATA")
+                .map(PathBuf::from)
+                .map(|root| root.join("HematuriaTraining").join("MentorLocalAI-FinalCandidate"))
+                .ok_or_else(|| "desktop_local_data_dir_unavailable".to_string())
         },
         Ok,
     )
@@ -557,6 +558,10 @@ fn sanitized_child_environment(
         .env("HEMATURIA_DESKTOP_BEARER", bearer)
         .env("HEMATURIA_DESKTOP_HANDSHAKE", handshake)
         .env("HEMATURIA_DESKTOP_ALLOWED_ORIGINS", DESKTOP_ORIGINS);
+    command.env(
+        "NEXT_PUBLIC_GIT_SHA",
+        option_env!("NEXT_PUBLIC_GIT_SHA").unwrap_or("desktop-local"),
+    );
 
     if let Some(model_path) = configured_absolute_path("HEMATURIA_DESKTOP_MODEL_PATH")? {
         command.env("HEMATURIA_DESKTOP_MODEL_PATH", model_path);

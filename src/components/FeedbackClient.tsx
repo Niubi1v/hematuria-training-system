@@ -59,7 +59,7 @@ export default function FeedbackClient() {
         <aside className="rounded-lg border border-clinic-line bg-white p-5">
           <p className="text-sm text-clinic-muted">总分</p>
           <p className="mt-2 text-5xl font-semibold text-clinic-blue">{report.total}</p>
-          <p className="mt-2 text-sm text-clinic-muted">病史采集阶段完成度；全流程终末总评统一为360分</p>
+          <p className="mt-2 text-sm text-clinic-muted">病史采集阶段完成度；全流程终末总评以百分制呈现</p>
           <div className="mt-6 grid gap-2">
             <a className="rounded-md border border-clinic-line px-4 py-2 text-center hover:border-clinic-blue" href={publicCaseHref(caseId)}>重新问诊</a>
             <Link className="rounded-md bg-clinic-blue px-4 py-2 text-center text-white hover:bg-clinic-teal" href="/cases">选择其他病例</Link>

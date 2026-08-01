@@ -1,6 +1,6 @@
 "use client";
 
-import { FolderCog, LoaderCircle, Power, SlidersHorizontal, X } from "lucide-react";
+import { Copy, Download, FolderCog, LoaderCircle, Power, SlidersHorizontal, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { requestJson } from "@/src/lib/apiClient";
 import { desktopRuntimeConfig, publicApiConfig } from "@/src/lib/apiConfig";
@@ -27,6 +27,21 @@ type DesktopSettings = {
   version: number;
 };
 
+type DesktopRuntimeSummary = {
+  schemaVersion: 1;
+  sessionStartedAt: string;
+  runtimeTarget: "desktop";
+  model: "Qwen3-1.7B" | "Qwen3-4B";
+  modelProfile: "lightweight" | "standard";
+  productHead: string;
+  llamaServerReady: boolean;
+  localModelReady: boolean;
+  localAiAcceptedCount: number;
+  ruleFallbackCount: number;
+  cloudRequestCount: number;
+  generatedAt: string;
+};
+
 const emptySettings: DesktopSettings = {
   modelMode: "lightweight",
   modelAlias: "Qwen3-1.7B",
@@ -48,6 +63,7 @@ export default function DesktopModelSettings() {
   const [draftModelMode, setDraftModelMode] = useState<DesktopSettings["modelMode"]>("lightweight");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [diagnostics, setDiagnostics] = useState<DesktopRuntimeSummary | null>(null);
 
   useEffect(() => {
     if (readStringStorage("hematuria-language").value === "en") setLang("en");
@@ -81,11 +97,43 @@ export default function DesktopModelSettings() {
       setSettings(next);
       setDraftDirectory(next.modelDirectory);
       setDraftModelMode(next.modelMode);
+      const evidence = await requestJson<DesktopRuntimeSummary>(`${publicApiConfig.baseUrl}/api/desktop/evidence`, undefined, {
+        method: "GET",
+        timeoutMs: 10_000,
+        retries: 0,
+        endpointName: "desktop-runtime-summary"
+      });
+      setDiagnostics(evidence);
     } catch {
       setMessage(lang === "en" ? "Settings are temporarily unavailable." : "设置暂时不可用。");
     } finally {
       setLoading(false);
     }
+  }
+
+  function diagnosticJson() {
+    return diagnostics ? `${JSON.stringify(diagnostics, null, 2)}\n` : "";
+  }
+
+  async function copyDiagnostics() {
+    if (!diagnostics) return;
+    try {
+      await navigator.clipboard.writeText(diagnosticJson());
+      setMessage(lang === "en" ? "Local verification summary copied." : "本机运行验证摘要已复制。");
+    } catch {
+      setMessage(lang === "en" ? "Copy is unavailable on this device." : "当前设备无法复制摘要。");
+    }
+  }
+
+  function exportDiagnostics() {
+    if (!diagnostics) return;
+    const url = URL.createObjectURL(new Blob([diagnosticJson()], { type: "application/json;charset=utf-8" }));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "hematuria-local-runtime-verification.json";
+    anchor.click();
+    URL.revokeObjectURL(url);
+    setMessage(lang === "en" ? "Local verification summary exported." : "本机运行验证摘要已导出。");
   }
 
   async function saveSettings(localAiEnabled = settings.localAiEnabled) {
@@ -191,6 +239,29 @@ export default function DesktopModelSettings() {
               </button>
               {loading && <span role="status" className="text-xs text-clinic-muted">{lang === "en" ? "Applying settings..." : "正在应用设置……"}</span>}
             </div>
+            <details className="mt-5 rounded-lg border border-clinic-line bg-clinic-paper p-4">
+              <summary className="cursor-pointer font-medium">{lang === "en" ? "Local runtime verification" : "本机运行验证"}</summary>
+              <p className="mt-2 text-xs leading-5 text-clinic-muted">
+                {lang === "en" ? "Runtime statistics only; no patient questions or answers are included." : "仅显示运行统计，不包含患者问答内容。"}
+              </p>
+              {diagnostics ? (
+                <>
+                  <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                    <dt>{lang === "en" ? "Local interview service" : "本地问诊服务"}</dt><dd>{diagnostics.llamaServerReady && diagnostics.localModelReady ? (lang === "en" ? "Ready" : "已就绪") : (lang === "en" ? "Not ready" : "未就绪")}</dd>
+                    <dt>{lang === "en" ? "Local resource profile" : "本地资源方案"}</dt><dd>{diagnostics.modelProfile === "lightweight" ? (lang === "en" ? "Lightweight" : "轻量") : (lang === "en" ? "Standard" : "标准")}</dd>
+                    <dt>{lang === "en" ? "Accepted local answers this start" : "本次启动已接受的本地回答"}</dt><dd>{diagnostics.localAiAcceptedCount}</dd>
+                    <dt>{lang === "en" ? "Safe fallback answers this start" : "本次启动安全降级回答"}</dt><dd>{diagnostics.ruleFallbackCount}</dd>
+                    <dt>{lang === "en" ? "Cloud requests" : "云端请求"}</dt><dd>{diagnostics.cloudRequestCount}</dd>
+                    <dt>{lang === "en" ? "Session started" : "本次启动时间"}</dt><dd>{diagnostics.sessionStartedAt}</dd>
+                    <dt>{lang === "en" ? "Product version" : "产品版本"}</dt><dd className="break-all">{diagnostics.productHead}</dd>
+                  </dl>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button type="button" className="ui-button-secondary" onClick={() => void copyDiagnostics()}><Copy size={15} />{lang === "en" ? "Copy summary" : "复制摘要"}</button>
+                    <button type="button" className="ui-button-secondary" onClick={exportDiagnostics}><Download size={15} />{lang === "en" ? "Export JSON" : "导出JSON"}</button>
+                  </div>
+                </>
+              ) : <p className="mt-3 text-xs text-clinic-muted">{lang === "en" ? "Verification summary is not available yet." : "运行验证摘要尚未就绪。"}</p>}
+            </details>
             {message && <p role="status" className="mt-4 rounded-lg bg-clinic-paper px-3 py-2 text-sm text-clinic-muted">{message}</p>}
           </section>
           </div>

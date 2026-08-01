@@ -1359,12 +1359,14 @@ test("@ui-defect-regression P001 Chinese seven-stage contract keeps public label
   await page.getByRole("button", { name: "发送", exact: true }).click();
   await page.getByRole("textbox", { name: "病史小结" }).fill("已完成重点病史采集。小便颜色发红，已询问相关危险因素。");
   await submitFirstStage(page, "zh");
+  await expect(page.locator("body")).not.toContainText(/360分|\b360\b/);
   await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
   await page.getByRole("button", { name: "直肠指检/前列腺", exact: true }).click();
   await page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜").fill("尿常规；血常规");
   await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
   await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
   await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(/360分|\b360\b/);
   await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
 
   const smokingEvidence = page.getByText("问诊：吸烟史——已采集", { exact: true }).first();
@@ -1376,16 +1378,19 @@ test("@ui-defect-regression P001 Chinese seven-stage contract keeps public label
   await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
   await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "提交本阶段", exact: true })).toHaveCount(0);
+  await expect(page.locator("body")).not.toContainText(/360分|\b360\b/);
   expect(observations.find((item) => item.action === "stage-feedback" && item.stageKey === "diagnosis")?.submittedEvidenceIds).toHaveLength(2);
   expect(observations.find((item) => item.action === "stage-feedback" && item.stageKey === "diagnosis")?.submittedEvidenceIds.every((id) => /^EV-/.test(id))).toBe(true);
   await page.reload();
   await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(/360分|\b360\b/);
   await expect(page.getByText("训练会话尚未就绪", { exact: true })).toHaveCount(0);
   await expect(page.locator("main").getByRole("alert")).toHaveCount(0);
   await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
   await page.getByLabel("暂不需要会诊").check();
   await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
   await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(/360分|\b360\b/);
   await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
 
   await page.setViewportSize({ width: 390, height: 844 });
@@ -1407,15 +1412,18 @@ test("@ui-defect-regression P001 Chinese seven-stage contract keeps public label
   await expectStudentCopyPublic(page);
   await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
   await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(/360分|\b360\b/);
   await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
   await page.getByRole("checkbox").first().check();
   await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
   await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(/360分|\b360\b/);
   await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
   await page.setViewportSize({ width: 1366, height: 768 });
   await page.getByRole("textbox", { name: "学习反思" }).fill("本次训练需要继续改进问诊顺序、证据整合和医嘱表达。");
   await page.getByTestId("complete-training").click();
   await expect(page.getByTestId("final-report")).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(/360分|\b360\b/);
   await expectStudentCopyPublic(page);
   await expect(page.getByTestId("training-complete-state")).toContainText("已完成");
   await expect(page.getByText("训练会话尚未就绪", { exact: true })).toHaveCount(0);
@@ -1423,6 +1431,7 @@ test("@ui-defect-regression P001 Chinese seven-stage contract keeps public label
   await page.reload();
   await expect(page.getByTestId("final-report")).toBeVisible();
   await expect(page.getByTestId("training-complete-state")).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(/360分|\b360\b/);
   await expectStudentCopyPublic(page);
   const axe = await new AxeBuilder({ page }).analyze();
   expect(axe.violations.filter((item) => item.impact === "critical" || item.impact === "serious")).toEqual([]);
@@ -1454,9 +1463,11 @@ test("@ui-defect-regression P001 English stages 1-3 use natural evidence labels"
   await page.getByRole("button", { name: "Send", exact: true }).click();
   await page.getByRole("textbox", { name: "History summary" }).fill("Focused history completed.");
   await submitFirstStage(page, "en");
+  await expect(page.locator("body")).not.toContainText(/\b360\b/);
   await page.getByRole("button", { name: "Next stage", exact: true }).click();
   await page.getByRole("button", { name: "Submit stage", exact: true }).click();
   await expect(page.getByRole("button", { name: "Next stage", exact: true })).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(/\b360\b/);
   await page.getByRole("button", { name: "Next stage", exact: true }).click();
 
   await expect(page.getByText("History: Smoking history — obtained", { exact: true }).first()).toBeVisible();
@@ -1465,6 +1476,7 @@ test("@ui-defect-regression P001 English stages 1-3 use natural evidence labels"
   await fillDiagnosisBuilder(page, "en");
   await page.getByRole("button", { name: "Submit stage", exact: true }).click();
   await expect(page.getByRole("button", { name: "Next stage", exact: true })).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(/\b360\b/);
   const diagnosisSubmission = observations.find((item) => item.action === "stage-feedback" && item.stageKey === "diagnosis");
   expect(diagnosisSubmission?.submittedEvidenceIds).toHaveLength(2);
   expect(diagnosisSubmission?.submittedEvidenceIds.every((id) => /^EV-/.test(id))).toBe(true);

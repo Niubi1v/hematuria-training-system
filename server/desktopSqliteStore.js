@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { DatabaseSync } = require("node:sqlite");
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 const MAX_IDEMPOTENCY_RECORDS = 64;
 const ATTEMPT_TTL_MILLISECONDS = 24 * 60 * 60 * 1000;
 
@@ -56,9 +56,7 @@ function migrate(database) {
     const version = readSchemaVersion(database);
     if (version > SCHEMA_VERSION) throw new Error("desktop_database_schema_too_new");
     if (version === SCHEMA_VERSION) return;
-    if (version !== 0) throw new Error("desktop_database_schema_unsupported");
-
-    database.exec(`
+    if (version === 0) database.exec(`
       CREATE TABLE attempts (
         attempt_key TEXT PRIMARY KEY,
         case_id TEXT NOT NULL,
@@ -126,6 +124,15 @@ function migrate(database) {
         created_at INTEGER NOT NULL
       ) STRICT;
     `);
+    if (version === 0 || version === 1) database.exec(`
+      CREATE TABLE desktop_attempt_snapshots (
+        attempt_key TEXT PRIMARY KEY,
+        snapshot_json TEXT NOT NULL,
+        updated_at INTEGER NOT NULL,
+        FOREIGN KEY (attempt_key) REFERENCES attempts(attempt_key) ON DELETE CASCADE
+      ) STRICT;
+    `);
+    if (version !== 0 && version !== 1) throw new Error("desktop_database_schema_unsupported");
     database.prepare(`
       INSERT INTO schema_meta(key, value) VALUES ('schema_version', ?)
       ON CONFLICT(key) DO UPDATE SET value = excluded.value
@@ -158,8 +165,110 @@ function openStore() {
 
 function closeDesktopSqliteStore() {
   if (!activeStore) return;
+  activeStore.database.exec("PRAGMA wal_checkpoint(TRUNCATE)");
   activeStore.database.close();
   activeStore = null;
+}
+
+function parseAttemptState(row) {
+  if (!row) return null;
+  try {
+    const state = JSON.parse(row.state_json);
+    return state && typeof state === "object" && !Array.isArray(state) ? state : null;
+  } catch {
+    return null;
+  }
+}
+
+function discoverAttempt({ caseId, mode, language }) {
+  const expectedCaseId = String(caseId || "");
+  const expectedMode = String(mode || "");
+  const expectedLanguage = String(language || "");
+  if (!expectedCaseId || !expectedMode || !expectedLanguage) throw new Error("desktop_attempt_identity_required");
+  const { database } = openStore();
+  const rows = database.prepare(`
+    SELECT a.attempt_key, a.state_json, a.created_at, a.updated_at, a.expires_at,
+           s.snapshot_json
+    FROM attempts a
+    LEFT JOIN desktop_attempt_snapshots s ON s.attempt_key = a.attempt_key
+    WHERE a.case_id = ? AND a.expires_at > ?
+    ORDER BY a.updated_at DESC, a.created_at DESC
+  `).all(expectedCaseId, Date.now());
+  for (const row of rows) {
+    const state = parseAttemptState(row);
+    if (!state || state.mode !== expectedMode || state.language !== expectedLanguage) continue;
+    if (!["active", "completed"].includes(String(state.status || ""))) continue;
+    let snapshot = null;
+    try {
+      snapshot = row.snapshot_json ? JSON.parse(row.snapshot_json) : null;
+    } catch {
+      snapshot = null;
+    }
+    return {
+      kind: "active",
+      attemptKey: row.attempt_key,
+      state: clone(state),
+      snapshot: snapshot && typeof snapshot === "object" && !Array.isArray(snapshot) ? clone(snapshot) : null,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    };
+  }
+  return { kind: "missing" };
+}
+
+function saveAttemptSnapshot({ attemptKey, caseId, attemptId, mode, language, snapshot }) {
+  const serialized = JSON.stringify(snapshot);
+  if (!serialized || Buffer.byteLength(serialized, "utf8") > 1_500_000) {
+    throw new Error("desktop_attempt_snapshot_invalid");
+  }
+  const { database } = openStore();
+  return transaction(database, () => {
+    const row = database.prepare("SELECT case_id, attempt_id, state_json, expires_at FROM attempts WHERE attempt_key = ?").get(String(attemptKey || ""));
+    const state = parseAttemptState(row);
+    if (!row || !state || row.expires_at <= Date.now()) return { kind: "missing" };
+    if (
+      row.case_id !== String(caseId)
+      || row.attempt_id !== String(attemptId)
+      || state.mode !== String(mode)
+      || state.language !== String(language)
+      || snapshot?.attempt?.attemptId !== String(attemptId)
+      || snapshot?.attempt?.caseId !== String(caseId)
+    ) return { kind: "identity_mismatch" };
+    database.prepare(`
+      INSERT INTO desktop_attempt_snapshots(attempt_key, snapshot_json, updated_at)
+      VALUES (?, ?, ?)
+      ON CONFLICT(attempt_key) DO UPDATE SET
+        snapshot_json = excluded.snapshot_json,
+        updated_at = excluded.updated_at
+    `).run(attemptKey, serialized, Date.now());
+    return { kind: "saved" };
+  });
+}
+
+function attemptRequestPayloads(attemptKey) {
+  const { database } = openStore();
+  return database.prepare(`
+    SELECT payload_json FROM attempt_requests
+    WHERE attempt_key = ? ORDER BY created_at, request_id
+  `).all(String(attemptKey || "")).flatMap((row) => {
+    try { return [JSON.parse(row.payload_json)]; } catch { return []; }
+  });
+}
+
+function catalogProgress() {
+  const { database } = openStore();
+  const progress = {};
+  const rows = database.prepare(`
+    SELECT case_id, state_json FROM attempts
+    WHERE expires_at > ? ORDER BY updated_at DESC
+  `).all(Date.now());
+  for (const row of rows) {
+    const state = parseAttemptState(row);
+    if (!state || !["active", "completed"].includes(String(state.status || ""))) continue;
+    const next = state.status === "completed" ? "completed" : "in-progress";
+    if (progress[row.case_id] !== "completed") progress[row.case_id] = next;
+  }
+  return progress;
 }
 
 function deleteExpiredAttempt(database, attemptKey, now) {
@@ -550,7 +659,9 @@ function getDesktopSchemaVersion() {
 module.exports = {
   SCHEMA_VERSION,
   closeDesktopSqliteStore,
+  catalogProgress,
   commitAttempt,
+  discoverAttempt,
   desktopDatabasePath,
   getDesktopSchemaVersion,
   getDesktopSessionMetadata,
@@ -558,8 +669,10 @@ module.exports = {
   getOrCreateDesktopSecret,
   getTrainingRecordSnapshot,
   loadAttempt,
+  attemptRequestPayloads,
   registerAttempt,
   resumeAttempt,
+  saveAttemptSnapshot,
   saveTrainingRecordSnapshot,
   setDesktopSetting,
   upsertDesktopSessionMetadata,

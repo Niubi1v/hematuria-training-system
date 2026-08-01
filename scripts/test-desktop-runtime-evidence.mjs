@@ -5,9 +5,24 @@ const require = createRequire(import.meta.url);
 const {
   desktopEvidenceSnapshot,
   desktopPatientEvidence,
+  desktopRuntimeSummary,
   resetDesktopPatientEvidenceForTests,
   runtimeSnapshot
 } = require("../server/desktopRuntimeEvidence.js");
+
+function runtime(overrides = {}) {
+  return {
+    sessionStartedAt: "2026-08-01T12:00:00.000Z",
+    runtimeTarget: "desktop",
+    model: "Qwen3-1.7B",
+    modelProfile: "lightweight",
+    productHead: "a".repeat(40),
+    llamaServerReady: true,
+    localModelReady: true,
+    cloudRequestCount: 0,
+    ...overrides
+  };
+}
 
 function patient({
   classificationSource = "local_ai",
@@ -45,13 +60,12 @@ try {
   assert.equal(runtimeSnapshot(), null);
   assert.equal(desktopPatientEvidence(patient()), null);
 
-  globalThis.__hematuriaDesktopRuntimeEvidence = () => ({
-    llamaServerReady: true,
-    localModelReady: true,
-    model: "Qwen3-1.7B",
-    cloudRequestCount: 0
-  });
+  globalThis.__hematuriaDesktopRuntimeEvidence = () => runtime();
   assert.deepEqual(desktopEvidenceSnapshot(), {
+    sessionStartedAt: "2026-08-01T12:00:00.000Z",
+    runtimeTarget: "desktop",
+    modelProfile: "lightweight",
+    productHead: "a".repeat(40),
     llamaServerReady: true,
     localModelReady: true,
     model: "Qwen3-1.7B",
@@ -66,6 +80,10 @@ try {
     responseErrors: []
   });
   assert.deepEqual(desktopPatientEvidence(patient()), {
+    sessionStartedAt: "2026-08-01T12:00:00.000Z",
+    runtimeTarget: "desktop",
+    modelProfile: "lightweight",
+    productHead: "a".repeat(40),
     llamaServerReady: true,
     localModelReady: true,
     model: "Qwen3-1.7B",
@@ -90,12 +108,7 @@ try {
     "rule_fallback"
   );
 
-  globalThis.__hematuriaDesktopRuntimeEvidence = () => ({
-    llamaServerReady: false,
-    localModelReady: false,
-    model: "Qwen3-4B",
-    cloudRequestCount: 0
-  });
+  globalThis.__hematuriaDesktopRuntimeEvidence = () => runtime({ llamaServerReady: false, localModelReady: false, model: "Qwen3-4B" });
   const unavailable = desktopPatientEvidence(patient());
   assert.equal(unavailable.answerSource, "rule_fallback");
   assert.equal(unavailable.llamaServerReady, false);
@@ -111,20 +124,33 @@ try {
   assert.equal(unknown.unknown, "fact_missing");
   assert.equal(unknown.fallbackReason, "semantic_low_confidence");
 
-  globalThis.__hematuriaDesktopRuntimeEvidence = () => ({
+  resetDesktopPatientEvidenceForTests();
+  globalThis.__hematuriaDesktopRuntimeEvidence = () => runtime();
+  desktopPatientEvidence(patient());
+  desktopPatientEvidence(patient());
+  desktopPatientEvidence(patient());
+  desktopPatientEvidence(patient({ classifierStatus: "rejected" }));
+  const aggregate = desktopRuntimeSummary();
+  assert.deepEqual(aggregate, {
+    schemaVersion: 1,
+    sessionStartedAt: "2026-08-01T12:00:00.000Z",
+    runtimeTarget: "desktop",
+    model: "Qwen3-1.7B",
+    modelProfile: "lightweight",
+    productHead: "a".repeat(40),
     llamaServerReady: true,
     localModelReady: true,
-    model: "Qwen3-1.7B",
-    cloudRequestCount: -1
+    localAiAcceptedCount: 3,
+    ruleFallbackCount: 1,
+    cloudRequestCount: 0,
+    generatedAt: aggregate.generatedAt
   });
+  assert.doesNotMatch(JSON.stringify(aggregate), /question|answer|prompt|reply|caseId|token|secret|reasoning|patient|intent/i);
+
+  globalThis.__hematuriaDesktopRuntimeEvidence = () => runtime({ cloudRequestCount: -1 });
   assert.equal(runtimeSnapshot(), null);
 
-  globalThis.__hematuriaDesktopRuntimeEvidence = () => ({
-    llamaServerReady: true,
-    localModelReady: true,
-    model: "attacker-controlled-model",
-    cloudRequestCount: 0
-  });
+  globalThis.__hematuriaDesktopRuntimeEvidence = () => runtime({ model: "attacker-controlled-model" });
   assert.equal(runtimeSnapshot(), null);
 
   process.stdout.write("desktop runtime evidence tests passed\n");

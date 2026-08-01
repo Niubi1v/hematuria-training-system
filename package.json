@@ -27,6 +27,7 @@
     "test:desktop:clinical-triage": "node scripts/verify-desktop-clinical-triage.mjs && node scripts/test-desktop-clinical-triage.mjs",
     "desktop:clinical-review-pack": "node scripts/build-desktop-clinical-review-pack.mjs",
     "test:desktop:runtime-evidence": "node scripts/test-desktop-runtime-evidence.mjs",
+    "test:desktop:student-score-projection": "tsx scripts/test-student-score-projection.ts",
     "test:desktop:public-boundary": "node scripts/test-desktop-public-boundary.mjs",
     "test:desktop:acceptance": "node scripts/desktop-acceptance-test.mjs",
     "test:desktop:offline-ai": "node scripts/desktop-acceptance-test.mjs --real-local-ai",

@@ -40,6 +40,7 @@ const networkAudit = {
   loopbackRequestCount: 0,
   cloudRequestCount: 0
 };
+const runtimeSessionStartedAt = new Date().toISOString();
 
 function fatalConfiguration(message) {
   process.stderr.write(`${JSON.stringify({ event: "desktop_sidecar_configuration_error", code: message })}\n`);
@@ -502,10 +503,6 @@ function desktopSettingsSnapshot(store) {
   };
 }
 
-function desktopDebugRuntime() {
-  return process.env.HEMATURIA_DESKTOP_DEBUG_RUNTIME === "1";
-}
-
 function desktopAttemptKey(caseId, attemptId) {
   const scope = `${String(caseId).toLowerCase()}:${String(attemptId)}`;
   const digest = crypto.createHash("sha256").update(scope).digest("hex");
@@ -519,9 +516,13 @@ function installDesktopRuntimeEvidence(store) {
       && Boolean(llamaChild)
       && llamaChild.exitCode === null;
     return {
+      sessionStartedAt: runtimeSessionStartedAt,
+      runtimeTarget: "desktop",
       llamaServerReady,
       localModelReady: llamaServerReady && isRegularFile(modelFilePath),
       model: modelAlias,
+      modelProfile: selectedModelMode(store),
+      productHead: process.env.NEXT_PUBLIC_GIT_SHA || "desktop-local",
       cloudRequestCount: networkAudit.cloudRequestCount
     };
   };
@@ -572,11 +573,115 @@ function desktopSettingsHandler(store) {
 
 function desktopEvidenceHandler(evidence) {
   return async (req, res) => {
-    if (!desktopDebugRuntime()) return res.status(404).json({ error: "not_found" });
     if (req.method !== "GET") return res.status(405).json({ error: "method_not_allowed" });
-    const snapshot = evidence.desktopEvidenceSnapshot();
+    const snapshot = evidence.desktopRuntimeSummary();
     if (!snapshot) return res.status(503).json({ error: "desktop_evidence_unavailable" });
     return res.status(200).json(snapshot);
+  };
+}
+
+function desktopCloudProbeHandler(evidence) {
+  return async (req, res) => {
+    if (process.env.HEMATURIA_DESKTOP_TEST_MODE !== "1") return res.status(404).json({ error: "not_found" });
+    if (req.method !== "POST") return res.status(405).json({ error: "method_not_allowed" });
+    try { await fetch("https://desktop-cloud-probe.invalid/"); } catch { /* Expected policy block. */ }
+    return res.status(200).json(evidence.desktopRuntimeSummary());
+  };
+}
+
+const STAGE_BY_KEY = Object.freeze({
+  history: 1,
+  orders: 2,
+  diagnosis: 3,
+  consult: 4,
+  treatment: 5,
+  perioperative: 6,
+  debrief: 7
+});
+
+function legacyAttemptSnapshot(discovered) {
+  const state = discovered.state;
+  const clientMode = state.mode === "formal-attempt" ? "osce" : state.mode === "rct" ? "rct" : "free";
+  const attempt = {
+    attemptId: state.attemptId,
+    caseId: state.caseId,
+    mode: clientMode,
+    language: state.language,
+    participantId: "practice-user",
+    schemaVersion: "attempt-v3",
+    createdAt: new Date(discovered.createdAt).toISOString()
+  };
+  const payloads = sqliteStore.attemptRequestPayloads(discovered.attemptKey);
+  const submitted = {};
+  let finalReport = null;
+  let evidenceOptions = [];
+  for (const payload of payloads) {
+    const stage = STAGE_BY_KEY[payload?.stageKey];
+    if (stage) submitted[stage] = payload;
+    if (Array.isArray(payload?.items) && payload?.max === 360) finalReport = payload;
+    if (Array.isArray(payload?.evidenceOptions)) evidenceOptions = payload.evidenceOptions;
+  }
+  return {
+    attempt,
+    activeStageNo: Math.max(1, Math.min(7, Number(state.currentStage) || 1)),
+    submitted,
+    finalReport,
+    serverEvidenceOptions: evidenceOptions
+  };
+}
+
+function desktopAttemptStateHandler(store, trainingState) {
+  const validModes = new Set(["free", "osce", "rct"]);
+  return async (req, res) => {
+    if (req.method !== "POST") return res.status(405).json({ error: "method_not_allowed" });
+    const body = req.body;
+    if (!body || typeof body !== "object" || Array.isArray(body) || !["load", "save"].includes(body.action)) {
+      return res.status(400).json({ error: "desktop_attempt_state_payload_invalid" });
+    }
+    if (
+      typeof body.caseId !== "string" || !/^[A-Za-z0-9_-]{1,64}$/.test(body.caseId)
+      || typeof body.mode !== "string" || !validModes.has(body.mode)
+      || !["zh", "en"].includes(body.language)
+    ) return res.status(400).json({ error: "desktop_attempt_state_payload_invalid" });
+    const mode = trainingState.normalizeAttemptMode(body.mode);
+    if (body.action === "load") {
+      if (Object.keys(body).sort().join(",") !== "action,caseId,language,mode") {
+        return res.status(400).json({ error: "desktop_attempt_state_payload_invalid" });
+      }
+      const discovered = store.discoverAttempt({ caseId: body.caseId, mode, language: body.language });
+      if (discovered.kind === "missing") return res.status(404).json({ error: "attempt_not_found" });
+      const token = trainingState.signAttemptState(discovered.state);
+      return res.status(200).json({
+        attemptId: discovered.state.attemptId,
+        currentStage: Number(discovered.state.currentStage),
+        status: discovered.state.status,
+        stateToken: token,
+        snapshot: discovered.snapshot || legacyAttemptSnapshot(discovered)
+      });
+    }
+    if (
+      Object.keys(body).sort().join(",") !== "action,attemptId,caseId,language,mode,snapshot"
+      || typeof body.attemptId !== "string" || !/^[A-Za-z0-9:_-]{1,200}$/.test(body.attemptId)
+      || !body.snapshot || typeof body.snapshot !== "object" || Array.isArray(body.snapshot)
+    ) return res.status(400).json({ error: "desktop_attempt_state_payload_invalid" });
+    const result = store.saveAttemptSnapshot({
+      attemptKey: desktopAttemptKey(body.caseId, body.attemptId),
+      caseId: body.caseId,
+      attemptId: body.attemptId,
+      mode,
+      language: body.language,
+      snapshot: body.snapshot
+    });
+    if (result.kind === "missing") return res.status(404).json({ error: "attempt_not_found" });
+    if (result.kind !== "saved") return res.status(409).json({ error: "attempt_identity_mismatch" });
+    return res.status(200).json({ saved: true });
+  };
+}
+
+function desktopProgressHandler(store) {
+  return async (req, res) => {
+    if (req.method !== "GET") return res.status(405).json({ error: "method_not_allowed" });
+    return res.status(200).json({ progress: store.catalogProgress() });
   };
 }
 
@@ -669,8 +774,11 @@ async function loadHandlers(store) {
   handlers.set("/api/desktop/settings", desktopSettingsHandler(store));
   const evidence = require(path.join(appRoot, "server", "desktopRuntimeEvidence.js"));
   handlers.set("/api/desktop/evidence", desktopEvidenceHandler(evidence));
+  handlers.set("/api/desktop/evidence/cloud-probe", desktopCloudProbeHandler(evidence));
   const trainingState = require(path.join(appRoot, "server", "trainingState.js"));
   handlers.set("/api/desktop/attempt/resume", desktopAttemptResumeHandler(store, trainingState));
+  handlers.set("/api/desktop/attempt/state", desktopAttemptStateHandler(store, trainingState));
+  handlers.set("/api/desktop/progress", desktopProgressHandler(store));
   return handlers;
 }
 
@@ -862,13 +970,13 @@ async function shutdown(exitCode = 0) {
     await new Promise((resolve) => apiServer.close(resolve));
     apiServer = null;
   }
-  if (llamaChild) {
-    await stopLocalAi();
-  }
   try {
     sqliteStore?.closeDesktopSqliteStore();
   } catch {
     // Shutdown is best-effort; no request or secret data is logged.
+  }
+  if (llamaChild) {
+    await stopLocalAi();
   }
   safeLog("desktop_sidecar_stopped", { status: exitCode === 0 ? "ok" : "error" });
   process.exit(exitCode);

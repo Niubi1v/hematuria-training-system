@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { publicCaseHref } from "@/src/lib/publicRoutes";
-import { loadCatalogProgress } from "@/src/lib/catalogProgress";
+import { loadAuthoritativeCatalogProgress } from "@/src/lib/catalogProgress";
 import { publicApiConfig } from "@/src/lib/apiConfig";
 import { readStringStorage } from "@/src/lib/safeStorage";
 
@@ -43,8 +43,7 @@ export default function HomeWorkspaceClient({ cases }: { cases: BlindCaseSummary
 
   useEffect(() => {
     if (readStringStorage("hematuria-language").value === "en") setLang("en");
-    const loaded = loadCatalogProgress(publicApiConfig.baseUrl, window.location.origin);
-    setProgress(loaded.progress);
+    void loadAuthoritativeCatalogProgress(publicApiConfig.baseUrl, window.location.origin).then((loaded) => setProgress(loaded.progress));
     const listener = (event: Event) => setLang((event as CustomEvent<LanguageCode>).detail);
     window.addEventListener("hematuria-language-change", listener);
     return () => window.removeEventListener("hematuria-language-change", listener);

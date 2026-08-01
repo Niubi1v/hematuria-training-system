@@ -7,6 +7,8 @@ import {
   type StoredAttemptState
 } from "./attemptState";
 import { listStorageKeys, readJsonStorage, readStringStorage } from "./safeStorage";
+import { requestJson } from "./apiClient";
+import { desktopRuntimeConfig } from "./apiConfig";
 
 export const ATTEMPT_SUMMARY_KEY = "hematuria-practice-attempt-summaries-v2";
 
@@ -134,4 +136,20 @@ export function loadCatalogProgress(apiBaseUrl: string, pageOrigin: string) {
   }
 
   return { progress, storageAvailable: true };
+}
+
+export async function loadAuthoritativeCatalogProgress(apiBaseUrl: string, pageOrigin: string) {
+  const runtime = desktopRuntimeConfig();
+  if (!runtime) return loadCatalogProgress(apiBaseUrl, pageOrigin);
+  try {
+    const result = await requestJson<{ progress: CatalogProgress }>(`${runtime.apiBaseUrl}/api/desktop/progress`, undefined, {
+      method: "GET",
+      timeoutMs: 5000,
+      retries: 0,
+      endpointName: "desktop-progress"
+    });
+    return { progress: result.progress || {}, storageAvailable: true };
+  } catch {
+    return loadCatalogProgress(apiBaseUrl, pageOrigin);
+  }
 }

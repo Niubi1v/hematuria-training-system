@@ -57,6 +57,7 @@ import { canonicalSlotDefinitions } from "@/src/lib/canonicalSlots";
 import { isConnectionFailureFallback, isSafetyFallback, mergeRecoveredCoverage, recordConnectionTransition, validCachedSession, type AiConnectionStatus, type CachedPatientSession, type ConnectionTransition } from "@/src/lib/aiRecovery";
 import { initializeStorageVersion, readJsonStorage, removeBrowserStorageEntries, writeJsonStorage } from "@/src/lib/safeStorage";
 import { attemptPointerKey, attemptStorageKey, createAttempt, isAttemptCompatible, isStoredAttemptStateCompatible, legacyTrainingStateStorageKey, trainingStateStorageKey, type AttemptIdentity, type AttemptMode, type StoredAttemptState } from "@/src/lib/attemptState";
+import { projectStudentScoreText } from "@/src/lib/studentScoreProjection";
 import {
   AZURE_VOICE_BY_PROFILE,
   cleanSpeechText,
@@ -257,6 +258,24 @@ type PendingHistoryLog = {
   requestId: string;
   attempts: number;
 };
+
+type PersistedAttemptState = {
+  attempt?: AttemptIdentity;
+  activeStageNo?: AgentStageNo;
+  answers?: FullProcessAnswers;
+  submitted?: Partial<Record<AgentStageNo, StageEvaluation>>;
+  finalReport?: Evaluator360Report | null;
+  messages?: ChatMessage[];
+  askedSlots?: string[];
+  collected?: CollectedMap;
+  examLogs?: ExamResultLog[];
+  orderLogs?: OrderResultLog[];
+  mdtOpinions?: MdtOpinion[];
+  timeline?: TimelineEvent[];
+  serverEvidenceOptions?: StudentEvidenceOption[];
+  pendingHistoryLogs?: PendingHistoryLog[];
+  osceTimeLeft?: number;
+} & StoredAttemptState;
 
 type SpeechRecognitionResultLike = { transcript: string };
 type SpeechRecognitionEventLike = { results: ArrayLike<ArrayLike<SpeechRecognitionResultLike>> };
@@ -688,9 +707,7 @@ function percentageScore(rawScore: number) {
 }
 
 function studentScoreText(value: unknown, lang: LanguageCode) {
-  return studentFacingClinicalText(value, lang)
-    .replace(/(?:原始|最终)?\s*360\s*分(?:制)?/g, lang === "en" ? "percentage result" : "最终百分制结果")
-    .replace(/(?:raw|final)?\s*360[- ]point(?:\s+(?:scale|score))?/gi, lang === "en" ? "percentage result" : "最终百分制结果");
+  return projectStudentScoreText(studentFacingClinicalText(value, lang), lang);
 }
 
 const internalFieldNames = ["answerSource", "intent", "factState", "requestedSlot", "provider", "provenance"];
@@ -786,12 +803,12 @@ function studentFacingClinicalText(value: unknown, lang: LanguageCode, fallback 
     text = text.replace(new RegExp(`\\b${field}\\b`, "gi"), "");
   }
   text = text.replace(/\b[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)+\b/g, lang === "en" ? "status recorded" : "状态已记录");
-  return text
+  return projectStudentScoreText(text
     .replace(/[（(]\s*[）)]/g, "")
     .replace(/\s*[:：]\s*[—–-]\s*/g, lang === "en" ? ": " : "：")
     .replace(/\s{2,}/g, " ")
     .replace(/(?:[；;,，]\s*){2,}/g, lang === "en" ? "; " : "；")
-    .trim() || fallback;
+    .trim() || fallback, lang);
 }
 
 function studentEvidenceLabel(value: unknown, lang: LanguageCode) {
@@ -1192,6 +1209,41 @@ async function requestDesktopAttemptResume(body: { attemptId: string; caseId: st
   return { payload, stateToken };
 }
 
+async function loadDesktopAttemptState(body: { caseId: string; mode: AttemptMode; language: LanguageCode }) {
+  const runtime = desktopRuntimeConfig();
+  if (!runtime) throw new ApiRequestError("request", 400, "desktop_runtime_missing");
+  return requestJson<{
+    attemptId: string;
+    currentStage: number;
+    status: string;
+    stateToken: string;
+    snapshot: PersistedAttemptState;
+  }>(`${runtime.apiBaseUrl}/api/desktop/attempt/state`, { action: "load", ...body }, {
+    method: "POST",
+    timeoutMs: 10_000,
+    retries: 0,
+    endpointName: "desktop-attempt-state-load"
+  });
+}
+
+async function saveDesktopAttemptState(attempt: AttemptIdentity, snapshot: PersistedAttemptState) {
+  const runtime = desktopRuntimeConfig();
+  if (!runtime) return;
+  await requestJson<{ saved: true }>(`${runtime.apiBaseUrl}/api/desktop/attempt/state`, {
+    action: "save",
+    attemptId: attempt.attemptId,
+    caseId: attempt.caseId,
+    mode: attempt.mode,
+    language: attempt.language,
+    snapshot
+  }, {
+    method: "POST",
+    timeoutMs: 10_000,
+    retries: 0,
+    endpointName: "desktop-attempt-state-save"
+  });
+}
+
 function EvidenceChecklist({ options, selected, onChange, lang, ariaLabel }: {
   options: EvidenceOption[];
   selected: string[];
@@ -1388,6 +1440,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const stageProgressRef = useRef({ activeStageNo, hasSubmittedStages: Object.keys(submitted).length > 0 });
   stageProgressRef.current = { activeStageNo, hasSubmittedStages: Object.keys(submitted).length > 0 };
   const trainingActionQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const desktopSnapshotQueueRef = useRef<Promise<void>>(Promise.resolve());
   const sessionInitAbortRef = useRef<AbortController | null>(null);
   const autoSessionInitRef = useRef<{ key: string; promise: Promise<SessionInitResponse>; controller: AbortController } | null>(null);
   const patientReplyAbortRef = useRef<AbortController | null>(null);
@@ -1647,8 +1700,6 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     const targetMode: TrainingMode = practiceDeployment && (requestedMode === "osce" || requestedMode === "rct") ? "free" : requestedMode;
     setRuntimeMode(targetMode);
     const attemptMode: AttemptMode = targetMode === "osce" ? "osce" : targetMode === "rct" ? "rct" : "free";
-    const pointer = attemptPointerKey(initialCaseData.id, attemptMode, targetLang);
-    const savedAttempt = readJsonStorage<unknown>(pointer, null).value;
     const expectedAttempt = {
       caseId: initialCaseData.id,
       mode: attemptMode,
@@ -1656,16 +1707,6 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       participantId: "practice-user",
       schemaVersion: "attempt-v3" as const
     };
-    const activeAttempt = isAttemptCompatible(savedAttempt, expectedAttempt)
-      ? savedAttempt
-      : createAttempt(initialCaseData.id, attemptMode, targetLang);
-    setAttempt(activeAttempt);
-    const pointerWrite = writeJsonStorage(pointer, activeAttempt);
-    if (!pointerWrite.ok) {
-      setStorageWarning(targetLang === "en"
-        ? "Browser storage is unavailable. This attempt will continue in memory."
-        : "浏览器存储不可用，本次训练将以内存模式继续。");
-    }
     setSpeechInputSupported(Boolean(getSpeechRecognition()));
     setSpeechOutputSupported("Audio" in window || "speechSynthesis" in window);
     const savedSpeech = readJsonStorage<{
@@ -1681,66 +1722,62 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     setSpeechPitch(Math.min(1.1, Math.max(0.85, Number(savedSpeech.pitch) || 1)));
     setSpeechProvider(savedSpeech.provider === "disabled" || savedSpeech.provider === "browser" ? savedSpeech.provider : "auto");
     setSpeechPreferencesReady(true);
-
-    type PersistedAttemptState = {
-      attempt?: AttemptIdentity;
-      activeStageNo?: AgentStageNo;
-      answers?: FullProcessAnswers;
-      submitted?: Partial<Record<AgentStageNo, StageEvaluation>>;
-      finalReport?: Evaluator360Report | null;
-      messages?: ChatMessage[];
-      askedSlots?: string[];
-      collected?: CollectedMap;
-      examLogs?: ExamResultLog[];
-      orderLogs?: OrderResultLog[];
-      mdtOpinions?: MdtOpinion[];
-      timeline?: TimelineEvent[];
-      serverEvidenceOptions?: StudentEvidenceOption[];
-      pendingHistoryLogs?: PendingHistoryLog[];
-      osceTimeLeft?: number;
-    } & StoredAttemptState;
-    const savedResult = readJsonStorage<PersistedAttemptState | null>(attemptStorageKey(activeAttempt), null);
-    const saved: PersistedAttemptState = isStoredAttemptStateCompatible(savedResult.value, activeAttempt) ? savedResult.value : {};
-    if (savedResult.value && !isStoredAttemptStateCompatible(savedResult.value, activeAttempt)) {
-      setStorageWarning(targetLang === "en"
-        ? "An incompatible saved attempt was ignored and a safe session was started."
-        : "已忽略身份不一致的训练记录，并安全创建新会话。");
-    }
-    if (savedResult.recovered) setStorageWarning("检测到损坏的训练缓存，已安全恢复为空白会话。");
-    if (Number.isInteger(saved.activeStageNo) && Number(saved.activeStageNo) >= 1 && Number(saved.activeStageNo) <= 7) setActiveStageNo(saved.activeStageNo as AgentStageNo);
-    if (saved.answers) setAnswers(sanitizeAnswers(saved.answers));
-    if (saved.submitted) setSubmitted(saved.submitted);
-    if (saved.finalReport) setFinalReport(saved.finalReport);
-    if (saved.messages) {
-      // Preserve the dialogue and training progress while replacing legacy
-      // pre-desktop opening text that could disclose the chief complaint.
-      setMessages(saved.messages.map((message, index) => (
-        index === 0 && message.role === "patient"
-          ? { ...message, text: patientOpening(targetLang) }
-          : message
-      )));
-    }
-    if (saved.askedSlots) setAskedSlots(saved.askedSlots);
-    if (saved.collected) setCollected(saved.collected);
-    if (saved.examLogs) setExamLogs(saved.examLogs);
-    if (saved.orderLogs) {
-      setOrderLogs(saved.orderLogs.map((log) => log.pendingResults?.length
-        ? {
-            ...log,
-            results: log.pendingResults,
-            pendingResults: undefined,
-            returnedAt: log.returnedAt || new Date().toISOString(),
-            status: "reported"
+    let cancelled = false;
+    const hydrate = async () => {
+      const pointer = attemptPointerKey(initialCaseData.id, attemptMode, targetLang);
+      const savedAttempt = readJsonStorage<unknown>(pointer, null).value;
+      let activeAttempt = isAttemptCompatible(savedAttempt, expectedAttempt)
+        ? savedAttempt
+        : createAttempt(initialCaseData.id, attemptMode, targetLang);
+      const savedResult = readJsonStorage<PersistedAttemptState | null>(attemptStorageKey(activeAttempt), null);
+      let saved: PersistedAttemptState = isStoredAttemptStateCompatible(savedResult.value, activeAttempt) ? savedResult.value : {};
+      if (isDesktopRuntime) {
+        try {
+          const durable = await loadDesktopAttemptState({ caseId: initialCaseData.id, mode: attemptMode, language: targetLang });
+          const durableAttempt = durable.snapshot?.attempt;
+          if (isAttemptCompatible(durableAttempt, expectedAttempt) && durableAttempt.attemptId === durable.attemptId) {
+            activeAttempt = durableAttempt;
+            saved = isStoredAttemptStateCompatible(durable.snapshot, durableAttempt) ? durable.snapshot : { attempt: durableAttempt };
+            trainingStateTokenRef.current = { attemptId: durableAttempt.attemptId, token: durable.stateToken };
+            try {
+              sessionStorage.setItem(trainingStateStorageKey(durableAttempt.attemptId, publicApiConfig.baseUrl, window.location.origin), durable.stateToken);
+            } catch { /* The durable state remains authoritative. */ }
           }
-        : log));
-    }
-    if (saved.mdtOpinions) setMdtOpinions(saved.mdtOpinions);
-    if (saved.timeline) setTimeline(sanitizeTimeline(saved.timeline, targetLang));
-    if (saved.serverEvidenceOptions) setServerEvidenceOptions(extractStudentEvidenceOptions({ evidenceOptions: saved.serverEvidenceOptions }) || []);
-    if (saved.pendingHistoryLogs) setPendingHistoryLogs(saved.pendingHistoryLogs);
-    if (typeof saved.osceTimeLeft === "number") setOsceTimeLeft(saved.osceTimeLeft);
-    setAttemptReady(true);
-  }, [initialCaseData.id, mode, practiceDeployment]);
+        } catch (error) {
+          const missing = error instanceof ApiRequestError && error.status === 404 && error.code === "attempt_not_found";
+          if (!missing) setStorageWarning(targetLang === "en" ? "Saved training state is temporarily unavailable." : "已保存的训练状态暂时不可用。");
+        }
+      }
+      if (cancelled) return;
+      setAttempt(activeAttempt);
+      const pointerWrite = writeJsonStorage(pointer, activeAttempt);
+      if (!pointerWrite.ok) setStorageWarning(targetLang === "en"
+        ? "Browser cache is unavailable. Durable desktop recovery remains enabled."
+        : "浏览器缓存不可用，桌面持久化恢复仍然有效。");
+      writeJsonStorage(attemptStorageKey(activeAttempt), saved);
+      if (savedResult.value && !isStoredAttemptStateCompatible(savedResult.value, activeAttempt) && !isDesktopRuntime) {
+        setStorageWarning(targetLang === "en" ? "An incompatible saved attempt was ignored and a safe session was started." : "已忽略身份不一致的训练记录，并安全创建新会话。");
+      }
+      if (savedResult.recovered && !isDesktopRuntime) setStorageWarning("检测到损坏的训练缓存，已安全恢复为空白会话。");
+      if (Number.isInteger(saved.activeStageNo) && Number(saved.activeStageNo) >= 1 && Number(saved.activeStageNo) <= 7) setActiveStageNo(saved.activeStageNo as AgentStageNo);
+      if (saved.answers) setAnswers(sanitizeAnswers(saved.answers));
+      if (saved.submitted) setSubmitted(saved.submitted);
+      if (saved.finalReport) setFinalReport(saved.finalReport);
+      if (saved.messages) setMessages(saved.messages.map((message, index) => index === 0 && message.role === "patient" ? { ...message, text: patientOpening(targetLang) } : message));
+      if (saved.askedSlots) setAskedSlots(saved.askedSlots);
+      if (saved.collected) setCollected(saved.collected);
+      if (saved.examLogs) setExamLogs(saved.examLogs);
+      if (saved.orderLogs) setOrderLogs(saved.orderLogs.map((log) => log.pendingResults?.length ? { ...log, results: log.pendingResults, pendingResults: undefined, returnedAt: log.returnedAt || new Date().toISOString(), status: "reported" } : log));
+      if (saved.mdtOpinions) setMdtOpinions(saved.mdtOpinions);
+      if (saved.timeline) setTimeline(sanitizeTimeline(saved.timeline, targetLang));
+      if (saved.serverEvidenceOptions) setServerEvidenceOptions(extractStudentEvidenceOptions({ evidenceOptions: saved.serverEvidenceOptions }) || []);
+      if (saved.pendingHistoryLogs) setPendingHistoryLogs(saved.pendingHistoryLogs);
+      if (typeof saved.osceTimeLeft === "number") setOsceTimeLeft(saved.osceTimeLeft);
+      setAttemptReady(true);
+    };
+    void hydrate();
+    return () => { cancelled = true; };
+  }, [initialCaseData.id, isDesktopRuntime, mode, practiceDeployment]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1911,7 +1948,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   useEffect(() => {
     if (!attemptReady) return;
     setSaveStatus("saving");
-    const result = writeJsonStorage(attemptStorageKey(attempt), {
+    const snapshot: PersistedAttemptState = {
       attempt,
       activeStageNo,
       answers,
@@ -1927,7 +1964,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       serverEvidenceOptions,
       pendingHistoryLogs,
       osceTimeLeft
-    });
+    };
+    const result = writeJsonStorage(attemptStorageKey(attempt), snapshot);
     const pointerResult = result.ok && isAttemptCompatible(attempt, {
       caseId: caseData.id,
       mode: attempt.mode,
@@ -1942,10 +1980,15 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       : { ok: false as const };
     const persisted = result.ok && pointerResult.ok;
     setSaveStatus(persisted ? "saved" : "error");
+    if (isDesktopRuntime) {
+      desktopSnapshotQueueRef.current = desktopSnapshotQueueRef.current
+        .then(() => saveDesktopAttemptState(attempt, snapshot))
+        .catch(() => undefined);
+    }
     if (!persisted) setStorageWarning(lang === "en"
       ? "Autosave is temporarily unavailable. Keep this page open and retry after browser storage recovers."
       : "自动保存暂时不可用，请保持页面打开并在浏览器存储恢复后重试。");
-  }, [activeStageNo, answers, askedSlots, attempt, attemptReady, caseData.id, collected, examLogs, finalReport, lang, mdtOpinions, messages, orderLogs, osceTimeLeft, pendingHistoryLogs, serverEvidenceOptions, submitted, timeline]);
+  }, [activeStageNo, answers, askedSlots, attempt, attemptReady, caseData.id, collected, examLogs, finalReport, isDesktopRuntime, lang, mdtOpinions, messages, orderLogs, osceTimeLeft, pendingHistoryLogs, serverEvidenceOptions, submitted, timeline]);
 
   useEffect(() => {
     if (!isOsce || activeStageNo === 7 || finalReport) return;

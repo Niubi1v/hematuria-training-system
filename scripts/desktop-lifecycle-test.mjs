@@ -131,7 +131,7 @@ async function launch(name, { debugRuntime = true } = {}) {
   assert.equal(ready.protocolVersion, 1);
   assert.equal(ready.handshake, handshake);
   assert.equal(ready.pid, child.pid);
-  assert.equal(ready.databaseSchemaVersion, 1);
+  assert.equal(ready.databaseSchemaVersion, 2);
   assert.equal(ready.localAi.status, "starting");
   assert.match(ready.origin, /^http:\/\/127\.0\.0\.1:\d+$/);
   assert.equal(await fs.stat(path.join(dataDirectory, "hematuria.sqlite3")).then((value) => value.isFile()), true);
@@ -261,20 +261,23 @@ try {
   const debugEvidence = await authorizedFetch(first, "/api/desktop/evidence/");
   assert.equal(debugEvidence.status, 200);
   assert.deepEqual(Object.keys(await debugEvidence.json()).sort(), [
-    "answerSource",
     "cloudRequestCount",
-    "factState",
-    "fallbackReason",
-    "intent",
-    "latency",
+    "generatedAt",
     "llamaServerReady",
     "localModelReady",
+    "localAiAcceptedCount",
     "model",
-    "requestedSlot",
-    "responseErrors",
-    "unknown"
+    "modelProfile",
+    "productHead",
+    "ruleFallbackCount",
+    "runtimeTarget",
+    "schemaVersion",
+    "sessionStartedAt"
   ].sort());
-  assert.equal((await authorizedFetch(second, "/api/desktop/evidence/")).status, 404);
+  assert.equal((await authorizedFetch(second, "/api/desktop/evidence/")).status, 200);
+  const cloudProbe = await authorizedFetch(first, "/api/desktop/evidence/cloud-probe/", { method: "POST" });
+  assert.equal(cloudProbe.status, 200);
+  assert.equal((await cloudProbe.json()).cloudRequestCount, 1);
 
   const resumeAttemptId = "desktop-resume-lifecycle";
   const initRequestId = "desktop-resume-init";
@@ -322,6 +325,33 @@ try {
   assert.equal(resumedPayload.status, "active");
   assert.deepEqual(resumedPayload.evidenceOptions, []);
   assert.equal("token" in resumedPayload, false);
+
+  const discoveredAttempt = await authorizedFetch(first, "/api/desktop/attempt/state/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "load", caseId: "P001", mode: "free", language: "zh" })
+  });
+  assert.equal(discoveredAttempt.status, 200);
+  const discoveredPayload = await discoveredAttempt.json();
+  assert.equal(discoveredPayload.attemptId, resumeAttemptId);
+  assert.equal(discoveredPayload.snapshot.attempt.attemptId, resumeAttemptId);
+  assert.ok(discoveredPayload.stateToken);
+  const savedSnapshot = { ...discoveredPayload.snapshot, activeStageNo: 1, messages: [{ role: "patient", text: "not exported through diagnostics" }] };
+  const snapshotResponse = await authorizedFetch(first, "/api/desktop/attempt/state/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "save", attemptId: resumeAttemptId, caseId: "P001", mode: "free", language: "zh", snapshot: savedSnapshot })
+  });
+  assert.equal(snapshotResponse.status, 200);
+  const reloadedSnapshot = await authorizedFetch(first, "/api/desktop/attempt/state/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "load", caseId: "P001", mode: "free", language: "zh" })
+  });
+  assert.deepEqual((await reloadedSnapshot.json()).snapshot.messages, savedSnapshot.messages);
+  const progressResponse = await authorizedFetch(first, "/api/desktop/progress/");
+  assert.equal(progressResponse.status, 200);
+  assert.equal((await progressResponse.json()).progress.P001, "in-progress");
 
   const wrongResumeIdentity = await authorizedFetch(first, "/api/desktop/attempt/resume/", {
     method: "POST",
