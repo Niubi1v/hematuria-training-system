@@ -4,6 +4,7 @@ import labs from "../data/order_catalog_labs.json";
 import perioperative from "../data/order_catalog_perioperative.json";
 import procedures from "../data/order_catalog_procedures.json";
 import orderResults from "../data/order_results_structured.json";
+import { assessClinicalResult } from "../shared/clinicalResultSemantics.js";
 import { buildStudentOrderCatalog, sourceOrderId } from "../shared/dataAgentPresentation.js";
 import { matchOrderResults } from "../src/lib/multiAgents";
 import type { CaseData } from "../src/lib/types";
@@ -27,9 +28,13 @@ assert(ctuBlocked.results.length === 0 && ctuBlocked.unmetPrerequisites?.include
 
 const ctu = matchOrderResults(p008, "LAB-BL-003；IMG-CT-002");
 const ctuReport = ctu.results.find((item) => item.orderId === "IMG-CT-002");
-assert(Boolean(ctuReport), "P008 CTU should return after prerequisite is ordered");
-assert(/膀胱内多发结石/.test(ctuReport?.result || ""), "P008 CTU must return its independent imaging report");
-assert(!/乳果糖|肠道准备|心肺功能/.test(ctuReport?.result || ""), "P008 CTU contains unrelated treatment content");
+assert(!ctuReport, "P008 CTU must remain isolated because the configured result is a pelvis CT rather than a CTU report");
+const ctuOutcome = ctu.orderOutcomes?.find((item) => item.orderId === "IMG-CT-002");
+assert(ctuOutcome?.status === "medical_review_pending"
+  && ctuOutcome.provenance === "source_result_semantic_mismatch"
+  && ctuOutcome.diagnosticEligible === false
+  && ctuOutcome.scoringEligible === false,
+"P008 mismatched CTU result must remain pending review and excluded from diagnosis and scoring");
 
 const pathology = matchOrderResults(p008, "END-002；LAB-PATH-001");
 const pathologyOutcome = pathology.orderOutcomes?.find((item) => item.orderId === "LAB-PATH-001");
@@ -45,6 +50,7 @@ assert(duplicate.duplicateOrderIds?.includes("LAB-BL-001") && duplicate.results.
 const cases = casesJson as CaseData[];
 const studentCatalog = buildStudentOrderCatalog([...labs, ...imaging, ...procedures, ...perioperative]);
 let finalMappings = 0;
+let semanticallyQuarantinedMappings = 0;
 let unavailableMappings = 0;
 for (const sourceResult of orderResults) {
   const caseData = cases.find((item) => item.id === sourceResult.caseId);
@@ -54,10 +60,25 @@ for (const sourceResult of orderResults) {
   const mapped = matchOrderResults(caseData!, input, { previousOrderIds: sourceResult.prerequisites });
   const outcome = mapped.orderOutcomes?.find((item) => item.orderId === sourceResult.orderId);
   assert(outcome, `${sourceResult.caseId}/${sourceResult.orderId}: canonical or alias must resolve to an outcome`);
-  if (sourceResult.status === "final") {
+  const semanticallyCompatible = sourceResult.status === "final" && Boolean(studentOrder) && assessClinicalResult({
+    domain: studentOrder?.primaryCategory === "检验" ? "laboratory" : "",
+    itemId: sourceResult.orderId,
+    displayName: studentOrder?.displayName || "",
+    result: [sourceResult.value, sourceResult.impression].filter(Boolean).join("\n")
+  }).compatible;
+  if (sourceResult.status === "final" && semanticallyCompatible) {
     assert(mapped.results.some((item) => item.resultId === sourceResult.resultId), `${sourceResult.caseId}/${sourceResult.orderId}: final source report must be released`);
     assert(outcome?.status === "reported" && outcome.provenance === "configured_case_result", `${sourceResult.caseId}/${sourceResult.orderId}: final mapping must preserve source provenance`);
     finalMappings += 1;
+  } else if (sourceResult.status === "final") {
+    assert(mapped.results.every((item) => item.resultId !== sourceResult.resultId), `${sourceResult.caseId}/${sourceResult.orderId}: semantically mismatched source report must remain isolated`);
+    assert(outcome?.status === "medical_review_pending"
+      && outcome.provenance === "source_result_semantic_mismatch"
+      && outcome.reviewStatus === "pending_human_medical_review"
+      && outcome.diagnosticEligible === false
+      && outcome.scoringEligible === false,
+    `${sourceResult.caseId}/${sourceResult.orderId}: semantic mismatch must fail closed`);
+    semanticallyQuarantinedMappings += 1;
   } else if (sourceResult.status === "not_performed") {
     assert(mapped.results.every((item) => item.resultId !== sourceResult.resultId), `${sourceResult.caseId}/${sourceResult.orderId}: unavailable placeholder must not be presented as a report`);
     assert(outcome?.status === "not_provided" && outcome.provenance === "source_not_performed", `${sourceResult.caseId}/${sourceResult.orderId}: not-performed source status must remain explicit`);
@@ -69,4 +90,4 @@ for (const sourceResult of orderResults) {
   }
 }
 
-console.log(`Order mapping audit passed: P008 prerequisites plus 42 cases / ${finalMappings} final reports / ${unavailableMappings} unavailable or not-performed outcomes.`);
+console.log(`Order mapping audit passed: P008 prerequisites plus 42 cases / ${finalMappings} final reports / ${semanticallyQuarantinedMappings} semantic quarantines / ${unavailableMappings} unavailable or not-performed outcomes.`);

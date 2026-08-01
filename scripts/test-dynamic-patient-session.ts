@@ -192,7 +192,7 @@ async function main() {
     assert(liveAnswer.isFallback === false, "a configured successful provider must remain a live answer");
     assert(liveAnswer.provider === "deepseek", `unexpected live provider: ${liveAnswer.provider}`);
     assert(liveAnswer.model === "deepseek-v4-flash", `unexpected live model: ${liveAnswer.model}`);
-    assert(liveAnswer.runtimeTrace?.generationSource === "live_ai", `unexpected generation source: ${liveAnswer.runtimeTrace?.generationSource}`);
+    assert(liveAnswer.runtimeTrace?.generationSource === "deepseek_live_ai", `unexpected generation source: ${liveAnswer.runtimeTrace?.generationSource}`);
     assert(liveAnswer.runtimeTrace?.providerConfigured === true, "live trace must mark the provider configured");
     assert(liveAnswer.runtimeTrace?.providerHttpSuccess === true, "live trace must mark the provider request successful");
     assert(liveAnswer.runtimeTrace?.thinkingExecuted === false, "Flash must not execute thinking by default");
@@ -221,7 +221,7 @@ async function main() {
     });
     assert(correctionCalls === 2, "a safe but fact-incomplete paraphrase should receive exactly one bounded correction");
     assert(correctedAnswer.isFallback === false, "a corrected governed answer should remain live");
-    assert(correctedAnswer.runtimeTrace?.generationSource === "live_ai", "a corrected governed answer should remain live_ai");
+    assert(correctedAnswer.runtimeTrace?.generationSource === "deepseek_live_ai", "a corrected governed DeepSeek answer should remain deepseek_live_ai");
     assert(/menstruation/i.test(correctedAnswer.replyText), "the correction must restore the omitted governed fact");
     assert(/\b1 day\b/i.test(correctedAnswer.replyText), "the correction must restore the governed duration");
   } finally {

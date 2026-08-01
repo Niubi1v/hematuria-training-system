@@ -115,8 +115,14 @@ async function main() {
   input: "肾功能/eGFR；双肾CTU平扫+增强"
 }, attempt.token);
   assert.equal(response.statusCode, 200);
-  assert.deepEqual((response.payload.results as Array<{ orderId: string }>).map((item) => item.orderId).sort(), ["IMG-CT-002"]);
-  assert((response.payload.orderOutcomes as Array<{ orderId: string; status: string }>).some((item) => item.orderId === "LAB-BL-003" && item.status === "medical_review_pending"));
+  assert.deepEqual((response.payload.results as Array<{ orderId: string }>).map((item) => item.orderId).sort(), []);
+  const p008Outcomes = response.payload.orderOutcomes as Array<{ orderId: string; status: string; provenance: string; diagnosticEligible?: boolean; scoringEligible?: boolean }>;
+  assert(p008Outcomes.some((item) => item.orderId === "LAB-BL-003" && item.status === "medical_review_pending"));
+  assert(p008Outcomes.some((item) => item.orderId === "IMG-CT-002"
+    && item.status === "medical_review_pending"
+    && item.provenance === "source_result_semantic_mismatch"
+    && item.diagnosticEligible === false
+    && item.scoringEligible === false));
   assert((response.payload.matchedOrders as Array<{ displayName: string }>).some((item) => item.displayName === "双肾CTU平扫+增强"));
 
   attempt = await investigationAttempt("P008");
@@ -129,7 +135,10 @@ async function main() {
   input: "肾功能/eGFR；CTUCT"
 }, attempt.token);
   assert.equal(response.statusCode, 200);
-  assert((response.payload.results as Array<{ orderId: string }>).some((item) => item.orderId === "IMG-CT-002"));
+  assert.equal((response.payload.results as Array<{ orderId: string }>).some((item) => item.orderId === "IMG-CT-002"), false);
+  assert((response.payload.orderOutcomes as Array<{ orderId: string; status: string; provenance: string }>).some((item) => item.orderId === "IMG-CT-002"
+    && item.status === "medical_review_pending"
+    && item.provenance === "source_result_semantic_mismatch"));
 
   attempt = await investigationAttempt("P001");
   response = await call({
@@ -143,9 +152,21 @@ async function main() {
   assert.equal(response.statusCode, 200);
   assert.deepEqual(
     (response.payload.results as Array<{ orderId: string }>).map((item) => item.orderId).sort(),
-    ["IMG-US-001", "LAB-BL-001", "LAB-UR-001"]
+    ["LAB-UR-001"]
   );
-  assert.equal((response.payload.orderOutcomes as Array<{ status: string }>).filter((item) => item.status === "reported").length, 3);
+  const p001Results = response.payload.results as Array<{ orderId: string; result: string; diagnosticEligible?: boolean; scoringEligible?: boolean }>;
+  assert.equal(p001Results[0]?.result, "红细胞 5562个/μl");
+  assert.equal((p001Results[0]?.result.match(/红细胞\s*5562个\/μl/gu) || []).length, 1);
+  const p001Outcomes = response.payload.orderOutcomes as Array<{ orderId: string; status: string; provenance: string; diagnosticEligible?: boolean; scoringEligible?: boolean }>;
+  assert.equal(p001Outcomes.filter((item) => item.status === "reported").length, 1);
+  for (const orderId of ["LAB-BL-001", "IMG-US-001"]) {
+    assert(p001Outcomes.some((item) => item.orderId === orderId
+      && item.status === "medical_review_pending"
+      && item.provenance === "source_result_semantic_mismatch"
+      && item.diagnosticEligible === false
+      && item.scoringEligible === false));
+  }
+  assert.doesNotMatch(JSON.stringify(response.payload), /糖化血红蛋白|梅毒抗体|LAD|RCA|LCX/u);
 
   attempt = await investigationAttempt("P001");
   response = await call({
