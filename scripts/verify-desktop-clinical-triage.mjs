@@ -5,6 +5,9 @@ import path from "node:path";
 import process from "node:process";
 import { inflateRawSync } from "node:zlib";
 import { fileURLToPath } from "node:url";
+import clinicalResultSemantics from "../shared/clinicalResultSemantics.js";
+
+const { assessClinicalResult, clinicalResultFingerprint, projectClinicalResult } = clinicalResultSemantics;
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const defaultPackPath = "D:\\HematuriaReview\\desktop-clinical-content-review-pack-triaged.zip";
@@ -82,15 +85,25 @@ function normalize(value) {
     .replace(/[\s\p{P}\p{S}]/gu, "");
 }
 
-function sourceLeaves(source, existingSource = "") {
+function sourceLeafEntries(source, existingSource = "") {
   const leaves = [
-    source?.clinicalSource?.physicalExam,
-    source?.clinicalSource?.specialTests,
-    source?.urineTestResult,
-    ...(Array.isArray(source?.investigations) ? source.investigations.map((item) => item?.result) : [])
+    { location: "clinicalSource.physicalExam", text: source?.clinicalSource?.physicalExam },
+    { location: "clinicalSource.specialTests", text: source?.clinicalSource?.specialTests },
+    { location: "urineTestResult", text: source?.urineTestResult },
+    ...(Array.isArray(source?.investigations) ? source.investigations.map((item, index) => ({ location: `investigations[${index}].result`, text: item?.result })) : [])
   ];
-  if (existingSource && !/^无独立source结果$/u.test(String(existingSource).trim())) leaves.push(existingSource);
-  return [...new Set(leaves.map((item) => String(item || "").trim()).filter(Boolean))];
+  if (existingSource && !/^无独立source结果$/u.test(String(existingSource).trim())) leaves.push({ location: "existingSource", text: existingSource });
+  const seen = new Set();
+  return leaves.flatMap((item) => {
+    const text = String(item.text || "").trim();
+    if (!text || seen.has(text)) return [];
+    seen.add(text);
+    return [{ location: item.location, text }];
+  });
+}
+
+function sourceLeaves(source, existingSource = "") {
+  return sourceLeafEntries(source, existingSource).map((item) => item.text);
 }
 
 const neutralPrefixes = [
@@ -119,13 +132,14 @@ function verifySourceProjection(item, source) {
   if (/建议|必要时|无需立即|持续则|按需|需评估|需排除|进一步评估|若伴|通常|多无|可提示/u.test(result)) {
     return { accepted: false, reason: "recommendation_or_hypothesis_not_report" };
   }
-  const match = sourceLeaves(source, item.existingSource)
-    .map((text) => ({ text, normalized: normalize(text) }))
+  const match = sourceLeafEntries(source, item.existingSource)
+    .map((candidate) => ({ ...candidate, normalized: normalize(candidate.text) }))
     .find((candidate) => candidate.normalized.includes(core));
   if (!match) return { accepted: false, reason: "suggested_result_not_directly_located_in_source" };
   return {
     accepted: true,
     sourceMatchSha256: sha256(Buffer.from(match.text, "utf8")),
+    sourceLocation: match.location,
     matchMethod: "normalized_direct_source_substring"
   };
 }
@@ -208,6 +222,7 @@ for (const item of Object.values(categories).flat()) {
 }
 
 const examResults = JSON.parse(await fs.readFile(path.join(repoRoot, "data", "physical_exam_results.json"), "utf8"));
+const structuredOrderResults = JSON.parse(await fs.readFile(path.join(repoRoot, "data", "order_results_structured.json"), "utf8"));
 const rubrics = JSON.parse(await fs.readFile(path.join(repoRoot, "data", "event_rubrics.json"), "utf8"));
 const configuredExamKeys = new Set(examResults
   .filter((item) => item.studentVisibleAfterSelection)
@@ -218,14 +233,65 @@ const rubricExamKeys = new Set(rubrics.flatMap((row) => row.dimensions.flatMap((
 
 const sourceProjection = [];
 const sourceProjectionRejected = [];
+const sourceProjectionSemanticAudit = [];
+const fingerprintOwnersByCase = new Map();
+for (const result of structuredOrderResults.filter((item) => item.status === "final")) {
+  const fingerprint = clinicalResultFingerprint(projectClinicalResult(result).result);
+  if (!fingerprint) continue;
+  const owners = fingerprintOwnersByCase.get(result.caseId) || new Map();
+  if (!owners.has(fingerprint)) owners.set(fingerprint, { itemId: result.orderId, source: "configured_order_result" });
+  fingerprintOwnersByCase.set(result.caseId, owners);
+}
 for (const item of categories.auto_apply_after_source_match) {
   const verification = verifySourceProjection(item, sourceByCase.get(item.caseId));
   if (!verification.accepted) {
     sourceProjectionRejected.push(publicItem(item, { reason: verification.reason }));
     continue;
   }
-  sourceProjection.push(publicItem(item, {
+  const assessment = assessClinicalResult({
+    domain: item.domain,
+    itemId: item.itemId,
+    displayName: item.displayName,
     result: item.suggestedResult,
+    projection: true
+  });
+  const fingerprint = clinicalResultFingerprint(assessment.normalizedResult);
+  const owners = fingerprintOwnersByCase.get(item.caseId) || new Map();
+  const duplicateOwner = owners.get(fingerprint);
+  const duplicate = Boolean(fingerprint && duplicateOwner && duplicateOwner.itemId !== item.itemId);
+  const reason = duplicate ? "cross_order_duplicate_result" : assessment.reason;
+  const retained = !duplicate && assessment.compatible;
+  const auditRecord = {
+    caseId: item.caseId,
+    orderId: item.itemId,
+    orderDisplayName: item.displayName,
+    domain: item.domain,
+    existingSource: item.existingSource,
+    projectedResult: item.suggestedResult,
+    sourceFile: item.sourceFile,
+    sourceLocation: verification.sourceLocation,
+    sourceMatchSha256: verification.sourceMatchSha256,
+    semanticallyCompatible: assessment.compatible,
+    mixedResult: assessment.reason === "cross_domain_or_mixed_order_content",
+    duplicate,
+    duplicateOf: duplicate ? duplicateOwner : null,
+    empty: assessment.reason === "empty_result",
+    couldAffectDiagnosisOrTreatment: item.affectsDiagnosisOrScoring === true,
+    retained,
+    reason
+  };
+  sourceProjectionSemanticAudit.push(auditRecord);
+  assert(auditRecord.caseId && auditRecord.orderId && auditRecord.orderDisplayName && auditRecord.domain, `semantic_audit_identity_missing:${item.caseId}:${item.itemId}`);
+  assert(auditRecord.existingSource && auditRecord.projectedResult && auditRecord.sourceFile && auditRecord.sourceLocation, `semantic_audit_source_missing:${item.caseId}:${item.itemId}`);
+  assert.equal(typeof auditRecord.semanticallyCompatible, "boolean", `semantic_audit_compatibility_missing:${item.caseId}:${item.itemId}`);
+  if (fingerprint && !owners.has(fingerprint)) owners.set(fingerprint, { itemId: item.itemId, source: "source_projection_candidate" });
+  fingerprintOwnersByCase.set(item.caseId, owners);
+  if (!retained) {
+    sourceProjectionRejected.push(publicItem(item, { reason }));
+    continue;
+  }
+  sourceProjection.push(publicItem(item, {
+    result: assessment.normalizedResult,
     provenance: "case_source_projection",
     scoringEligible: false,
     affectsScore: false,
@@ -235,6 +301,10 @@ for (const item of categories.auto_apply_after_source_match) {
     matchMethod: verification.matchMethod
   }));
 }
+assert.equal(sourceProjectionSemanticAudit.length, 66, "all_previously_applied_source_projections_must_receive_semantic_audit");
+const sourceProjectionWithdrawalReasons = Object.fromEntries([...new Set(sourceProjectionSemanticAudit.filter((item) => !item.retained).map((item) => item.reason))]
+  .sort()
+  .map((reason) => [reason, sourceProjectionSemanticAudit.filter((item) => !item.retained && item.reason === reason).length]));
 
 const safeSimulatedNormal = [];
 const safeSimulatedNormalRejected = [];
@@ -318,7 +388,10 @@ if (writeRuntime) {
 console.log(JSON.stringify({
   packSha256: EXPECTED_PACK_SHA256,
   triageCounts: EXPECTED_COUNTS,
+  sourceProjectionAuditedBeforeSemanticReview: sourceProjectionSemanticAudit.length,
   sourceProjectionApplied: sourceProjection.length,
+  sourceProjectionWithdrawnAfterSemanticReview: sourceProjectionSemanticAudit.filter((item) => !item.retained).length,
+  sourceProjectionWithdrawalReasons,
   sourceProjectionRejected: sourceProjectionRejected.length,
   safeSimulatedNormalApplied: safeSimulatedNormal.length,
   safeSimulatedNormalRejected: safeSimulatedNormalRejected.length,
