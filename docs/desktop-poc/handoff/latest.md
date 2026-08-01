@@ -1,84 +1,44 @@
-# 桌面本地 AI 导师最终候选交接
+# 桌面本地 AI 导师 R2 候选交接
 
-- handoffId：`03bcba07-20260801-120657`
-- 状态：`ready_for_review`
+- handoffId：`1866364b-20260801-162444`
+- 状态：`blocked_external_ui_control`
 - 分支：`codex/hematuria-desktop-mentor-beta-package`
-- 桌面 POC 远程基线：`e43191ca0b91c636eb4c3b4d031f26d31b31797c`
-- UI 远程 HEAD：`966129504a3f5dc12f9475561e98cbe5f12965bd`
-- 候选包产品 HEAD：`4670022b57aa23db17cd9c8b24bd54fa56d55323`
-- 已测试实现 HEAD：`f253129ececdc02f2106de55f92f2abf5286cf43`
-- `data/**`：相对桌面 POC 基线及当前工作树均为零差异
+- R2 产品 HEAD：`8fed9433a06723865ba904bce202a10155ab0e4e`
+- 交接前已验证仓库 HEAD：`4bb15dfdc87cf1eadcb7b1394201245cb8599bbf`
+- `data/**`：零差异
 
-## 受控集成
+## 三项原阻塞与修复
 
-按顺序集成：
+1. 重启恢复：SQLite 实际保留了 R1 attempt，但学生端发现、首页进度和完整终报只依赖带随机sidecar端口的 WebView缓存；退出顺序也在SQLite前停止模型。R2新增SQLite快照、按病例发现与进度接口、R1持久响应重建，并在停止llama前完成WAL checkpoint。权威目录统一为 `%LOCALAPPDATA%\HematuriaTraining\MentorLocalAI-FinalCandidate\hematuria.sqlite3`，localStorage仅作缓存。
+2. 360泄露：服务端形成性反馈改为自然中英文，所有学生可见反馈、标准答案、命中/遗漏/警告、timeline、终报及恢复文案统一经过公共分数投影。中英文DOM组合流程均无 `360`/“360分”；内部评分和API仍保持360分合同。
+3. 聚合诊断：“辅助设置”新增“本机运行验证”，通过现有桌面认证读取本次启动统计，可复制/导出schema v1 JSON。只包含产品HEAD、runtime/model状态、接受数、fallback数、云请求数及时间，不含问答、患者标识、bearer/token/secret或推理。
 
-1. `33199f4d8f2a845b5f7d606515b2503a5cc71120`
-2. `715179368e7b8d8442caa109ea57797713c9761e`
-3. `99db3a06fdcb01459612c6c1e0713fd4b6755b65`
-4. `de84b6a913da2b6bc188983ce4669ba97d9e83c1`
-5. `966129504a3f5dc12f9475561e98cbe5f12965bd`
+医学结果保持：source projection应用4、撤回62、拒绝121、等待医学审核1023、医学冲突1；P001血常规继续等待审核且不参与诊断/评分，尿常规只显示一次“红细胞 5562个/μl”，timeline无空壳。`data/**`未改动。
 
-唯一内容冲突位于 `ClinicalTrainingClient.tsx` 的 `sanitizeTimeline`。逐 hunk 保留桌面 POC 的临床结果过滤、医学隔离与 fingerprint 去重，同时保留 UI 分支的学生端自然 label 和缺失结果本地化状态；未使用整文件 ours/theirs。
+## 组合与包级验收
 
-## 医学语义组合结果
+- Playwright：P001中文七阶段、英文阶段1—3、每阶段/终报/刷新后的360泄露断言、自然证据label、移动操作栏、设置窗口、幂等及axe通过。P003另一路零轮提交与token轮换通过；旧P003瞬时连接文案断言存在5秒边界竞态，未修改或放宽该门禁。
+- 包内Qwen3‑1.7B：16轮中15轮接受为`local_ai`，1轮治理冲突如实`rule_fallback`；当前诊断session显示接受7、fallback 1、云请求0。未运行4B。
+- 模型关闭：P001七阶段完成、终报生成、关闭重启后同一attempt/七阶段反馈/终报/首页完成进度恢复，幂等记录唯一；P001英文和P003零轮进入阶段2。
+- 根启动器：在`D:\HematuriaDesktopR2Acceptance\真实验收 R2 20260801`完整解压并通过包内校验，真实Tauri/sidecar/Qwen自动启动，仅监听127.0.0.1。三次正常关闭后WAL完成checkpoint，候选关联残留0。
+- NSIS：中文空格路径安装、启动、正常退出、卸载通过；81文件、134,009,302 B，卸载后目录不存在。
+- 扫描：解压树88文件、秘密命中0、禁用文件命中0；仓库秘密扫描通过。Tauri release、NSIS、Next 82页、TypeScript、ESLint、Data Agent、evidence graph、SQLite/sidecar生命周期均通过。
 
-| 项目 | 结果 |
-|---|---:|
-| source projection 保留并应用 | 4 |
-| 语义复核撤回 | 62 |
-| 运行时拒绝总数 | 121 |
-| medical_review_pending | 1023 |
-| medical_conflict | 1 |
+## R2产物
 
-- P001 血常规显示等待医学审核，`diagnosticEligible=false`、`scoringEligible=false`，不返回糖化血红蛋白或梅毒抗体。
-- P001 尿常规只显示一次“红细胞 5562个/μl”，不再重复旧“尿检”文本。
-- timeline 与最终报告无空冒号、无只有检验分类而无结果的空壳记录；缺失结果明确显示状态或被安全过滤。
-- 未审核结果不进入 evidence graph、诊断或评分。
-
-## UI 组合结果
-
-- 学生端不显示 `slot_answered`、canonical key、`evidenceId`、Provider、intent、provenance 或内部编号；中英文均使用自然临床 label。
-- 初始化、失败、未完成、已提交和完成动作互斥；提交后只保留进入下一阶段。
-- 390×844 输入区和固定操作栏不遮挡；1093×614 设置窗口完整可关闭；1366×768 与 1440×900 无横向溢出。
-- 第 3—7 阶段主操作持续可见；第 7 阶段以百分制为主，内部 360 分合同保留但不直接暴露。
-
-## 七阶段、离线 AI 与恢复
-
-- P001 中文完整七阶段、P001 英文阶段 1—3、P003 零轮提交均通过。
-- P002 肿瘤女性、P006 感染、P009 结石、P011 肾小球性血尿均完成七阶段并生成报告。
-- 模型关闭后的 P001 完整七阶段 `rule_fallback`、SQLite 关闭重开恢复、阶段和最终报告快速双击幂等均通过。
-- 默认 Qwen3-1.7B 模型 SHA 已复核；真实离线 16 回合中 15 回合接受并标记 `local_ai`，1 回合治理元数据冲突被拒绝并标记 `rule_fallback`。
-- `llamaServerReady=true`、`localModelReady=true`、`cloudRequestCount=0`；未重复 4B A/B。
-
-## 最终候选产物
-
-输出目录：`D:\HematuriaDesktopArtifacts\MentorLocalAI-FinalCandidate`
+目录：`D:\HematuriaDesktopArtifacts\MentorLocalAI-FinalCandidate-R2`
 
 | 产物 | 大小 | SHA-256 |
 |---|---:|---|
-| `HematuriaTraining-Mentor-LocalAI-FinalCandidate.zip` | 1,311,839,017 B | `c310f313481000efe68d256419425393e4f0373cf5cc6e5562438dcc609d7c83` |
-| `HematuriaTraining-Mentor-LocalAI-Setup.exe` | 32,429,679 B | `13978811ddd74c21bc94f3328c8f31f5773a9d91517f79be561cc4ad4586da20` |
-| `HematuriaTraining-Mentor-LocalAI-Portable.zip` | 51,198,070 B | `19e2719550976d9fbcdb2849cf59e4038fc0debb66b51f719cae6f844ac55d63` |
+| `HematuriaTraining-Mentor-LocalAI-FinalCandidate-R2.zip` | 1,311,861,288 B | `e3cd387f95b3e52c1315107735933ffa8d84272f74f0ab40d640af5d67421e92` |
+| `HematuriaTraining-Mentor-LocalAI-Setup-R2.exe` | 32,437,307 B | `a903553a5e65c4eaeda9431159715911d8de8b5c7d1769f43382bd82daf54c66` |
+| `HematuriaTraining-Mentor-LocalAI-Portable-R2.zip` | 51,220,838 B | `c606bebe7afc16625641918250515799773d18b9d7f8bbf58eaf4b33dc7432b7` |
 | `Model\Qwen3-1.7B-Q4_K_M.gguf` | 1,282,439,264 B | `d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5` |
 
-ZIP 根目录直接包含 `启动血尿训练系统.cmd`。真实使用路径为：完整解压 → 双击根启动器 → 自动启动本地服务、本地模型和桌面窗口；无需 Node、Docker、Redis、Python、API Key 或其他 AI 软件。
+主ZIP解压后88文件、1,416,378,517 B。冷启动根启动器就绪125,929 ms，缓存后10,792 ms；llama加载1,603 ms；本地问答P50 3,342 ms、P95 4,288 ms；完整进程树峰值2,850,271,232 B。
 
-完整 ZIP 在 `D:\HematuriaDesktopAcceptance\导师 最终候选 20260801` 解压为 88 文件、1,416,360,036 B。便携版解压为 80 文件、133,908,748 B。NSIS 安装为 81 文件、133,991,273 B，已完成安装、启动、正常退出及卸载，卸载后安装目录不存在。
+## 当前阻塞
 
-## 性能、网络与生命周期
+唯一一次真实Tauri桌面控制授权在首次窗口状态捕获前超时。按要求未再次申请，也未用浏览器或源码fixture冒充真实桌面点击。因此R2窗口内“阶段1→正常关闭→恢复→中文七阶段→再次关闭→终报恢复”、英文1—3和诊断折叠区的用户视角点击仍需独立控制环境复核；没有观察到新的产品失败。
 
-- 首次根启动器调用墙钟约 9.8 s；精确监控就绪 8,651 ms。
-- 单次 1.7B 模型加载 1,072 ms；16 回合 P50 2,673 ms、P95 4,241 ms。
-- llama-server 峰值工作集 2,421,661,696 B；完整应用进程树峰值 2,810,101,760 B。
-- 便携版就绪 3,101 ms；NSIS 安装 3,778 ms、安装版就绪 3,843 ms、卸载 7,651 ms。
-- 业务 sidecar 与 llama-server 仅监听随机 `127.0.0.1` 端口；未观察到外部连接。
-- 根启动器、便携版与安装版正常关闭后，Node、llama-server、WebView2、Tauri 与 sidecar 在发布宽限内残留均为 0。
-
-## 门禁与剩余限制
-
-完整仓库测试、TypeScript、ESLint、医学分流、Data Agent、evidence graph、timeline/最终报告、SQLite/幂等、sidecar 生命周期、Next 82 页构建、Tauri release、NSIS、bundle/package/secret 扫描全部通过。限定 Playwright/axe 为 19 通过、5 个按项目守卫跳过，严重或关键 axe 违规为 0。
-
-剩余限制：1023 项继续等待医学审核，121 项 source projection 保持运行时拒绝，1 项医学冲突继续隔离；Windows 候选未代码签名、无自动更新及 macOS 包。本系统是医学教学 Beta，不用于真实诊疗。
-
-当前无发布阻塞，可进入独立轻量验收。未修改 Production、main、Vercel、腾讯云，也未覆盖旧导师包。
+状态不得写为`ready_for_review`。待桌面控制可用后，使用上述不可变哈希完成一次独立轻量真实Tauri验收；通过后再晋级。R1候选包、Production、main、Vercel和腾讯云均未修改或覆盖。

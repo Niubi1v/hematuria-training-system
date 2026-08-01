@@ -1,35 +1,51 @@
 {
   "schemaVersion": 2,
-  "handoffId": "03bcba07-20260801-120657",
-  "status": "ready_for_review",
-  "milestone": "desktop-mentor-local-ai-final-candidate",
+  "handoffId": "1866364b-20260801-162444",
+  "status": "blocked_external_ui_control",
+  "milestone": "desktop-mentor-local-ai-final-candidate-r2",
   "branch": "codex/hematuria-desktop-mentor-beta-package",
   "worktree": "D:/CodexProjects/worktrees/hematuria-desktop-mentor-beta-package",
-  "baseline": {
-    "desktopPocRemoteHead": "e43191ca0b91c636eb4c3b4d031f26d31b31797c",
-    "uiRemoteHead": "966129504a3f5dc12f9475561e98cbe5f12965bd",
-    "startedFromDesktopPoc": true
+  "packageProductHead": "8fed9433a06723865ba904bce202a10155ab0e4e",
+  "validatedRepositoryHeadBeforeHandoff": "4bb15dfdc87cf1eadcb7b1394201245cb8599bbf",
+  "originalIndependentAcceptance": {
+    "verdict": "BLOCKED_PRODUCT_DEFECT",
+    "evidenceDirectory": "D:/HematuriaDesktopAcceptance/Independent-FinalCandidate",
+    "defects": [
+      "Completed P001 and its final report were not discoverable after a normal restart.",
+      "English learner feedback exposed the internal final 360 score contract.",
+      "The release UI had no authenticated aggregate evidence for local_ai acceptance and cloud request count."
+    ]
   },
-  "packageProductHead": "4670022b57aa23db17cd9c8b24bd54fa56d55323",
-  "testedImplementationHead": "f253129ececdc02f2106de55f92f2abf5286cf43",
-  "uiIntegrationCommits": [
-    "33199f4d8f2a845b5f7d606515b2503a5cc71120",
-    "715179368e7b8d8442caa109ea57797713c9761e",
-    "99db3a06fdcb01459612c6c1e0713fd4b6755b65",
-    "de84b6a913da2b6bc188983ce4669ba97d9e83c1",
-    "966129504a3f5dc12f9475561e98cbe5f12965bd"
-  ],
-  "integration": {
-    "cherryPickOrderPreserved": true,
-    "conflicts": [
-      {
-        "file": "src/components/ClinicalTrainingClient.tsx",
-        "area": "sanitizeTimeline",
-        "resolution": "Manual hunk-level merge retained desktop POC clinical result filtering and fingerprint deduplication, then applied UI public labels and explicit localized unavailable-result handling. No whole-file ours/theirs resolution was used."
-      }
-    ],
-    "dataDiff": "zero",
-    "dataDiffAgainstDesktopPoc": "zero"
+  "r2Fixes": {
+    "sqliteRecovery": {
+      "rootCause": "SQLite retained authoritative server attempts, but the renderer discovered attempts, progress and the full report only through localStorage/sessionStorage keys scoped to a random sidecar port. Shutdown also stopped llama before closing/checkpointing SQLite.",
+      "stableDataDirectory": "%LOCALAPPDATA%/HematuriaTraining/MentorLocalAI-FinalCandidate",
+      "database": "hematuria.sqlite3",
+      "schemaVersion": 2,
+      "strategy": "SQLite attempt snapshots and discovery/progress APIs are authoritative; localStorage is cache only. Schema v1 records rebuild stage feedback and the final report from durable request payloads. SQLite checkpoints before llama shutdown."
+    },
+    "studentScoreProjection": {
+      "serverWordingUpdated": true,
+      "commonProjectionApplied": true,
+      "chineseStages1To7No360": true,
+      "englishStages1To3No360": true,
+      "finalAndRecoveredReportNo360": true,
+      "internalMaxScore": 360
+    },
+    "aggregateRuntimeDiagnostics": {
+      "schemaVersion": 1,
+      "authenticatedDesktopOnly": true,
+      "fields": [
+        "schemaVersion", "productHead", "runtimeTarget", "model", "modelProfile",
+        "llamaServerReady", "localModelReady", "localAiAcceptedCount",
+        "ruleFallbackCount", "cloudRequestCount", "sessionStartedAt", "generatedAt"
+      ],
+      "forbiddenContentAbsent": [
+        "question", "answer", "prompt", "reply", "caseId", "patient identifiers",
+        "bearer", "token", "secret", "reasoning"
+      ],
+      "copyAndJsonExport": true
+    }
   },
   "medicalSemantics": {
     "sourceProjectionApplied": 4,
@@ -37,161 +53,112 @@
     "sourceProjectionRejected": 121,
     "medicalReviewPending": 1023,
     "medicalConflict": 1,
-    "p001CompleteBloodCount": {
-      "status": "medical_review_pending",
-      "diagnosticEligible": false,
-      "scoringEligible": false,
-      "forbiddenResultsAbsent": [
-        "glycated hemoglobin",
-        "syphilis antibody"
-      ]
-    },
-    "p001Urinalysis": {
-      "display": "红细胞 5562个/μl",
-      "occurrences": 1,
-      "duplicateLegacyTextAbsent": true
-    },
-    "timelineAndReport": {
-      "emptyColonAbsent": true,
-      "emptyResultShellAbsent": true,
-      "missingResultsExplicitOrFiltered": true,
-      "unreviewedEvidenceExcludedFromGraphDiagnosisAndScoring": true
-    }
+    "p001CbcMedicalReviewPending": true,
+    "p001CbcDiagnosticEligible": false,
+    "p001CbcScoringEligible": false,
+    "p001UrinalysisSingleDisplay": "红细胞 5562个/μl",
+    "timelineEmptyShellsAbsent": true,
+    "dataDiff": "zero"
   },
-  "uiAcceptance": {
-    "internalLabelsHidden": [
-      "slot_answered",
-      "canonical key",
-      "evidenceId",
-      "Provider",
-      "intent",
-      "provenance",
-      "internal identifiers"
-    ],
-    "naturalChineseLabels": true,
-    "naturalEnglishLabels": true,
-    "exclusiveInitializationFailureSubmittedCompletedStates": true,
-    "submittedActionOnlyAdvances": true,
-    "mobile390x844ComposerVisible": true,
-    "settings1093x614Closable": true,
-    "horizontalOverflowAbsent1366x768And1440x900": true,
-    "primaryActionsVisibleStages3To7": true,
-    "stage7PercentagePrimary": true,
-    "internalMaxScore": 360
-  },
-  "journeys": {
-    "p001ChineseSevenStage": "pass",
-    "p001EnglishStages1To3": "pass",
+  "automatedAndPackageContractAcceptance": {
+    "p001ChineseSevenStageDom": "pass",
+    "p001EnglishStages1To3Dom": "pass",
     "p003ZeroRound": "pass",
-    "p002TumorFemaleSevenStage": "pass",
-    "p006InfectionSevenStage": "pass",
-    "p009StoneSevenStage": "pass",
-    "p011GlomerularHematuriaSevenStage": "pass",
-    "ruleFallbackSevenStageWithModelDisabled": "pass",
-    "sqliteCloseReopenRestore": "pass",
-    "rapidDoubleClickIdempotency": "pass"
-  },
-  "localAiAcceptance": {
-    "defaultModel": "Qwen3-1.7B-Q4_K_M.gguf",
-    "modelSha256Verified": true,
-    "thinkingMode": "disabled",
-    "llamaServerReady": true,
-    "localModelReady": true,
+    "rapidDoubleClickIdempotency": "pass",
+    "ruleFallbackSevenStage": "pass",
+    "sqliteCompletedAttemptRestart": "pass",
+    "sqliteFinalReportRebuild": "pass",
+    "sqliteCatalogCompletedProgress": "pass",
+    "qwen17bQuestions": 16,
+    "qwen17bAcceptedLocalAiTurns": 15,
+    "qwen17bGovernedFallbackTurns": 1,
+    "currentDiagnosticSessionAcceptedCount": 7,
+    "currentDiagnosticSessionFallbackCount": 1,
     "cloudRequestCount": 0,
-    "turns": 16,
-    "acceptedLocalAiTurns": 15,
-    "governedConflictFallbackTurns": 1,
-    "conflictFallbackReason": "local_metadata_conflict_with_governed_candidates",
-    "modelDisabledRuleFallbackTurns": 16,
     "fourBComparisonRepeated": false
   },
+  "realPackageLifecycle": {
+    "freshExtractionPath": "D:/HematuriaDesktopR2Acceptance/真实验收 R2 20260801",
+    "testLocalAppData": "D:/HematuriaDesktopR2Acceptance/状态 R2 用户",
+    "pathsContainChineseAndSpaces": true,
+    "verifyPackage": "pass",
+    "rootLauncherStartsTauriSidecarAndModel": "pass",
+    "listenAddresses": ["127.0.0.1"],
+    "rootLauncherNormalCloseRuns": 3,
+    "sqliteWalCheckpointAfterClose": "pass",
+    "residualProcessesAfterGrace": 0,
+    "nsisInstallStartUninstall": "pass",
+    "nsisInstalledFiles": 81,
+    "nsisInstalledBytes": 134009302,
+    "desktopUiSevenStageRestartChain": "blocked_external_ui_control",
+    "desktopControlDetail": "The single Computer Use approval attempt timed out; no browser or source fixture was used as a substitute."
+  },
   "artifacts": {
-    "directory": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate",
+    "directory": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R2",
     "mentorZip": {
-      "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate/HematuriaTraining-Mentor-LocalAI-FinalCandidate.zip",
-      "bytes": 1311839017,
-      "sha256": "c310f313481000efe68d256419425393e4f0373cf5cc6e5562438dcc609d7c83",
+      "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R2/HematuriaTraining-Mentor-LocalAI-FinalCandidate-R2.zip",
+      "bytes": 1311861288,
+      "sha256": "e3cd387f95b3e52c1315107735933ffa8d84272f74f0ab40d640af5d67421e92",
       "unpackedFiles": 88,
-      "unpackedBytes": 1416360036,
-      "rootLauncher": "启动血尿训练系统.cmd"
+      "unpackedBytes": 1416378517
     },
     "nsis": {
-      "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate/HematuriaTraining-Mentor-LocalAI-Setup.exe",
-      "bytes": 32429679,
-      "sha256": "13978811ddd74c21bc94f3328c8f31f5773a9d91517f79be561cc4ad4586da20",
-      "installedFiles": 81,
-      "installedBytes": 133991273
+      "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R2/HematuriaTraining-Mentor-LocalAI-Setup-R2.exe",
+      "bytes": 32437307,
+      "sha256": "a903553a5e65c4eaeda9431159715911d8de8b5c7d1769f43382bd82daf54c66"
     },
     "portable": {
-      "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate/HematuriaTraining-Mentor-LocalAI-Portable.zip",
-      "bytes": 51198070,
-      "sha256": "19e2719550976d9fbcdb2849cf59e4038fc0debb66b51f719cae6f844ac55d63",
-      "unpackedFiles": 80,
-      "unpackedBytes": 133908748
+      "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R2/HematuriaTraining-Mentor-LocalAI-Portable-R2.zip",
+      "bytes": 51220838,
+      "sha256": "c606bebe7afc16625641918250515799773d18b9d7f8bbf58eaf4b33dc7432b7"
     },
     "model": {
-      "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate/Model/Qwen3-1.7B-Q4_K_M.gguf",
+      "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R2/Model/Qwen3-1.7B-Q4_K_M.gguf",
       "bytes": 1282439264,
       "sha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5"
     }
   },
-  "packageAcceptance": {
-    "freshExtractionPath": "D:/HematuriaDesktopAcceptance/导师 最终候选 20260801",
-    "portableExtractionPath": "D:/HematuriaDesktopAcceptance/便携版 测试 20260801",
-    "nsisInstallPath": "D:/HematuriaDesktopAcceptance/NSIS 导师 安装 20260801",
-    "pathsContainSpacesAndChinese": true,
-    "rootLauncherDoubleClickEquivalent": "pass",
-    "modelHash": "pass",
-    "apiKeyRequired": false,
-    "externalCloudConnections": 0,
-    "listenAddress": "127.0.0.1",
-    "startupProgressVisible": true,
-    "portableLifecycle": "pass",
-    "nsisInstallStartUninstall": "pass",
-    "residualProcessesAfterGrace": 0,
-    "secretFindings": 0,
-    "forbiddenPackageFindings": 0
-  },
   "performance": {
-    "firstRootLauncherInvocationMsApprox": 9800,
-    "instrumentedRootLauncherReadyMs": 8651,
-    "modelLoadMs": 1072,
-    "turnP50Ms": 2673,
-    "turnP95Ms": 4241,
-    "modelPeakWorkingSetBytes": 2421661696,
-    "fullProcessTreePeakWorkingSetBytes": 2810101760,
-    "portableReadyMs": 3101,
-    "nsisInstallMs": 3778,
-    "nsisAppReadyMs": 3843,
-    "nsisUninstallMs": 7651
+    "coldRootLauncherReadyMs": 125929,
+    "warmRootLauncherReadyMs": 10792,
+    "llamaModelLoadMs": 1603,
+    "localAiTurnP50Ms": 3342,
+    "localAiTurnP95Ms": 4288,
+    "fullProcessTreePeakWorkingSetBytes": 2850271232,
+    "nsisAppReadyMs": 2942
   },
   "releaseGates": {
-    "fullRepositoryTests": "pass",
     "typescript": "pass",
     "eslint": "pass",
     "nextBuildPages": 82,
     "tauriRelease": "pass",
     "nsisBuild": "pass",
-    "playwrightPassed": 19,
-    "playwrightProjectGuardSkips": 5,
+    "playwrightChineseSevenStageAndEnglishStages1To3": "pass",
     "axeSeriousOrCriticalViolations": 0,
-    "desktopClinicalTriage": "pass",
     "dataAgentAuthorityAndPresentation": "pass",
     "evidenceGraphIsolation": "pass",
-    "timelineAndFinalReport": "pass",
     "sqliteAndIdempotency": "pass",
     "sidecarLifecycle": "pass",
-    "packageAndSecretScans": "pass",
+    "packageSecretFindings": 0,
+    "packageForbiddenFindings": 0,
+    "repositorySecretScan": "pass",
     "dataDiff": "zero"
   },
   "remainingLimitations": [
-    "1023 items remain medical_review_pending and stay fail-closed.",
-    "121 source projection candidates remain runtime-rejected; 62 were withdrawn during semantic review.",
-    "One medical conflict remains isolated and unadjudicated.",
+    "The R2 real-Tauri seven-stage close/reopen UI chain remains unexecuted because external desktop control approval timed out.",
+    "Attempts have a 24-hour server recovery window in this teaching Beta.",
+    "1023 items remain medical_review_pending; 121 source projection candidates remain rejected; one medical conflict remains isolated.",
     "The Windows candidate is unsigned and has no automatic update or macOS package.",
     "This is a medical teaching Beta and must not be used for real diagnosis or treatment."
   ],
-  "blockingIssues": [],
+  "blockingIssues": [
+    {
+      "code": "BLOCKED_EXTERNAL_UI_CONTROL",
+      "severity": "release-verification",
+      "reproduction": "Launch the R2 root launcher, request Computer Use control of the unique Tauri window, and observe that the single approval request times out before the first state capture.",
+      "productFailureObserved": false
+    }
+  ],
   "releaseScope": {
     "productionModified": false,
     "mainModified": false,
@@ -199,5 +166,5 @@
     "tencentCloudModified": false,
     "oldMentorPackageOverwritten": false
   },
-  "recommendedNextStep": "Proceed to independent lightweight acceptance against this handoff and the FinalCandidate artifacts."
+  "recommendedNextStep": "Do not mark ready_for_review yet. Re-run the independent lightweight real-Tauri stage/restart chain after desktop control is available; use the immutable R2 hashes in this handoff."
 }
