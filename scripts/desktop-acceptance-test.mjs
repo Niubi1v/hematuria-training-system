@@ -307,8 +307,16 @@ function recordSourceContract(reply, expectation, label, language, turnNumber) {
   assert.ok(reply.desktopEvidence, `${label} must include authenticated desktop runtime evidence`);
   assert.deepEqual(Object.keys(reply.desktopEvidence).sort(), [
     "answerSource", "cloudRequestCount", "factState", "fallbackReason", "intent", "latency",
-    "llamaServerReady", "localModelReady", "model", "requestedSlot", "unknown"
+    "llamaServerReady", "localModelReady", "model", "requestedSlot", "responseErrors", "unknown"
   ].sort(), `${label} diagnostics must remain on the safe whitelist`);
+  assert.ok(Array.isArray(reply.desktopEvidence.responseErrors), `${label} response errors must remain a bounded list`);
+  const allowedResponseErrors = new Set([
+    "tangential", "oversharing", "role_breaking", "off_script", "wrong_unknown", "context_lost", "polarity_error"
+  ]);
+  assert.ok(
+    reply.desktopEvidence.responseErrors.every((value) => allowedResponseErrors.has(String(value))),
+    `${label} response errors must remain on the closed safe enum`
+  );
   assert.equal(reply.desktopEvidence.cloudRequestCount, 0, `${label} must make no cloud request`);
   assert.equal(reply.desktopEvidence.model, selectedModel.alias, `${label} must report the selected model`);
   assert.ok(Number.isSafeInteger(reply.desktopEvidence.latency), `${label} must report bounded latency`);
@@ -388,6 +396,7 @@ function recordSourceContract(reply, expectation, label, language, turnNumber) {
     model: reply.desktopEvidence.model,
     cloudRequestCount: reply.desktopEvidence.cloudRequestCount,
     latency: reply.desktopEvidence.latency,
+    responseErrors: reply.desktopEvidence.responseErrors,
     intentMatch,
     slotMatch,
     erroneousUnknown,
