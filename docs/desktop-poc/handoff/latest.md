@@ -1,53 +1,84 @@
-# 桌面医学内容治理分流与导师 Beta 交接
+# 桌面本地 AI 导师最终候选交接
 
-- handoffId：`155e8ff4-20260801-043929`
+- handoffId：`03bcba07-20260801-120657`
 - 状态：`ready_for_review`
-- 分支：`codex/hematuria-desktop-local-ai-poc`
-- Production 基线：`6f22d591332a522c1a85835ba4c39a840f961901`
-- 产品/已测试实现 HEAD：`155e8ff4cb641cae4acb8a884b8b3245c18d4fd8`
-- `data/**`：零差异
+- 分支：`codex/hematuria-desktop-mentor-beta-package`
+- 桌面 POC 远程基线：`e43191ca0b91c636eb4c3b4d031f26d31b31797c`
+- UI 远程 HEAD：`966129504a3f5dc12f9475561e98cbe5f12965bd`
+- 候选包产品 HEAD：`4670022b57aa23db17cd9c8b24bd54fa56d55323`
+- 已测试实现 HEAD：`f253129ececdc02f2106de55f92f2abf5286cf43`
+- `data/**`：相对桌面 POC 基线及当前工作树均为零差异
 
-## 医学分流
+## 受控集成
 
-输入包：`D:\HematuriaReview\desktop-clinical-content-review-pack-triaged.zip`（215,145 B；SHA256 `832cd6c0935a129258b5844db403f12a471949cabc36caecd6120173e8b68a46`）。
+按顺序集成：
 
-| 分类 | 输入 | 运行时结果 |
+1. `33199f4d8f2a845b5f7d606515b2503a5cc71120`
+2. `715179368e7b8d8442caa109ea57797713c9761e`
+3. `99db3a06fdcb01459612c6c1e0713fd4b6755b65`
+4. `de84b6a913da2b6bc188983ce4669ba97d9e83c1`
+5. `966129504a3f5dc12f9475561e98cbe5f12965bd`
+
+唯一内容冲突位于 `ClinicalTrainingClient.tsx` 的 `sanitizeTimeline`。逐 hunk 保留桌面 POC 的临床结果过滤、医学隔离与 fingerprint 去重，同时保留 UI 分支的学生端自然 label 和缺失结果本地化状态；未使用整文件 ours/theirs。
+
+## 医学语义组合结果
+
+| 项目 | 结果 |
+|---|---:|
+| source projection 保留并应用 | 4 |
+| 语义复核撤回 | 62 |
+| 运行时拒绝总数 | 121 |
+| medical_review_pending | 1023 |
+| medical_conflict | 1 |
+
+- P001 血常规显示等待医学审核，`diagnosticEligible=false`、`scoringEligible=false`，不返回糖化血红蛋白或梅毒抗体。
+- P001 尿常规只显示一次“红细胞 5562个/μl”，不再重复旧“尿检”文本。
+- timeline 与最终报告无空冒号、无只有检验分类而无结果的空壳记录；缺失结果明确显示状态或被安全过滤。
+- 未审核结果不进入 evidence graph、诊断或评分。
+
+## UI 组合结果
+
+- 学生端不显示 `slot_answered`、canonical key、`evidenceId`、Provider、intent、provenance 或内部编号；中英文均使用自然临床 label。
+- 初始化、失败、未完成、已提交和完成动作互斥；提交后只保留进入下一阶段。
+- 390×844 输入区和固定操作栏不遮挡；1093×614 设置窗口完整可关闭；1366×768 与 1440×900 无横向溢出。
+- 第 3—7 阶段主操作持续可见；第 7 阶段以百分制为主，内部 360 分合同保留但不直接暴露。
+
+## 七阶段、离线 AI 与恢复
+
+- P001 中文完整七阶段、P001 英文阶段 1—3、P003 零轮提交均通过。
+- P002 肿瘤女性、P006 感染、P009 结石、P011 肾小球性血尿均完成七阶段并生成报告。
+- 模型关闭后的 P001 完整七阶段 `rule_fallback`、SQLite 关闭重开恢复、阶段和最终报告快速双击幂等均通过。
+- 默认 Qwen3-1.7B 模型 SHA 已复核；真实离线 16 回合中 15 回合接受并标记 `local_ai`，1 回合治理元数据冲突被拒绝并标记 `rule_fallback`。
+- `llamaServerReady=true`、`localModelReady=true`、`cloudRequestCount=0`；未重复 4B A/B。
+
+## 最终候选产物
+
+输出目录：`D:\HematuriaDesktopArtifacts\MentorLocalAI-FinalCandidate`
+
+| 产物 | 大小 | SHA-256 |
 |---|---:|---|
-| auto_apply_after_source_match | 125 | 66 项通过严格 source/result 直接匹配并应用；59 项不匹配，继续 fail-closed |
-| policy_safe_simulated_normal_candidate | 75 | 75 项完成病例 source 冲突检查并应用 |
-| no_specimen_or_not_indicated | 552 | 明确显示无适应证、未实施或未取材，不生成正常数值/病理 |
-| no_report_or_not_indicated | 952 | 明确显示无适应证或未实施，不生成 CT/MR/超声/内镜/核医学报告 |
-| needs_case_specific_medical_review | 902 | 继续 fail-closed |
-| blocked_medical_conflict | 1 | 保留 medical_conflict，不自动裁决 |
+| `HematuriaTraining-Mentor-LocalAI-FinalCandidate.zip` | 1,311,839,017 B | `c310f313481000efe68d256419425393e4f0373cf5cc6e5562438dcc609d7c83` |
+| `HematuriaTraining-Mentor-LocalAI-Setup.exe` | 32,429,679 B | `13978811ddd74c21bc94f3328c8f31f5773a9d91517f79be561cc4ad4586da20` |
+| `HematuriaTraining-Mentor-LocalAI-Portable.zip` | 51,198,070 B | `19e2719550976d9fbcdb2849cf59e4038fc0debb66b51f719cae6f844ac55d63` |
+| `Model\Qwen3-1.7B-Q4_K_M.gguf` | 1,282,439,264 B | `d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5` |
 
-66 项 source projection 使用 `provenance=case_source_projection`、`scoringEligible=false`。75 项安全正常使用 `provenance=simulated_normal`、`affectsDiagnosis=false`、`affectsScore=false`、`scoringEligible=false`、`diagnosticEligible=false`，不进入诊断或评分证据链。
+ZIP 根目录直接包含 `启动血尿训练系统.cmd`。真实使用路径为：完整解压 → 双击根启动器 → 自动启动本地服务、本地模型和桌面窗口；无需 Node、Docker、Redis、Python、API Key 或其他 AI 软件。
 
-学生端每项医嘱独立显示“报告已返回、无明确适应证、未实施、未取材、等待医学审核、前置条件未满足”之一。未实施和未取材项目不生成结果事件；不必要检查进入第7阶段轨迹复盘。关键影像、尿检、病理、961项待审核内容（902+59）和1项冲突均未进入确定性诊断、治疗或评分证据，且未由 LLM 生成。
+完整 ZIP 在 `D:\HematuriaDesktopAcceptance\导师 最终候选 20260801` 解压为 88 文件、1,416,360,036 B。便携版解压为 80 文件、133,908,748 B。NSIS 安装为 81 文件、133,991,273 B，已完成安装、启动、正常退出及卸载，卸载后安装目录不存在。
 
-## 阶段2—7验证
+## 性能、网络与生命周期
 
-P001肿瘤、P002女性肿瘤、P006感染、P009结石及P011肾小球性血尿均完成阶段2—7并生成最终报告；证据节点数分别为23、16、18、15、16。
+- 首次根启动器调用墙钟约 9.8 s；精确监控就绪 8,651 ms。
+- 单次 1.7B 模型加载 1,072 ms；16 回合 P50 2,673 ms、P95 4,241 ms。
+- llama-server 峰值工作集 2,421,661,696 B；完整应用进程树峰值 2,810,101,760 B。
+- 便携版就绪 3,101 ms；NSIS 安装 3,778 ms、安装版就绪 3,843 ms、卸载 7,651 ms。
+- 业务 sidecar 与 llama-server 仅监听随机 `127.0.0.1` 端口；未观察到外部连接。
+- 根启动器、便携版与安装版正常关闭后，Node、llama-server、WebView2、Tauri 与 sidecar 在发布宽限内残留均为 0。
 
-- 阶段2：逐项状态、来源、前置条件和时间线净化通过，无 `undefined` 或原始对象。
-- 阶段3：只允许选择已释放且可用于诊断的 evidenceId；安全正常和待审核内容被排除。
-- 阶段4—6：会诊、治疗医嘱和围术期反馈继续引用真实 evidenceId。
-- 阶段7：完成率5/5，百分制和最终报告生成通过，轨迹可指出不必要检查。
+## 门禁与剩余限制
 
-通过的专项包括 triage 清单校验、Data Agent 权限/展示、evidence graph 隔离、阶段2—7、TypeScript、ESLint、Next/Tauri/NSIS构建、打包 sidecar 生命周期、mentor 包内容/secret 扫描及 `data/**` 零差异。
+完整仓库测试、TypeScript、ESLint、医学分流、Data Agent、evidence graph、timeline/最终报告、SQLite/幂等、sidecar 生命周期、Next 82 页构建、Tauri release、NSIS、bundle/package/secret 扫描全部通过。限定 Playwright/axe 为 19 通过、5 个按项目守卫跳过，严重或关键 axe 违规为 0。
 
-## 导师本地 AI Beta
+剩余限制：1023 项继续等待医学审核，121 项 source projection 保持运行时拒绝，1 项医学冲突继续隔离；Windows 候选未代码签名、无自动更新及 macOS 包。本系统是医学教学 Beta，不用于真实诊疗。
 
-推荐模型为 Qwen3-1.7B Q4（非思考模式）。模型只处理 intent/topic/slot/context 和表达风格，不决定病例事实；文件与安装程序仍分离，但导师 ZIP 同包携带。
-
-| 产物 | 大小 | SHA256 |
-|---|---:|---|
-| `D:\HematuriaDesktopArtifacts\MentorLocalAI\HematuriaTraining-Mentor-LocalAI-Beta.zip` | 1,311,796,605 B | `e9b9724d1863136dbb4e809390b81b54539ffaa308ddfe551d1cff931caf321c` |
-| `D:\HematuriaDesktopArtifacts\MentorLocalAI\HematuriaTraining-Mentor-LocalAI-NSIS.exe` | 32,405,294 B | `b29d4938046291cf58522d7f1223e51b98df174737c7d8e14955288c065346d5` |
-| `D:\HematuriaDesktopArtifacts\MentorLocalAI\HematuriaTraining-Mentor-LocalAI-Portable.zip` | 51,155,901 B | `54f03d710c3af1e876daf0bc2d52bc4d0c2de76ad71c656afbccac82d1323c16` |
-| `D:\HematuriaDesktopArtifacts\MentorLocalAI\Model\Qwen3-1.7B-Q4_K_M.gguf` | 1,282,439,264 B | `d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5` |
-
-ZIP根目录包含 `启动血尿训练系统.cmd`，README首行为“完整解压后，双击启动血尿训练系统.cmd”。真实全新解压烟雾测试已验证：自动校验同包模型、显示启动进度、启动业务与 llama sidecar、仅监听随机 `127.0.0.1` 端口、无需外部 Node/Docker/Redis/Python/API Key、启动器返回0，主程序退出后无 sidecar 残留。包内86个文件的源码、缓存、日志、trace、禁入文件和 secret 扫描为0项发现。
-
-## 已知限制
-
-902项病例特异关键医学内容仍保持 fail-closed，另有59项 source 投影因严格匹配失败而隔离、1项医学冲突未裁决。这些内容需要后续人工医学审核，但不会被伪造，也不阻断当前受治理的导师 Beta 七阶段练习。
+当前无发布阻塞，可进入独立轻量验收。未修改 Production、main、Vercel、腾讯云，也未覆盖旧导师包。
