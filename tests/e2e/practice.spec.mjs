@@ -1552,6 +1552,7 @@ test("automatic voice profile follows patient sex, language, and age", async ({ 
 
 test("mobile voice controls meet the 44px touch-target contract", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "mobile-chromium", "Touch geometry is a mobile contract.");
+  await mockTrainingState(page);
   for (const viewport of [{ width: 360, height: 800 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(viewport);
     await page.goto("/cases/P001/");

@@ -2896,7 +2896,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           </section>
         </aside>
 
-        <section onFocusCapture={ensureMobileStageControlVisible} className="workbench-main rounded-xl border border-clinic-line bg-white p-4 shadow-soft sm:p-5">
+        <section tabIndex={0} aria-label={`${studentStageLabel(activeStageNo, lang)}：${stageName(activeStageNo, lang)}`} onFocusCapture={ensureMobileStageControlVisible} className="workbench-main rounded-xl border border-clinic-line bg-white p-4 shadow-soft sm:p-5">
           <div className="mb-3 border-b border-clinic-line pb-3">
             <p className="text-sm font-medium text-clinic-blue">{studentStageLabel(activeStageNo, lang)}</p>
             <h2 className="mt-1 text-lg font-semibold sm:text-xl">{stageName(activeStageNo, lang)}</h2>
