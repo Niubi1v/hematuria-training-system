@@ -55,17 +55,39 @@ assert.equal(modelStat.size, 1_282_439_264, "mentor_model_size_mismatch");
 assert.equal(await sha256(modelPath), "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5", "mentor_model_sha256_mismatch");
 
 const readme = await fs.readFile(path.join(stage, "README_导师验收.txt"), "utf8");
-assert.equal(readme.replace(/^\uFEFF/u, "").split(/\r?\n/u)[0], "完整解压后，双击启动血尿训练系统.cmd");
-assert.match(readme, /仅用于医学教学模拟，不用于真实诊疗/u);
+const readmeLines = readme.replace(/^\uFEFF/u, "").split(/\r?\n/u);
+assert.deepEqual(readmeLines.slice(0, 3), [
+  "完整解压",
+  "→ 双击“启动血尿训练系统.cmd”",
+  "→ 自动启动本地服务、本地模型和桌面窗口"
+]);
+assert.match(readme, /医学教学 Beta.*不用于真实诊疗/u);
+assert.match(readme, /source projection 保留并应用 4 项.*运行时拒绝总数 121 项/u);
+assert.match(readme, /1023 项等待医学审核.*1 项医学冲突/u);
 const limitations = await fs.readFile(path.join(stage, "KNOWN_LIMITATIONS.txt"), "utf8");
-assert.match(limitations, /902项.*fail-closed/u);
+assert.match(limitations, /保留并应用 4 项.*拒绝总数为 121 项/u);
+assert.match(limitations, /1023 项等待医学审核.*fail-closed/u);
+assert.match(limitations, /1 项医学冲突/u);
+
+const version = JSON.parse((await fs.readFile(path.join(stage, "VERSION.json"), "utf8")).replace(/^\uFEFF/u, ""));
+assert.equal(version.channel, "mentor-local-ai-final-candidate");
+assert.match(version.productHead, /^[0-9a-f]{40}$/u);
+assert.equal(version.medicalGovernance.sourceProjectionApplied, 4);
+assert.equal(version.medicalGovernance.sourceProjectionWithdrawn, 62);
+assert.equal(version.medicalGovernance.sourceProjectionRejected, 121);
+assert.equal(version.medicalGovernance.medicalReviewPending, 1023);
+assert.equal(version.medicalGovernance.medicalConflict, 1);
+assert.equal(version.runtimeSecurity.cloudRequestAllowed, false);
+assert.equal(version.runtimeSecurity.listenAddress, "127.0.0.1");
 
 const launcher = await fs.readFile(path.join(stage, "tools", "Start-Mentor.ps1"), "utf8");
 for (const signal of ["正在启动本地患者服务", "127.0.0.1", "Get-FileHash", "Get-NetTCPConnection", "llama-server.exe", "node.exe"]) {
   assert(launcher.includes(signal), `mentor_launcher_contract_missing:${signal}`);
 }
 const runtime = JSON.parse(await fs.readFile(path.join(stage, "App", "resources", "app", "desktop", "clinical-content-triage-runtime.json"), "utf8"));
-assert.equal(runtime.sourceProjection.length, 66);
+assert.equal(runtime.sourceProjection.length, 4);
+assert.equal(runtime.sourceProjectionRejected.length, 121);
+assert.equal(runtime.medicalReviewPending.length, 1023);
 assert.equal(runtime.safeSimulatedNormal.length, 75);
 assert.equal(runtime.noSpecimenOrNotIndicated.length, 552);
 assert.equal(runtime.noReportOrNotIndicated.length, 952);
@@ -79,5 +101,5 @@ console.log(JSON.stringify({
   secretFindings: 0,
   forbiddenFindings: 0,
   rootLauncher: true,
-  triageRuntime: { sourceProjection: 66, safeSimulatedNormal: 75, noSpecimen: 552, noReport: 952, medicalConflicts: 1 }
+  triageRuntime: { sourceProjectionApplied: 4, sourceProjectionRejected: 121, medicalReviewPending: 1023, medicalConflicts: 1 }
 }));
