@@ -70,7 +70,7 @@ assert.match(limitations, /1023 项等待医学审核.*fail-closed/u);
 assert.match(limitations, /1 项医学冲突/u);
 
 const version = JSON.parse((await fs.readFile(path.join(stage, "VERSION.json"), "utf8")).replace(/^\uFEFF/u, ""));
-assert.equal(version.channel, "mentor-local-ai-final-candidate");
+assert.match(version.channel, /^mentor-local-ai-final-candidate(?:-r2)?$/u);
 assert.match(version.productHead, /^[0-9a-f]{40}$/u);
 assert.equal(version.medicalGovernance.sourceProjectionApplied, 4);
 assert.equal(version.medicalGovernance.sourceProjectionWithdrawn, 62);

@@ -12,6 +12,8 @@
 5. 默认模型为 Qwen3-1.7B-Q4_K_M；接受的模型分类标记为 local_ai，冲突或模型不可用时如实标记 rule_fallback。
 6. 关闭软件窗口后，Node、llama-server、WebView 和 sidecar 应自动退出。
 7. 可运行 VERIFY-PACKAGE.ps1 复核关键文件 SHA-256。
+8. R2 使用同一 Windows 用户目录中的 SQLite 作为训练状态权威来源；关闭重开后会恢复病例进度、当前阶段和最终报告。
+9. “辅助设置”内的“本机运行验证”仅显示本次启动的聚合统计，可复制或导出 JSON，不包含患者问答内容。
 
 本候选医学内容治理事实：
 - source projection 保留并应用 4 项；撤回 62 项；运行时拒绝总数 121 项。

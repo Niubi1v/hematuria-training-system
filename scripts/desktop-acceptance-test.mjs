@@ -172,7 +172,7 @@ async function launchSidecar() {
   assert.equal(ready.protocolVersion, 1);
   assert.equal(ready.handshake, handshake);
   assert.equal(ready.pid, child.pid);
-  assert.equal(ready.databaseSchemaVersion, 1);
+  assert.equal(ready.databaseSchemaVersion, 2);
   assert.equal(ready.localAi?.status, realLocalAi ? "starting" : "disabled");
   assert.match(ready.origin, /^http:\/\/127\.0\.0\.1:\d+$/);
   const runtime = { bearer, child, diagnostics: () => diagnostics, origin: ready.origin, ready };
@@ -307,7 +307,8 @@ function recordSourceContract(reply, expectation, label, language, turnNumber) {
   assert.ok(reply.desktopEvidence, `${label} must include authenticated desktop runtime evidence`);
   assert.deepEqual(Object.keys(reply.desktopEvidence).sort(), [
     "answerSource", "cloudRequestCount", "factState", "fallbackReason", "intent", "latency",
-    "llamaServerReady", "localModelReady", "model", "requestedSlot", "responseErrors", "unknown"
+    "llamaServerReady", "localModelReady", "model", "modelProfile", "productHead", "requestedSlot",
+    "responseErrors", "runtimeTarget", "sessionStartedAt", "unknown"
   ].sort(), `${label} diagnostics must remain on the safe whitelist`);
   assert.ok(Array.isArray(reply.desktopEvidence.responseErrors), `${label} response errors must remain a bounded list`);
   const allowedResponseErrors = new Set([
@@ -962,6 +963,8 @@ try {
     label: "P003 zero-round"
   });
   finalRuntimeEvidence = (await requestJson(runtime, "/api/desktop/evidence/", { method: "GET" })).payload;
+  assert.equal(finalRuntimeEvidence.schemaVersion, 1);
+  assert.equal(finalRuntimeEvidence.runtimeTarget, "desktop");
   assert.equal(finalRuntimeEvidence.llamaServerReady, realLocalAi);
   assert.equal(finalRuntimeEvidence.localModelReady, realLocalAi);
   assert.equal(finalRuntimeEvidence.cloudRequestCount, 0);
@@ -977,6 +980,15 @@ try {
     assert.equal(completedResume.payload.currentStage, 8, "completed P001 must restore at the report stage");
     assert.equal(completedResume.payload.status, "completed", "completed P001 must restore as completed");
     assert.equal(completedResume.stateToken, fallbackSevenStage.stateToken, "completed resume must return the current durable token");
+    const recoveredClientState = await requestJson(runtime, "/api/desktop/attempt/state/", {
+      body: { action: "load", caseId: "P001", mode: "free", language: "zh" }
+    });
+    assert.equal(recoveredClientState.payload.attemptId, p001ZhAttemptId, "desktop discovery must restore the same completed attempt");
+    assert.equal(recoveredClientState.payload.snapshot.activeStageNo, 7, "desktop discovery must restore the report stage");
+    assert.equal(Object.keys(recoveredClientState.payload.snapshot.submitted || {}).length, 7, "desktop discovery must restore seven submitted stage feedback records");
+    assert.equal(recoveredClientState.payload.snapshot.finalReport?.max, 360, "desktop discovery must rebuild the internal final report contract");
+    const recoveredProgress = await requestJson(runtime, "/api/desktop/progress/", { method: "GET" });
+    assert.equal(recoveredProgress.payload.progress.P001, "completed", "desktop catalog progress must restore completed P001 from SQLite");
 
     const scoreReplay = await requestJson(runtime, "/api/training-action/", {
       body: fallbackSevenStage.score.body,
@@ -993,7 +1005,7 @@ try {
   const database = new DatabaseSync(databasePath, { readOnly: true });
   try {
     const schema = database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get();
-    assert.equal(Number(schema?.value), 1);
+    assert.equal(Number(schema?.value), 2);
     const attemptRows = database.prepare(`
       SELECT attempt_id, state_json
       FROM attempts
@@ -1045,14 +1057,18 @@ try {
   assert.ok(contextAppliedCount > 0, "follow-up intent and slot context must be retained");
   if (realLocalAi) {
     assert.ok((answerSourceCounts.get("local_ai") || 0) > 0, "the real model run must accept at least one local classification");
+    assert.ok(finalRuntimeEvidence.localAiAcceptedCount >= 3, "the aggregate diagnostic must expose at least three accepted local answers");
   } else {
     assert.ok((answerSourceCounts.get("rule_fallback") || 0) > 0, "the disabled model run must use rule_fallback");
   }
   const offlineEvidence = {
     llamaServerReady: finalRuntimeEvidence.llamaServerReady,
     localModelReady: finalRuntimeEvidence.localModelReady,
-    answerSource: finalRuntimeEvidence.answerSource,
-    cloudRequestCount: finalRuntimeEvidence.cloudRequestCount
+    answerSource: turnDiagnostics.at(-1)?.answerSource || "unknown",
+    localAiAcceptedCount: finalRuntimeEvidence.localAiAcceptedCount,
+    ruleFallbackCount: finalRuntimeEvidence.ruleFallbackCount,
+    cloudRequestCount: finalRuntimeEvidence.cloudRequestCount,
+    sessionStartedAt: finalRuntimeEvidence.sessionStartedAt
   };
   if (!realLocalAi) assert.equal(offlineEvidence.answerSource, "rule_fallback", "disabled local AI must never be presented as local_ai");
   process.stdout.write(`${JSON.stringify({
