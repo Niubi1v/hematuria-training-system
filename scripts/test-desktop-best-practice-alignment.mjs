@@ -17,10 +17,10 @@ const { digest, loadAttempt, resetMemoryAttemptStore } = require("../server/trai
 
 const journeys = [
   { caseId: "P001", language: "zh", cohort: "tumor", orderId: "LAB-UR-001", department: "肿瘤科" },
-  { caseId: "P001", language: "en", cohort: "tumor", orderId: "LAB-BL-001", department: "Oncology" },
+  { caseId: "P001", language: "en", cohort: "tumor", orderId: "LAB-BL-001", department: "Oncology", expectedOrderStatus: "medical_review_pending" },
   { caseId: "P006", language: "zh", cohort: "infection_female", orderId: "LAB-UR-001", department: "感染科" },
   { caseId: "P009", language: "zh", cohort: "stone_female", orderId: "IMG-US-001", department: "影像科" },
-  { caseId: "P002", language: "zh", cohort: "tumor_female", orderId: "IMG-US-001", department: "肿瘤科" }
+  { caseId: "P002", language: "zh", cohort: "tumor_female", orderId: "IMG-US-001", department: "肿瘤科", expectedOrderStatus: "medical_review_pending" }
 ];
 
 const questions = {
@@ -190,11 +190,21 @@ for (const journey of journeys) {
   assert.equal(response.statusCode, 200);
   metrics.orders += 1;
   const returned = Array.isArray(response.payload.results) ? response.payload.results : [];
-  const matched = returned.some((item) => item.orderId === journey.orderId
-    && item.caseId === journey.caseId
-    && item.provenance === "configured_case_result");
+  const outcomes = Array.isArray(response.payload.orderOutcomes) ? response.payload.orderOutcomes : [];
+  const expectedPending = journey.expectedOrderStatus === "medical_review_pending";
+  const matched = expectedPending
+    ? returned.every((item) => item.orderId !== journey.orderId)
+      && outcomes.some((item) => item.orderId === journey.orderId
+        && item.status === "medical_review_pending"
+        && item.provenance === "source_result_semantic_mismatch"
+        && item.diagnosticEligible === false
+        && item.scoringEligible === false)
+    : returned.some((item) => item.orderId === journey.orderId
+      && item.caseId === journey.caseId
+      && item.provenance === "configured_case_result");
   if (matched) metrics.actionResultMatches += 1;
-  assert(matched, `${attemptId} did not release the exact configured result for ${journey.orderId}`);
+  assert(matched, `${attemptId} did not return the governed outcome for ${journey.orderId}`);
+  if (expectedPending && journey.language === "en") assert.doesNotMatch(JSON.stringify(response.payload), /[\u3400-\u9fff]/u);
 
   response = await stage(response, journey, attemptId, "orders", {});
   metrics.stageSubmissions += 1;
@@ -202,8 +212,10 @@ for (const journey of journeys) {
   const historyEvidence = evidenceOptions.filter((item) => item.sourceStage === 1);
   const measurementEvidence = evidenceOptions.filter((item) => item.sourceStage === 2);
   assert(historyEvidence.length >= 2, `${attemptId} must expose two collected history evidence IDs`);
-  assert(measurementEvidence.length >= 1, `${attemptId} must expose the released measurement evidence ID`);
-  const primaryEvidenceIds = [historyEvidence[0].evidenceId, measurementEvidence[0].evidenceId];
+  if (expectedPending) assert.equal(measurementEvidence.length, 0, `${attemptId} must not expose an unreviewed result as diagnostic evidence`);
+  else assert(measurementEvidence.length >= 1, `${attemptId} must expose the released measurement evidence ID`);
+  const comparisonEvidence = measurementEvidence[0] || historyEvidence[1];
+  const primaryEvidenceIds = [historyEvidence[0].evidenceId, comparisonEvidence.evidenceId];
 
   const stageFeedback = [];
   response = await stage(response, journey, attemptId, "diagnosis", {
@@ -214,8 +226,8 @@ for (const journey of journeys) {
       primary: { diagnosis: caseData.title, evidenceIds: primaryEvidenceIds },
       differentials: [
         { diagnosis: "Differential A", supportEvidenceIds: [historyEvidence[0].evidenceId], opposeEvidenceIds: [] },
-        { diagnosis: "Differential B", supportEvidenceIds: [], opposeEvidenceIds: [measurementEvidence[0].evidenceId] },
-        { diagnosis: "Differential C", supportEvidenceIds: [measurementEvidence[0].evidenceId], opposeEvidenceIds: [] }
+        { diagnosis: "Differential B", supportEvidenceIds: [], opposeEvidenceIds: [comparisonEvidence.evidenceId] },
+        { diagnosis: "Differential C", supportEvidenceIds: [comparisonEvidence.evidenceId], opposeEvidenceIds: [] }
       ]
     }
   });
