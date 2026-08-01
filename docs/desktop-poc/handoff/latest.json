@@ -1,51 +1,62 @@
 {
-  "schemaVersion": 2,
-  "handoffId": "1866364b-20260801-162444",
+  "schemaVersion": 3,
+  "handoffId": "18e2f1b6-20260801-214538",
   "status": "blocked_external_ui_control",
-  "milestone": "desktop-mentor-local-ai-final-candidate-r2",
+  "milestone": "desktop-mentor-local-ai-final-candidate-r3",
   "branch": "codex/hematuria-desktop-mentor-beta-package",
   "worktree": "D:/CodexProjects/worktrees/hematuria-desktop-mentor-beta-package",
-  "packageProductHead": "8fed9433a06723865ba904bce202a10155ab0e4e",
-  "validatedRepositoryHeadBeforeHandoff": "4bb15dfdc87cf1eadcb7b1394201245cb8599bbf",
-  "originalIndependentAcceptance": {
+  "packageProductHead": "8030240eeb459872bca85e056860917e211a5e96",
+  "validatedRepositoryHeadBeforeHandoff": "014fea46293205cb0c6949888277a56063251657",
+  "r2IndependentAcceptance": {
     "verdict": "BLOCKED_PRODUCT_DEFECT",
-    "evidenceDirectory": "D:/HematuriaDesktopAcceptance/Independent-FinalCandidate",
+    "evidenceDirectory": "D:/HematuriaDesktopR2Acceptance/Independent-R2",
     "defects": [
-      "Completed P001 and its final report were not discoverable after a normal restart.",
-      "English learner feedback exposed the internal final 360 score contract.",
-      "The release UI had no authenticated aggregate evidence for local_ai acceptance and cloud request count."
+      "A legacy completed P001 WebView cache was restored into a fresh SQLite store.",
+      "Home, catalog and case training state disagreed.",
+      "A recovered final report exposed raw clinical trajectory action keys."
     ]
   },
-  "r2Fixes": {
-    "sqliteRecovery": {
-      "rootCause": "SQLite retained authoritative server attempts, but the renderer discovered attempts, progress and the full report only through localStorage/sessionStorage keys scoped to a random sidecar port. Shutdown also stopped llama before closing/checkpointing SQLite.",
-      "stableDataDirectory": "%LOCALAPPDATA%/HematuriaTraining/MentorLocalAI-FinalCandidate",
-      "database": "hematuria.sqlite3",
-      "schemaVersion": 2,
-      "strategy": "SQLite attempt snapshots and discovery/progress APIs are authoritative; localStorage is cache only. Schema v1 records rebuild stage feedback and the final report from durable request payloads. SQLite checkpoints before llama shutdown."
+  "rootCause": {
+    "tauriApplicationIdentifier": "cn.hematuria.training.desktop",
+    "webViewUserDataDirectory": "C:/Users/admin/AppData/Local/cn.hematuria.training.desktop/EBWebView",
+    "sqliteDirectory": "%LOCALAPPDATA%/HematuriaTraining/MentorLocalAI-FinalCandidate",
+    "chain": "The home and catalog queried /api/desktop/progress and saw the fresh empty SQLite store. ClinicalTrainingClient hydrated attempt-pointer-v3 and attempt-v3 from the fixed-identifier WebView profile before querying /api/desktop/attempt/state. A 404 left the legacy completed snapshot active; token recovery then resumed and explicitly initialized that stale attemptId, after which desktop autosave wrote the stage-7 snapshot into the new SQLite database.",
+    "localAppDataIsolation": "Custom LOCALAPPDATA isolated the business SQLite directory, but WebView2 continued using the fixed Tauri application identifier user-data directory.",
+    "r2TestGap": "R2 tested handlers, SQLite lifecycle and renderer cache behavior separately; it did not combine a persistent real WebView profile containing a completed attempt with a distinct empty SQLite instance."
+  },
+  "r3StateAuthority": {
+    "sqliteSchemaVersion": 3,
+    "stateStoreId": "UUID v4 generated once per SQLite database and stable across launches",
+    "bootstrapFields": ["stateStoreId", "schemaVersion", "productHead", "serverStateRevision"],
+    "bootstrapEndpoint": "/api/desktop/state/bootstrap",
+    "serverFirst": true,
+    "desktopTrainingBrowserCache": "disabled and legacy/unbound training keys cleared before attempt discovery",
+    "legacyCachePolicy": "legacy_untrusted_cache; never imported into or used to create an SQLite attempt",
+    "homeCatalogCaseAuthority": "SQLite discovery/progress endpoints",
+    "serverUnavailablePolicy": "fail closed without browser-cache fallback"
+  },
+  "conflictMatrix": {
+    "A_oldCacheFreshSqlite": "automated pass; real package root launch created stateStoreId 5cb45132-9150-48a6-8cec-aaf01fb7a849 and remained attempts=0/snapshots=0 before UI control timed out",
+    "B_emptyCacheCompletedSqlite": "SQLite, sidecar and Playwright contract pass; real-Tauri visual confirmation blocked",
+    "C_bidirectionalConflict": "automated pass in both directions; SQLite revision and snapshot win",
+    "D_upgradeAndPathChange": "package launched from a Chinese/space extraction path and used the stable SQLite directory; full UI recovery chain blocked",
+    "E_threeRestarts": "SQLite/sidecar repeated-start and idempotency tests pass; three real-Tauri UI restarts blocked"
+  },
+  "publicReportPresentation": {
+    "typedMappings": {
+      "diagnosis": ["诊断结论", "Diagnosis"],
+      "department": ["会诊科室", "Consulting specialty"],
+      "trigger": ["会诊原因", "Reason for consultation"],
+      "question": ["会诊问题", "Consultation question"],
+      "evidence": ["提供依据", "Evidence provided"],
+      "consult": ["会诊意见", "Consultation advice"],
+      "treatment": ["治疗计划", "Treatment plan"],
+      "perioperative": ["围术期管理", "Perioperative management"]
     },
-    "studentScoreProjection": {
-      "serverWordingUpdated": true,
-      "commonProjectionApplied": true,
-      "chineseStages1To7No360": true,
-      "englishStages1To3No360": true,
-      "finalAndRecoveredReportNo360": true,
-      "internalMaxScore": 360
-    },
-    "aggregateRuntimeDiagnostics": {
-      "schemaVersion": 1,
-      "authenticatedDesktopOnly": true,
-      "fields": [
-        "schemaVersion", "productHead", "runtimeTarget", "model", "modelProfile",
-        "llamaServerReady", "localModelReady", "localAiAcceptedCount",
-        "ruleFallbackCount", "cloudRequestCount", "sessionStartedAt", "generatedAt"
-      ],
-      "forbiddenContentAbsent": [
-        "question", "answer", "prompt", "reply", "caseId", "patient identifiers",
-        "bearer", "token", "secret", "reasoning"
-      ],
-      "copyAndJsonExport": true
-    }
+    "newAndRecoveredUseSameLayer": true,
+    "printUsesSameDom": true,
+    "globalWordDeletionUsed": false,
+    "automatedDom": "Chinese generated/recovered/print pass; bilingual typed mapping pass"
   },
   "medicalSemantics": {
     "sourceProjectionApplied": 4,
@@ -60,72 +71,62 @@
     "timelineEmptyShellsAbsent": true,
     "dataDiff": "zero"
   },
-  "automatedAndPackageContractAcceptance": {
+  "automatedAcceptance": {
+    "stateNamespaceAndCacheIsolation": "pass",
+    "sqliteDiscoveryAndRecovery": "pass",
+    "sidecarLifecycle": "pass",
     "p001ChineseSevenStageDom": "pass",
     "p001EnglishStages1To3Dom": "pass",
     "p003ZeroRound": "pass",
     "rapidDoubleClickIdempotency": "pass",
     "ruleFallbackSevenStage": "pass",
-    "sqliteCompletedAttemptRestart": "pass",
-    "sqliteFinalReportRebuild": "pass",
-    "sqliteCatalogCompletedProgress": "pass",
-    "qwen17bQuestions": 16,
-    "qwen17bAcceptedLocalAiTurns": 15,
-    "qwen17bGovernedFallbackTurns": 1,
-    "currentDiagnosticSessionAcceptedCount": 7,
-    "currentDiagnosticSessionFallbackCount": 1,
+    "ruleFallbackCompletedRestart": "pass",
+    "realLocalAiQuestions": 16,
+    "realLocalAiAccepted": 15,
+    "realLocalAiGovernedFallback": 1,
+    "llamaServerReady": true,
+    "localModelReady": true,
     "cloudRequestCount": 0,
     "fourBComparisonRepeated": false
   },
-  "realPackageLifecycle": {
-    "freshExtractionPath": "D:/HematuriaDesktopR2Acceptance/真实验收 R2 20260801",
-    "testLocalAppData": "D:/HematuriaDesktopR2Acceptance/状态 R2 用户",
+  "realPackageSelfTest": {
+    "freshExtractionPath": "D:/HematuriaDesktopR3SelfTest/R3 真实自验 中文",
+    "freshSqliteRoot": "D:/HematuriaDesktopR3SelfTest/R3 新SQLite 状态",
     "pathsContainChineseAndSpaces": true,
     "verifyPackage": "pass",
-    "rootLauncherStartsTauriSidecarAndModel": "pass",
-    "listenAddresses": ["127.0.0.1"],
-    "rootLauncherNormalCloseRuns": 3,
-    "sqliteWalCheckpointAfterClose": "pass",
-    "residualProcessesAfterGrace": 0,
-    "nsisInstallStartUninstall": "pass",
-    "nsisInstalledFiles": 81,
-    "nsisInstalledBytes": 134009302,
-    "desktopUiSevenStageRestartChain": "blocked_external_ui_control",
-    "desktopControlDetail": "The single Computer Use approval attempt timed out; no browser or source fixture was used as a substitute."
+    "rootLauncherCreatedUniqueTauriWindow": true,
+    "freshSqliteStateStoreId": "5cb45132-9150-48a6-8cec-aaf01fb7a849",
+    "freshSqliteAttemptsBeforeUiControl": 0,
+    "freshSqliteSnapshotsBeforeUiControl": 0,
+    "desktopUiChain": "blocked_external_ui_control",
+    "desktopControlDetail": "The single window-state control approval timed out after the unique real Tauri window was discovered; no second approval or browser/source substitute was used.",
+    "normalCloseRequested": true,
+    "associatedResidualProcesses": 0
   },
   "artifacts": {
-    "directory": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R2",
+    "directory": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R3",
     "mentorZip": {
-      "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R2/HematuriaTraining-Mentor-LocalAI-FinalCandidate-R2.zip",
-      "bytes": 1311861288,
-      "sha256": "e3cd387f95b3e52c1315107735933ffa8d84272f74f0ab40d640af5d67421e92",
+      "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R3/HematuriaTraining-Mentor-LocalAI-FinalCandidate-R3.zip",
+      "bytes": 1311871990,
+      "sha256": "3609a3b2056003c43ea32057371ff51c38028dce9363e6cf69c4a2cac5de7f87",
       "unpackedFiles": 88,
-      "unpackedBytes": 1416378517
+      "unpackedBytes": 1416382709
     },
     "nsis": {
-      "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R2/HematuriaTraining-Mentor-LocalAI-Setup-R2.exe",
-      "bytes": 32437307,
-      "sha256": "a903553a5e65c4eaeda9431159715911d8de8b5c7d1769f43382bd82daf54c66"
+      "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R3/HematuriaTraining-Mentor-LocalAI-Setup-R3.exe",
+      "bytes": 32474434,
+      "sha256": "f6f13507d0322dbf25fae32e8e556527ed833291fabec46f4d74fc4d7707dace"
     },
     "portable": {
-      "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R2/HematuriaTraining-Mentor-LocalAI-Portable-R2.zip",
-      "bytes": 51220838,
-      "sha256": "c606bebe7afc16625641918250515799773d18b9d7f8bbf58eaf4b33dc7432b7"
+      "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R3/HematuriaTraining-Mentor-LocalAI-Portable-R3.zip",
+      "bytes": 51232175,
+      "sha256": "c756fd2283fdb87d230607916f798a740b34af5cba1adea1761cb8ecab0fc1e4"
     },
     "model": {
-      "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R2/Model/Qwen3-1.7B-Q4_K_M.gguf",
+      "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R3/Model/Qwen3-1.7B-Q4_K_M.gguf",
       "bytes": 1282439264,
       "sha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5"
     }
-  },
-  "performance": {
-    "coldRootLauncherReadyMs": 125929,
-    "warmRootLauncherReadyMs": 10792,
-    "llamaModelLoadMs": 1603,
-    "localAiTurnP50Ms": 3342,
-    "localAiTurnP95Ms": 4288,
-    "fullProcessTreePeakWorkingSetBytes": 2850271232,
-    "nsisAppReadyMs": 2942
   },
   "releaseGates": {
     "typescript": "pass",
@@ -133,31 +134,29 @@
     "nextBuildPages": 82,
     "tauriRelease": "pass",
     "nsisBuild": "pass",
-    "playwrightChineseSevenStageAndEnglishStages1To3": "pass",
+    "playwrightR3DefectRegressions": "3 passed",
     "axeSeriousOrCriticalViolations": 0,
     "dataAgentAuthorityAndPresentation": "pass",
     "evidenceGraphIsolation": "pass",
-    "sqliteAndIdempotency": "pass",
-    "sidecarLifecycle": "pass",
     "packageSecretFindings": 0,
     "packageForbiddenFindings": 0,
     "repositorySecretScan": "pass",
     "dataDiff": "zero"
   },
-  "remainingLimitations": [
-    "The R2 real-Tauri seven-stage close/reopen UI chain remains unexecuted because external desktop control approval timed out.",
-    "Attempts have a 24-hour server recovery window in this teaching Beta.",
-    "1023 items remain medical_review_pending; 121 source projection candidates remain rejected; one medical conflict remains isolated.",
-    "The Windows candidate is unsigned and has no automatic update or macOS package.",
-    "This is a medical teaching Beta and must not be used for real diagnosis or treatment."
-  ],
   "blockingIssues": [
     {
       "code": "BLOCKED_EXTERNAL_UI_CONTROL",
       "severity": "release-verification",
-      "reproduction": "Launch the R2 root launcher, request Computer Use control of the unique Tauri window, and observe that the single approval request times out before the first state capture.",
+      "reproduction": "Launch D:/HematuriaDesktopR3SelfTest/R3 真实自验 中文/启动血尿训练系统.cmd, discover the unique 血尿临床问诊训练系统 Tauri window, request the first window-state capture, and observe the desktop-control approval timeout.",
       "productFailureObserved": false
     }
+  ],
+  "remainingLimitations": [
+    "The five real-Tauri conflict/restart scenarios and user-visible final-report recovery chain remain blocked by external desktop-control approval timeout.",
+    "Attempts have a 24-hour server recovery window in this teaching Beta.",
+    "1023 items remain medical_review_pending; 121 source projection candidates remain rejected; one medical conflict remains isolated.",
+    "The Windows candidate is unsigned and has no automatic update or macOS package.",
+    "This is a medical teaching Beta and must not be used for real diagnosis or treatment."
   ],
   "releaseScope": {
     "productionModified": false,
@@ -166,5 +165,5 @@
     "tencentCloudModified": false,
     "oldMentorPackageOverwritten": false
   },
-  "recommendedNextStep": "Do not mark ready_for_review yet. Re-run the independent lightweight real-Tauri stage/restart chain after desktop control is available; use the immutable R2 hashes in this handoff."
+  "recommendedNextStep": "Do not mark ready_for_review. Re-run only the five real-Tauri state conflict/restart scenarios and recovered report visual checks against the immutable R3 hashes when desktop control is available."
 }
