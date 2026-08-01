@@ -10,8 +10,10 @@ process.env.TRAINING_API_RATE_LIMIT_PER_MINUTE = "1000000";
 const require = createRequire(import.meta.url);
 const handler = require("../api/training-action.js");
 const cases = require("../data/cases.json");
+const runtime = require("../desktop/clinical-content-triage-runtime.json");
 const { desktopClinicalTriageSummary } = require("../server/desktopClinicalContentProjection.js");
 const { digest, loadAttempt, resetMemoryAttemptStore } = require("../server/trainingAttemptStore.js");
+const { containsCjk } = require("../shared/dataAgentPresentation.js");
 
 resetMemoryAttemptStore();
 let requestCounter = 0;
@@ -24,10 +26,7 @@ async function call(body, token = "") {
   const req = {
     method: "POST",
     body: { ...body, requestId },
-    headers: {
-      "x-idempotency-key": requestId,
-      ...(token ? { "x-training-state": token } : {})
-    },
+    headers: { "x-idempotency-key": requestId, ...(token ? { "x-training-state": token } : {}) },
     socket: { remoteAddress: `desktop-clinical-triage-${requestCounter}` }
   };
   const res = {
@@ -40,53 +39,69 @@ async function call(body, token = "") {
   return { statusCode, payload, token: headers["x-training-state"] || token };
 }
 
-async function stage(response, caseId, attemptId, stageKey, submission) {
-  const next = await call({
-    action: "stage-feedback",
-    caseId,
-    attemptId,
-    mode: "free",
-    language: "zh",
-    stageKey,
-    submission
-  }, response.token);
-  assert.equal(next.statusCode, 200, `${caseId}/${stageKey}:${JSON.stringify(next.payload)}`);
+async function stage(response, caseId, attemptId, stageKey, submission, language = "zh") {
+  const next = await call({ action: "stage-feedback", caseId, attemptId, mode: "free", language, stageKey, submission }, response.token);
+  assert.equal(next.statusCode, 200, `${caseId}/${language}/${stageKey}:${JSON.stringify(next.payload)}`);
   return next;
 }
 
-async function startStageTwo(caseId, suffix) {
-  const attemptId = `triage-${caseId}-${suffix}`;
-  let response = await call({ action: "init-attempt", caseId, attemptId, mode: "free", language: "zh" });
+async function startStageTwo(caseId, suffix, language = "zh") {
+  const attemptId = `triage-${caseId}-${suffix}-${language}`;
+  let response = await call({ action: "init-attempt", caseId, attemptId, mode: "free", language });
   assert.equal(response.statusCode, 200);
-  for (const question of ["哪里不舒服？", "多久了？"]) {
-    response = await call({ action: "history-log", caseId, attemptId, mode: "free", language: "zh", question }, response.token);
+  const questions = language === "en" ? ["Where is the discomfort?", "How long has it been present?"] : ["哪里不舒服？", "多久了？"];
+  for (const question of questions) {
+    response = await call({ action: "history-log", caseId, attemptId, mode: "free", language, question }, response.token);
     assert.equal(response.statusCode, 200);
   }
-  response = await stage(response, caseId, attemptId, "history", { askedQuestions: ["哪里不舒服？", "多久了？"] });
+  response = await stage(response, caseId, attemptId, "history", { askedQuestions: questions }, language);
   return { attemptId, response };
 }
 
-async function placeOrder(response, caseId, attemptId, input) {
-  const next = await call({ action: "order", caseId, attemptId, mode: "free", language: "zh", input }, response.token);
-  assert.equal(next.statusCode, 200, `${caseId}/${input}:${JSON.stringify(next.payload)}`);
+async function placeOrder(response, caseId, attemptId, input, language = "zh") {
+  const next = await call({ action: "order", caseId, attemptId, mode: "free", language, input }, response.token);
+  assert.equal(next.statusCode, 200, `${caseId}/${language}/${input}:${JSON.stringify(next.payload)}`);
   return next;
 }
 
-function outcome(response, status) {
-  return (response.payload.orderOutcomes || []).find((item) => item.status === status);
+function outcome(response, status, orderId = "") {
+  return (response.payload.orderOutcomes || []).find((item) => item.status === status && (!orderId || item.orderId === orderId));
+}
+
+function assertNoEmptyTrajectoryShells(trajectory, caseId) {
+  const groups = ["questions", "acquiredEvidence", "examinationsAndOrders", "diagnosisFormation", "consultations", "treatmentOrders", "perioperativeManagement", "unnecessaryInvestigations"];
+  for (const group of groups) {
+    for (const item of trajectory[group] || []) {
+      assert(String(item.action || "").trim() || String(item.canonical || "").trim(), `${caseId}/${group}:empty_action`);
+      assert(String(item.result || "").trim(), `${caseId}/${group}:empty_result`);
+      assert.doesNotMatch(String(item.result), /[:：]\s*$/u, `${caseId}/${group}:empty_colon_shell`);
+    }
+  }
 }
 
 const summary = desktopClinicalTriageSummary();
 assert.deepEqual(summary, {
   sourcePackSha256: "832cd6c0935a129258b5844db403f12a471949cabc36caecd6120173e8b68a46",
-  sourceProjectionApplied: 66,
-  sourceProjectionRejected: 59,
+  sourceProjectionApplied: 4,
+  sourceProjectionRejected: 121,
   safeSimulatedNormalApplied: 75,
   noSpecimenOrNotIndicated: 552,
   noReportOrNotIndicated: 952,
-  medicalReviewPending: 961,
+  medicalReviewPending: 1023,
   medicalConflicts: 1
 });
+
+const semanticReasons = ["cross_domain_or_mixed_order_content", "cross_order_duplicate_result", "multiple_timepoints_or_states", "recommendation_or_uncertain_result"];
+const withdrawalReasons = Object.fromEntries(semanticReasons.map((reason) => [reason, runtime.sourceProjectionRejected.filter((item) => item.reason === reason).length]));
+assert.deepEqual(withdrawalReasons, {
+  cross_domain_or_mixed_order_content: 7,
+  cross_order_duplicate_result: 37,
+  multiple_timepoints_or_states: 1,
+  recommendation_or_uncertain_result: 17
+});
+assert.equal(runtime.sourceProjection.length, 4);
+assert.equal(Object.values(withdrawalReasons).reduce((sum, count) => sum + count, 0), 62);
+assert(runtime.sourceProjection.every((item) => item.itemId === "LAB-UR-001" && item.diagnosticEligible === true && item.scoringEligible === false));
 
 const representativeCases = [
   { caseId: "P001", cohort: "tumor" },
@@ -104,39 +119,60 @@ for (const journey of representativeCases) {
   let { response } = started;
   const { attemptId } = started;
 
-  response = await placeOrder(response, journey.caseId, attemptId, "LAB-UR-002");
-  const projection = (response.payload.results || []).find((item) => item.provenance === "case_source_projection");
-  assert(projection, `${journey.caseId}:source_projection_not_returned`);
-  assert.equal(projection.scoringEligible, false);
-  assert.equal(projection.diagnosticEligible, true);
-  assert(outcome(response, "reported"));
+  response = await placeOrder(response, journey.caseId, attemptId, "LAB-UR-001");
+  if (journey.caseId === "P011") {
+    const pending = outcome(response, "medical_review_pending", "LAB-UR-001");
+    assert(pending);
+    assert.equal(pending.scoringEligible, false);
+    assert.equal(pending.diagnosticEligible, false);
+    assert.equal((response.payload.results || []).length, 0);
+  } else {
+    const reported = outcome(response, "reported", "LAB-UR-001");
+    assert(reported, `${journey.caseId}:urinalysis_not_reported`);
+    const urinalysis = (response.payload.results || []).find((item) => item.orderId === "LAB-UR-001");
+    assert(urinalysis);
+    assert(String(urinalysis.result).trim());
+    assert.doesNotMatch(urinalysis.result, /尿检\s*[:：]/u);
+    assert.equal(urinalysis.result.split("\n").length, 1, `${journey.caseId}:duplicate_urinalysis_result`);
+    if (journey.caseId === "P001") {
+      assert.equal(urinalysis.result, "红细胞 5562个/μl");
+      assert.equal((urinalysis.result.match(/红细胞\s*5562个\/μl/gu) || []).length, 1);
+    }
+  }
+
+  response = await placeOrder(response, journey.caseId, attemptId, "LAB-BL-001");
+  const unsafeCbc = outcome(response, "medical_review_pending", "LAB-BL-001");
+  assert(unsafeCbc, `${journey.caseId}:cross_domain_cbc_not_isolated`);
+  assert.equal(unsafeCbc.scoringEligible, false);
+  assert.equal(unsafeCbc.diagnosticEligible, false);
+  assert.equal((response.payload.results || []).length, 0);
+  if (journey.caseId === "P001") assert.doesNotMatch(JSON.stringify(response.payload), /糖化血红蛋白|梅毒抗体/u);
 
   if (journey.caseId === "P001") {
+    response = await placeOrder(response, journey.caseId, attemptId, "LAB-UR-002");
+    assert(outcome(response, "medical_review_pending", "LAB-UR-002"));
+    assert.equal((response.payload.results || []).length, 0);
     response = await call({ action: "exam", caseId: journey.caseId, attemptId, mode: "free", language: "zh", input: "腰部包块" }, response.token);
     assert.equal(response.statusCode, 200);
     assert.equal(response.payload.provenance, "simulated_normal");
     assert.equal(response.payload.scoringEligible, false);
     assert.equal(response.payload.diagnosticEligible, false);
-
-    response = await placeOrder(response, journey.caseId, attemptId, "LAB-UR-005");
-    assert(outcome(response, "no_specimen"));
-    assert.equal((response.payload.results || []).length, 0);
-
     response = await placeOrder(response, journey.caseId, attemptId, "KUB腹部平片");
     assert(outcome(response, "no_indication"));
-    assert.match(outcome(response, "no_indication").message, /无明确开立适应证.*未实施/u);
-    assert.equal((response.payload.results || []).length, 0);
-
-    response = await placeOrder(response, journey.caseId, attemptId, "LAB-UR-003");
-    assert(outcome(response, "medical_review_pending"));
-    assert.equal((response.payload.results || []).length, 0);
   }
 
   if (journey.caseId === "P006") {
-    response = await placeOrder(response, journey.caseId, attemptId, "尿脱落细胞学");
-    assert(outcome(response, "no_specimen"));
-    assert.match(outcome(response, "no_specimen").message, /未取材.*无病理报告/u);
-    assert.equal((response.payload.results || []).length, 0, "pathology must not fabricate a normal report without a specimen");
+    response = await placeOrder(response, journey.caseId, attemptId, "LAB-UR-008");
+    assert(outcome(response, "medical_review_pending", "LAB-UR-008"), "hypothetical culture result must remain pending review");
+    assert.equal((response.payload.results || []).length, 0);
+  }
+
+  if (journey.caseId === "P011") {
+    for (const orderId of ["LAB-UR-003", "LAB-BL-003", "IMG-US-001"]) {
+      response = await placeOrder(response, journey.caseId, attemptId, orderId);
+      assert(outcome(response, "medical_review_pending"), `${journey.caseId}/${orderId}:uncertain_or_mixed_result_not_isolated`);
+      assert.equal((response.payload.results || []).length, 0);
+    }
   }
 
   response = await stage(response, journey.caseId, attemptId, "orders", {});
@@ -144,9 +180,10 @@ for (const journey of representativeCases) {
   const historyEvidence = evidenceOptions.filter((item) => item.sourceStage === 1);
   const measurementEvidence = evidenceOptions.filter((item) => item.sourceStage === 2);
   assert(historyEvidence.length >= 1);
-  assert(measurementEvidence.some((item) => /LAB-UR-002|红细胞|尿沉渣/u.test(item.label)), `${journey.caseId}:projection_not_in_evidence_graph`);
-  assert(!evidenceOptions.some((item) => /双侧腰部未触及明显包块/u.test(item.label)), "simulated normal must not enter diagnostic evidence options");
-  const selectedIds = [historyEvidence[0].evidenceId, measurementEvidence[0].evidenceId];
+  if (journey.caseId === "P011") assert.equal(measurementEvidence.length, 0, "unconfirmed P011 results must not enter evidence options");
+  else assert(measurementEvidence.some((item) => /红细胞|尿常规/u.test(item.label)), `${journey.caseId}:urinalysis_not_in_evidence_graph`);
+  assert(!evidenceOptions.some((item) => /糖化血红蛋白|梅毒抗体|双侧腰部未触及明显包块/u.test(item.label)));
+  const selectedIds = [historyEvidence[0].evidenceId, ...(measurementEvidence[0] ? [measurementEvidence[0].evidenceId] : [])];
 
   response = await stage(response, journey.caseId, attemptId, "diagnosis", {
     diagnosis: caseData.diagnosis,
@@ -156,27 +193,19 @@ for (const journey of representativeCases) {
       primary: { diagnosis: caseData.diagnosis, evidenceIds: selectedIds },
       differentials: [
         { diagnosis: "感染", supportEvidenceIds: [selectedIds[0]], opposeEvidenceIds: [] },
-        { diagnosis: "结石", supportEvidenceIds: [], opposeEvidenceIds: [selectedIds[1]] },
-        { diagnosis: "肿瘤", supportEvidenceIds: [selectedIds[1]], opposeEvidenceIds: [] }
+        { diagnosis: "结石", supportEvidenceIds: [], opposeEvidenceIds: selectedIds.slice(1) },
+        { diagnosis: "肿瘤", supportEvidenceIds: selectedIds.slice(1), opposeEvidenceIds: [] }
       ]
     }
   });
   response = await call({
-    action: "mdt",
-    caseId: journey.caseId,
-    attemptId,
-    mode: "free",
-    language: "zh",
-    departments: ["影像科"],
-    purpose: "核对病例相关影像问题",
+    action: "mdt", caseId: journey.caseId, attemptId, mode: "free", language: "zh",
+    departments: ["影像科"], purpose: "核对病例相关影像问题",
     consultRequests: [{ department: "影像科", purpose: "核对病例相关影像问题", question: "还需补充哪些证据？", evidenceIds: selectedIds }]
   }, response.token);
   assert.equal(response.statusCode, 200);
   response = await stage(response, journey.caseId, attemptId, "consult", {
-    consultNeeded: "required",
-    consultDepartments: ["影像科"],
-    consultPurpose: "核对病例相关影像问题",
-    consultQuestions: "还需补充哪些证据？"
+    consultNeeded: "required", consultDepartments: ["影像科"], consultPurpose: "核对病例相关影像问题", consultQuestions: "还需补充哪些证据？"
   });
   response = await stage(response, journey.caseId, attemptId, "treatment", {
     immediateTreatment: "评估急诊与入院需要并监测生命体征",
@@ -194,26 +223,36 @@ for (const journey of representativeCases) {
   const scored = await call({ action: "score", caseId: journey.caseId, attemptId, mode: "free", language: "zh" }, response.token);
   assert.equal(scored.statusCode, 200);
   assert.equal(scored.payload.max, 360);
-  assert(scored.payload.clinicalTrajectory);
-  if (journey.caseId === "P001") {
-    assert((scored.payload.clinicalTrajectory.unnecessaryInvestigations || []).some((item) => /无明确开立适应证/u.test(item.result)));
-  }
+  assertNoEmptyTrajectoryShells(scored.payload.clinicalTrajectory, journey.caseId);
 
   const stored = await loadAttempt({
-    caseId: journey.caseId,
-    attemptId,
-    token: scored.token,
-    requestId: `inspect-${attemptId}`,
-    requestDigest: digest(`inspect-${attemptId}`)
+    caseId: journey.caseId, attemptId, token: scored.token,
+    requestId: `inspect-${attemptId}`, requestDigest: digest(`inspect-${attemptId}`)
   });
   assert.equal(stored.state.status, "completed");
-  const projectedNodes = stored.state.evidenceGraph.filter((node) => node.provenance === "case_source_projection");
-  assert(projectedNodes.some((node) => node.eventType === "result_returned" && node.diagnosticEligible === true && node.scoringEligible === false));
-  const simulatedNodes = stored.state.evidenceGraph.filter((node) => node.provenance === "simulated_normal");
-  assert(simulatedNodes.every((node) => node.diagnosticEligible === false && node.scoringEligible === false && node.rubricMappings.length === 0));
+  assert(!stored.state.evidenceGraph.some((node) => node.provenance === "source_result_semantic_mismatch" && node.eventType === "result_returned"));
+  assert(!stored.state.evidenceGraph.some((node) => node.provenance === "source_projection_semantic_mismatch" && node.eventType === "result_returned"));
   assert(!stored.state.evidenceGraph.some((node) => node.provenance === "medical_review_pending" && node.eventType === "result_returned"));
+  assert(!stored.state.evidenceGraph.some((node) => /糖化血红蛋白|梅毒抗体/u.test(String(node.result || ""))));
   journeyResults.push({ caseId: journey.caseId, cohort: journey.cohort, completed: true, evidenceNodes: stored.state.evidenceGraph.length });
 }
+
+const english = await startStageTwo("P001", "english-stage-1-3", "en");
+let englishResponse = await placeOrder(english.response, "P001", english.attemptId, "CBC", "en");
+assert(outcome(englishResponse, "medical_review_pending", "LAB-BL-001"));
+assert.equal((englishResponse.payload.results || []).length, 0);
+assert.equal(containsCjk(JSON.stringify(englishResponse.payload)), false);
+englishResponse = await stage(englishResponse, "P001", english.attemptId, "orders", {}, "en");
+const englishEvidence = englishResponse.payload.evidenceOptions || [];
+const englishSelected = englishEvidence.filter((item) => item.sourceStage <= 2).slice(0, 2).map((item) => item.evidenceId);
+assert(englishSelected.length >= 1);
+englishResponse = await stage(englishResponse, "P001", english.attemptId, "diagnosis", {
+  diagnosis: "Bladder tumour",
+  differentials: "Infection; stone disease",
+  confirmatoryTests: "Urinalysis; imaging",
+  evidenceSelections: { primary: { diagnosis: "Bladder tumour", evidenceIds: englishSelected }, differentials: [] }
+}, "en");
+assert.equal(englishResponse.statusCode, 200);
 
 const conflict = await startStageTwo("P004", "conflict");
 const conflictOrder = await placeOrder(conflict.response, "P004", conflict.attemptId, "双肾+输尿管CT平扫+增强");
@@ -222,4 +261,10 @@ assert.equal(outcome(conflictOrder, "medical_review_pending").provenance, "medic
 assert.equal((conflictOrder.payload.results || []).length, 0);
 
 assert.doesNotMatch(JSON.stringify(journeyResults), /undefined|\[object Object\]/iu);
-console.log(`DESKTOP_CLINICAL_TRIAGE_RESULT ${JSON.stringify({ summary, journeys: journeyResults, medicalConflictPreserved: 1 })}`);
+console.log(`DESKTOP_CLINICAL_TRIAGE_RESULT ${JSON.stringify({
+  summary,
+  sourceProjectionAudit: { audited: 66, retained: 4, withdrawn: 62, withdrawalReasons, pendingMedicalReview: 1023 },
+  journeys: journeyResults,
+  englishP001StagesCompleted: 3,
+  medicalConflictPreserved: 1
+})}`);

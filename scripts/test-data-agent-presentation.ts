@@ -37,6 +37,9 @@ const physicalExamItems = require("../data/physical_exam_items.json") as Array<{
   studentHint?: string;
 }>;
 const handler = require("../api/training-action.js");
+const { assessClinicalResult } = require("../shared/clinicalResultSemantics.js") as {
+  assessClinicalResult(input: Record<string, unknown>): { compatible: boolean; reason: string; normalizedResult: string };
+};
 const {
   ENGLISH_METADATA_PLACEHOLDER,
   ENGLISH_ORDER_PLACEHOLDER,
@@ -86,8 +89,42 @@ for (const result of results) {
   assert.equal(containsCjk((presented.abnormalFlags as string[] || []).join(" ")), false, `${result.resultId}/abnormalFlags must not expose CJK`);
   if (presented.metadataStatus === "awaiting_reviewed_metadata") pendingMetadataCount += 1;
 }
-assert.equal(pendingMetadataCount, 28, "all 28 numeric final lab results with missing metadata must fail closed");
+assert.equal(pendingMetadataCount, 26, "all 26 genuinely numeric final lab results with missing metadata must fail closed; numbered narrative items are not measurements");
 assert.equal(containsCjk(ENGLISH_METADATA_PLACEHOLDER), false);
+
+const p001UrinalysisSource = results.find((item) => item.caseId === "P001" && item.orderId === "LAB-UR-001");
+const p001UrinalysisOrder = catalogs.find((item) => item.orderId === "LAB-UR-001");
+assert(p001UrinalysisSource && p001UrinalysisOrder);
+const p001Urinalysis = presentOrderResult(p001UrinalysisOrder, p001UrinalysisSource, "zh");
+assert.equal(p001Urinalysis.value, "红细胞 5562个/μl");
+assert.equal(p001Urinalysis.impression, "");
+assert.equal(p001Urinalysis.result, "红细胞 5562个/μl");
+assert.equal((String(p001Urinalysis.result).match(/红细胞\s*5562个\/μl/gu) || []).length, 1);
+assert.doesNotMatch(String(p001Urinalysis.result), /尿检\s*[:：]/u);
+
+const semanticallyUnsafeConfiguredResults = [
+  ["P001", "LAB-BL-001"],
+  ["P002", "LAB-BL-001"],
+  ["P006", "LAB-BL-001"],
+  ["P006", "LAB-UR-008"],
+  ["P009", "LAB-BL-001"],
+  ["P011", "LAB-UR-001"],
+  ["P011", "LAB-UR-003"],
+  ["P011", "LAB-BL-003"],
+  ["P011", "IMG-US-001"]
+] as const;
+for (const [caseId, orderId] of semanticallyUnsafeConfiguredResults) {
+  const result = results.find((item) => item.caseId === caseId && item.orderId === orderId);
+  const order = catalogs.find((item) => item.orderId === orderId);
+  assert(result && order, `${caseId}/${orderId}:missing_fixture_binding`);
+  const assessment = assessClinicalResult({
+    domain: order.primaryCategory === "检验" ? "laboratory" : "",
+    itemId: orderId,
+    displayName: order.displayName,
+    result: [result.value, result.impression].filter(Boolean).join("\n")
+  });
+  assert.equal(assessment.compatible, false, `${caseId}/${orderId}:unsafe_result_not_isolated`);
+}
 
 const presentedExams = physicalExamItems.map((item) => presentPhysicalExamItem(item, "en"));
 assert.equal(presentedExams.length, physicalExamItems.length, "physical examination item count must remain stable");

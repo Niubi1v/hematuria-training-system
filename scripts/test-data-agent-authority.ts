@@ -16,6 +16,8 @@ const results = require("../data/order_results_structured.json") as Array<{
   orderId: string;
   resultId: string;
   status: "final" | "not_available" | "not_performed";
+  value?: string;
+  impression?: string;
   prerequisites?: string[];
 }>;
 const rubrics = require("../data/event_rubrics.json") as Array<{
@@ -33,6 +35,9 @@ const { presentOrderCatalogItem } = require("../shared/dataAgentPresentation.js"
     item: Record<string, unknown>,
     language: "zh" | "en"
   ): Record<string, unknown> & { translationAvailable: boolean };
+};
+const { assessClinicalResult } = require("../shared/clinicalResultSemantics.js") as {
+  assessClinicalResult(input: Record<string, unknown>): { compatible: boolean };
 };
 const handler = require("../api/training-action.js");
 const { resetMemoryAttemptStore } = require("../server/trainingAttemptStore.js");
@@ -218,6 +223,15 @@ async function testPrerequisiteRecovery() {
   assert.equal(scenarios.length, 58);
 
   for (const [index, { item, language }] of scenarios.entries()) {
+    const configuredOrder = catalogs.find((orderItem) => orderItem.orderId === item.orderId);
+    assert(configuredOrder);
+    const semanticallyCompatible = assessClinicalResult({
+      domain: configuredOrder.primaryCategory === "检验" ? "laboratory" : "",
+      itemId: item.orderId,
+      displayName: configuredOrder.displayName,
+      result: [item.value, item.impression].filter(Boolean).join("\n")
+    }).compatible;
+    const expectedReport = item.status === "final" && semanticallyCompatible;
     const prerequisiteId = item.prerequisites?.[0] || "";
     const recovery = await startStageTwo(item.caseId, language, `recovery-${index}`);
     let response = await order(
@@ -237,8 +251,8 @@ async function testPrerequisiteRecovery() {
 
     response = await order(recovery.attemptId, item.caseId, language, prerequisiteId, response);
     response = await order(recovery.attemptId, item.caseId, language, item.orderId, response);
-    assert.equal(resultIds(response.payload).includes(item.resultId), item.status === "final");
-    if (item.status !== "final") {
+    assert.equal(resultIds(response.payload).includes(item.resultId), expectedReport);
+    if (!expectedReport) {
       const expectedStatus = item.status === "not_performed" ? "not_performed" : "medical_review_pending";
       assert.equal(
         ((response.payload.orderOutcomes || []) as Array<{ orderId: string; status: string }>).some((outcome) => outcome.orderId === item.orderId && outcome.status === expectedStatus),
@@ -262,7 +276,7 @@ async function testPrerequisiteRecovery() {
       item.orderId,
       controlResponse
     );
-    assert.equal(resultIds(controlResponse.payload).includes(item.resultId), item.status === "final");
+    assert.equal(resultIds(controlResponse.payload).includes(item.resultId), expectedReport);
   }
   return { prerequisiteRecoveryScenarios: scenarios.length, positiveControls: scenarios.length };
 }
