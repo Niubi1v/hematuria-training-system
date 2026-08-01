@@ -26,6 +26,8 @@ const {
 } = require("../server/evidenceGraph.js");
 const { commitAttempt, digest, loadAttempt, registerAttempt } = require("../server/trainingAttemptStore.js");
 const { desktopClinicalContent } = require("../server/desktopClinicalContentProjection.js");
+const { assessClinicalResult } = require("../shared/clinicalResultSemantics.js");
+const { sanitizeClinicalTrajectory } = require("../shared/clinicalTrajectoryPresentation.js");
 const { BILINGUAL_CONFLICT_REASON, filterQuarantinedEvents } = require("../server/bilingualConflictQuarantine.js");
 const { setServerTiming } = require("../server/performanceTiming.js");
 const { parseJsonBody } = require("../server/requestSecurity.js");
@@ -334,6 +336,15 @@ function handleOrder(caseData, input, previousOrderIds, language) {
     return result ? [{ order, result }] : [];
   });
   const sourceRowsByOrderId = new Map(sourceRows.map((item) => [sourceOrderId(item.order), item.result]));
+  const sourceAssessmentByOrderId = new Map(sourceRows.map(({ order, result }) => {
+    const canonicalId = sourceOrderId(order);
+    return [canonicalId, assessClinicalResult({
+      domain: String(order.primaryCategory || "") === "检验" ? "laboratory" : "",
+      itemId: canonicalId,
+      displayName: order.displayName,
+      result: [result.value, result.impression, result.result].filter(Boolean).join("\n")
+    })];
+  }));
   const triageRowsByOrderId = new Map(orders.map((order) => {
     const canonicalId = sourceOrderId(order);
     const triaged = desktopClinicalContent({
@@ -343,7 +354,19 @@ function handleOrder(caseData, input, previousOrderIds, language) {
     });
     return [canonicalId, triaged];
   }));
-  const reportable = sourceRows.filter(({ result }) => orderResultIsReportable(result));
+  const triageAssessmentByOrderId = new Map(orders.map((order) => {
+    const canonicalId = sourceOrderId(order);
+    const triaged = triageRowsByOrderId.get(canonicalId);
+    return [canonicalId, triaged?.classification === "source_projection" ? assessClinicalResult({
+      domain: triaged.domain,
+      itemId: canonicalId,
+      displayName: order.displayName,
+      result: triaged.result,
+      projection: true
+    }) : null];
+  }));
+  const reportable = sourceRows.filter(({ order, result }) => orderResultIsReportable(result)
+    && sourceAssessmentByOrderId.get(sourceOrderId(order))?.compatible === true);
   const unmetPrerequisites = [...new Set(sourceRows.flatMap(({ result }) => (result.prerequisites || []).filter((id) => !available.has(id))))];
   const acceptedOrderIds = orders.filter((order) => {
     const canonicalId = sourceOrderId(order);
@@ -370,10 +393,12 @@ function handleOrder(caseData, input, previousOrderIds, language) {
     const canonicalId = sourceOrderId(order);
     const sourceResult = sourceRowsByOrderId.get(canonicalId);
     const triaged = triageRowsByOrderId.get(canonicalId);
+    const triageAssessment = triageAssessmentByOrderId.get(canonicalId);
     if (!acceptedOrderIds.includes(canonicalId)
       || configuredResultOrderIds.has(canonicalId)
       || sourceResult?.status === "not_performed"
-      || triaged?.classification !== "source_projection") return [];
+      || triaged?.classification !== "source_projection"
+      || triageAssessment?.compatible !== true) return [];
     const projected = {
       caseId: caseData.id,
       orderId: canonicalId,
@@ -428,6 +453,8 @@ function handleOrder(caseData, input, previousOrderIds, language) {
     }
     const result = sourceRowsByOrderId.get(canonicalId);
     const triaged = triageRowsByOrderId.get(canonicalId);
+    const sourceAssessment = sourceAssessmentByOrderId.get(canonicalId);
+    const triageAssessment = triageAssessmentByOrderId.get(canonicalId);
     const missingPrerequisites = (result?.prerequisites || []).filter((id) => !available.has(id));
     if (missingPrerequisites.length) {
       return {
@@ -435,6 +462,16 @@ function handleOrder(caseData, input, previousOrderIds, language) {
         message: language === "en"
           ? `${displayName}: prerequisite missing (${missingPrerequisites.join(", ")}); the report remains locked.`
           : `${displayName}：缺少前置条件（${missingPrerequisites.join("、")}），暂不释放报告。`
+      };
+    }
+    if (orderResultIsReportable(result) && sourceAssessment?.compatible !== true) {
+      return {
+        orderId: canonicalId, displayName, status: "medical_review_pending", provenance: "source_result_semantic_mismatch",
+        reviewStatus: "pending_human_medical_review", reviewReason: sourceAssessment?.reason || "order_result_semantic_mismatch",
+        scoringEligible: false, diagnosticEligible: false,
+        message: language === "en"
+          ? `${displayName}: the source result does not map safely to this examination and remains isolated pending medical review.`
+          : `${displayName}：现有 source 结果无法安全归属于该检查，等待医学审核；当前不进入诊断、治疗或评分证据。`
       };
     }
     if (orderResultIsReportable(result)) {
@@ -450,6 +487,16 @@ function handleOrder(caseData, input, previousOrderIds, language) {
         message: language === "en"
           ? `${displayName}: this examination was not performed in the case, so no report exists.`
           : `${displayName}：本病例未实施该项目，因此无报告。`
+      };
+    }
+    if (triaged?.classification === "source_projection" && triageAssessment?.compatible !== true) {
+      return {
+        orderId: canonicalId, displayName, status: "medical_review_pending", provenance: "source_projection_semantic_mismatch",
+        reviewStatus: "pending_human_medical_review", reviewReason: triageAssessment?.reason || "order_result_semantic_mismatch",
+        scoringEligible: false, diagnosticEligible: false,
+        message: language === "en"
+          ? `${displayName}: this source projection was withdrawn after semantic review and remains isolated from diagnosis, treatment, and scoring.`
+          : `${displayName}：该 source projection 经语义复核后已撤回，等待医学审核；当前不进入诊断、治疗或评分证据。`
       };
     }
     if (triaged?.classification === "source_projection") {
@@ -994,7 +1041,7 @@ module.exports = async function handler(req, res) {
       state.completedAt = at;
       state.finalScore = report.total;
       state.scoringVersion = report.scoringVersion;
-      report.clinicalTrajectory = buildClinicalTrajectory(state, report, language);
+      report.clinicalTrajectory = sanitizeClinicalTrajectory(buildClinicalTrajectory(state, report, language), language);
       setServerTiming(res, { score: Date.now() - startedAt });
       return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: report });
     }

@@ -84,7 +84,9 @@ export type OrderResultLog = {
     status: "reported" | "no_indication" | "not_performed" | "no_specimen" | "not_provided" | "medical_review_pending" | "prerequisite_missing" | "duplicate" | "unrecognized" | "unavailable";
     provenance: string;
     reviewStatus?: "pending_human_medical_review" | "not_required";
+    reviewReason?: string;
     scoringEligible?: boolean;
+    diagnosticEligible?: boolean;
     resultId?: string;
     message: string;
   }>;

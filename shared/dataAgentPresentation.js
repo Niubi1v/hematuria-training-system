@@ -1,3 +1,5 @@
+const { projectClinicalResult } = require("./clinicalResultSemantics.js");
+
 const CJK_PATTERN = /[\u3400-\u9fff]/u;
 const ENGLISH_ORDER_PLACEHOLDER = "Awaiting reviewed order-name translation";
 const ENGLISH_CATEGORY_PLACEHOLDER = "Awaiting reviewed category translation";
@@ -206,26 +208,27 @@ function needsReviewedMetadata(order, result) {
 }
 
 function presentOrderResult(order, result, language = "zh") {
-  const metadataStatus = needsReviewedMetadata(order, result) ? "awaiting_reviewed_metadata" : "complete";
+  const projectedResult = { ...result, ...projectClinicalResult(result, order?.displayName) };
+  const metadataStatus = needsReviewedMetadata(order, projectedResult) ? "awaiting_reviewed_metadata" : "complete";
   if (language !== "en") {
     return {
-      ...result,
+      ...projectedResult,
       orderCategory: `${order.primaryCategory}/${order.secondaryCategory}`,
-      abnormalLevel: (result.abnormalFlags || []).join("、") || result.status,
+      abnormalLevel: (projectedResult.abnormalFlags || []).join("、") || projectedResult.status,
       metadataStatus,
       translationStatus: "source_language"
     };
   }
 
   const catalog = presentOrderCatalogItem(order, language);
-  const originalValue = String(result.value || "");
-  const originalImpression = String(result.impression || "");
+  const originalValue = String(projectedResult.value || "");
+  const originalImpression = String(projectedResult.impression || "");
   const value = safeEnglishText(originalValue, originalValue ? ENGLISH_RESULT_PLACEHOLDER : "");
   const impression = safeEnglishText(originalImpression, originalImpression ? ENGLISH_RESULT_PLACEHOLDER : "");
   const translationPending = containsCjk(originalValue) || containsCjk(originalImpression);
   const abnormalFlags = (result.abnormalFlags || []).length ? ["abnormal"] : [];
   return {
-    ...result,
+    ...projectedResult,
     orderCategory: `${catalog.primaryCategoryLabel}/${catalog.secondaryCategoryLabel}`,
     value,
     impression,

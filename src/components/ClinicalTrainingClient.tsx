@@ -49,6 +49,7 @@ import {
   reportStatusPresentation,
   safeStudentFacingText
 } from "@/shared/dataAgentPresentation.js";
+import { clinicalResultFingerprint } from "@/shared/clinicalResultSemantics.js";
 import { ApiRequestError, createIdempotencyKey, createRequestId, fetchWithRecovery, requestJson, studentFacingApiMessage } from "@/src/lib/apiClient";
 import { desktopRuntimeConfig, publicApiConfig } from "@/src/lib/apiConfig";
 import { ATTEMPT_SUMMARY_KEY, createAttemptSummary, isAttemptSummary, type AttemptSummary } from "@/src/lib/catalogProgress";
@@ -409,12 +410,16 @@ function sanitizeTimeline(value: unknown, lang: LanguageCode): TimelineEvent[] {
     const item = raw as Partial<Record<keyof TimelineEvent, unknown>>;
     const stageNo = Number(item.stageNo);
     if (!Number.isInteger(stageNo) || stageNo < 1 || stageNo > 7) return [];
-    const label = safeText(item.label, lang === "en" ? "Training record" : "训练记录");
-    const detail = safeText(item.detail);
-    const at = safeText(item.at);
-    const parsedAt = Number.isFinite(Date.parse(at)) ? at : new Date().toISOString();
     const allowedTypes = new Set<TimelineEvent["type"]>(["ask", "answer", "technical", "exam", "order", "result", "diagnosis", "mdt", "treatment", "perioperative", "submit", "timeout"]);
     const type = allowedTypes.has(item.type as TimelineEvent["type"]) ? item.type as TimelineEvent["type"] : "technical";
+    const label = safeText(item.label, lang === "en" ? "Training record" : "训练记录");
+    const rawDetail = safeText(item.detail);
+    const detail = !rawDetail || /[:：]\s*$/u.test(rawDetail)
+      ? (type === "result" ? (lang === "en" ? "Result temporarily unavailable" : "结果暂不可用") : rawDetail.replace(/[:：]\s*$/u, ""))
+      : rawDetail;
+    if (!detail) return [];
+    const at = safeText(item.at);
+    const parsedAt = Number.isFinite(Date.parse(at)) ? at : new Date().toISOString();
     return [{ id: safeText(item.id, `restored-${index}-${stageNo}`), stageNo: stageNo as AgentStageNo, type, label, detail, at: parsedAt }];
   });
 }
@@ -816,7 +821,8 @@ function ReportCard({ item, lang }: { item: OrderResultLog["results"][number]; l
   const impression = safeStudentFacingText(item.impression, lang, ENGLISH_RESULT_PLACEHOLDER);
   const orderCategory = safeStudentFacingText(item.orderCategory, lang, ENGLISH_CATEGORY_PLACEHOLDER);
   const teachingExplanation = safeStudentFacingText(item.teachingExplanation, lang, ENGLISH_RESULT_PLACEHOLDER);
-  const lines = formatReportLines(resultText);
+  const valueFingerprints = new Set(formatReportLines(safeStudentFacingText(item.value, lang, ENGLISH_RESULT_PLACEHOLDER)).map((line) => clinicalResultFingerprint(line)));
+  const lines = formatReportLines(resultText).filter((line) => !valueFingerprints.has(clinicalResultFingerprint(line)));
   const status = reportStatusPresentation(item, lang);
   const statusClass = status.state === "needs-review" ? "ui-status-warning" : status.state === "abnormal" ? "ui-status-danger" : status.state === "normal" ? "ui-status-success" : "ui-status-info";
   const missingReviewedMetadata = item.metadataStatus === "awaiting_reviewed_metadata"
@@ -834,7 +840,7 @@ function ReportCard({ item, lang }: { item: OrderResultLog["results"][number]; l
       </div>
       {(item.value || item.unit || item.referenceRange) && (
         <dl className="mt-3 grid gap-2 rounded-lg bg-clinic-paper p-3 sm:grid-cols-3">
-          <div><dt className="text-xs text-clinic-muted">{lang === "en" ? "Value" : "结果"}</dt><dd className="mt-0.5 font-semibold text-clinic-ink">{safeStudentFacingText(item.value, lang, ENGLISH_RESULT_PLACEHOLDER) || "—"}</dd></div>
+          <div><dt className="text-xs text-clinic-muted">{lang === "en" ? "Value" : "结果"}</dt><dd className="mt-0.5 whitespace-pre-line font-semibold text-clinic-ink">{safeStudentFacingText(item.value, lang, ENGLISH_RESULT_PLACEHOLDER) || "—"}</dd></div>
           <div><dt className="text-xs text-clinic-muted">{lang === "en" ? "Unit" : "单位"}</dt><dd className="mt-0.5 text-clinic-ink">{unit}</dd></div>
           <div><dt className="text-xs text-clinic-muted">{lang === "en" ? "Reference range" : "参考范围"}</dt><dd className="mt-0.5 text-clinic-ink">{referenceRange}</dd></div>
         </dl>
@@ -2383,7 +2389,13 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       setOrderLogs((current) => [...current, log]);
       addTimeline("order", lang === "en" ? "Order placed" : "开立医嘱", text, 2);
       if (hasReport) {
-        addTimeline("result", lang === "en" ? "Report returned" : "返回检查结果", matchedLog.results.map((item) => `${item.orderCategory}：${item.result}`).join("\n"), 2);
+        const timelineResults = matchedLog.results.map((item) => {
+          const result = safeText(item.result || item.value || item.impression);
+          if (!result) return "";
+          const category = safeText(item.orderCategory);
+          return category ? `${category}：${result}` : result;
+        }).filter(Boolean);
+        if (timelineResults.length) addTimeline("result", lang === "en" ? "Report returned" : "返回检查结果", timelineResults.join("\n"), 2);
       }
       setOrderInput("");
     } catch (error) {

@@ -10,10 +10,12 @@ import {
   buildStudentOrderCatalog,
   orderApplicableForSex,
   orderResultIsReportable,
+  presentOrderResult,
   simulatedPhysicalExamResult,
   splitOrderInput,
   sourceOrderId
 } from "@/shared/dataAgentPresentation.js";
+import { assessClinicalResult } from "@/shared/clinicalResultSemantics.js";
 import type { CaseData, MdtTrigger, OrderCatalogItem, OrderResultItem, PhysicalExamItem, PhysicalExamResult } from "./types";
 import { scoreTrainingEvents, type TrainingEvent } from "./eventScoring";
 
@@ -41,7 +43,9 @@ export type OrderResultLog = {
     status: "reported" | "no_indication" | "not_performed" | "no_specimen" | "not_provided" | "medical_review_pending" | "prerequisite_missing" | "duplicate" | "unrecognized";
     provenance: string;
     reviewStatus?: "pending_human_medical_review" | "not_required";
+    reviewReason?: string;
     scoringEligible?: boolean;
+    diagnosticEligible?: boolean;
     resultId?: string;
     message: string;
   }>;
@@ -175,32 +179,45 @@ export function matchOrderResults(caseData: CaseData, input: string, context?: {
     return result ? [{ order, result }] : [];
   });
   const sourceRowsByOrderId = new Map(sourceRows.map(({ order, result }) => [sourceOrderId(order), result]));
-  const reportable = sourceRows.filter(({ result }) => orderResultIsReportable(result));
+  const sourceAssessmentByOrderId = new Map(sourceRows.map(({ order, result }) => {
+    const canonicalId = sourceOrderId(order);
+    return [canonicalId, assessClinicalResult({
+      domain: order.primaryCategory === "检验" ? "laboratory" : "",
+      itemId: canonicalId,
+      displayName: order.displayName,
+      result: [result.value, result.impression].filter(Boolean).join("\n")
+    })];
+  }));
+  const reportable = sourceRows.filter(({ order, result }) => orderResultIsReportable(result)
+    && sourceAssessmentByOrderId.get(sourceOrderId(order))?.compatible === true);
   const unmetPrerequisites = unique(sourceRows.flatMap(({ result }) => result.prerequisites.filter((prerequisite) => !availableOrderIds.has(prerequisite))));
-  const matched = reportable.filter(({ order, result }) => !duplicateOrderIds.includes(sourceOrderId(order)) && result.prerequisites.every((prerequisite) => availableOrderIds.has(prerequisite))).map(({ order, result }) => ({
-    caseId: result.caseId,
-    orderId: result.orderId,
-    resultId: result.resultId,
-    status: result.status,
-    value: result.value,
-    unit: result.unit,
-    referenceRange: result.referenceRange,
-    impression: result.impression,
-    abnormalFlags: result.abnormalFlags,
-    availableAt: result.availableAt,
-    prerequisites: result.prerequisites,
-    sourceVersion: result.sourceVersion,
-    diagnosis: "",
-    diseaseType: "",
-    orderCategory: `${order.primaryCategory}/${order.secondaryCategory}`,
-    synonyms: [order.displayName],
-    result: result.value || result.impression,
-    abnormalLevel: result.abnormalFlags.join("、") || result.status,
-    teachingExplanation: "仅返回当前caseId与已开orderId的结构化结果。",
-    provenance: "configured_case_result",
-    isKey: true,
-    prerequisite: result.prerequisites.join("、")
-  } satisfies OrderResultItem));
+  const matched = reportable.filter(({ order, result }) => !duplicateOrderIds.includes(sourceOrderId(order)) && result.prerequisites.every((prerequisite) => availableOrderIds.has(prerequisite))).map(({ order, result }) => {
+    const presented = presentOrderResult(order, result, "zh");
+    return {
+      caseId: result.caseId,
+      orderId: result.orderId,
+      resultId: result.resultId,
+      status: result.status,
+      value: presented.value,
+      unit: result.unit,
+      referenceRange: result.referenceRange,
+      impression: presented.impression,
+      abnormalFlags: result.abnormalFlags,
+      availableAt: result.availableAt,
+      prerequisites: result.prerequisites,
+      sourceVersion: result.sourceVersion,
+      diagnosis: "",
+      diseaseType: "",
+      orderCategory: presented.orderCategory,
+      synonyms: [order.displayName],
+      result: presented.result || "",
+      abnormalLevel: presented.abnormalLevel,
+      teachingExplanation: "仅返回当前caseId与已开orderId的结构化结果。",
+      provenance: "configured_case_result",
+      isKey: true,
+      prerequisite: result.prerequisites.join("、")
+    } satisfies OrderResultItem;
+  });
   const orderOutcomes = matchedOrders.map((order) => {
     const canonicalId = sourceOrderId(order);
     const result = sourceRowsByOrderId.get(canonicalId);
@@ -215,6 +232,20 @@ export function matchOrderResults(caseData: CaseData, input: string, context?: {
       return {
         orderId: canonicalId, displayName: order.displayName, status: "prerequisite_missing" as const, provenance: "configured_case_result",
         message: `${order.displayName}：缺少前置条件（${missingPrerequisites.join("、")}），暂不释放报告。`
+      };
+    }
+    const sourceAssessment = sourceAssessmentByOrderId.get(canonicalId);
+    if (orderResultIsReportable(result) && sourceAssessment?.compatible !== true) {
+      return {
+        orderId: canonicalId,
+        displayName: order.displayName,
+        status: "medical_review_pending" as const,
+        provenance: "source_result_semantic_mismatch",
+        reviewStatus: "pending_human_medical_review" as const,
+        reviewReason: sourceAssessment?.reason || "order_result_semantic_mismatch",
+        scoringEligible: false,
+        diagnosticEligible: false,
+        message: `${order.displayName}：现有 source 结果无法安全归属于该检查，等待医学审核；当前不进入诊断、治疗或评分证据。`
       };
     }
     if (orderResultIsReportable(result)) {
