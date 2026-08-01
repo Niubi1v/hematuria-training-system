@@ -1423,6 +1423,9 @@ test("@ui-defect-regression P001 Chinese seven-stage contract keeps public label
   await page.getByRole("textbox", { name: "学习反思" }).fill("本次训练需要继续改进问诊顺序、证据整合和医嘱表达。");
   await page.getByTestId("complete-training").click();
   await expect(page.getByTestId("final-report")).toBeVisible();
+  const generatedTrajectory = page.getByTestId("clinical-trajectory");
+  await expect(generatedTrajectory).toContainText(/诊断结论|治疗计划|围术期管理/);
+  await expect(generatedTrajectory).not.toContainText(/(^|\n)\s*(diagnosis|department|trigger|question|evidence|consult|treatment|perioperative)\s*([:=]|$)/m);
   await expect(page.locator("body")).not.toContainText(/360分|\b360\b/);
   await expectStudentCopyPublic(page);
   await expect(page.getByTestId("training-complete-state")).toContainText("已完成");
@@ -1430,11 +1433,61 @@ test("@ui-defect-regression P001 Chinese seven-stage contract keeps public label
   await captureDefectScreenshot(page, screenshotDir, "p001-zh-stage7-1366x768.png");
   await page.reload();
   await expect(page.getByTestId("final-report")).toBeVisible();
+  const recoveredTrajectory = page.getByTestId("clinical-trajectory");
+  await expect(recoveredTrajectory).toContainText(/诊断结论|治疗计划|围术期管理/);
+  await expect(recoveredTrajectory).not.toContainText(/(^|\n)\s*(diagnosis|department|trigger|question|evidence|consult|treatment|perioperative)\s*([:=]|$)/m);
+  await page.emulateMedia({ media: "print" });
+  await expect(recoveredTrajectory).not.toContainText(/(^|\n)\s*(diagnosis|department|trigger|question|evidence|consult|treatment|perioperative)\s*([:=]|$)/m);
+  await page.emulateMedia({ media: "screen" });
   await expect(page.getByTestId("training-complete-state")).toBeVisible();
   await expect(page.locator("body")).not.toContainText(/360分|\b360\b/);
   await expectStudentCopyPublic(page);
   const axe = await new AxeBuilder({ page }).analyze();
   expect(axe.violations.filter((item) => item.impact === "critical" || item.impact === "serious")).toEqual([]);
+});
+
+test("@ui-defect-regression desktop legacy cache cannot create or restore an attempt in a fresh SQLite authority", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "Desktop authority is captured once.");
+  const oldAttemptId = "legacy-completed-p001";
+  const stateStoreId = "22222222-2222-4222-8222-222222222222";
+  const savedAttemptIds = [];
+  await page.addInitScript(({ oldAttemptId }) => {
+    globalThis.__HEMATURIA_DESKTOP_RUNTIME__ = {
+      runtimeTarget: "desktop",
+      apiBaseUrl: "http://127.0.0.1:15555",
+      authToken: "playwright_desktop_runtime_token_12345678901234567890",
+      debugRuntime: false
+    };
+    const attempt = {
+      attemptId: oldAttemptId, caseId: "P001", mode: "free", language: "zh",
+      participantId: "practice-user", schemaVersion: "attempt-v3", createdAt: "2026-07-30T18:35:28.465Z"
+    };
+    localStorage.setItem("hematuria-attempt-pointer-v3:P001:free:zh", JSON.stringify(attempt));
+    localStorage.setItem(`hematuria-attempt-v3:P001:free:zh:${oldAttemptId}`, JSON.stringify({ attempt, activeStageNo: 7, finalReport: { total: 360, max: 360 } }));
+    localStorage.setItem("hematuria-practice-attempt-summaries-v2", JSON.stringify([{ attemptId: oldAttemptId, caseId: "P001" }]));
+    sessionStorage.setItem(`hematuria-training-state-v4:http%3A%2F%2F127.0.0.1%3A15555:${oldAttemptId}`, "legacy-token");
+  }, { oldAttemptId });
+  await routeTrainingApiThroughHandler(page);
+  const authority = { stateStoreId, schemaVersion: 3, productHead: "r3-product-head", serverStateRevision: 0 };
+  await page.route("**/api/desktop/state/bootstrap", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(authority) }));
+  await page.route("**/api/desktop/attempt/resume", (route) => route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: "attempt_not_found" }) }));
+  await page.route("**/api/desktop/attempt/state", async (route) => {
+    const body = route.request().postDataJSON();
+    if (body.action === "load") {
+      await route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ error: "attempt_not_found" }) });
+      return;
+    }
+    savedAttemptIds.push(body.attemptId);
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ...authority, serverStateRevision: 1, saved: true }) });
+  });
+
+  await page.goto("/cases/P001/");
+  await expect(page.getByText(/^第1阶段 · /).first()).toBeVisible();
+  await expect(page.getByTestId("final-report")).toHaveCount(0);
+  await expect.poll(() => savedAttemptIds.length).toBeGreaterThan(0);
+  expect(savedAttemptIds).not.toContain(oldAttemptId);
+  const remainingTrainingKeys = await page.evaluate(() => [...Object.keys(localStorage), ...Object.keys(sessionStorage)].filter((key) => /attempt-v3|attempt-pointer|training-state|ai-patient-session|attempt-summaries/.test(key)));
+  expect(remainingTrainingKeys).toEqual([]);
 });
 
 test("@ui-defect-regression P001 English stages 1-3 use natural evidence labels", async ({ page }, testInfo) => {

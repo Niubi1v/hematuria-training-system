@@ -43,7 +43,12 @@ async function main() {
   assert.equal(store.assertStoreConfigured(), "sqlite");
   assert.equal(store.durableAttemptStoreConfigured(), true);
   assert.equal(store.attemptStoreCredentialSource(), "desktop_sqlite");
-  assert.equal(sqlite.getDesktopSchemaVersion(), 2);
+  assert.equal(sqlite.getDesktopSchemaVersion(), 3);
+  const initialAuthority = sqlite.getDesktopStateAuthority();
+  assert.match(initialAuthority.stateStoreId, /^[0-9a-f-]{36}$/i);
+  assert.equal(initialAuthority.schemaVersion, 3);
+  assert.equal(initialAuthority.productHead, "desktop-local");
+  assert.equal(initialAuthority.serverStateRevision, 0);
 
   const schemaDatabase = new DatabaseSync(databasePath);
   const tableNames = schemaDatabase.prepare(`
@@ -82,6 +87,7 @@ async function main() {
     payload: initialPayload,
     token: "token-1"
   });
+  assert.equal(sqlite.getDesktopStateAuthority().serverStateRevision, 1);
 
   const duplicateRegister = await store.registerAttempt({
     state: initialState,
@@ -247,6 +253,7 @@ async function main() {
       finalReport: { total: 88, max: 360 }
     }
   }), { kind: "saved" });
+  assert.ok(sqlite.getDesktopStateAuthority().serverStateRevision > 1);
   assert.equal(sqlite.discoverAttempt({ caseId: "P003", mode: "public-practice", language: "zh" }).snapshot.finalReport.total, 88);
   assert.equal(sqlite.catalogProgress().P003, "completed");
 
@@ -420,6 +427,7 @@ async function main() {
   delete require.cache[require.resolve("../server/desktopSqliteStore.js")];
   store = require("../server/trainingAttemptStore.js");
   sqlite = require("../server/desktopSqliteStore.js");
+  assert.equal(sqlite.getDesktopStateAuthority().stateStoreId, initialAuthority.stateStoreId);
   assert.deepEqual(store.getDesktopSetting("appearance.theme"), { value: "dark" });
   assert.equal(store.getOrCreateDesktopSecret(), secret);
   const persisted = await store.validateCurrentAttempt({
@@ -437,7 +445,7 @@ async function main() {
   versionOneDatabase.prepare("UPDATE schema_meta SET value = '1' WHERE key = 'schema_version'").run();
   versionOneDatabase.close();
   process.env.HEMATURIA_DESKTOP_DATABASE_PATH = versionOnePath;
-  assert.equal(sqlite.getDesktopSchemaVersion(), 2);
+  assert.equal(sqlite.getDesktopSchemaVersion(), 3);
   sqlite.closeDesktopSqliteStore();
   const migratedDatabase = new DatabaseSync(versionOnePath);
   assert.ok(migratedDatabase.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'desktop_attempt_snapshots'").get());
@@ -445,9 +453,16 @@ async function main() {
 
   process.env.HEMATURIA_DESKTOP_DATABASE_PATH = databasePath;
   const newerSchemaDatabase = new DatabaseSync(databasePath);
-  newerSchemaDatabase.prepare("UPDATE schema_meta SET value = '3' WHERE key = 'schema_version'").run();
+  newerSchemaDatabase.prepare("UPDATE schema_meta SET value = '4' WHERE key = 'schema_version'").run();
   newerSchemaDatabase.close();
   assert.throws(() => sqlite.getDesktopSchemaVersion(), /desktop_database_schema_too_new/);
+
+  sqlite.closeDesktopSqliteStore();
+  const secondDatabasePath = path.join(testDirectory, "second.sqlite");
+  process.env.HEMATURIA_DESKTOP_DATABASE_PATH = secondDatabasePath;
+  const secondAuthority = sqlite.getDesktopStateAuthority();
+  assert.notEqual(secondAuthority.stateStoreId, initialAuthority.stateStoreId);
+  assert.equal(secondAuthority.serverStateRevision, 0);
 
   process.env.HEMATURIA_DESKTOP_DATABASE_PATH = "relative.sqlite";
   assert.equal(store.durableAttemptStoreConfigured(), false);

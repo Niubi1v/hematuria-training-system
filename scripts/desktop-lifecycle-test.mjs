@@ -131,7 +131,7 @@ async function launch(name, { debugRuntime = true } = {}) {
   assert.equal(ready.protocolVersion, 1);
   assert.equal(ready.handshake, handshake);
   assert.equal(ready.pid, child.pid);
-  assert.equal(ready.databaseSchemaVersion, 2);
+  assert.equal(ready.databaseSchemaVersion, 3);
   assert.equal(ready.localAi.status, "starting");
   assert.match(ready.origin, /^http:\/\/127\.0\.0\.1:\d+$/);
   assert.equal(await fs.stat(path.join(dataDirectory, "hematuria.sqlite3")).then((value) => value.isFile()), true);
@@ -166,6 +166,15 @@ try {
   }, 20_000);
   assert.notEqual(first.ready.origin, second.ready.origin, "each launch must use a fresh random port");
   assert.notEqual(first.bearer, second.bearer, "each launch must use a fresh bearer");
+  const firstBootstrap = await authorizedFetch(first, "/api/desktop/state/bootstrap/").then((response) => response.json());
+  const secondBootstrap = await authorizedFetch(second, "/api/desktop/state/bootstrap/").then((response) => response.json());
+  for (const bootstrap of [firstBootstrap, secondBootstrap]) {
+    assert.match(bootstrap.stateStoreId, /^[0-9a-f-]{36}$/i);
+    assert.equal(bootstrap.schemaVersion, 3);
+    assert.equal(typeof bootstrap.productHead, "string");
+    assert.equal(bootstrap.serverStateRevision, 0);
+  }
+  assert.notEqual(firstBootstrap.stateStoreId, secondBootstrap.stateStoreId);
 
   const unauthenticated = await fetch(`${first.ready.origin}/api/health/`);
   assert.equal(unauthenticated.status, 401);
@@ -319,6 +328,10 @@ try {
     "evidenceOptions",
     "language",
     "mode",
+    "productHead",
+    "schemaVersion",
+    "serverStateRevision",
+    "stateStoreId",
     "status"
   ].sort());
   assert.equal(resumedPayload.currentStage, 1);
