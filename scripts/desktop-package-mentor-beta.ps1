@@ -10,14 +10,19 @@ $ErrorActionPreference = "Stop"
 $scriptsDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = [System.IO.Path]::GetFullPath((Join-Path $scriptsDirectory ".."))
 $mentorSource = Join-Path $repoRoot "desktop\mentor"
-$outputRoot = Join-Path ([System.IO.Path]::GetFullPath($ArtifactsDirectory)) "MentorLocalAI"
-$stageRoot = Join-Path $repoRoot ".desktop-cache\mentor-local-ai-beta"
+$artifactsRoot = [System.IO.Path]::GetFullPath($ArtifactsDirectory)
+$outputRoot = Join-Path $artifactsRoot "MentorLocalAI-FinalCandidate"
+$outputStageRoot = Join-Path $artifactsRoot ".MentorLocalAI-FinalCandidate.partial-$PID"
+$stageRoot = Join-Path $repoRoot ".desktop-cache\mentor-local-ai-final-candidate"
 $portableSource = Join-Path $ArtifactsDirectory "hematuria-desktop-portable-$Version-windows-x64.zip"
 $installerSource = Join-Path $ArtifactsDirectory "hematuria-desktop-setup-$Version-windows-x64.exe"
-$portableOutput = Join-Path $outputRoot "HematuriaTraining-Mentor-LocalAI-Portable.zip"
-$installerOutput = Join-Path $outputRoot "HematuriaTraining-Mentor-LocalAI-NSIS.exe"
-$zipOutput = Join-Path $outputRoot "HematuriaTraining-Mentor-LocalAI-Beta.zip"
-$modelOutputDirectory = Join-Path $outputRoot "Model"
+$portableFileName = "HematuriaTraining-Mentor-LocalAI-Portable.zip"
+$installerFileName = "HematuriaTraining-Mentor-LocalAI-Setup.exe"
+$zipFileName = "HematuriaTraining-Mentor-LocalAI-FinalCandidate.zip"
+$portableOutput = Join-Path $outputStageRoot $portableFileName
+$installerOutput = Join-Path $outputStageRoot $installerFileName
+$zipOutput = Join-Path $outputStageRoot $zipFileName
+$modelOutputDirectory = Join-Path $outputStageRoot "Model"
 $modelOutput = Join-Path $modelOutputDirectory "Qwen3-1.7B-Q4_K_M.gguf"
 $expectedModelBytes = 1282439264
 $expectedModelSha256 = "D2387CA2DBFEE2FFABCE7120D3770DADCA0B293052BC2F0E138FDC940D9BC7B5"
@@ -29,6 +34,7 @@ function Assert-File([string]$path, [string]$label) {
 Assert-File $portableSource "portable package"
 Assert-File $installerSource "NSIS installer"
 Assert-File $ModelPath "Qwen3-1.7B model"
+if (Test-Path -LiteralPath $outputRoot) { throw "mentor_final_candidate_output_already_exists:$outputRoot" }
 $model = Get-Item -LiteralPath $ModelPath
 if ($model.Length -ne $expectedModelBytes) { throw "mentor_model_size_mismatch" }
 if ((Get-FileHash -LiteralPath $ModelPath -Algorithm SHA256).Hash -ne $expectedModelSha256) { throw "mentor_model_sha256_mismatch" }
@@ -37,6 +43,10 @@ $resolvedStage = [System.IO.Path]::GetFullPath($stageRoot)
 $resolvedRepo = [System.IO.Path]::GetFullPath($repoRoot)
 if (-not $resolvedStage.StartsWith($resolvedRepo, [System.StringComparison]::OrdinalIgnoreCase)) { throw "mentor_stage_outside_repo" }
 if (Test-Path -LiteralPath $resolvedStage) { Remove-Item -LiteralPath $resolvedStage -Recurse -Force }
+$resolvedOutputStage = [System.IO.Path]::GetFullPath($outputStageRoot)
+$artifactsPrefix = "$($artifactsRoot.TrimEnd('\'))\"
+if (-not $resolvedOutputStage.StartsWith($artifactsPrefix, [System.StringComparison]::OrdinalIgnoreCase)) { throw "mentor_output_stage_outside_artifacts" }
+if (Test-Path -LiteralPath $resolvedOutputStage) { Remove-Item -LiteralPath $resolvedOutputStage -Recurse -Force }
 New-Item -ItemType Directory -Path $resolvedStage -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $resolvedStage "App") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $resolvedStage "Model") -Force | Out-Null
@@ -51,26 +61,36 @@ Copy-Item -LiteralPath (Join-Path $mentorSource "KNOWN_LIMITATIONS.txt") -Destin
 
 if ([string]::IsNullOrWhiteSpace($ProductHead)) { $ProductHead = (& git -C $repoRoot rev-parse HEAD).Trim() }
 $versionRecord = [ordered]@{
-  schemaVersion = 1
+  schemaVersion = 2
   product = "血尿临床问诊训练系统"
-  channel = "mentor-local-ai-beta"
+  channel = "mentor-local-ai-final-candidate"
   version = $Version
   productHead = $ProductHead
+  uiIntegrationCommits = @(
+    "33199f4d8f2a845b5f7d606515b2503a5cc71120",
+    "715179368e7b8d8442caa109ea57797713c9761e",
+    "99db3a06fdcb01459612c6c1e0713fd4b6755b65",
+    "de84b6a913da2b6bc188983ce4669ba97d9e83c1",
+    "966129504a3f5dc12f9475561e98cbe5f12965bd"
+  )
   model = [ordered]@{
     repository = "ggml-org/Qwen3-1.7B-GGUF"
     fileName = "Qwen3-1.7B-Q4_K_M.gguf"
     bytes = $expectedModelBytes
     sha256 = $expectedModelSha256.ToLowerInvariant()
     thinkingMode = "disabled"
+    defaultModelMode = "lightweight"
   }
   medicalGovernance = [ordered]@{
-    sourceProjectionApplied = 66
-    safeSimulatedNormalApplied = 75
-    noSpecimenOrNotIndicated = 552
-    noReportOrNotIndicated = 952
-    caseSpecificMedicalReviewFailClosed = 902
-    sourceProjectionMatchFailedFailClosed = 59
-    blockedMedicalConflict = 1
+    sourceProjectionApplied = 4
+    sourceProjectionWithdrawn = 62
+    sourceProjectionRejected = 121
+    medicalReviewPending = 1023
+    medicalConflict = 1
+  }
+  runtimeSecurity = [ordered]@{
+    cloudRequestAllowed = $false
+    listenAddress = "127.0.0.1"
   }
 }
 $versionRecord | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $resolvedStage "VERSION.json") -Encoding UTF8
@@ -82,6 +102,7 @@ $criticalFiles = @(
   "Model\Qwen3-1.7B-Q4_K_M.gguf",
   "启动血尿训练系统.cmd",
   "tools\Start-Mentor.ps1",
+  "VERIFY-PACKAGE.ps1",
   "README_导师验收.txt",
   "KNOWN_LIMITATIONS.txt",
   "VERSION.json"
@@ -106,11 +127,10 @@ Assert-File $nodeForScan "bundled build Node"
 & $nodeForScan (Join-Path $repoRoot "scripts\scan-mentor-package-stage.mjs") $resolvedStage
 if ($LASTEXITCODE -ne 0) { throw "mentor_stage_scan_failed" }
 
-New-Item -ItemType Directory -Path $outputRoot -Force | Out-Null
+New-Item -ItemType Directory -Path $resolvedOutputStage -Force | Out-Null
 New-Item -ItemType Directory -Path $modelOutputDirectory -Force | Out-Null
-Copy-Item -LiteralPath $portableSource -Destination $portableOutput -Force
-Copy-Item -LiteralPath $installerSource -Destination $installerOutput -Force
-if (Test-Path -LiteralPath $zipOutput) { Remove-Item -LiteralPath $zipOutput -Force }
+Copy-Item -LiteralPath $portableSource -Destination $portableOutput
+Copy-Item -LiteralPath $installerSource -Destination $installerOutput
 Compress-Archive -Path (Join-Path $resolvedStage "*") -DestinationPath $zipOutput -CompressionLevel Fastest
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -125,23 +145,41 @@ try {
   $archive.Dispose()
 }
 
-if (Test-Path -LiteralPath $modelOutput) { Remove-Item -LiteralPath $modelOutput -Force }
-Move-Item -LiteralPath (Join-Path $resolvedStage "Model\Qwen3-1.7B-Q4_K_M.gguf") -Destination $modelOutput
-Copy-Item -LiteralPath (Join-Path $resolvedStage "README_导师验收.txt") -Destination $outputRoot -Force
-Copy-Item -LiteralPath (Join-Path $resolvedStage "KNOWN_LIMITATIONS.txt") -Destination $outputRoot -Force
-Copy-Item -LiteralPath (Join-Path $resolvedStage "VERSION.json") -Destination $outputRoot -Force
-Copy-Item -LiteralPath (Join-Path $resolvedStage "VERIFY-PACKAGE.ps1") -Destination $outputRoot -Force
+Copy-Item -LiteralPath (Join-Path $resolvedStage "Model\Qwen3-1.7B-Q4_K_M.gguf") -Destination $modelOutput
+Copy-Item -LiteralPath (Join-Path $resolvedStage "启动血尿训练系统.cmd") -Destination $resolvedOutputStage
+Copy-Item -LiteralPath (Join-Path $resolvedStage "README_导师验收.txt") -Destination $resolvedOutputStage
+Copy-Item -LiteralPath (Join-Path $resolvedStage "KNOWN_LIMITATIONS.txt") -Destination $resolvedOutputStage
+Copy-Item -LiteralPath (Join-Path $resolvedStage "VERSION.json") -Destination $resolvedOutputStage
+Copy-Item -LiteralPath (Join-Path $resolvedStage "VERIFY-PACKAGE.ps1") -Destination $resolvedOutputStage
 
-$artifactSums = foreach ($target in @($zipOutput, $installerOutput, $portableOutput, $modelOutput)) {
+$artifactSums = foreach ($target in @(
+  $zipOutput,
+  $installerOutput,
+  $portableOutput,
+  $modelOutput,
+  (Join-Path $resolvedOutputStage "启动血尿训练系统.cmd"),
+  (Join-Path $resolvedOutputStage "README_导师验收.txt"),
+  (Join-Path $resolvedOutputStage "VERSION.json"),
+  (Join-Path $resolvedOutputStage "VERIFY-PACKAGE.ps1"),
+  (Join-Path $resolvedOutputStage "KNOWN_LIMITATIONS.txt")
+)) {
   $relative = if ($target -eq $modelOutput) { "Model\Qwen3-1.7B-Q4_K_M.gguf" } else { Split-Path -Leaf $target }
   "{0}  {1}" -f (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash.ToLowerInvariant(), $relative
 }
-$artifactSums | Set-Content -LiteralPath (Join-Path $outputRoot "SHA256SUMS.txt") -Encoding UTF8
+$artifactSums | Set-Content -LiteralPath (Join-Path $resolvedOutputStage "SHA256SUMS.txt") -Encoding UTF8
+
+Move-Item -LiteralPath $resolvedOutputStage -Destination $outputRoot
+Remove-Item -LiteralPath $resolvedStage -Recurse -Force
+
+$finalZipOutput = Join-Path $outputRoot $zipFileName
+$finalInstallerOutput = Join-Path $outputRoot $installerFileName
+$finalPortableOutput = Join-Path $outputRoot $portableFileName
+$finalModelOutput = Join-Path $outputRoot "Model\Qwen3-1.7B-Q4_K_M.gguf"
 
 Write-Output (ConvertTo-Json -Depth 5 ([ordered]@{
-  mentorZip = $zipOutput
-  installer = $installerOutput
-  portable = $portableOutput
-  model = $modelOutput
+  mentorZip = $finalZipOutput
+  installer = $finalInstallerOutput
+  portable = $finalPortableOutput
+  model = $finalModelOutput
   productHead = $ProductHead
 }))

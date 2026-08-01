@@ -1,16 +1,21 @@
-完整解压后，双击启动血尿训练系统.cmd
+完整解压
+→ 双击“启动血尿训练系统.cmd”
+→ 自动启动本地服务、本地模型和桌面窗口
 
-“血尿临床问诊训练系统”Windows本地AI测试版，仅用于医学教学模拟，不用于真实诊疗。
+“血尿临床问诊训练系统”Windows 本地 AI 导师最终候选包是医学教学 Beta，仅用于教学模拟，不用于真实诊疗。
 
 使用要求：
-1. 必须先完整解压ZIP，不能在压缩软件预览窗口中直接运行。
-2. 无需安装Node、Docker、Redis、Python，无需API Key；断网可用。
-3. 首次启动会校验约1.28GB模型并显示“正在启动本地患者服务”，请等待服务就绪提示。
-4. 本地业务服务和llama-server只监听127.0.0.1随机端口；关闭软件窗口后全部sidecar自动退出。
-5. 模型缺失或损坏时，启动器会给出修复提示，不会把rule_fallback标记为local_ai。
-6. 可运行VERIFY-PACKAGE.ps1复核关键文件SHA256。
+1. 必须完整解压 FinalCandidate ZIP，不能在压缩软件预览窗口中直接运行。
+2. 无需安装 Node、Docker、Redis、Python、API Key 或其他 AI 软件；断网可用。
+3. 首次启动会先校验约 1.28 GB 模型，再显示本地患者服务加载进度；请等待“本地患者服务已就绪”。
+4. 本地业务服务和 llama-server 仅监听 127.0.0.1 随机端口，不连接云服务。
+5. 默认模型为 Qwen3-1.7B-Q4_K_M；接受的模型分类标记为 local_ai，冲突或模型不可用时如实标记 rule_fallback。
+6. 关闭软件窗口后，Node、llama-server、WebView 和 sidecar 应自动退出。
+7. 可运行 VERIFY-PACKAGE.ps1 复核关键文件 SHA-256。
 
-医学内容治理：
-- 病例事实仅来自既有病例source、ontology、九态事实模型与answer planner。
-- 本地模型只识别intent/topic/slot/context及自然化参数，不生成检查、病理、诊断、治疗或评分事实。
-- 未通过医学治理的检查结果保持fail-closed，不会自动补成“正常”。
+本候选医学内容治理事实：
+- source projection 保留并应用 4 项；撤回 62 项；运行时拒绝总数 121 项。
+- 共有 1023 项等待医学审核；1 项医学冲突继续隔离，未自动裁决。
+- 未审核结果不得进入 evidence graph、诊断或评分；缺失结果明确显示状态或安全过滤。
+- 病例事实仅来自既有病例 source、ontology、九态事实模型与 answer planner。
+- 本地模型只识别 intent/topic/slot/context 及自然化参数，不生成检查、病理、诊断、治疗或评分事实。

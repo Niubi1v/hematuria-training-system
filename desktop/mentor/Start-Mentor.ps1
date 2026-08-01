@@ -8,7 +8,7 @@ $modelPath = Join-Path $packageRoot "Model\Qwen3-1.7B-Q4_K_M.gguf"
 $appPath = Join-Path $packageRoot "App\HematuriaTraining.exe"
 $nodePath = Join-Path $packageRoot "App\resources\runtime\node\node.exe"
 $llamaPath = Join-Path $packageRoot "App\resources\runtime\llama\llama-server.exe"
-$mentorData = Join-Path $env:LOCALAPPDATA "HematuriaTraining\MentorLocalAI"
+$mentorData = Join-Path $env:LOCALAPPDATA "HematuriaTraining\MentorLocalAI-FinalCandidate"
 
 function Stop-WithRepair([string]$message) {
   Write-Host ""
@@ -48,6 +48,7 @@ try {
 
   New-Item -ItemType Directory -Path $mentorData -Force | Out-Null
   $env:HEMATURIA_DESKTOP_MODEL_PATH = $modelPath
+  $env:HEMATURIA_DESKTOP_MODEL_MODE = "lightweight"
   $env:HEMATURIA_DESKTOP_DATA_DIR = $mentorData
   Remove-Item Env:HEMATURIA_DESKTOP_DISABLE_LOCAL_AI -ErrorAction SilentlyContinue
   Write-Host "正在启动本地患者服务……首次加载可能需要数十秒。" -ForegroundColor Cyan
