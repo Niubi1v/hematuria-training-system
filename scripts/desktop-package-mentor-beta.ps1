@@ -3,7 +3,7 @@
   [string]$ArtifactsDirectory = "D:\HematuriaDesktopArtifacts",
   [string]$ModelPath = "$env:LOCALAPPDATA\cn.hematuria.training.desktop\models\Qwen3-1.7B-Q4_K_M.gguf",
   [string]$ProductHead = "",
-  [ValidateSet("", "R2")][string]$CandidateSuffix = ""
+  [ValidateSet("", "R2", "R3")][string]$CandidateSuffix = ""
 )
 
 $ErrorActionPreference = "Stop"
