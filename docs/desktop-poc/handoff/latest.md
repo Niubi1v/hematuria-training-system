@@ -1,7 +1,8 @@
 # 桌面本地 AI 导师 R4.1 最终候选交接
 
-- handoffId：`086abf5b-20260802-173610`
+- handoffId：`086abf5b-20260803-010001`
 - 状态：`ready_for_review`
+- 独立验收结论：`ACCEPTED_FOR_MENTOR_BETA`
 - 分支：`codex/hematuria-desktop-mentor-beta-package`
 - R3 基线 HEAD：`4c31bd547437270b08572218ef8f36052a401338`
 - R4.1 产品 HEAD：`086abf5b0b5a4080b8928270fcd314678cbb5b27`
@@ -11,7 +12,7 @@
 
 ## 发布判断
 
-R4.1 产品缺陷、唯一 Playwright 异常归因和完整发布门禁均已关闭。候选包可进入最后一次独立、真实 Tauri 增量验收；R4 旧产物保持不可变，仅作回滚。
+R4.1 产品缺陷、唯一 Playwright 异常归因和完整发布门禁均已关闭，独立真实 Tauri 增量验收结论为 `ACCEPTED_FOR_MENTOR_BETA`。R4.1 产品 HEAD 和四项产物保持不变并冻结；R4 旧产物保持不可变，仅作回滚。
 
 ## 根因与共享权威
 
@@ -112,8 +113,21 @@ JUnit：`D:\HematuriaDesktopR41PlaywrightGate\full-086abf5-20260802-final\playwr
 
 包内 `VERSION.json` 的 `productHead` 为 `086abf5b0b5a4080b8928270fcd314678cbb5b27`，channel 为 `mentor-local-ai-final-candidate-r4.1`。
 
-## 剩余限制与下一步
+## 独立真实 Tauri 增量验收归档
 
-- 仍需对上述不可变 R4.1 产物执行最后一次独立真实 Tauri 增量验收；不得以源码服务器或本轮开发证据代替。
+- 原交接 handoffId：`086abf5b-20260802-173610`
+- 最终归档 handoffId：`086abf5b-20260803-010001`
+- verdict：`ACCEPTED_FOR_MENTOR_BETA`
+- 验收报告目录：`D:\HematuriaDesktopR41Acceptance\Independent-R4.1`
+- 报告：`acceptance-r4.1.md`、`acceptance-r4.1.json`、`runtime-verification-r4.1.json`
+- 真实 Tauri 8 轮：`localAiAcceptedCount=8`、`ruleFallbackCount=0`、`cloudRequestCount=0`、`runtimeAuditHealthy=true`；设置页关闭后重开计数保持 8/0。
+- 原生复制和 JSON 导出成功，摘要隐私扫描零命中；学生端未泄露运行审计内部字段。
+- 阶段 1 关闭重开恢复通过，无重复 attempt 或提交；阶段 2 尿常规、血常规等待医学审核及未审核证据隔离边界通过。
+- 正常退出并等待 10 秒后，关联进程和监听端口残留均为 0。
+- 产品 HEAD 继续为 `086abf5b0b5a4080b8928270fcd314678cbb5b27`；上表四项产物大小和 SHA-256 与独立验收完全一致。
+- 独立验收及本归档未修改产品代码、测试、`data/**`、打包输入或候选产物，未重新构建或重新打包。
+
+## 归档后限制
+
 - 首次本地模型加载可能较慢，但必须持续显示进度。
 - 系统为医学教学 Beta，不用于真实诊疗。

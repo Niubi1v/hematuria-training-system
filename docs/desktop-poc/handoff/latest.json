@@ -1,7 +1,8 @@
 {
   "schemaVersion": 6,
-  "handoffId": "086abf5b-20260802-173610",
-  "generatedAt": "2026-08-02T17:36:10+08:00",
+  "handoffId": "086abf5b-20260803-010001",
+  "previousHandoffId": "086abf5b-20260802-173610",
+  "generatedAt": "2026-08-03T01:00:01+08:00",
   "status": "ready_for_review",
   "milestone": "desktop-local-ai-mentor-final-candidate-r4.1",
   "branch": "codex/hematuria-desktop-mentor-beta-package",
@@ -261,11 +262,82 @@
   "secretScan": "pass",
   "packageProductHead": "086abf5b0b5a4080b8928270fcd314678cbb5b27",
   "packageChannel": "mentor-local-ai-final-candidate-r4.1",
+  "independentAcceptance": {
+    "acceptanceId": "independent-r4.1-retry-20260803",
+    "verdict": "ACCEPTED_FOR_MENTOR_BETA",
+    "sourceHandoffId": "086abf5b-20260802-173610",
+    "acceptedBranchHead": "d4113c3107a5577f348196e916457cf7441ac109",
+    "productHead": "086abf5b0b5a4080b8928270fcd314678cbb5b27",
+    "target": "true_tauri",
+    "reportDirectory": "D:/HematuriaDesktopR41Acceptance/Independent-R4.1",
+    "reports": [
+      "D:/HematuriaDesktopR41Acceptance/Independent-R4.1/acceptance-r4.1.md",
+      "D:/HematuriaDesktopR41Acceptance/Independent-R4.1/acceptance-r4.1.json",
+      "D:/HematuriaDesktopR41Acceptance/Independent-R4.1/runtime-verification-r4.1.json"
+    ],
+    "runtime": {
+      "visibleReplies": 8,
+      "localAiAcceptedCount": 8,
+      "ruleFallbackCount": 0,
+      "cloudRequestCount": 0,
+      "llamaServerReady": true,
+      "localModelReady": true,
+      "runtimeAuditHealthy": true,
+      "countsPersistAfterSettingsReopen": true
+    },
+    "nativeDiagnostics": {
+      "copy": {
+        "parsed": true,
+        "bytes": 483,
+        "sha256": "cf7aa3be2d01426b5016b2b37a2d35af7e28e9c80f61cdf8e8865c125049edff"
+      },
+      "export": {
+        "parsed": true,
+        "bytes": 467,
+        "sha256": "db1e4c18b42babda06617f05a545e2e433fab45582737bc9f5cdf66fca58831c"
+      },
+      "privacyFindings": 0
+    },
+    "restartRecovery": {
+      "status": "pass",
+      "stage1Restored": true,
+      "duplicateAttempts": 0,
+      "duplicateSubmissions": 0
+    },
+    "medicalSmoke": {
+      "status": "pass",
+      "urinalysisRedCells": "5562个/μl",
+      "cbcMedicalReviewPending": true,
+      "unreviewedEvidenceExcluded": true
+    },
+    "exitCleanup": {
+      "status": "pass",
+      "residualProcesses": 0,
+      "residualPorts": 0
+    },
+    "artifactsUnchanged": true,
+    "artifactSha256": {
+      "mentorZip": "ad519485d5f549c10d4faf7d62af94ad3e39dce4a7a5041e625e270d25a40575",
+      "nsis": "abebccf8cff46b09680c3e2aa5ccdf5d5a21133690f7ed61ec653b31f9270ae4",
+      "portable": "8b06c8982d97bc8f514efe8d18c78589abf8086bba7736ff91f7aab2aa4e672a",
+      "model": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5"
+    },
+    "worktreeClean": true,
+    "dataDiff": "zero",
+    "mutations": {
+      "productCode": false,
+      "tests": false,
+      "data": false,
+      "packagingInputs": false,
+      "candidateArtifacts": false,
+      "rebuilt": false,
+      "repackaged": false
+    }
+  },
   "blockers": [],
   "remainingLimitations": [
-    "Independent real Tauri incremental acceptance is still required.",
     "First local model load can be slow but must show continuous progress.",
     "Medical teaching Beta only; not for real diagnosis or treatment."
   ],
-  "recommendedNextStep": "Run the final independent real Tauri incremental acceptance against the immutable R4.1 artifacts."
+  "recommendedNextStep": "Archive complete; freeze the accepted immutable R4.1 candidate."
 }
