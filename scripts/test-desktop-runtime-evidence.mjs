@@ -5,6 +5,7 @@ const require = createRequire(import.meta.url);
 const {
   desktopEvidenceSnapshot,
   desktopPatientEvidence,
+  desktopRuntimeEventsForTests,
   desktopRuntimeSummary,
   resetDesktopPatientEvidenceForTests,
   runtimeSnapshot
@@ -79,7 +80,7 @@ try {
     latency: 0,
     responseErrors: []
   });
-  assert.deepEqual(desktopPatientEvidence(patient()), {
+  assert.deepEqual(desktopPatientEvidence(patient(), { sessionId: "runtime-test-session" }), {
     sessionStartedAt: "2026-08-01T12:00:00.000Z",
     runtimeTarget: "desktop",
     modelProfile: "lightweight",
@@ -126,10 +127,10 @@ try {
 
   resetDesktopPatientEvidenceForTests();
   globalThis.__hematuriaDesktopRuntimeEvidence = () => runtime();
-  desktopPatientEvidence(patient());
-  desktopPatientEvidence(patient());
-  desktopPatientEvidence(patient());
-  desktopPatientEvidence(patient({ classifierStatus: "rejected" }));
+  for (let index = 0; index < 5; index += 1) {
+    desktopPatientEvidence(patient(), { sessionId: `local-session-${index}` });
+  }
+  desktopPatientEvidence(patient({ classifierStatus: "rejected" }), { sessionId: "fallback-session" });
   const aggregate = desktopRuntimeSummary();
   assert.deepEqual(aggregate, {
     schemaVersion: 1,
@@ -140,12 +141,30 @@ try {
     productHead: "a".repeat(40),
     llamaServerReady: true,
     localModelReady: true,
-    localAiAcceptedCount: 3,
+    localAiAcceptedCount: 5,
     ruleFallbackCount: 1,
     cloudRequestCount: 0,
     generatedAt: aggregate.generatedAt
   });
   assert.doesNotMatch(JSON.stringify(aggregate), /question|answer|prompt|reply|caseId|token|secret|reasoning|patient|intent/i);
+  const runtimeEvent = desktopRuntimeEventsForTests()[0];
+  assert.deepEqual(Object.keys(runtimeEvent).sort(), ["eventType", "latency", "model", "sessionId", "timestamp"].sort());
+  assert.equal(runtimeEvent.eventType, "local_ai_accepted");
+  assert.match(runtimeEvent.timestamp, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u);
+  assert.doesNotMatch(JSON.stringify(desktopRuntimeEventsForTests()), /question|answer|prompt|reply|caseId|token|secret|reasoning|patient|intent/i);
+
+  resetDesktopPatientEvidenceForTests();
+  for (let index = 0; index < 10; index += 1) {
+    desktopPatientEvidence(patient({
+      classificationSource: "deterministic",
+      classifierStatus: "not_invoked",
+      providerHttpSuccess: false
+    }), { sessionId: `model-disabled-session-${index}` });
+  }
+  const modelDisabledAggregate = desktopRuntimeSummary();
+  assert.equal(modelDisabledAggregate.localAiAcceptedCount, 0);
+  assert.equal(modelDisabledAggregate.ruleFallbackCount, 10);
+  assert.equal(modelDisabledAggregate.cloudRequestCount, 0);
 
   globalThis.__hematuriaDesktopRuntimeEvidence = () => runtime({ cloudRequestCount: -1 });
   assert.equal(runtimeSnapshot(), null);

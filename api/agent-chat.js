@@ -220,9 +220,11 @@ async function buildAgentResponse(body, agentId, caseData, startedAt) {
             ? "rule_fallback"
             : patient.cacheHit ? "ai_cache" : "live_ai"
         ));
-    const desktopEvidence = desktopDiagnosticsRequested(body)
-      ? desktopPatientEvidence(patient, { latency: Date.now() - startedAt })
-      : null;
+    const recordedDesktopEvidence = desktopPatientEvidence(patient, {
+      latency: Date.now() - startedAt,
+      sessionId: body.sessionId
+    });
+    const desktopEvidence = desktopDiagnosticsRequested(body) ? recordedDesktopEvidence : null;
     return {
       statusCode: 200,
       timings: { app: Date.now() - startedAt, provider: patient.providerDurationMs, firsttoken: patient.providerFirstTokenMs },

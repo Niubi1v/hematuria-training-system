@@ -31,8 +31,7 @@ const RESPONSE_ERRORS = new Set([
   "polarity_error"
 ]);
 let lastPatientEvidence = null;
-let localAiAcceptedCount = 0;
-let ruleFallbackCount = 0;
+const runtimeEvents = [];
 
 function safeToken(value, maxLength = 120) {
   const token = String(value || "");
@@ -121,8 +120,13 @@ function desktopPatientEvidence(patient, options = {}) {
       ? patient.runtimeTrace.responseErrors.filter((value) => RESPONSE_ERRORS.has(String(value)))
       : []
   };
-  if (localClassificationAccepted) localAiAcceptedCount += 1;
-  else ruleFallbackCount += 1;
+  runtimeEvents.push(Object.freeze({
+    eventType: localClassificationAccepted ? "local_ai_accepted" : "rule_fallback_used",
+    sessionId: safeToken(options.sessionId, 160) || "desktop-session-unavailable",
+    timestamp: new Date().toISOString(),
+    model: runtime.model,
+    latency
+  }));
   lastPatientEvidence = Object.freeze({ ...evidence });
   return evidence;
 }
@@ -130,6 +134,8 @@ function desktopPatientEvidence(patient, options = {}) {
 function desktopRuntimeSummary() {
   const runtime = runtimeSnapshot();
   if (!runtime) return null;
+  const localAiAcceptedCount = runtimeEvents.filter((event) => event.eventType === "local_ai_accepted").length;
+  const ruleFallbackCount = runtimeEvents.filter((event) => event.eventType === "rule_fallback_used").length;
   return {
     schemaVersion: 1,
     sessionStartedAt: runtime.sessionStartedAt,
@@ -170,13 +176,17 @@ function desktopEvidenceSnapshot() {
 
 function resetDesktopPatientEvidenceForTests() {
   lastPatientEvidence = null;
-  localAiAcceptedCount = 0;
-  ruleFallbackCount = 0;
+  runtimeEvents.length = 0;
+}
+
+function desktopRuntimeEventsForTests() {
+  return runtimeEvents.map((event) => ({ ...event }));
 }
 
 module.exports = {
   desktopEvidenceSnapshot,
   desktopPatientEvidence,
+  desktopRuntimeEventsForTests,
   desktopRuntimeSummary,
   resetDesktopPatientEvidenceForTests,
   runtimeSnapshot

@@ -63,6 +63,10 @@ const {
 } = require("../server/patientSession.js");
 const { closeDesktopSqliteStore } = require("../server/desktopSqliteStore.js");
 const agentChatHandler = require("../api/agent-chat.js");
+const {
+  desktopRuntimeSummary,
+  resetDesktopPatientEvidenceForTests
+} = require("../server/desktopRuntimeEvidence.js");
 const originalDesktopRuntimeEvidence = globalThis.__hematuriaDesktopRuntimeEvidence;
 
 function localMetadata(intent = "dysuria", overrides = {}) {
@@ -465,10 +469,15 @@ async function main() {
     });
     process.env.HEMATURIA_RUNTIME_TARGET = "desktop";
     process.env.HEMATURIA_DESKTOP_DEBUG_RUNTIME = "1";
+    resetDesktopPatientEvidenceForTests();
     globalThis.__hematuriaDesktopRuntimeEvidence = () => ({
+      sessionStartedAt: "2026-08-02T00:00:00.000Z",
+      runtimeTarget: "desktop",
       llamaServerReady: true,
       localModelReady: true,
       model: DEFAULT_LOCAL_MODEL,
+      modelProfile: "lightweight",
+      productHead: "a".repeat(40),
       cloudRequestCount: 0
     });
     networkCalls = 0;
@@ -502,9 +511,93 @@ async function main() {
     assert.notEqual(apiLocal.payload.answerSource, "local");
     assert.deepEqual(Object.keys(apiLocal.payload.desktopEvidence).sort(), [
       "answerSource", "cloudRequestCount", "factState", "fallbackReason", "intent", "latency",
-      "llamaServerReady", "localModelReady", "model", "requestedSlot", "unknown"
+      "llamaServerReady", "localModelReady", "model", "modelProfile", "productHead", "requestedSlot",
+      "responseErrors", "runtimeTarget", "sessionStartedAt", "unknown"
     ].sort());
     assert.equal(apiLocal.payload.desktopEvidence.model, DEFAULT_LOCAL_MODEL);
+    assert.equal(desktopRuntimeSummary().localAiAcceptedCount, 1);
+
+    for (let index = 0; index < 4; index += 1) {
+      resetPatientIntentClassifierState();
+      globalThis.fetch = async () => providerResponse(JSON.stringify(localMetadata()));
+      const releaseModeReply = await callApi(agentChatHandler, {
+        ip: `local-structured-api-release-mode-${index}`,
+        headers: { "x-idempotency-key": `local-structured-api-release-mode-${index}` },
+        body: {
+          caseId: "P002",
+          agentId: "standardized_patient",
+          sessionId: apiSession.sessionId,
+          attemptId: apiSession.attemptId,
+          sessionMode: "free",
+          mode: "free",
+          stage: "history",
+          language: "zh",
+          studentInput: "排尿痛不痛？",
+          conversationHistory: []
+        }
+      });
+      assert.equal(releaseModeReply.statusCode, 200, JSON.stringify(releaseModeReply.payload));
+      assert.equal(releaseModeReply.payload.classificationSource, "local_ai");
+      assert.equal(releaseModeReply.payload.classifierStatus, "accepted");
+      assert.equal(Object.hasOwn(releaseModeReply.payload, "desktopEvidence"), false);
+    }
+    assert.equal(desktopRuntimeSummary().localAiAcceptedCount, 5);
+
+    resetDesktopPatientEvidenceForTests();
+    process.env.LLM_ENABLE_AI_PATIENT = "false";
+    globalThis.__hematuriaDesktopRuntimeEvidence = () => ({
+      sessionStartedAt: "2026-08-02T00:00:00.000Z",
+      runtimeTarget: "desktop",
+      llamaServerReady: false,
+      localModelReady: false,
+      model: DEFAULT_LOCAL_MODEL,
+      modelProfile: "lightweight",
+      productHead: "a".repeat(40),
+      cloudRequestCount: 0
+    });
+    networkCalls = 0;
+    globalThis.fetch = async () => {
+      networkCalls += 1;
+      throw new Error("disabled model must not call provider");
+    };
+    for (let index = 0; index < 10; index += 1) {
+      resetPatientIntentClassifierState();
+      const disabledReply = await callApi(agentChatHandler, {
+        ip: `local-structured-api-disabled-${index}`,
+        headers: { "x-idempotency-key": `local-structured-api-disabled-${index}` },
+        body: {
+          caseId: "P002",
+          agentId: "standardized_patient",
+          sessionId: apiSession.sessionId,
+          attemptId: apiSession.attemptId,
+          sessionMode: "free",
+          mode: "free",
+          stage: "history",
+          language: "zh",
+          studentInput: "排尿痛不痛？",
+          conversationHistory: []
+        }
+      });
+      assert.equal(disabledReply.statusCode, 200, JSON.stringify(disabledReply.payload));
+      assert.equal(disabledReply.payload.classificationSource, "deterministic");
+      assert.equal(Object.hasOwn(disabledReply.payload, "desktopEvidence"), false);
+    }
+    assert.equal(networkCalls, 0);
+    assert.equal(desktopRuntimeSummary().localAiAcceptedCount, 0);
+    assert.equal(desktopRuntimeSummary().ruleFallbackCount, 10);
+    assert.equal(desktopRuntimeSummary().cloudRequestCount, 0);
+
+    process.env.LLM_ENABLE_AI_PATIENT = "true";
+    globalThis.__hematuriaDesktopRuntimeEvidence = () => ({
+      sessionStartedAt: "2026-08-02T00:00:00.000Z",
+      runtimeTarget: "desktop",
+      llamaServerReady: true,
+      localModelReady: true,
+      model: DEFAULT_LOCAL_MODEL,
+      modelProfile: "lightweight",
+      productHead: "a".repeat(40),
+      cloudRequestCount: 0
+    });
 
     resetPatientIntentClassifierState();
     globalThis.fetch = async () => providerResponse(JSON.stringify({
@@ -638,5 +731,6 @@ try {
   }
   if (originalDesktopRuntimeEvidence === undefined) delete globalThis.__hematuriaDesktopRuntimeEvidence;
   else globalThis.__hematuriaDesktopRuntimeEvidence = originalDesktopRuntimeEvidence;
+  resetDesktopPatientEvidenceForTests();
 }
 if (failure) throw failure;
