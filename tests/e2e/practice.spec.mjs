@@ -1223,11 +1223,15 @@ test("catalog links cover all display IDs and representative routes refresh", as
 
 test("case catalog search has a recoverable empty state", async ({ page }) => {
   await page.goto("/cases/");
-  await page.getByRole("textbox", { name: "按病例编号搜索" }).fill("NO-SUCH-CASE");
-  await expect(page.getByRole("heading", { name: "没有匹配的病例" })).toBeVisible();
+  const search = page.getByRole("textbox", { name: "按病例编号搜索" });
+  await search.fill("NO-SUCH-CASE");
+  await expect(page.getByRole("heading", { name: "没有匹配的病例编号", exact: true })).toBeVisible();
   await expect(page.getByText("0 / 42", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "清除搜索与筛选" }).click();
-  await expect(page.getByRole("heading", { name: "训练病例 P001" })).toBeVisible();
+  await search.fill("");
+  const cards = page.locator("a[data-case-id]");
+  await expect(cards).toHaveCount(42);
+  await expect(page.locator('a[data-case-id="P001"]')).toBeVisible();
+  expect((await cards.allTextContents()).join(" ")).not.toMatch(/主诉|病程|肉眼血尿|尿液发红|无痛|腰痛|发热|尿频|尿急|尿痛|诊断|检查结果|标准答案/);
 });
 
 test("mobile interview keeps multiline input visible without horizontal overflow", async ({ page }) => {
