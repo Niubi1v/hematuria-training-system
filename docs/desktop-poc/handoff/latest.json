@@ -1,169 +1,94 @@
 {
-  "schemaVersion": 3,
-  "handoffId": "18e2f1b6-20260801-214538",
-  "status": "blocked_external_ui_control",
-  "milestone": "desktop-mentor-local-ai-final-candidate-r3",
+  "schemaVersion": 4,
+  "handoffId": "e2ea82e9-20260802-122048",
+  "status": "ready_for_review",
+  "milestone": "desktop-local-ai-runtime-audit-r4",
   "branch": "codex/hematuria-desktop-mentor-beta-package",
   "worktree": "D:/CodexProjects/worktrees/hematuria-desktop-mentor-beta-package",
-  "packageProductHead": "8030240eeb459872bca85e056860917e211a5e96",
-  "validatedRepositoryHeadBeforeHandoff": "014fea46293205cb0c6949888277a56063251657",
-  "r2IndependentAcceptance": {
-    "verdict": "BLOCKED_PRODUCT_DEFECT",
-    "evidenceDirectory": "D:/HematuriaDesktopR2Acceptance/Independent-R2",
-    "defects": [
-      "A legacy completed P001 WebView cache was restored into a fresh SQLite store.",
-      "Home, catalog and case training state disagreed.",
-      "A recovered final report exposed raw clinical trajectory action keys."
-    ]
-  },
-  "rootCause": {
-    "tauriApplicationIdentifier": "cn.hematuria.training.desktop",
-    "webViewUserDataDirectory": "C:/Users/admin/AppData/Local/cn.hematuria.training.desktop/EBWebView",
-    "sqliteDirectory": "%LOCALAPPDATA%/HematuriaTraining/MentorLocalAI-FinalCandidate",
-    "chain": "The home and catalog queried /api/desktop/progress and saw the fresh empty SQLite store. ClinicalTrainingClient hydrated attempt-pointer-v3 and attempt-v3 from the fixed-identifier WebView profile before querying /api/desktop/attempt/state. A 404 left the legacy completed snapshot active; token recovery then resumed and explicitly initialized that stale attemptId, after which desktop autosave wrote the stage-7 snapshot into the new SQLite database.",
-    "localAppDataIsolation": "Custom LOCALAPPDATA isolated the business SQLite directory, but WebView2 continued using the fixed Tauri application identifier user-data directory.",
-    "r2TestGap": "R2 tested handlers, SQLite lifecycle and renderer cache behavior separately; it did not combine a persistent real WebView profile containing a completed attempt with a distinct empty SQLite instance."
-  },
-  "r3StateAuthority": {
-    "sqliteSchemaVersion": 3,
-    "stateStoreId": "UUID v4 generated once per SQLite database and stable across launches",
-    "bootstrapFields": ["stateStoreId", "schemaVersion", "productHead", "serverStateRevision"],
-    "bootstrapEndpoint": "/api/desktop/state/bootstrap",
-    "serverFirst": true,
-    "desktopTrainingBrowserCache": "disabled and legacy/unbound training keys cleared before attempt discovery",
-    "legacyCachePolicy": "legacy_untrusted_cache; never imported into or used to create an SQLite attempt",
-    "homeCatalogCaseAuthority": "SQLite discovery/progress endpoints",
-    "serverUnavailablePolicy": "fail closed without browser-cache fallback"
-  },
-  "conflictMatrix": {
-    "A_oldCacheFreshSqlite": "automated pass; real package root launch created stateStoreId 5cb45132-9150-48a6-8cec-aaf01fb7a849 and remained attempts=0/snapshots=0 before UI control timed out",
-    "B_emptyCacheCompletedSqlite": "SQLite, sidecar and Playwright contract pass; real-Tauri visual confirmation blocked",
-    "C_bidirectionalConflict": "automated pass in both directions; SQLite revision and snapshot win",
-    "D_upgradeAndPathChange": "package launched from a Chinese/space extraction path and used the stable SQLite directory; full UI recovery chain blocked",
-    "E_threeRestarts": "SQLite/sidecar repeated-start and idempotency tests pass; three real-Tauri UI restarts blocked"
-  },
-  "publicReportPresentation": {
-    "typedMappings": {
-      "diagnosis": ["诊断结论", "Diagnosis"],
-      "department": ["会诊科室", "Consulting specialty"],
-      "trigger": ["会诊原因", "Reason for consultation"],
-      "question": ["会诊问题", "Consultation question"],
-      "evidence": ["提供依据", "Evidence provided"],
-      "consult": ["会诊意见", "Consultation advice"],
-      "treatment": ["治疗计划", "Treatment plan"],
-      "perioperative": ["围术期管理", "Perioperative management"]
-    },
-    "newAndRecoveredUseSameLayer": true,
-    "printUsesSameDom": true,
-    "globalWordDeletionUsed": false,
-    "automatedDom": "Chinese generated/recovered/print pass; bilingual typed mapping pass"
-  },
-  "medicalSemantics": {
-    "sourceProjectionApplied": 4,
-    "sourceProjectionWithdrawn": 62,
-    "sourceProjectionRejected": 121,
-    "medicalReviewPending": 1023,
-    "medicalConflict": 1,
-    "p001CbcMedicalReviewPending": true,
-    "p001CbcDiagnosticEligible": false,
-    "p001CbcScoringEligible": false,
-    "p001UrinalysisSingleDisplay": "红细胞 5562个/μl",
-    "timelineEmptyShellsAbsent": true,
-    "dataDiff": "zero"
-  },
-  "automatedAcceptance": {
-    "stateNamespaceAndCacheIsolation": "pass",
-    "sqliteDiscoveryAndRecovery": "pass",
-    "sidecarLifecycle": "pass",
-    "p001ChineseSevenStageDom": "pass",
-    "p001EnglishStages1To3Dom": "pass",
-    "p003ZeroRound": "pass",
-    "rapidDoubleClickIdempotency": "pass",
-    "ruleFallbackSevenStage": "pass",
-    "ruleFallbackCompletedRestart": "pass",
-    "realLocalAiQuestions": 16,
-    "realLocalAiAccepted": 15,
-    "realLocalAiGovernedFallback": 1,
-    "llamaServerReady": true,
-    "localModelReady": true,
-    "cloudRequestCount": 0,
-    "fourBComparisonRepeated": false
-  },
-  "realPackageSelfTest": {
-    "freshExtractionPath": "D:/HematuriaDesktopR3SelfTest/R3 真实自验 中文",
-    "freshSqliteRoot": "D:/HematuriaDesktopR3SelfTest/R3 新SQLite 状态",
-    "pathsContainChineseAndSpaces": true,
-    "verifyPackage": "pass",
-    "rootLauncherCreatedUniqueTauriWindow": true,
-    "freshSqliteStateStoreId": "5cb45132-9150-48a6-8cec-aaf01fb7a849",
-    "freshSqliteAttemptsBeforeUiControl": 0,
-    "freshSqliteSnapshotsBeforeUiControl": 0,
-    "desktopUiChain": "blocked_external_ui_control",
-    "desktopControlDetail": "The single window-state control approval timed out after the unique real Tauri window was discovered; no second approval or browser/source substitute was used.",
-    "normalCloseRequested": true,
-    "associatedResidualProcesses": 0
-  },
-  "artifacts": {
-    "directory": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R3",
-    "mentorZip": {
-      "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R3/HematuriaTraining-Mentor-LocalAI-FinalCandidate-R3.zip",
-      "bytes": 1311871990,
-      "sha256": "3609a3b2056003c43ea32057371ff51c38028dce9363e6cf69c4a2cac5de7f87",
-      "unpackedFiles": 88,
-      "unpackedBytes": 1416382709
-    },
-    "nsis": {
-      "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R3/HematuriaTraining-Mentor-LocalAI-Setup-R3.exe",
-      "bytes": 32474434,
-      "sha256": "f6f13507d0322dbf25fae32e8e556527ed833291fabec46f4d74fc4d7707dace"
-    },
-    "portable": {
-      "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R3/HematuriaTraining-Mentor-LocalAI-Portable-R3.zip",
-      "bytes": 51232175,
-      "sha256": "c756fd2283fdb87d230607916f798a740b34af5cba1adea1761cb8ecab0fc1e4"
-    },
-    "model": {
-      "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R3/Model/Qwen3-1.7B-Q4_K_M.gguf",
-      "bytes": 1282439264,
-      "sha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5"
-    }
-  },
-  "releaseGates": {
-    "typescript": "pass",
-    "eslint": "pass",
-    "nextBuildPages": 82,
-    "tauriRelease": "pass",
-    "nsisBuild": "pass",
-    "playwrightR3DefectRegressions": "3 passed",
-    "axeSeriousOrCriticalViolations": 0,
-    "dataAgentAuthorityAndPresentation": "pass",
-    "evidenceGraphIsolation": "pass",
-    "packageSecretFindings": 0,
-    "packageForbiddenFindings": 0,
-    "repositorySecretScan": "pass",
-    "dataDiff": "zero"
-  },
-  "blockingIssues": [
-    {
-      "code": "BLOCKED_EXTERNAL_UI_CONTROL",
-      "severity": "release-verification",
-      "reproduction": "Launch D:/HematuriaDesktopR3SelfTest/R3 真实自验 中文/启动血尿训练系统.cmd, discover the unique 血尿临床问诊训练系统 Tauri window, request the first window-state capture, and observe the desktop-control approval timeout.",
-      "productFailureObserved": false
-    }
+  "baseHead": "4c31bd547437270b08572218ef8f36052a401338",
+  "productHead": "e2ea82e908b46f241fe955b3eb3b0391617267dc",
+  "resolvedDefect": "R3-LOCALAI-COUNT-001",
+  "rootCause": "Release-mode Tauri does not enable debugRuntime, so the renderer omitted debug:true. api/agent-chat.js therefore skipped desktopPatientEvidence entirely because accounting and response diagnostics shared the same debug-only gate. Real local_ai replies passed the classifier and validator, but no accepted event reached the runtime aggregate read by /api/desktop/evidence.",
+  "patientReplyChain": [
+    "ClinicalTrainingClient input",
+    "POST /api/agent-chat",
+    "patientSession intent classification",
+    "local model provider",
+    "governed validator",
+    "answer planner",
+    "patient response",
+    "internal desktop runtime event",
+    "GET /api/desktop/evidence aggregate"
   ],
-  "remainingLimitations": [
-    "The five real-Tauri conflict/restart scenarios and user-visible final-report recovery chain remain blocked by external desktop-control approval timeout.",
-    "Attempts have a 24-hour server recovery window in this teaching Beta.",
-    "1023 items remain medical_review_pending; 121 source projection candidates remain rejected; one medical conflict remains isolated.",
-    "The Windows candidate is unsigned and has no automatic update or macOS package.",
-    "This is a medical teaching Beta and must not be used for real diagnosis or treatment."
+  "changedFiles": [
+    "api/agent-chat.js",
+    "server/desktopRuntimeEvidence.js",
+    "scripts/test-desktop-runtime-evidence.mjs",
+    "scripts/test-local-llm-structured.mjs",
+    "scripts/desktop-package-mentor-beta.ps1",
+    "scripts/scan-mentor-package-stage.mjs"
   ],
-  "releaseScope": {
-    "productionModified": false,
-    "mainModified": false,
-    "vercelModified": false,
-    "tencentCloudModified": false,
-    "oldMentorPackageOverwritten": false
+  "runtimeEventContract": {
+    "eventTypes": ["local_ai_accepted", "rule_fallback_used"],
+    "fields": ["eventType", "sessionId", "timestamp", "model", "latency"],
+    "forbiddenFields": ["question", "answer", "patient data", "token", "prompt", "secret", "reasoning"],
+    "studentVisible": false,
+    "aggregation": "Counts are derived from actual in-process runtime events; cloudRequestCount remains the actual non-loopback provider-attempt count from the desktop sidecar."
   },
-  "recommendedNextStep": "Do not mark ready_for_review. Re-run only the five real-Tauri state conflict/restart scenarios and recovered report visual checks against the immutable R3 hashes when desktop control is available."
+  "localAiEvidence": {
+    "modelEnabledRealTauri": {
+      "questions": 16,
+      "localAiAccepted": 15,
+      "governedRuleFallback": 1,
+      "finalRuntimeSessionLocalAiAcceptedCount": 7,
+      "finalRuntimeSessionRuleFallbackCount": 1,
+      "llamaServerReady": true,
+      "localModelReady": true,
+      "cloudRequestCount": 0,
+      "result": "pass"
+    },
+    "modelDisabledApi": {
+      "questions": 10,
+      "localAiAcceptedCount": 0,
+      "ruleFallbackCount": 10,
+      "providerCalls": 0,
+      "cloudRequestCount": 0,
+      "result": "pass"
+    },
+    "modelDisabledRealSidecar": {
+      "questions": 16,
+      "allAnswerSources": "rule_fallback",
+      "cloudRequestCount": 0,
+      "result": "pass"
+    },
+    "exportPrivacy": "pass; aggregate JSON and runtime event fixtures contain no patient question, answer, prompt, token, secret or reasoning"
+  },
+  "tests": [
+    {"name": "test:desktop:runtime-evidence", "status": "pass", "evidence": "5 accepted events; disabled model 0 accepted/10 fallback; event allowlist and privacy assertions"},
+    {"name": "test:desktop:local-ai", "status": "pass", "evidence": "release-mode API accounting works without exposing desktopEvidence; disabled model makes no provider call"},
+    {"name": "test:desktop:acceptance", "status": "pass", "evidence": "16 real sidecar replies, all rule_fallback, cloudRequestCount=0"},
+    {"name": "test:desktop:offline-ai", "status": "pass", "evidence": "16 real model replies: 15 local_ai, 1 governed fallback; final runtime session count 7/1; cloudRequestCount=0"},
+    {"name": "typecheck", "status": "pass"},
+    {"name": "lint", "status": "pass"},
+    {"name": "test", "status": "pass", "evidence": "full behavior suite including 42-case bilingual seven-stage and 360-point contracts"},
+    {"name": "test:secrets", "status": "pass", "evidence": "455 tracked/candidate files plus reachable history"},
+    {"name": "test:secret-scanner", "status": "pass"},
+    {"name": "targeted Playwright @ui-defect-regression", "status": "pass", "evidence": "3 passed using one desktop worker"},
+    {"name": "full Playwright test:e2e", "status": "fail", "evidence": "74 passed, 30 failed, 12 skipped; broad existing initialization/disabled-control/time-out failures under four workers"},
+    {"name": "desktop:build", "status": "pass", "evidence": "Next 82 pages, Tauri release, portable ZIP, NSIS and four-target package audit"},
+    {"name": "R4 mentor package scan", "status": "pass", "evidence": "88 files, secretFindings=0, forbiddenFindings=0"}
+  ],
+  "artifacts": [
+    {"type": "mentor_zip", "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R4/HematuriaTraining-Mentor-LocalAI-FinalCandidate-R4.zip", "bytes": 1311834518, "sha256": "8bf536337a8ad268f6d687aef75fde6f1dfa810a70ab05b8ad85990cbb110e59"},
+    {"type": "nsis", "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R4/HematuriaTraining-Mentor-LocalAI-Setup-R4.exe", "bytes": 32432744, "sha256": "dbc9e7acca5e78e078a66474a4fe7d73ff65b4d6497f12f4a467baac0b8408d8"},
+    {"type": "portable", "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R4/HematuriaTraining-Mentor-LocalAI-Portable-R4.zip", "bytes": 51192169, "sha256": "9056fe04903c4f688bf26ab7bef518620178a7fcc24e787b45e42dafaccd5db3"},
+    {"type": "model", "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R4/Model/Qwen3-1.7B-Q4_K_M.gguf", "bytes": 1282439264, "sha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5"}
+  ],
+  "dataDiff": "zero",
+  "secretScan": "pass; repository and R4 package scans found zero secrets",
+  "defects": [
+    {"id": "R4-E2E-GATE-001", "status": "open", "scope": "pre-existing/non-audit UI test environment", "detail": "Full four-worker Playwright run failed 30 tests; targeted R3 defect regressions pass. Not fixed because UI and unrelated product behavior are outside this task."}
+  ],
+  "blockers": ["A clean full Playwright release gate is not available from this run; do not promote R4 beyond independent review until the 30 failures are reproduced or cleared."],
+  "recommendedNextStep": "Run independent real-Tauri R4 acceptance against the immutable hashes, then rerun the full Playwright gate in the known release environment. Do not change patient answers, medical data, scoring or R3 artifacts."
 }
