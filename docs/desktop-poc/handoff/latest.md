@@ -1,69 +1,119 @@
-# 桌面本地 AI R4.1 运行审计修复交接（门禁阻塞）
+# 桌面本地 AI 导师 R4.1 最终候选交接
 
-- handoffId：`086abf5b-20260802-163937`
-- 状态：`blocked_test_gate`
+- handoffId：`086abf5b-20260802-173610`
+- 状态：`ready_for_review`
 - 分支：`codex/hematuria-desktop-mentor-beta-package`
-- 基线 HEAD：`4c31bd547437270b08572218ef8f36052a401338`
+- R3 基线 HEAD：`4c31bd547437270b08572218ef8f36052a401338`
 - R4.1 产品 HEAD：`086abf5b0b5a4080b8928270fcd314678cbb5b27`
+- Playwright 门禁代码 HEAD：`9fc3bef9320759b34f1e26773beb8405aacd28da`
 - 已关闭产品缺陷：`R4-LOCALAI-COUNT-REAL-TAURI-001`
 - `data/**`：零差异
 
-## 根因与修复
+## 发布判断
 
-真实 release Tauri 的 `debugRuntime=false`，渲染端因此不会发送 `debug:true`。此前 `/api/agent-chat` 只在 debug 诊断响应开启时调用 `desktopPatientEvidence`，把内部计数和对外诊断错误地绑在同一个 debug 门上。本地模型实际完成 intent 分类、validator 校验和回答规划，但事件从未进入 `/api/desktop/evidence` 使用的聚合器，所以真实回答后仍显示 `localAiAcceptedCount=0`、`ruleFallbackCount=0`。
+R4.1 产品缺陷、唯一 Playwright 异常归因和完整发布门禁均已关闭。候选包可进入最后一次独立、真实 Tauri 增量验收；R4 旧产物保持不可变，仅作回滚。
 
-修复保持患者回答链不变：每次真实桌面患者回复均在服务端内部记录一个最小事件，只有通过 validator 的真实 `local_ai` 写入 `local_ai_accepted`，其余真实安全降级写入 `rule_fallback_used`。事件仅包含 `eventType/sessionId/timestamp/model/latency`；不含问题、回答、患者数据、token、prompt、secret 或 reasoning。学生响应仍不暴露 `answerSource` 或桌面诊断对象。`cloudRequestCount` 继续读取 sidecar 对真实非本地 provider 请求的拦截计数，没有硬编码。
+## 根因与共享权威
 
-调用链：输入 → `/api/agent-chat` → intent → local model → governed validator → answer planner → patient response → 内部 runtime event → `/api/desktop/evidence` 聚合。
+失败版 release sidecar 的写端和读端位于同一 PID `53508`，但分别加载了不同的 `desktopRuntimeEvidence.js` 模块实例：
 
-## 修改文件
+- 写端 `moduleInstanceId=2f112762-e41b-47e7-96d6-43959927a2cf`，事件数从 1 增至 3；
+- 读端 `moduleInstanceId=61d0fd6e-e56c-48c3-9947-c4c51dafdaef`，事件数始终为 0。
+
+根因是同 PID、不同 `moduleInstanceId` 的模块级数组彼此隔离；不是本地模型没有运行，也不是 release 模式的 debug 开关导致。修复后，SQLite 表 `desktop_runtime_sessions` 与 `desktop_runtime_events` 成为 runtime session/event 的共享权威。事件写入按 `event_id` 幂等，跨模块、跨进程读取相同聚合结果；`cloudRequestCount` 仍来自真实非本地 provider 请求拦截计数。
+
+运行审计只保存计数所需的内部运行字段，不保存问题、回答、患者身份、病例内容、prompt、reply、bearer、token、secret 或 reasoning，学生响应也不暴露 `answerSource` 或诊断对象。
+
+## 产品提交实际修改文件
+
+产品提交 `086abf5b0b5a4080b8928270fcd314678cbb5b27` 实际修改 11 个文件：
 
 - `api/agent-chat.js`
-- `server/desktopRuntimeEvidence.js`
+- `desktop/sidecar/index.cjs`
+- `docs/desktop-poc/handoff/r4.1-runtime-audit-topology.md`
+- `scripts/desktop-lifecycle-test.mjs`
 - `scripts/test-desktop-runtime-evidence.mjs`
+- `scripts/test-desktop-sqlite-store.mjs`
 - `scripts/test-local-llm-structured.mjs`
-- `scripts/desktop-package-mentor-beta.ps1`
-- `scripts/scan-mentor-package-stage.mjs`
+- `server/desktopRuntimeEvidence.js`
+- `server/desktopSqliteStore.js`
+- `src-tauri/src/lib.rs`
+- `src/components/DesktopModelSettings.tsx`
 
-未修改 `data/**`、医学事实、Patient Agent 回答策略、评分、UI、SQLite 或 Tauri 实现。
+未修改 `data/**`、Patient Agent 回答策略、医学事实、评分合同或病例训练 UI。
 
-## 本地 AI 计数证据
+## 真实 Tauri 与跨进程证据
 
-真实本地模型桌面验收共 16 轮：15 轮 `local_ai`、1 轮 validator 因受治理候选冲突安全降级为 `rule_fallback`。最终一个真实 runtime session 为：
+修复版真实 release Tauri sidecar 为 PID `40012`：
 
-- `llamaServerReady=true`
-- `localModelReady=true`
-- `localAiAcceptedCount=7`
-- `ruleFallbackCount=1`
-- `cloudRequestCount=0`
+- 8 个可见回答：`local_ai=7`、受治理冲突 `rule_fallback=1`；
+- `llamaServerReady=true`、`localModelReady=true`；
+- `cloudRequestCount=0`、`runtimeAuditHealthy=true`；
+- 设置窗口关闭再打开后，7/1 聚合保持；
+- 正常退出后本轮相关进程、WebView2 与监听端口异常残留为 0。
 
-模型关闭 API 验收严格执行 10 轮：`localAiAcceptedCount=0`、`ruleFallbackCount=10`、provider 调用 0、`cloudRequestCount=0`。关闭模型的真实 sidecar 验收另执行 16 轮，回答来源全部为 `rule_fallback`，七阶段可继续，云请求为 0。JSON 聚合与事件结构的禁止内容检查通过。
+跨进程测试由进程 A 写入 5 个 accepted、1 个 fallback，进程 B 从同一 SQLite runtime session 读取 5/1；重复 `eventId` 不增加计数。
 
-## 测试与门禁
+“复制诊断摘要”得到 483 B 安全 JSON，SHA-256 为 `8876ea9acf95d153c753bfc7dcf60c41089b4663d54bdf7637c95093636a1551`。导出文件为 `D:\HematuriaDesktopTopologyEvidence\R4-Fixed-8Rounds-20260802-01\exports\hematuria-local-runtime-verification-1785658580741.json`，467 B，SHA-256 为 `4a9cbe1639a0ac4a353d2b3bad55c57678a02f6c0a729f74356fcd2a1a1142e2`。两者均通过禁止字段检查。
 
-通过：runtime evidence、structured local LLM、真实模型开启/关闭桌面验收、TypeScript、lint、完整行为测试、两类秘密扫描、Next 82 页构建、Tauri release、NSIS、便携包与 R4 包扫描。单线程桌面 `@ui-defect-regression` 3 项全部通过。
+## Playwright 唯一异常归因与最终门禁
 
-完整四 worker Playwright 门禁在隔离环境最终为 104 通过、0 失败、0 错误、12 个既有 project 互斥跳过，共 116 项，未启用 retry。最后的病例库空结果测试通过清空搜索框恢复 42 张病例卡，并继续验证公开卡不泄露主诉、病程或隐藏答案；desktop/mobile 定向结果为 2/2 通过。归因历史与最终 JUnit 位置见 `docs/desktop-poc/handoff/r4-playwright-attribution.md`。
+原始唯一失败为：
 
-R4 runtime evidence、TypeScript、ESLint、`data/**` 零差异、`git diff --check` 和本轮进程/端口清理均通过。
+`mobile-chromium › tests/e2e/practice.spec.mjs:189:1 › case route renders seven locked stages and no disease tag`
 
-## R4 产物
+首个失败请求是 `GET /cases/P008/`，HTTP 500。页面为 Next.js 15.5.21 开发错误页，唯一 page error 为 `Invariant: Expected clientReferenceManifest to be defined. This is a bug in Next.js.`；没有产品 JavaScript 异常。同轮第一个 P008 请求（desktop）HTTP 200 并通过，第二个 P008 请求（mobile）HTTP 500，后续 P008 请求均恢复 HTTP 200。因此归因为一次性 Next dev `clientReferenceManifest` 异常。
 
-目录：`D:\HematuriaDesktopArtifacts\MentorLocalAI-FinalCandidate-R4`
+随后三轮完全独立定向复现均使用全新 `.next`、LOCALAPPDATA、状态目录、输出目录、唯一端口和新 Next dev 进程；desktop/mobile、`retries=0` 每轮均为 `2 passed / 0 failed`：
+
+- `D:\HematuriaDesktopR41PlaywrightGate\targeted-p008-round1-086abf5-20260802`
+- `D:\HematuriaDesktopR41PlaywrightGate\targeted-p008-round2-086abf5-20260802`
+- `D:\HematuriaDesktopR41PlaywrightGate\targeted-p008-round3-086abf5-20260802`
+
+最终完整门禁使用 Node 22.14.0、Playwright 1.61.1、desktop/mobile、4 workers、`retries=0`，结果为：
+
+- 104 passed
+- 12 个既有 project 互斥 skip
+- 0 failed
+- 0 errors
+- 总计 116 项
+
+JUnit：`D:\HematuriaDesktopR41PlaywrightGate\full-086abf5-20260802-final\playwright-junit.xml`。测试端口与 Next 进程残留为 0。
+
+## 其余发布门禁
+
+以下门禁全部通过：
+
+- runtime evidence 跨进程与事件幂等；
+- SQLite store；
+- TypeScript；
+- ESLint；
+- R3 状态恢复、医学语义、Data Agent、evidence graph、timeline 与 public boundary 专项；
+- source projection：保留 4、拒绝 121、等待医学审核 1023、医学冲突 1；
+- Next 82 页生产构建；
+- Tauri release、NSIS、便携版；
+- 桌面包 4 个目标扫描，0 findings；
+- R4.1 阶段 88 个文件，`secretFindings=0`、`forbiddenFindings=0`；
+- `VERIFY-PACKAGE.ps1` 检查 9 个关键文件；
+- 仓库秘密扫描与秘密扫描器合同；
+- `git diff --check`、`data/**` 零差异；
+- 构建和测试关联进程、端口异常残留为 0。
+
+## R4.1 不可变产物
+
+目录：`D:\HematuriaDesktopArtifacts\MentorLocalAI-FinalCandidate-R4.1`
 
 | 产物 | 大小 | SHA-256 |
 |---|---:|---|
-| `HematuriaTraining-Mentor-LocalAI-FinalCandidate-R4.zip` | 1,311,834,518 B | `8bf536337a8ad268f6d687aef75fde6f1dfa810a70ab05b8ad85990cbb110e59` |
-| `HematuriaTraining-Mentor-LocalAI-Setup-R4.exe` | 32,432,744 B | `dbc9e7acca5e78e078a66474a4fe7d73ff65b4d6497f12f4a467baac0b8408d8` |
-| `HematuriaTraining-Mentor-LocalAI-Portable-R4.zip` | 51,192,169 B | `9056fe04903c4f688bf26ab7bef518620178a7fcc24e787b45e42dafaccd5db3` |
+| `HematuriaTraining-Mentor-LocalAI-FinalCandidate-R4.1.zip` | 1,311,867,078 B | `ad519485d5f549c10d4faf7d62af94ad3e39dce4a7a5041e625e270d25a40575` |
+| `HematuriaTraining-Mentor-LocalAI-Setup-R4.1.exe` | 32,451,859 B | `abebccf8cff46b09680c3e2aa5ccdf5d5a21133690f7ed61ec653b31f9270ae4` |
+| `HematuriaTraining-Mentor-LocalAI-Portable-R4.1.zip` | 51,225,070 B | `8b06c8982d97bc8f514efe8d18c78589abf8086bba7736ff91f7aab2aa4e672a` |
 | `Model\Qwen3-1.7B-Q4_K_M.gguf` | 1,282,439,264 B | `d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5` |
 
-R4 解压树 88 个文件，包扫描 `secretFindings=0`、`forbiddenFindings=0`。未提交安装包、模型、trace、截图或日志。
+包内 `VERSION.json` 的 `productHead` 为 `086abf5b0b5a4080b8928270fcd314678cbb5b27`，channel 为 `mentor-local-ai-final-candidate-r4.1`。
 
-## 下一步
+## 剩余限制与下一步
 
-不要进入独立验收。R4.1 产品修复已通过真实 Tauri 8 轮验证，但本轮唯一一次完整四 worker Playwright 为 `103 passed / 1 failed / 12 skipped`。失败页是 Next.js 开发服务器的 `Expected clientReferenceManifest to be defined` 不变量错误；同轮 desktop 对应测试及后续 P008 请求通过。按限定范围未重跑完整门禁、未修改病例 UI/测试、未生成 R4.1 产物。
-
-失败版写端与读端同为 PID `53508`，但模块实例不同，写端累计 3、读端始终 0。修复版 sidecar PID `40012` 使用 SQLite 聚合，真实 UI 8 轮得到 `local_ai=7`、`rule_fallback=1`、云请求 0，关闭重开设置后保持。剪贴板摘要 SHA-256 为 `8876ea9acf95d153c753bfc7dcf60c41089b4663d54bdf7637c95093636a1551`；导出文件为 `D:\HematuriaDesktopTopologyEvidence\R4-Fixed-8Rounds-20260802-01\exports\hematuria-local-runtime-verification-1785658580741.json`，467 B，SHA-256 `4a9cbe1639a0ac4a353d2b3bad55c57678a02f6c0a729f74356fcd2a1a1142e2`。详情见 `docs/desktop-poc/handoff/r4.1-runtime-audit-topology.md`。
-
-R4 旧产物保持不可变，仅作回滚；未创建 `D:\HematuriaDesktopArtifacts\MentorLocalAI-FinalCandidate-R4.1`。
+- 仍需对上述不可变 R4.1 产物执行最后一次独立真实 Tauri 增量验收；不得以源码服务器或本轮开发证据代替。
+- 首次本地模型加载可能较慢，但必须持续显示进度。
+- 系统为医学教学 Beta，不用于真实诊疗。
