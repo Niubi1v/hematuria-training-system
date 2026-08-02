@@ -6,7 +6,7 @@ const { readLLMResponse } = require("../server/llmClient.runtime.js");
 const { verifySessionCapability } = require("../server/sessionCapability.js");
 const { normalizeAttemptMode } = require("../server/trainingState.js");
 const { executeIdempotentAgentRequest } = require("../server/agentRequestStore.js");
-const { desktopPatientEvidence } = require("../server/desktopRuntimeEvidence.js");
+const { desktopPatientEvidence, runtimeAuditTrace } = require("../server/desktopRuntimeEvidence.js");
 
 const blockedTeacherKeys = ["diagnosis", "imaging", "pathology", "treatment", "teacherOnlyData", "case_card", "scoring"];
 const PUBLIC_AGENT_ID = "standardized_patient";
@@ -221,9 +221,15 @@ async function buildAgentResponse(body, agentId, caseData, startedAt) {
             : patient.cacheHit ? "ai_cache" : "live_ai"
         ));
     const recordedDesktopEvidence = desktopPatientEvidence(patient, {
-      latency: Date.now() - startedAt,
-      sessionId: body.sessionId
+      latency: Date.now() - startedAt
     });
+    runtimeAuditTrace(
+      recordedDesktopEvidence?.answerSource === "local_ai"
+        ? "agent-chat-final-local-ai"
+        : recordedDesktopEvidence?.answerSource === "rule_fallback"
+          ? "agent-chat-final-rule-fallback"
+          : "agent-chat-final-provider-missing"
+    );
     const desktopEvidence = desktopDiagnosticsRequested(body) ? recordedDesktopEvidence : null;
     return {
       statusCode: 200,
@@ -332,6 +338,7 @@ module.exports = async function handler(req, res) {
   if (!origin.allowed) return res.status(403).json({ error: "origin_not_allowed" });
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  runtimeAuditTrace("agent-chat-entry");
   const rate = takeRateLimit(req, {
     store: requestWindows,
     limit: positiveInteger(process.env.AGENT_CHAT_RATE_LIMIT_PER_MINUTE || process.env.AGENT_API_RATE_LIMIT_PER_MINUTE, 30, 10000),

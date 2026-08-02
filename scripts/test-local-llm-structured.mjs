@@ -12,6 +12,7 @@ const environmentKeys = [
   "TRAINING_STATE_SECRET",
   "TRAINING_ATTEMPT_STORE_MODE",
   "HEMATURIA_DESKTOP_DATABASE_PATH",
+  "HEMATURIA_DESKTOP_RUNTIME_SESSION_ID",
   "HEMATURIA_RUNTIME_TARGET",
   "HEMATURIA_DESKTOP_DEBUG_RUNTIME",
   "LLM_PROVIDER",
@@ -42,6 +43,10 @@ delete process.env.LLM_MODEL;
 delete process.env.LLM_STREAMING_ENABLED;
 delete process.env.PATIENT_SEMANTIC_CLASSIFIER_ENABLED;
 
+const runtimeEvidenceDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "hematuria-local-runtime-evidence-"));
+process.env.HEMATURIA_DESKTOP_DATABASE_PATH = path.join(runtimeEvidenceDirectory, "runtime.sqlite3");
+process.env.HEMATURIA_DESKTOP_RUNTIME_SESSION_ID = "local-structured-runtime";
+
 const {
   DEFAULT_LOCAL_MODEL,
   getLLMProviderConfig,
@@ -61,7 +66,12 @@ const {
   getSession,
   initSession
 } = require("../server/patientSession.js");
-const { closeDesktopSqliteStore } = require("../server/desktopSqliteStore.js");
+const desktopSqliteStore = require("../server/desktopSqliteStore.js");
+const { closeDesktopSqliteStore } = desktopSqliteStore;
+desktopSqliteStore.startDesktopRuntimeSession({
+  runtimeSessionId: process.env.HEMATURIA_DESKTOP_RUNTIME_SESSION_ID,
+  sessionStartedAt: "2026-08-02T00:00:00.000Z"
+});
 const agentChatHandler = require("../api/agent-chat.js");
 const {
   desktopRuntimeSummary,
@@ -732,5 +742,6 @@ try {
   if (originalDesktopRuntimeEvidence === undefined) delete globalThis.__hematuriaDesktopRuntimeEvidence;
   else globalThis.__hematuriaDesktopRuntimeEvidence = originalDesktopRuntimeEvidence;
   resetDesktopPatientEvidenceForTests();
+  fs.rmSync(runtimeEvidenceDirectory, { recursive: true, force: true });
 }
 if (failure) throw failure;

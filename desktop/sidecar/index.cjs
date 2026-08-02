@@ -41,6 +41,7 @@ const networkAudit = {
   cloudRequestCount: 0
 };
 const runtimeSessionStartedAt = new Date().toISOString();
+const runtimeSessionId = crypto.randomUUID();
 
 function fatalConfiguration(message) {
   process.stderr.write(`${JSON.stringify({ event: "desktop_sidecar_configuration_error", code: message })}\n`);
@@ -130,6 +131,7 @@ function installDesktopEnvironment(trainingSecret) {
   Object.assign(process.env, {
     NODE_ENV: "production",
     HEMATURIA_RUNTIME_TARGET: "desktop",
+    HEMATURIA_DESKTOP_RUNTIME_SESSION_ID: runtimeSessionId,
     TRAINING_STATE_SECRET: trainingSecret,
     TRAINING_ATTEMPT_STORE_MODE: "sqlite",
     AGENT_REQUEST_STORE_MODE: "memory",
@@ -526,6 +528,10 @@ function installDesktopRuntimeEvidence(store) {
       cloudRequestCount: networkAudit.cloudRequestCount
     };
   };
+  const evidence = require(path.join(appRoot, "server", "desktopRuntimeEvidence.js"));
+  evidence.runtimeAuditTrace("sidecar-provider-install", {
+    runtimeSessionId
+  });
 }
 
 function desktopSettingsHandler(store) {
@@ -574,9 +580,98 @@ function desktopSettingsHandler(store) {
 function desktopEvidenceHandler(evidence) {
   return async (req, res) => {
     if (req.method !== "GET") return res.status(405).json({ error: "method_not_allowed" });
+    const source = new URL(req.url || "/", "http://127.0.0.1").searchParams.get("source");
+    if (source === "settings-refresh") evidence.runtimeAuditTrace("settings-summary-refresh");
     const snapshot = evidence.desktopRuntimeSummary();
     if (!snapshot) return res.status(503).json({ error: "desktop_evidence_unavailable" });
     return res.status(200).json(snapshot);
+  };
+}
+
+const RUNTIME_DIAGNOSTIC_KEYS = new Set([
+  "cloudRequestCount",
+  "eventWriteFailureCount",
+  "generatedAt",
+  "llamaServerReady",
+  "localAiAcceptedCount",
+  "localModelReady",
+  "model",
+  "modelProfile",
+  "productHead",
+  "ruleFallbackCount",
+  "runtimeAuditHealthy",
+  "runtimeTarget",
+  "schemaVersion",
+  "sessionStartedAt"
+]);
+
+function runtimeDiagnosticJson(evidence) {
+  const snapshot = evidence.desktopRuntimeSummary();
+  if (!snapshot) throw new Error("desktop_evidence_unavailable");
+  const keys = Object.keys(snapshot);
+  if (keys.length !== RUNTIME_DIAGNOSTIC_KEYS.size || keys.some((key) => !RUNTIME_DIAGNOSTIC_KEYS.has(key))) {
+    throw new Error("desktop_evidence_schema_invalid");
+  }
+  return `${JSON.stringify(snapshot, null, 2)}\n`;
+}
+
+function writeRuntimeDiagnosticToClipboard(serialized) {
+  return new Promise((resolve, reject) => {
+    const systemRoot = String(process.env.SystemRoot || process.env.WINDIR || "");
+    const clipPath = path.join(systemRoot, "System32", "clip.exe");
+    let settled = false;
+    const finish = (error) => {
+      if (settled) return;
+      settled = true;
+      if (error) reject(error);
+      else resolve();
+    };
+    const child = spawn(clipPath, [], {
+      stdio: ["pipe", "ignore", "ignore"],
+      windowsHide: true
+    });
+    child.once("error", () => finish(new Error("desktop_clipboard_unavailable")));
+    child.once("exit", (code) => finish(code === 0 ? null : new Error("desktop_clipboard_write_failed")));
+    child.stdin.once("error", () => finish(new Error("desktop_clipboard_write_failed")));
+    child.stdin.end(serialized, "utf8");
+  });
+}
+
+function desktopEvidenceCopyHandler(evidence) {
+  return async (req, res) => {
+    if (req.method !== "POST") return res.status(405).json({ error: "method_not_allowed" });
+    try {
+      const serialized = runtimeDiagnosticJson(evidence);
+      await writeRuntimeDiagnosticToClipboard(serialized);
+      return res.status(200).json({
+        copied: true,
+        sha256: crypto.createHash("sha256").update(serialized).digest("hex")
+      });
+    } catch (error) {
+      const code = error instanceof Error ? error.message : "desktop_clipboard_write_failed";
+      return res.status(code === "desktop_evidence_unavailable" ? 503 : 500).json({ error: code });
+    }
+  };
+}
+
+function desktopEvidenceExportHandler(evidence) {
+  return async (req, res) => {
+    if (req.method !== "POST") return res.status(405).json({ error: "method_not_allowed" });
+    try {
+      const serialized = runtimeDiagnosticJson(evidence);
+      const exportDirectory = path.join(dataDirectory, "exports");
+      fs.mkdirSync(exportDirectory, { recursive: true });
+      const fileName = `hematuria-local-runtime-verification-${Date.now()}.json`;
+      const filePath = path.join(exportDirectory, fileName);
+      fs.writeFileSync(filePath, serialized, { encoding: "utf8", flag: "wx" });
+      const stored = fs.readFileSync(filePath);
+      const sha256 = crypto.createHash("sha256").update(stored).digest("hex");
+      if (stored.toString("utf8") !== serialized) throw new Error("desktop_evidence_export_verify_failed");
+      return res.status(200).json({ exported: true, path: filePath, size: stored.length, sha256 });
+    } catch (error) {
+      const code = error instanceof Error ? error.message : "desktop_evidence_export_failed";
+      return res.status(code === "desktop_evidence_unavailable" ? 503 : 500).json({ error: code });
+    }
   };
 }
 
@@ -783,6 +878,8 @@ async function loadHandlers(store) {
   handlers.set("/api/desktop/settings", desktopSettingsHandler(store));
   const evidence = require(path.join(appRoot, "server", "desktopRuntimeEvidence.js"));
   handlers.set("/api/desktop/evidence", desktopEvidenceHandler(evidence));
+  handlers.set("/api/desktop/evidence/copy", desktopEvidenceCopyHandler(evidence));
+  handlers.set("/api/desktop/evidence/export", desktopEvidenceExportHandler(evidence));
   handlers.set("/api/desktop/evidence/cloud-probe", desktopCloudProbeHandler(evidence));
   const trainingState = require(path.join(appRoot, "server", "trainingState.js"));
   handlers.set("/api/desktop/attempt/resume", desktopAttemptResumeHandler(store, trainingState));
@@ -1001,6 +1098,7 @@ async function main() {
   const databaseSchemaVersion = sqliteStore.getDesktopSchemaVersion();
   const trainingSecret = sqliteStore.getOrCreateDesktopSecret();
   installDesktopEnvironment(trainingSecret);
+  sqliteStore.startDesktopRuntimeSession({ runtimeSessionId, sessionStartedAt: runtimeSessionStartedAt });
   installDesktopRuntimeEvidence(sqliteStore);
   const selected = selectedModel(sqliteStore);
   activeModelAlias = selected.modelAlias;

@@ -271,6 +271,7 @@ try {
   assert.equal(debugEvidence.status, 200);
   assert.deepEqual(Object.keys(await debugEvidence.json()).sort(), [
     "cloudRequestCount",
+    "eventWriteFailureCount",
     "generatedAt",
     "llamaServerReady",
     "localModelReady",
@@ -279,10 +280,26 @@ try {
     "modelProfile",
     "productHead",
     "ruleFallbackCount",
+    "runtimeAuditHealthy",
     "runtimeTarget",
     "schemaVersion",
     "sessionStartedAt"
   ].sort());
+  const copiedEvidence = await authorizedFetch(first, "/api/desktop/evidence/copy/", { method: "POST" });
+  assert.equal(copiedEvidence.status, 200);
+  assert.match((await copiedEvidence.json()).sha256, /^[a-f0-9]{64}$/);
+  const exportedEvidence = await authorizedFetch(first, "/api/desktop/evidence/export/", { method: "POST" });
+  assert.equal(exportedEvidence.status, 200);
+  const exportedPayload = await exportedEvidence.json();
+  assert.equal(exportedPayload.exported, true);
+  assert.equal(exportedPayload.path.startsWith(`${path.join(first.dataDirectory, "exports")}${path.sep}`), true);
+  const exportedBuffer = await fs.readFile(exportedPayload.path);
+  assert.equal(exportedBuffer.length, exportedPayload.size);
+  assert.equal(crypto.createHash("sha256").update(exportedBuffer).digest("hex"), exportedPayload.sha256);
+  assert.doesNotMatch(
+    exportedBuffer.toString("utf8"),
+    /"(?:question|answer|prompt|reply|caseId|patient|bearer|token|secret|reasoning)"\s*:/i
+  );
   assert.equal((await authorizedFetch(second, "/api/desktop/evidence/")).status, 200);
   const cloudProbe = await authorizedFetch(first, "/api/desktop/evidence/cloud-probe/", { method: "POST" });
   assert.equal(cloudProbe.status, 200);

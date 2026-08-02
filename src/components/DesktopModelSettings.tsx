@@ -38,9 +38,14 @@ type DesktopRuntimeSummary = {
   localModelReady: boolean;
   localAiAcceptedCount: number;
   ruleFallbackCount: number;
+  eventWriteFailureCount: number;
+  runtimeAuditHealthy: boolean;
   cloudRequestCount: number;
   generatedAt: string;
 };
+
+type DesktopCopyResult = { copied: true; sha256: string };
+type DesktopExportResult = { exported: true; path: string; size: number; sha256: string };
 
 const emptySettings: DesktopSettings = {
   modelMode: "lightweight",
@@ -97,7 +102,7 @@ export default function DesktopModelSettings() {
       setSettings(next);
       setDraftDirectory(next.modelDirectory);
       setDraftModelMode(next.modelMode);
-      const evidence = await requestJson<DesktopRuntimeSummary>(`${publicApiConfig.baseUrl}/api/desktop/evidence`, undefined, {
+      const evidence = await requestJson<DesktopRuntimeSummary>(`${publicApiConfig.baseUrl}/api/desktop/evidence?source=settings-refresh`, undefined, {
         method: "GET",
         timeoutMs: 10_000,
         retries: 0,
@@ -111,29 +116,36 @@ export default function DesktopModelSettings() {
     }
   }
 
-  function diagnosticJson() {
-    return diagnostics ? `${JSON.stringify(diagnostics, null, 2)}\n` : "";
-  }
-
   async function copyDiagnostics() {
     if (!diagnostics) return;
     try {
-      await navigator.clipboard.writeText(diagnosticJson());
+      const result = await requestJson<DesktopCopyResult>(`${publicApiConfig.baseUrl}/api/desktop/evidence/copy`, {}, {
+        method: "POST",
+        timeoutMs: 10_000,
+        retries: 0,
+        endpointName: "desktop-runtime-copy"
+      });
+      if (!result.copied) throw new Error("desktop_clipboard_write_failed");
       setMessage(lang === "en" ? "Local verification summary copied." : "本机运行验证摘要已复制。");
     } catch {
       setMessage(lang === "en" ? "Copy is unavailable on this device." : "当前设备无法复制摘要。");
     }
   }
 
-  function exportDiagnostics() {
+  async function exportDiagnostics() {
     if (!diagnostics) return;
-    const url = URL.createObjectURL(new Blob([diagnosticJson()], { type: "application/json;charset=utf-8" }));
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = "hematuria-local-runtime-verification.json";
-    anchor.click();
-    URL.revokeObjectURL(url);
-    setMessage(lang === "en" ? "Local verification summary exported." : "本机运行验证摘要已导出。");
+    try {
+      const result = await requestJson<DesktopExportResult>(`${publicApiConfig.baseUrl}/api/desktop/evidence/export`, {}, {
+        method: "POST",
+        timeoutMs: 10_000,
+        retries: 0,
+        endpointName: "desktop-runtime-export"
+      });
+      if (!result.exported || !result.path) throw new Error("desktop_evidence_export_failed");
+      setMessage(lang === "en" ? `Exported to ${result.path}` : `已导出至 ${result.path}`);
+    } catch {
+      setMessage(lang === "en" ? "Export failed." : "导出失败。");
+    }
   }
 
   async function saveSettings(localAiEnabled = settings.localAiEnabled) {
@@ -251,13 +263,14 @@ export default function DesktopModelSettings() {
                     <dt>{lang === "en" ? "Local resource profile" : "本地资源方案"}</dt><dd>{diagnostics.modelProfile === "lightweight" ? (lang === "en" ? "Lightweight" : "轻量") : (lang === "en" ? "Standard" : "标准")}</dd>
                     <dt>{lang === "en" ? "Accepted local answers this start" : "本次启动已接受的本地回答"}</dt><dd>{diagnostics.localAiAcceptedCount}</dd>
                     <dt>{lang === "en" ? "Safe fallback answers this start" : "本次启动安全降级回答"}</dt><dd>{diagnostics.ruleFallbackCount}</dd>
+                    <dt>{lang === "en" ? "Runtime audit" : "运行审计"}</dt><dd>{diagnostics.runtimeAuditHealthy ? (lang === "en" ? "Healthy" : "正常") : (lang === "en" ? `Unavailable (${diagnostics.eventWriteFailureCount} write failures)` : `不可用（${diagnostics.eventWriteFailureCount} 次写入失败）`)}</dd>
                     <dt>{lang === "en" ? "Cloud requests" : "云端请求"}</dt><dd>{diagnostics.cloudRequestCount}</dd>
                     <dt>{lang === "en" ? "Session started" : "本次启动时间"}</dt><dd>{diagnostics.sessionStartedAt}</dd>
                     <dt>{lang === "en" ? "Product version" : "产品版本"}</dt><dd className="break-all">{diagnostics.productHead}</dd>
                   </dl>
                   <div className="mt-4 flex flex-wrap gap-2">
                     <button type="button" className="ui-button-secondary" onClick={() => void copyDiagnostics()}><Copy size={15} />{lang === "en" ? "Copy summary" : "复制摘要"}</button>
-                    <button type="button" className="ui-button-secondary" onClick={exportDiagnostics}><Download size={15} />{lang === "en" ? "Export JSON" : "导出JSON"}</button>
+                    <button type="button" className="ui-button-secondary" onClick={() => void exportDiagnostics()}><Download size={15} />{lang === "en" ? "Export JSON" : "导出JSON"}</button>
                   </div>
                 </>
               ) : <p className="mt-3 text-xs text-clinic-muted">{lang === "en" ? "Verification summary is not available yet." : "运行验证摘要尚未就绪。"}</p>}

@@ -8,6 +8,8 @@ const MAX_IDEMPOTENCY_RECORDS = 64;
 const ATTEMPT_TTL_MILLISECONDS = 24 * 60 * 60 * 1000;
 const STATE_STORE_ID_KEY = "state_store_id";
 const SERVER_STATE_REVISION_KEY = "server_state_revision";
+const RUNTIME_EVENT_TYPES = new Set(["local_ai_accepted", "rule_fallback_used"]);
+const RUNTIME_MODELS = new Set(["Qwen3-1.7B", "Qwen3-4B"]);
 
 let activeStore = null;
 
@@ -150,6 +152,30 @@ function migrate(database) {
   });
 }
 
+function ensureRuntimeAuditSchema(database) {
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS desktop_runtime_sessions (
+      runtime_session_id TEXT PRIMARY KEY,
+      session_started_at TEXT NOT NULL,
+      event_write_failure_count INTEGER NOT NULL DEFAULT 0 CHECK(event_write_failure_count >= 0),
+      created_at INTEGER NOT NULL
+    ) STRICT;
+
+    CREATE TABLE IF NOT EXISTS desktop_runtime_events (
+      event_id TEXT PRIMARY KEY,
+      runtime_session_id TEXT NOT NULL,
+      event_type TEXT NOT NULL CHECK(event_type IN ('local_ai_accepted', 'rule_fallback_used')),
+      timestamp TEXT NOT NULL,
+      model TEXT NOT NULL,
+      latency INTEGER NOT NULL CHECK(latency >= 0 AND latency <= 120000),
+      FOREIGN KEY (runtime_session_id) REFERENCES desktop_runtime_sessions(runtime_session_id) ON DELETE CASCADE
+    ) STRICT;
+
+    CREATE INDEX IF NOT EXISTS desktop_runtime_events_session
+      ON desktop_runtime_events(runtime_session_id, event_type);
+  `);
+}
+
 function openStore() {
   const databasePath = desktopDatabasePath();
   if (activeStore?.path === databasePath) return activeStore;
@@ -165,6 +191,7 @@ function openStore() {
     database.exec("PRAGMA foreign_keys = ON");
     database.exec("PRAGMA busy_timeout = 5000");
     migrate(database);
+    ensureRuntimeAuditSchema(database);
   } catch (error) {
     database.close();
     throw error;
@@ -178,6 +205,135 @@ function closeDesktopSqliteStore() {
   activeStore.database.exec("PRAGMA wal_checkpoint(TRUNCATE)");
   activeStore.database.close();
   activeStore = null;
+}
+
+function runtimeIdentifier(value, code) {
+  const normalized = String(value || "");
+  if (!normalized || normalized.length > 160 || !/^[A-Za-z0-9:_.-]+$/.test(normalized)) {
+    throw new Error(code);
+  }
+  return normalized;
+}
+
+function runtimeTimestamp(value) {
+  const normalized = String(value || "");
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(normalized)) {
+    throw new Error("desktop_runtime_timestamp_invalid");
+  }
+  return normalized;
+}
+
+function desktopRuntimeEventSummary(runtimeSessionId) {
+  const sessionId = runtimeIdentifier(runtimeSessionId, "desktop_runtime_session_id_invalid");
+  const { database } = openStore();
+  const row = database.prepare(`
+    SELECT
+      s.session_started_at,
+      s.event_write_failure_count,
+      COALESCE(SUM(CASE WHEN e.event_type = 'local_ai_accepted' THEN 1 ELSE 0 END), 0) AS local_ai_accepted_count,
+      COALESCE(SUM(CASE WHEN e.event_type = 'rule_fallback_used' THEN 1 ELSE 0 END), 0) AS rule_fallback_count
+    FROM desktop_runtime_sessions s
+    LEFT JOIN desktop_runtime_events e ON e.runtime_session_id = s.runtime_session_id
+    WHERE s.runtime_session_id = ?
+    GROUP BY s.runtime_session_id
+  `).get(sessionId);
+  if (!row) return null;
+  return {
+    sessionStartedAt: row.session_started_at,
+    localAiAcceptedCount: Number(row.local_ai_accepted_count),
+    ruleFallbackCount: Number(row.rule_fallback_count),
+    eventWriteFailureCount: Number(row.event_write_failure_count),
+    runtimeAuditHealthy: Number(row.event_write_failure_count) === 0
+  };
+}
+
+function startDesktopRuntimeSession({ runtimeSessionId, sessionStartedAt }) {
+  const sessionId = runtimeIdentifier(runtimeSessionId, "desktop_runtime_session_id_invalid");
+  const startedAt = runtimeTimestamp(sessionStartedAt);
+  const { database } = openStore();
+  database.prepare(`
+    INSERT INTO desktop_runtime_sessions(
+      runtime_session_id, session_started_at, event_write_failure_count, created_at
+    ) VALUES (?, ?, 0, ?)
+    ON CONFLICT(runtime_session_id) DO NOTHING
+  `).run(sessionId, startedAt, Date.now());
+  const row = database.prepare(`
+    SELECT session_started_at FROM desktop_runtime_sessions WHERE runtime_session_id = ?
+  `).get(sessionId);
+  if (row?.session_started_at !== startedAt) throw new Error("desktop_runtime_session_conflict");
+  return desktopRuntimeEventSummary(sessionId);
+}
+
+function writeDesktopRuntimeEvent({ eventId, runtimeSessionId, eventType, timestamp, model, latency }) {
+  const normalizedEventId = runtimeIdentifier(eventId, "desktop_runtime_event_id_invalid");
+  const sessionId = runtimeIdentifier(runtimeSessionId, "desktop_runtime_session_id_invalid");
+  const normalizedType = String(eventType || "");
+  const normalizedModel = String(model || "");
+  const normalizedLatency = Number(latency);
+  if (!RUNTIME_EVENT_TYPES.has(normalizedType)) throw new Error("desktop_runtime_event_type_invalid");
+  if (!RUNTIME_MODELS.has(normalizedModel)) throw new Error("desktop_runtime_event_model_invalid");
+  if (!Number.isSafeInteger(normalizedLatency) || normalizedLatency < 0 || normalizedLatency > 120_000) {
+    throw new Error("desktop_runtime_event_latency_invalid");
+  }
+  const { database } = openStore();
+  const inserted = database.prepare(`
+    INSERT INTO desktop_runtime_events(
+      event_id, runtime_session_id, event_type, timestamp, model, latency
+    ) VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(event_id) DO NOTHING
+  `).run(
+    normalizedEventId,
+    sessionId,
+    normalizedType,
+    runtimeTimestamp(timestamp),
+    normalizedModel,
+    normalizedLatency
+  );
+  return {
+    inserted: inserted.changes === 1,
+    ...desktopRuntimeEventSummary(sessionId)
+  };
+}
+
+function recordDesktopRuntimeWriteFailure(runtimeSessionId) {
+  const sessionId = runtimeIdentifier(runtimeSessionId, "desktop_runtime_session_id_invalid");
+  const { database } = openStore();
+  const updated = database.prepare(`
+    UPDATE desktop_runtime_sessions
+    SET event_write_failure_count = event_write_failure_count + 1
+    WHERE runtime_session_id = ?
+  `).run(sessionId);
+  if (updated.changes !== 1) throw new Error("desktop_runtime_session_missing");
+  return desktopRuntimeEventSummary(sessionId);
+}
+
+function desktopRuntimeEventsForTests(runtimeSessionId) {
+  const sessionId = runtimeIdentifier(runtimeSessionId, "desktop_runtime_session_id_invalid");
+  const { database } = openStore();
+  return database.prepare(`
+    SELECT event_id, runtime_session_id, event_type, timestamp, model, latency
+    FROM desktop_runtime_events
+    WHERE runtime_session_id = ?
+    ORDER BY timestamp, event_id
+  `).all(sessionId).map((row) => ({
+    eventId: row.event_id,
+    runtimeSessionId: row.runtime_session_id,
+    eventType: row.event_type,
+    timestamp: row.timestamp,
+    model: row.model,
+    latency: row.latency
+  }));
+}
+
+function resetDesktopRuntimeSessionForTests(runtimeSessionId) {
+  const sessionId = runtimeIdentifier(runtimeSessionId, "desktop_runtime_session_id_invalid");
+  const { database } = openStore();
+  transaction(database, () => {
+    database.prepare("DELETE FROM desktop_runtime_events WHERE runtime_session_id = ?").run(sessionId);
+    database.prepare(`
+      UPDATE desktop_runtime_sessions SET event_write_failure_count = 0 WHERE runtime_session_id = ?
+    `).run(sessionId);
+  });
 }
 
 function readServerStateRevision(database) {
@@ -705,6 +861,8 @@ module.exports = {
   commitAttempt,
   discoverAttempt,
   desktopDatabasePath,
+  desktopRuntimeEventSummary,
+  desktopRuntimeEventsForTests,
   getDesktopSchemaVersion,
   getDesktopStateAuthority,
   getDesktopSessionMetadata,
@@ -713,11 +871,15 @@ module.exports = {
   getTrainingRecordSnapshot,
   loadAttempt,
   attemptRequestPayloads,
+  recordDesktopRuntimeWriteFailure,
   registerAttempt,
+  resetDesktopRuntimeSessionForTests,
   resumeAttempt,
   saveAttemptSnapshot,
   saveTrainingRecordSnapshot,
   setDesktopSetting,
+  startDesktopRuntimeSession,
   upsertDesktopSessionMetadata,
-  validateCurrentAttempt
+  validateCurrentAttempt,
+  writeDesktopRuntimeEvent
 };

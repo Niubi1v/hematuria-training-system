@@ -1,5 +1,8 @@
 "use strict";
 
+const crypto = require("node:crypto");
+const desktopSqliteStore = require("./desktopSqliteStore.js");
+
 const FACT_STATES = new Set([
   "known_true",
   "known_false",
@@ -31,7 +34,28 @@ const RESPONSE_ERRORS = new Set([
   "polarity_error"
 ]);
 let lastPatientEvidence = null;
-const runtimeEvents = [];
+const moduleInstanceId = crypto.randomUUID();
+
+function runtimeAuditTrace(routeName, details = {}) {
+  if (process.env.HEMATURIA_RUNTIME_AUDIT_TRACE !== "1") return;
+  const providerPresent = typeof globalThis.__hematuriaDesktopRuntimeEvidence === "function";
+  const runtimeSessionId = String(
+    details.runtimeSessionId || process.env.HEMATURIA_DESKTOP_RUNTIME_SESSION_ID || ""
+  );
+  process.stderr.write(`${JSON.stringify({
+    timestamp: new Date().toISOString(),
+    routeName: safeToken(routeName, 80) || "runtime-audit",
+    "process.pid": process.pid,
+    "process.ppid": process.ppid,
+    moduleInstanceId,
+    runtimeSessionId,
+    providerPresent,
+    eventWriteAttempted: details.eventWriteAttempted === true,
+    eventWriteSucceeded: details.eventWriteSucceeded === true,
+    eventStoreKind: "desktop_sqlite",
+    eventCount: Number.isSafeInteger(details.eventCount) ? details.eventCount : 0
+  })}\n`);
+}
 
 function safeToken(value, maxLength = 120) {
   const token = String(value || "");
@@ -75,7 +99,26 @@ function runtimeSnapshot() {
 
 function desktopPatientEvidence(patient, options = {}) {
   const runtime = runtimeSnapshot();
-  if (!runtime) return null;
+  const runtimeSessionId = safeToken(process.env.HEMATURIA_DESKTOP_RUNTIME_SESSION_ID, 160);
+  if (!runtime) {
+    let failureSummary = null;
+    try {
+      if (runtimeSessionId) failureSummary = desktopSqliteStore.recordDesktopRuntimeWriteFailure(runtimeSessionId);
+    } catch {
+      failureSummary = null;
+    }
+    runtimeAuditTrace("event-write-provider-missing", {
+      eventWriteAttempted: true,
+      eventCount: failureSummary
+        ? failureSummary.localAiAcceptedCount + failureSummary.ruleFallbackCount
+        : 0
+    });
+    return null;
+  }
+  if (!runtimeSessionId) {
+    runtimeAuditTrace("event-write-session-missing", { eventWriteAttempted: true });
+    return null;
+  }
 
   const classificationSource = String(patient?.runtimeTrace?.classificationSource || "none");
   const classifierStatus = String(patient?.runtimeTrace?.classifierStatus || "not_invoked");
@@ -120,23 +163,72 @@ function desktopPatientEvidence(patient, options = {}) {
       ? patient.runtimeTrace.responseErrors.filter((value) => RESPONSE_ERRORS.has(String(value)))
       : []
   };
-  runtimeEvents.push(Object.freeze({
-    eventType: localClassificationAccepted ? "local_ai_accepted" : "rule_fallback_used",
-    sessionId: safeToken(options.sessionId, 160) || "desktop-session-unavailable",
-    timestamp: new Date().toISOString(),
-    model: runtime.model,
-    latency
-  }));
-  lastPatientEvidence = Object.freeze({ ...evidence });
+  let audit;
+  try {
+    audit = desktopSqliteStore.writeDesktopRuntimeEvent({
+      eventId: safeToken(options.eventId, 160) || crypto.randomUUID(),
+      runtimeSessionId,
+      eventType: localClassificationAccepted ? "local_ai_accepted" : "rule_fallback_used",
+      timestamp: new Date().toISOString(),
+      model: runtime.model,
+      latency
+    });
+  } catch {
+    try {
+      audit = desktopSqliteStore.recordDesktopRuntimeWriteFailure(runtimeSessionId);
+    } catch {
+      audit = null;
+    }
+    runtimeAuditTrace("event-write-failed", {
+      eventWriteAttempted: true,
+      eventCount: audit ? audit.localAiAcceptedCount + audit.ruleFallbackCount : 0
+    });
+    lastPatientEvidence = Object.freeze({
+      ...evidence,
+      runtimeAuditHealthy: false,
+      eventWriteFailureCount: audit?.eventWriteFailureCount ?? 1
+    });
+    return lastPatientEvidence;
+  }
+  runtimeAuditTrace(
+    localClassificationAccepted ? "event-write-local-ai" : "event-write-rule-fallback",
+    {
+      eventWriteAttempted: true,
+      eventWriteSucceeded: true,
+      eventCount: audit.localAiAcceptedCount + audit.ruleFallbackCount
+    }
+  );
+  lastPatientEvidence = Object.freeze({
+    ...evidence,
+    runtimeAuditHealthy: audit.runtimeAuditHealthy,
+    eventWriteFailureCount: audit.eventWriteFailureCount
+  });
   return evidence;
 }
 
 function desktopRuntimeSummary() {
   const runtime = runtimeSnapshot();
-  if (!runtime) return null;
-  const localAiAcceptedCount = runtimeEvents.filter((event) => event.eventType === "local_ai_accepted").length;
-  const ruleFallbackCount = runtimeEvents.filter((event) => event.eventType === "rule_fallback_used").length;
-  return {
+  if (!runtime) {
+    runtimeAuditTrace("evidence-read-provider-missing");
+    return null;
+  }
+  const runtimeSessionId = safeToken(process.env.HEMATURIA_DESKTOP_RUNTIME_SESSION_ID, 160);
+  if (!runtimeSessionId) {
+    runtimeAuditTrace("evidence-read-session-missing");
+    return null;
+  }
+  let audit;
+  try {
+    audit = desktopSqliteStore.desktopRuntimeEventSummary(runtimeSessionId);
+  } catch {
+    runtimeAuditTrace("evidence-read-failed");
+    return null;
+  }
+  if (!audit) {
+    runtimeAuditTrace("evidence-read-session-missing");
+    return null;
+  }
+  const summary = {
     schemaVersion: 1,
     sessionStartedAt: runtime.sessionStartedAt,
     runtimeTarget: runtime.runtimeTarget,
@@ -145,11 +237,17 @@ function desktopRuntimeSummary() {
     productHead: runtime.productHead,
     llamaServerReady: runtime.llamaServerReady,
     localModelReady: runtime.localModelReady,
-    localAiAcceptedCount,
-    ruleFallbackCount,
+    localAiAcceptedCount: audit.localAiAcceptedCount,
+    ruleFallbackCount: audit.ruleFallbackCount,
+    eventWriteFailureCount: audit.eventWriteFailureCount,
+    runtimeAuditHealthy: audit.runtimeAuditHealthy,
     cloudRequestCount: runtime.cloudRequestCount,
     generatedAt: new Date().toISOString()
   };
+  runtimeAuditTrace("evidence-read", {
+    eventCount: audit.localAiAcceptedCount + audit.ruleFallbackCount
+  });
+  return summary;
 }
 
 function desktopEvidenceSnapshot() {
@@ -176,11 +274,13 @@ function desktopEvidenceSnapshot() {
 
 function resetDesktopPatientEvidenceForTests() {
   lastPatientEvidence = null;
-  runtimeEvents.length = 0;
+  const runtimeSessionId = safeToken(process.env.HEMATURIA_DESKTOP_RUNTIME_SESSION_ID, 160);
+  if (runtimeSessionId) desktopSqliteStore.resetDesktopRuntimeSessionForTests(runtimeSessionId);
 }
 
 function desktopRuntimeEventsForTests() {
-  return runtimeEvents.map((event) => ({ ...event }));
+  const runtimeSessionId = safeToken(process.env.HEMATURIA_DESKTOP_RUNTIME_SESSION_ID, 160);
+  return runtimeSessionId ? desktopSqliteStore.desktopRuntimeEventsForTests(runtimeSessionId) : [];
 }
 
 module.exports = {
@@ -189,5 +289,6 @@ module.exports = {
   desktopRuntimeEventsForTests,
   desktopRuntimeSummary,
   resetDesktopPatientEvidenceForTests,
+  runtimeAuditTrace,
   runtimeSnapshot
 };

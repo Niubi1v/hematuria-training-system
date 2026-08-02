@@ -61,6 +61,8 @@ async function main() {
     "attempts",
     "desktop_sessions",
     "desktop_attempt_snapshots",
+    "desktop_runtime_events",
+    "desktop_runtime_sessions",
     "schema_meta",
     "settings",
     "training_records"

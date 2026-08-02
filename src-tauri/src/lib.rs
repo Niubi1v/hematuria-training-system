@@ -569,6 +569,9 @@ fn sanitized_child_environment(
     if let Some(disabled) = env::var_os("HEMATURIA_DESKTOP_DISABLE_LOCAL_AI") {
         command.env("HEMATURIA_DESKTOP_DISABLE_LOCAL_AI", disabled);
     }
+    if env::var("HEMATURIA_RUNTIME_AUDIT_TRACE").ok().as_deref() == Some("1") {
+        command.env("HEMATURIA_RUNTIME_AUDIT_TRACE", "1");
+    }
     if cfg!(debug_assertions) {
         command.env("HEMATURIA_DESKTOP_DEBUG_RUNTIME", "1");
     }
