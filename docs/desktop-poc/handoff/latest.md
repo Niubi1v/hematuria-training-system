@@ -43,7 +43,9 @@
 
 通过：runtime evidence、structured local LLM、真实模型开启/关闭桌面验收、TypeScript、lint、完整行为测试、两类秘密扫描、Next 82 页构建、Tauri release、NSIS、便携包与 R4 包扫描。单线程桌面 `@ui-defect-regression` 3 项全部通过。
 
-完整四 worker Playwright 门禁结果为 74 通过、30 失败、12 跳过。失败广泛表现为页面初始化、控件长期 disabled 和超时；本次审计链没有修改 UI。依照范围约束未修复，也不把该门禁记为通过。完成失败归因并使标准发布门禁通过前，R4 不得进入独立验收或导师发布。
+完整四 worker Playwright 门禁在隔离环境复现为 74 通过、30 失败、12 跳过。归因证明 30 项均为 R3 已存在的陈旧 Playwright 合同或测试准备缺失，不是 R4 产品回归，也不是 worker 并发、端口、SQLite、attempt store、启动竞争或状态污染。两轮限定测试修复后，代表集合由 18 通过、11 失败、3 跳过收敛为 27 通过、2 失败、3 跳过；剩余两项是同一病例库空结果测试仍寻找旧清除按钮。详见 `docs/desktop-poc/handoff/r4-playwright-attribution.md`。
+
+达到两轮上限后未继续修复，也未把门禁记为通过。R4 仍不得进入独立验收或导师发布。
 
 ## R4 产物
 
@@ -60,4 +62,4 @@ R4 解压树 88 个文件，包扫描 `secretFindings=0`、`forbiddenFindings=0`
 
 ## 下一步
 
-在隔离状态目录中复现完整四 worker Playwright 门禁，按共同根因聚类并完成单 worker/四 worker 对照；门禁全绿后再进入独立真实 Tauri 验收。不要修改患者回答、医学数据、评分或 R3 产物。
+仅处理归因报告所列的 2 项剩余病例库空结果测试合同，然后在隔离状态目录重跑标准完整四 worker Playwright 门禁。门禁全绿后再生成新 handoffId 并进入独立真实 Tauri 验收。不要修改患者回答、医学数据、评分、产品运行时或 R4 产物。

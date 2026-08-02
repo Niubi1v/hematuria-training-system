@@ -235,14 +235,16 @@ test("@ui-clinical-stage3 male case hides initial answers and restores released 
   const orderInput = page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜");
   await orderInput.fill("尿常规；血常规；彩超泌尿系（双肾、输尿管及膀胱）+残余尿");
   await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
-  await expect(page.getByTestId("report-card")).toHaveCount(3);
+  await expect(page.getByTestId("report-card")).toHaveCount(1);
   await expect(page.getByTestId("order-outcome")).toHaveCount(3);
+  await expect(page.getByText("血常规：现有 source 结果无法安全归属于该检查，等待医学审核；当前不进入诊断、治疗或评分证据。", { exact: true })).toBeVisible();
+  await expect(page.getByText("彩超泌尿系（双肾、输尿管及膀胱）+残余尿：现有 source 结果无法安全归属于该检查，等待医学审核；当前不进入诊断、治疗或评分证据。", { exact: true })).toBeVisible();
   await expect(page.getByText("第2阶段 · 检查与开单", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("第2阶段", { exact: true })).toHaveCount(0);
   await expect(page.getByText("开单服务暂时不可用，未释放报告。")).toHaveCount(0);
 
   await page.reload();
-  await expect(page.getByTestId("report-card")).toHaveCount(3);
+  await expect(page.getByTestId("report-card")).toHaveCount(1);
   await expect(page.getByTestId("order-outcome")).toHaveCount(3);
   const orderCountBeforeDoubleClick = observations.filter((item) => item.action === "order").length;
   await orderInput.fill("X光膀胱造影");
@@ -289,22 +291,26 @@ test("@ui-clinical-stage3 female case shows only applicable examination and imag
 
   await page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜").fill("尿常规；血常规；彩超泌尿系（双肾、输尿管及膀胱）+残余尿");
   await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
-  await expect(page.getByTestId("report-card")).toHaveCount(3);
+  await expect(page.getByTestId("report-card")).toHaveCount(1);
   await expect(page.getByTestId("order-outcome")).toHaveCount(3);
+  await expect(page.getByText("血常规：现有 source 结果无法安全归属于该检查，等待医学审核；当前不进入诊断、治疗或评分证据。", { exact: true })).toBeVisible();
+  await expect(page.getByText("彩超泌尿系（双肾、输尿管及膀胱）+残余尿：现有 source 结果无法安全归属于该检查，等待医学审核；当前不进入诊断、治疗或评分证据。", { exact: true })).toBeVisible();
   await page.reload();
-  await expect(page.getByTestId("report-card")).toHaveCount(3);
+  await expect(page.getByTestId("report-card")).toHaveCount(1);
   await expect(page.getByTestId("order-outcome")).toHaveCount(3);
   await expect(page.getByText(/未返回结果|开单服务暂时不可用/)).toHaveCount(0);
 });
 
-test("case catalog switches public complaint language", async ({ page }) => {
+test("case catalog switches public labels without exposing complaints", async ({ page }) => {
   await page.goto("/cases/");
   await page.getByRole("button", { name: "English" }).click();
-  await expect(page.getByRole("heading", { name: "Case selection" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Choose a training case" })).toBeVisible();
   await expect(page.getByText(/Hematuria/i).first()).toBeVisible();
-  await expect(page.locator('a[href="/cases/P013/"]')).toContainText("Intermittent red urine for 2 months");
-  await expect(page.locator('a[href="/cases/P019/"]')).toContainText("Fever, left flank pain, urinary frequency, and painful urination for 3 days");
-  await expect(page.locator('a[href="/cases/P020/"]')).toContainText("Chief complaint pending medical review");
+  await expect(page.locator('a[href="/cases/P013/"]')).toContainText("Case 13");
+  await expect(page.locator('a[href="/cases/P013/"]')).toContainText("Age68");
+  await expect(page.locator('a[href="/cases/P013/"]')).toContainText("SexMale");
+  expect(await page.locator('a[href="/cases/P013/"], a[href="/cases/P019/"], a[href="/cases/P020/"]').allTextContents())
+    .not.toEqual(expect.arrayContaining([expect.stringMatching(/red urine|fever|flank pain|chief complaint/i)]));
 });
 
 test("case catalog remains usable when localStorage throws across four viewports", async ({ page }, testInfo) => {
@@ -332,18 +338,19 @@ test("case catalog remains usable when localStorage throws across four viewports
     await page.setViewportSize(viewport);
     await page.goto("/cases/");
     await expect(page.locator("a[data-case-id]")).toHaveCount(42);
-    await expect(page.getByRole("status").filter({ hasText: "浏览器存储不可用" })).toBeVisible();
-    const search = page.getByRole("textbox", { name: "搜索病例" });
+    await expect(page.getByRole("status").filter({ hasText: "本机进度暂不可用，但仍可选择病例。" })).toBeVisible();
+    const search = page.getByRole("textbox", { name: "按病例编号搜索" });
     await search.fill("P001");
     await expect(page.locator("a[data-case-id]")).toHaveCount(1);
     await search.fill("");
     await page.getByRole("button", { name: "English" }).click();
-    await expect(page.getByRole("heading", { name: "Case selection" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Choose a training case" })).toBeVisible();
     await expect(page.locator("a[data-case-id]")).toHaveCount(42);
   }
 
   await page.locator('a[data-case-id="P001"]').click();
-  await expect(page.getByText("P001", { exact: true }).first()).toBeVisible();
+  await expect(page).toHaveURL(/\/cases\/P001\/$/);
+  await expect(page.getByRole("heading", { name: /血尿临床问诊训练系统|Hematuria Clinical Interview Training System/ })).toBeVisible();
 });
 
 test("case catalog rejects malformed pointers and unverified summaries across four viewports", async ({ page }, testInfo) => {
@@ -384,10 +391,10 @@ test("case catalog rejects malformed pointers and unverified summaries across fo
   ]) {
     await page.setViewportSize(viewport);
     await page.goto("/cases/");
-    await expect(page.getByRole("heading", { name: "Case selection" })).toBeVisible();
-    await expect(page.locator('a[data-case-id="P001"]')).toContainText("Not started");
-    await expect(page.locator('a[data-case-id="P002"]')).toContainText("Not started");
-    await expect(page.locator('a[data-case-id="P003"]')).toContainText("Not started");
+    await expect(page.getByRole("heading", { name: "Choose a training case" })).toBeVisible();
+    await expect(page.locator('a[data-case-id="P001"]').getByRole("img", { name: "Not started" })).toBeVisible();
+    await expect(page.locator('a[data-case-id="P002"]').getByRole("img", { name: "Not started" })).toBeVisible();
+    await expect(page.locator('a[data-case-id="P003"]').getByRole("img", { name: "Not started" })).toBeVisible();
   }
 });
 
@@ -565,14 +572,12 @@ test("stage submission waits for the training attempt while the patient service 
   await routeTrainingApiThroughHandler(page, observations, { initAttemptDelayMs: 800, sessionInitDelayMs: 5000 });
   await page.goto("/cases/P001/");
 
-  const initializing = page.getByRole("button", { name: "正在初始化训练会话……", exact: true });
-  await expect(initializing).toBeDisabled();
-  await expect(page.getByText("正在初始化训练会话", { exact: false })).toBeVisible();
+  await expect(page.getByTestId("stage-preparing-state")).toHaveText("正在准备…");
   expect(observations.filter((item) => item.action === "stage-feedback")).toHaveLength(0);
 
   const submit = page.getByRole("button", { name: "提交本阶段", exact: true });
   await expect(submit).toBeEnabled();
-  await expect(page.getByText("患者服务连接中……", { exact: false })).toBeVisible();
+  await expect(page.getByText("正在准备问诊……", { exact: true })).toBeVisible();
   await submit.click();
   await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
   expect(observations.filter((item) => item.action === "init-attempt")).toHaveLength(1);
@@ -630,7 +635,7 @@ test("P003 replaces a legacy cross-deployment token before zero-round stage subm
 
   await page.goto("/cases/P003/");
   await expect.poll(() => observations.filter((item) => item.action === "init-attempt").length).toBe(1);
-  await expect(page.getByText("患者服务连接中……", { exact: false })).toBeVisible();
+  await expect(page.getByTestId("patient-service-status")).toHaveText("正在准备问诊环境");
   await expect(page.getByRole("button", { name: "提交本阶段", exact: true })).toBeEnabled();
 
   await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
@@ -915,7 +920,7 @@ test("English investigation presentation fails closed without exposing untransla
   await page.getByPlaceholder("Example: urinalysis and sediment, CTU, cystoscopy").fill("CBC");
   await page.getByRole("button", { name: "Order and return results", exact: true }).click();
   await expect(page.getByTestId("report-card")).toHaveCount(0);
-  const unavailable = page.getByText("CBC: the result is awaiting medical content review and is excluded from diagnosis and scoring for this attempt.", { exact: true });
+  const unavailable = page.getByText("CBC: the result is awaiting medical content review and is excluded from diagnosis, treatment, and scoring for this attempt.", { exact: true });
   await expect(unavailable).toBeVisible();
   await expect(unavailable).not.toContainText(/[\u3400-\u9fff]/u);
   expect(observations.filter((item) => item.action === "order")).toEqual([
@@ -923,16 +928,16 @@ test("English investigation presentation fails closed without exposing untransla
   ]);
 });
 
-test("numeric laboratory reports expose missing reviewed metadata instead of a normal-looking dash", async ({ page }) => {
+test("pending CBC remains excluded instead of rendering an unreviewed report", async ({ page }) => {
   await routeTrainingApiThroughHandler(page, []);
   await page.goto("/cases/P001/");
   await enterInvestigationStage(page, "zh");
 
   await page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜").fill("血常规");
   await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
-  const report = page.getByTestId("report-card");
-  await expect(report).toBeVisible();
-  await expect(report.getByText("等待审核元数据", { exact: true })).toHaveCount(2);
+  await expect(page.getByTestId("report-card")).toHaveCount(0);
+  await expect(page.getByText("等待医学审核", { exact: true })).toBeVisible();
+  await expect(page.getByText("血常规：现有 source 结果无法安全归属于该检查，等待医学审核；当前不进入诊断、治疗或评分证据。", { exact: true })).toBeVisible();
 });
 
 test("report status labels are localized and abnormal evidence takes priority over final", async ({ page }) => {
@@ -985,7 +990,7 @@ test("report status labels are localized and abnormal evidence takes priority ov
   await expect(reports).toHaveCount(2);
   await expect(reports.nth(0)).toHaveAttribute("data-status", "abnormal");
   await expect(reports.nth(0)).toContainText("Abnormal");
-  await expect(reports.nth(1)).toContainText("Not available in this case");
+  await expect(reports.nth(1)).toContainText("No configured result is available.");
   expect((await reports.allTextContents()).join(" ")).not.toMatch(/\b(final|not_available|not_performed)\b/);
 });
 
@@ -1218,9 +1223,9 @@ test("catalog links cover all display IDs and representative routes refresh", as
 
 test("case catalog search has a recoverable empty state", async ({ page }) => {
   await page.goto("/cases/");
-  await page.getByRole("textbox", { name: "搜索病例" }).fill("NO-SUCH-CASE");
+  await page.getByRole("textbox", { name: "按病例编号搜索" }).fill("NO-SUCH-CASE");
   await expect(page.getByRole("heading", { name: "没有匹配的病例" })).toBeVisible();
-  await expect(page.getByText("当前 0 / 42")).toBeVisible();
+  await expect(page.getByText("0 / 42", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "清除搜索与筛选" }).click();
   await expect(page.getByRole("heading", { name: "训练病例 P001" })).toBeVisible();
 });
@@ -1595,6 +1600,7 @@ test("primary practice pages have no serious accessibility violations", async ({
 });
 
 test("automatic voice profile follows patient sex, language, and age", async ({ page }) => {
+  await mockTrainingState(page);
   await page.goto("/cases/P001/");
   await page.getByRole("button", { name: /语音设置/ }).click();
   await expect(page.getByTestId("voice-profile")).toHaveAttribute("data-gender", "male");
@@ -1639,6 +1645,7 @@ test("mobile voice controls meet the 44px touch-target contract", async ({ page 
 });
 
 test("cloud TTS failure visibly falls back to the matched browser voice", async ({ page }) => {
+  await mockTrainingState(page);
   await page.addInitScript(() => {
     class MockUtterance {
       constructor(text) { this.text = text; this.onstart = null; this.onend = null; this.onerror = null; }
@@ -1654,7 +1661,7 @@ test("cloud TTS failure visibly falls back to the matched browser voice", async 
   await page.goto("/cases/P001/");
   await page.getByRole("button", { name: /语音设置/ }).click();
   await page.getByRole("button", { name: "试听" }).click();
-  await expect(page.getByText("云语音暂时不可用，已切换为浏览器语音。")).toBeVisible();
+  await expect(page.getByText("首选播放方式暂不可用，已自动切换到可用方式。")).toBeVisible();
   await expect(page.getByTestId("voice-profile")).toHaveAttribute("data-speech-state", "fallback-browser");
 });
 
@@ -1792,11 +1799,12 @@ test("rule fallback keeps reconnection available and recovery replaces the reply
   await page.goto("/cases/P001/");
   await page.getByPlaceholder("输入问诊问题").fill("您吸烟吗？");
   await page.getByRole("button", { name: "发送" }).click();
-  await expect(page.getByText("患者服务正在使用安全离线回答，可随时重新连接。")).toBeVisible();
+  await expect(page.getByText("问诊辅助暂时不可用，仍可安全继续并稍后重试。")).toBeVisible();
   const reconnect = page.getByRole("button", { name: "重新连接", exact: true });
   expect(await reconnect.count()).toBe(1);
   await reconnect.evaluate((button) => { button.click(); button.click(); });
-  await expect(page.getByText("患者服务已重新连接")).toBeVisible();
+  await expect(page.getByTestId("patient-service-status")).toHaveText("问诊对话可用");
+  await expect(page.getByText("问诊辅助暂时不可用，仍可安全继续并稍后重试。")).toHaveCount(0);
   const conversation = page.getByRole("log", { name: "模拟问诊对话" });
   await expect(conversation.getByText("您吸烟吗？", { exact: true })).toHaveCount(1);
   await expect(conversation.getByText("我吸烟，大约每天一包。", { exact: true })).toHaveCount(1);
@@ -1869,7 +1877,7 @@ test("patient send waits for a session capability before issuing agent-chat", as
   expect(patientCalls).toBe(1);
 });
 
-test("offline reconnect sends no request and can recover after the online event", async ({ page, context }) => {
+test("offline transition sends no request and resumes locally after the online event", async ({ page, context }) => {
   let healthCalls = 0;
   let sessionCalls = 0;
   await mockTrainingState(page);
@@ -1890,10 +1898,10 @@ test("offline reconnect sends no request and can recover after the online event"
   await page.getByRole("button", { name: "重新连接", exact: true }).click();
   expect(healthCalls).toBe(before);
   await context.setOffline(false);
-  await expect(page.getByText("网络已恢复，可以重新连接患者服务。")).toBeVisible();
-  await page.getByRole("button", { name: "重新连接", exact: true }).click();
-  await expect(page.getByText("患者服务已重新连接")).toBeVisible();
-  expect(healthCalls).toBeGreaterThan(before);
+  await expect(page.getByText("网络已恢复，可以继续问诊。")).toBeVisible();
+  await expect(page.getByTestId("patient-service-status")).toHaveText("问诊对话可用");
+  expect(healthCalls).toBe(before);
+  expect(sessionCalls).toBe(1);
 });
 
 test("AI reply renders before history log synchronization and uses one sync notice", async ({ page }) => {
