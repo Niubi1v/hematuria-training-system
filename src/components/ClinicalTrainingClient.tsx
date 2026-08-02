@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FocusEvent as ReactFocusEvent } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FocusEvent as ReactFocusEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -1345,6 +1345,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [caseData] = useState<StudentVisibleCase>(initialCaseData);
   const [runtimeMode, setRuntimeMode] = useState<TrainingMode>(mode);
   const [lang, setLang] = useState<LanguageCode>("zh");
+  const [pendingLanguage, setPendingLanguage] = useState<LanguageCode | null>(null);
   const [attempt, setAttempt] = useState<AttemptIdentity>(() => createAttempt(initialCaseData.id, "free", "zh"));
   const [attemptReady, setAttemptReady] = useState(false);
   const [activeStageNo, setActiveStageNo] = useState<AgentStageNo>(1);
@@ -1405,6 +1406,10 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [logSyncStatus, setLogSyncStatus] = useState<"idle" | "pending" | "verified" | "failed">("idle");
   const [logRetryNonce, setLogRetryNonce] = useState(0);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const workbenchMainRef = useRef<HTMLElement | null>(null);
+  const stageHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const languageDialogRef = useRef<HTMLDialogElement | null>(null);
+  const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
   const chatComposerRef = useRef<HTMLDivElement | null>(null);
   const chatPinnedToBottomRef = useRef(true);
@@ -1815,7 +1820,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   useEffect(() => {
     if (isDesktopRuntime) return;
     const handleOffline = () => { setAiStatus("offline"); setReconnectNotice(lang === "en" ? "You are offline. Existing training records are preserved." : "当前处于离线状态，既有训练记录已保留。"); };
-    const handleOnline = () => { setAiStatus((current) => current === "offline" ? "unknown" : current); setReconnectNotice(lang === "en" ? "Network restored. You can resume the interview." : "网络已恢复，可以继续问诊。"); };
+    const handleOnline = () => {
+      setAiStatus((current) => current === "offline" ? "unknown" : current);
+      setReconnectNotice(lang === "en" ? "Network restored. You can resume the interview." : "网络已恢复，可以继续问诊。");
+      globalThis.setTimeout(() => setReconnectNotice((current) => /Network restored|网络已恢复/.test(current) ? "" : current), 1800);
+    };
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
     if (!navigator.onLine) handleOffline();
@@ -2051,6 +2060,13 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }, [finalReport, timeline.length]);
 
   useLayoutEffect(() => {
+    const pane = workbenchMainRef.current;
+    if (!pane) return;
+    pane.scrollTo({ top: 0, behavior: "auto" });
+    if (window.innerWidth < 1024) stageHeadingRef.current?.scrollIntoView({ block: "start", behavior: "auto" });
+  }, [activeStageNo]);
+
+  useLayoutEffect(() => {
     if (activeStageNo !== 1) return;
     const panel = chatScrollRef.current;
     if (!panel) return;
@@ -2147,9 +2163,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     setTimeline((current) => sanitizeTimeline([...current, { id: nowEventId(), stageNo, type, label: safeLabel, detail: safeDetail, at: new Date().toISOString() }], lang));
   }
 
-  function setLanguage(next: LanguageCode) {
+  function applyLanguage(next: LanguageCode) {
     if (next === lang) return;
-    if (timeline.length > 0 && !window.confirm(next === "en" ? "Switching language starts a separate attempt. Continue?" : "切换语言将开始独立训练记录，是否继续？")) return;
     if (isDesktopRuntime) {
       try { localStorage.setItem("hematuria-language", next); } catch { /* The reload will retain the current language if preferences are unavailable. */ }
       allowNavigationRef.current = true;
@@ -2185,6 +2200,48 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     setReconnectNotice("");
     window.dispatchEvent(new CustomEvent("hematuria-language-change", { detail: next }));
     setMessages([{ role: "patient", text: patientOpening(next) }]);
+  }
+
+  function requestLanguage(next: LanguageCode, trigger: HTMLButtonElement) {
+    if (next === lang) return;
+    if (!timeline.length) {
+      applyLanguage(next);
+      return;
+    }
+    languageTriggerRef.current = trigger;
+    setPendingLanguage(next);
+    window.requestAnimationFrame(() => {
+      const dialog = languageDialogRef.current;
+      if (dialog && !dialog.open) dialog.showModal();
+      dialog?.querySelector<HTMLButtonElement>("button")?.focus();
+    });
+  }
+
+  function closeLanguageDialog() {
+    languageDialogRef.current?.close();
+    setPendingLanguage(null);
+    window.requestAnimationFrame(() => languageTriggerRef.current?.focus());
+  }
+
+  function confirmLanguageSwitch() {
+    const next = pendingLanguage;
+    closeLanguageDialog();
+    if (next) applyLanguage(next);
+  }
+
+  function trapLanguageDialogFocus(event: ReactKeyboardEvent<HTMLDialogElement>) {
+    if (event.key !== "Tab") return;
+    const controls = [...event.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)")];
+    const first = controls[0];
+    const last = controls.at(-1);
+    if (!first || !last) return;
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   function updateAnswer<K extends keyof FullProcessAnswers>(key: K, value: FullProcessAnswers[K]) {
@@ -2911,13 +2968,13 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         </div>
         <div className="flex flex-wrap items-center gap-2 xl:justify-end">
           <div className="ui-segmented">
-            <button type="button" onClick={() => setLanguage("zh")} className={`ui-segment ${lang === "zh" ? "ui-segment-active" : ""}`}>{t(lang, "zh")}</button>
-            <button type="button" onClick={() => setLanguage("en")} className={`ui-segment ${lang === "en" ? "ui-segment-active" : ""}`}>{t(lang, "en")}</button>
+            <button type="button" onClick={(event) => requestLanguage("zh", event.currentTarget)} className={`ui-segment ${lang === "zh" ? "ui-segment-active" : ""}`}>{t(lang, "zh")}</button>
+            <button type="button" onClick={(event) => requestLanguage("en", event.currentTarget)} className={`ui-segment ${lang === "en" ? "ui-segment-active" : ""}`}>{t(lang, "en")}</button>
           </div>
           <DesktopModelSettings />
-          <span data-testid="patient-service-status" role="status" aria-label={patientServiceLabel} className={`ui-status ${patientServiceAvailable ? "ui-status-success" : connectionIsBusy ? "ui-status-info" : "ui-status-warning"}`}>
+          {!showConnectionNotice && <span data-testid="patient-service-status" role="status" aria-label={patientServiceLabel} className={`ui-status ${patientServiceAvailable ? "ui-status-success" : connectionIsBusy ? "ui-status-info" : "ui-status-warning"}`}>
             {patientServiceLabel}
-          </span>
+          </span>}
           {logSyncStatus !== "idle" && <div role="status" aria-live="polite" className={`ui-status ${logSyncStatus === "failed" ? "ui-status-warning" : "ui-status-info"}`}>
             <span>{logSyncStatus === "verified"
               ? (lang === "en" ? "Scoring synced" : "评分已同步")
@@ -3011,10 +3068,10 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           </section>
         </aside>
 
-        <section tabIndex={0} aria-label={`${studentStageLabel(activeStageNo, lang)}：${stageName(activeStageNo, lang)}`} onFocusCapture={ensureMobileStageControlVisible} className="workbench-main rounded-xl border border-clinic-line bg-white p-4 shadow-soft sm:p-5">
+        <section ref={workbenchMainRef} tabIndex={0} aria-label={`${studentStageLabel(activeStageNo, lang)}：${stageName(activeStageNo, lang)}`} onFocusCapture={ensureMobileStageControlVisible} className="workbench-main rounded-xl border border-clinic-line bg-white p-4 shadow-soft sm:p-5">
           <div className="mb-3 border-b border-clinic-line pb-3">
             <p className="text-sm font-medium text-clinic-blue">{studentStageLabel(activeStageNo, lang)}</p>
-            <h2 className="mt-1 text-lg font-semibold sm:text-xl">{stageName(activeStageNo, lang)}</h2>
+            <h2 ref={stageHeadingRef} data-testid="stage-heading" className="mt-1 text-lg font-semibold sm:text-xl">{stageName(activeStageNo, lang)}</h2>
             <p className="mt-1 hidden text-sm text-clinic-muted sm:block">{t(lang, "noFeedbackBeforeSubmit")}</p>
           </div>
 
@@ -3556,6 +3613,24 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           )}
         </aside>
       </div>
+      <dialog
+        ref={languageDialogRef}
+        aria-labelledby="language-switch-title"
+        onCancel={(event) => { event.preventDefault(); closeLanguageDialog(); }}
+        onKeyDown={trapLanguageDialogFocus}
+        className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-lg border border-clinic-line bg-white p-0 text-clinic-ink shadow-raised backdrop:bg-black/35"
+      >
+        <div className="p-5">
+          <h2 id="language-switch-title" className="text-lg font-semibold text-clinic-blue">{lang === "en" ? "Switch training language?" : "切换训练语言？"}</h2>
+          <p className="mt-3 text-sm leading-6 text-clinic-muted">{lang === "en"
+            ? "Your current attempt will be kept. Switching opens a separate Chinese training record for this case."
+            : "当前训练记录会保留。切换后将为本病例打开一份独立的英文训练记录。"}</p>
+          <div className="mt-5 flex flex-wrap justify-end gap-2">
+            <button type="button" onClick={closeLanguageDialog} className="ui-button-secondary">{lang === "en" ? "Cancel" : "取消"}</button>
+            <button data-testid="confirm-language-switch" type="button" onClick={confirmLanguageSwitch} className="ui-button-primary">{lang === "en" ? "Switch language" : "确认切换"}</button>
+          </div>
+        </div>
+      </dialog>
     </main>
   );
 }

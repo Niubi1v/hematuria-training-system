@@ -460,8 +460,20 @@ test("P001 stage one submission advances across language switches and refresh", 
   const firstZhSession = observations.find((item) => item.action === "session-init" && item.language === "zh");
   expect(firstZhSession?.attemptId).toBe(firstZhStage?.attemptId);
 
-  page.once("dialog", (dialog) => dialog.accept());
-  await page.getByRole("button", { name: "English" }).click();
+  const englishTrigger = page.getByRole("button", { name: "English" });
+  await englishTrigger.click();
+  const languageDialog = page.getByRole("dialog", { name: "切换训练语言？" });
+  await expect(languageDialog).toContainText("当前训练记录会保留");
+  await expectStudentCopyPublic(page);
+  const dialogAxe = await new AxeBuilder({ page }).include("dialog").analyze();
+  expect(dialogAxe.violations.filter((item) => item.impact === "critical" || item.impact === "serious")).toEqual([]);
+  await page.keyboard.press("Shift+Tab");
+  expect(await languageDialog.evaluate((dialog) => dialog.contains(document.activeElement))).toBe(true);
+  await page.keyboard.press("Escape");
+  await expect(languageDialog).not.toBeVisible();
+  await expect(englishTrigger).toBeFocused();
+  await englishTrigger.click();
+  await page.getByTestId("confirm-language-switch").click();
   await submitFirstStage(page, "en");
   expect(observations.filter((item) => item.action === "stage-feedback" && item.language === "en")).toEqual([
     expect.objectContaining({ stageKey: "history", status: 200, tokenPresent: true })
@@ -479,8 +491,8 @@ test("P001 stage one submission advances across language switches and refresh", 
   await page.reload();
   await expect(page.getByRole("heading", { name: "Investigation and ordering", exact: true })).toBeVisible();
 
-  page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "中文" }).click();
+  await page.getByTestId("confirm-language-switch").click();
   await submitFirstStage(page, "zh");
   expect(observations.filter((item) => item.action === "stage-feedback" && item.language === "zh")).toHaveLength(2);
 });
@@ -665,7 +677,8 @@ test("P003 replaces a legacy cross-deployment token before zero-round stage subm
 
   await page.goto("/cases/P003/");
   await expect.poll(() => observations.filter((item) => item.action === "init-attempt").length).toBe(1);
-  await expect(page.getByTestId("patient-service-status")).toHaveText("正在准备问诊环境");
+  await expect(page.locator(".workbench-connection")).toContainText("正在准备问诊");
+  await expect(page.getByTestId("patient-service-status")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "提交本阶段", exact: true })).toBeEnabled();
 
   await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
@@ -896,8 +909,8 @@ test("@ui-state-regression initialization, failure, and submitted actions are mu
   await expect(page.getByRole("button", { name: "提交本阶段", exact: true })).toHaveCount(0);
   await expect(page.getByText("训练会话尚未就绪", { exact: true })).toHaveCount(0);
 
-  page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "English", exact: true }).click();
+  await page.getByTestId("confirm-language-switch").click();
   const englishSubmit = page.getByRole("button", { name: "Submit stage", exact: true });
   const englishIncomplete = page.getByRole("button", { name: "Complete this stage first", exact: true });
   await expect(englishSubmit).toBeEnabled();
@@ -1279,6 +1292,30 @@ test("mobile interview keeps multiline input visible without horizontal overflow
   }).toBeLessThanOrEqual(844);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
   expect(overflow).toBe(false);
+});
+
+test("stage transitions and refresh restore the active task at the top", async ({ page }) => {
+  await routeTrainingApiThroughHandler(page, []);
+  await page.setViewportSize({ width: 1093, height: 614 });
+  await page.goto("/cases/P001/");
+  await enterInvestigationStage(page, "zh");
+
+  const main = page.locator(".workbench-main");
+  await main.evaluate((element) => element.scrollTo({ top: element.scrollHeight, behavior: "auto" }));
+  expect(await main.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  await page.locator(".workbench-sidebar button").first().click();
+  await expect(page.getByTestId("stage-heading")).toHaveText("病史采集");
+  await expect.poll(() => main.evaluate((element) => element.scrollTop)).toBe(0);
+
+  await main.evaluate((element) => element.scrollTo({ top: element.scrollHeight, behavior: "auto" }));
+  await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
+  await expect(page.getByTestId("stage-heading")).toHaveText("检查与开单");
+  await expect.poll(() => main.evaluate((element) => element.scrollTop)).toBe(0);
+
+  await main.evaluate((element) => element.scrollTo({ top: element.scrollHeight, behavior: "auto" }));
+  await page.reload();
+  await expect(page.getByTestId("stage-heading")).toHaveText("检查与开单");
+  await expect.poll(() => main.evaluate((element) => element.scrollTop)).toBe(0);
 });
 
 test("interview composer and desktop workbench fit target Windows viewports and 125 percent scaling", async ({ page }, testInfo) => {
@@ -1753,12 +1790,12 @@ test("HEM-P1-034 language switches bind each session to its own attempt token", 
 
   await page.reload();
   await expect(page.getByPlaceholder("Enter an interview question")).toBeVisible();
-  page.on("dialog", (dialog) => dialog.accept());
   const chineseSessionAfterRefresh = page.waitForResponse((response) => {
     if (!response.url().includes("/api/session/init/")) return false;
     return response.request().postDataJSON()?.language === "zh";
   });
   await page.getByRole("button", { name: "中文" }).click();
+  await page.getByTestId("confirm-language-switch").click();
   expect((await chineseSessionAfterRefresh).status(), JSON.stringify(sessionObservations)).toBe(200);
   expect(sessionObservations.at(-1)).toMatchObject({ language: "zh", headerPresent: true, attemptMatches: true, languageMatches: true });
   await expect(page.getByPlaceholder("输入问诊问题")).toBeVisible();
@@ -1928,6 +1965,7 @@ test("offline transition sends no request and resumes locally after the online e
   await expect.poll(() => sessionCalls).toBeGreaterThan(0);
   await context.setOffline(true);
   await expect(page.getByText("当前处于离线状态，既有训练记录已保留。")).toBeVisible();
+  await expect(page.getByTestId("patient-service-status")).toHaveCount(0);
   const before = healthCalls;
   await page.getByRole("button", { name: "重新连接", exact: true }).click();
   expect(healthCalls).toBe(before);
