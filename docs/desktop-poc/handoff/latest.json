@@ -1,7 +1,7 @@
 {
   "schemaVersion": 4,
   "handoffId": "e2ea82e9-20260802-122048",
-  "status": "ready_for_review",
+  "status": "blocked_test_gate",
   "milestone": "desktop-local-ai-runtime-audit-r4",
   "branch": "codex/hematuria-desktop-mentor-beta-package",
   "worktree": "D:/CodexProjects/worktrees/hematuria-desktop-mentor-beta-package",
@@ -87,8 +87,8 @@
   "dataDiff": "zero",
   "secretScan": "pass; repository and R4 package scans found zero secrets",
   "defects": [
-    {"id": "R4-E2E-GATE-001", "status": "open", "scope": "pre-existing/non-audit UI test environment", "detail": "Full four-worker Playwright run failed 30 tests; targeted R3 defect regressions pass. Not fixed because UI and unrelated product behavior are outside this task."}
+    {"id": "R4-E2E-GATE-001", "status": "open", "scope": "unattributed full Playwright release gate", "detail": "Full four-worker Playwright run failed 30 tests while the targeted R4 runtime-evidence regression passed 3/3. Root-cause attribution is required before independent acceptance or mentor release."}
   ],
-  "blockers": ["A clean full Playwright release gate is not available from this run; do not promote R4 beyond independent review until the 30 failures are reproduced or cleared."],
-  "recommendedNextStep": "Run independent real-Tauri R4 acceptance against the immutable hashes, then rerun the full Playwright gate in the known release environment. Do not change patient answers, medical data, scoring or R3 artifacts."
+  "blockers": ["Full four-worker Playwright is 74 passed, 30 failed, 12 skipped. Do not enter independent acceptance or mentor release until the failures are attributed and the supported release gate passes."],
+  "recommendedNextStep": "Reproduce the full four-worker Playwright gate with isolated state, cluster failures by shared root cause, and compare representative clusters with one and four workers. Do not change patient answers, medical data, scoring or R3 artifacts."
 }

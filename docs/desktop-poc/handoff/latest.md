@@ -1,7 +1,7 @@
 # 桌面本地 AI R4 运行审计修复交接
 
 - handoffId：`e2ea82e9-20260802-122048`
-- 状态：`ready_for_review`
+- 状态：`blocked_test_gate`
 - 分支：`codex/hematuria-desktop-mentor-beta-package`
 - 基线 HEAD：`4c31bd547437270b08572218ef8f36052a401338`
 - R4 产品 HEAD：`e2ea82e908b46f241fe955b3eb3b0391617267dc`
@@ -43,7 +43,7 @@
 
 通过：runtime evidence、structured local LLM、真实模型开启/关闭桌面验收、TypeScript、lint、完整行为测试、两类秘密扫描、Next 82 页构建、Tauri release、NSIS、便携包与 R4 包扫描。单线程桌面 `@ui-defect-regression` 3 项全部通过。
 
-完整四 worker Playwright 门禁结果为 74 通过、30 失败、12 跳过。失败广泛表现为既有页面初始化、控件长期 disabled 和超时；本次审计链没有修改 UI。依照范围约束未修复，也不把该门禁记为通过。R4 可供独立复核，但在这些失败于标准发布环境复现或清零前不得继续晋级。
+完整四 worker Playwright 门禁结果为 74 通过、30 失败、12 跳过。失败广泛表现为页面初始化、控件长期 disabled 和超时；本次审计链没有修改 UI。依照范围约束未修复，也不把该门禁记为通过。完成失败归因并使标准发布门禁通过前，R4 不得进入独立验收或导师发布。
 
 ## R4 产物
 
@@ -60,4 +60,4 @@ R4 解压树 88 个文件，包扫描 `secretFindings=0`、`forbiddenFindings=0`
 
 ## 下一步
 
-使用上述不可变 SHA-256 做一次独立真实 Tauri R4 验收，并在标准发布环境重跑完整 Playwright 门禁。不要修改患者回答、医学数据、评分或 R3 产物。
+在隔离状态目录中复现完整四 worker Playwright 门禁，按共同根因聚类并完成单 worker/四 worker 对照；门禁全绿后再进入独立真实 Tauri 验收。不要修改患者回答、医学数据、评分或 R3 产物。
