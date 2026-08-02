@@ -161,6 +161,10 @@ async function fillDiagnosisBuilder(page, language) {
   for (let index = 0; index < 3; index += 1) {
     const card = diagnosisBuilder.getByTestId("differential-card").nth(index);
     await card.getByRole("textbox", { name: language === "en" ? `Differential diagnosis ${index + 1}` : `鉴别诊断 ${index + 1}`, exact: true }).fill(language === "en" ? `Differential ${index + 1}` : `鉴别诊断示例 ${index + 1}`);
+    const evidenceSummaries = card.getByTestId("evidence-checklist").locator("summary");
+    for (let summaryIndex = 0; summaryIndex < await evidenceSummaries.count(); summaryIndex += 1) {
+      await evidenceSummaries.nth(summaryIndex).click();
+    }
     await card.locator("fieldset").first().locator('input[type="checkbox"]').first().check();
   }
 }
@@ -329,6 +333,51 @@ test("@stage3-evidence-recovery reopens stage 2 when only one diagnostic finding
 
   expect(observations.filter((item) => item.action === "stage-feedback" && item.stageKey === "history")).toHaveLength(2);
   expect(observations.filter((item) => item.action === "stage-feedback" && item.stageKey === "orders")).toHaveLength(2);
+});
+
+test("@ui-ia investigation and diagnosis directories keep selection context without nested scrolling", async ({ page }) => {
+  await routeTrainingApiThroughHandler(page, []);
+  await page.setViewportSize({ width: 1093, height: 614 });
+  await page.goto("/cases/P001/");
+  await enterInvestigationStage(page, "zh");
+
+  const summary = page.getByTestId("investigation-selection-summary");
+  await expect(summary).toContainText("已勾选医嘱 0 项");
+  const firstExamGroup = page.locator(".workbench-main details").first();
+  await firstExamGroup.locator("summary").click();
+  await expect(page.getByRole("button", { name: "体温", exact: true })).not.toBeVisible();
+  await firstExamGroup.locator("summary").click();
+  await page.getByRole("button", { name: "体温", exact: true }).click();
+  await expect(summary).toContainText("已返回查体记录 1 项");
+
+  await page.getByPlaceholder("搜索医嘱名称或同义词，例如 CTU、尿培养、膀胱镜").fill("尿常规");
+  await page.locator("label").filter({ hasText: "尿常规" }).first().getByRole("checkbox").check();
+  await expect(summary).toContainText("已勾选医嘱 1 项");
+  await page.getByRole("button", { name: "返回已选项目结果", exact: true }).click();
+  await expect(summary).toContainText("已返回检查报告 1 份");
+  for (const viewport of [{ width: 390, height: 844 }, { width: 1093, height: 614 }, { width: 1366, height: 768 }, { width: 1440, height: 900 }]) {
+    await page.setViewportSize(viewport);
+    const layout = await page.evaluate(() => {
+      const summaryBox = document.querySelector('[data-testid="investigation-selection-summary"]')?.getBoundingClientRect();
+      return { overflow: document.documentElement.scrollWidth > window.innerWidth, summaryRight: summaryBox?.right ?? Number.POSITIVE_INFINITY };
+    });
+    expect(layout.overflow, `${viewport.width}x${viewport.height}`).toBe(false);
+    expect(Math.ceil(layout.summaryRight), `${viewport.width}x${viewport.height}`).toBeLessThanOrEqual(viewport.width);
+  }
+  await page.setViewportSize({ width: 1093, height: 614 });
+  await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
+  await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
+
+  const checklists = page.getByTestId("evidence-checklist");
+  await expect(checklists).toHaveCount(7);
+  await expect(checklists.first()).toHaveAttribute("open", "");
+  await expect(checklists.nth(1)).not.toHaveAttribute("open", "");
+  expect(await checklists.first().locator("fieldset > div").evaluate((element) => getComputedStyle(element).overflowY)).toBe("visible");
+  const primary = checklists.first().locator('input[type="checkbox"]');
+  await primary.nth(0).check();
+  await primary.nth(1).check();
+  await expect(checklists.first().locator("summary")).toContainText("2/2");
+  await expectStudentCopyPublic(page);
 });
 
 test("case catalog switches public labels without exposing complaints", async ({ page }) => {

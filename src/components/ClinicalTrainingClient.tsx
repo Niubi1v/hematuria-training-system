@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FocusEvent as ReactFocusEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FocusEvent as ReactFocusEvent, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -1249,31 +1249,44 @@ async function saveDesktopAttemptState(attempt: AttemptIdentity, snapshot: Persi
   if (!isDesktopStateAuthority(result)) throw new Error("desktop_state_authority_invalid");
 }
 
-function EvidenceChecklist({ options, selected, onChange, lang, ariaLabel }: {
+function Disclosure({ summary, children, initiallyOpen = false, testId }: { summary: ReactNode; children: ReactNode; initiallyOpen?: boolean; testId?: string }) {
+  const [open, setOpen] = useState(initiallyOpen);
+  return (
+    <details data-testid={testId} open={open} onToggle={(event) => setOpen(event.currentTarget.open)} className="rounded-xl border border-clinic-line p-4">
+      <summary className="cursor-pointer font-semibold text-clinic-blue">{summary}</summary>
+      {children}
+    </details>
+  );
+}
+
+function EvidenceChecklist({ options, selected, onChange, lang, ariaLabel, defaultOpen = false }: {
   options: EvidenceOption[];
   selected: string[];
   onChange: (next: string[]) => void;
   lang: LanguageCode;
   ariaLabel: string;
+  defaultOpen?: boolean;
 }) {
   return (
-    <fieldset aria-label={ariaLabel} className="rounded-lg border border-clinic-line bg-clinic-paper p-3">
-      <legend className="px-1 text-sm font-medium text-clinic-blue">{ariaLabel}</legend>
-      <div className="mt-1 max-h-52 space-y-2 overflow-y-auto pr-1">
-        {options.map((option) => (
-          <label key={option.id} className="flex items-start gap-2 rounded-md bg-white px-3 py-2 text-sm leading-5">
-            <input
-              type="checkbox"
-              className="mt-1"
-              checked={selected.includes(option.id)}
-              onChange={() => onChange(selected.includes(option.id) ? selected.filter((item) => item !== option.id) : [...selected, option.id])}
-            />
-            <span>{option.label}</span>
-          </label>
-        ))}
-        {!options.length && <p className="px-2 py-3 text-sm text-clinic-muted">{lang === "en" ? "No collected evidence is available yet." : "尚无已采集证据，请先完成病史、查体或检查。"}</p>}
-      </div>
-    </fieldset>
+    <Disclosure testId="evidence-checklist" initiallyOpen={defaultOpen || selected.length > 0} summary={<span className="text-sm font-medium">{ariaLabel} · {selected.length}/{options.length}</span>}>
+      <fieldset aria-label={ariaLabel} className="mt-3 border-0 p-0">
+        <legend className="sr-only">{ariaLabel}</legend>
+        <div className="space-y-2">
+          {options.map((option) => (
+            <label key={option.id} className="flex items-start gap-2 rounded-md bg-white px-3 py-2 text-sm leading-5">
+              <input
+                type="checkbox"
+                className="mt-1"
+                checked={selected.includes(option.id)}
+                onChange={() => onChange(selected.includes(option.id) ? selected.filter((item) => item !== option.id) : [...selected, option.id])}
+              />
+              <span>{option.label}</span>
+            </label>
+          ))}
+          {!options.length && <p className="px-2 py-3 text-sm text-clinic-muted">{lang === "en" ? "No collected evidence is available yet." : "尚无已采集证据，请先完成病史、查体或检查。"}</p>}
+        </div>
+      </fieldset>
+    </Disclosure>
   );
 }
 
@@ -3203,12 +3216,18 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
 
           {activeStageNo === 2 && (
             <div className="space-y-6">
+              <section data-testid="investigation-selection-summary" className="rounded-lg bg-clinic-paper px-4 py-3 text-sm leading-6 text-clinic-muted">
+                <p className="font-medium text-clinic-ink">{lang === "en" ? "Current investigation summary" : "当前检查摘要"}</p>
+                <p>{lang === "en"
+                  ? `${answers.selectedOrders.length} orders selected · ${examLogs.length} examination records returned · ${orderLogs.reduce((sum, log) => sum + log.results.length, 0)} reports returned`
+                  : `已勾选医嘱 ${answers.selectedOrders.length} 项 · 已返回查体记录 ${examLogs.length} 项 · 已返回检查报告 ${orderLogs.reduce((sum, log) => sum + log.results.length, 0)} 份`}</p>
+                {answers.selectedOrders.length > 0 && <p className="mt-1 line-clamp-2">{answers.selectedOrders.join(lang === "en" ? "; " : "；")}</p>}
+              </section>
               <section>
                 <h3 className="text-lg font-semibold">{lang === "en" ? "Physical examination" : "查体"}</h3>
                 <div className="mt-4 space-y-4">
                   {physicalGroups.map((group) => (
-                    <section key={group.category} className="rounded-xl border border-clinic-line p-4">
-                      <h4 className="font-semibold text-clinic-blue">{group.category}</h4>
+                    <Disclosure key={group.category} initiallyOpen summary={`${group.category} · ${group.items.length}`}>
                       <div className="mt-3 flex flex-wrap gap-2">
                         {group.items.map((item) => (
                           <button key={item.examId} type="button" onClick={() => submitExam(item.displayName)} disabled={!item.translationAvailable} className="ui-button-secondary">
@@ -3216,7 +3235,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                           </button>
                         ))}
                       </div>
-                    </section>
+                    </Disclosure>
                   ))}
                 </div>
                 <div className="mt-4 flex gap-2">
@@ -3245,8 +3264,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 <input value={orderSearch} onChange={(event) => setOrderSearch(event.target.value)} className="ui-input mt-4 w-full" placeholder={t(lang, "orderSearch")} />
                 <div className="mt-4 space-y-5">
                   {orderGroups.map((group) => (
-                    <section key={group.category} className="rounded-xl border border-clinic-line p-4">
-                      <h4 className="font-semibold text-clinic-blue">{group.categoryLabel}</h4>
+                    <Disclosure key={group.category} initiallyOpen summary={`${group.categoryLabel} · ${group.items.length}`}>
                       <div className="mt-3 grid gap-2 md:grid-cols-2">
                         {group.items.map((item) => (
                           <label key={item.catalogId || item.orderId} className="flex min-h-[72px] items-start justify-between gap-3 rounded-lg border border-clinic-line px-3 py-2 text-sm transition-colors hover:border-clinic-blue">
@@ -3261,7 +3279,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                           </label>
                         ))}
                       </div>
-                    </section>
+                    </Disclosure>
                   ))}
                 </div>
                 <label className="mt-4 block"><span className="font-medium">{t(lang, "otherOrders")}</span><textarea value={answers.customOrders} onChange={(event) => updateAnswer("customOrders", event.target.value)} rows={4} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" /></label>
@@ -3325,7 +3343,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 <h3 className="text-lg font-semibold text-clinic-blue">{lang === "en" ? "A. Most likely diagnosis" : "A. 最可能诊断"}</h3>
                 <label className="mt-3 block"><span className="font-medium">{t(lang, "diagnosis")}</span><input aria-label={t(lang, "diagnosis")} value={answers.diagnosis} onChange={(event) => updateAnswer("diagnosis", event.target.value)} className="ui-input mt-2 w-full" placeholder={lang === "en" ? "Search, select, or enter a short diagnosis" : "搜索、选择或简短输入诊断名称"} /></label>
                 <div className="mt-4">
-                  <EvidenceChecklist options={evidenceOptions} selected={diagnosisEvidence.selected} onChange={(selected) => updateDiagnosisEvidence(selected)} lang={lang} ariaLabel={lang === "en" ? "Diagnostic evidence from collected findings" : "诊断依据（从已采集证据中选择）"} />
+                  <EvidenceChecklist options={evidenceOptions} selected={diagnosisEvidence.selected} onChange={(selected) => updateDiagnosisEvidence(selected)} lang={lang} ariaLabel={lang === "en" ? "Diagnostic evidence from collected findings" : "诊断依据（从已采集证据中选择）"} defaultOpen />
                 </div>
                 <label className="mt-3 block text-sm"><span className="font-medium">{lang === "en" ? "Optional note" : "补充说明（可选）"}</span><input aria-label={lang === "en" ? "Diagnosis optional note" : "诊断补充说明"} value={diagnosisEvidence.note} onChange={(event) => updateDiagnosisEvidence(diagnosisEvidence.selected, event.target.value)} className="ui-input mt-2 w-full" /></label>
               </section>
