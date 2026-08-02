@@ -1,12 +1,11 @@
-# 桌面本地 AI R4 运行审计修复交接
+# 桌面本地 AI R4.1 运行审计修复交接（门禁阻塞）
 
-- handoffId：`f4b2ada6-20260802-134320`
-- 状态：`ready_for_review`
+- handoffId：`086abf5b-20260802-163937`
+- 状态：`blocked_test_gate`
 - 分支：`codex/hematuria-desktop-mentor-beta-package`
 - 基线 HEAD：`4c31bd547437270b08572218ef8f36052a401338`
-- R4 产品 HEAD：`e2ea82e908b46f241fe955b3eb3b0391617267dc`
-- Playwright 门禁 HEAD：`f4b2ada6539bf66ad4aacb110a5afce878ff2cd5`
-- 已关闭缺陷：`R3-LOCALAI-COUNT-001`
+- R4.1 产品 HEAD：`086abf5b0b5a4080b8928270fcd314678cbb5b27`
+- 已关闭产品缺陷：`R4-LOCALAI-COUNT-REAL-TAURI-001`
 - `data/**`：零差异
 
 ## 根因与修复
@@ -63,4 +62,8 @@ R4 解压树 88 个文件，包扫描 `secretFindings=0`、`forbiddenFindings=0`
 
 ## 下一步
 
-使用现有不可变 R4 候选包恢复独立真实 Tauri 验收。产品 HEAD 与四项产物 SHA 未变化，不需要重建或生成 R4.1。
+不要进入独立验收。R4.1 产品修复已通过真实 Tauri 8 轮验证，但本轮唯一一次完整四 worker Playwright 为 `103 passed / 1 failed / 12 skipped`。失败页是 Next.js 开发服务器的 `Expected clientReferenceManifest to be defined` 不变量错误；同轮 desktop 对应测试及后续 P008 请求通过。按限定范围未重跑完整门禁、未修改病例 UI/测试、未生成 R4.1 产物。
+
+失败版写端与读端同为 PID `53508`，但模块实例不同，写端累计 3、读端始终 0。修复版 sidecar PID `40012` 使用 SQLite 聚合，真实 UI 8 轮得到 `local_ai=7`、`rule_fallback=1`、云请求 0，关闭重开设置后保持。剪贴板摘要 SHA-256 为 `8876ea9acf95d153c753bfc7dcf60c41089b4663d54bdf7637c95093636a1551`；导出文件为 `D:\HematuriaDesktopTopologyEvidence\R4-Fixed-8Rounds-20260802-01\exports\hematuria-local-runtime-verification-1785658580741.json`，467 B，SHA-256 `4a9cbe1639a0ac4a353d2b3bad55c57678a02f6c0a729f74356fcd2a1a1142e2`。详情见 `docs/desktop-poc/handoff/r4.1-runtime-audit-topology.md`。
+
+R4 旧产物保持不可变，仅作回滚；未创建 `D:\HematuriaDesktopArtifacts\MentorLocalAI-FinalCandidate-R4.1`。

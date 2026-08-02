@@ -1,15 +1,15 @@
 {
-  "schemaVersion": 4,
-  "handoffId": "f4b2ada6-20260802-134320",
-  "status": "ready_for_review",
-  "milestone": "desktop-local-ai-runtime-audit-r4",
+  "schemaVersion": 5,
+  "handoffId": "086abf5b-20260802-163937",
+  "status": "blocked_test_gate",
+  "milestone": "desktop-local-ai-runtime-audit-r4.1-prepackage",
   "branch": "codex/hematuria-desktop-mentor-beta-package",
   "worktree": "D:/CodexProjects/worktrees/hematuria-desktop-mentor-beta-package",
   "baseHead": "4c31bd547437270b08572218ef8f36052a401338",
-  "productHead": "e2ea82e908b46f241fe955b3eb3b0391617267dc",
-  "playwrightGateHead": "f4b2ada6539bf66ad4aacb110a5afce878ff2cd5",
-  "resolvedDefect": "R3-LOCALAI-COUNT-001",
-  "rootCause": "Release-mode Tauri does not enable debugRuntime, so the renderer omitted debug:true. api/agent-chat.js therefore skipped desktopPatientEvidence entirely because accounting and response diagnostics shared the same debug-only gate. Real local_ai replies passed the classifier and validator, but no accepted event reached the runtime aggregate read by /api/desktop/evidence.",
+  "productHead": "086abf5b0b5a4080b8928270fcd314678cbb5b27",
+  "playwrightGateHead": null,
+  "resolvedDefect": "R4-LOCALAI-COUNT-REAL-TAURI-001",
+  "rootCause": "The release sidecar loaded desktopRuntimeEvidence.js in two module instances. Agent chat wrote three events to one module-level array while the settings/evidence route read a second empty array in the same PID. Same-process tests passed because writer and reader shared one require cache; real route bundles did not.",
   "patientReplyChain": [
     "ClinicalTrainingClient input",
     "POST /api/agent-chat",
@@ -90,11 +90,39 @@
     {"type": "portable", "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R4/HematuriaTraining-Mentor-LocalAI-Portable-R4.zip", "bytes": 51192169, "sha256": "9056fe04903c4f688bf26ab7bef518620178a7fcc24e787b45e42dafaccd5db3"},
     {"type": "model", "path": "D:/HematuriaDesktopArtifacts/MentorLocalAI-FinalCandidate-R4/Model/Qwen3-1.7B-Q4_K_M.gguf", "bytes": 1282439264, "sha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5"}
   ],
+  "r41Validation": {
+    "topologyEvidence": {
+      "failedWriter": {"pid": 53508, "ppid": 52240, "moduleInstanceId": "2f112762-e41b-47e7-96d6-43959927a2cf", "eventCount": 3},
+      "failedReader": {"pid": 53508, "ppid": 52240, "moduleInstanceId": "61d0fd6e-e56c-48c3-9947-c4c51dafdaef", "eventCount": 0},
+      "providerPresent": true,
+      "fixedStore": "desktop_sqlite"
+    },
+    "realTauri": {
+      "rounds": 8,
+      "localAiAcceptedCount": 7,
+      "ruleFallbackCount": 1,
+      "cloudRequestCount": 0,
+      "runtimeAuditHealthy": true,
+      "countsPersistAfterSettingsReopen": true,
+      "studentAnswerSourceLeak": false,
+      "residualProcesses": 0
+    },
+    "clipboard": {"parsed": true, "bytes": 483, "sha256": "8876ea9acf95d153c753bfc7dcf60c41089b4663d54bdf7637c95093636a1551", "forbiddenKeys": false},
+    "export": {"path": "D:/HematuriaDesktopTopologyEvidence/R4-Fixed-8Rounds-20260802-01/exports/hematuria-local-runtime-verification-1785658580741.json", "bytes": 467, "sha256": "4a9cbe1639a0ac4a353d2b3bad55c57678a02f6c0a729f74356fcd2a1a1142e2", "forbiddenKeys": false},
+    "crossProcess": "pass; process A wrote 5 accepted and 1 fallback, process B read 5 and 1",
+    "r3StateAndMedicalRegression": "pass",
+    "typescript": "pass on Node 22.14.0",
+    "eslint": "pass on Node 22.14.0",
+    "playwright": {"status": "fail", "passed": 103, "failed": 1, "errors": 0, "skipped": 12, "workers": 4, "retries": 0, "junit": "D:/HematuriaDesktopR41PlaywrightGate/full-086abf5-20260802-1630/playwright-junit.xml", "detail": "mobile P008 received a Next.js clientReferenceManifest invariant error; desktop counterpart and later P008 requests passed"},
+    "r41ArtifactsGenerated": false
+  },
   "dataDiff": "zero",
   "secretScan": "pass; repository and R4 package scans found zero secrets",
   "defects": [
     {"id": "R4-E2E-GATE-001", "status": "closed", "scope": "Playwright release gate", "detail": "The original 30 failures were attributed to R3-existing stale contracts/test setup. The final catalog empty-state contract passed in both projects, and the complete supported four-worker gate passed 104/0/12 with no retries."}
   ],
-  "blockers": [],
-  "recommendedNextStep": "Resume independent real-Tauri acceptance against the existing immutable R4 candidate. Product HEAD and artifact hashes are unchanged; do not rebuild R4."
+  "blockers": [
+    {"id": "R4.1-E2E-GATE-001", "status": "open", "scope": "Playwright release gate", "detail": "The single allowed full four-worker run ended 103 passed, 1 failed, 12 skipped because the mobile P008 page received a Next.js development-server clientReferenceManifest invariant error."}
+  ],
+  "recommendedNextStep": "Do not enter independent acceptance and do not build R4.1 while status is blocked_test_gate. Resolve or authoritatively qualify the Next.js development-server gate failure, then run the supported full gate under explicit authorization."
 }
