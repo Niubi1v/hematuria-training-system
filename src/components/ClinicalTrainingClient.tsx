@@ -2733,6 +2733,33 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     }
   }
 
+  async function reopenInvestigationStage() {
+    if (osceLocked || stageSubmitLockRef.current || trainingAttemptStatus !== "ready" || !submitted[1]) return;
+    stageSubmitLockRef.current = true;
+    setStageSubmitting(true);
+    try {
+      const evaluation = await trainingAction<StageEvaluation>({
+        action: "stage-feedback",
+        stageKey: "history",
+        submission: {
+          ...answers,
+          answerText: stageAnswerText(1, answers, messages, examLogs, orderLogs, mdtOpinions),
+          askedQuestions: messages.filter((message) => message.role === "student").map((message) => message.text)
+        }
+      });
+      setSubmitted({ 1: evaluation });
+      setFinalReport(null);
+      setActiveStageNo(2);
+      setMobileNavOpen(false);
+      setStorageWarning("");
+    } catch (error) {
+      setStorageWarning(stageSubmissionFailureMessage(error, lang));
+    } finally {
+      stageSubmitLockRef.current = false;
+      setStageSubmitting(false);
+    }
+  }
+
   async function completeTraining() {
     if (finalReport || stageSubmitLockRef.current || trainingAttemptStatus !== "ready") return;
     for (let stage = 1 as AgentStageNo; stage <= 6; stage = (stage + 1) as AgentStageNo) {
@@ -3225,6 +3252,18 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
 
           {activeStageNo === 3 && (
             <div data-testid="diagnosis-builder" className="space-y-5">
+              {evidenceOptions.length < 2 && (
+                <div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
+                  <p>{lang === "en"
+                    ? "At least two reviewed findings are required to build a diagnosis. Return to stage 2 and collect another available finding."
+                    : "诊断构建至少需要2条已审核可用依据。请返回阶段2，再补充1条可用检查依据。"}</p>
+                  <button type="button" disabled={stageSubmitting} onClick={reopenInvestigationStage} className="ui-button-secondary mt-3">
+                    {stageSubmitting
+                      ? (lang === "en" ? "Reopening..." : "正在返回……")
+                      : (lang === "en" ? "Return to stage 2 for more evidence" : "返回阶段2补充依据")}
+                  </button>
+                </div>
+              )}
               <section className="rounded-xl border border-clinic-line p-4">
                 <h3 className="text-lg font-semibold text-clinic-blue">{lang === "en" ? "A. Most likely diagnosis" : "A. 最可能诊断"}</h3>
                 <label className="mt-3 block"><span className="font-medium">{t(lang, "diagnosis")}</span><input aria-label={t(lang, "diagnosis")} value={answers.diagnosis} onChange={(event) => updateAnswer("diagnosis", event.target.value)} className="ui-input mt-2 w-full" placeholder={lang === "en" ? "Search, select, or enter a short diagnosis" : "搜索、选择或简短输入诊断名称"} /></label>

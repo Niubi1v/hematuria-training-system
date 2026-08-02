@@ -301,6 +301,36 @@ test("@ui-clinical-stage3 female case shows only applicable examination and imag
   await expect(page.getByText(/未返回结果|开单服务暂时不可用/)).toHaveCount(0);
 });
 
+test("@stage3-evidence-recovery reopens stage 2 when only one diagnostic finding is available", async ({ page }) => {
+  const observations = [];
+  await routeTrainingApiThroughHandler(page, observations);
+  await page.goto("/cases/P001/");
+
+  await enterInvestigationStage(page, "zh");
+  await page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜").fill("尿常规");
+  await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
+  await expect(page.getByTestId("report-card")).toHaveCount(1);
+  await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
+  await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
+
+  const primaryEvidence = page.getByTestId("diagnosis-builder").locator("fieldset").first().locator('input[type="checkbox"]');
+  await expect(primaryEvidence).toHaveCount(1);
+  await page.reload();
+  await expect(primaryEvidence).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "返回阶段2补充依据", exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "返回阶段2补充依据", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "检查与开单", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "提交本阶段", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "体温", exact: true }).click();
+  await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
+  await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
+  await expect(primaryEvidence).toHaveCount(2);
+
+  expect(observations.filter((item) => item.action === "stage-feedback" && item.stageKey === "history")).toHaveLength(2);
+  expect(observations.filter((item) => item.action === "stage-feedback" && item.stageKey === "orders")).toHaveLength(2);
+});
+
 test("case catalog switches public labels without exposing complaints", async ({ page }) => {
   await page.goto("/cases/");
   await page.getByRole("button", { name: "English" }).click();
