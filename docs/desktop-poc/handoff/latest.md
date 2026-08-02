@@ -1,10 +1,11 @@
 # 桌面本地 AI R4 运行审计修复交接
 
-- handoffId：`e2ea82e9-20260802-122048`
-- 状态：`blocked_test_gate`
+- handoffId：`f4b2ada6-20260802-134320`
+- 状态：`ready_for_review`
 - 分支：`codex/hematuria-desktop-mentor-beta-package`
 - 基线 HEAD：`4c31bd547437270b08572218ef8f36052a401338`
 - R4 产品 HEAD：`e2ea82e908b46f241fe955b3eb3b0391617267dc`
+- Playwright 门禁 HEAD：`f4b2ada6539bf66ad4aacb110a5afce878ff2cd5`
 - 已关闭缺陷：`R3-LOCALAI-COUNT-001`
 - `data/**`：零差异
 
@@ -43,9 +44,9 @@
 
 通过：runtime evidence、structured local LLM、真实模型开启/关闭桌面验收、TypeScript、lint、完整行为测试、两类秘密扫描、Next 82 页构建、Tauri release、NSIS、便携包与 R4 包扫描。单线程桌面 `@ui-defect-regression` 3 项全部通过。
 
-完整四 worker Playwright 门禁在隔离环境复现为 74 通过、30 失败、12 跳过。归因证明 30 项均为 R3 已存在的陈旧 Playwright 合同或测试准备缺失，不是 R4 产品回归，也不是 worker 并发、端口、SQLite、attempt store、启动竞争或状态污染。两轮限定测试修复后，代表集合由 18 通过、11 失败、3 跳过收敛为 27 通过、2 失败、3 跳过；剩余两项是同一病例库空结果测试仍寻找旧清除按钮。详见 `docs/desktop-poc/handoff/r4-playwright-attribution.md`。
+完整四 worker Playwright 门禁在隔离环境最终为 104 通过、0 失败、0 错误、12 个既有 project 互斥跳过，共 116 项，未启用 retry。最后的病例库空结果测试通过清空搜索框恢复 42 张病例卡，并继续验证公开卡不泄露主诉、病程或隐藏答案；desktop/mobile 定向结果为 2/2 通过。归因历史与最终 JUnit 位置见 `docs/desktop-poc/handoff/r4-playwright-attribution.md`。
 
-达到两轮上限后未继续修复，也未把门禁记为通过。R4 仍不得进入独立验收或导师发布。
+R4 runtime evidence、TypeScript、ESLint、`data/**` 零差异、`git diff --check` 和本轮进程/端口清理均通过。
 
 ## R4 产物
 
@@ -62,4 +63,4 @@ R4 解压树 88 个文件，包扫描 `secretFindings=0`、`forbiddenFindings=0`
 
 ## 下一步
 
-仅处理归因报告所列的 2 项剩余病例库空结果测试合同，然后在隔离状态目录重跑标准完整四 worker Playwright 门禁。门禁全绿后再生成新 handoffId 并进入独立真实 Tauri 验收。不要修改患者回答、医学数据、评分、产品运行时或 R4 产物。
+使用现有不可变 R4 候选包恢复独立真实 Tauri 验收。产品 HEAD 与四项产物 SHA 未变化，不需要重建或生成 R4.1。

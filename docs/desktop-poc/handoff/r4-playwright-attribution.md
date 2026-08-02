@@ -60,8 +60,23 @@ R4 干净环境完整四 worker 门禁复现为 `74 passed / 30 failed / 12 skip
 
 - 第 1 轮：`18 passed / 11 failed / 3 skipped`
 - 第 2 轮：`27 passed / 2 failed / 3 skipped`
-- 剩余：`case catalog search has a recoverable empty state` 在 desktop/mobile 中寻找旧“清除搜索与筛选”按钮
+- 最后合同修正：按当前可访问性合同清空搜索框，恢复 42 张病例卡，并继续断言公开卡不泄露主诉、病程或隐藏答案
+- 定向双项目：`2 passed / 0 failed`
+
+## 最终完整门禁
+
+- 测试 HEAD：`f4b2ada6539bf66ad4aacb110a5afce878ff2cd5`
+- Node：`22.14.0`
+- Playwright：`1.61.1`
+- projects：`desktop-chromium`、`mobile-chromium`
+- workers：`4`
+- 结果：`104 passed / 12 skipped / 0 failed / 0 errors`，116 项总计，约 5 分钟
+- retry：配置未启用，本次没有首轮失败后重试通过
+- JUnit：`D:\HematuriaDesktopR4PlaywrightGate\full-f4b2ada-20260802-1510\playwright-junit.xml`
+- 残留：受控 Next PID、端口 43126/43127 及相关测试进程均为 0
+
+12 个 skip 均为既有 project 互斥覆盖：完整 42 病例矩阵只在 desktop 执行，移动完整旅程和触控几何只在 mobile 执行，其余四视口、状态合同与 desktop runtime 专项只在声明的单一 project 执行。未新增 skip。
 
 ## 发布判断
 
-产品 HEAD 与 R4 产物 SHA 均不变，不生成 R4.1。由于两轮后仍有 2 项代表测试失败，未运行修复后的完整门禁，状态保持 `blocked_test_gate`，不得进入独立真实 Tauri 验收或导师发布。
+产品 HEAD 与 R4 产物 SHA 均不变，不生成 R4.1。最终完整四 worker Playwright、runtime evidence、TypeScript、ESLint、`data/**` 和 diff 门禁全部通过，状态改为 `ready_for_review`，可以恢复独立真实 Tauri 验收。
