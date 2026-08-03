@@ -219,6 +219,10 @@ a {
   max-height: 106px;
 }
 
+.stage-navigation-label {
+  overflow-wrap: normal;
+}
+
 @layer components {
   .ui-card {
     @apply rounded-xl border border-clinic-line bg-white shadow-soft;
@@ -389,13 +393,17 @@ a {
   }
 
   .history-composer {
-    position: sticky !important;
-    bottom: 0 !important;
     order: 10;
     margin-top: 12px;
     border-color: rgb(199 206 209);
     border-radius: 9px;
-    box-shadow: 0 -8px 22px rgb(23 33 38 / 0.08);
+  }
+
+  .investigation-selection-summary {
+    position: sticky;
+    top: 0;
+    z-index: calc(var(--z-sticky) - 1);
+    box-shadow: 0 1px 0 rgb(var(--color-line));
   }
 
   .workbench-drawer {
@@ -406,6 +414,16 @@ a {
     border-left: 1px solid rgb(var(--color-line));
     background: rgb(var(--color-surface-subtle));
     padding: 12px;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1179px) {
+  .stage-navigation-item {
+    height: 68px;
+  }
+
+  .stage-navigation-description {
+    display: none;
   }
 }
 
@@ -476,8 +494,27 @@ a {
     max-width: 85% !important;
   }
 
+  .history-transcript {
+    height: auto !important;
+    min-height: 96px;
+    max-height: 180px;
+    margin-top: 0.5rem;
+  }
+
+  .history-composer {
+    margin-top: 0.25rem;
+  }
+
+  .history-task-hint {
+    margin-top: 0;
+  }
+
   .workbench-actions > p {
     flex-basis: 100%;
+  }
+
+  .history-stage-form .workbench-actions > p {
+    display: none;
   }
 
   .workbench-actions .ui-button {

@@ -1068,7 +1068,6 @@ function FeedbackBox({ evaluation, lang }: { evaluation: StageEvaluation; lang: 
 function FinalReport({ report, lang }: { report: Evaluator360Report; lang: LanguageCode }) {
   const strengths = report.items.filter((item) => item.max > 0 && item.score / item.max >= 0.8).map((item) => studentFacingClinicalText(item.label, lang));
   const priorities = report.items.filter((item) => item.criticalErrors.length || item.misses.length || item.improvements.length).map((item) => studentFacingClinicalText(item.label, lang));
-  const displayedScore = percentageScore(report.total);
   const trajectoryGroups = report.clinicalTrajectory ? [
     [lang === "en" ? "Questions asked" : "问过什么", report.clinicalTrajectory.questions],
     [lang === "en" ? "Evidence acquired" : "获得的证据", report.clinicalTrajectory.acquiredEvidence],
@@ -1079,18 +1078,13 @@ function FinalReport({ report, lang }: { report: Evaluator360Report; lang: Langu
     [lang === "en" ? "Perioperative management" : "围术期管理", report.clinicalTrajectory.perioperativeManagement]
   ] as const : [];
   return (
-    <section data-testid="final-report" className="rounded-xl border border-clinic-line bg-white p-5 print:border-0 print:p-0">
+    <section id="final-report-details" data-testid="final-report" className="rounded-xl border border-clinic-line bg-white p-5 print:border-0 print:p-0">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h3 className="text-lg font-semibold text-clinic-blue">{t(lang, "competencyProfile")}</h3>
+          <h3 className="text-lg font-semibold text-clinic-blue">{lang === "en" ? "Full training report" : "完整训练报告"}</h3>
           <p className="text-sm text-clinic-muted">{t(lang, "reportBasis")}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button type="button" onClick={() => window.print()} className="no-print rounded-md border border-clinic-line px-3 py-2 text-sm font-medium hover:border-clinic-blue">{t(lang, "printReport")}</button>
-          <div data-testid="final-percentage-score" aria-label={lang === "en" ? `Percentage score ${displayedScore} out of 100` : `百分制得分 ${displayedScore} / 100`} className="text-3xl font-semibold text-clinic-blue">
-            {displayedScore}<span className="text-base text-clinic-muted"> / 100</span>
-          </div>
-        </div>
+        <button type="button" onClick={() => window.print()} className="no-print rounded-md border border-clinic-line px-3 py-2 text-sm font-medium hover:border-clinic-blue">{t(lang, "printReport")}</button>
       </div>
       {report.redFlags.length > 0 && (
         <div role="alert" className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-900">
@@ -1425,18 +1419,20 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
   const chatComposerRef = useRef<HTMLDivElement | null>(null);
+  const reportSummaryRef = useRef<HTMLHeadingElement | null>(null);
   const chatPinnedToBottomRef = useRef(true);
   const [chatHasNewMessage, setChatHasNewMessage] = useState(false);
-  const [chatComposerReserve, setChatComposerReserve] = useState(148);
   const ensureMobileComposerVisible = useCallback(() => {
-    if (window.innerWidth >= 640) return;
     const composer = chatComposerRef.current;
     if (!composer) return;
     const rect = composer.getBoundingClientRect();
     const viewportTop = window.visualViewport?.offsetTop ?? 0;
     const viewportBottom = viewportTop + (window.visualViewport?.height ?? window.innerHeight);
-    if (rect.bottom > viewportBottom - 8) window.scrollBy(0, rect.bottom - viewportBottom + 8);
-    else if (rect.top < viewportTop + 8) window.scrollBy(0, rect.top - viewportTop - 8);
+    const actionTop = document.querySelector(".workbench-actions")?.getBoundingClientRect().top ?? viewportBottom;
+    const visibleBottom = Math.min(viewportBottom, actionTop) - 8;
+    const scrollOwner = window.innerWidth >= 1024 ? workbenchMainRef.current : null;
+    if (rect.bottom > visibleBottom) (scrollOwner || window).scrollBy({ top: rect.bottom - visibleBottom, behavior: "auto" });
+    else if (rect.top < viewportTop + 8) (scrollOwner || window).scrollBy({ top: rect.top - viewportTop - 8, behavior: "auto" });
   }, []);
   const ensureMobileStageControlVisible = useCallback((event: ReactFocusEvent<HTMLElement>) => {
     if (window.innerWidth >= 640 || !(event.target instanceof HTMLElement)) return;
@@ -2080,6 +2076,14 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }, [activeStageNo]);
 
   useLayoutEffect(() => {
+    if (activeStageNo !== 7 || !finalReport) return;
+    const summary = reportSummaryRef.current;
+    if (!summary) return;
+    workbenchMainRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    summary.focus({ preventScroll: true });
+  }, [activeStageNo, finalReport]);
+
+  useLayoutEffect(() => {
     if (activeStageNo !== 1) return;
     const panel = chatScrollRef.current;
     if (!panel) return;
@@ -2092,21 +2096,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     } else if (messages.length > 1) {
       setChatHasNewMessage(true);
     }
-  }, [activeStageNo, chatComposerReserve, ensureMobileComposerVisible, messages, patientReplyLoading]);
-
-  useEffect(() => {
-    if (activeStageNo !== 1) return;
-    const composer = chatComposerRef.current;
-    if (!composer) return;
-    const updateReserve = () => {
-      const next = Math.ceil(composer.getBoundingClientRect().height);
-      setChatComposerReserve((current) => current === next ? current : next);
-    };
-    updateReserve();
-    const observer = new ResizeObserver(updateReserve);
-    observer.observe(composer);
-    return () => observer.disconnect();
-  }, [activeStageNo, lang]);
+  }, [activeStageNo, ensureMobileComposerVisible, messages, patientReplyLoading]);
 
   useEffect(() => {
     if (activeStageNo !== 1 || messages.length !== 1 || messages[0]?.role !== "patient") return;
@@ -2118,7 +2108,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       window.cancelAnimationFrame(firstFrame);
       if (secondFrame) window.cancelAnimationFrame(secondFrame);
     };
-  }, [activeStageNo, chatComposerReserve, ensureMobileComposerVisible, lang, messages]);
+  }, [activeStageNo, aiSessionId, ensureMobileComposerVisible, lang, messages, sessionInitLoading, trainingAttemptStatus]);
 
   useEffect(() => {
     const handleViewportResize = () => {
@@ -2921,6 +2911,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       : "";
   const connectionMessage = reconnectNotice || sessionInitError || ((sessionInitLoading || !aiSessionId) ? (lang === "en" ? "Preparing the interview..." : "正在准备问诊……") : "") || healthNotice;
   const connectionIsBusy = sessionInitLoading || !aiSessionId || aiStatus === "reconnecting";
+  const connectionIsRecovered = /Network restored|网络已恢复|Interview resumed|问诊已恢复/.test(reconnectNotice);
+  const connectionNoticeState = connectionIsRecovered ? "recovered" : connectionIsBusy ? "recovering" : "unavailable";
   const showReconnect = aiMode !== "rule" && (["degraded", "offline", "error", "reconnecting"].includes(aiStatus) || /reconnect|重新连接/i.test(reconnectNotice));
   const patientServiceAvailable = Boolean(aiSessionId) && !["offline", "error"].includes(aiStatus);
   const patientServiceLabel = connectionIsBusy
@@ -2975,7 +2967,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                   : t(lang, "freeTraining")}
             </span>
           </div>
-          <h1 className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">{lang === "en" ? "Hematuria Clinical Interview Training System" : "血尿临床问诊训练系统"}</h1>
+          <h1 className="mt-1 hidden text-xl font-semibold tracking-tight sm:block sm:text-2xl">{lang === "en" ? "Hematuria Clinical Interview Training System" : "血尿临床问诊训练系统"}</h1>
           <p className="mt-1 hidden text-sm text-clinic-muted md:block">{t(lang, "appSubtitle")}</p>
           <p className="mt-1 line-clamp-2 text-sm text-clinic-muted lg:hidden">{display.age || "-"} / {display.sex || "-"}</p>
         </div>
@@ -3032,7 +3024,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         </div>
       )}
       {showConnectionNotice && <div className="workbench-connection mb-3" aria-live="polite">
-        <div role="status" className={`flex min-h-9 flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm ${connectionIsBusy ? "border-sky-200 bg-sky-50 text-sky-900" : "border-amber-200 bg-amber-50 text-amber-950"}`}>
+        <div data-testid="resource-status-notice" data-state={connectionNoticeState} role="status" className={`flex min-h-9 flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm ${connectionIsRecovered ? "border-emerald-200 bg-emerald-50 text-emerald-900" : connectionIsBusy ? "border-sky-200 bg-sky-50 text-sky-900" : "border-amber-200 bg-amber-50 text-amber-950"}`}>
           <span>{connectionMessage}</span>
           {showReconnect && aiStatus !== "reconnecting" && <button type="button" onClick={() => void reconnectAiPatient()} className="font-semibold underline underline-offset-2">{lang === "en" ? "Reconnect" : "重新连接"}</button>}
         </div>
@@ -3057,15 +3049,16 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                     type="button"
                     disabled={locked}
                     onClick={() => openStage(agent.stageNo)}
-                    className={`w-full rounded-md border p-3 text-left transition ${active ? "border-clinic-line border-l-2 border-l-clinic-blue bg-clinic-paper text-clinic-ink" : completed ? "border-emerald-200 bg-emerald-50 text-emerald-900" : locked ? "cursor-not-allowed border-clinic-line bg-slate-50 text-clinic-muted opacity-60" : "border-clinic-line bg-white hover:border-clinic-blue"}`}
+                    data-testid="stage-navigation-item"
+                    className={`stage-navigation-item w-full rounded-md border p-3 text-left transition ${active ? "border-clinic-line border-l-2 border-l-clinic-blue bg-clinic-paper text-clinic-ink" : completed ? "border-emerald-200 bg-emerald-50 text-emerald-900" : locked ? "cursor-not-allowed border-clinic-line bg-slate-50 text-clinic-muted opacity-60" : "border-clinic-line bg-white hover:border-clinic-blue"}`}
                   >
                     <div className="flex items-start gap-2">
                       <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white">
                         {locked ? <LockKeyhole size={14} /> : completed ? <CheckCircle2 size={14} /> : <AgentIcon stageNo={agent.stageNo} />}
                       </span>
-                      <span>
-                        <span className="block text-sm font-semibold leading-5">{agent.stageNo}. {stageName(agent.stageNo, lang)}</span>
-                        <span className="mt-1 block text-xs leading-5 text-clinic-muted">{agent.competency[lang]}</span>
+                      <span className="min-w-0">
+                        <span className="stage-navigation-label block text-sm font-semibold leading-5">{agent.stageNo}. {stageName(agent.stageNo, lang)}</span>
+                        <span className="stage-navigation-description mt-1 block text-xs leading-5 text-clinic-muted">{agent.competency[lang]}</span>
                       </span>
                     </div>
                   </button>
@@ -3088,13 +3081,16 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             <p className="mt-1 hidden text-sm text-clinic-muted sm:block">{t(lang, "noFeedbackBeforeSubmit")}</p>
           </div>
 
-          <fieldset disabled={(osceLocked && activeStageNo !== 7) || (trainingAttemptStatus !== "ready" && !currentStageSubmitted && !trainingComplete)} className="workbench-stage-form min-w-0 border-0 p-0 disabled:opacity-75">
+          <fieldset disabled={(osceLocked && activeStageNo !== 7) || (trainingAttemptStatus !== "ready" && !currentStageSubmitted && !trainingComplete)} className={`workbench-stage-form min-w-0 border-0 p-0 disabled:opacity-75 ${activeStageNo === 1 ? "history-stage-form" : ""}`}>
           {activeStageNo === 1 && (
             <div className="history-stage">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-lg font-semibold">{lang === "en" ? "Patient interview" : "患者问诊"}</h3>
-                <button type="button" onClick={() => setSpeechSettingsOpen(true)} disabled={!speechOutputSupported} className="inline-flex min-h-11 items-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm text-clinic-muted hover:border-clinic-blue disabled:opacity-50">
-                  <Settings2 size={16} /> {t(lang, "voiceSettings")}
+                <div>
+                  <h3 className="text-lg font-semibold">{lang === "en" ? "Patient interview" : "患者问诊"}</h3>
+                  <p className="history-task-hint mt-1 text-sm text-clinic-muted">{lang === "en" ? "Continue asking the patient focused history questions." : "继续向患者提问，完成本阶段病史采集。"}</p>
+                </div>
+                <button type="button" aria-label={t(lang, "voiceSettings")} title={t(lang, "voiceSettings")} onClick={() => setSpeechSettingsOpen(true)} disabled={!speechOutputSupported} className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm text-clinic-muted hover:border-clinic-blue disabled:opacity-50">
+                  <Settings2 size={16} /> <span className="hidden sm:inline">{t(lang, "voiceSettings")}</span>
                   <span className="sr-only">{autoSpeak ? speechStateLabel() : t(lang, "speechOff")}</span>
                 </button>
               </div>
@@ -3166,21 +3162,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                     </div>
                   </div>
                 ))}
-                <div
-                  aria-hidden="true"
-                  data-testid="chat-composer-spacer"
-                  style={{ height: `calc(${chatComposerReserve}px + env(safe-area-inset-bottom, 0px))` }}
-                  className="pointer-events-none hidden sm:block"
-                />
                 </div>
               </div>
               {chatHasNewMessage && <button type="button" onClick={scrollChatToBottom} className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full border border-clinic-line bg-white px-3 py-1.5 text-xs font-semibold text-clinic-blue shadow-soft">{lang === "en" ? "New message · go to latest" : "有新消息 · 回到底部"}</button>}
               </div>
-              <label className="history-summary mt-5 block">
-                <span className="font-medium">{t(lang, "historySummary")}</span>
-                <textarea value={answers.historySummary} onChange={(event) => updateAnswer("historySummary", event.target.value)} rows={4} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" />
-              </label>
-              <div ref={chatComposerRef} data-testid="chat-composer" data-reserve={chatComposerReserve} className="history-composer relative z-30 mt-3 scroll-mb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] rounded-xl border border-clinic-line bg-white/95 p-1.5 shadow-raised backdrop-blur-sm sm:sticky sm:bottom-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
+              <div ref={chatComposerRef} data-testid="chat-composer" className="history-composer relative z-20 mt-3 scroll-mb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] rounded-xl border border-clinic-line bg-white p-1.5 shadow-soft">
                 <textarea
                   value={question}
                   rows={1}
@@ -3211,12 +3197,16 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                   </div>
                 </div>
               </div>
+              <label className="history-summary mt-5 block">
+                <span className="font-medium">{t(lang, "historySummary")}</span>
+                <textarea value={answers.historySummary} onChange={(event) => updateAnswer("historySummary", event.target.value)} rows={4} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" />
+              </label>
             </div>
           )}
 
           {activeStageNo === 2 && (
             <div className="space-y-6">
-              <section data-testid="investigation-selection-summary" className="rounded-lg bg-clinic-paper px-4 py-3 text-sm leading-6 text-clinic-muted">
+              <section data-testid="investigation-selection-summary" className="investigation-selection-summary rounded-lg bg-clinic-paper px-4 py-3 text-sm leading-6 text-clinic-muted">
                 <p className="font-medium text-clinic-ink">{lang === "en" ? "Current investigation summary" : "当前检查摘要"}</p>
                 <p>{lang === "en"
                   ? `${answers.selectedOrders.length} orders selected · ${examLogs.length} examination records returned · ${orderLogs.reduce((sum, log) => sum + log.results.length, 0)} reports returned`
@@ -3492,6 +3482,18 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
 
           {activeStageNo === 7 && (
             <div>
+              {finalReport && <section data-testid="final-report-summary" className="mb-5 rounded-lg border border-emerald-200 bg-emerald-50/60 p-5">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <h3 ref={reportSummaryRef} tabIndex={-1} className="text-xl font-semibold text-emerald-950 outline-none focus-visible:ring-2 focus-visible:ring-clinic-blue focus-visible:ring-offset-2">{lang === "en" ? "Training completed" : "训练已完成"}</h3>
+                    <p className="mt-1 text-sm text-emerald-900">{lang === "en" ? "The final report is ready. Review the details and continue your reflection." : "最终报告已生成，可查看完整报告并继续复盘。"}</p>
+                  </div>
+                  <div data-testid="final-percentage-score" aria-label={lang === "en" ? `Percentage score ${percentageScore(finalReport.total)} out of 100` : `百分制得分 ${percentageScore(finalReport.total)} / 100`} className="text-3xl font-semibold text-clinic-blue">
+                    {percentageScore(finalReport.total)}<span className="text-base text-clinic-muted"> / 100</span>
+                  </div>
+                </div>
+                <a href="#final-report-details" className="ui-button-secondary mt-4 w-fit">{lang === "en" ? "View full report" : "查看完整报告"}</a>
+              </section>}
               <h3 className="text-lg font-semibold">{t(lang, "debriefTitle")}</h3>
               <label className="mt-4 block">
                 <span className="font-medium">{t(lang, "reflection")}</span>
@@ -3601,18 +3603,18 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
               <p>{t(lang, "saveStatus")}：{saveStatus === "saved" ? t(lang, "saved") : saveStatus === "saving" ? t(lang, "saving") : t(lang, "saveFailed")}</p>
               <p className="pt-2 text-xs leading-5">{t(lang, "teachingOnly")}</p>
             </div>
-          </section>
-          <section className="rounded-lg border border-clinic-line bg-white p-5">
-            <h2 className="font-semibold">{t(lang, "obtainedData")}</h2>
-            <div className="mt-3 space-y-3 text-sm text-clinic-muted">
+            <div className="mt-4 border-t border-clinic-line pt-4">
+            <h3 className="font-semibold">{t(lang, "obtainedData")}</h3>
+            <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-sm text-clinic-muted">
               <p>{t(lang, "questionsCount")}：{acquiredStats.questions}</p>
               <p>{t(lang, "repliesCount")}：{acquiredStats.patientAnswers}</p>
               <p>{t(lang, "examsCount")}：{acquiredStats.exams}</p>
               <p>{t(lang, "ordersCount")}：{acquiredStats.orders}</p>
               <p>{t(lang, "reportsCount")}：{acquiredStats.reports}</p>
             </div>
+            </div>
           </section>
-          <section className="rounded-lg border border-clinic-line bg-white p-5">
+          {activeStageNo !== 7 && <section className="rounded-lg border border-clinic-line bg-white p-5">
             <h2 className="font-semibold">{t(lang, "timeline")}</h2>
             <div className="mt-3 space-y-3">
               {(visibleTimeline.length ? visibleTimeline.slice(-6).reverse() : []).map((item) => (
@@ -3623,7 +3625,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
               ))}
               {!visibleTimeline.length && <p className="text-sm text-clinic-muted">{t(lang, "noTimeline")}</p>}
             </div>
-          </section>
+          </section>}
           {isOsce && activeEvaluation && activeStageNo !== 7 && (
             <section className="rounded-lg border border-clinic-line bg-white p-5 text-sm leading-6 text-clinic-muted">
               {t(lang, "osceFeedbackNotice")}

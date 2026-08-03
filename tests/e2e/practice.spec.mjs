@@ -336,6 +336,7 @@ test("@stage3-evidence-recovery reopens stage 2 when only one diagnostic finding
 });
 
 test("@ui-ia investigation and diagnosis directories keep selection context without nested scrolling", async ({ page }) => {
+  const screenshotDir = process.env.UI_ROUND2_SCREENSHOT_DIR || "";
   await routeTrainingApiThroughHandler(page, []);
   await page.setViewportSize({ width: 1093, height: 614 });
   await page.goto("/cases/P001/");
@@ -355,14 +356,34 @@ test("@ui-ia investigation and diagnosis directories keep selection context with
   await expect(summary).toContainText("已勾选医嘱 1 项");
   await page.getByRole("button", { name: "返回已选项目结果", exact: true }).click();
   await expect(summary).toContainText("已返回检查报告 1 份");
+  const main = page.locator(".workbench-main");
+  await main.evaluate((element) => element.scrollTo({ top: 700, behavior: "auto" }));
+  await expect.poll(async () => {
+    const [summaryBox, mainBox, paddingTop] = await Promise.all([
+      summary.boundingBox(),
+      main.boundingBox(),
+      main.evaluate((element) => Number.parseFloat(getComputedStyle(element).paddingTop))
+    ]);
+    return summaryBox && mainBox ? Math.abs(summaryBox.y - mainBox.y - paddingTop) : Number.POSITIVE_INFINITY;
+  }).toBeLessThanOrEqual(2);
+  const [summaryBox, actionsBox] = await Promise.all([summary.boundingBox(), page.locator(".workbench-actions").boundingBox()]);
+  expect(summaryBox).toBeTruthy();
+  expect(actionsBox).toBeTruthy();
+  expect(summaryBox.y + summaryBox.height).toBeLessThanOrEqual(actionsBox.y);
+  await captureDefectScreenshot(page, screenshotDir, "stage2-summary-sticky-1093x614.png");
   for (const viewport of [{ width: 390, height: 844 }, { width: 1093, height: 614 }, { width: 1366, height: 768 }, { width: 1440, height: 900 }]) {
     await page.setViewportSize(viewport);
     const layout = await page.evaluate(() => {
       const summaryBox = document.querySelector('[data-testid="investigation-selection-summary"]')?.getBoundingClientRect();
-      return { overflow: document.documentElement.scrollWidth > window.innerWidth, summaryRight: summaryBox?.right ?? Number.POSITIVE_INFINITY };
+      return {
+        overflow: document.documentElement.scrollWidth > window.innerWidth,
+        summaryRight: summaryBox?.right ?? Number.POSITIVE_INFINITY,
+        summaryPosition: getComputedStyle(document.querySelector('[data-testid="investigation-selection-summary"]')).position
+      };
     });
     expect(layout.overflow, `${viewport.width}x${viewport.height}`).toBe(false);
     expect(Math.ceil(layout.summaryRight), `${viewport.width}x${viewport.height}`).toBeLessThanOrEqual(viewport.width);
+    expect(layout.summaryPosition, `${viewport.width}x${viewport.height}`).toBe(viewport.width >= 1024 ? "sticky" : "static");
   }
   await page.setViewportSize({ width: 1093, height: 614 });
   await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
@@ -664,6 +685,8 @@ test("stage submission waits for the training attempt while the patient service 
   await page.goto("/cases/P001/");
 
   await expect(page.getByTestId("stage-preparing-state")).toHaveText("正在准备…");
+  await expect(page.getByTestId("resource-status-notice")).toHaveAttribute("data-state", "recovering");
+  await expect(page.getByTestId("resource-status-notice")).toHaveClass(/bg-sky-50/);
   expect(observations.filter((item) => item.action === "stage-feedback")).toHaveLength(0);
 
   const submit = page.getByRole("button", { name: "提交本阶段", exact: true });
@@ -1395,22 +1418,21 @@ test("interview composer and desktop workbench fit target Windows viewports and 
       const opening = conversation.getByText(language === "en" ? englishOpening : chineseOpening, { exact: true });
       const input = page.getByRole("textbox", { name: language === "en" ? "Enter an interview question" : "输入问诊问题" });
       const composer = page.getByTestId("chat-composer");
-      const spacer = page.getByTestId("chat-composer-spacer");
+      await expect(page.getByTestId("stage-heading")).toContainText(language === "en" ? "History taking" : "病史采集");
+      await expect(page.getByText(language === "en" ? "Continue asking the patient focused history questions." : "继续向患者提问，完成本阶段病史采集。", { exact: true })).toBeVisible();
       await expect(opening).toBeVisible();
       await expect(input).toBeVisible();
-      if (viewport.width < 640) await input.focus();
       await expect.poll(async () => {
         const box = await composer.boundingBox();
         return box ? Math.ceil(box.y + box.height) : Number.POSITIVE_INFINITY;
       }).toBeLessThanOrEqual(viewport.height);
-      const [openingBox, composerBox, layout] = await Promise.all([
+      const [openingBox, composerBox, actionsBox, layout] = await Promise.all([
         opening.boundingBox(),
         composer.boundingBox(),
+        page.locator(".workbench-actions").boundingBox(),
         page.evaluate(() => {
           const composerElement = document.querySelector('[data-testid="chat-composer"]');
           return {
-            spacerHeight: Number.parseFloat(getComputedStyle(document.querySelector('[data-testid="chat-composer-spacer"]')).height),
-            spacerDisplay: getComputedStyle(document.querySelector('[data-testid="chat-composer-spacer"]')).display,
             composerHeight: composerElement?.getBoundingClientRect().height ?? 0,
             overflow: document.documentElement.scrollWidth > window.innerWidth,
             mainRight: document.querySelector(".workbench-main")?.getBoundingClientRect().right ?? Number.POSITIVE_INFINITY,
@@ -1424,14 +1446,10 @@ test("interview composer and desktop workbench fit target Windows viewports and 
       ]);
       expect(openingBox).toBeTruthy();
       expect(composerBox).toBeTruthy();
+      expect(actionsBox).toBeTruthy();
       expect(composerBox.y, `${viewport.width}x${viewport.height}/${language}`).toBeGreaterThanOrEqual(openingBox.y + openingBox.height);
       expect(Math.ceil(composerBox.y + composerBox.height)).toBeLessThanOrEqual(viewport.height);
-      await expect(spacer).toHaveAttribute("style", /safe-area-inset-bottom/);
-      if (viewport.width < 640) {
-        expect(layout.spacerDisplay).toBe("none");
-      } else {
-        expect(layout.spacerHeight).toBeGreaterThanOrEqual(layout.composerHeight);
-      }
+      expect(Math.ceil(composerBox.y + composerBox.height), `${viewport.width}x${viewport.height}/${language}`).toBeLessThanOrEqual(Math.ceil(actionsBox.y));
       expect(layout.className).toContain("safe-area-inset-bottom");
       expect(layout.overflow).toBe(false);
       expect(Math.ceil(layout.mainRight)).toBeLessThanOrEqual(viewport.width + 1);
@@ -1442,6 +1460,16 @@ test("interview composer and desktop workbench fit target Windows viewports and 
         expect(layout.drawerWidth).toBeGreaterThanOrEqual(220);
       }
       if (viewport.width >= 1040 && viewport.width < 1180) expect(layout.drawerDisplay).toBe("none");
+      if (viewport.width === 1093) {
+        const navItems = page.getByTestId("stage-navigation-item");
+        await expect(navItems).toHaveCount(7);
+        const heights = await navItems.evaluateAll((items) => items.map((item) => item.getBoundingClientRect().height));
+        expect(Math.max(...heights) - Math.min(...heights), language).toBeLessThanOrEqual(1);
+        await expect(navItems.first().locator(".stage-navigation-description")).toBeHidden();
+      }
+      if (language === "zh" && (viewport.width === 390 || viewport.width === 1440)) {
+        await captureDefectScreenshot(page, process.env.UI_ROUND2_SCREENSHOT_DIR || "", `stage1-task-focus-${viewport.width}x${viewport.height}.png`);
+      }
     }
   }
 
@@ -1547,6 +1575,11 @@ test("@ui-defect-regression P001 Chinese seven-stage contract keeps public label
   await page.setViewportSize({ width: 1366, height: 768 });
   await page.getByRole("textbox", { name: "学习反思" }).fill("本次训练需要继续改进问诊顺序、证据整合和医嘱表达。");
   await page.getByTestId("complete-training").click();
+  const reportSummary = page.getByTestId("final-report-summary");
+  await expect(reportSummary).toBeVisible();
+  await expect(reportSummary.getByRole("heading", { name: "训练已完成", exact: true })).toBeFocused();
+  await expect(reportSummary.getByTestId("final-percentage-score")).toBeInViewport();
+  await expect(reportSummary.getByRole("link", { name: "查看完整报告", exact: true })).toBeVisible();
   await expect(page.getByTestId("final-report")).toBeVisible();
   const generatedTrajectory = page.getByTestId("clinical-trajectory");
   await expect(generatedTrajectory).toContainText(/诊断结论|治疗计划|围术期管理/);
@@ -1554,9 +1587,15 @@ test("@ui-defect-regression P001 Chinese seven-stage contract keeps public label
   await expect(page.locator("body")).not.toContainText(/360分|\b360\b/);
   await expectStudentCopyPublic(page);
   await expect(page.getByTestId("training-complete-state")).toContainText("已完成");
+  await expect(page.getByRole("heading", { name: "时间线", exact: true })).toHaveCount(1);
   await expect(page.getByText("训练会话尚未就绪", { exact: true })).toHaveCount(0);
   await captureDefectScreenshot(page, screenshotDir, "p001-zh-stage7-1366x768.png");
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await captureDefectScreenshot(page, process.env.UI_ROUND2_SCREENSHOT_DIR || "", "stage7-report-summary-1440x900.png");
   await page.reload();
+  await expect(page.getByTestId("final-report-summary")).toBeVisible();
+  await expect(page.getByTestId("final-report-summary").getByRole("heading", { name: "训练已完成", exact: true })).toBeFocused();
+  await expect(page.getByTestId("final-percentage-score")).toBeInViewport();
   await expect(page.getByTestId("final-report")).toBeVisible();
   const recoveredTrajectory = page.getByTestId("clinical-trajectory");
   await expect(recoveredTrajectory).toContainText(/诊断结论|治疗计划|围术期管理/);
@@ -2014,12 +2053,17 @@ test("offline transition sends no request and resumes locally after the online e
   await expect.poll(() => sessionCalls).toBeGreaterThan(0);
   await context.setOffline(true);
   await expect(page.getByText("当前处于离线状态，既有训练记录已保留。")).toBeVisible();
+  await expect(page.getByTestId("resource-status-notice")).toHaveAttribute("data-state", "unavailable");
+  await expect(page.getByTestId("resource-status-notice")).toHaveClass(/bg-amber-50/);
   await expect(page.getByTestId("patient-service-status")).toHaveCount(0);
   const before = healthCalls;
   await page.getByRole("button", { name: "重新连接", exact: true }).click();
   expect(healthCalls).toBe(before);
   await context.setOffline(false);
   await expect(page.getByText("网络已恢复，可以继续问诊。")).toBeVisible();
+  await expect(page.getByTestId("resource-status-notice")).toHaveAttribute("data-state", "recovered");
+  await expect(page.getByTestId("resource-status-notice")).toHaveClass(/bg-emerald-50/);
+  await expect(page.getByTestId("resource-status-notice")).not.toHaveClass(/bg-amber-50/);
   await expect(page.getByTestId("patient-service-status")).toHaveText("问诊对话可用");
   expect(healthCalls).toBe(before);
   expect(sessionCalls).toBe(1);
