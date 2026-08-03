@@ -1419,7 +1419,7 @@ test("interview composer and desktop workbench fit target Windows viewports and 
       const input = page.getByRole("textbox", { name: language === "en" ? "Enter an interview question" : "输入问诊问题" });
       const composer = page.getByTestId("chat-composer");
       await expect(page.getByTestId("stage-heading")).toContainText(language === "en" ? "History taking" : "病史采集");
-      await expect(page.getByText(language === "en" ? "Continue asking the patient focused history questions." : "继续向患者提问，完成本阶段病史采集。", { exact: true })).toBeVisible();
+      await expect(page.getByText(language === "en" ? "Continue asking the patient." : "继续向患者提问，完成本阶段病史采集。", { exact: true })).toBeVisible();
       await expect(opening).toBeVisible();
       await expect(input).toBeVisible();
       await expect.poll(async () => {

@@ -436,12 +436,26 @@ a {
     display: none;
   }
 
+  .workbench-topbar h1 {
+    display: none;
+  }
+
   .workbench-main {
     padding-block: 12px !important;
   }
 
+  .stage-intro {
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .stage-submission-hint {
+    display: none;
+  }
+
   .history-transcript {
-    height: 140px !important;
+    height: 70px !important;
+    margin-top: 0.25rem;
   }
 
   .history-summary {
@@ -454,6 +468,27 @@ a {
 
   .history-composer {
     margin-top: 6px;
+    display: flex;
+    max-height: none;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .history-composer > textarea {
+    min-width: 0;
+  }
+
+  .history-composer > div {
+    margin-top: 0;
+  }
+
+  .history-composer > div > p {
+    display: none;
+  }
+
+  .workbench-actions {
+    padding-top: 0.25rem;
+    padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
   }
 }
 
@@ -502,7 +537,7 @@ a {
   }
 
   .history-composer {
-    margin-top: 0.25rem;
+    margin-top: 0;
   }
 
   .history-task-hint {
@@ -533,6 +568,8 @@ a {
 
   .workbench-actions {
     gap: 0.5rem;
+    padding-top: 0.625rem;
+    padding-bottom: max(0.625rem, env(safe-area-inset-bottom));
   }
 
   .workbench-actions .workbench-action-state {

@@ -1420,6 +1420,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
   const chatComposerRef = useRef<HTMLDivElement | null>(null);
   const reportSummaryRef = useRef<HTMLHeadingElement | null>(null);
+  const revealInitialComposerRef = useRef(true);
+  const composerLanguageRef = useRef(lang);
   const chatPinnedToBottomRef = useRef(true);
   const [chatHasNewMessage, setChatHasNewMessage] = useState(false);
   const ensureMobileComposerVisible = useCallback(() => {
@@ -2099,10 +2101,19 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }, [activeStageNo, ensureMobileComposerVisible, messages, patientReplyLoading]);
 
   useEffect(() => {
-    if (activeStageNo !== 1 || messages.length !== 1 || messages[0]?.role !== "patient") return;
+    if (composerLanguageRef.current === lang) return;
+    composerLanguageRef.current = lang;
+    revealInitialComposerRef.current = true;
+  }, [lang]);
+
+  useEffect(() => {
+    if (activeStageNo !== 1 || !revealInitialComposerRef.current || messages.length !== 1 || messages[0]?.role !== "patient") return;
     let secondFrame = 0;
     const firstFrame = window.requestAnimationFrame(() => {
-      secondFrame = window.requestAnimationFrame(ensureMobileComposerVisible);
+      secondFrame = window.requestAnimationFrame(() => {
+        ensureMobileComposerVisible();
+        revealInitialComposerRef.current = false;
+      });
     });
     return () => {
       window.cancelAnimationFrame(firstFrame);
@@ -3075,10 +3086,10 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         </aside>
 
         <section ref={workbenchMainRef} tabIndex={0} aria-label={`${studentStageLabel(activeStageNo, lang)}：${stageName(activeStageNo, lang)}`} onFocusCapture={ensureMobileStageControlVisible} className="workbench-main rounded-xl border border-clinic-line bg-white p-4 shadow-soft sm:p-5">
-          <div className="mb-3 border-b border-clinic-line pb-3">
+          <div className="stage-intro mb-3 border-b border-clinic-line pb-3">
             <p className="text-sm font-medium text-clinic-blue">{studentStageLabel(activeStageNo, lang)}</p>
             <h2 ref={stageHeadingRef} data-testid="stage-heading" className="mt-1 text-lg font-semibold sm:text-xl">{stageName(activeStageNo, lang)}</h2>
-            <p className="mt-1 hidden text-sm text-clinic-muted sm:block">{t(lang, "noFeedbackBeforeSubmit")}</p>
+            <p className="stage-submission-hint mt-1 hidden text-sm text-clinic-muted sm:block">{t(lang, "noFeedbackBeforeSubmit")}</p>
           </div>
 
           <fieldset disabled={(osceLocked && activeStageNo !== 7) || (trainingAttemptStatus !== "ready" && !currentStageSubmitted && !trainingComplete)} className={`workbench-stage-form min-w-0 border-0 p-0 disabled:opacity-75 ${activeStageNo === 1 ? "history-stage-form" : ""}`}>
@@ -3087,7 +3098,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h3 className="text-lg font-semibold">{lang === "en" ? "Patient interview" : "患者问诊"}</h3>
-                  <p className="history-task-hint mt-1 text-sm text-clinic-muted">{lang === "en" ? "Continue asking the patient focused history questions." : "继续向患者提问，完成本阶段病史采集。"}</p>
+                  <p className="history-task-hint mt-1 text-sm text-clinic-muted">{lang === "en" ? "Continue asking the patient." : "继续向患者提问，完成本阶段病史采集。"}</p>
                 </div>
                 <button type="button" aria-label={t(lang, "voiceSettings")} title={t(lang, "voiceSettings")} onClick={() => setSpeechSettingsOpen(true)} disabled={!speechOutputSupported} className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-md border border-clinic-line px-3 py-2 text-sm text-clinic-muted hover:border-clinic-blue disabled:opacity-50">
                   <Settings2 size={16} /> <span className="hidden sm:inline">{t(lang, "voiceSettings")}</span>
