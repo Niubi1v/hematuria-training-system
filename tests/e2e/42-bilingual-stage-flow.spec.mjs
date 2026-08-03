@@ -195,6 +195,7 @@ async function completeSevenStages(page, caseId, language) {
   await diagnosticEvidence.getByRole("checkbox").nth(1).check();
   for (let index = 1; index <= 3; index += 1) {
     await page.getByLabel(copy.differential(index), { exact: true }).fill(language === "en" ? `Training option ${index}` : `训练选项${index}`);
+    await page.locator("summary").filter({ hasText: copy.support(index) }).click();
     await page.getByRole("group", { name: copy.support(index), exact: true }).getByRole("checkbox").first().check();
   }
   await submitAndAdvance(page, language);
