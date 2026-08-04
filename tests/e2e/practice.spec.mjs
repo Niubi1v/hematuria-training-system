@@ -130,6 +130,103 @@ async function routeTrainingApiThroughHandler(page, observations = [], options =
   });
 }
 
+async function routeDesktopDurableBridge(page, observations) {
+  const origin = "http://127.0.0.1:43127";
+  const authToken = "desktop-e2e-launch-token-with-at-least-forty-three-characters";
+  const authority = {
+    stateStoreId: "33333333-3333-4333-8333-333333333333",
+    schemaVersion: 3,
+    productHead: "desktop-durable-bridge-e2e",
+    serverStateRevision: 0
+  };
+  const snapshots = new Map();
+  let stateToken = "";
+
+  await page.addInitScript(({ origin, authToken }) => {
+    Object.defineProperty(globalThis, "__HEMATURIA_DESKTOP_RUNTIME__", {
+      value: Object.freeze({ runtimeTarget: "desktop", apiBaseUrl: origin, authToken, debugRuntime: false }),
+      writable: true,
+      configurable: false
+    });
+    localStorage.setItem("hematuria-language", "en");
+  }, { origin, authToken });
+
+  await page.route(`${origin}/**`, async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const cors = {
+      "Access-Control-Allow-Origin": request.headers().origin || "http://127.0.0.1:3000",
+      "Access-Control-Allow-Headers": "Content-Type, X-Request-Id, X-Idempotency-Key, X-Training-State, X-Hematuria-Desktop-Token",
+      "Access-Control-Expose-Headers": "X-Training-State"
+    };
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({ status: 204, headers: cors });
+      return;
+    }
+    expect(request.headers()["x-hematuria-desktop-token"]).toBe(authToken);
+    const respond = (status, body, headers = {}) => route.fulfill({
+      status,
+      contentType: "application/json",
+      headers: { ...cors, ...headers },
+      body: JSON.stringify(body)
+    });
+    if (url.pathname === "/api/health/") {
+      await respond(200, {
+        status: "ok", patientServiceConfigured: true, trainingStateConfigured: true,
+        durableAttemptStoreConfigured: true, cloudTtsConfigured: false,
+        allowedOriginConfigured: true, deploymentTier: "practice", gitSha: authority.productHead,
+        deploymentSha: authority.productHead, apiVersion: "2.6.0"
+      });
+      return;
+    }
+    if (url.pathname === "/api/desktop/state/bootstrap") {
+      observations.push({ endpoint: "bootstrap", status: 200 });
+      await respond(200, authority);
+      return;
+    }
+    const body = request.postDataJSON();
+    if (url.pathname === "/api/desktop/attempt/state") {
+      const key = `${body.caseId}:${body.mode}:${body.language}`;
+      if (body.action === "load") {
+        const stored = snapshots.get(key);
+        observations.push({ endpoint: "attempt-load", status: stored ? 200 : 404, ...body });
+        await respond(stored ? 200 : 404, stored
+          ? { ...authority, attemptId: stored.snapshot.attempt.attemptId, currentStage: stored.snapshot.activeStageNo || 1, status: "active", stateToken, snapshot: stored.snapshot }
+          : { error: "attempt_not_found" });
+        return;
+      }
+      snapshots.set(key, { snapshot: body.snapshot });
+      authority.serverStateRevision += 1;
+      observations.push({ endpoint: "attempt-save", status: 200, ...body });
+      await respond(200, { saved: true, ...authority });
+      return;
+    }
+    if (url.pathname === "/api/desktop/attempt/resume") {
+      const status = body.mode === "free" ? 404 : 400;
+      observations.push({ endpoint: "attempt-resume", status, ...body });
+      await respond(status, { error: status === 404 ? "attempt_not_found" : "desktop_attempt_resume_payload_invalid" });
+      return;
+    }
+    if (url.pathname === "/api/training-action/") {
+      const result = await trainingApi(body, request.headers()["x-training-state"] || "");
+      stateToken = result.headers["x-training-state"] || stateToken;
+      observations.push({ endpoint: "training-action", action: body.action, status: result.statusCode, mode: body.mode });
+      await respond(result.statusCode, result.payload, stateToken ? { "X-Training-State": stateToken } : {});
+      return;
+    }
+    if (url.pathname === "/api/session/init/") {
+      await respond(200, {
+        sessionId: `desktop-session-${body.attemptId}`, caseId: body.caseId, language: body.language,
+        mode: body.mode, patientOpeningStatement: "Hello doctor.", sessionCreatedAt: new Date().toISOString(),
+        sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: authority.productHead,
+        apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false
+      });
+      return;
+    }
+    await respond(404, { error: "not_found" });
+  });
+}
+
 async function submitFirstStage(page, language) {
   const label = language === "en" ? "Submit stage" : "提交本阶段";
   const nextLabel = language === "en" ? "Next stage" : "进入下一阶段";
@@ -902,6 +999,31 @@ test("failed training attempt initialization never sends stage feedback and retr
   await submit.click();
   await expect(page.getByRole("button", { name: "进入下一阶段", exact: true })).toBeVisible();
   expect(observations.filter((item) => item.action === "stage-feedback")).toHaveLength(1);
+});
+
+test("random case uses the durable desktop bridge, autosaves, submits, and restores", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium", "Desktop bridge contract is captured once.");
+  const observations = [];
+  await routeDesktopDurableBridge(page, observations);
+  await page.goto("/cases/P001/?mode=random");
+
+  const submit = page.getByTestId("submit-stage");
+  await expect(submit).toBeEnabled();
+  expect(observations.filter((item) => item.endpoint === "attempt-resume")).toEqual([
+    expect.objectContaining({ mode: "free", status: 404 })
+  ]);
+  expect(observations).toContainEqual(expect.objectContaining({ endpoint: "training-action", action: "init-attempt", status: 200 }));
+
+  const summary = page.getByTestId("history-summary");
+  await summary.fill("Durable random-case bridge marker.");
+  await expect.poll(() => observations.filter((item) => item.endpoint === "attempt-save").length).toBeGreaterThan(0);
+  await submit.click();
+  await expect(page.getByTestId("next-stage")).toBeEnabled();
+  expect(observations).toContainEqual(expect.objectContaining({ endpoint: "training-action", action: "stage-feedback", status: 200 }));
+
+  await page.reload();
+  await expect(page.getByTestId("history-summary")).toHaveValue("Durable random-case bridge marker.");
+  expect(observations).toContainEqual(expect.objectContaining({ endpoint: "attempt-load", status: 200, mode: "free" }));
 });
 
 test("a transient durable attempt store failure recovers without a doomed stage request", async ({ page }) => {

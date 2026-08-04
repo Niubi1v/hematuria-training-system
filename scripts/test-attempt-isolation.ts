@@ -1,5 +1,10 @@
 import assert from "node:assert/strict";
-import { attemptPointerKey, attemptStorageKey, createAttempt, isAttemptCompatible, recordTimeoutOnce, trainingStateStorageKey } from "../src/lib/attemptState";
+import { attemptModeForTrainingMode, attemptPointerKey, attemptStorageKey, createAttempt, isAttemptCompatible, recordTimeoutOnce, trainingStateStorageKey } from "../src/lib/attemptState";
+
+assert.equal(attemptModeForTrainingMode("random"), "free", "random case UI mode must use the durable free-attempt contract");
+assert.equal(attemptModeForTrainingMode("demo"), "free");
+assert.equal(attemptModeForTrainingMode("osce"), "osce");
+assert.equal(attemptModeForTrainingMode("rct"), "rct");
 
 const freeZh = createAttempt("P001", "free", "zh");
 const freeEn = createAttempt("P001", "free", "en");

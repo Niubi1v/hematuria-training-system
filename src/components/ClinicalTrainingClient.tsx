@@ -57,7 +57,7 @@ import { ATTEMPT_SUMMARY_KEY, createAttemptSummary, isAttemptSummary, type Attem
 import { canonicalSlotDefinitions } from "@/src/lib/canonicalSlots";
 import { isConnectionFailureFallback, isSafetyFallback, mergeRecoveredCoverage, recordConnectionTransition, validCachedSession, type AiConnectionStatus, type CachedPatientSession, type ConnectionTransition } from "@/src/lib/aiRecovery";
 import { initializeStorageVersion, readJsonStorage, removeBrowserStorageEntries, writeJsonStorage } from "@/src/lib/safeStorage";
-import { attemptPointerKey, attemptStorageKey, createAttempt, isAttemptCompatible, isStoredAttemptStateCompatible, legacyTrainingStateStorageKey, trainingStateStorageKey, type AttemptIdentity, type AttemptMode, type StoredAttemptState } from "@/src/lib/attemptState";
+import { attemptModeForTrainingMode, attemptPointerKey, attemptStorageKey, createAttempt, isAttemptCompatible, isStoredAttemptStateCompatible, legacyTrainingStateStorageKey, trainingStateStorageKey, type AttemptIdentity, type AttemptMode, type StoredAttemptState } from "@/src/lib/attemptState";
 import { projectStudentScoreText } from "@/src/lib/studentScoreProjection";
 import { bootstrapDesktopStateAuthority, desktopAuthoritiesCompatible, isDesktopStateAuthority, type DesktopStateAuthority } from "@/src/lib/desktopStateAuthority";
 import { publicTrajectoryActionLabel } from "@/src/lib/publicClinicalTrajectory";
@@ -1183,7 +1183,7 @@ function AgentIcon({ stageNo }: { stageNo: AgentStageNo }) {
   return <ClipboardList className={className} />;
 }
 
-async function requestDesktopAttemptResume(body: { attemptId: string; caseId: string; mode: TrainingMode; language: LanguageCode }) {
+async function requestDesktopAttemptResume(body: { attemptId: string; caseId: string; mode: AttemptMode; language: LanguageCode }) {
   const runtime = desktopRuntimeConfig();
   if (!runtime) throw new ApiRequestError("request", 400, "desktop_runtime_missing");
   const response = await fetchWithRecovery(`${runtime.apiBaseUrl}/api/desktop/attempt/resume`, {
@@ -1642,7 +1642,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           const resumed = await requestDesktopAttemptResume({
             attemptId,
             caseId: caseData.id,
-            mode: runtimeMode,
+            mode: attempt.mode,
             language: lang
           });
           trainingStateTokenRef.current = { attemptId, token: resumed.stateToken };
@@ -1687,7 +1687,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       if (trainingInitPromiseRef.current === pending) trainingInitPromiseRef.current = null;
     }).catch(() => undefined);
     return promise;
-  }, [attempt.attemptId, caseData.id, lang, runtimeMode]);
+  }, [attempt.attemptId, attempt.mode, caseData.id, lang, runtimeMode]);
 
   useEffect(() => {
     if (!attemptReady) return;
@@ -1756,7 +1756,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     const requestedMode: TrainingMode = urlMode === "random" ? "random" : urlMode === "osce" ? "osce" : urlMode === "rct" ? "rct" : mode;
     const targetMode: TrainingMode = practiceDeployment && (requestedMode === "osce" || requestedMode === "rct") ? "free" : requestedMode;
     setRuntimeMode(targetMode);
-    const attemptMode: AttemptMode = targetMode === "osce" ? "osce" : targetMode === "rct" ? "rct" : "free";
+    const attemptMode = attemptModeForTrainingMode(targetMode);
     const expectedAttempt = {
       caseId: initialCaseData.id,
       mode: attemptMode,
@@ -2213,7 +2213,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       window.location.reload();
       return;
     }
-    const attemptMode: AttemptMode = runtimeMode === "osce" ? "osce" : runtimeMode === "rct" ? "rct" : "free";
+    const attemptMode = attemptModeForTrainingMode(runtimeMode);
     const nextAttempt = createAttempt(caseData.id, attemptMode, next);
     autoSessionInitRef.current?.controller.abort();
     autoSessionInitRef.current = null;
@@ -3238,7 +3238,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
               </div>
               <label className="history-summary mt-5 block">
                 <span className="font-medium">{t(lang, "historySummary")}</span>
-                <textarea value={answers.historySummary} onChange={(event) => updateAnswer("historySummary", event.target.value)} rows={4} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" />
+                <textarea data-testid="history-summary" value={answers.historySummary} onChange={(event) => updateAnswer("historySummary", event.target.value)} rows={4} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" />
               </label>
             </div>
           )}
@@ -3617,7 +3617,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
               </button>
             ) : (
               <>
-                <button disabled={osceLocked || stageSubmitting} onClick={submitStage} className="ui-button-primary">
+                <button data-testid="submit-stage" disabled={osceLocked || stageSubmitting} onClick={submitStage} className="ui-button-primary">
                   <CheckCircle2 size={16} /> {stageSubmitting ? (lang === "en" ? "Submitting..." : "正在提交……") : t(lang, "submitStage")}
                 </button>
                 <button data-testid="next-stage" type="button" disabled className="ui-button-secondary">

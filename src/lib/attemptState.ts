@@ -19,6 +19,10 @@ export type StoredAttemptState = {
   [key: string]: unknown;
 };
 
+export function attemptModeForTrainingMode(mode: string): AttemptMode {
+  return mode === "osce" ? "osce" : mode === "rct" ? "rct" : "free";
+}
+
 export function createAttempt(caseId: string, mode: AttemptMode, language: AttemptLanguage, participantId = "practice-user"): AttemptIdentity {
   const random = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   return { attemptId: random, caseId, mode, language, participantId, schemaVersion: "attempt-v3", createdAt: new Date().toISOString() };
