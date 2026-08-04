@@ -15,15 +15,17 @@ use tauri::{Manager, WebviewUrl};
 const SIDECAR_PROTOCOL_VERSION: u32 = 1;
 const SIDECAR_STARTUP_TIMEOUT: Duration = Duration::from_secs(150);
 const SIDECAR_GRACEFUL_SHUTDOWN: Duration = Duration::from_secs(3);
-const DESKTOP_ORIGINS: &str =
-    "http://tauri.localhost,https://tauri.localhost,tauri://localhost";
+const DESKTOP_ORIGINS: &str = "http://tauri.localhost,https://tauri.localhost,tauri://localhost";
 const WINDOW_STATE_VERSION: u32 = 1;
 const WINDOW_STATE_FILE: &str = "window-state-v1.json";
 const MIN_WINDOW_WIDTH: u32 = 960;
 const MIN_WINDOW_HEIGHT: u32 = 640;
 const MAX_WINDOW_DIMENSION: u32 = 16_384;
+const R4_DATA_DIRECTORY_NAME: &str = "MentorLocalAI-FinalCandidate";
+const R5_DATA_DIRECTORY_NAME: &str = "MentorLocalAI-R5";
+const DIAGNOSTIC_SCHEMA_VERSION: u32 = 2;
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct ReadyMessage {
     event: String,
@@ -34,10 +36,83 @@ struct ReadyMessage {
     database_schema_version: u32,
 }
 
+#[derive(Clone)]
 struct RuntimeLayout {
     app_root: PathBuf,
     node: PathBuf,
-    llama_server: PathBuf,
+    llama_server: Option<PathBuf>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DesktopRuntimeConfig {
+    runtime_target: &'static str,
+    api_base_url: String,
+    auth_token: String,
+    debug_runtime: bool,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DiagnosticFile {
+    name: String,
+    path: String,
+    present: bool,
+    size: Option<u64>,
+    size_matches: bool,
+    sha256_status: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DiagnosticFailure {
+    category: String,
+    code: String,
+    phase: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DesktopDiagnosticReport {
+    schema_version: u32,
+    product_version: String,
+    product_head: String,
+    runtime_target: &'static str,
+    installation_mode: String,
+    operating_system: serde_json::Value,
+    standard_user: Option<bool>,
+    paths: serde_json::Value,
+    resources: Vec<DiagnosticFile>,
+    processes: serde_json::Value,
+    job_object: serde_json::Value,
+    sidecar: serde_json::Value,
+    sqlite: serde_json::Value,
+    loopback: serde_json::Value,
+    local_ai: serde_json::Value,
+    last_failure: Option<DiagnosticFailure>,
+    stable_failure_codes: Vec<String>,
+    data_isolation: serde_json::Value,
+    recovery_suggestions: Vec<String>,
+    generated_at: String,
+}
+
+#[derive(Clone, Default)]
+struct RuntimeObservation {
+    data_dir: Option<PathBuf>,
+    layout: Option<RuntimeLayout>,
+    runtime_config: Option<DesktopRuntimeConfig>,
+    ready: Option<ReadyMessage>,
+    sidecar_pid: Option<u32>,
+    sidecar_exit_code: Option<i32>,
+    last_failure: Option<DiagnosticFailure>,
+    job_object_status: String,
+}
+
+#[derive(Clone)]
+struct RuntimeContext {
+    layout: RuntimeLayout,
+    data_dir: PathBuf,
+    window_state_path: PathBuf,
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
@@ -70,8 +145,8 @@ fn load_window_state(path: &Path) -> Result<Option<PersistedWindowState>, String
     if bytes.len() > 4096 {
         return Err("desktop_window_state_too_large".to_string());
     }
-    let state: PersistedWindowState = serde_json::from_slice(&bytes)
-        .map_err(|_| "desktop_window_state_invalid".to_string())?;
+    let state: PersistedWindowState =
+        serde_json::from_slice(&bytes).map_err(|_| "desktop_window_state_invalid".to_string())?;
     if !state.valid() {
         return Err("desktop_window_state_invalid".to_string());
     }
@@ -112,8 +187,7 @@ fn replace_file_atomically(source: &Path, destination: &Path) -> Result<(), Stri
 
 #[cfg(not(windows))]
 fn replace_file_atomically(source: &Path, destination: &Path) -> Result<(), String> {
-    fs::rename(source, destination)
-        .map_err(|_| "desktop_window_state_replace_failed".to_string())
+    fs::rename(source, destination).map_err(|_| "desktop_window_state_replace_failed".to_string())
 }
 
 fn persist_window_state_atomic(path: &Path, state: &PersistedWindowState) -> Result<(), String> {
@@ -123,8 +197,7 @@ fn persist_window_state_atomic(path: &Path, state: &PersistedWindowState) -> Res
     let parent = path
         .parent()
         .ok_or_else(|| "desktop_window_state_parent_missing".to_string())?;
-    fs::create_dir_all(parent)
-        .map_err(|_| "desktop_window_state_directory_failed".to_string())?;
+    fs::create_dir_all(parent).map_err(|_| "desktop_window_state_directory_failed".to_string())?;
     let nonce = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_err(|_| "desktop_window_state_clock_invalid".to_string())?
@@ -184,10 +257,53 @@ fn window_state_intersects_monitor<R: tauri::Runtime>(
 struct LifecycleState {
     sidecar: Mutex<Option<ManagedSidecar>>,
     window_state_path: Mutex<Option<PathBuf>>,
+    observation: Mutex<RuntimeObservation>,
+    prepare_lock: Mutex<()>,
 }
 
 impl LifecycleState {
-    fn install(&self, sidecar: ManagedSidecar, window_state_path: PathBuf) -> Result<(), String> {
+    fn set_data_directory(
+        &self,
+        data_dir: PathBuf,
+        window_state_path: PathBuf,
+    ) -> Result<(), String> {
+        let mut observation = self
+            .observation
+            .lock()
+            .map_err(|_| "desktop_runtime_observation_poisoned".to_string())?;
+        observation.data_dir = Some(data_dir);
+        drop(observation);
+        *self
+            .window_state_path
+            .lock()
+            .map_err(|_| "desktop_window_state_path_poisoned".to_string())? =
+            Some(window_state_path);
+        Ok(())
+    }
+
+    fn set_context(&self, context: RuntimeContext) -> Result<(), String> {
+        let mut observation = self
+            .observation
+            .lock()
+            .map_err(|_| "desktop_runtime_observation_poisoned".to_string())?;
+        observation.data_dir = Some(context.data_dir.clone());
+        observation.layout = Some(context.layout);
+        drop(observation);
+        *self
+            .window_state_path
+            .lock()
+            .map_err(|_| "desktop_window_state_path_poisoned".to_string())? =
+            Some(context.window_state_path);
+        Ok(())
+    }
+
+    fn install(
+        &self,
+        sidecar: ManagedSidecar,
+        context: RuntimeContext,
+        ready: ReadyMessage,
+        bearer: String,
+    ) -> Result<(), String> {
         let mut guard = self
             .sidecar
             .lock()
@@ -196,11 +312,96 @@ impl LifecycleState {
             return Err("desktop_sidecar_already_started".to_string());
         }
         *guard = Some(sidecar);
-        *self
-            .window_state_path
+        self.set_context(context)?;
+        let mut observation = self
+            .observation
             .lock()
-            .map_err(|_| "desktop_window_state_path_poisoned".to_string())? =
-            Some(window_state_path);
+            .map_err(|_| "desktop_runtime_observation_poisoned".to_string())?;
+        observation.runtime_config = Some(DesktopRuntimeConfig {
+            runtime_target: "desktop",
+            api_base_url: ready.origin.clone(),
+            auth_token: bearer,
+            debug_runtime: cfg!(debug_assertions),
+        });
+        observation.ready = Some(ready);
+        observation.sidecar_pid = observation.ready.as_ref().map(|value| value.pid);
+        observation.sidecar_exit_code = None;
+        observation.last_failure = None;
+        observation.job_object_status = "ready".to_string();
+        Ok(())
+    }
+
+    fn record_failure(&self, code: &str, phase: &str) {
+        let category = classify_runtime_error(code);
+        if let Ok(mut observation) = self.observation.lock() {
+            observation.runtime_config = None;
+            observation.ready = None;
+            observation.last_failure = Some(DiagnosticFailure {
+                category: category.to_string(),
+                code: stable_runtime_code(code),
+                phase: stable_runtime_code(phase),
+            });
+            if category == "job_object_failed" {
+                observation.job_object_status = "failed".to_string();
+            }
+        }
+    }
+
+    fn runtime_config(&self) -> Result<Option<DesktopRuntimeConfig>, String> {
+        Ok(self
+            .observation
+            .lock()
+            .map_err(|_| "desktop_runtime_observation_poisoned".to_string())?
+            .runtime_config
+            .clone())
+    }
+
+    fn observation(&self) -> Result<RuntimeObservation, String> {
+        Ok(self
+            .observation
+            .lock()
+            .map_err(|_| "desktop_runtime_observation_poisoned".to_string())?
+            .clone())
+    }
+
+    fn refresh_sidecar_status(&self) -> Result<(), String> {
+        let was_ready = self
+            .observation
+            .lock()
+            .map_err(|_| "desktop_runtime_observation_poisoned".to_string())?
+            .runtime_config
+            .is_some();
+        if !was_ready {
+            return Ok(());
+        }
+        let mut exit_code = None;
+        let exited = {
+            let mut guard = self
+                .sidecar
+                .lock()
+                .map_err(|_| "desktop_sidecar_state_poisoned".to_string())?;
+            match guard.as_mut() {
+                None => true,
+                Some(sidecar) => match sidecar.child.try_wait() {
+                    Ok(None) => false,
+                    Ok(Some(status)) => {
+                        exit_code = status.code();
+                        guard.take();
+                        true
+                    }
+                    Err(_) => {
+                        guard.take();
+                        true
+                    }
+                },
+            }
+        };
+        if exited {
+            if let Ok(mut observation) = self.observation.lock() {
+                observation.sidecar_exit_code = exit_code;
+            }
+            self.record_failure("desktop_sidecar_exited_after_ready", "sidecar_monitor");
+        }
         Ok(())
     }
 
@@ -231,11 +432,7 @@ impl LifecycleState {
     }
 
     fn shutdown(&self) {
-        let sidecar = self
-            .sidecar
-            .lock()
-            .ok()
-            .and_then(|mut guard| guard.take());
+        let sidecar = self.sidecar.lock().ok().and_then(|mut guard| guard.take());
         if let Some(mut sidecar) = sidecar {
             sidecar.shutdown();
         }
@@ -293,10 +490,7 @@ impl JobObject {
 
         let handle = unsafe { CreateJobObjectW(ptr::null(), ptr::null()) };
         if handle.is_null() {
-            return Err(format!(
-                "desktop_job_create_failed:{}",
-                std::io::Error::last_os_error()
-            ));
+            return Err("desktop_job_create_failed".to_string());
         }
         let mut limits: JOBOBJECT_EXTENDED_LIMIT_INFORMATION = unsafe { std::mem::zeroed() };
         limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
@@ -312,10 +506,7 @@ impl JobObject {
             unsafe {
                 windows_sys::Win32::Foundation::CloseHandle(handle);
             }
-            return Err(format!(
-                "desktop_job_configure_failed:{}",
-                std::io::Error::last_os_error()
-            ));
+            return Err("desktop_job_configure_failed".to_string());
         }
         Ok(Self {
             handle: handle as isize,
@@ -325,30 +516,20 @@ impl JobObject {
     fn assign(&self, child: &Child) -> Result<(), String> {
         use std::os::windows::io::AsRawHandle;
         use windows_sys::Win32::{
-            Foundation::HANDLE,
-            System::JobObjects::AssignProcessToJobObject,
+            Foundation::HANDLE, System::JobObjects::AssignProcessToJobObject,
         };
 
         let assigned = unsafe {
-            AssignProcessToJobObject(
-                self.handle as HANDLE,
-                child.as_raw_handle() as HANDLE,
-            )
+            AssignProcessToJobObject(self.handle as HANDLE, child.as_raw_handle() as HANDLE)
         };
         if assigned == 0 {
-            return Err(format!(
-                "desktop_job_assign_failed:{}",
-                std::io::Error::last_os_error()
-            ));
+            return Err("desktop_job_assign_failed".to_string());
         }
         Ok(())
     }
 
     fn terminate(&self) {
-        use windows_sys::Win32::{
-            Foundation::HANDLE,
-            System::JobObjects::TerminateJobObject,
-        };
+        use windows_sys::Win32::{Foundation::HANDLE, System::JobObjects::TerminateJobObject};
         unsafe {
             TerminateJobObject(self.handle as HANDLE, 1);
         }
@@ -399,6 +580,208 @@ fn terminate_process_tree_fallback(pid: u32) {
     }
 }
 
+fn stable_runtime_code(raw: &str) -> String {
+    let candidate = raw.trim();
+    if !candidate.is_empty()
+        && candidate.len() <= 120
+        && candidate
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-' | b'.' | b':'))
+        && !candidate.contains(":\\")
+        && !candidate.contains("/")
+    {
+        return candidate.to_string();
+    }
+    let normalized = candidate.to_ascii_lowercase();
+    if normalized.contains("access denied") || normalized.contains("permission") {
+        "runtime_access_denied".to_string()
+    } else if normalized.contains("not found") || normalized.contains("missing") {
+        "runtime_resource_missing".to_string()
+    } else if normalized.contains("timeout") {
+        "runtime_timeout".to_string()
+    } else if normalized.contains("sqlite") || normalized.contains("database") {
+        "sqlite_runtime_error".to_string()
+    } else {
+        "unknown_runtime_failure".to_string()
+    }
+}
+
+fn classify_runtime_error(raw: &str) -> &'static str {
+    let code = stable_runtime_code(raw).to_ascii_lowercase();
+    if code.contains("job_object") || code.contains("job_") {
+        return "job_object_failed";
+    }
+    if code.contains("r4_data_directory")
+        || code.contains("data_dir")
+        || code.contains("log_open")
+        || code.contains("directory")
+        || code.contains("runtime_access_denied")
+    {
+        return if code.contains("runtime_access_denied") {
+            "security_software_suspected"
+        } else {
+            "data_directory_unwritable"
+        };
+    }
+    if code.contains("llama")
+        && (code.contains("exited") || code.contains("start") || code.contains("spawn"))
+    {
+        return "llama_start_failed";
+    }
+    if code.contains("llama") && (code.contains("dependency") || code.contains("dll")) {
+        return "llama_dependency_missing";
+    }
+    if code.contains("exited") || code.contains("sidecar_closed") {
+        return "sidecar_exited";
+    }
+    if code.contains("handshake")
+        || code.contains("startup_timeout")
+        || code.contains("start_gate_timeout")
+    {
+        return "sidecar_handshake_timeout";
+    }
+    if code.contains("node_runtime_missing") {
+        return "runtime_resources_missing";
+    }
+    if code.contains("spawn") || code.contains("node_runtime") {
+        return "node_spawn_failed";
+    }
+    if code.contains("resource") || code.contains("manifest") || code.contains("app_root") {
+        return "runtime_resources_missing";
+    }
+    if code.contains("sqlite") || code.contains("database") {
+        return if code.contains("lock") || code.contains("corrupt") || code.contains("schema") {
+            "sqlite_locked_or_corrupt"
+        } else {
+            "sqlite_open_failed"
+        };
+    }
+    if code.contains("loopback") || code.contains("port") || code.contains("api_bind") {
+        return "loopback_unavailable";
+    }
+    if code.contains("model_missing") || code.contains("checksum") || code.contains("integrity") {
+        return "model_missing_or_invalid";
+    }
+    if code.contains("cpu") || code.contains("instruction") {
+        return "llama_cpu_incompatible";
+    }
+    if code.contains("memory") || code.contains("allocation") {
+        return "llama_memory_insufficient";
+    }
+    if code.contains("security") || code.contains("blocked") || code.contains("quarantine") {
+        return "security_software_suspected";
+    }
+    "unknown_runtime_failure"
+}
+
+fn recovery_suggestions(category: &str) -> Vec<String> {
+    let suggestion = match category {
+        "runtime_resources_missing" => "重新安装或完整解压应用；不要只复制 exe 文件。 / Reinstall or fully extract the application; do not copy only the exe.",
+        "node_spawn_failed" => "重新安装完整版本，并保留 resources 目录。 / Reinstall the complete version and keep the resources directory.",
+        "job_object_failed" => "关闭重复实例后重新准备；仍失败时导出诊断报告。 / Close duplicate instances and prepare again; export a diagnostic report if it persists.",
+        "sidecar_handshake_timeout" => "重新准备并检查本机安全软件记录。 / Prepare again and check local security-software history.",
+        "sidecar_exited" => "检查运行组件是否被隔离或缺少 DLL。 / Check whether a runtime component was quarantined or is missing a DLL.",
+        "data_directory_unwritable" => "使用可写的用户数据目录；不要删除数据库。 / Use a writable user data directory; do not delete the database.",
+        "sqlite_open_failed" => "关闭旧版本实例后重试；不要删除数据库。 / Close older app instances and retry; do not delete the database.",
+        "sqlite_locked_or_corrupt" => "先备份并导出诊断报告，再执行明确的恢复动作。 / Back up the database and export diagnostics before explicit repair.",
+        "loopback_unavailable" => "重新准备并检查 127.0.0.1 是否被阻止。 / Prepare again and check whether 127.0.0.1 was blocked.",
+        "model_missing_or_invalid" => "检查模型文件是否完整且匹配清单。 / Check that the model is complete and matches the manifest.",
+        "llama_dependency_missing" => "重新安装完整版本，不要只复制 llama-server.exe。 / Reinstall the complete version; do not copy only llama-server.exe.",
+        "llama_cpu_incompatible" => "改用轻量配置或更换设备，并导出诊断报告。 / Use the lightweight profile or another device and export diagnostics.",
+        "llama_memory_insufficient" => "关闭占用内存的程序后重试轻量配置。 / Close memory-intensive programs and retry the lightweight profile.",
+        "llama_start_failed" => "导出诊断报告后重新准备，不要启动重复实例。 / Export diagnostics and prepare again; do not start duplicate instances.",
+        "security_software_suspected" => "查看 Windows 安全记录；不要关闭安全软件。 / Check Windows security history; do not disable security software.",
+        _ => "导出诊断报告后重新准备；已有训练记录不会被静默删除。 / Export diagnostics and prepare again; existing training records are not silently deleted."
+    };
+    vec![suggestion.to_string()]
+}
+
+fn redact_path(path: Option<&Path>) -> String {
+    let Some(path) = path else {
+        return String::new();
+    };
+    let roots = [
+        ("%LOCALAPPDATA%", "LOCALAPPDATA"),
+        ("%USERPROFILE%", "USERPROFILE"),
+        ("%TEMP%", "TEMP"),
+    ];
+    for (label, environment) in roots {
+        if let Some(root) = env::var_os(environment) {
+            let root = PathBuf::from(root);
+            if let Ok(relative) = path.strip_prefix(&root) {
+                return if relative.as_os_str().is_empty() {
+                    label.to_string()
+                } else {
+                    format!("{}\\{}", label, relative.display())
+                };
+            }
+        }
+    }
+    let name = path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or("item");
+    format!("<redacted>\\{}", name)
+}
+
+fn directory_writable(path: Option<&Path>) -> bool {
+    let Some(path) = path else { return false };
+    if !path.is_dir() {
+        return false;
+    }
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|value| value.as_nanos())
+        .unwrap_or(0);
+    let probe = path.join(format!(
+        ".hematuria-diagnostic-{}-{nonce}.tmp",
+        std::process::id()
+    ));
+    let result = (|| {
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&probe)
+            .ok()?;
+        file.write_all(b"ok").ok()?;
+        file.sync_all().ok()?;
+        Some(())
+    })();
+    let _ = fs::remove_file(&probe);
+    result.is_some()
+}
+
+fn diagnostic_file(name: &str, path: Option<&Path>, expected_size: Option<u64>) -> DiagnosticFile {
+    let Some(path) = path else {
+        return DiagnosticFile {
+            name: name.to_string(),
+            path: String::new(),
+            present: false,
+            size: None,
+            size_matches: false,
+            sha256_status: "missing".to_string(),
+        };
+    };
+    match fs::metadata(path) {
+        Ok(metadata) if metadata.is_file() => DiagnosticFile {
+            name: name.to_string(),
+            path: redact_path(Some(path)),
+            present: true,
+            size: Some(metadata.len()),
+            size_matches: expected_size.is_none_or(|value| value == metadata.len()),
+            sha256_status: "not_checked".to_string(),
+        },
+        _ => DiagnosticFile {
+            name: name.to_string(),
+            path: redact_path(Some(path)),
+            present: false,
+            size: None,
+            size_matches: false,
+            sha256_status: "missing".to_string(),
+        },
+    }
+}
+
 #[cfg(windows)]
 fn random_secret_hex() -> Result<String, String> {
     use windows_sys::Win32::Security::Cryptography::{
@@ -436,53 +819,73 @@ fn configured_absolute_path(name: &str) -> Result<Option<PathBuf>, String> {
 }
 
 fn desktop_data_directory(_app: &tauri::App) -> Result<PathBuf, String> {
-    configured_absolute_path("HEMATURIA_DESKTOP_DATA_DIR")?.map_or_else(
+    let candidate = configured_absolute_path("HEMATURIA_DESKTOP_DATA_DIR")?.map_or_else(
         || {
             env::var_os("LOCALAPPDATA")
                 .map(PathBuf::from)
-                .map(|root| root.join("HematuriaTraining").join("MentorLocalAI-FinalCandidate"))
+                .map(|root| root.join("HematuriaTraining").join(R5_DATA_DIRECTORY_NAME))
                 .ok_or_else(|| "desktop_local_data_dir_unavailable".to_string())
         },
         Ok,
-    )
+    )?;
+    if let Some(local_app_data) = env::var_os("LOCALAPPDATA") {
+        let legacy = PathBuf::from(local_app_data)
+            .join("HematuriaTraining")
+            .join(R4_DATA_DIRECTORY_NAME);
+        if candidate
+            .to_string_lossy()
+            .eq_ignore_ascii_case(&legacy.to_string_lossy())
+        {
+            return Err("desktop_r4_data_directory_rejected".to_string());
+        }
+    }
+    Ok(candidate)
 }
 
-fn first_existing(candidates: impl IntoIterator<Item = PathBuf>) -> Option<PathBuf> {
-    candidates.into_iter().find(|candidate| candidate.exists())
+fn first_file(candidates: impl IntoIterator<Item = PathBuf>) -> Option<PathBuf> {
+    candidates.into_iter().find(|candidate| candidate.is_file())
 }
 
-fn resolve_runtime_layout(app: &tauri::App) -> Result<RuntimeLayout, String> {
+fn first_directory(candidates: impl IntoIterator<Item = PathBuf>) -> Option<PathBuf> {
+    candidates.into_iter().find(|candidate| candidate.is_dir())
+}
+
+fn resolve_runtime_layout<R: tauri::Runtime, M: tauri::Manager<R>>(
+    app: &M,
+) -> Result<RuntimeLayout, String> {
     let resource_dir = app
         .path()
         .resource_dir()
-        .map_err(|error| format!("desktop_resource_dir_unavailable:{error}"))?;
+        .map_err(|_| "desktop_resource_dir_unavailable".to_string())?;
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let development_root = manifest_dir
         .parent()
         .ok_or_else(|| "desktop_repository_root_unavailable".to_string())?
         .to_path_buf();
 
-    let app_root = first_existing([
+    let app_root = first_directory([
         resource_dir.join("resources").join("app"),
         resource_dir.join("app"),
         development_root.clone(),
     ])
-    .filter(|root| root.join("desktop").join("sidecar").join("index.cjs").is_file())
+    .filter(|root| {
+        root.join("desktop")
+            .join("sidecar")
+            .join("index.cjs")
+            .is_file()
+    })
     .ok_or_else(|| "desktop_sidecar_resources_missing".to_string())?;
 
     let node = if let Some(configured) = configured_absolute_path("HEMATURIA_DESKTOP_NODE")? {
         configured
     } else {
-        first_existing([
+        first_file([
             resource_dir
                 .join("resources")
                 .join("runtime")
                 .join("node")
                 .join("node.exe"),
-            resource_dir
-                .join("runtime")
-                .join("node")
-                .join("node.exe"),
+            resource_dir.join("runtime").join("node").join("node.exe"),
             development_root
                 .join("desktop-runtime")
                 .join("node")
@@ -491,7 +894,7 @@ fn resolve_runtime_layout(app: &tauri::App) -> Result<RuntimeLayout, String> {
         .ok_or_else(|| "desktop_node_runtime_missing_run_desktop_prepare".to_string())?
     };
 
-    let llama_server = first_existing([
+    let llama_server = first_file([
         resource_dir
             .join("resources")
             .join("runtime")
@@ -505,15 +908,7 @@ fn resolve_runtime_layout(app: &tauri::App) -> Result<RuntimeLayout, String> {
             .join("desktop-runtime")
             .join("llama")
             .join("llama-server.exe"),
-    ])
-    .unwrap_or_else(|| {
-        resource_dir
-            .join("resources")
-            .join("runtime")
-            .join("llama")
-            .join("llama-server.exe")
-    });
-
+    ]);
     Ok(RuntimeLayout {
         app_root,
         node,
@@ -526,10 +921,12 @@ fn sanitized_child_environment(
     app_root: &Path,
     data_dir: &Path,
     database_path: &Path,
-    llama_server: &Path,
+    llama_server: Option<&Path>,
     bearer: &str,
     handshake: &str,
 ) -> Result<(), String> {
+    let installation_mode =
+        env::var("HEMATURIA_DESKTOP_INSTALLATION_MODE").unwrap_or_else(|_| "unknown".to_string());
     command.env_clear();
     for key in [
         "SystemRoot",
@@ -554,13 +951,23 @@ fn sanitized_child_environment(
         .env("HEMATURIA_APP_ROOT", app_root)
         .env("HEMATURIA_DESKTOP_DATA_DIR", data_dir)
         .env("HEMATURIA_DESKTOP_DATABASE_PATH", database_path)
-        .env("HEMATURIA_LLAMA_SERVER_PATH", llama_server)
+        .env(
+            "HEMATURIA_LLAMA_SERVER_PATH",
+            llama_server
+                .map(|path| path.as_os_str())
+                .unwrap_or_else(|| std::ffi::OsStr::new("")),
+        )
         .env("HEMATURIA_DESKTOP_BEARER", bearer)
         .env("HEMATURIA_DESKTOP_HANDSHAKE", handshake)
-        .env("HEMATURIA_DESKTOP_ALLOWED_ORIGINS", DESKTOP_ORIGINS);
+        .env("HEMATURIA_DESKTOP_ALLOWED_ORIGINS", DESKTOP_ORIGINS)
+        .env(
+            "HEMATURIA_PRODUCT_VERSION",
+            option_env!("CARGO_PKG_VERSION").unwrap_or("0.1.0"),
+        )
+        .env("HEMATURIA_DESKTOP_INSTALLATION_MODE", installation_mode);
     command.env(
-        "NEXT_PUBLIC_GIT_SHA",
-        option_env!("NEXT_PUBLIC_GIT_SHA").unwrap_or("desktop-local"),
+        "HEMATURIA_PRODUCT_HEAD",
+        option_env!("HEMATURIA_PRODUCT_HEAD").unwrap_or("desktop-local"),
     );
 
     if let Some(model_path) = configured_absolute_path("HEMATURIA_DESKTOP_MODEL_PATH")? {
@@ -583,7 +990,17 @@ fn validate_ready_message(
     expected_handshake: &str,
     expected_pid: u32,
 ) -> Result<ReadyMessage, String> {
-    let message: ReadyMessage = serde_json::from_str(line)
+    let value: serde_json::Value = serde_json::from_str(line)
+        .map_err(|_| "desktop_sidecar_handshake_invalid_json".to_string())?;
+    if value.get("event").and_then(|event| event.as_str()) == Some("failure") {
+        let code = value
+            .get("code")
+            .and_then(|code| code.as_str())
+            .filter(|code| !code.is_empty() && code.len() <= 120)
+            .unwrap_or("desktop_sidecar_start_failed");
+        return Err(stable_runtime_code(code));
+    }
+    let message: ReadyMessage = serde_json::from_value(value)
         .map_err(|_| "desktop_sidecar_handshake_invalid_json".to_string())?;
     if message.event != "ready"
         || message.protocol_version != SIDECAR_PROTOCOL_VERSION
@@ -630,16 +1047,14 @@ fn wait_for_ready(
 }
 
 fn start_sidecar(
-    app: &tauri::App,
+    layout: &RuntimeLayout,
     data_dir: &Path,
 ) -> Result<(ManagedSidecar, ReadyMessage, String), String> {
-    let layout = resolve_runtime_layout(app)?;
     let logs_dir = data_dir.join("logs");
-    fs::create_dir_all(&logs_dir)
-        .map_err(|error| format!("desktop_data_dir_create_failed:{error}"))?;
+    fs::create_dir_all(&logs_dir).map_err(|_| "desktop_data_dir_create_failed".to_string())?;
     let database_path = data_dir.join("hematuria.sqlite3");
     let log_file = File::create(logs_dir.join("sidecar-current.log"))
-        .map_err(|error| format!("desktop_log_open_failed:{error}"))?;
+        .map_err(|_| "desktop_log_open_failed".to_string())?;
 
     let bearer = random_secret_hex()?;
     let handshake = random_secret_hex()?;
@@ -660,7 +1075,7 @@ fn start_sidecar(
         &layout.app_root,
         &data_dir,
         &database_path,
-        &layout.llama_server,
+        layout.llama_server.as_deref(),
         &bearer,
         &handshake,
     )?;
@@ -677,7 +1092,7 @@ fn start_sidecar(
     let job = JobObject::create()?;
     let mut child = command
         .spawn()
-        .map_err(|error| format!("desktop_sidecar_spawn_failed:{error}"))?;
+        .map_err(|_| "desktop_sidecar_spawn_failed".to_string())?;
     if let Err(error) = job.assign(&child) {
         terminate_process_tree_fallback(child.id());
         let _ = child.kill();
@@ -695,7 +1110,7 @@ fn start_sidecar(
         .as_mut()
         .ok_or_else(|| "desktop_sidecar_stdin_missing".to_string())?
         .write_all(b"START\n")
-        .map_err(|error| format!("desktop_sidecar_start_gate_failed:{error}"))?;
+        .map_err(|_| "desktop_sidecar_start_gate_failed".to_string())?;
     let ready = match wait_for_ready(stdout, handshake, child.id()) {
         Ok(ready) => ready,
         Err(error) => {
@@ -708,60 +1123,460 @@ fn start_sidecar(
 }
 
 fn runtime_initialization_script(
-    origin: &str,
-    bearer: &str,
-    debug_runtime: bool,
+    runtime: Option<&DesktopRuntimeConfig>,
+    diagnostics: &DesktopDiagnosticReport,
 ) -> Result<String, String> {
-    let value = serde_json::json!({
-        "runtimeTarget": "desktop",
-        "apiBaseUrl": origin,
-        "authToken": bearer,
-        "debugRuntime": debug_runtime
-    });
-    let serialized = serde_json::to_string(&value)
+    let diagnostic = serde_json::to_string(diagnostics)
         .map_err(|_| "desktop_runtime_injection_serialize_failed".to_string())?;
-    Ok(format!(
-        "Object.defineProperty(globalThis,'__HEMATURIA_DESKTOP_RUNTIME__',{{value:Object.freeze({serialized}),writable:false,configurable:false,enumerable:false}});"
-    ))
+    let mut script = format!(
+        "Object.defineProperty(globalThis,'__HEMATURIA_DESKTOP_DIAGNOSTIC__',{{value:Object.freeze({diagnostic}),writable:true,configurable:false,enumerable:false}});"
+    );
+    if let Some(runtime) = runtime {
+        let serialized = serde_json::to_string(runtime)
+            .map_err(|_| "desktop_runtime_injection_serialize_failed".to_string())?;
+        script.push_str(&format!(
+            "Object.defineProperty(globalThis,'__HEMATURIA_DESKTOP_RUNTIME__',{{value:Object.freeze({serialized}),writable:true,configurable:false,enumerable:false}});"
+        ));
+    }
+    Ok(script)
+}
+
+#[cfg(windows)]
+fn standard_user_status() -> Option<bool> {
+    use windows_sys::Win32::UI::Shell::IsUserAnAdmin;
+    Some(unsafe { IsUserAnAdmin() == 0 })
+}
+
+#[cfg(not(windows))]
+fn standard_user_status() -> Option<bool> {
+    None
+}
+
+fn operating_system_version() -> String {
+    #[cfg(windows)]
+    {
+        let output = Command::new("cmd")
+            .args(["/C", "ver"])
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .output();
+        if let Ok(output) = output {
+            let value = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            if value.len() <= 120 && !value.contains('\\') && !value.contains('/') {
+                return value;
+            }
+        }
+    }
+    env::consts::OS.to_string()
+}
+
+fn installation_mode<R: tauri::Runtime, M: tauri::Manager<R>>(app: &M) -> String {
+    if let Ok(value) = env::var("HEMATURIA_DESKTOP_INSTALLATION_MODE") {
+        if matches!(value.as_str(), "installer" | "portable" | "development") {
+            return value;
+        }
+    }
+    if app
+        .path()
+        .resource_dir()
+        .map(|path| {
+            path.join("portable.marker").is_file()
+                || path.join("resources").join("portable.marker").is_file()
+        })
+        .unwrap_or(false)
+    {
+        return "portable".to_string();
+    }
+    if let Ok(path) = env::current_exe() {
+        let value = path.to_string_lossy().to_ascii_lowercase();
+        if value.contains("program files") || value.contains("appdata\\local") {
+            return "installer".to_string();
+        }
+    }
+    "unknown".to_string()
+}
+
+fn diagnostic_report<R: tauri::Runtime, M: tauri::Manager<R>>(
+    app: &M,
+    lifecycle: &LifecycleState,
+) -> Result<DesktopDiagnosticReport, String> {
+    lifecycle.refresh_sidecar_status()?;
+    let observation = lifecycle.observation()?;
+    let data_dir = observation.data_dir.as_ref();
+    let layout = observation.layout.as_ref();
+    let application_path = env::current_exe().ok();
+    let app_root = layout.map(|value| value.app_root.as_path());
+    let database_path = data_dir.map(|path| path.join("hematuria.sqlite3"));
+    let log_directory = data_dir.map(|path| path.join("logs"));
+    let model_path = data_dir.map(|path| path.join("models").join("Qwen3-1.7B-Q4_K_M.gguf"));
+    let legacy_path = env::var_os("LOCALAPPDATA").map(|root| {
+        PathBuf::from(root)
+            .join("HematuriaTraining")
+            .join(R4_DATA_DIRECTORY_NAME)
+    });
+    let failure = observation.last_failure.clone();
+    let current_category = failure
+        .as_ref()
+        .map(|value| value.category.as_str())
+        .unwrap_or("unknown_runtime_failure");
+    let ready = observation.ready.as_ref();
+    let sidecar_status = if ready.is_some() {
+        "ready"
+    } else if failure.is_some() {
+        "failed"
+    } else {
+        "not_started"
+    };
+    let sidecar_phase = failure
+        .as_ref()
+        .map(|value| value.phase.clone())
+        .unwrap_or_else(|| {
+            if ready.is_some() {
+                "ready".to_string()
+            } else {
+                "not_started".to_string()
+            }
+        });
+    let port = ready.and_then(|value| {
+        value
+            .origin
+            .strip_prefix("http://127.0.0.1:")
+            .and_then(|text| text.parse::<u16>().ok())
+    });
+    let data_accessible = data_dir.map(|path| path.is_dir()).unwrap_or(false);
+    let data_writable = directory_writable(data_dir.map(|path| path.as_path()));
+    let sidecar_path = app_root.map(|path| path.join("desktop").join("sidecar").join("index.cjs"));
+    let sidecar_pid = ready.map(|value| value.pid).or(observation.sidecar_pid);
+    let sidecar_exit_code = observation.sidecar_exit_code;
+    let schema_version = ready.map(|value| value.database_schema_version);
+    let legacy_detected = legacy_path
+        .as_ref()
+        .map(|path| path.is_dir())
+        .unwrap_or(false);
+    let report = DesktopDiagnosticReport {
+        schema_version: DIAGNOSTIC_SCHEMA_VERSION,
+        product_version: option_env!("CARGO_PKG_VERSION")
+            .unwrap_or("0.1.0")
+            .to_string(),
+        product_head: option_env!("HEMATURIA_PRODUCT_HEAD")
+            .unwrap_or("desktop-local")
+            .to_string(),
+        runtime_target: "desktop",
+        installation_mode: installation_mode(app),
+        operating_system: serde_json::json!({
+            "platform": env::consts::OS,
+            "version": operating_system_version(),
+            "architecture": env::consts::ARCH
+        }),
+        standard_user: standard_user_status(),
+        paths: serde_json::json!({
+            "program": redact_path(application_path.as_deref()),
+            "applicationRoot": redact_path(app_root),
+            "data": redact_path(data_dir.map(|path| path.as_path())),
+            "dataAccessible": data_accessible,
+            "dataWritable": data_writable,
+            "logs": redact_path(log_directory.as_deref()),
+            "database": redact_path(database_path.as_deref()),
+            "model": redact_path(model_path.as_deref()),
+            "temporary": redact_path(Some(env::temp_dir().as_path()))
+        }),
+        resources: vec![
+            diagnostic_file("node", layout.map(|value| value.node.as_path()), None),
+            diagnostic_file("sidecar", sidecar_path.as_deref(), None),
+            diagnostic_file(
+                "llama_server",
+                layout.and_then(|value| value.llama_server.as_deref()),
+                None,
+            ),
+            diagnostic_file("model", model_path.as_deref(), None),
+        ],
+        processes: serde_json::json!({
+            "sidecar": { "status": sidecar_status, "pid": sidecar_pid, "exitCode": sidecar_exit_code },
+            "llamaServer": { "status": "unverified", "pid": null, "exitCode": null }
+        }),
+        job_object: serde_json::json!({
+            "status": if observation.job_object_status.is_empty() { "not_started" } else { observation.job_object_status.as_str() },
+            "code": if current_category == "job_object_failed" { failure.as_ref().map(|value| value.code.clone()) } else { None::<String> }
+        }),
+        sidecar: serde_json::json!({
+            "status": sidecar_status,
+            "phase": sidecar_phase,
+            "handshake": if ready.is_some() { "ready" } else { "not_ready" },
+            "pid": sidecar_pid,
+            "exitCode": sidecar_exit_code,
+            "origin": ready.map(|value| value.origin.clone())
+        }),
+        sqlite: serde_json::json!({
+            "status": if schema_version.is_some() { "open" } else if database_path.as_ref().map(|path| path.is_file()).unwrap_or(false) { "present_unchecked" } else { "not_available" },
+            "schemaVersion": schema_version,
+            "journalMode": "wal_expected"
+        }),
+        loopback: serde_json::json!({
+            "status": if port.is_some() { "listening" } else { "not_available" },
+            "host": "127.0.0.1",
+            "port": port
+        }),
+        local_ai: serde_json::json!({
+            "status": if ready.is_some() { "starting_or_unverified" } else { "not_available" },
+            "model": "Qwen3-1.7B",
+            "modelValidation": "not_checked",
+            "failureCategory": if current_category == "unknown_runtime_failure" && failure.is_none() { None::<&str> } else { Some(current_category) },
+            "failureCode": failure.as_ref().map(|value| value.code.clone()),
+            "processId": null,
+            "exitCode": null
+        }),
+        last_failure: failure.clone(),
+        stable_failure_codes: failure.iter().map(|value| value.code.clone()).collect(),
+        data_isolation: serde_json::json!({
+            "currentProfile": "R5",
+            "currentDirectory": R5_DATA_DIRECTORY_NAME,
+            "legacyR4Detected": legacy_detected,
+            "legacyR4Path": redact_path(legacy_path.as_deref()),
+            "concurrentWritesPrevented": true,
+            "migrationPerformed": false
+        }),
+        recovery_suggestions: if failure.is_some() {
+            recovery_suggestions(current_category)
+        } else {
+            Vec::new()
+        },
+        generated_at: chrono_like_now(),
+    };
+    Ok(report)
+}
+
+fn chrono_like_now() -> String {
+    let duration = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default();
+    format!("unix:{}", duration.as_secs())
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DesktopDiagnosticExport {
+    exported: bool,
+    path: String,
+    size: usize,
+    sha256_status: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DesktopRuntimeRestartResult {
+    prepared: bool,
+    runtime: Option<DesktopRuntimeConfig>,
+    diagnostic: DesktopDiagnosticReport,
+}
+
+fn diagnostic_export_directory(lifecycle: &LifecycleState) -> Result<PathBuf, String> {
+    let observation = lifecycle.observation()?;
+    if let Some(data_dir) = observation.data_dir.as_ref() {
+        if directory_writable(Some(data_dir)) {
+            return Ok(data_dir.join("exports"));
+        }
+    }
+    Ok(env::temp_dir()
+        .join("HematuriaTraining")
+        .join("R5-diagnostics"))
+}
+
+#[tauri::command]
+fn desktop_diagnostic_snapshot(
+    app: tauri::AppHandle,
+    lifecycle: tauri::State<'_, LifecycleState>,
+) -> Result<DesktopDiagnosticReport, String> {
+    diagnostic_report(&app, &lifecycle)
+}
+
+#[tauri::command]
+fn desktop_diagnostic_export(
+    app: tauri::AppHandle,
+    lifecycle: tauri::State<'_, LifecycleState>,
+) -> Result<DesktopDiagnosticExport, String> {
+    let report = diagnostic_report(&app, &lifecycle)?;
+    let serialized = serde_json::to_vec_pretty(&report)
+        .map_err(|_| "desktop_diagnostic_serialize_failed".to_string())?;
+    let directory = diagnostic_export_directory(&lifecycle)?;
+    fs::create_dir_all(&directory)
+        .map_err(|_| "desktop_diagnostic_directory_failed".to_string())?;
+    let file_path = directory.join(format!(
+        "hematuria-r5-runtime-diagnostic-{}-{}.json",
+        std::process::id(),
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|value| value.as_nanos())
+            .unwrap_or(0)
+    ));
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&file_path)
+        .map_err(|_| "desktop_diagnostic_export_failed".to_string())?;
+    file.write_all(&serialized)
+        .map_err(|_| "desktop_diagnostic_export_failed".to_string())?;
+    file.sync_all()
+        .map_err(|_| "desktop_diagnostic_export_failed".to_string())?;
+    Ok(DesktopDiagnosticExport {
+        exported: true,
+        path: file_path.to_string_lossy().to_string(),
+        size: serialized.len(),
+        sha256_status: "not_checked".to_string(),
+    })
+}
+
+#[tauri::command]
+fn desktop_open_logs_directory(
+    lifecycle: tauri::State<'_, LifecycleState>,
+) -> Result<String, String> {
+    let observation = lifecycle.observation()?;
+    let data_dir = observation
+        .data_dir
+        .ok_or_else(|| "desktop_data_directory_unavailable".to_string())?;
+    let logs = data_dir.join("logs");
+    fs::create_dir_all(&logs).map_err(|_| "desktop_log_directory_unavailable".to_string())?;
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        Command::new("explorer.exe")
+            .arg(&logs)
+            .creation_flags(CREATE_NO_WINDOW)
+            .spawn()
+            .map_err(|_| "desktop_log_directory_open_failed".to_string())?;
+    }
+    #[cfg(not(windows))]
+    {
+        return Err("desktop_log_directory_open_requires_windows".to_string());
+    }
+    Ok(logs.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+fn desktop_restart_runtime(
+    app: tauri::AppHandle,
+    lifecycle: tauri::State<'_, LifecycleState>,
+) -> Result<DesktopRuntimeRestartResult, String> {
+    let _prepare_lock = lifecycle
+        .prepare_lock
+        .lock()
+        .map_err(|_| "desktop_runtime_prepare_state_poisoned".to_string())?;
+    lifecycle.refresh_sidecar_status()?;
+    if let Some(runtime) = lifecycle.runtime_config()? {
+        return Ok(DesktopRuntimeRestartResult {
+            prepared: true,
+            runtime: Some(runtime),
+            diagnostic: diagnostic_report(&app, &lifecycle)?,
+        });
+    }
+    let observation = lifecycle.observation()?;
+    let Some(data_dir) = observation.data_dir else {
+        lifecycle.record_failure("desktop_data_directory_unavailable", "runtime_prepare");
+        return Ok(DesktopRuntimeRestartResult {
+            prepared: false,
+            runtime: None,
+            diagnostic: diagnostic_report(&app, &lifecycle)?,
+        });
+    };
+    let layout = match observation.layout {
+        Some(layout) => layout,
+        None => match resolve_runtime_layout(&app) {
+            Ok(layout) => layout,
+            Err(code) => {
+                lifecycle.record_failure(&code, "resource_resolution");
+                return Ok(DesktopRuntimeRestartResult {
+                    prepared: false,
+                    runtime: None,
+                    diagnostic: diagnostic_report(&app, &lifecycle)?,
+                });
+            }
+        },
+    };
+    let context = RuntimeContext {
+        layout,
+        data_dir: data_dir.clone(),
+        window_state_path: data_dir.join(WINDOW_STATE_FILE),
+    };
+    lifecycle.set_context(context.clone())?;
+    match start_sidecar(&context.layout, &context.data_dir) {
+        Ok((sidecar, ready, bearer)) => {
+            lifecycle.install(sidecar, context, ready, bearer)?;
+            Ok(DesktopRuntimeRestartResult {
+                prepared: true,
+                runtime: lifecycle.runtime_config()?,
+                diagnostic: diagnostic_report(&app, &lifecycle)?,
+            })
+        }
+        Err(code) => {
+            lifecycle.record_failure(&code, "runtime_prepare");
+            Ok(DesktopRuntimeRestartResult {
+                prepared: false,
+                runtime: None,
+                diagnostic: diagnostic_report(&app, &lifecycle)?,
+            })
+        }
+    }
 }
 
 fn setup(app: &mut tauri::App) -> Result<(), Box<dyn Error>> {
-    let data_dir = desktop_data_directory(app).map_err(std::io::Error::other)?;
-    fs::create_dir_all(&data_dir).map_err(|error| {
-        std::io::Error::other(format!("desktop_data_dir_create_failed:{error}"))
-    })?;
-    let window_state_path = data_dir.join(WINDOW_STATE_FILE);
-    let restored_window_state = match load_window_state(&window_state_path) {
-        Ok(state) => state,
-        Err(code) => {
-            eprintln!("{{\"event\":\"desktop_window_state_ignored\",\"code\":\"{code}\"}}");
-            None
+    let lifecycle = app.state::<LifecycleState>();
+    let mut restored_window_state = None;
+    if let Ok(data_dir) = desktop_data_directory(app) {
+        let window_state_path = data_dir.join(WINDOW_STATE_FILE);
+        lifecycle
+            .set_data_directory(data_dir.clone(), window_state_path.clone())
+            .map_err(std::io::Error::other)?;
+        if let Ok(layout) = resolve_runtime_layout(app) {
+            let context = RuntimeContext {
+                layout,
+                data_dir: data_dir.clone(),
+                window_state_path: window_state_path.clone(),
+            };
+            lifecycle
+                .set_context(context.clone())
+                .map_err(std::io::Error::other)?;
+            match fs::create_dir_all(&data_dir) {
+                Ok(()) => {
+                    restored_window_state = match load_window_state(&window_state_path) {
+                        Ok(state) => state,
+                        Err(code) => {
+                            eprintln!("{{\"event\":\"desktop_window_state_ignored\",\"code\":\"{code}\"}}");
+                            None
+                        }
+                    };
+                    match start_sidecar(&context.layout, &data_dir) {
+                        Ok((sidecar, ready, bearer)) => {
+                            lifecycle
+                                .install(sidecar, context, ready, bearer)
+                                .map_err(std::io::Error::other)?;
+                        }
+                        Err(code) => lifecycle.record_failure(&code, "sidecar_startup"),
+                    }
+                }
+                Err(_) => {
+                    lifecycle.record_failure("desktop_data_dir_create_failed", "data_directory")
+                }
+            }
+        } else {
+            lifecycle.record_failure("desktop_sidecar_resources_missing", "resource_resolution");
         }
-    };
-    let (sidecar, ready, bearer) =
-        start_sidecar(app, &data_dir).map_err(std::io::Error::other)?;
-    let initialization_script = runtime_initialization_script(
-        &ready.origin,
-        &bearer,
-        cfg!(debug_assertions),
-    )
-    .map_err(std::io::Error::other)?;
-    app.state::<LifecycleState>()
-        .install(sidecar, window_state_path)
+    } else if let Err(code) = desktop_data_directory(app) {
+        lifecycle.record_failure(&code, "data_directory");
+    }
+    let diagnostic = diagnostic_report(app, &lifecycle).map_err(std::io::Error::other)?;
+    let runtime = lifecycle.runtime_config().map_err(std::io::Error::other)?;
+    let initialization_script = runtime_initialization_script(runtime.as_ref(), &diagnostic)
         .map_err(std::io::Error::other)?;
 
-    let mut builder = tauri::WebviewWindowBuilder::new(
-        app,
-        "main",
-        WebviewUrl::App("index.html".into()),
-    )
-        .title("血尿临床问诊训练系统")
-        .inner_size(1280.0, 820.0)
-        .min_inner_size(960.0, 640.0)
-        .center()
-        .resizable(true)
-        .devtools(cfg!(debug_assertions))
-        .initialization_script(initialization_script);
+    let mut builder =
+        tauri::WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
+            .title("血尿临床问诊训练系统")
+            .inner_size(1280.0, 820.0)
+            .min_inner_size(960.0, 640.0)
+            .center()
+            .resizable(true)
+            .devtools(cfg!(debug_assertions))
+            .initialization_script(initialization_script);
     if restored_window_state.is_none() {
         builder = builder.maximized(true);
     }
@@ -783,12 +1598,20 @@ fn setup(app: &mut tauri::App) -> Result<(), Box<dyn Error>> {
 pub fn run() {
     tauri::Builder::default()
         .manage(LifecycleState::default())
+        .invoke_handler(tauri::generate_handler![
+            desktop_diagnostic_snapshot,
+            desktop_diagnostic_export,
+            desktop_open_logs_directory,
+            desktop_restart_runtime
+        ])
         .setup(setup)
         .on_window_event(|window, event| {
             if matches!(event, tauri::WindowEvent::CloseRequested { .. }) {
                 let lifecycle = window.state::<LifecycleState>();
                 if let Err(code) = lifecycle.persist_window(window) {
-                    eprintln!("{{\"event\":\"desktop_window_state_save_failed\",\"code\":\"{code}\"}}");
+                    eprintln!(
+                        "{{\"event\":\"desktop_window_state_save_failed\",\"code\":\"{code}\"}}"
+                    );
                 }
                 lifecycle.shutdown();
             }
@@ -856,5 +1679,49 @@ mod tests {
             maximized: false,
         };
         assert!(!invalid.valid());
+    }
+
+    #[test]
+    fn runtime_failure_categories_are_stable() {
+        let cases = [
+            (
+                "desktop_sidecar_resources_missing",
+                "runtime_resources_missing",
+            ),
+            ("desktop_sidecar_spawn_failed", "node_spawn_failed"),
+            ("desktop_job_assign_failed", "job_object_failed"),
+            (
+                "desktop_sidecar_startup_timeout",
+                "sidecar_handshake_timeout",
+            ),
+            ("desktop_sidecar_exited_before_handshake", "sidecar_exited"),
+            (
+                "desktop_data_dir_create_failed",
+                "data_directory_unwritable",
+            ),
+            ("desktop_sqlite_open_failed", "sqlite_open_failed"),
+            ("desktop_sqlite_lock_corrupt", "sqlite_locked_or_corrupt"),
+            ("desktop_loopback_unavailable", "loopback_unavailable"),
+            ("model_missing", "model_missing_or_invalid"),
+            ("llama_dependency_missing", "llama_dependency_missing"),
+            ("llama_cpu_incompatible", "llama_cpu_incompatible"),
+            ("llama_memory_insufficient", "llama_memory_insufficient"),
+            ("llama_server_exited_during_startup", "llama_start_failed"),
+            ("runtime_access_denied", "security_software_suspected"),
+            ("unclassified_runtime_event", "unknown_runtime_failure"),
+        ];
+        for (code, expected) in cases {
+            assert_eq!(classify_runtime_error(code), expected, "{code}");
+        }
+    }
+
+    #[test]
+    fn runtime_diagnostic_values_do_not_include_user_paths() {
+        let code = stable_runtime_code(r#"C:\Users\someone\runtime.exe: access denied"#);
+        assert!(!code.contains("someone"));
+        let path = env::temp_dir().join("hematuria-runtime.exe");
+        let redacted = redact_path(Some(&path));
+        assert!(!redacted.contains("someone"));
+        assert!(!redacted.contains("admin"));
     }
 }

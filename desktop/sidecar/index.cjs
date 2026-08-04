@@ -44,6 +44,7 @@ const runtimeSessionStartedAt = new Date().toISOString();
 const runtimeSessionId = crypto.randomUUID();
 
 function fatalConfiguration(message) {
+  process.stdout.write(`${JSON.stringify({ event: "failure", code: message })}\n`);
   process.stderr.write(`${JSON.stringify({ event: "desktop_sidecar_configuration_error", code: message })}\n`);
   process.exit(1);
 }
@@ -53,6 +54,22 @@ if (!REQUIRED_SECRET_PATTERN.test(handshake)) fatalConfiguration("desktop_handsh
 if (!path.isAbsolute(appRoot) || !fs.existsSync(appRoot)) fatalConfiguration("desktop_app_root_invalid");
 if (!String(process.env.HEMATURIA_DESKTOP_DATA_DIR || "") || !path.isAbsolute(dataDirectory)) {
   fatalConfiguration("desktop_data_directory_invalid");
+}
+
+const compatibility = require(path.join(appRoot, "server", "desktopCompatibility.js"));
+if (compatibility.isLegacyR4DataDirectory(dataDirectory, process.env.LOCALAPPDATA)) {
+  fatalConfiguration("desktop_r4_data_directory_rejected");
+}
+let runtimePhase = "configuration";
+let lastFailure = null;
+let apiOrigin = "";
+
+function recordRuntimeFailure(value, phase = runtimePhase) {
+  const code = compatibility.normalizeRuntimeErrorCode(value);
+  const category = compatibility.classifyRuntimeError(code);
+  runtimePhase = phase;
+  lastFailure = { category, code, phase };
+  return lastFailure;
 }
 
 function loadModelManifest() {
@@ -98,7 +115,9 @@ activeModelAlias = modelModes[DEFAULT_MODEL_MODE].alias;
 function safeLog(event, metadata = {}) {
   const allowed = {};
   for (const [key, value] of Object.entries(metadata)) {
-    if (["status", "code", "durationMs", "pid", "port"].includes(key)) allowed[key] = value;
+    if (["status", "code", "category", "durationMs", "pid", "port", "phase", "exitCode", "schemaVersion"].includes(key)) {
+      allowed[key] = key === "code" ? compatibility.normalizeRuntimeErrorCode(value) : value;
+    }
   }
   process.stderr.write(`${JSON.stringify({ event, ...allowed })}\n`);
 }
@@ -272,10 +291,15 @@ function boundedInteger(value, fallback, minimum, maximum) {
 async function reserveLoopbackPort() {
   const reservation = net.createServer();
   reservation.unref();
-  await new Promise((resolve, reject) => {
-    reservation.once("error", reject);
-    reservation.listen(0, HOST, resolve);
-  });
+  try {
+    await new Promise((resolve, reject) => {
+      reservation.once("error", reject);
+      reservation.listen(0, HOST, resolve);
+    });
+  } catch {
+    recordRuntimeFailure("loopback_port_reservation_failed", "loopback");
+    throw new Error("loopback_port_reservation_failed");
+  }
   const address = reservation.address();
   const port = typeof address === "object" && address ? address.port : 0;
   await new Promise((resolve) => reservation.close(resolve));
@@ -370,22 +394,28 @@ async function terminateChildTree(child) {
 }
 
 async function startLocalAi(store) {
+  runtimePhase = "local_ai_startup";
   const { descriptor, modelAlias, modelFilePath: modelPath } = selectedModel(store);
   activeModelAlias = modelAlias;
   disableLocalAi();
   if (!localAiEnabled(store)) return { status: "disabled" };
 
-  if (!isRegularFile(modelPath)) return { status: "model_missing" };
+  if (!isRegularFile(modelPath)) {
+    const failure = recordRuntimeFailure("model_missing", "model_validation");
+    return { status: "model_missing", failureCode: failure.code, failureCategory: failure.category };
+  }
   const integrity = await validateModelIntegrity(modelPath, descriptor);
   if (!integrity.ok) {
+    const failure = recordRuntimeFailure(integrity.reason === "model_missing" ? "model_missing" : "checksum_mismatch", "model_validation");
     return integrity.reason === "model_missing"
-      ? { status: "model_missing" }
-      : { status: "model_invalid", validationError: "checksum_mismatch" };
+      ? { status: "model_missing", failureCode: failure.code, failureCategory: failure.category }
+      : { status: "model_invalid", validationError: "checksum_mismatch", failureCode: failure.code, failureCategory: failure.category };
   }
 
   const llamaPath = path.resolve(String(process.env.HEMATURIA_LLAMA_SERVER_PATH || ""));
   if (!String(process.env.HEMATURIA_LLAMA_SERVER_PATH || "") || !isRegularFile(llamaPath)) {
-    return { status: "runtime_missing" };
+    const failure = recordRuntimeFailure("llama_dependency_missing", "llama_resource_check");
+    return { status: "runtime_missing", failureCode: failure.code, failureCategory: failure.category };
   }
 
   const configuredThreads = store.getDesktopSetting("localAi.threads");
@@ -412,6 +442,7 @@ async function startLocalAi(store) {
       "--no-webui",
       "--api-key", apiKey
     ];
+    let spawnError = null;
     const child = spawn(llamaPath, llamaArguments, {
       cwd: path.dirname(llamaPath),
       env: llamaChildEnvironment(),
@@ -423,15 +454,28 @@ async function startLocalAi(store) {
       if (llamaChild !== child || shuttingDown) return;
       llamaChild = null;
       disableLocalAi();
-      localAiState = { status: "stopped" };
-      safeLog("desktop_llama_stopped_unexpectedly", { code: Number.isInteger(code) ? code : "terminated" });
+      const failure = recordRuntimeFailure("llama_server_exited_during_startup", "llama_process");
+      localAiState = {
+        status: "stopped",
+        failureCode: failure.code,
+        failureCategory: failure.category,
+        exitCode: Number.isInteger(code) ? code : null
+      };
+      safeLog("desktop_llama_stopped_unexpectedly", {
+        code: failure.code,
+        category: failure.category,
+        exitCode: Number.isInteger(code) ? code : "terminated"
+      });
     });
     child.once("error", (error) => {
-      safeLog("desktop_llama_process_error", { code: error.code || "spawn_error" });
+      spawnError = error;
+      const failure = recordRuntimeFailure(error.code || "llama_spawn_failed", "llama_process");
+      safeLog("desktop_llama_process_error", { code: failure.code, category: failure.category });
     });
 
     try {
       await waitForLlama(origin, apiKey, child, modelAlias);
+      if (spawnError) throw spawnError;
       Object.assign(process.env, {
         LLM_PROVIDER: "local",
         LLM_API_BASE_URL: `${origin}/v1`,
@@ -448,16 +492,18 @@ async function startLocalAi(store) {
       safeLog("desktop_llama_ready", { durationMs: Date.now() - startedAt, pid: child.pid, port });
       return { status: "ready", modelValidation: "verified" };
     } catch (error) {
-      lastStartupError = error instanceof Error ? error.message : "startup_failed";
+      lastStartupError = compatibility.normalizeRuntimeErrorCode(error);
       await terminateChildTree(child);
       if (llamaChild === child) llamaChild = null;
     }
   }
+  const failure = recordRuntimeFailure(lastStartupError, "llama_startup");
   safeLog("desktop_llama_unavailable", {
-    code: lastStartupError,
+    code: failure.code,
+    category: failure.category,
     durationMs: Date.now() - startedAt
   });
-  return { status: "startup_failed" };
+  return { status: "startup_failed", failureCode: failure.code, failureCategory: failure.category };
 }
 
 async function stopLocalAi() {
@@ -477,9 +523,15 @@ function reconfigureLocalAi(store) {
       localAiState = await startLocalAi(store);
     } catch (error) {
       disableLocalAi();
-      localAiState = { status: "startup_failed" };
+      const failure = recordRuntimeFailure(error, "local_ai_reconfiguration");
+      localAiState = {
+        status: "startup_failed",
+        failureCode: failure.code,
+        failureCategory: failure.category
+      };
       safeLog("desktop_llama_reconfiguration_failed", {
-        code: error instanceof Error ? error.message : "startup_failed"
+        code: failure.code,
+        category: failure.category
       });
     }
     return localAiState;
@@ -524,7 +576,7 @@ function installDesktopRuntimeEvidence(store) {
       localModelReady: llamaServerReady && isRegularFile(modelFilePath),
       model: modelAlias,
       modelProfile: selectedModelMode(store),
-      productHead: process.env.NEXT_PUBLIC_GIT_SHA || "desktop-local",
+      productHead: process.env.HEMATURIA_PRODUCT_HEAD || process.env.NEXT_PUBLIC_GIT_SHA || "desktop-local",
       cloudRequestCount: networkAudit.cloudRequestCount
     };
   };
@@ -532,6 +584,118 @@ function installDesktopRuntimeEvidence(store) {
   evidence.runtimeAuditTrace("sidecar-provider-install", {
     runtimeSessionId
   });
+}
+
+function runtimeFileDiagnostic(name, filePath, expectedSize, roots, sha256Status = "not_checked") {
+  const state = compatibility.fileState(filePath, expectedSize);
+  return {
+    name,
+    path: compatibility.redactedPath(filePath, roots),
+    present: state.present,
+    size: state.size,
+    sizeMatches: state.sizeMatches,
+    sha256Status: state.present ? sha256Status : "missing"
+  };
+}
+
+function desktopRuntimeDiagnostics(store) {
+  const roots = {
+    localAppData: process.env.LOCALAPPDATA,
+    userProfile: process.env.USERPROFILE,
+    temp: process.env.TEMP || process.env.TMP
+  };
+  let selected = null;
+  try {
+    selected = selectedModel(store);
+  } catch {
+    selected = null;
+  }
+  const llamaPath = String(process.env.HEMATURIA_LLAMA_SERVER_PATH || "");
+  const sidecarPath = path.join(appRoot, "desktop", "sidecar", "index.cjs");
+  const nodePath = process.execPath;
+  const listenAddress = apiServer?.address();
+  const port = typeof listenAddress === "object" && listenAddress ? listenAddress.port : null;
+  let sqliteStatus = "not_checked";
+  let sqliteSchemaVersion = null;
+  try {
+    sqliteSchemaVersion = store.getDesktopSchemaVersion();
+    sqliteStatus = "open";
+  } catch (error) {
+    const failure = recordRuntimeFailure(error, "sqlite_diagnostic");
+    sqliteStatus = failure.category === "sqlite_locked_or_corrupt" ? "locked_or_corrupt" : "open_failed";
+  }
+  const modelShaStatus = localAiState.modelValidation === "verified"
+    ? "verified"
+    : localAiState.validationError === "checksum_mismatch" ? "mismatch" : "not_checked";
+  const dataDirectoryWritable = compatibility.directoryWritable(dataDirectory);
+  const legacyDataDirectory = compatibility.r4DataDirectory(process.env.LOCALAPPDATA);
+  const last = lastFailure || {
+    category: "unknown_runtime_failure",
+    code: "",
+    phase: runtimePhase
+  };
+  return {
+    schemaVersion: 2,
+    productVersion: process.env.HEMATURIA_PRODUCT_VERSION || "0.1.0",
+    productHead: process.env.HEMATURIA_PRODUCT_HEAD || process.env.NEXT_PUBLIC_GIT_SHA || "desktop-local",
+    runtimeTarget: "desktop",
+    installationMode: process.env.HEMATURIA_DESKTOP_INSTALLATION_MODE || "unknown",
+    operatingSystem: { platform: process.platform, architecture: process.arch, nodeVersion: process.version },
+    standardUser: null,
+    paths: {
+      program: compatibility.redactedPath(nodePath, roots),
+      applicationRoot: compatibility.redactedPath(appRoot, roots),
+      application: compatibility.redactedPath(appRoot, roots),
+      data: compatibility.redactedPath(dataDirectory, roots),
+      dataAccessible: fs.existsSync(dataDirectory),
+      dataWritable: dataDirectoryWritable,
+      logs: compatibility.redactedPath(path.join(dataDirectory, "logs"), roots),
+      database: compatibility.redactedPath(path.join(dataDirectory, "hematuria.sqlite3"), roots),
+      model: compatibility.redactedPath(selected?.modelFilePath || "", roots),
+      temporary: compatibility.redactedPath(process.env.TEMP || process.env.TMP || os.tmpdir(), roots)
+    },
+    resources: [
+      runtimeFileDiagnostic("node", nodePath, null, roots, "not_checked"),
+      runtimeFileDiagnostic("sidecar", sidecarPath, null, roots, "not_checked"),
+      runtimeFileDiagnostic("llama_server", llamaPath, null, roots, localAiState.failureCategory === "llama_dependency_missing" ? "missing" : "not_checked"),
+      ...(selected ? [runtimeFileDiagnostic("model", selected.modelFilePath, selected.descriptor.size, roots, modelShaStatus)] : [])
+    ],
+    processes: {
+      sidecar: { status: "ready", pid: process.pid, exitCode: null },
+      llamaServer: { status: llamaChild ? "running" : localAiState.status, pid: llamaChild?.pid || null, exitCode: llamaChild?.exitCode ?? localAiState.exitCode ?? null }
+    },
+    jobObject: { status: "managed_by_tauri", code: null },
+    sidecar: {
+      status: "ready",
+      phase: runtimePhase,
+      handshake: "ready",
+      pid: process.pid,
+      exitCode: null,
+      origin: apiOrigin || null
+    },
+    sqlite: { status: sqliteStatus, schemaVersion: sqliteSchemaVersion, journalMode: "wal" },
+    loopback: { status: port ? "listening" : "unavailable", host: HOST, port },
+    localAi: {
+      status: localAiState.status,
+      model: selected?.modelAlias || activeModelAlias,
+      modelValidation: modelShaStatus,
+      failureCategory: localAiState.failureCategory || null,
+      failureCode: localAiState.failureCode || null,
+      processId: llamaChild?.pid || null,
+      exitCode: llamaChild?.exitCode ?? localAiState.exitCode ?? null
+    },
+    lastFailure: lastFailure ? last : null,
+    stableFailureCodes: lastFailure ? [lastFailure.code] : [],
+    dataIsolation: {
+      currentProfile: "R5",
+      currentDirectory: "MentorLocalAI-R5",
+      legacyR4Detected: Boolean(legacyDataDirectory && fs.existsSync(legacyDataDirectory)),
+      concurrentWritesPrevented: true,
+      migrationPerformed: false
+    },
+    recoverySuggestions: lastFailure ? compatibility.recoveriesFor(last.category, "zh") : [],
+    generatedAt: new Date().toISOString()
+  };
 }
 
 function desktopSettingsHandler(store) {
@@ -585,6 +749,13 @@ function desktopEvidenceHandler(evidence) {
     const snapshot = evidence.desktopRuntimeSummary();
     if (!snapshot) return res.status(503).json({ error: "desktop_evidence_unavailable" });
     return res.status(200).json(snapshot);
+  };
+}
+
+function desktopDiagnosticsHandler(store) {
+  return async (req, res) => {
+    if (req.method !== "GET") return res.status(405).json({ error: "method_not_allowed" });
+    return res.status(200).json(desktopRuntimeDiagnostics(store));
   };
 }
 
@@ -654,14 +825,14 @@ function desktopEvidenceCopyHandler(evidence) {
   };
 }
 
-function desktopEvidenceExportHandler(evidence) {
+function desktopEvidenceExportHandler(evidence, store) {
   return async (req, res) => {
     if (req.method !== "POST") return res.status(405).json({ error: "method_not_allowed" });
     try {
-      const serialized = runtimeDiagnosticJson(evidence);
+      const serialized = `${JSON.stringify(desktopRuntimeDiagnostics(store), null, 2)}\n`;
       const exportDirectory = path.join(dataDirectory, "exports");
       fs.mkdirSync(exportDirectory, { recursive: true });
-      const fileName = `hematuria-local-runtime-verification-${Date.now()}.json`;
+      const fileName = `hematuria-r5-runtime-diagnostic-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.json`;
       const filePath = path.join(exportDirectory, fileName);
       fs.writeFileSync(filePath, serialized, { encoding: "utf8", flag: "wx" });
       const stored = fs.readFileSync(filePath);
@@ -878,8 +1049,9 @@ async function loadHandlers(store) {
   handlers.set("/api/desktop/settings", desktopSettingsHandler(store));
   const evidence = require(path.join(appRoot, "server", "desktopRuntimeEvidence.js"));
   handlers.set("/api/desktop/evidence", desktopEvidenceHandler(evidence));
+  handlers.set("/api/desktop/diagnostics", desktopDiagnosticsHandler(store));
   handlers.set("/api/desktop/evidence/copy", desktopEvidenceCopyHandler(evidence));
-  handlers.set("/api/desktop/evidence/export", desktopEvidenceExportHandler(evidence));
+  handlers.set("/api/desktop/evidence/export", desktopEvidenceExportHandler(evidence, store));
   handlers.set("/api/desktop/evidence/cloud-probe", desktopCloudProbeHandler(evidence));
   const trainingState = require(path.join(appRoot, "server", "trainingState.js"));
   handlers.set("/api/desktop/attempt/resume", desktopAttemptResumeHandler(store, trainingState));
@@ -1090,25 +1262,33 @@ async function shutdown(exitCode = 0) {
 }
 
 async function main() {
+  runtimePhase = "start_gate";
   await waitForStartGate();
   process.stdin.once("end", () => void shutdown(0));
   process.chdir(appRoot);
 
+  runtimePhase = "sqlite_open";
   sqliteStore = require(path.join(appRoot, "server", "desktopSqliteStore.js"));
   const databaseSchemaVersion = sqliteStore.getDesktopSchemaVersion();
   const trainingSecret = sqliteStore.getOrCreateDesktopSecret();
   installDesktopEnvironment(trainingSecret);
   sqliteStore.startDesktopRuntimeSession({ runtimeSessionId, sessionStartedAt: runtimeSessionStartedAt });
   installDesktopRuntimeEvidence(sqliteStore);
+  runtimePhase = "configuration";
   const selected = selectedModel(sqliteStore);
   activeModelAlias = selected.modelAlias;
   disableLocalAi();
   localAiState = localAiEnabled(sqliteStore) ? { status: "starting" } : { status: "disabled" };
+  runtimePhase = "handler_load";
   const handlers = await loadHandlers(sqliteStore);
 
+  runtimePhase = "loopback_bind";
   apiServer = createApiServer(handlers);
   const origin = await listen(apiServer);
+  apiOrigin = origin;
+  runtimePhase = "loopback_health";
   await verifyHealth(origin);
+  runtimePhase = "ready";
 
   const ready = {
     event: "ready",
@@ -1129,15 +1309,21 @@ async function main() {
 process.once("SIGINT", () => void shutdown(0));
 process.once("SIGTERM", () => void shutdown(0));
 process.once("uncaughtException", (error) => {
-  safeLog("desktop_sidecar_uncaught_exception", { code: error?.code || error?.message || "uncaught" });
+  const failure = recordRuntimeFailure(error, runtimePhase);
+  process.stdout.write(`${JSON.stringify({ event: "failure", code: failure.code })}\n`);
+  safeLog("desktop_sidecar_uncaught_exception", { code: failure.code, category: failure.category, phase: failure.phase });
   void shutdown(1);
 });
 process.once("unhandledRejection", (error) => {
-  safeLog("desktop_sidecar_unhandled_rejection", { code: error?.code || error?.message || "rejection" });
+  const failure = recordRuntimeFailure(error, runtimePhase);
+  process.stdout.write(`${JSON.stringify({ event: "failure", code: failure.code })}\n`);
+  safeLog("desktop_sidecar_unhandled_rejection", { code: failure.code, category: failure.category, phase: failure.phase });
   void shutdown(1);
 });
 
 main().catch((error) => {
-  safeLog("desktop_sidecar_start_failed", { code: error instanceof Error ? error.message : "unknown" });
+  const failure = recordRuntimeFailure(error, runtimePhase);
+  process.stdout.write(`${JSON.stringify({ event: "failure", code: failure.code })}\n`);
+  safeLog("desktop_sidecar_start_failed", { code: failure.code, category: failure.category, phase: failure.phase });
   void shutdown(1);
 });

@@ -65,7 +65,7 @@ export function desktopRuntimeConfig(): DesktopRuntimeConfig | null {
 const desktopRuntime = process.env.NEXT_PUBLIC_RUNTIME_TARGET === "desktop"
   ? validatedDesktopRuntime()
   : null;
-const baseUrl = desktopRuntime?.apiBaseUrl || (
+const staticBaseUrl = desktopRuntime?.apiBaseUrl || (
   process.env.NEXT_PUBLIC_RUNTIME_TARGET === "desktop"
     // During static prerender the Tauri launch configuration does not exist yet.
     // The browser evaluates this module again after the host injects it.
@@ -79,10 +79,22 @@ const baseUrl = desktopRuntime?.apiBaseUrl || (
 );
 
 export const publicApiConfig: PublicApiConfig = Object.freeze({
-  baseUrl,
-  sessionInit: `${baseUrl}/api/session/init/`,
-  patientAgent: `${baseUrl}/api/agent-chat/`,
-  trainingAction: `${baseUrl}/api/training-action/`,
-  tts: `${baseUrl}/api/tts/`,
-  health: `${baseUrl}/api/health/`
+  get baseUrl() {
+    return desktopRuntimeConfig()?.apiBaseUrl || staticBaseUrl;
+  },
+  get sessionInit() {
+    return `${this.baseUrl}/api/session/init/`;
+  },
+  get patientAgent() {
+    return `${this.baseUrl}/api/agent-chat/`;
+  },
+  get trainingAction() {
+    return `${this.baseUrl}/api/training-action/`;
+  },
+  get tts() {
+    return `${this.baseUrl}/api/tts/`;
+  },
+  get health() {
+    return `${this.baseUrl}/api/health/`;
+  }
 });
