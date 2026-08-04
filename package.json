@@ -27,6 +27,7 @@
     "test:desktop:clinical-triage": "node scripts/verify-desktop-clinical-triage.mjs && node scripts/test-desktop-clinical-triage.mjs",
     "desktop:clinical-review-pack": "node scripts/build-desktop-clinical-review-pack.mjs",
     "test:desktop:runtime-evidence": "node scripts/test-desktop-runtime-evidence.mjs",
+    "test:desktop:r5-compatibility": "node scripts/test-desktop-r5-compatibility.mjs",
     "test:desktop:student-score-projection": "tsx scripts/test-student-score-projection.ts",
     "test:desktop:state-authority": "tsx scripts/test-desktop-state-authority.ts && node scripts/test-desktop-sqlite-store.mjs",
     "test:desktop:public-trajectory": "tsx scripts/test-public-clinical-trajectory.ts",

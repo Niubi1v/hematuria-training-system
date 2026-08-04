@@ -29,6 +29,7 @@ if (Test-Path -LiteralPath $stage) {
 New-Item -ItemType Directory -Path $stage -Force | Out-Null
 Copy-Item -LiteralPath $executable -Destination (Join-Path $stage "HematuriaTraining.exe")
 Copy-Item -LiteralPath $resources -Destination (Join-Path $stage "resources") -Recurse
+Set-Content -LiteralPath (Join-Path $stage "resources\portable.marker") -Value "portable" -Encoding ASCII
 
 $forbiddenDirectories = @("node_modules", "tests", "test", "screenshots", "traces", "logs", "fonts")
 $forbiddenExtensions = @(".map", ".pdb", ".lib", ".exp", ".dmp", ".gguf", ".ggml", ".sqlite", ".sqlite3", ".db", ".log", ".woff", ".woff2", ".ttf", ".otf")

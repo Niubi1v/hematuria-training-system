@@ -18,10 +18,13 @@
 - 提供分离下载的两档模型：默认 `lightweight` 为
   `ggml-org/Qwen3-1.7B-GGUF` / `Qwen3-1.7B-Q4_K_M.gguf`；`standard` 为
   `ggml-org/Qwen3-4B-GGUF` / `Qwen3-4B-Q4_K_M.gguf`。两者都不进入安装包或 Git。
-- 默认模型目录：
-  `%LOCALAPPDATA%\cn.hematuria.training.desktop\models`
-- 默认数据库：
-  `%LOCALAPPDATA%\cn.hematuria.training.desktop\hematuria.sqlite3`
+- R5 默认数据目录：
+  `%LOCALAPPDATA%\HematuriaTraining\MentorLocalAI-R5`
+  （R4 的 `MentorLocalAI-FinalCandidate` 不会被自动读取、迁移或写入。）
+- R5 默认模型目录：
+  `%LOCALAPPDATA%\HematuriaTraining\MentorLocalAI-R5\models`
+- R5 默认数据库：
+  `%LOCALAPPDATA%\HematuriaTraining\MentorLocalAI-R5\hematuria.sqlite3`
 - 可在桌面训练页的“本地 AI”设置中修改模型目录；也可在启动前设置绝对路径
   `HEMATURIA_DESKTOP_MODEL_PATH`。
 - 设置 `HEMATURIA_DESKTOP_DISABLE_LOCAL_AI=1` 可完全关闭模型；Patient Agent
