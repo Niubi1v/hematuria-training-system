@@ -52,6 +52,7 @@ import {
 import { clinicalResultFingerprint } from "@/shared/clinicalResultSemantics.js";
 import { ApiRequestError, createIdempotencyKey, createRequestId, fetchWithRecovery, requestJson, studentFacingApiMessage } from "@/src/lib/apiClient";
 import { desktopRuntimeConfig, publicApiConfig } from "@/src/lib/apiConfig";
+import { desktopRuntimeFailureMessage, desktopShellAvailable, isDesktopRuntimeFailureCode, restartDesktopRuntime } from "@/src/lib/desktopDiagnostics";
 import { ATTEMPT_SUMMARY_KEY, createAttemptSummary, isAttemptSummary, type AttemptSummary } from "@/src/lib/catalogProgress";
 import { canonicalSlotDefinitions } from "@/src/lib/canonicalSlots";
 import { isConnectionFailureFallback, isSafetyFallback, mergeRecoveredCoverage, recordConnectionTransition, validCachedSession, type AiConnectionStatus, type CachedPatientSession, type ConnectionTransition } from "@/src/lib/aiRecovery";
@@ -155,11 +156,12 @@ type ServiceHealth = {
   apiVersion: string;
 };
 
-type TrainingFailureReason = "session_initializing" | "attempt_not_found" | "token_expired" | "token_missing" | "stage_mismatch" | "network_error" | "configuration_error" | "origin_mismatch" | "rate_limit" | "state_mismatch" | "request_error";
+type TrainingFailureReason = "session_initializing" | "attempt_not_found" | "token_expired" | "token_missing" | "stage_mismatch" | "network_error" | "desktop_runtime" | "configuration_error" | "origin_mismatch" | "rate_limit" | "state_mismatch" | "request_error";
 
 function trainingFailureReason(error: unknown): TrainingFailureReason {
   const code = error instanceof ApiRequestError ? error.code : "";
   const kind = error instanceof ApiRequestError ? error.kind : "request";
+  if (isDesktopRuntimeFailureCode(code) || (desktopShellAvailable() && ["network", "offline", "timeout"].includes(kind))) return "desktop_runtime";
   if (/attempt_not_found/.test(code)) return "attempt_not_found";
   if (/expired_attempt_token/.test(code)) return "token_expired";
   if (/training_state_token_missing/.test(code)) return "token_missing";
@@ -178,6 +180,9 @@ function stageSubmissionFailureMessage(error: unknown, language: LanguageCode) {
     return language === "en"
       ? "Training records are temporarily unavailable, so this stage cannot be submitted. Please retry later."
       : "训练记录暂时不可用，当前无法提交阶段，请稍后重试。";
+  }
+  if (reason === "desktop_runtime") {
+    return desktopRuntimeFailureMessage(error instanceof ApiRequestError ? error.code : "unknown_runtime_failure", language);
   }
   if (reason === "attempt_not_found") {
     return language === "en"
@@ -222,6 +227,9 @@ function stageSubmissionFailureMessage(error: unknown, language: LanguageCode) {
 
 function orderSubmissionFailureMessage(error: unknown, language: LanguageCode) {
   const reason = trainingFailureReason(error);
+  if (reason === "desktop_runtime") {
+    return desktopRuntimeFailureMessage(error instanceof ApiRequestError ? error.code : "unknown_runtime_failure", language);
+  }
   if (reason === "configuration_error") {
     return language === "en"
       ? "Training records are temporarily unavailable, so this order cannot be saved. Please retry later."
@@ -1409,6 +1417,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [stageSubmitting, setStageSubmitting] = useState(false);
   const [trainingAttemptStatus, setTrainingAttemptStatus] = useState<"initializing" | "ready" | "failed">("initializing");
   const [trainingAttemptError, setTrainingAttemptError] = useState("");
+  const [desktopRuntimeReady, setDesktopRuntimeReady] = useState(() => Boolean(desktopRuntimeConfig()));
   const [pendingHistoryLogs, setPendingHistoryLogs] = useState<PendingHistoryLog[]>([]);
   const [logSyncStatus, setLogSyncStatus] = useState<"idle" | "pending" | "verified" | "failed">("idle");
   const [logRetryNonce, setLogRetryNonce] = useState(0);
@@ -1474,7 +1483,13 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const aiGenerationRef = useRef(0);
   const reconnectPromiseRef = useRef<Promise<boolean> | null>(null);
   const practiceDeployment = process.env.NEXT_PUBLIC_DEPLOYMENT_TIER !== "formal";
-  const isDesktopRuntime = Boolean(desktopRuntimeConfig());
+  const isDesktopRuntime = desktopRuntimeReady;
+
+  useEffect(() => {
+    const syncRuntimeState = () => setDesktopRuntimeReady(Boolean(desktopRuntimeConfig()));
+    window.addEventListener("hematuria-desktop-runtime-change", syncRuntimeState);
+    return () => window.removeEventListener("hematuria-desktop-runtime-change", syncRuntimeState);
+  }, []);
 
   useEffect(() => {
     const previous = previousAiStatusRef.current;
@@ -1561,6 +1576,19 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
 
   const ensureTrainingStateToken = useCallback(async (forceRetry = false) => {
     const attemptId = attempt.attemptId;
+    let runtimeReady = Boolean(desktopRuntimeConfig());
+    if (forceRetry && desktopShellAvailable()) {
+      try {
+        const result = await restartDesktopRuntime();
+        if (!result.prepared) {
+          throw new ApiRequestError("network", 503, result.diagnostic.lastFailure?.category || "unknown_runtime_failure");
+        }
+        runtimeReady = Boolean(desktopRuntimeConfig());
+      } catch (error) {
+        if (error instanceof ApiRequestError) throw error;
+        throw new ApiRequestError("network", 503, "unknown_runtime_failure");
+      }
+    }
     if (trainingStateTokenRef.current?.attemptId === attemptId) {
       setTrainingAttemptStatus("ready");
       setTrainingAttemptError("");
@@ -1575,7 +1603,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       const storageKey = trainingStateStorageKey(attempt.attemptId, publicApiConfig.baseUrl, window.location.origin);
       const legacyStorageKey = legacyTrainingStateStorageKey(attempt.attemptId);
       let saved = "";
-      if (!isDesktopRuntime) {
+      if (!runtimeReady) {
         try { saved = sessionStorage.getItem(storageKey) || sessionStorage.getItem(legacyStorageKey) || ""; } catch { /* Continue with a fresh in-memory token. */ }
       }
       if (saved) {
@@ -1588,7 +1616,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           trainingStateTokenRef.current = { attemptId, token: validated.stateToken };
           setServerEvidenceOptions(extractStudentEvidenceOptions(validated.payload) || []);
           trainingInitFailureRef.current = null;
-          if (!isDesktopRuntime) {
+          if (!runtimeReady) {
             try {
               sessionStorage.setItem(storageKey, validated.stateToken);
               sessionStorage.removeItem(legacyStorageKey);
@@ -1601,7 +1629,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           const safeStageOneRecovery = stageProgressRef.current.activeStageNo === 1 && !stageProgressRef.current.hasSubmittedStages
             && ["attempt_not_found", "token_expired", "state_mismatch"].includes(reason);
           if (!safeStageOneRecovery) throw error;
-          if (!isDesktopRuntime) {
+          if (!runtimeReady) {
             try {
               sessionStorage.removeItem(storageKey);
               sessionStorage.removeItem(legacyStorageKey);
@@ -1609,7 +1637,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
           }
         }
       }
-      if (!saved && isDesktopRuntime) {
+      if (!saved && runtimeReady) {
         try {
           const resumed = await requestDesktopAttemptResume({
             attemptId,
@@ -1638,7 +1666,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       setServerEvidenceOptions(extractStudentEvidenceOptions(initialized.payload) || []);
       trainingInitFailureRef.current = null;
       setTrainingAttemptStatus("ready");
-      if (!isDesktopRuntime) {
+      if (!runtimeReady) {
         try {
           sessionStorage.setItem(storageKey, initialized.stateToken);
           sessionStorage.removeItem(legacyStorageKey);
@@ -1659,7 +1687,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       if (trainingInitPromiseRef.current === pending) trainingInitPromiseRef.current = null;
     }).catch(() => undefined);
     return promise;
-  }, [attempt.attemptId, caseData.id, isDesktopRuntime, lang, runtimeMode]);
+  }, [attempt.attemptId, caseData.id, lang, runtimeMode]);
 
   useEffect(() => {
     if (!attemptReady) return;

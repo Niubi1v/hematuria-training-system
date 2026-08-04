@@ -4,6 +4,8 @@ import { Copy, Download, FolderCog, LoaderCircle, Power, SlidersHorizontal, X } 
 import { useEffect, useState } from "react";
 import { requestJson } from "@/src/lib/apiClient";
 import { desktopRuntimeConfig, publicApiConfig } from "@/src/lib/apiConfig";
+import { desktopDiagnosticSnapshot, desktopRuntimeFailureMessage, desktopShellAvailable, exportDesktopDiagnostic, openDesktopLogsDirectory, refreshDesktopDiagnosticSnapshot, restartDesktopRuntime } from "@/src/lib/desktopDiagnostics";
+import type { DesktopDiagnosticReport } from "@/src/lib/desktopDiagnostics";
 import { readStringStorage } from "@/src/lib/safeStorage";
 
 type DesktopSettings = {
@@ -46,6 +48,11 @@ type DesktopRuntimeSummary = {
 
 type DesktopCopyResult = { copied: true; sha256: string };
 type DesktopExportResult = { exported: true; path: string; size: number; sha256: string };
+type DesktopDiagnostics = DesktopRuntimeSummary | DesktopDiagnosticReport;
+
+function isRuntimeDiagnostic(value: DesktopDiagnostics): value is DesktopDiagnosticReport {
+  return "paths" in value && "recoverySuggestions" in value;
+}
 
 const emptySettings: DesktopSettings = {
   modelMode: "lightweight",
@@ -61,6 +68,7 @@ const emptySettings: DesktopSettings = {
 
 export default function DesktopModelSettings() {
   const desktopRuntime = desktopRuntimeConfig();
+  const [shellAvailable, setShellAvailable] = useState(() => desktopShellAvailable());
   const [open, setOpen] = useState(false);
   const [lang, setLang] = useState<"zh" | "en">("zh");
   const [settings, setSettings] = useState<DesktopSettings>(emptySettings);
@@ -68,13 +76,19 @@ export default function DesktopModelSettings() {
   const [draftModelMode, setDraftModelMode] = useState<DesktopSettings["modelMode"]>("lightweight");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [diagnostics, setDiagnostics] = useState<DesktopRuntimeSummary | null>(null);
+  const [diagnostics, setDiagnostics] = useState<DesktopDiagnostics | null>(() => desktopDiagnosticSnapshot());
 
   useEffect(() => {
     if (readStringStorage("hematuria-language").value === "en") setLang("en");
     const listener = (event: Event) => setLang((event as CustomEvent<"zh" | "en">).detail);
     window.addEventListener("hematuria-language-change", listener);
     return () => window.removeEventListener("hematuria-language-change", listener);
+  }, []);
+
+  useEffect(() => {
+    const listener = () => setShellAvailable(desktopShellAvailable());
+    window.addEventListener("hematuria-desktop-runtime-change", listener);
+    return () => window.removeEventListener("hematuria-desktop-runtime-change", listener);
   }, []);
 
   useEffect(() => {
@@ -86,13 +100,20 @@ export default function DesktopModelSettings() {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [open]);
 
-  if (!desktopRuntime) return null;
+  if (!shellAvailable && !desktopRuntime) return null;
   const endpoint = `${publicApiConfig.baseUrl}/api/desktop/settings`;
 
   async function loadSettings() {
     setLoading(true);
     setMessage("");
     try {
+      if (!desktopRuntimeConfig()) {
+        const report = desktopDiagnosticSnapshot() || await refreshDesktopDiagnosticSnapshot();
+        setDiagnostics(report);
+        const category = report.lastFailure?.category || "unknown_runtime_failure";
+        setMessage(desktopRuntimeFailureMessage(category, lang));
+        return;
+      }
       const next = await requestJson<DesktopSettings>(endpoint, undefined, {
         method: "GET",
         timeoutMs: 10_000,
@@ -133,8 +154,14 @@ export default function DesktopModelSettings() {
   }
 
   async function exportDiagnostics() {
-    if (!diagnostics) return;
     try {
+      if (desktopShellAvailable()) {
+        const result = await exportDesktopDiagnostic();
+        if (!result.exported || !result.path) throw new Error("desktop_diagnostic_export_failed");
+        setMessage(lang === "en" ? `Diagnostics exported to ${result.path}` : `诊断已导出至 ${result.path}`);
+        return;
+      }
+      if (!diagnostics) return;
       const result = await requestJson<DesktopExportResult>(`${publicApiConfig.baseUrl}/api/desktop/evidence/export`, {}, {
         method: "POST",
         timeoutMs: 10_000,
@@ -145,6 +172,35 @@ export default function DesktopModelSettings() {
       setMessage(lang === "en" ? `Exported to ${result.path}` : `已导出至 ${result.path}`);
     } catch {
       setMessage(lang === "en" ? "Export failed." : "导出失败。");
+    }
+  }
+
+  async function prepareRuntime() {
+    setLoading(true);
+    setMessage("");
+    try {
+      const result = await restartDesktopRuntime();
+      setDiagnostics(result.diagnostic);
+      if (!result.prepared) {
+        const category = result.diagnostic.lastFailure?.category || "unknown_runtime_failure";
+        setMessage(desktopRuntimeFailureMessage(category, lang));
+        return;
+      }
+      setMessage(lang === "en" ? "Desktop runtime prepared." : "桌面运行环境已重新准备。" );
+      await loadSettings();
+    } catch {
+      setMessage(lang === "en" ? "Runtime preparation failed. Export diagnostics and retry." : "运行环境准备失败，请导出诊断后重试。" );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function openLogs() {
+    try {
+      await openDesktopLogsDirectory();
+      setMessage(lang === "en" ? "Logs folder opened." : "日志文件夹已打开。" );
+    } catch {
+      setMessage(lang === "en" ? "Logs folder could not be opened." : "无法打开日志文件夹。" );
     }
   }
 
@@ -257,6 +313,21 @@ export default function DesktopModelSettings() {
                 {lang === "en" ? "Runtime statistics only; no patient questions or answers are included." : "仅显示运行统计，不包含患者问答内容。"}
               </p>
               {diagnostics ? (
+                isRuntimeDiagnostic(diagnostics) ? (
+                  <>
+                    <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                      <dt>{lang === "en" ? "Last failure" : "最近失败"}</dt><dd className="break-all">{diagnostics.lastFailure?.category || (lang === "en" ? "None" : "无")}</dd>
+                      <dt>{lang === "en" ? "Failure phase" : "失败阶段"}</dt><dd>{diagnostics.lastFailure?.phase || "—"}</dd>
+                      <dt>{lang === "en" ? "Data directory" : "数据目录"}</dt><dd className="break-all">{diagnostics.paths.data}</dd>
+                      <dt>{lang === "en" ? "Data writable" : "数据目录可写"}</dt><dd>{diagnostics.paths.dataWritable ? (lang === "en" ? "Yes" : "是") : (lang === "en" ? "No" : "否")}</dd>
+                      <dt>{lang === "en" ? "Sidecar" : "本地服务"}</dt><dd>{String(diagnostics.sidecar.status || "unknown")}</dd>
+                      <dt>{lang === "en" ? "SQLite" : "SQLite"}</dt><dd>{String(diagnostics.sqlite.status || "unknown")}</dd>
+                      <dt>{lang === "en" ? "Local assistance" : "本地辅助"}</dt><dd>{String(diagnostics.localAi.status || "unknown")}</dd>
+                      <dt>{lang === "en" ? "Product version" : "产品版本"}</dt><dd className="break-all">{diagnostics.productHead}</dd>
+                    </dl>
+                    {diagnostics.recoverySuggestions.length > 0 && <p className="mt-3 text-xs leading-5 text-clinic-muted">{diagnostics.recoverySuggestions[0]}</p>}
+                  </>
+                ) : (
                 <>
                   <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
                     <dt>{lang === "en" ? "Local interview service" : "本地问诊服务"}</dt><dd>{diagnostics.llamaServerReady && diagnostics.localModelReady ? (lang === "en" ? "Ready" : "已就绪") : (lang === "en" ? "Not ready" : "未就绪")}</dd>
@@ -270,10 +341,18 @@ export default function DesktopModelSettings() {
                   </dl>
                   <div className="mt-4 flex flex-wrap gap-2">
                     <button type="button" className="ui-button-secondary" onClick={() => void copyDiagnostics()}><Copy size={15} />{lang === "en" ? "Copy summary" : "复制摘要"}</button>
-                    <button type="button" className="ui-button-secondary" onClick={() => void exportDiagnostics()}><Download size={15} />{lang === "en" ? "Export JSON" : "导出JSON"}</button>
                   </div>
                 </>
+                )
               ) : <p className="mt-3 text-xs text-clinic-muted">{lang === "en" ? "Verification summary is not available yet." : "运行验证摘要尚未就绪。"}</p>}
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button type="button" disabled={loading} className="ui-button-primary" onClick={() => void prepareRuntime()}>
+                  {loading ? <LoaderCircle size={15} className="animate-spin" /> : <Power size={15} />}
+                  {lang === "en" ? "Prepare again" : "重新准备"}
+                </button>
+                <button type="button" className="ui-button-secondary" onClick={() => void exportDiagnostics()}><Download size={15} />{lang === "en" ? "Export diagnostics" : "导出诊断"}</button>
+                <button type="button" className="ui-button-secondary" onClick={() => void openLogs()}><FolderCog size={15} />{lang === "en" ? "Open logs folder" : "打开日志文件夹"}</button>
+              </div>
             </details>
             {message && <p role="status" className="mt-4 rounded-lg bg-clinic-paper px-3 py-2 text-sm text-clinic-muted">{message}</p>}
           </section>
