@@ -72,7 +72,8 @@ function currentProductHead() {
 export async function startDesktopSidecar({
   allowedOrigin,
   appRoot = process.env.HEMATURIA_DESKTOP_CONTRACT_APP_ROOT || repoRoot,
-  dataDirectory
+  dataDirectory,
+  installationMode = process.env.HEMATURIA_DESKTOP_INSTALLATION_MODE || "development"
 }) {
   assert.match(String(allowedOrigin), /^http:\/\/127\.0\.0\.1:\d+$/);
   const resolvedAppRoot = path.resolve(appRoot);
@@ -108,6 +109,7 @@ export async function startDesktopSidecar({
       HEMATURIA_DESKTOP_ALLOWED_ORIGINS: allowedOrigin,
       HEMATURIA_DESKTOP_BEARER: bearer,
       HEMATURIA_DESKTOP_HANDSHAKE: handshake,
+      HEMATURIA_DESKTOP_INSTALLATION_MODE: installationMode,
       HEMATURIA_DESKTOP_DISABLE_LOCAL_AI: "1",
       HEMATURIA_DESKTOP_DEBUG_RUNTIME: "1",
       HEMATURIA_PRODUCT_HEAD: productHead,
@@ -179,7 +181,7 @@ export async function installDesktopRuntime(target, runtime, language = "zh") {
       configurable: false,
       enumerable: false
     });
-    localStorage.setItem("hematuria-language", selectedLanguage);
+    if (!localStorage.getItem("hematuria-language")) localStorage.setItem("hematuria-language", selectedLanguage);
   }, { injectedRuntime: runtime, selectedLanguage: language });
 }
 
@@ -212,6 +214,66 @@ export async function runtimeEvidence(page) {
       runtimeTarget: String(payload.runtimeTarget || "")
     };
   });
+}
+
+export async function desktopJson(page, pathname, { body, idempotencyKey, stateToken } = {}) {
+  return page.evaluate(async ({ pathname, body, idempotencyKey, stateToken }) => {
+    const runtime = globalThis.__HEMATURIA_DESKTOP_RUNTIME__;
+    if (!runtime) throw new Error("desktop_runtime_missing");
+    const response = await fetch(`${runtime.apiBaseUrl}${pathname}`, {
+      method: body === undefined ? "GET" : "POST",
+      headers: {
+        "X-Hematuria-Desktop-Token": runtime.authToken,
+        ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+        ...(idempotencyKey ? { "X-Idempotency-Key": idempotencyKey } : {}),
+        ...(stateToken ? { "X-Training-State": stateToken } : {})
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      cache: "no-store"
+    });
+    return {
+      ok: response.ok,
+      status: response.status,
+      payload: await response.json(),
+      stateToken: response.headers.get("x-training-state") || ""
+    };
+  }, { pathname, body, idempotencyKey, stateToken });
+}
+
+export async function seedCompletedPercentageFixture(page) {
+  const attempt = {
+    attemptId: "surface-percentage-fixture",
+    caseId: "P004",
+    mode: "free",
+    language: "zh",
+    participantId: "practice-user",
+    schemaVersion: "attempt-v3",
+    createdAt: new Date().toISOString()
+  };
+  const requestId = "surface-percentage-fixture-init";
+  const initialized = await desktopJson(page, "/api/training-action", {
+    body: { action: "init-attempt", caseId: "P004", attemptId: attempt.attemptId, mode: "free", language: "zh", requestId },
+    idempotencyKey: requestId
+  });
+  assert.equal(initialized.status, 200);
+  assert.ok(initialized.stateToken);
+  const evaluation = {
+    score: 1, max: 1, hits: [], misses: [], warnings: [], standardAnswer: "",
+    comment: "Completed fixture.", practiceOnly: true
+  };
+  const snapshot = {
+    attempt,
+    activeStageNo: 7,
+    submitted: Object.fromEntries(Array.from({ length: 7 }, (_, index) => [index + 1, { ...evaluation, stageKey: `stage-${index + 1}` }])),
+    finalReport: {
+      total: 270, max: 360, items: [], redFlags: [], ragGuardrails: [],
+      scoringVersion: "fixture", caseVersion: "fixture", generatedAt: new Date().toISOString(), reportVersion: 3
+    }
+  };
+  const saved = await desktopJson(page, "/api/desktop/attempt/state", {
+    body: { action: "save", attemptId: attempt.attemptId, caseId: "P004", mode: "free", language: "zh", snapshot }
+  });
+  assert.equal(saved.status, 200);
 }
 
 function caseUrl(page, caseId, mode, baseURL) {
@@ -262,6 +324,7 @@ export async function saveHistoryDraft(page, {
   const summary = page.getByTestId("history-summary");
   await summary.waitFor({ state: "visible" });
   await summary.fill(marker);
+  await summary.blur();
   const response = await saved;
   const body = response.request().postDataJSON();
   assert.equal(body.mode, requestedMode === "random" || requestedMode === "demo" ? "free" : requestedMode);

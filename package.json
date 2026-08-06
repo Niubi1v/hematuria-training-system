@@ -38,6 +38,7 @@
     "test:desktop:renderer-contract": "playwright test --config playwright.desktop-contract.config.mjs",
     "test:desktop:tauri-smoke": "node scripts/test-desktop-tauri-smoke.mjs --surface no-bundle",
     "test:desktop:install-identity": "node scripts/test-desktop-install-identity.mjs",
+    "test:desktop:package-differential": "node scripts/test-desktop-package-differential.mjs",
     "benchmark:desktop:model": "node scripts/desktop-model-benchmark.mjs",
     "test:r5:corpus": "node scripts/test-r5-regression-corpus.mjs",
     "test:r5:state-model": "tsx scripts/test-r5-state-model.ts",

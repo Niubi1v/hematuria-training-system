@@ -11,12 +11,15 @@ const noProxy = [process.env.NO_PROXY, process.env.no_proxy, "127.0.0.1", "local
 process.env.NO_PROXY = noProxy;
 process.env.no_proxy = noProxy;
 const rendererRoot = path.resolve(process.env.HEMATURIA_DESKTOP_CONTRACT_RENDERER_ROOT || ".");
-if (!fs.existsSync(path.join(rendererRoot, "out", "index.html"))) {
+const surface = process.env.HEMATURIA_DESKTOP_RENDERER_SURFACE || "static-renderer";
+if (surface !== "development-renderer" && !fs.existsSync(path.join(rendererRoot, "out", "index.html"))) {
   throw new Error("desktop_renderer_output_missing: run the desktop Next build before this contract");
 }
 const node = process.execPath.includes(" ") ? `"${process.execPath}"` : process.execPath;
 const serverScript = path.join(rendererRoot, "scripts", "serve-static.mjs");
 const quotedServerScript = serverScript.includes(" ") ? `"${serverScript}"` : serverScript;
+const nextScript = path.join(rendererRoot, "node_modules", "next", "dist", "bin", "next");
+const quotedNextScript = nextScript.includes(" ") ? `"${nextScript}"` : nextScript;
 
 export default defineConfig({
   testDir: "./tests/desktop",
@@ -35,7 +38,9 @@ export default defineConfig({
     video: "off"
   },
   webServer: {
-    command: `${node} ${quotedServerScript}`,
+    command: surface === "development-renderer"
+      ? `${node} ${quotedNextScript} dev -H 127.0.0.1 -p ${port}`
+      : `${node} ${quotedServerScript}`,
     cwd: rendererRoot,
     url: `${baseURL}/cases/P001/`,
     reuseExistingServer: false,
@@ -43,7 +48,10 @@ export default defineConfig({
     env: {
       ...process.env,
       HOST: "127.0.0.1",
-      PORT: String(port)
+      PORT: String(port),
+      NEXT_PUBLIC_RUNTIME_TARGET: "desktop",
+      NEXT_PUBLIC_API_BASE_URL: "",
+      NEXT_PUBLIC_GIT_SHA: process.env.HEMATURIA_PRODUCT_HEAD || ""
     }
   }
 });

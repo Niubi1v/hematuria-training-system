@@ -8,13 +8,21 @@ import { DatabaseSync } from "node:sqlite";
 import { chromium } from "@playwright/test";
 import {
   assertLoopbackClosed,
+  desktopJson,
   expectSubmittedStageTwo,
   repoRoot,
   runtimeProbe,
   runtimeEvidence,
   saveHistoryDraft,
+  seedCompletedPercentageFixture,
   submitHistoryAndEnterStageTwo
 } from "../tests/desktop/desktop-harness.mjs";
+import {
+  databaseCheckpoint,
+  directoryFingerprint,
+  fileSha256,
+  writeSurfaceCheckpoint
+} from "../tests/desktop/surface-checkpoint.mjs";
 
 if (process.platform !== "win32") throw new Error("desktop_tauri_smoke_requires_windows");
 const noProxy = [process.env.NO_PROXY, process.env.no_proxy, "127.0.0.1", "localhost", "::1"]
@@ -24,7 +32,10 @@ process.env.NO_PROXY = noProxy;
 process.env.no_proxy = noProxy;
 const surfaceIndex = process.argv.indexOf("--surface");
 const surface = surfaceIndex >= 0 ? String(process.argv[surfaceIndex + 1] || "") : "no-bundle";
-if (surface !== "no-bundle") throw new Error(`desktop_tauri_surface_not_implemented:${surface}`);
+if (!new Set(["no-bundle", "portable", "nsis"]).has(surface)) throw new Error(`desktop_tauri_surface_not_implemented:${surface}`);
+const surfaceLabel = process.env.HEMATURIA_SURFACE_LABEL || surface;
+if (!/^[a-z0-9-]{1,40}$/u.test(surfaceLabel)) throw new Error("desktop_tauri_surface_label_invalid");
+const expectedInstallationMode = surface === "portable" ? "portable" : surface === "nsis" ? "installer" : "development";
 const executable = path.resolve(process.env.HEMATURIA_DESKTOP_TAURI_EXECUTABLE
   || path.join(repoRoot, "src-tauri", "target", "release", "hematuria-training-r5.exe"));
 try {
@@ -239,7 +250,7 @@ async function launch(dataDirectory, webViewDirectory) {
       NO_PROXY: "127.0.0.1,localhost",
       no_proxy: "127.0.0.1,localhost",
       HEMATURIA_DESKTOP_DATA_DIR: dataDirectory,
-      HEMATURIA_DESKTOP_INSTALLATION_MODE: "development",
+      HEMATURIA_DESKTOP_INSTALLATION_MODE: expectedInstallationMode,
       HEMATURIA_DESKTOP_TEST_MODE: "1",
       HEMATURIA_LLAMA_SERVER_PATH: process.execPath,
       HEMATURIA_LLAMA_SERVER_PREFIX_ARGS: JSON.stringify([path.join(repoRoot, "scripts", "desktop-fake-llama-server.mjs")]),
@@ -286,30 +297,6 @@ async function diagnosticSnapshot(page) {
   });
 }
 
-async function desktopJson(page, pathname, { body, idempotencyKey, stateToken } = {}) {
-  return page.evaluate(async ({ pathname, body, idempotencyKey, stateToken }) => {
-    const runtime = globalThis.__HEMATURIA_DESKTOP_RUNTIME__;
-    if (!runtime) throw new Error("desktop_runtime_missing");
-    const response = await fetch(`${runtime.apiBaseUrl}${pathname}`, {
-      method: body === undefined ? "GET" : "POST",
-      headers: {
-        "X-Hematuria-Desktop-Token": runtime.authToken,
-        ...(body === undefined ? {} : { "Content-Type": "application/json" }),
-        ...(idempotencyKey ? { "X-Idempotency-Key": idempotencyKey } : {}),
-        ...(stateToken ? { "X-Training-State": stateToken } : {})
-      },
-      body: body === undefined ? undefined : JSON.stringify(body),
-      cache: "no-store"
-    });
-    return {
-      ok: response.ok,
-      status: response.status,
-      payload: await response.json(),
-      stateToken: response.headers.get("x-training-state") || ""
-    };
-  }, { pathname, body, idempotencyKey, stateToken });
-}
-
 async function waitForLlama(page) {
   return eventually(async () => {
     const response = await desktopJson(page, "/api/desktop/diagnostics").catch(() => null);
@@ -354,62 +341,6 @@ async function askSafetyFallback(page) {
     fallbackDelta: after.ruleFallbackCount - before.ruleFallbackCount,
     cloudRequestCount: after.cloudRequestCount
   };
-}
-
-async function seedCompletedPercentageFixture(page) {
-  const attempt = {
-    attemptId: "tauri-percentage-fixture",
-    caseId: "P004",
-    mode: "free",
-    language: "zh",
-    participantId: "practice-user",
-    schemaVersion: "attempt-v3",
-    createdAt: new Date().toISOString()
-  };
-  const requestId = "tauri-percentage-fixture-init";
-  const initialized = await desktopJson(page, "/api/training-action", {
-    body: { action: "init-attempt", caseId: "P004", attemptId: attempt.attemptId, mode: "free", language: "zh", requestId },
-    idempotencyKey: requestId
-  });
-  assert.equal(initialized.status, 200);
-  assert.ok(initialized.stateToken);
-  const evaluation = {
-    score: 1,
-    max: 1,
-    hits: [],
-    misses: [],
-    warnings: [],
-    standardAnswer: "",
-    comment: "Completed fixture.",
-    practiceOnly: true
-  };
-  const snapshot = {
-    attempt,
-    activeStageNo: 7,
-    submitted: Object.fromEntries(Array.from({ length: 7 }, (_, index) => [index + 1, { ...evaluation, stageKey: `stage-${index + 1}` }])),
-    finalReport: {
-      total: 270,
-      max: 360,
-      items: [],
-      redFlags: [],
-      ragGuardrails: [],
-      scoringVersion: "fixture",
-      caseVersion: "fixture",
-      generatedAt: new Date().toISOString(),
-      reportVersion: 3
-    }
-  };
-  const saved = await desktopJson(page, "/api/desktop/attempt/state", {
-    body: {
-      action: "save",
-      attemptId: attempt.attemptId,
-      caseId: "P004",
-      mode: "free",
-      language: "zh",
-      snapshot
-    }
-  });
-  assert.equal(saved.status, 200);
 }
 
 async function verifyPublicBoundaryAndExport(page, redactions) {
@@ -511,6 +442,8 @@ function databaseSummary(databasePath, expectedProductHead, stageRequestId, stag
 const temporaryRoot = await fs.mkdtemp(path.join(os.tmpdir(), "hematuria-tauri-smoke-"));
 const dataDirectory = path.join(temporaryRoot, "data");
 const webViewDirectory = path.join(temporaryRoot, "webview");
+const r4Directory = path.join(process.env.LOCALAPPDATA || os.tmpdir(), "HematuriaTraining", "MentorLocalAI-FinalCandidate");
+const r4Before = await directoryFingerprint(r4Directory);
 const p001Marker = `P001 tauri smoke ${Date.now()}`;
 const p002Marker = `P002 tauri fallback ${Date.now()}`;
 const p003Marker = `P003 tauri random ${Date.now()}`;
@@ -565,7 +498,7 @@ try {
   assert.ok(firstAuthority.serverStateRevision > initialAuthority.serverStateRevision);
   const firstDiagnostic = await diagnosticSnapshot(running.page);
   assert.equal(firstDiagnostic.productIdentity, "hematuria-training-r5");
-  assert.equal(firstDiagnostic.installationMode, "development");
+  assert.equal(firstDiagnostic.installationMode, expectedInstallationMode);
   assert.equal(firstDiagnostic.productHead, expectedProductHead);
   assert.equal(firstDiagnostic.runtimeTarget, "desktop");
   assert.equal(firstLlama.diagnostics.productHead, expectedProductHead);
@@ -620,6 +553,9 @@ try {
     language: "zh",
     marker: p001Marker
   });
+  const canonicalState = (await desktopJson(running.page, "/api/desktop/attempt/state", {
+    body: { action: "load", caseId: "P001", mode: "free", language: "zh" }
+  })).payload.snapshot;
   await seedCompletedPercentageFixture(running.page);
   await running.page.goto(new URL("/cases/P004/", running.page.url()).toString());
   const publicBoundary = await verifyPublicBoundaryAndExport(running.page, [
@@ -637,7 +573,7 @@ try {
   assert.ok(finalAuthority.serverStateRevision > postReplayAuthority.serverStateRevision);
   const finalDiagnostic = await diagnosticSnapshot(running.page);
   assert.equal(finalDiagnostic.productIdentity, "hematuria-training-r5");
-  assert.equal(finalDiagnostic.installationMode, "development");
+  assert.equal(finalDiagnostic.installationMode, expectedInstallationMode);
   assert.equal(finalDiagnostic.productHead, expectedProductHead);
   assert.equal(secondLlama.diagnostics.productHead, expectedProductHead);
   assert.deepEqual(await runtimeEvidence(running.page), {
@@ -663,8 +599,29 @@ try {
   assert.equal(database.attemptCount, 4);
   assert.equal(database.eventCount, 1);
   assert.equal(database.serverStateRevision, finalAuthority.serverStateRevision);
+  const checkpoint = {
+    surface: surfaceLabel,
+    productHead: expectedProductHead,
+    artifactSha: await fileSha256(executable),
+    installationMode: firstDiagnostic.installationMode,
+    case: "P001",
+    language: "zh",
+    trainingMode: "random",
+    durableMode: "free",
+    activeStage: canonicalState.activeStageNo,
+    submittedStageCount: Object.keys(canonicalState.submitted || {}).length,
+    ...databaseCheckpoint(path.join(dataDirectory, "hematuria.sqlite3")),
+    idempotentReplay: database.idempotentStageReplay,
+    cloudRequestCount: 0,
+    localAcceptedCount: fallback.acceptedDelta,
+    fallbackCount: fallback.fallbackDelta,
+    percentageOnlyBoundary: publicBoundary.percentageScore === 75,
+    diagnosticExport: publicBoundary.exported,
+    processCleanup: true,
+    r4DataUnchanged: false
+  };
   result = {
-    surface,
+    surface: surfaceLabel,
     status: "passed",
     productHead: expectedProductHead,
     authorityAgreement: true,
@@ -683,7 +640,8 @@ try {
     randomDurableMode: "free",
     cloudRequestCount: 0,
     lifecycleCycles: 2,
-    processCleanup: true
+    processCleanup: true,
+    checkpoint
   };
 } catch (error) {
   failure = error;
@@ -698,10 +656,12 @@ try {
   } catch (error) {
     cleanupFailure = error;
   }
+  if (result?.checkpoint) result.checkpoint.r4DataUnchanged = r4Before === await directoryFingerprint(r4Directory);
 }
 
 if (failure) {
   throw new Error(sanitize(failure instanceof Error ? failure.message : String(failure), [temporaryRoot]));
 }
 if (cleanupFailure) throw new Error("desktop_tauri_temp_cleanup_failed");
+await writeSurfaceCheckpoint(result.checkpoint);
 process.stdout.write(`${JSON.stringify(result)}\n`);
