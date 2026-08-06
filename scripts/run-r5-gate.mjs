@@ -41,11 +41,13 @@ const fast = [
 ];
 const milestone = [
   ...fast,
+  command(pnpm, "run", "test:r5:state-model", "--", "--runs", "200", "--steps", "50", "--integration"),
   command(pnpm, "run", "test"),
-  command(pnpm, "run", "test:e2e"),
+  command(process.execPath, "scripts/run-r5-playwright.mjs", "--workers=4", "--retries=0"),
   desktopCommand(pnpm, "run", "desktop:prepare"),
   desktopCommand(pnpm, "run", "build"),
   command(pnpm, "run", "test:bundle"),
+  command(pnpm, "run", "test:secrets"),
   command(pnpm, "run", "test:desktop:public-boundary"),
   desktopCommand(pnpm, "run", "desktop:stage"),
   command(pnpm, "run", "test:desktop:lifecycle"),
@@ -54,9 +56,11 @@ const milestone = [
   command(pnpm, "run", "test:desktop:r5-compatibility"),
   command(pnpm, "run", "test:desktop:acceptance"),
   command(pnpm, "run", "test:desktop:renderer-contract"),
+  command("cargo", "check", "--manifest-path", "src-tauri/Cargo.toml"),
   command("cargo", "test", "--manifest-path", "src-tauri/Cargo.toml", "--lib"),
   desktopCommand(pnpm, "exec", "tauri", "build", "--no-bundle"),
-  desktopCommand(process.execPath, "scripts/test-desktop-tauri-smoke.mjs", "--surface", "no-bundle")
+  desktopCommand(process.execPath, "scripts/test-desktop-tauri-smoke.mjs", "--surface", "no-bundle"),
+  command(git, "diff", "--quiet", baselineHead, "HEAD", "--", "data")
 ];
 function parseArguments(argv) {
   const options = { level: argv[0], dryRun: false, allowPackage: false, preflightOnly: false };
@@ -209,6 +213,7 @@ try {
       const executionPlan = options.level === "fast" ? fast : milestone;
       const commonEnv = {
         ...process.env,
+        ...(options.level === "milestone" ? { CI: "true" } : {}),
         PATH: `${path.dirname(process.execPath)}${path.delimiter}${process.env.PATH || ""}`,
         R5_TEST_SEED: options.seed,
         HEMATURIA_PRODUCT_HEAD: report.productHead

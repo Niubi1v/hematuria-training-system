@@ -17,7 +17,7 @@
       "minimumReproduction": { "environment": "Deterministic seven-stage runner with sparse evidence", "steps": ["Initialize P001 in free mode.", "Submit stages 1 and 2 below the stage-3 evidence requirement.", "Verify a legal recovery action remains available."] },
       "originalEvidence": { "head": "19c1278e76bf25a933c5f0d06bef83255ee2bfd0", "artifactSha256": null, "references": ["docs/goal/DEFECT_LOG.md", "docs/goal/TEST_EVIDENCE.md"] },
       "legacyGap": "The 42-case flow used empty fixed submissions and proved endpoint order, not evidence sufficiency or recoverability.",
-      "regressionTests": [{ "id": "R5-STATE-STAGE3-DEADEND", "status": "planned", "path": "scripts/test-r5-state-model.ts", "gate": "fast", "components": ["shared stage predicates", "evidence graph", "state model"] }, { "id": "R5-UI-STAGE3-EVIDENCE-RECOVERY", "status": "existing", "path": "tests/e2e/practice.spec.mjs", "gate": "milestone", "components": ["renderer", "stage handler", "evidence recovery"] }],
+      "regressionTests": [{ "id": "R5-STATE-STAGE3-DEADEND", "status": "existing", "path": "scripts/test-r5-state-model.ts", "gate": "fast", "components": ["shared stage predicates", "evidence graph", "state model"] }, { "id": "R5-UI-STAGE3-EVIDENCE-RECOVERY", "status": "existing", "path": "tests/e2e/practice.spec.mjs", "gate": "milestone", "components": ["renderer", "stage handler", "evidence recovery"] }],
       "replay": { "seed": "r5-stage3-deadend-v1", "command": "pnpm run test:e2e -- --grep @stage3-evidence-recovery", "actions": ["init", "sparse evidence", "submit", "recover"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "milestone",
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     },
@@ -65,7 +65,7 @@
       "minimumReproduction": { "environment": "390 by 844 and 1093 by 614 viewports", "steps": ["Scroll to the bottom of a long stage.", "Advance.", "Assert the responsible container starts at the top."] },
       "originalEvidence": { "head": "19c1278e76bf25a933c5f0d06bef83255ee2bfd0", "artifactSha256": null, "references": ["docs/ui-quality-audit.md"] },
       "legacyGap": "Screenshots inspected settled layouts but did not execute scroll-then-transition.",
-      "regressionTests": [{ "id": "R5-UI-SCROLL-RESET", "status": "planned", "path": "tests/e2e/practice.spec.mjs", "gate": "milestone", "components": ["renderer", "stage scroll container"] }],
+      "regressionTests": [{ "id": "R5-UI-SCROLL-RESET", "status": "existing", "path": "tests/e2e/practice.spec.mjs", "gate": "milestone", "components": ["renderer", "stage scroll container"] }],
       "replay": { "seed": "r5-scroll-inheritance-v1", "command": "pnpm run test:e2e -- --grep scroll-reset", "actions": ["scroll bottom", "advance", "measure scrollTop"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "milestone",
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     },
@@ -77,7 +77,7 @@
       "minimumReproduction": { "environment": "Short desktop and mobile viewports with long bilingual text", "steps": ["Open a long form.", "Scroll every focusable control into view.", "Assert no rectangle intersects the sticky action region."] },
       "originalEvidence": { "head": "19c1278e76bf25a933c5f0d06bef83255ee2bfd0", "artifactSha256": null, "references": ["docs/ui-quality-audit.md"] },
       "legacyGap": "Static geometry checks did not compare every focusable control after scrolling.",
-      "regressionTests": [{ "id": "R5-UI-STICKY-NO-OCCLUSION", "status": "planned", "path": "tests/e2e/practice.spec.mjs", "gate": "milestone", "components": ["renderer", "sticky actions", "focusable controls"] }],
+      "regressionTests": [{ "id": "R5-UI-STICKY-NO-OCCLUSION", "status": "existing", "path": "tests/e2e/practice.spec.mjs", "gate": "milestone", "components": ["renderer", "sticky actions", "focusable controls"] }],
       "replay": { "seed": "r5-sticky-occlusion-v1", "command": "pnpm run test:e2e -- --grep sticky-occlusion", "actions": ["open long stage", "tab and scroll", "compare rectangles"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "milestone",
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     },
@@ -89,7 +89,7 @@
       "minimumReproduction": { "environment": "Desktop and mobile renderer with keyboard input", "steps": ["Focus the primary input.", "Switch language by keyboard.", "Assert focus remains on the equivalent control and accepts one input."] },
       "originalEvidence": { "head": "19c1278e76bf25a933c5f0d06bef83255ee2bfd0", "artifactSha256": null, "references": ["docs/ui-quality-audit.md"] },
       "legacyGap": "Language tests asserted text, not activeElement and post-switch typing.",
-      "regressionTests": [{ "id": "R5-UI-LANGUAGE-FOCUS", "status": "planned", "path": "tests/e2e/practice.spec.mjs", "gate": "milestone", "components": ["renderer", "language switch", "keyboard focus"] }],
+      "regressionTests": [{ "id": "R5-UI-LANGUAGE-FOCUS", "status": "existing", "path": "tests/e2e/practice.spec.mjs", "gate": "milestone", "components": ["renderer", "language switch", "keyboard focus"] }],
       "replay": { "seed": "r5-language-focus-v1", "command": "pnpm run test:e2e -- --grep language-focus", "actions": ["focus", "switch", "type", "assert focus"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "milestone",
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     },
@@ -197,8 +197,8 @@
       "minimumReproduction": { "environment": "Student session across all output channels", "steps": ["Complete representative stages.", "Capture student-authorized output.", "Assert the allowlist and absence of internal field families."] },
       "originalEvidence": { "head": "99c206e1036472a562ee84ca26e762b9c09027a7", "artifactSha256": null, "references": ["scripts/test-training-security.ts", "scripts/test-desktop-public-boundary.mjs"] },
       "legacyGap": "Existing checks cover selected responses or static output, not every channel after a full desktop journey.",
-      "regressionTests": [{ "id": "R5-BOUNDARY-STUDENT-ALLOWLIST", "status": "planned", "path": "tests/desktop/renderer-contract.spec.mjs", "gate": "milestone", "components": ["API projection", "DOM", "clipboard", "diagnostic export"] }],
-      "replay": { "seed": "r5-student-allowlist-v1", "command": "pnpm run test:desktop:renderer-contract -- --grep student-allowlist", "actions": ["train", "inspect API", "inspect DOM", "copy", "export"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "milestone",
+      "regressionTests": [{ "id": "R5-BOUNDARY-STUDENT-ALLOWLIST", "status": "existing", "path": "tests/e2e/practice.spec.mjs", "gate": "milestone", "components": ["DOM", "ARIA and title", "forms", "clipboard", "print export"] }, { "id": "R5-BOUNDARY-STUDENT-API-ALLOWLIST", "status": "existing", "path": "scripts/test-42-bilingual-stage-flow.ts", "gate": "milestone", "components": ["real training handler", "stage response allowlist", "public evidence projection"] }, { "id": "R5-BOUNDARY-STUDENT-DESKTOP-EXPORT", "status": "existing", "path": "scripts/test-desktop-tauri-smoke.mjs", "gate": "milestone", "components": ["real Tauri DOM", "clipboard", "diagnostic export"] }],
+      "replay": { "seed": "r5-student-allowlist-v1", "command": "pnpm run test:r5:milestone -- --seed r5-student-allowlist-v1", "actions": ["train", "inspect API", "inspect DOM", "copy", "export"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "milestone",
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     },
     {
@@ -209,8 +209,8 @@
       "minimumReproduction": { "environment": "Completed stage-7 student attempt", "steps": ["Complete seven stages.", "Inspect API, DOM, clipboard, and export.", "Assert approved projection and absence of internal raw fields."] },
       "originalEvidence": { "head": "99c206e1036472a562ee84ca26e762b9c09027a7", "artifactSha256": null, "references": ["scripts/test-student-score-projection.ts", "ACCEPTANCE_MATRIX.md"] },
       "legacyGap": "Projection tests did not prove every stage-7 desktop channel uses the projection.",
-      "regressionTests": [{ "id": "R5-BOUNDARY-STAGE7-NO-RAW-360", "status": "planned", "path": "tests/desktop/renderer-contract.spec.mjs", "gate": "milestone", "components": ["score projection", "stage 7 DOM", "clipboard", "export"] }],
-      "replay": { "seed": "r5-stage7-score-boundary-v1", "command": "pnpm run test:desktop:renderer-contract -- --grep stage7-score-boundary", "actions": ["complete", "inspect API", "inspect outputs"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "milestone",
+      "regressionTests": [{ "id": "R5-BOUNDARY-STAGE7-NO-RAW-360", "status": "existing", "path": "tests/e2e/practice.spec.mjs", "gate": "milestone", "components": ["score projection", "stage 7 DOM", "clipboard", "print export"] }, { "id": "R5-BOUNDARY-STAGE7-TAURI-EXPORT", "status": "existing", "path": "scripts/test-desktop-tauri-smoke.mjs", "gate": "milestone", "components": ["real Tauri stage 7", "clipboard", "diagnostic export"] }],
+      "replay": { "seed": "r5-stage7-score-boundary-v1", "command": "pnpm run test:e2e -- --grep @ui-defect-regression", "actions": ["complete", "inspect projection", "inspect outputs"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "milestone",
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     },
     {

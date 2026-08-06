@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import { evaluateStage } from "../src/lib/fullProcessScoring";
+import { canOpenTrainingStage } from "../src/lib/trainingStageState";
 import cases from "../data/cases.json";
 
 function assert(condition: unknown, message: string) { if (!condition) throw new Error(message); }
@@ -12,7 +13,9 @@ assert(!/stageNo === 7 && !finalReport\) setFinalReport/.test(source), "Opening 
 assert(!/answers\.debriefReflection\.trim\(\)\.length\s*</.test(source), "An empty optional reflection must not block final report generation");
 assert(/trainingAction<StageEvaluation>\(\{ action: "stage-feedback", stageKey: "debrief"/.test(source), "Explicit completion must submit stage 7 before scoring");
 assert(/setFinalReport\(report\)/.test(source), "Explicit completion must create final report");
-assert(/if \(finalReport && stageNo !== 7\) return false/.test(source), "Final report must lock prior-stage logs");
+const submittedStages = new Set([1, 2, 3, 4, 5, 6, 7]);
+assert(!canOpenTrainingStage(6, submittedStages, true), "Final report must lock prior-stage logs");
+assert(canOpenTrainingStage(7, submittedStages, true), "Final report must keep stage 7 available");
 
 const caseData = cases[0] as any;
 const treatment = evaluateStage(caseData, "treatment", "即时处理；病因治疗；确定性治疗；随访教育");
