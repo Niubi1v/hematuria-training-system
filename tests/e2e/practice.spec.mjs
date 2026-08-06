@@ -242,10 +242,15 @@ async function enterInvestigationStage(page, language) {
   await expect(page.getByRole("heading", { name: language === "en" ? "Investigation and ordering" : "检查与开单", exact: true })).toBeVisible();
 }
 
-const studentInternalFieldPattern = /slot_answered|answerSource|factState|requestedSlot|\bintent\b|\bprovider\b|\bprovenance\b|\bEV-[A-Za-z0-9-]+\b|\b(?:LAB|IMG|MED)-[A-Za-z0-9-]+\b|\bPE(?:-[A-Za-z0-9-]+|\d+)\b|\b[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)+\b/i;
+const studentInternalFieldPattern = /canonical(?:Key|FactOrAction)?|slot_answered|evidenceId|answerSource|factState|requestedSlot|\bintent\b|\bprovider\b|\bprovenance\b|local_ai|rule_fallback|runtimeSessionId|stateStoreId|attemptId|state.?token|raw.?360|prompt|reasoning|\bEV-[A-Za-z0-9-]+\b|\b(?:LAB|IMG|MED)-[A-Za-z0-9-]+\b|\bPE(?:-[A-Za-z0-9-]+|\d+)\b|\b[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)+\b/i;
 
 async function expectStudentCopyPublic(page) {
   expect(await page.locator("body").innerText()).not.toMatch(studentInternalFieldPattern);
+  const exposedAttributesAndForms = await page.locator("body").evaluate((body) => Array.from(body.querySelectorAll("*"))
+    .flatMap((element) => ["aria-label", "title", "name", "placeholder", "value"].map((name) => element.getAttribute(name) || ""))
+    .filter(Boolean)
+    .join("\n"));
+  expect(exposedAttributesAndForms).not.toMatch(studentInternalFieldPattern);
 }
 
 async function fillDiagnosisBuilder(page, language) {
@@ -432,7 +437,7 @@ test("@stage3-evidence-recovery reopens stage 2 when only one diagnostic finding
   expect(observations.filter((item) => item.action === "stage-feedback" && item.stageKey === "orders")).toHaveLength(2);
 });
 
-test("@ui-ia investigation and diagnosis directories keep selection context without nested scrolling", async ({ page }) => {
+test("@r5-historical @ui-ia investigation and diagnosis directories keep selection context without nested scrolling", async ({ page }) => {
   const screenshotDir = process.env.UI_ROUND2_SCREENSHOT_DIR || "";
   await routeTrainingApiThroughHandler(page, []);
   await page.setViewportSize({ width: 1093, height: 614 });
@@ -611,7 +616,7 @@ test("saved English preference initializes one English patient session and openi
   ]);
 });
 
-test("P001 stage one submission advances across language switches and refresh", async ({ page }) => {
+test("@r5-historical P001 stage one submission advances across language switches and refresh", async ({ page }) => {
   const observations = [];
   await routeTrainingApiThroughHandler(page, observations);
   await page.goto("/cases/P001/");
@@ -664,7 +669,7 @@ test("P001 stage one submission advances across language switches and refresh", 
   expect(observations.filter((item) => item.action === "stage-feedback" && item.language === "zh")).toHaveLength(2);
 });
 
-test("rapid stage submission is accepted only once", async ({ page }) => {
+test("@r5-historical rapid stage submission is accepted only once", async ({ page }) => {
   const observations = [];
   await routeTrainingApiThroughHandler(page, observations, { stageFeedbackDelayMs: 150 });
   await page.goto("/cases/P001/");
@@ -1458,6 +1463,20 @@ test("catalog links cover all display IDs and representative routes refresh", as
   }).toBe(`${routeBasePath}/cases/P013/?mode=random`);
 });
 
+test("@r5-historical browser back and forward preserve case routing without stale content", async ({ page }) => {
+  await page.goto("/cases/");
+  await page.locator('a[data-case-id="P001"]').click();
+  await expect(page).toHaveURL(/\/cases\/P001\/?$/);
+  await expect(page.getByTestId("stage-heading")).toContainText(/病史采集|History taking/);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/cases\/?$/);
+  await expect(page.locator('a[data-case-id="P001"]')).toBeVisible();
+  await page.goForward();
+  await expect(page).toHaveURL(/\/cases\/P001\/?$/);
+  await expect(page.getByTestId("stage-heading")).toContainText(/病史采集|History taking/);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
+});
+
 test("case catalog search has a recoverable empty state", async ({ page }) => {
   await page.goto("/cases/");
   const search = page.getByRole("textbox", { name: "按病例编号搜索" });
@@ -1488,7 +1507,7 @@ test("mobile interview keeps multiline input visible without horizontal overflow
   expect(overflow).toBe(false);
 });
 
-test("stage transitions and refresh restore the active task at the top", async ({ page }) => {
+test("@r5-historical stage transitions and refresh restore the active task at the top", async ({ page }) => {
   await routeTrainingApiThroughHandler(page, []);
   await page.setViewportSize({ width: 1093, height: 614 });
   await page.goto("/cases/P001/");
@@ -1512,7 +1531,7 @@ test("stage transitions and refresh restore the active task at the top", async (
   await expect.poll(() => main.evaluate((element) => element.scrollTop)).toBe(0);
 });
 
-test("interview composer and desktop workbench fit target Windows viewports and 125 percent scaling", async ({ page }, testInfo) => {
+test("@r5-historical interview composer and desktop workbench fit target Windows viewports and 125 percent scaling", async ({ page }, testInfo) => {
   testInfo.setTimeout(90_000);
   const chineseOpening = "医生您好，我是因为小便颜色变红3月余来看病的。";
   const englishOpening = "Hello doctor. I came in because my urine has looked red for more than three months.";
