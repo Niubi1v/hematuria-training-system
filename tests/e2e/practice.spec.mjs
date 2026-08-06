@@ -277,6 +277,14 @@ async function captureDefectScreenshot(page, directory, name) {
   await page.screenshot({ path: path.join(directory, name), fullPage: false });
 }
 
+async function expectStableScreenshot(page, name) {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.addStyleTag({ content: "*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}" });
+  await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: "instant" }));
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
+  await expect(page).toHaveScreenshot(name, { animations: "disabled", caret: "hide", maxDiffPixelRatio: 0.005 });
+}
+
 async function mockTrainingState(page) {
   await page.route("**/api/training-action/**", async (route) => {
     const body = route.request().postDataJSON();
@@ -407,7 +415,7 @@ test("@ui-clinical-stage3 female case shows only applicable examination and imag
   await expect(page.getByText(/未返回结果|开单服务暂时不可用/)).toHaveCount(0);
 });
 
-test("@stage3-evidence-recovery reopens stage 2 when only one diagnostic finding is available", async ({ page }) => {
+test("@r5-visual @stage3-evidence-recovery reopens stage 2 when only one diagnostic finding is available", async ({ page }, testInfo) => {
   const observations = [];
   await routeTrainingApiThroughHandler(page, observations);
   await page.goto("/cases/P001/");
@@ -423,6 +431,10 @@ test("@stage3-evidence-recovery reopens stage 2 when only one diagnostic finding
   await expect(primaryEvidence).toHaveCount(1);
   await page.reload();
   await expect(primaryEvidence).toHaveCount(1);
+  if (testInfo.project.name === "desktop-chromium") {
+    await page.setViewportSize({ width: 1093, height: 614 });
+    await expectStableScreenshot(page, "stage3-single-evidence-recovery-1093x614.png");
+  }
   await expect(page.getByRole("button", { name: "返回阶段2补充依据", exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "返回阶段2补充依据", exact: true }).click();
@@ -437,7 +449,7 @@ test("@stage3-evidence-recovery reopens stage 2 when only one diagnostic finding
   expect(observations.filter((item) => item.action === "stage-feedback" && item.stageKey === "orders")).toHaveLength(2);
 });
 
-test("@r5-historical @ui-ia investigation and diagnosis directories keep selection context without nested scrolling", async ({ page }) => {
+test("@r5-visual @r5-historical @ui-ia investigation and diagnosis directories keep selection context without nested scrolling", async ({ page }, testInfo) => {
   const screenshotDir = process.env.UI_ROUND2_SCREENSHOT_DIR || "";
   await routeTrainingApiThroughHandler(page, []);
   await page.setViewportSize({ width: 1093, height: 614 });
@@ -472,6 +484,7 @@ test("@r5-historical @ui-ia investigation and diagnosis directories keep selecti
   expect(summaryBox).toBeTruthy();
   expect(actionsBox).toBeTruthy();
   expect(summaryBox.y + summaryBox.height).toBeLessThanOrEqual(actionsBox.y);
+  if (testInfo.project.name === "desktop-chromium") await expectStableScreenshot(page, "stage2-sticky-summary-1093x614.png");
   await captureDefectScreenshot(page, screenshotDir, "stage2-summary-sticky-1093x614.png");
   for (const viewport of [{ width: 390, height: 844 }, { width: 1093, height: 614 }, { width: 1366, height: 768 }, { width: 1440, height: 900 }]) {
     await page.setViewportSize(viewport);
@@ -616,7 +629,7 @@ test("saved English preference initializes one English patient session and openi
   ]);
 });
 
-test("@r5-historical P001 stage one submission advances across language switches and refresh", async ({ page }) => {
+test("@r5-visual @r5-historical P001 stage one submission advances across language switches and refresh", async ({ page }, testInfo) => {
   const observations = [];
   await routeTrainingApiThroughHandler(page, observations);
   await page.goto("/cases/P001/");
@@ -637,6 +650,10 @@ test("@r5-historical P001 stage one submission advances across language switches
   const languageDialog = page.getByRole("dialog", { name: "切换训练语言？" });
   await expect(languageDialog).toContainText("当前训练记录会保留");
   await expectStudentCopyPublic(page);
+  if (testInfo.project.name === "desktop-chromium") {
+    await page.setViewportSize({ width: 1366, height: 768 });
+    await expectStableScreenshot(page, "language-switch-dialog-1366x768.png");
+  }
   const dialogAxe = await new AxeBuilder({ page }).include("dialog").analyze();
   expect(dialogAxe.violations.filter((item) => item.impact === "critical" || item.impact === "serious")).toEqual([]);
   await page.keyboard.press("Shift+Tab");
@@ -781,7 +798,7 @@ test("rapid final-stage completion creates one debrief request and one report", 
   }, { seededAttemptId: attemptId })).toBe(1);
 });
 
-test("stage submission waits for the training attempt while the patient service is preparing", async ({ page }) => {
+test("@r5-visual stage submission waits for the training attempt while the patient service is preparing", async ({ page }, testInfo) => {
   const observations = [];
   await routeTrainingApiThroughHandler(page, observations, { initAttemptDelayMs: 800, sessionInitDelayMs: 5000 });
   await page.goto("/cases/P001/");
@@ -789,6 +806,10 @@ test("stage submission waits for the training attempt while the patient service 
   await expect(page.getByTestId("stage-preparing-state")).toHaveText("正在准备…");
   await expect(page.getByTestId("resource-status-notice")).toHaveAttribute("data-state", "recovering");
   await expect(page.getByTestId("resource-status-notice")).toHaveClass(/bg-sky-50/);
+  if (testInfo.project.name === "desktop-chromium") {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expectStableScreenshot(page, "runtime-preparing-390x844.png");
+  }
   expect(observations.filter((item) => item.action === "stage-feedback")).toHaveLength(0);
 
   const submit = page.getByRole("button", { name: "提交本阶段", exact: true });
@@ -1077,7 +1098,7 @@ test("AI session failure does not invalidate a ready training attempt", async ({
   await expect(page.getByRole("alert").filter({ hasText: "阶段提交失败" })).toHaveCount(0);
 });
 
-test("@ui-state-regression initialization, failure, and submitted actions are mutually exclusive", async ({ page }, testInfo) => {
+test("@r5-visual @ui-state-regression initialization, failure, and submitted actions are mutually exclusive", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "State contract is captured once.");
   const screenshotDir = process.env.UI_DEFECT_SCREENSHOT_DIR || "";
   await page.setViewportSize({ width: 390, height: 844 });
@@ -1098,6 +1119,7 @@ test("@ui-state-regression initialization, failure, and submitted actions are mu
   await expect(retry).toBeVisible();
   expect(await retry.evaluate((element) => getComputedStyle(element).whiteSpace)).toBe("nowrap");
   expect((await page.getByTestId("stage-preparing-state").boundingBox())?.width).toBeLessThan(200);
+  await expectStableScreenshot(page, "runtime-failure-390x844.png");
   await captureDefectScreenshot(page, screenshotDir, "p001-zh-recovery-390x844.png");
 
   await retry.click();
@@ -1108,6 +1130,7 @@ test("@ui-state-regression initialization, failure, and submitted actions are mu
   await expect(page.getByRole("button", { name: "提交本阶段", exact: true })).toHaveCount(0);
   await expect(page.getByText("训练会话尚未就绪", { exact: true })).toHaveCount(0);
 
+  await expectStableScreenshot(page, "runtime-recovered-390x844.png");
   await page.getByRole("button", { name: "English", exact: true }).click();
   await page.getByTestId("confirm-language-switch").click();
   const englishSubmit = page.getByRole("button", { name: "Submit stage", exact: true });
@@ -1531,7 +1554,7 @@ test("@r5-historical stage transitions and refresh restore the active task at th
   await expect.poll(() => main.evaluate((element) => element.scrollTop)).toBe(0);
 });
 
-test("@r5-historical interview composer and desktop workbench fit target Windows viewports and 125 percent scaling", async ({ page }, testInfo) => {
+test("@r5-visual @r5-historical interview composer and desktop workbench fit target Windows viewports and 125 percent scaling", async ({ page }, testInfo) => {
   testInfo.setTimeout(90_000);
   const chineseOpening = "医生您好，我是因为小便颜色变红3月余来看病的。";
   const englishOpening = "Hello doctor. I came in because my urine has looked red for more than three months.";
@@ -1609,6 +1632,7 @@ test("@r5-historical interview composer and desktop workbench fit target Windows
         await expect(navItems.first().locator(".stage-navigation-description")).toBeHidden();
       }
       if (language === "zh" && (viewport.width === 390 || viewport.width === 1440)) {
+        await expectStableScreenshot(page, `stage1-initial-${viewport.width}x${viewport.height}.png`);
         await captureDefectScreenshot(page, process.env.UI_ROUND2_SCREENSHOT_DIR || "", `stage1-task-focus-${viewport.width}x${viewport.height}.png`);
       }
     }
@@ -1628,7 +1652,7 @@ test("@r5-historical interview composer and desktop workbench fit target Windows
   }
 });
 
-test("@ui-defect-regression P001 Chinese seven-stage contract keeps public labels and coherent actions", async ({ page }, testInfo) => {
+test("@r5-visual @ui-defect-regression P001 Chinese seven-stage contract keeps public labels and coherent actions", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chromium", "One desktop project captures the required contract evidence.");
   testInfo.setTimeout(180_000);
   const screenshotDir = process.env.UI_DEFECT_SCREENSHOT_DIR || "";
@@ -1652,6 +1676,7 @@ test("@ui-defect-regression P001 Chinese seven-stage contract keeps public label
   await page.getByRole("textbox", { name: "输入问诊问题" }).fill("平时吸烟吗？");
   await page.getByRole("button", { name: "发送", exact: true }).click();
   await page.getByRole("textbox", { name: "病史小结" }).fill("已完成重点病史采集。小便颜色发红，已询问相关危险因素。");
+  await expectStableScreenshot(page, "stage1-multiturn-1093x614.png");
   await submitFirstStage(page, "zh");
   await expect(page.locator("body")).not.toContainText(/360分|\b360\b/);
   await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
@@ -1730,11 +1755,13 @@ test("@ui-defect-regression P001 Chinese seven-stage contract keeps public label
   await expect(page.getByTestId("training-complete-state")).toContainText("已完成");
   await expect(page.getByRole("heading", { name: "时间线", exact: true })).toHaveCount(1);
   await expect(page.getByText("训练会话尚未就绪", { exact: true })).toHaveCount(0);
+  await expectStableScreenshot(page, "stage7-percentage-summary-1366x768.png");
   await captureDefectScreenshot(page, screenshotDir, "p001-zh-stage7-1366x768.png");
   await page.setViewportSize({ width: 1440, height: 900 });
   await captureDefectScreenshot(page, process.env.UI_ROUND2_SCREENSHOT_DIR || "", "stage7-report-summary-1440x900.png");
   await page.reload();
   await expect(page.getByTestId("final-report-summary")).toBeVisible();
+  await expectStableScreenshot(page, "close-reopen-restored-1440x900.png");
   await expect(page.getByTestId("final-report-summary").getByRole("heading", { name: "训练已完成", exact: true })).toBeFocused();
   await expect(page.getByTestId("final-percentage-score")).toBeInViewport();
   await expect(page.getByTestId("final-report")).toBeVisible();
