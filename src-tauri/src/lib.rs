@@ -850,6 +850,14 @@ fn first_directory(candidates: impl IntoIterator<Item = PathBuf>) -> Option<Path
     candidates.into_iter().find(|candidate| candidate.is_dir())
 }
 
+fn desktop_test_mode() -> bool {
+    env::var("HEMATURIA_DESKTOP_INSTALLATION_MODE")
+        .ok()
+        .as_deref()
+        == Some("development")
+        && env::var("HEMATURIA_DESKTOP_TEST_MODE").ok().as_deref() == Some("1")
+}
+
 fn resolve_runtime_layout<R: tauri::Runtime, M: tauri::Manager<R>>(
     app: &M,
 ) -> Result<RuntimeLayout, String> {
@@ -894,21 +902,28 @@ fn resolve_runtime_layout<R: tauri::Runtime, M: tauri::Manager<R>>(
         .ok_or_else(|| "desktop_node_runtime_missing_run_desktop_prepare".to_string())?
     };
 
-    let llama_server = first_file([
-        resource_dir
-            .join("resources")
-            .join("runtime")
-            .join("llama")
-            .join("llama-server.exe"),
-        resource_dir
-            .join("runtime")
-            .join("llama")
-            .join("llama-server.exe"),
-        development_root
-            .join("desktop-runtime")
-            .join("llama")
-            .join("llama-server.exe"),
-    ]);
+    let llama_server = if desktop_test_mode() {
+        configured_absolute_path("HEMATURIA_LLAMA_SERVER_PATH")?
+    } else {
+        None
+    }
+    .or_else(|| {
+        first_file([
+            resource_dir
+                .join("resources")
+                .join("runtime")
+                .join("llama")
+                .join("llama-server.exe"),
+            resource_dir
+                .join("runtime")
+                .join("llama")
+                .join("llama-server.exe"),
+            development_root
+                .join("desktop-runtime")
+                .join("llama")
+                .join("llama-server.exe"),
+        ])
+    });
     Ok(RuntimeLayout {
         app_root,
         node,
@@ -975,6 +990,17 @@ fn sanitized_child_environment(
     }
     if let Some(disabled) = env::var_os("HEMATURIA_DESKTOP_DISABLE_LOCAL_AI") {
         command.env("HEMATURIA_DESKTOP_DISABLE_LOCAL_AI", disabled);
+    }
+    if desktop_test_mode() {
+        command.env("HEMATURIA_DESKTOP_TEST_MODE", "1");
+        for key in [
+            "HEMATURIA_LLAMA_SERVER_PREFIX_ARGS",
+            "HEMATURIA_DESKTOP_TEST_LLAMA_PID_FILE",
+        ] {
+            if let Some(value) = env::var_os(key) {
+                command.env(key, value);
+            }
+        }
     }
     if env::var("HEMATURIA_RUNTIME_AUDIT_TRACE").ok().as_deref() == Some("1") {
         command.env("HEMATURIA_RUNTIME_AUDIT_TRACE", "1");

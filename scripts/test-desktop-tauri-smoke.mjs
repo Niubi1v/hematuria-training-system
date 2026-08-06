@@ -4,6 +4,7 @@ import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync, spawn, spawnSync } from "node:child_process";
+import { DatabaseSync } from "node:sqlite";
 import { chromium } from "@playwright/test";
 import {
   assertLoopbackClosed,
@@ -39,6 +40,16 @@ const expectedProductHead = execFileSync("git", ["rev-parse", "HEAD"], {
 
 const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
+async function eventually(predicate, timeoutMs = 20_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const value = await predicate();
+    if (value) return value;
+    await delay(50);
+  }
+  throw new Error("desktop_tauri_eventually_timeout");
+}
+
 function sanitize(value, paths = []) {
   let output = String(value || "");
   for (const item of [...paths, executable, repoRoot, process.env.USERPROFILE, process.env.LOCALAPPDATA, process.env.TEMP]
@@ -72,6 +83,38 @@ function processExists(pid) {
   } catch {
     return false;
   }
+}
+
+function llamaNetworkState(pid) {
+  const result = spawnSync("powershell.exe", [
+    "-NoProfile",
+    "-NonInteractive",
+    "-Command",
+    `$process=Get-CimInstance Win32_Process -Filter "ProcessId = ${Number(pid)}" -ErrorAction SilentlyContinue; $listeners=@(Get-NetTCPConnection -State Listen -OwningProcess ${Number(pid)} -ErrorAction SilentlyContinue); $match=[regex]::Match([string]$process.CommandLine,'--port\\s+(\\d+)'); @{exists=[bool]$process;listenerCount=$listeners.Count;ports=@($listeners | ForEach-Object LocalPort | Sort-Object -Unique);argumentPort=if($match.Success){[int]$match.Groups[1].Value}else{0}} | ConvertTo-Json -Compress`
+  ], { encoding: "utf8", windowsHide: true });
+  try {
+    const value = JSON.parse(String(result.stdout || ""));
+    return {
+      exists: Boolean(value.exists),
+      listenerCount: Number(value.listenerCount || 0),
+      ports: (Array.isArray(value.ports) ? value.ports : value.ports ? [value.ports] : []).map(Number),
+      argumentPort: Number(value.argumentPort || 0)
+    };
+  } catch {
+    return { exists: false, listenerCount: -1, ports: [], argumentPort: 0 };
+  }
+}
+
+async function assertLlamaClosed(pid, port) {
+  await eventually(() => !processExists(pid));
+  await eventually(async () => {
+    const socket = net.createConnection({ host: "127.0.0.1", port });
+    return new Promise((resolve) => {
+      socket.once("connect", () => { socket.destroy(); resolve(false); });
+      socket.once("error", () => resolve(true));
+      socket.setTimeout(250, () => { socket.destroy(); resolve(true); });
+    });
+  });
 }
 
 function waitForExit(child, timeoutMs = 20_000) {
@@ -171,6 +214,10 @@ async function closeNormally(child) {
 
 async function launch(dataDirectory, webViewDirectory) {
   const cdpPort = await reservePort();
+  const modelPath = path.join(dataDirectory, "models", "Qwen3-1.7B-Q4_K_M.gguf");
+  const llamaPidFile = path.join(dataDirectory, "fake-llama.pid");
+  await fs.mkdir(path.dirname(modelPath), { recursive: true });
+  await fs.writeFile(modelPath, "tauri-smoke-model-placeholder", "utf8");
   const child = spawn(executable, [], {
     cwd: path.dirname(executable),
     env: {
@@ -185,8 +232,12 @@ async function launch(dataDirectory, webViewDirectory) {
       NO_PROXY: "127.0.0.1,localhost",
       no_proxy: "127.0.0.1,localhost",
       HEMATURIA_DESKTOP_DATA_DIR: dataDirectory,
-      HEMATURIA_DESKTOP_DISABLE_LOCAL_AI: "1",
       HEMATURIA_DESKTOP_INSTALLATION_MODE: "development",
+      HEMATURIA_DESKTOP_TEST_MODE: "1",
+      HEMATURIA_LLAMA_SERVER_PATH: process.execPath,
+      HEMATURIA_LLAMA_SERVER_PREFIX_ARGS: JSON.stringify([path.join(repoRoot, "scripts", "desktop-fake-llama-server.mjs")]),
+      HEMATURIA_DESKTOP_TEST_LLAMA_PID_FILE: llamaPidFile,
+      HEMATURIA_DESKTOP_MODEL_PATH: modelPath,
       WEBVIEW2_USER_DATA_FOLDER: webViewDirectory,
       WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${cdpPort}`
     },
@@ -202,7 +253,7 @@ async function launch(dataDirectory, webViewDirectory) {
   try {
     const { browser, page } = await connectToWebView(cdpPort, child);
     page.on("dialog", (dialog) => void dialog.accept());
-    return { browser, child, diagnostics: () => diagnostics, page };
+    return { browser, child, diagnostics: () => diagnostics, llamaPidFile, page };
   } catch (error) {
     if (child.exitCode === null) child.kill("SIGKILL");
     await waitForExit(child).catch(() => undefined);
@@ -226,10 +277,233 @@ async function diagnosticSnapshot(page) {
   });
 }
 
+async function desktopJson(page, pathname, { body, idempotencyKey, stateToken } = {}) {
+  return page.evaluate(async ({ pathname, body, idempotencyKey, stateToken }) => {
+    const runtime = globalThis.__HEMATURIA_DESKTOP_RUNTIME__;
+    if (!runtime) throw new Error("desktop_runtime_missing");
+    const response = await fetch(`${runtime.apiBaseUrl}${pathname}`, {
+      method: body === undefined ? "GET" : "POST",
+      headers: {
+        "X-Hematuria-Desktop-Token": runtime.authToken,
+        ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+        ...(idempotencyKey ? { "X-Idempotency-Key": idempotencyKey } : {}),
+        ...(stateToken ? { "X-Training-State": stateToken } : {})
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      cache: "no-store"
+    });
+    return {
+      ok: response.ok,
+      status: response.status,
+      payload: await response.json(),
+      stateToken: response.headers.get("x-training-state") || ""
+    };
+  }, { pathname, body, idempotencyKey, stateToken });
+}
+
+async function waitForLlama(page) {
+  return eventually(async () => {
+    const response = await desktopJson(page, "/api/desktop/diagnostics").catch(() => null);
+    const pid = Number(response?.payload?.processes?.llamaServer?.pid || 0);
+    if (!response?.ok || response.payload?.localAi?.status !== "ready" || !processExists(pid)) return false;
+    const network = llamaNetworkState(pid);
+    return network.exists
+      && network.listenerCount === 1
+      && network.argumentPort > 0
+      && network.ports.includes(network.argumentPort)
+      ? { diagnostics: response.payload, pid, port: network.argumentPort }
+      : false;
+  });
+}
+
+async function askSafetyFallback(page) {
+  const before = (await desktopJson(page, "/api/desktop/evidence")).payload;
+  const composer = page.locator('[data-testid="chat-composer"]');
+  const send = composer.locator("button").last();
+  await send.waitFor({ state: "visible" });
+  await composer.locator("textarea").fill("排泄尿液时会产生灼热样感觉吗？");
+  await eventually(() => send.isEnabled());
+  const responsePromise = page.waitForResponse((response) =>
+    response.request().method() === "POST"
+      && /^\/api\/agent-chat\/?$/.test(new URL(response.url()).pathname)
+  , { timeout: 30_000 });
+  await send.click();
+  const response = await responsePromise;
+  assert.equal(response.status(), 200);
+  const payload = await response.json();
+  assert.equal(payload.isFallback, true);
+  assert.equal(payload.fallbackReason, "semantic_response_invalid");
+  const after = (await desktopJson(page, "/api/desktop/evidence")).payload;
+  assert.equal(after.localAiAcceptedCount, before.localAiAcceptedCount);
+  assert.equal(after.ruleFallbackCount, before.ruleFallbackCount + 1);
+  assert.equal(after.cloudRequestCount, 0);
+  const conversation = page.getByRole("log", { name: "模拟问诊对话" });
+  await conversation.locator(".history-message").last().waitFor({ state: "visible" });
+  assert.doesNotMatch(await conversation.innerText(), /answerSource|fallbackReason|rule_fallback|semantic_response_invalid|local_ai/i);
+  return {
+    acceptedDelta: after.localAiAcceptedCount - before.localAiAcceptedCount,
+    fallbackDelta: after.ruleFallbackCount - before.ruleFallbackCount,
+    cloudRequestCount: after.cloudRequestCount
+  };
+}
+
+async function seedCompletedPercentageFixture(page) {
+  const attempt = {
+    attemptId: "tauri-percentage-fixture",
+    caseId: "P004",
+    mode: "free",
+    language: "zh",
+    participantId: "practice-user",
+    schemaVersion: "attempt-v3",
+    createdAt: new Date().toISOString()
+  };
+  const requestId = "tauri-percentage-fixture-init";
+  const initialized = await desktopJson(page, "/api/training-action", {
+    body: { action: "init-attempt", caseId: "P004", attemptId: attempt.attemptId, mode: "free", language: "zh", requestId },
+    idempotencyKey: requestId
+  });
+  assert.equal(initialized.status, 200);
+  assert.ok(initialized.stateToken);
+  const evaluation = {
+    score: 1,
+    max: 1,
+    hits: [],
+    misses: [],
+    warnings: [],
+    standardAnswer: "",
+    comment: "Completed fixture.",
+    practiceOnly: true
+  };
+  const snapshot = {
+    attempt,
+    activeStageNo: 7,
+    submitted: Object.fromEntries(Array.from({ length: 7 }, (_, index) => [index + 1, { ...evaluation, stageKey: `stage-${index + 1}` }])),
+    finalReport: {
+      total: 270,
+      max: 360,
+      items: [],
+      redFlags: [],
+      ragGuardrails: [],
+      scoringVersion: "fixture",
+      caseVersion: "fixture",
+      generatedAt: new Date().toISOString(),
+      reportVersion: 3
+    }
+  };
+  const saved = await desktopJson(page, "/api/desktop/attempt/state", {
+    body: {
+      action: "save",
+      attemptId: attempt.attemptId,
+      caseId: "P004",
+      mode: "free",
+      language: "zh",
+      snapshot
+    }
+  });
+  assert.equal(saved.status, 200);
+}
+
+async function verifyPublicBoundaryAndExport(page, redactions) {
+  const score = page.getByTestId("final-percentage-score");
+  try {
+    await score.waitFor({ state: "visible" });
+  } catch {
+    const state = await desktopJson(page, "/api/desktop/attempt/state", {
+      body: { action: "load", caseId: "P004", mode: "free", language: "zh" }
+    });
+    const view = await page.evaluate(() => ({
+      applicationError: document.body.innerText.startsWith("Application error:"),
+      language: localStorage.getItem("hematuria-language"),
+      url: location.href
+    }));
+    throw new Error(`percentage_fixture_not_visible:${JSON.stringify({
+      activeStageNo: state.payload?.snapshot?.activeStageNo,
+      finalTotal: state.payload?.snapshot?.finalReport?.total,
+      applicationError: view.applicationError,
+      language: view.language,
+      status: state.status,
+      url: view.url
+    })}`);
+  }
+  assert.match(await score.innerText(), /^75\s*\/\s*100$/);
+  const accessible = await page.evaluate(() => {
+    const values = [...document.querySelectorAll("[aria-label],[title],input,textarea,select,button,a,[role]")]
+      .flatMap((element) => [
+        element.getAttribute("aria-label"),
+        element.getAttribute("title"),
+        "value" in element ? element.value : null,
+        element.textContent
+      ])
+      .filter(Boolean);
+    return `${document.body.innerText}\n${values.join("\n")}`;
+  });
+  assert.doesNotMatch(accessible, /answerSource|fallbackReason|requestedSlot|factState|rule_fallback|local_ai|\b360\b|360分/i);
+  const exported = await page.evaluate(async () => {
+    const bridge = globalThis.__TAURI_INTERNALS__;
+    if (!bridge?.invoke) throw new Error("tauri_bridge_unavailable");
+    return bridge.invoke("desktop_diagnostic_export");
+  });
+  assert.equal(exported.exported, true);
+  const serialized = await fs.readFile(exported.path, "utf8");
+  assert.equal(Buffer.byteLength(serialized), exported.size);
+  assert.equal(path.dirname(exported.path), path.join(redactions[0], "exports"));
+  assert.doesNotMatch(serialized, /answerSource|fallbackReason|requestedSlot|factState|stateToken|authToken|\b360\b|360分/i);
+  for (const value of redactions.filter(Boolean)) assert.equal(serialized.includes(value), false);
+  return { accessibleSurfaceScanned: true, exportBytes: exported.size, exported: true, percentageScore: 75 };
+}
+
+function databaseSummary(databasePath, expectedProductHead, stageRequestId, stageAttemptId) {
+  const database = new DatabaseSync(databasePath, { readOnly: true });
+  try {
+    const scalar = (sql, ...params) => Number(database.prepare(sql).get(...params)?.count || 0);
+    const schemaVersion = Number(database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get()?.value);
+    const serverStateRevision = Number(database.prepare("SELECT value FROM schema_meta WHERE key = 'server_state_revision'").get()?.value);
+    const stateStoreId = String(database.prepare("SELECT value FROM schema_meta WHERE key = 'state_store_id'").get()?.value || "");
+    const attemptCount = scalar("SELECT COUNT(*) AS count FROM attempts");
+    const snapshotCount = scalar("SELECT COUNT(*) AS count FROM desktop_attempt_snapshots");
+    const requestCount = scalar("SELECT COUNT(*) AS count FROM attempt_requests");
+    const distinctRequestCount = scalar("SELECT COUNT(DISTINCT request_id) AS count FROM attempt_requests");
+    const eventCount = scalar("SELECT COUNT(*) AS count FROM desktop_runtime_events");
+    const stageReplayCount = scalar("SELECT COUNT(*) AS count FROM attempt_requests WHERE request_id = ?", stageRequestId);
+    const trainingRecordCount = scalar("SELECT COUNT(*) AS count FROM training_records");
+    const distinctTrainingAttemptCount = scalar("SELECT COUNT(DISTINCT attempt_id) AS count FROM training_records");
+    const scoredRecordCount = scalar("SELECT COUNT(*) AS count FROM training_records WHERE score IS NOT NULL");
+    const stageAttemptRecordCount = scalar("SELECT COUNT(*) AS count FROM training_records WHERE attempt_id = ?", stageAttemptId);
+    const stageAttemptScoredCount = scalar("SELECT COUNT(*) AS count FROM training_records WHERE attempt_id = ? AND score IS NOT NULL", stageAttemptId);
+    assert.equal(schemaVersion, 3);
+    assert.match(stateStoreId, /^[0-9a-f-]{36}$/i);
+    assert.equal(attemptCount, snapshotCount);
+    assert.equal(requestCount, distinctRequestCount);
+    assert.equal(stageReplayCount, 1);
+    assert.equal(trainingRecordCount, distinctTrainingAttemptCount);
+    assert.equal(stageAttemptRecordCount, 1);
+    assert.equal(stageAttemptScoredCount, 0);
+    assert.equal(expectedProductHead.length, 40);
+    return {
+      attemptCount,
+      eventCount,
+      idempotentStageReplay: true,
+      noDuplicateRequests: true,
+      noDuplicateTrainingRecords: true,
+      requestCount,
+      schemaVersion,
+      scoredRecordCount,
+      serverStateRevision,
+      snapshotCount,
+      stageAttemptNotScored: true,
+      stateStoreIdValid: true,
+      trainingRecordCount
+    };
+  } finally {
+    database.close();
+  }
+}
+
 const temporaryRoot = await fs.mkdtemp(path.join(os.tmpdir(), "hematuria-tauri-smoke-"));
 const dataDirectory = path.join(temporaryRoot, "data");
 const webViewDirectory = path.join(temporaryRoot, "webview");
 const p001Marker = `P001 tauri smoke ${Date.now()}`;
+const p002Marker = `P002 tauri fallback ${Date.now()}`;
 const p003Marker = `P003 tauri random ${Date.now()}`;
 let running;
 let failure;
@@ -243,34 +517,84 @@ try {
   assert.equal(firstProbe.runtimeTarget, "desktop");
   assert.match(firstProbe.apiBaseUrl, /^http:\/\/127\.0\.0\.1:\d+$/);
   assert.equal(firstProbe.tokenValid, true);
+  const firstLlama = await waitForLlama(running.page);
+  const initialAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
+  assert.equal(initialAuthority.schemaVersion, 3);
+  assert.equal(initialAuthority.productHead, expectedProductHead);
+  assert.notEqual(initialAuthority.productHead, "desktop-local");
+  await saveHistoryDraft(running.page, {
+    caseId: "P002",
+    language: "zh",
+    marker: p002Marker
+  });
+  const fallback = await askSafetyFallback(running.page);
   await saveHistoryDraft(running.page, {
     caseId: "P001",
     language: "zh",
     marker: p001Marker
   });
+  const stageResponsePromise = running.page.waitForResponse((response) => {
+    if (response.request().method() !== "POST" || !/^\/api\/training-action\/?$/.test(new URL(response.url()).pathname)) return false;
+    try {
+      const body = response.request().postDataJSON();
+      return body?.action === "stage-feedback" && body?.stageKey === "history";
+    } catch {
+      return false;
+    }
+  }, { timeout: 30_000 });
   await submitHistoryAndEnterStageTwo(running.page, { caseId: "P001", language: "zh", marker: p001Marker });
+  const stageResponse = await stageResponsePromise;
+  const stageReplay = {
+    body: stageResponse.request().postDataJSON(),
+    idempotencyKey: stageResponse.request().headers()["x-idempotency-key"],
+    stateToken: stageResponse.request().headers()["x-training-state"],
+    responseStateToken: stageResponse.headers()["x-training-state"]
+  };
+  assert.equal(stageReplay.idempotencyKey, stageReplay.body.requestId);
+  assert.ok(stageReplay.stateToken && stageReplay.responseStateToken);
+  const firstAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
+  assert.ok(firstAuthority.serverStateRevision > initialAuthority.serverStateRevision);
   const firstDiagnostic = await diagnosticSnapshot(running.page);
   assert.equal(firstDiagnostic.productHead, expectedProductHead);
   assert.equal(firstDiagnostic.runtimeTarget, "desktop");
+  assert.equal(firstLlama.diagnostics.productHead, expectedProductHead);
   assert.deepEqual(await runtimeEvidence(running.page), {
     cloudRequestCount: 0,
     productHead: expectedProductHead,
     runtimeTarget: "desktop"
   });
   assert.equal(processExists(firstDiagnostic.sidecarPid), true);
+  await running.page.waitForLoadState("networkidle");
+  const closingAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
+  assert.ok(closingAuthority.serverStateRevision >= firstAuthority.serverStateRevision);
   const firstOrigin = firstProbe.apiBaseUrl;
   await closeNormally(running.child);
   await running.browser.close().catch(() => undefined);
   running = undefined;
   assert.equal(processExists(firstDiagnostic.sidecarPid), false);
   await assertLoopbackClosed(firstOrigin);
+  await assertLlamaClosed(firstLlama.pid, firstLlama.port);
 
   running = await launch(dataDirectory, webViewDirectory);
+  const secondLlama = await waitForLlama(running.page);
+  assert.notEqual(secondLlama.pid, firstLlama.pid);
+  const restartedAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
+  assert.equal(restartedAuthority.stateStoreId, initialAuthority.stateStoreId);
+  assert.equal(restartedAuthority.productHead, expectedProductHead);
+  assert.equal(restartedAuthority.serverStateRevision, closingAuthority.serverStateRevision);
   await expectSubmittedStageTwo(running.page, {
     caseId: "P001",
     language: "zh",
     marker: p001Marker
   });
+  await running.page.waitForLoadState("networkidle");
+  const restoredAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
+  assert.ok(restoredAuthority.serverStateRevision >= restartedAuthority.serverStateRevision);
+  const replayed = await desktopJson(running.page, "/api/training-action", stageReplay);
+  assert.equal(replayed.status, 200);
+  assert.equal(replayed.stateToken, stageReplay.responseStateToken);
+  const postReplayAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
+  assert.equal(postReplayAuthority.serverStateRevision, restoredAuthority.serverStateRevision);
   const random = await saveHistoryDraft(running.page, {
     caseId: "P003",
     language: "en",
@@ -283,8 +607,24 @@ try {
     language: "zh",
     marker: p001Marker
   });
+  await seedCompletedPercentageFixture(running.page);
+  await running.page.goto(new URL("/cases/P004/", running.page.url()).toString());
+  const publicBoundary = await verifyPublicBoundaryAndExport(running.page, [
+    dataDirectory,
+    temporaryRoot,
+    p001Marker,
+    p002Marker,
+    p003Marker,
+    process.env.USERPROFILE
+  ]);
+  const finalAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
+  assert.equal(finalAuthority.stateStoreId, initialAuthority.stateStoreId);
+  assert.equal(finalAuthority.schemaVersion, 3);
+  assert.equal(finalAuthority.productHead, expectedProductHead);
+  assert.ok(finalAuthority.serverStateRevision > postReplayAuthority.serverStateRevision);
   const finalDiagnostic = await diagnosticSnapshot(running.page);
   assert.equal(finalDiagnostic.productHead, expectedProductHead);
+  assert.equal(secondLlama.diagnostics.productHead, expectedProductHead);
   assert.deepEqual(await runtimeEvidence(running.page), {
     cloudRequestCount: 0,
     productHead: expectedProductHead,
@@ -296,7 +636,38 @@ try {
   running = undefined;
   assert.equal(processExists(finalDiagnostic.sidecarPid), false);
   await assertLoopbackClosed(finalOrigin);
-  result = { surface, status: "passed", randomDurableMode: "free", cloudRequestCount: 0, processCleanup: true };
+  await assertLlamaClosed(secondLlama.pid, secondLlama.port);
+  const database = databaseSummary(
+    path.join(dataDirectory, "hematuria.sqlite3"),
+    expectedProductHead,
+    stageReplay.idempotencyKey,
+    stageReplay.body.attemptId
+  );
+  assert.equal(database.attemptCount, 4);
+  assert.equal(database.eventCount, 1);
+  assert.equal(database.serverStateRevision, finalAuthority.serverStateRevision);
+  result = {
+    surface,
+    status: "passed",
+    productHead: expectedProductHead,
+    authorityAgreement: true,
+    revisionSequence: [
+      initialAuthority.serverStateRevision,
+      firstAuthority.serverStateRevision,
+      closingAuthority.serverStateRevision,
+      restartedAuthority.serverStateRevision,
+      restoredAuthority.serverStateRevision,
+      postReplayAuthority.serverStateRevision,
+      finalAuthority.serverStateRevision
+    ],
+    database,
+    fallback,
+    publicBoundary,
+    randomDurableMode: "free",
+    cloudRequestCount: 0,
+    lifecycleCycles: 2,
+    processCleanup: true
+  };
 } catch (error) {
   failure = error;
 } finally {

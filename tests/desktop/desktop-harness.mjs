@@ -221,6 +221,20 @@ function caseUrl(page, caseId, mode, baseURL) {
   return url.toString();
 }
 
+let languageSelection = 0;
+
+async function selectLanguage(page, language) {
+  const selection = ++languageSelection;
+  const apply = ({ language, selection }) => {
+    const key = "hematuria-test-language-selection";
+    if (selection < Number(localStorage.getItem(key) || 0)) return;
+    localStorage.setItem(key, String(selection));
+    localStorage.setItem("hematuria-language", language);
+  };
+  await page.addInitScript(apply, { language, selection });
+  if (page.url() !== "about:blank") await page.evaluate(apply, { language, selection });
+}
+
 export async function saveHistoryDraft(page, {
   baseURL,
   caseId,
@@ -228,9 +242,7 @@ export async function saveHistoryDraft(page, {
   marker,
   requestedMode = "free"
 }) {
-  await page.addInitScript((selectedLanguage) => {
-    localStorage.setItem("hematuria-language", selectedLanguage);
-  }, language);
+  await selectLanguage(page, language);
   const saved = page.waitForResponse((response) => {
     const request = response.request();
     if (request.method() !== "POST" || new URL(response.url()).pathname !== "/api/desktop/attempt/state") return false;
@@ -308,9 +320,7 @@ export async function expectSubmittedStageTwo(page, {
   marker,
   requestedMode = "free"
 }) {
-  await page.addInitScript((selectedLanguage) => {
-    localStorage.setItem("hematuria-language", selectedLanguage);
-  }, language);
+  await selectLanguage(page, language);
   const loaded = page.waitForResponse((response) => {
     const request = response.request();
     if (request.method() !== "POST" || new URL(response.url()).pathname !== "/api/desktop/attempt/state") return false;
