@@ -36,6 +36,7 @@ const fast = [
   command(pnpm, "run", "test:desktop:student-score-projection"),
   command(pnpm, "run", "test:data-agent-authority"),
   command(pnpm, "run", "test:bilingual-conflict-quarantine"),
+  command(pnpm, "run", "test:desktop:install-identity"),
   command(pnpm, "run", "typecheck"),
   command(pnpm, "run", "lint")
 ];
@@ -58,8 +59,13 @@ const milestone = [
   command(pnpm, "run", "test:desktop:renderer-contract"),
   command("cargo", "check", "--manifest-path", "src-tauri/Cargo.toml"),
   command("cargo", "test", "--manifest-path", "src-tauri/Cargo.toml", "--lib"),
-  desktopCommand(pnpm, "exec", "tauri", "build", "--no-bundle"),
+  desktopCommand(pnpm, "exec", "tauri", "build", "--bundles", "nsis"),
+  desktopCommand("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts/desktop-package-portable.ps1"),
+  desktopCommand(process.execPath, "scripts/desktop-write-artifact-manifest.mjs"),
+  desktopCommand(process.execPath, "scripts/scan-desktop-package.mjs", "--require-artifacts"),
   desktopCommand(process.execPath, "scripts/test-desktop-tauri-smoke.mjs", "--surface", "no-bundle"),
+  desktopCommand(process.execPath, "scripts/test-desktop-package-differential.mjs", "--require-packages"),
+  desktopCommand(process.execPath, "scripts/test-desktop-fault-injection.mjs"),
   command(git, "diff", "--quiet", baselineHead, "HEAD", "--", "data")
 ];
 function parseArguments(argv) {
@@ -218,6 +224,9 @@ try {
         R5_TEST_SEED: options.seed,
         HEMATURIA_PRODUCT_HEAD: report.productHead
       };
+      if (options.level === "milestone") {
+        commonEnv.HEMATURIA_DESKTOP_ARTIFACTS = path.join(repoRoot, ".desktop-cache", "phase3-artifacts");
+      }
       const desktopEnv = {
         NEXT_PUBLIC_RUNTIME_TARGET: "desktop",
         NEXT_PUBLIC_API_BASE_URL: "",

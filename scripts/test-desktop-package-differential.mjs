@@ -10,8 +10,10 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."
 const requirePackages = process.argv.includes("--require-packages");
 const expectedHead = String(process.env.HEMATURIA_PRODUCT_HEAD || "");
 assert.match(expectedHead, /^[0-9a-f]{40}$/u, "HEMATURIA_PRODUCT_HEAD must be the full product SHA");
+const packageVersion = JSON.parse(await fs.readFile(path.join(repoRoot, "package.json"), "utf8")).version;
 const temporaryRoot = await fs.mkdtemp(path.join(os.tmpdir(), "hematuria-surface-differential-"));
 const checkpoints = [];
+let nsisUninstaller;
 
 function run(bin, args, env = {}) {
   const result = spawnSync(bin, args, {
@@ -57,17 +59,29 @@ async function extractPortable(archive, relative) {
   return executable;
 }
 
+async function installNsis(installer) {
+  const destination = path.join(temporaryRoot, "nsis-installed");
+  run(installer, ["/S", `/D=${destination}`]);
+  const executable = path.join(destination, "hematuria-training-r5.exe");
+  nsisUninstaller = path.join(destination, "uninstall.exe");
+  await Promise.all([fs.access(executable), fs.access(nsisUninstaller)]);
+  return executable;
+}
+
 try {
   await runRenderer("development-renderer");
   await runRenderer("static-renderer");
   await runRenderer("staged-desktop", path.join(repoRoot, "src-tauri", "resources", "app"));
   await runTauri("no-bundle", "no-bundle", path.join(repoRoot, "src-tauri", "target", "release", "hematuria-training-r5.exe"));
 
-  const portableArchive = process.env.HEMATURIA_DESKTOP_PORTABLE_ZIP;
-  const nsisExecutable = process.env.HEMATURIA_DESKTOP_NSIS_EXECUTABLE;
+  const artifactRoot = process.env.HEMATURIA_DESKTOP_ARTIFACTS;
+  const portableArchive = process.env.HEMATURIA_DESKTOP_PORTABLE_ZIP
+    || (artifactRoot && path.join(artifactRoot, `hematuria-desktop-r5-portable-${packageVersion}-windows-x64.zip`));
+  const nsisInstaller = process.env.HEMATURIA_DESKTOP_NSIS_INSTALLER
+    || (artifactRoot && path.join(artifactRoot, `hematuria-desktop-r5-setup-${packageVersion}-windows-x64.exe`));
   if (requirePackages) {
     assert.ok(portableArchive, "HEMATURIA_DESKTOP_PORTABLE_ZIP is required");
-    assert.ok(nsisExecutable, "HEMATURIA_DESKTOP_NSIS_EXECUTABLE is required");
+    assert.ok(nsisInstaller, "HEMATURIA_DESKTOP_NSIS_INSTALLER is required");
     await fs.access(portableArchive);
     const portableVariants = [
       ["portable-normal", "portable-normal"],
@@ -77,8 +91,8 @@ try {
     for (const [label, relative] of portableVariants) {
       await runTauri("portable", label, await extractPortable(portableArchive, relative));
     }
-    await fs.access(nsisExecutable);
-    await runTauri("nsis", "nsis", nsisExecutable);
+    await fs.access(nsisInstaller);
+    await runTauri("nsis", "nsis", await installNsis(nsisInstaller));
   }
 
   const reference = comparableOutcome(checkpoints[0]);
@@ -95,5 +109,6 @@ try {
   };
   process.stdout.write(`${JSON.stringify(summary)}\n`);
 } finally {
+  if (nsisUninstaller) run(nsisUninstaller, ["/S"]);
   await fs.rm(temporaryRoot, { recursive: true, force: true, maxRetries: 20, retryDelay: 250 });
 }
