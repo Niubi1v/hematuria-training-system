@@ -59,6 +59,7 @@ import { isConnectionFailureFallback, isSafetyFallback, mergeRecoveredCoverage, 
 import { initializeStorageVersion, readJsonStorage, removeBrowserStorageEntries, writeJsonStorage } from "@/src/lib/safeStorage";
 import { attemptModeForTrainingMode, attemptPointerKey, attemptStorageKey, createAttempt, isAttemptCompatible, isStoredAttemptStateCompatible, legacyTrainingStateStorageKey, trainingStateStorageKey, type AttemptIdentity, type AttemptMode, type StoredAttemptState } from "@/src/lib/attemptState";
 import { projectStudentScoreText } from "@/src/lib/studentScoreProjection";
+import { canOpenTrainingStage, nextTrainingStage, submittedTrainingStages, type TrainingStageNo } from "@/src/lib/trainingStageState";
 import { bootstrapDesktopStateAuthority, desktopAuthoritiesCompatible, isDesktopStateAuthority, type DesktopStateAuthority } from "@/src/lib/desktopStateAuthority";
 import { publicTrajectoryActionLabel } from "@/src/lib/publicClinicalTrajectory";
 import {
@@ -88,7 +89,7 @@ type TrainingMode = "free" | "osce" | "demo" | "rct" | "random";
 type LanguageCode = "zh" | "en";
 type AiMode = "deepseek" | "rule" | "debug";
 type AiStatus = AiConnectionStatus;
-type AgentStageNo = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+type AgentStageNo = TrainingStageNo;
 type StudentVisibleCase = {
   id: string;
   displayCaseId?: string;
@@ -679,10 +680,6 @@ function stageScoreKey(stageNo: AgentStageNo) {
   if (stageNo === 5) return "treatment";
   if (stageNo === 6) return "perioperative";
   return "debrief";
-}
-
-function nextStage(stageNo: AgentStageNo): AgentStageNo | null {
-  return stageNo < 7 ? ((stageNo + 1) as AgentStageNo) : null;
 }
 
 function patientOpening(lang: LanguageCode) {
@@ -2893,12 +2890,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }
 
   function canOpenStage(stageNo: AgentStageNo) {
-    if (finalReport && stageNo !== 7) return false;
-    if (stageNo === 1) return true;
-    for (let current = 1 as AgentStageNo; current < stageNo; current = (current + 1) as AgentStageNo) {
-      if (!submitted[current]) return false;
-    }
-    return true;
+    return canOpenTrainingStage(stageNo, submittedTrainingStages(submitted), Boolean(finalReport));
   }
 
   function openStage(stageNo: AgentStageNo) {
@@ -3604,7 +3596,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
               <span data-testid="training-complete-state" className="workbench-action-state"><CheckCircle2 size={16} />{lang === "en" ? "Completed" : "已完成"}</span>
             ) : currentStageSubmitted && activeStageNo !== 7 ? (
               <button data-testid="next-stage" onClick={() => {
-                const next = nextStage(activeStageNo);
+                const next = nextTrainingStage(activeStageNo);
                 if (next) openStage(next);
               }} className="ui-button-primary">
                 <ClipboardList size={16} /> {lang === "en" ? "Next stage" : "进入下一阶段"}
