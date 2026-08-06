@@ -45,8 +45,8 @@ pnpm desktop:model:install -- --model-mode standard
 手工放置时，文件名必须保持清单中的原名。可用以下命令核对 SHA-256：
 
 ```powershell
-Get-FileHash "$env:LOCALAPPDATA\cn.hematuria.training.desktop\models\Qwen3-1.7B-Q4_K_M.gguf" -Algorithm SHA256
-Get-FileHash "$env:LOCALAPPDATA\cn.hematuria.training.desktop\models\Qwen3-4B-Q4_K_M.gguf" -Algorithm SHA256
+Get-FileHash "$env:LOCALAPPDATA\HematuriaTraining\MentorLocalAI-R5\models\Qwen3-1.7B-Q4_K_M.gguf" -Algorithm SHA256
+Get-FileHash "$env:LOCALAPPDATA\HematuriaTraining\MentorLocalAI-R5\models\Qwen3-4B-Q4_K_M.gguf" -Algorithm SHA256
 ```
 
 ## 一键命令

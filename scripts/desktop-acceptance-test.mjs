@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 const scriptsDirectory = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptsDirectory, "..");
 const require = createRequire(import.meta.url);
+const { r5DataDirectory } = require("../server/desktopCompatibility.js");
 const realLocalAi = process.argv.includes("--real-local-ai");
 const appRootArgument = process.argv.indexOf("--app-root");
 const appRoot = appRootArgument >= 0
@@ -31,13 +32,9 @@ const modelMode = String(process.env.HEMATURIA_DESKTOP_MODEL_MODE || manifest.de
 const selectedModel = manifest.models?.[modelMode];
 assert.ok(selectedModel, `Unknown desktop model mode: ${modelMode}`);
 const llamaPath = path.join(repoRoot, "desktop-runtime", "llama", manifest.llamaCpp.entryPoint);
-const defaultModelPath = path.join(
-  process.env.LOCALAPPDATA || "",
-  "cn.hematuria.training.desktop",
-  "models",
-  selectedModel.fileName
-);
+const defaultModelPath = path.join(r5DataDirectory(process.env.LOCALAPPDATA), "models", selectedModel.fileName);
 const modelPath = process.env.HEMATURIA_DESKTOP_MODEL_PATH || defaultModelPath;
+const productHead = process.env.HEMATURIA_PRODUCT_HEAD || process.env.NEXT_PUBLIC_GIT_SHA || "desktop-acceptance";
 
 assert.ok(fs.existsSync(sidecarEntry), `Staged desktop sidecar is missing: ${sidecarEntry}. Run desktop:stage first.`);
 assert.ok(Number(process.versions.node.split(".")[0]) >= 22, "Desktop acceptance requires Node.js 22 or newer.");
@@ -142,6 +139,8 @@ async function launchSidecar() {
       HEMATURIA_DESKTOP_ALLOWED_ORIGINS: allowedOrigin,
       HEMATURIA_DESKTOP_BEARER: bearer,
       HEMATURIA_DESKTOP_HANDSHAKE: handshake,
+      HEMATURIA_PRODUCT_HEAD: productHead,
+      NEXT_PUBLIC_GIT_SHA: "stale-desktop-acceptance-head",
       HEMATURIA_DESKTOP_DEBUG_RUNTIME: "1",
       HEMATURIA_DESKTOP_MODEL_MODE: modelMode,
       ...(realLocalAi
@@ -305,6 +304,7 @@ function recordSourceContract(reply, expectation, label, language, turnNumber) {
   );
   assert.notEqual(reply.factSource, "local_ai", `${label} must keep model output outside the fact authority path`);
   assert.ok(reply.desktopEvidence, `${label} must include authenticated desktop runtime evidence`);
+  assert.equal(reply.desktopEvidence.productHead, productHead, `${label} must use the desktop product HEAD authority`);
   assert.deepEqual(Object.keys(reply.desktopEvidence).sort(), [
     "answerSource", "cloudRequestCount", "factState", "fallbackReason", "intent", "latency",
     "llamaServerReady", "localModelReady", "model", "modelProfile", "productHead", "requestedSlot",
@@ -965,6 +965,7 @@ try {
   finalRuntimeEvidence = (await requestJson(runtime, "/api/desktop/evidence/", { method: "GET" })).payload;
   assert.equal(finalRuntimeEvidence.schemaVersion, 1);
   assert.equal(finalRuntimeEvidence.runtimeTarget, "desktop");
+  assert.equal(finalRuntimeEvidence.productHead, productHead);
   assert.equal(finalRuntimeEvidence.llamaServerReady, realLocalAi);
   assert.equal(finalRuntimeEvidence.localModelReady, realLocalAi);
   assert.equal(finalRuntimeEvidence.cloudRequestCount, 0);

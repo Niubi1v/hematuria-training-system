@@ -147,6 +147,7 @@ globalThis.fetch = async function desktopLoopbackFetch(input, init) {
 
 function installDesktopEnvironment(trainingSecret) {
   const origins = [...allowedOrigins].join(",");
+  const productHead = process.env.HEMATURIA_PRODUCT_HEAD || process.env.NEXT_PUBLIC_GIT_SHA || "desktop-local";
   Object.assign(process.env, {
     NODE_ENV: "production",
     HEMATURIA_RUNTIME_TARGET: "desktop",
@@ -162,7 +163,8 @@ function installDesktopEnvironment(trainingSecret) {
     PATIENT_AGENT_ALLOWED_ORIGIN: origins,
     TTS_ALLOWED_ORIGINS: origins,
     TRAINING_DEPLOYMENT_TIER: "practice",
-    NEXT_PUBLIC_GIT_SHA: process.env.NEXT_PUBLIC_GIT_SHA || "desktop-local",
+    HEMATURIA_PRODUCT_HEAD: productHead,
+    NEXT_PUBLIC_GIT_SHA: productHead,
     PATIENT_PROMPT_AUDIT_ENABLED: "false"
   });
 }

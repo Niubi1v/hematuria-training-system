@@ -94,7 +94,7 @@ const SAFE_CODE = /^[A-Za-z0-9_.:-]{1,120}$/;
 function errorText(value) {
   if (value instanceof Error) return value.message;
   if (value && typeof value === "object") {
-    return String(value.code || value.message || value.name || "unknown_runtime_failure");
+    return [value.code, value.message, value.name].filter(Boolean).join(" ") || "unknown_runtime_failure";
   }
   return String(value || "unknown_runtime_failure");
 }
@@ -106,6 +106,9 @@ function normalizeRuntimeErrorCode(value) {
   if (/eacces|eperm|access.denied|blocked|quarantine/.test(normalized)) return "runtime_access_denied";
   if (/enoent|not.found|missing/.test(normalized)) return "runtime_resource_missing";
   if (/eaddrinuse|eaddrnotavail|loopback|api_bind|port.*bind/.test(normalized)) return "loopback_unavailable";
+  if (/database(?: (?:table|schema))? is (?:locked|busy)|sqlite_busy|database disk image is malformed|file is not a database/.test(normalized)) {
+    return "sqlite_locked_or_corrupt";
+  }
   if (/sqlite|database/.test(normalized)) return "sqlite_runtime_error";
   if (/timeout|timed.out/.test(normalized)) return "runtime_timeout";
   return "unknown_runtime_failure";

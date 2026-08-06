@@ -90,7 +90,8 @@ async function sidecarDiagnosticRoundTrip() {
       HEMATURIA_DESKTOP_BEARER: bearer,
       HEMATURIA_DESKTOP_HANDSHAKE: handshake,
       HEMATURIA_PRODUCT_VERSION: "r5-test",
-      NEXT_PUBLIC_GIT_SHA: "r5-test-head"
+      HEMATURIA_PRODUCT_HEAD: "r5-authoritative-head",
+      NEXT_PUBLIC_GIT_SHA: "stale-renderer-head"
     },
     stdio: ["pipe", "pipe", "pipe"],
     windowsHide: true
@@ -116,6 +117,7 @@ async function sidecarDiagnosticRoundTrip() {
     assert.equal(diagnosticsResponse.status, 200);
     const diagnostics = await diagnosticsResponse.json();
     assert.equal(diagnostics.schemaVersion, 2);
+    assert.equal(diagnostics.productHead, "r5-authoritative-head");
     assert.equal(diagnostics.dataIsolation.currentProfile, "R5");
     assert.equal(diagnostics.dataIsolation.currentDirectory, "MentorLocalAI-R5");
     assert.equal(diagnostics.dataIsolation.migrationPerformed, false);
@@ -125,6 +127,14 @@ async function sidecarDiagnosticRoundTrip() {
       assert.equal(typeof diagnostics.paths[key], "string", key);
     }
     assertSafeDiagnostic(JSON.stringify(diagnostics), bearer);
+
+    const bootstrapResponse = await request("/api/desktop/state/bootstrap");
+    assert.equal(bootstrapResponse.status, 200);
+    assert.equal((await bootstrapResponse.json()).productHead, "r5-authoritative-head");
+
+    const evidenceResponse = await request("/api/desktop/evidence");
+    assert.equal(evidenceResponse.status, 200);
+    assert.equal((await evidenceResponse.json()).productHead, "r5-authoritative-head");
 
     const firstExport = await request("/api/desktop/evidence/export", { method: "POST" });
     const secondExport = await request("/api/desktop/evidence/export", { method: "POST" });
@@ -232,6 +242,15 @@ try {
   assert.match(portableScript, /-Value\s+"portable"/);
   const tauriConfig = JSON.parse(fs.readFileSync(path.join(repoRoot, "src-tauri", "tauri.conf.json"), "utf8"));
   assert.deepEqual(tauriConfig.bundle.resources, ["resources/**/*"]);
+  for (const relativePath of [
+    "scripts/desktop-install-model.mjs",
+    "scripts/desktop-acceptance-test.mjs",
+    "scripts/desktop-model-benchmark.mjs"
+  ]) {
+    const source = fs.readFileSync(path.join(repoRoot, relativePath), "utf8");
+    assert.match(source, /r5DataDirectory/);
+    assert.doesNotMatch(source, /cn\.hematuria\.training\.desktop/);
+  }
 
   await sidecarDiagnosticRoundTrip();
   await sidecarRejectsR4DataDirectory();

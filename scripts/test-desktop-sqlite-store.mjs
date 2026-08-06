@@ -10,9 +10,13 @@ const testDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "hematuria-desktop-s
 const databasePath = path.join(testDirectory, "desktop.sqlite");
 const originalMode = process.env.TRAINING_ATTEMPT_STORE_MODE;
 const originalDatabasePath = process.env.HEMATURIA_DESKTOP_DATABASE_PATH;
+const originalProductHead = process.env.HEMATURIA_PRODUCT_HEAD;
+const originalGitSha = process.env.NEXT_PUBLIC_GIT_SHA;
 
 process.env.TRAINING_ATTEMPT_STORE_MODE = "sqlite";
 process.env.HEMATURIA_DESKTOP_DATABASE_PATH = databasePath;
+process.env.HEMATURIA_PRODUCT_HEAD = "r5-authoritative-head";
+process.env.NEXT_PUBLIC_GIT_SHA = "stale-renderer-head";
 
 let store = require("../server/trainingAttemptStore.js");
 let sqlite = require("../server/desktopSqliteStore.js");
@@ -47,7 +51,7 @@ async function main() {
   const initialAuthority = sqlite.getDesktopStateAuthority();
   assert.match(initialAuthority.stateStoreId, /^[0-9a-f-]{36}$/i);
   assert.equal(initialAuthority.schemaVersion, 3);
-  assert.equal(initialAuthority.productHead, "desktop-local");
+  assert.equal(initialAuthority.productHead, "r5-authoritative-head");
   assert.equal(initialAuthority.serverStateRevision, 0);
 
   const schemaDatabase = new DatabaseSync(databasePath);
@@ -488,6 +492,10 @@ try {
   else process.env.TRAINING_ATTEMPT_STORE_MODE = originalMode;
   if (originalDatabasePath === undefined) delete process.env.HEMATURIA_DESKTOP_DATABASE_PATH;
   else process.env.HEMATURIA_DESKTOP_DATABASE_PATH = originalDatabasePath;
+  if (originalProductHead === undefined) delete process.env.HEMATURIA_PRODUCT_HEAD;
+  else process.env.HEMATURIA_PRODUCT_HEAD = originalProductHead;
+  if (originalGitSha === undefined) delete process.env.NEXT_PUBLIC_GIT_SHA;
+  else process.env.NEXT_PUBLIC_GIT_SHA = originalGitSha;
   try {
     fs.rmSync(testDirectory, { recursive: true, force: true });
   } catch (error) {

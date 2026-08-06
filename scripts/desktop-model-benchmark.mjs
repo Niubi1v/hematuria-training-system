@@ -11,15 +11,13 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
+const { r5DataDirectory } = require("../server/desktopCompatibility.js");
 const manifest = JSON.parse(await fs.readFile(path.join(repoRoot, "desktop", "runtime-manifest.json"), "utf8"));
 const modelMode = String(process.env.HEMATURIA_DESKTOP_MODEL_MODE || manifest.defaultModelMode);
 const model = manifest.models?.[modelMode];
 if (!model) throw new Error("desktop_model_mode_invalid");
 const llamaPath = path.join(repoRoot, "desktop-runtime", "llama", manifest.llamaCpp.entryPoint);
-const defaultDataDirectory = path.join(
-  process.env.LOCALAPPDATA || "",
-  "cn.hematuria.training.desktop"
-);
+const defaultDataDirectory = r5DataDirectory(process.env.LOCALAPPDATA);
 const modelPath = process.env.HEMATURIA_DESKTOP_MODEL_PATH
   || path.join(defaultDataDirectory, "models", model.fileName);
 

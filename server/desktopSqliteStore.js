@@ -359,7 +359,7 @@ function getDesktopStateAuthority() {
   return {
     stateStoreId,
     schemaVersion: readSchemaVersion(database),
-    productHead: String(process.env.NEXT_PUBLIC_GIT_SHA || "desktop-local"),
+    productHead: String(process.env.HEMATURIA_PRODUCT_HEAD || process.env.NEXT_PUBLIC_GIT_SHA || "desktop-local"),
     serverStateRevision: readServerStateRevision(database)
   };
 }
