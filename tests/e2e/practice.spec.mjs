@@ -984,7 +984,7 @@ test("an init response without a signed training token never enables stage submi
   expect(observations.filter((item) => item.action === "stage-feedback")).toHaveLength(0);
 });
 
-test("failed training attempt initialization never sends stage feedback and retries explicitly", async ({ page }) => {
+test("failed training attempt initialization coalesces ten rapid prepare clicks", async ({ page }) => {
   const observations = [];
   await routeTrainingApiThroughHandler(page, observations, { initAttemptDelayMs: 300, initAttemptFailures: 1, initAttemptFailureStatus: 502, initAttemptFailureCode: "network_error" });
   await page.goto("/cases/P001/");
@@ -997,7 +997,7 @@ test("failed training attempt initialization never sends stage feedback and retr
   ]);
   expect(observations.filter((item) => item.action === "stage-feedback")).toHaveLength(0);
 
-  await retry.evaluate((button) => { button.click(); button.click(); });
+  await retry.evaluate((button) => { for (let index = 0; index < 10; index += 1) button.click(); });
   const submit = page.getByRole("button", { name: "提交本阶段", exact: true });
   await expect(submit).toBeEnabled();
   expect(observations.filter((item) => item.action === "init-attempt")).toHaveLength(2);

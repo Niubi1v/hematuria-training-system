@@ -53,7 +53,7 @@
       "minimumReproduction": { "environment": "Tauri no-bundle executable with test-only WebView2 CDP", "steps": ["Launch real Tauri with an isolated profile.", "Save through the visible renderer.", "Close normally, restart, restore, and verify cleanup."] },
       "originalEvidence": { "head": "fa1d5d05731163697eda0be8efa47c48a673a8cf", "artifactSha256": null, "references": ["docs/desktop-poc/handoff/r4.1-runtime-audit-topology.md", "docs/ui-quality-audit.md"] },
       "legacyGap": "Source renderer and packaged-sidecar tests covered disjoint halves of the product.",
-      "regressionTests": [{ "id": "R5-TAURI-CANONICAL-PERSISTENCE", "status": "existing", "path": "scripts/test-desktop-tauri-smoke.mjs", "gate": "milestone", "components": ["tauri", "webview2", "renderer", "bundled sidecar", "sqlite"] }],
+      "regressionTests": [{ "id": "R5-TAURI-CANONICAL-PERSISTENCE", "status": "existing", "path": "scripts/test-desktop-tauri-smoke.mjs", "gate": "milestone", "components": ["tauri", "webview2", "renderer", "bundled sidecar", "sqlite"] }, { "id": "R5-SURFACE-CANONICAL-DIFFERENTIAL", "status": "existing", "path": "scripts/test-desktop-package-differential.mjs", "gate": "milestone", "components": ["development renderer", "static renderer", "staged app", "tauri", "portable", "nsis"] }],
       "replay": { "seed": "r5-tauri-persistence-v1", "command": "node scripts/test-desktop-tauri-smoke.mjs --surface no-bundle", "actions": ["launch", "save", "normal close", "restart", "resume", "cleanup"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "milestone",
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     },
@@ -96,12 +96,12 @@
     {
       "id": "R5-REG-008", "slug": "R4-R5-DATA", "kind": "release_blocker", "severity": "P0", "status": "open", "title": "R4 and R5 installation or data identity can collide",
       "userVisibleSymptom": "Installing, running, or uninstalling R5 can overwrite or remove R4 state or installation metadata.",
-      "rootCause": { "status": "confirmed", "detail": "R5 has a separate data subdirectory, but frozen R4 and current R5 retain the same NSIS product name, version, identifier, and install mode." },
+      "rootCause": { "status": "confirmed", "detail": "The Phase 3 start configuration shared R4 product name, version, identifier, and install mode; R5 now has a distinct static identity while real coexistence remains externally blocked." },
       "affectedLayers": ["tauri", "nsis", "data_directory", "uninstall"],
       "minimumReproduction": { "environment": "Disposable Windows VM with frozen R4 installed", "steps": ["Create R4 durable state.", "Install and run R5.", "Uninstall each product independently and verify the other state remains."] },
       "originalEvidence": { "head": "99c206e1036472a562ee84ca26e762b9c09027a7", "artifactSha256": null, "references": ["src-tauri/tauri.conf.json", "src-tauri/src/lib.rs"] },
       "legacyGap": "Data-directory names were validated without side-by-side Windows installation identity.",
-      "regressionTests": [{ "id": "R5-EXTERNAL-R4-R5-COEXISTENCE", "status": "existing", "path": "scripts/run-r5-gate.mjs", "gate": "candidate", "components": ["frozen R4 config", "R5 config", "candidate preflight"] }],
+      "regressionTests": [{ "id": "R5-STATIC-R4-R5-IDENTITY", "status": "existing", "path": "scripts/test-desktop-install-identity.mjs", "gate": "milestone", "components": ["frozen R4 config", "R5 config", "data directory"] }, { "id": "R5-EXTERNAL-R4-R5-COEXISTENCE", "status": "existing", "path": "scripts/run-r5-gate.mjs", "gate": "candidate", "components": ["frozen R4 config", "R5 config", "candidate preflight"] }],
       "replay": { "seed": "r5-r4-r5-coexist-v1", "command": "node scripts/run-r5-gate.mjs candidate --product-head PRODUCT_HEAD --preflight-only", "actions": ["compare frozen identities", "stop before packaging if equal"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "candidate",
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     },
@@ -113,8 +113,8 @@
       "minimumReproduction": { "environment": "Scratch package copy under a Chinese spaced near-long path", "steps": ["Copy without renaming frozen artifacts.", "Launch as a standard user without host Node.", "Save, close, reopen, and export diagnostics."] },
       "originalEvidence": { "head": "21b4f6229fa4d871ffb6954f63193084169d9866", "artifactSha256": null, "references": ["external:R5-Cross-Machine-Compatibility-19c1278e"] },
       "legacyGap": "Local tests reused the repository path and installed development runtime.",
-      "regressionTests": [{ "id": "R5-COMPAT-UNICODE-LONG-PATH", "status": "planned", "path": "scripts/test-desktop-fault-injection.mjs", "gate": "candidate", "components": ["portable package", "bundled runtime", "sqlite"] }],
-      "replay": { "seed": "r5-unicode-long-path-v1", "command": "node scripts/test-desktop-fault-injection.mjs --scenario unicode-long-path", "actions": ["copy", "launch", "save", "restart"] }, "fixCommit": null, "relatedCommits": ["21b4f6229fa4d871ffb6954f63193084169d9866"], "permanentGate": "candidate",
+      "regressionTests": [{ "id": "R5-COMPAT-UNICODE-LONG-PATH", "status": "existing", "path": "scripts/test-desktop-package-differential.mjs", "gate": "milestone", "components": ["extracted portable package", "bundled runtime", "sqlite"] }],
+      "replay": { "seed": "r5-unicode-long-path-v1", "command": "pnpm run test:desktop:package-differential -- --require-packages", "actions": ["extract", "launch", "save", "restart"] }, "fixCommit": null, "relatedCommits": ["21b4f6229fa4d871ffb6954f63193084169d9866"], "permanentGate": "milestone",
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     },
     {
@@ -125,8 +125,8 @@
       "minimumReproduction": { "environment": "Scratch staged-resource copy", "steps": ["Remove one required resource.", "Launch.", "Assert fail-closed classification, no secret leakage, and no process residue."] },
       "originalEvidence": { "head": "99c206e1036472a562ee84ca26e762b9c09027a7", "artifactSha256": null, "references": ["scripts/scan-desktop-package.mjs", "scripts/test-desktop-r5-compatibility.mjs"] },
       "legacyGap": "Bundle scans prove presence in one artifact but not visible recovery after loss or quarantine.",
-      "regressionTests": [{ "id": "R5-FAULT-RESOURCE-MISSING", "status": "planned", "path": "scripts/test-desktop-fault-injection.mjs", "gate": "milestone", "components": ["scratch resources", "tauri diagnostics", "cleanup"] }],
-      "replay": { "seed": "r5-resource-missing-v1", "command": "node scripts/test-desktop-fault-injection.mjs --scenario resource-missing", "actions": ["copy", "remove", "launch", "classify", "cleanup"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "milestone",
+      "regressionTests": [{ "id": "R5-FAULT-RESOURCE-MISSING", "status": "existing", "path": "scripts/test-desktop-fault-injection.mjs", "gate": "milestone", "components": ["scratch resources", "tauri diagnostics", "cleanup"] }],
+      "replay": { "seed": "r5-resource-missing-v1", "command": "pnpm run test:desktop:fault-injection", "actions": ["copy", "remove", "launch", "classify", "cleanup"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "milestone",
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     },
     {
@@ -137,8 +137,8 @@
       "minimumReproduction": { "environment": "Isolated R5 model directory", "steps": ["Run without a model.", "Run with a wrong-digest same-name file.", "Assert safe fallback or actionable failure, correct label, and zero cloud requests."] },
       "originalEvidence": { "head": "21b4f6229fa4d871ffb6954f63193084169d9866", "artifactSha256": null, "references": ["scripts/desktop-install-model.mjs", "scripts/test-desktop-r5-compatibility.mjs"] },
       "legacyGap": "Optional real-model tests did not exercise corrupt or absent model recovery through the visible app.",
-      "regressionTests": [{ "id": "R5-FAULT-MODEL-MISSING-HASH", "status": "planned", "path": "scripts/test-desktop-fault-injection.mjs", "gate": "milestone", "components": ["model verifier", "sidecar", "fallback label"] }],
-      "replay": { "seed": "r5-model-missing-hash-v1", "command": "node scripts/test-desktop-fault-injection.mjs --scenario model-missing-hash", "actions": ["missing", "bad digest", "prepare", "assert label"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "milestone",
+      "regressionTests": [{ "id": "R5-FAULT-MODEL-MISSING-HASH", "status": "existing", "path": "scripts/test-desktop-fault-injection.mjs", "gate": "milestone", "components": ["model verifier", "sidecar", "fallback label"] }],
+      "replay": { "seed": "r5-model-missing-hash-v1", "command": "pnpm run test:desktop:fault-injection", "actions": ["missing", "bad digest", "prepare", "assert label"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "milestone",
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     },
     {
@@ -161,7 +161,7 @@
       "minimumReproduction": { "environment": "Real Tauri with deterministic delayed preparation", "steps": ["Trigger prepare ten times rapidly.", "Wait for one terminal result.", "Assert one runtime, one state transition, and no residue."] },
       "originalEvidence": { "head": "21b4f6229fa4d871ffb6954f63193084169d9866", "artifactSha256": null, "references": ["external:R5-Cross-Machine-Compatibility-19c1278e"] },
       "legacyGap": "Lifecycle tests invoke prepare once and wait before another action.",
-      "regressionTests": [{ "id": "R5-TAURI-REPREPARE-RACE", "status": "planned", "path": "scripts/test-desktop-tauri-smoke.mjs", "gate": "candidate", "components": ["tauri", "prepare command", "cleanup"] }],
+      "regressionTests": [{ "id": "R5-UI-REPREPARE-10X", "status": "existing", "path": "tests/e2e/practice.spec.mjs", "gate": "milestone", "components": ["renderer", "prepare action", "request coalescing"] }, { "id": "R5-TAURI-REPREPARE-RACE", "status": "planned", "path": "scripts/test-desktop-tauri-smoke.mjs", "gate": "candidate", "components": ["tauri", "prepare command", "cleanup"] }],
       "replay": { "seed": "r5-reprepare-race-v1", "command": "node scripts/test-desktop-tauri-smoke.mjs --scenario reprepare-race", "actions": ["launch", "prepare x10", "wait", "count", "close"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "candidate",
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     },
@@ -245,7 +245,7 @@
       "minimumReproduction": { "environment": "Real Tauri with sidecar and deterministic model", "steps": ["Launch and close normally ten times.", "Inspect child PIDs and ports after each exit.", "Assert all are gone before next launch."] },
       "originalEvidence": { "head": "99c206e1036472a562ee84ca26e762b9c09027a7", "artifactSha256": null, "references": ["scripts/desktop-lifecycle-test.mjs", "src-tauri/src/lib.rs"] },
       "legacyGap": "Direct lifecycle tests do not prove real window close releases the Job Object and CDP port.",
-      "regressionTests": [{ "id": "R5-TAURI-PROCESS-PORT-CLEANUP", "status": "planned", "path": "scripts/test-desktop-tauri-smoke.mjs", "gate": "candidate", "components": ["tauri", "job object", "sidecar", "model", "cdp"] }, { "id": "R5-TAURI-SINGLE-CYCLE-CLEANUP", "status": "existing", "path": "scripts/test-desktop-tauri-smoke.mjs", "gate": "milestone", "components": ["tauri", "sidecar", "loopback port", "cdp"] }],
+      "regressionTests": [{ "id": "R5-TAURI-PROCESS-PORT-CLEANUP", "status": "planned", "path": "scripts/test-desktop-tauri-smoke.mjs", "gate": "candidate", "components": ["tauri", "job object", "sidecar", "model", "cdp"] }, { "id": "R5-TAURI-SINGLE-CYCLE-CLEANUP", "status": "existing", "path": "scripts/test-desktop-tauri-smoke.mjs", "gate": "milestone", "components": ["tauri", "sidecar", "loopback port", "cdp"] }, { "id": "R5-FAULT-DELAYED-CHILD-CLEANUP", "status": "existing", "path": "scripts/test-desktop-fault-injection.mjs", "gate": "milestone", "components": ["sidecar", "llama", "loopback port", "cleanup"] }],
       "replay": { "seed": "r5-process-port-cleanup-v1", "command": "node scripts/test-desktop-tauri-smoke.mjs --scenario lifecycle-10", "actions": ["launch x10", "close x10", "probe"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "candidate",
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     },
@@ -257,8 +257,8 @@
       "minimumReproduction": { "environment": "Persistent WebView profile with replaceable temporary SQLite", "steps": ["Cache a durable attempt.", "Replace only SQLite with a fresh store.", "Restart and assert bootstrap clears incompatible cache and creates coherent authority."] },
       "originalEvidence": { "head": "99c206e1036472a562ee84ca26e762b9c09027a7", "artifactSha256": null, "references": ["src/lib/desktopStateAuthority.ts", "scripts/test-desktop-state-authority.ts"] },
       "legacyGap": "State-authority tests used MemoryStorage instead of real WebView profile plus replaced database.",
-      "regressionTests": [{ "id": "R5-TAURI-STALE-WEBVIEW-FRESH-DB", "status": "planned", "path": "scripts/test-desktop-tauri-smoke.mjs", "gate": "candidate", "components": ["webview2 profile", "bootstrap", "sqlite"] }],
-      "replay": { "seed": "r5-stale-webview-v1", "command": "node scripts/test-desktop-tauri-smoke.mjs --scenario stale-webview-fresh-db", "actions": ["cache", "replace DB", "restart", "bootstrap"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "candidate",
+      "regressionTests": [{ "id": "R5-RENDERER-STALE-WEBVIEW-FRESH-DB", "status": "existing", "path": "tests/desktop/renderer-contract.spec.mjs", "gate": "milestone", "components": ["renderer storage", "bootstrap", "fresh sqlite", "preferences"] }],
+      "replay": { "seed": "r5-stale-webview-v1", "command": "pnpm run test:desktop:renderer-contract -- --grep stale", "actions": ["cache", "replace DB", "restart", "bootstrap"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "milestone",
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     },
     {
@@ -288,12 +288,12 @@
     {
       "id": "R5-REG-024", "slug": "NSIS-IDENTITY", "kind": "release_blocker", "severity": "P0", "status": "open", "title": "R5 NSIS identity is not isolated from R4",
       "userVisibleSymptom": "Windows can treat R5 as an R4 update or let one uninstaller remove the other product.",
-      "rootCause": { "status": "confirmed", "detail": "Frozen R4 and current R5 share productName, version, identifier, and current-user install mode." },
+      "rootCause": { "status": "confirmed", "detail": "Frozen R4 and the Phase 3 start configuration shared product name, version, identifier, and current-user install mode; static R5 identity is now distinct." },
       "affectedLayers": ["tauri_config", "nsis", "windows_registry", "uninstall"],
       "minimumReproduction": { "environment": "Candidate preflight plus disposable Windows VM", "steps": ["Compare frozen R4 and candidate identity fields before build.", "Stop if all are equal.", "After isolation, install and uninstall both independently in a VM."] },
       "originalEvidence": { "head": "99c206e1036472a562ee84ca26e762b9c09027a7", "artifactSha256": null, "references": ["src-tauri/tauri.conf.json"] },
       "legacyGap": "Data-directory isolation was used as a proxy for Windows installer identity.",
-      "regressionTests": [{ "id": "R5-CANDIDATE-NSIS-IDENTITY", "status": "existing", "path": "scripts/run-r5-gate.mjs", "gate": "candidate", "components": ["frozen R4 config", "candidate config", "pre-build stop"] }],
+      "regressionTests": [{ "id": "R5-STATIC-NSIS-IDENTITY", "status": "existing", "path": "scripts/test-desktop-install-identity.mjs", "gate": "milestone", "components": ["product name", "identifier", "version", "shortcut", "uninstall identity"] }, { "id": "R5-CANDIDATE-NSIS-IDENTITY", "status": "existing", "path": "scripts/run-r5-gate.mjs", "gate": "candidate", "components": ["frozen R4 config", "candidate config", "pre-build stop"] }],
       "replay": { "seed": "r5-nsis-identity-v1", "command": "node scripts/run-r5-gate.mjs candidate --product-head PRODUCT_HEAD --preflight-only", "actions": ["read frozen config", "read candidate config", "compare", "stop"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "candidate",
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     },

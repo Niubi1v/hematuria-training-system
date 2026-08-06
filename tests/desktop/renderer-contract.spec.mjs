@@ -195,3 +195,47 @@ test("real renderer persists through the real sidecar and SQLite", async ({ brow
   }
   await writeSurfaceCheckpoint(checkpoint);
 });
+
+test("fresh SQLite authority clears stale training cache without clearing preferences", async ({ browser, baseURL }) => {
+  assert.ok(baseURL);
+  const pageOrigin = new URL(baseURL).origin;
+  const dataDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "hematuria-stale-webview-state-"));
+  let sidecar;
+  let context;
+  try {
+    sidecar = await startDesktopSidecar({ allowedOrigin: pageOrigin, dataDirectory });
+    context = await browser.newContext({ baseURL });
+    await installDesktopRuntime(context, sidecar.runtime, "en");
+    await context.addInitScript(() => {
+      localStorage.setItem("hematuria-language", "en");
+      localStorage.setItem("hematuria-ai-mode", "rule");
+      localStorage.setItem("hematuria-attempt-pointer-v3:P001:free:en", JSON.stringify({
+        attemptId: "stale-attempt", productHead: "0000000000000000000000000000000000000000", activeStageNo: 7
+      }));
+      localStorage.setItem("hematuria-attempt-v3:P001:free:en:stale-attempt", JSON.stringify({ activeStageNo: 7 }));
+      sessionStorage.setItem("hematuria-training-state-v4:stale-attempt", "stale-state-token");
+    });
+    const page = await context.newPage();
+    const bootstrapped = page.waitForResponse((response) => new URL(response.url()).pathname === "/api/desktop/state/bootstrap");
+    await page.goto(new URL("/cases/P001/", baseURL).toString());
+    await bootstrapped;
+    const storage = await page.evaluate(() => ({
+      aiMode: localStorage.getItem("hematuria-ai-mode"),
+      language: localStorage.getItem("hematuria-language"),
+      trainingKeys: [...Array(localStorage.length).keys()].map((index) => localStorage.key(index))
+        .concat([...Array(sessionStorage.length).keys()].map((index) => sessionStorage.key(index)))
+        .filter((key) => key?.startsWith("hematuria-attempt-") || key?.startsWith("hematuria-training-state-"))
+    }));
+    assert.deepEqual(storage, { aiMode: "rule", language: "en", trainingKeys: [] });
+    assert.equal((await desktopJson(page, "/api/desktop/state/bootstrap")).payload.productHead, sidecar.productHead);
+    await page.reload();
+    assert.deepEqual(await page.evaluate(() => ({
+      aiMode: localStorage.getItem("hematuria-ai-mode"),
+      language: localStorage.getItem("hematuria-language")
+    })), { aiMode: "rule", language: "en" });
+  } finally {
+    await context?.close();
+    await sidecar?.stop({ removeData: false });
+    await fs.rm(dataDirectory, { recursive: true, force: true });
+  }
+});
