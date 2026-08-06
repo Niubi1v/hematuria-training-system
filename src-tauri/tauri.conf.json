@@ -1,8 +1,9 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Hematuria Training System",
-  "version": "0.1.0",
-  "identifier": "cn.hematuria.training.desktop",
+  "productName": "Hematuria Training System R5",
+  "mainBinaryName": "hematuria-training-r5",
+  "version": "0.5.0",
+  "identifier": "cn.hematuria.training.desktop.r5",
   "build": {
     "frontendDist": "../out"
   },
@@ -26,6 +27,7 @@
     "windows": {
       "nsis": {
         "installMode": "currentUser",
+        "startMenuFolder": "Hematuria Training System R5",
         "displayLanguageSelector": true,
         "languages": ["SimpChinese", "English"]
       }

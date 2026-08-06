@@ -24,7 +24,7 @@ foreach ($target in $targets) {
   }
 }
 
-$portablePattern = Join-Path $repoRoot "outputs\hematuria-desktop-portable-*-windows-x64.zip"
+$portablePattern = Join-Path $repoRoot "outputs\hematuria-desktop-r5-portable-*-windows-x64.zip"
 Get-ChildItem -Path $portablePattern -File -ErrorAction SilentlyContinue | ForEach-Object {
   Remove-Item -LiteralPath $_.FullName -Force
 }

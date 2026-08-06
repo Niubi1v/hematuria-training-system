@@ -16,7 +16,7 @@ const required = [
   "VERIFY-PACKAGE.ps1",
   "SHA256SUMS.txt",
   "tools/Start-Mentor.ps1",
-  "App/HematuriaTraining.exe",
+  "App/HematuriaTraining-R5.exe",
   "App/resources/runtime/node/node.exe",
   "App/resources/runtime/llama/llama-server.exe",
   "App/resources/app/desktop/clinical-content-triage-runtime.json",
@@ -70,7 +70,7 @@ assert.match(limitations, /1023 项等待医学审核.*fail-closed/u);
 assert.match(limitations, /1 项医学冲突/u);
 
 const version = JSON.parse((await fs.readFile(path.join(stage, "VERSION.json"), "utf8")).replace(/^\uFEFF/u, ""));
-assert.match(version.channel, /^mentor-local-ai-final-candidate(?:-r2|-r3|-r4)?$/u);
+assert.match(version.channel, /^mentor-local-ai-r5(?:-r5)?$/u);
 assert.match(version.productHead, /^[0-9a-f]{40}$/u);
 assert.equal(version.medicalGovernance.sourceProjectionApplied, 4);
 assert.equal(version.medicalGovernance.sourceProjectionWithdrawn, 62);

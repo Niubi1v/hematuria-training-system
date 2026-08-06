@@ -1,6 +1,6 @@
 [package]
 name = "hematuria-desktop"
-version = "0.1.0"
+version = "0.5.0"
 description = "Windows desktop shell for the hematuria clinical training system"
 authors = ["Hematuria Training System"]
 edition = "2021"

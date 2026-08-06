@@ -638,7 +638,8 @@ function desktopRuntimeDiagnostics(store) {
   };
   return {
     schemaVersion: 2,
-    productVersion: process.env.HEMATURIA_PRODUCT_VERSION || "0.1.0",
+    productIdentity: "hematuria-training-r5",
+    productVersion: process.env.HEMATURIA_PRODUCT_VERSION || "0.5.0",
     productHead: process.env.HEMATURIA_PRODUCT_HEAD || process.env.NEXT_PUBLIC_GIT_SHA || "desktop-local",
     runtimeTarget: "desktop",
     installationMode: process.env.HEMATURIA_DESKTOP_INSTALLATION_MODE || "unknown",

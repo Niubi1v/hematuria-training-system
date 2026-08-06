@@ -33,23 +33,23 @@ const artifactRoot = process.env.HEMATURIA_DESKTOP_ARTIFACTS?.trim()
 const version = String(packageJson.version);
 const portablePath = path.join(
   artifactRoot,
-  `hematuria-desktop-portable-${version}-windows-x64.zip`
+  `hematuria-desktop-r5-portable-${version}-windows-x64.zip`
 );
 const installerPath = path.join(
   artifactRoot,
-  `hematuria-desktop-setup-${version}-windows-x64.exe`
+  `hematuria-desktop-r5-setup-${version}-windows-x64.exe`
 );
-const shellPath = path.join(repoRoot, "src-tauri", "target", "release", "hematuria-desktop.exe");
+const shellPath = path.join(repoRoot, "src-tauri", "target", "release", "hematuria-training-r5.exe");
 const portableStage = path.join(
   repoRoot,
   ".desktop-cache",
   "portable",
-  `HematuriaTraining-${version}-windows-x64`
+  `HematuriaTraining-R5-${version}-windows-x64`
 );
 
 const receipt = {
   schemaVersion: 1,
-  product: "hematuria-desktop-local-ai-poc",
+  product: "hematuria-training-r5",
   version,
   platform: "windows-x86_64",
   artifacts: {

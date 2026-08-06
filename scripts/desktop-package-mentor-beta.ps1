@@ -1,9 +1,9 @@
 ﻿param(
-  [string]$Version = "0.1.0",
+  [string]$Version = "0.5.0",
   [string]$ArtifactsDirectory = "D:\HematuriaDesktopArtifacts",
-  [string]$ModelPath = "$env:LOCALAPPDATA\cn.hematuria.training.desktop\models\Qwen3-1.7B-Q4_K_M.gguf",
+  [string]$ModelPath = "$env:LOCALAPPDATA\HematuriaTraining\MentorLocalAI-R5\models\Qwen3-1.7B-Q4_K_M.gguf",
   [string]$ProductHead = "",
-  [ValidateSet("", "R2", "R3", "R4")][string]$CandidateSuffix = ""
+  [ValidateSet("", "R5")][string]$CandidateSuffix = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -12,16 +12,16 @@ $scriptsDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = [System.IO.Path]::GetFullPath((Join-Path $scriptsDirectory ".."))
 $mentorSource = Join-Path $repoRoot "desktop\mentor"
 $artifactsRoot = [System.IO.Path]::GetFullPath($ArtifactsDirectory)
-$candidateName = if ($CandidateSuffix) { "MentorLocalAI-FinalCandidate-$CandidateSuffix" } else { "MentorLocalAI-FinalCandidate" }
+$candidateName = if ($CandidateSuffix) { "MentorLocalAI-R5-$CandidateSuffix" } else { "MentorLocalAI-R5" }
 $fileSuffix = if ($CandidateSuffix) { "-$CandidateSuffix" } else { "" }
 $outputRoot = Join-Path $artifactsRoot $candidateName
 $outputStageRoot = Join-Path $artifactsRoot ".$candidateName.partial-$PID"
 $stageRoot = Join-Path $repoRoot ".desktop-cache\$($candidateName.ToLowerInvariant())"
-$portableSource = Join-Path $ArtifactsDirectory "hematuria-desktop-portable-$Version-windows-x64.zip"
-$installerSource = Join-Path $ArtifactsDirectory "hematuria-desktop-setup-$Version-windows-x64.exe"
-$portableFileName = "HematuriaTraining-Mentor-LocalAI-Portable$fileSuffix.zip"
-$installerFileName = "HematuriaTraining-Mentor-LocalAI-Setup$fileSuffix.exe"
-$zipFileName = "HematuriaTraining-Mentor-LocalAI-FinalCandidate$fileSuffix.zip"
+$portableSource = Join-Path $ArtifactsDirectory "hematuria-desktop-r5-portable-$Version-windows-x64.zip"
+$installerSource = Join-Path $ArtifactsDirectory "hematuria-desktop-r5-setup-$Version-windows-x64.exe"
+$portableFileName = "HematuriaTraining-R5-Mentor-LocalAI-Portable$fileSuffix.zip"
+$installerFileName = "HematuriaTraining-R5-Mentor-LocalAI-Setup$fileSuffix.exe"
+$zipFileName = "HematuriaTraining-R5-Mentor-LocalAI$fileSuffix.zip"
 $portableOutput = Join-Path $outputStageRoot $portableFileName
 $installerOutput = Join-Path $outputStageRoot $installerFileName
 $zipOutput = Join-Path $outputStageRoot $zipFileName
@@ -66,7 +66,7 @@ if ([string]::IsNullOrWhiteSpace($ProductHead)) { $ProductHead = (& git -C $repo
 $versionRecord = [ordered]@{
   schemaVersion = 2
   product = "血尿临床问诊训练系统"
-  channel = if ($CandidateSuffix) { "mentor-local-ai-final-candidate-$($CandidateSuffix.ToLowerInvariant())" } else { "mentor-local-ai-final-candidate" }
+  channel = if ($CandidateSuffix) { "mentor-local-ai-r5-$($CandidateSuffix.ToLowerInvariant())" } else { "mentor-local-ai-r5" }
   version = $Version
   productHead = $ProductHead
   uiIntegrationCommits = @(
@@ -99,7 +99,7 @@ $versionRecord = [ordered]@{
 $versionRecord | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $resolvedStage "VERSION.json") -Encoding UTF8
 
 $criticalFiles = @(
-  "App\HematuriaTraining.exe",
+  "App\HematuriaTraining-R5.exe",
   "App\resources\runtime\node\node.exe",
   "App\resources\runtime\llama\llama-server.exe",
   "Model\Qwen3-1.7B-Q4_K_M.gguf",

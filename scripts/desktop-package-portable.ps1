@@ -1,20 +1,20 @@
 param(
-  [string]$Version = "0.1.0",
+  [string]$Version = "0.5.0",
   [string]$ArtifactsDirectory = $env:HEMATURIA_DESKTOP_ARTIFACTS
 )
 
 $ErrorActionPreference = "Stop"
 $scriptsDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = [System.IO.Path]::GetFullPath((Join-Path $scriptsDirectory ".."))
-$executable = Join-Path $repoRoot "src-tauri\target\release\hematuria-desktop.exe"
+$executable = Join-Path $repoRoot "src-tauri\target\release\hematuria-training-r5.exe"
 $resources = Join-Path $repoRoot "src-tauri\resources"
 $portableRoot = Join-Path $repoRoot ".desktop-cache\portable"
-$stage = Join-Path $portableRoot "HematuriaTraining-$Version-windows-x64"
+$stage = Join-Path $portableRoot "HematuriaTraining-R5-$Version-windows-x64"
 if ([string]::IsNullOrWhiteSpace($ArtifactsDirectory)) {
   $ArtifactsDirectory = "D:\HematuriaDesktopArtifacts"
 }
 $artifacts = [System.IO.Path]::GetFullPath($ArtifactsDirectory)
-$archive = Join-Path $artifacts "hematuria-desktop-portable-$Version-windows-x64.zip"
+$archive = Join-Path $artifacts "hematuria-desktop-r5-portable-$Version-windows-x64.zip"
 
 if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) {
   throw "Release executable not found: $executable"
@@ -27,7 +27,7 @@ if (Test-Path -LiteralPath $stage) {
   Remove-Item -LiteralPath $stage -Recurse -Force
 }
 New-Item -ItemType Directory -Path $stage -Force | Out-Null
-Copy-Item -LiteralPath $executable -Destination (Join-Path $stage "HematuriaTraining.exe")
+Copy-Item -LiteralPath $executable -Destination (Join-Path $stage "HematuriaTraining-R5.exe")
 Copy-Item -LiteralPath $resources -Destination (Join-Path $stage "resources") -Recurse
 Set-Content -LiteralPath (Join-Path $stage "resources\portable.marker") -Value "portable" -Encoding ASCII
 
@@ -55,7 +55,7 @@ $installer = Get-ChildItem -LiteralPath $nsisDirectory -Filter "*.exe" -File |
 if ($null -eq $installer) {
   throw "NSIS installer not found: $nsisDirectory"
 }
-$installerDestination = Join-Path $artifacts "hematuria-desktop-setup-$Version-windows-x64.exe"
+$installerDestination = Join-Path $artifacts "hematuria-desktop-r5-setup-$Version-windows-x64.exe"
 Copy-Item -LiteralPath $installer.FullName -Destination $installerDestination -Force
 
 Write-Output "Portable desktop package: $archive"

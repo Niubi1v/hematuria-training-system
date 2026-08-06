@@ -26,7 +26,7 @@ const surfaceIndex = process.argv.indexOf("--surface");
 const surface = surfaceIndex >= 0 ? String(process.argv[surfaceIndex + 1] || "") : "no-bundle";
 if (surface !== "no-bundle") throw new Error(`desktop_tauri_surface_not_implemented:${surface}`);
 const executable = path.resolve(process.env.HEMATURIA_DESKTOP_TAURI_EXECUTABLE
-  || path.join(repoRoot, "src-tauri", "target", "release", "hematuria-desktop.exe"));
+  || path.join(repoRoot, "src-tauri", "target", "release", "hematuria-training-r5.exe"));
 try {
   await fs.access(executable);
 } catch {
@@ -277,6 +277,8 @@ async function diagnosticSnapshot(page) {
     if (!bridge?.invoke) throw new Error("tauri_bridge_unavailable");
     const report = await bridge.invoke("desktop_diagnostic_snapshot");
     return {
+      installationMode: report.installationMode,
+      productIdentity: report.productIdentity,
       productHead: report.productHead,
       sidecarPid: Number(report.sidecar?.pid || 0),
       runtimeTarget: report.runtimeTarget
@@ -562,6 +564,8 @@ try {
   const firstAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
   assert.ok(firstAuthority.serverStateRevision > initialAuthority.serverStateRevision);
   const firstDiagnostic = await diagnosticSnapshot(running.page);
+  assert.equal(firstDiagnostic.productIdentity, "hematuria-training-r5");
+  assert.equal(firstDiagnostic.installationMode, "development");
   assert.equal(firstDiagnostic.productHead, expectedProductHead);
   assert.equal(firstDiagnostic.runtimeTarget, "desktop");
   assert.equal(firstLlama.diagnostics.productHead, expectedProductHead);
@@ -632,6 +636,8 @@ try {
   assert.equal(finalAuthority.productHead, expectedProductHead);
   assert.ok(finalAuthority.serverStateRevision > postReplayAuthority.serverStateRevision);
   const finalDiagnostic = await diagnosticSnapshot(running.page);
+  assert.equal(finalDiagnostic.productIdentity, "hematuria-training-r5");
+  assert.equal(finalDiagnostic.installationMode, "development");
   assert.equal(finalDiagnostic.productHead, expectedProductHead);
   assert.equal(secondLlama.diagnostics.productHead, expectedProductHead);
   assert.deepEqual(await runtimeEvidence(running.page), {

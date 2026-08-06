@@ -91,6 +91,7 @@ async function sidecarDiagnosticRoundTrip() {
       HEMATURIA_DESKTOP_HANDSHAKE: handshake,
       HEMATURIA_PRODUCT_VERSION: "r5-test",
       HEMATURIA_PRODUCT_HEAD: "r5-authoritative-head",
+      HEMATURIA_DESKTOP_INSTALLATION_MODE: "portable",
       NEXT_PUBLIC_GIT_SHA: "stale-renderer-head"
     },
     stdio: ["pipe", "pipe", "pipe"],
@@ -117,7 +118,9 @@ async function sidecarDiagnosticRoundTrip() {
     assert.equal(diagnosticsResponse.status, 200);
     const diagnostics = await diagnosticsResponse.json();
     assert.equal(diagnostics.schemaVersion, 2);
+    assert.equal(diagnostics.productIdentity, "hematuria-training-r5");
     assert.equal(diagnostics.productHead, "r5-authoritative-head");
+    assert.equal(diagnostics.installationMode, "portable");
     assert.equal(diagnostics.dataIsolation.currentProfile, "R5");
     assert.equal(diagnostics.dataIsolation.currentDirectory, "MentorLocalAI-R5");
     assert.equal(diagnostics.dataIsolation.migrationPerformed, false);

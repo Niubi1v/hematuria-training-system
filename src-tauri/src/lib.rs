@@ -23,6 +23,7 @@ const MIN_WINDOW_HEIGHT: u32 = 640;
 const MAX_WINDOW_DIMENSION: u32 = 16_384;
 const R4_DATA_DIRECTORY_NAME: &str = "MentorLocalAI-FinalCandidate";
 const R5_DATA_DIRECTORY_NAME: &str = "MentorLocalAI-R5";
+const R5_PRODUCT_IDENTITY: &str = "hematuria-training-r5";
 const DIAGNOSTIC_SCHEMA_VERSION: u32 = 2;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -75,6 +76,7 @@ struct DiagnosticFailure {
 #[serde(rename_all = "camelCase")]
 struct DesktopDiagnosticReport {
     schema_version: u32,
+    product_identity: &'static str,
     product_version: String,
     product_head: String,
     runtime_target: &'static str,
@@ -977,7 +979,7 @@ fn sanitized_child_environment(
         .env("HEMATURIA_DESKTOP_ALLOWED_ORIGINS", DESKTOP_ORIGINS)
         .env(
             "HEMATURIA_PRODUCT_VERSION",
-            option_env!("CARGO_PKG_VERSION").unwrap_or("0.1.0"),
+            option_env!("CARGO_PKG_VERSION").unwrap_or("0.5.0"),
         )
         .env("HEMATURIA_DESKTOP_INSTALLATION_MODE", installation_mode);
     command.env(
@@ -1281,8 +1283,9 @@ fn diagnostic_report<R: tauri::Runtime, M: tauri::Manager<R>>(
         .unwrap_or(false);
     let report = DesktopDiagnosticReport {
         schema_version: DIAGNOSTIC_SCHEMA_VERSION,
+        product_identity: R5_PRODUCT_IDENTITY,
         product_version: option_env!("CARGO_PKG_VERSION")
-            .unwrap_or("0.1.0")
+            .unwrap_or("0.5.0")
             .to_string(),
         product_head: option_env!("HEMATURIA_PRODUCT_HEAD")
             .unwrap_or("desktop-local")

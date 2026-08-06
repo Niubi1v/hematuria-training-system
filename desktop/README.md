@@ -104,9 +104,9 @@ pnpm test:desktop:package
 
 默认输出到 `D:\HematuriaDesktopArtifacts`：
 
-- `hematuria-desktop-portable-0.1.0-windows-x64.zip`
-- `hematuria-desktop-setup-0.1.0-windows-x64.exe`
-- `hematuria-desktop-artifacts-0.1.0.json`（上述产物哈希与组件体积收据）
+- `hematuria-desktop-r5-portable-0.5.0-windows-x64.zip`
+- `hematuria-desktop-r5-setup-0.5.0-windows-x64.exe`
+- `hematuria-desktop-artifacts-0.5.0.json`（上述产物哈希与组件体积收据）
 
 可用绝对路径环境变量 `HEMATURIA_DESKTOP_ARTIFACTS` 修改输出目录。安装包、
 便携包和模型都不得 push 到 GitHub。

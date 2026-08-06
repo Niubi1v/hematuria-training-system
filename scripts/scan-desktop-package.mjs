@@ -32,8 +32,8 @@ const TEXT_EXTENSIONS = new Set([
   ".bat", ".cjs", ".cmd", ".conf", ".css", ".html", ".ini", ".js", ".json",
   ".md", ".mjs", ".ps1", ".svg", ".toml", ".txt", ".xml", ".yaml", ".yml"
 ]);
-const PORTABLE_PATTERN = /^hematuria-desktop-portable-.+-windows-x64\.zip$/i;
-const INSTALLER_PATTERN = /^hematuria-desktop-(?:setup|installer)-.+-windows-x64\.exe$/i;
+const PORTABLE_PATTERN = /^hematuria-desktop-r5-portable-.+-windows-x64\.zip$/i;
+const INSTALLER_PATTERN = /^hematuria-desktop-r5-(?:setup|installer)-.+-windows-x64\.exe$/i;
 
 function normalizedPath(value) {
   return value.replaceAll("\\", "/").replace(/^\.\/+/, "");
@@ -455,7 +455,7 @@ async function scanArtifactReceipt(artifacts, expectedManifest) {
   const root = roots[0];
   const portableName = artifacts.map((artifact) => path.basename(artifact))
     .find((name) => PORTABLE_PATTERN.test(name));
-  const version = portableName?.match(/^hematuria-desktop-portable-(.+)-windows-x64\.zip$/i)?.[1];
+  const version = portableName?.match(/^hematuria-desktop-r5-portable-(.+)-windows-x64\.zip$/i)?.[1];
   if (!version) {
     findings.push({ reason: "artifact_receipt_version_unresolved", file: root });
     return { kind: "artifact_receipt", target: root, entries: 0, findings };

@@ -5,10 +5,10 @@ $expectedModelBytes = 1282439264
 $expectedModelSha256 = "D2387CA2DBFEE2FFABCE7120D3770DADCA0B293052BC2F0E138FDC940D9BC7B5"
 $packageRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
 $modelPath = Join-Path $packageRoot "Model\Qwen3-1.7B-Q4_K_M.gguf"
-$appPath = Join-Path $packageRoot "App\HematuriaTraining.exe"
+$appPath = Join-Path $packageRoot "App\HematuriaTraining-R5.exe"
 $nodePath = Join-Path $packageRoot "App\resources\runtime\node\node.exe"
 $llamaPath = Join-Path $packageRoot "App\resources\runtime\llama\llama-server.exe"
-$mentorData = Join-Path $env:LOCALAPPDATA "HematuriaTraining\MentorLocalAI-FinalCandidate"
+$mentorData = Join-Path $env:LOCALAPPDATA "HematuriaTraining\MentorLocalAI-R5"
 
 function Stop-WithRepair([string]$message) {
   Write-Host ""
