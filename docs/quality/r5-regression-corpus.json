@@ -320,6 +320,18 @@
       "regressionTests": [{ "id": "R5-RENDERER-AI-PREFERENCE-HYDRATION", "status": "existing", "path": "tests/desktop/renderer-contract.spec.mjs", "gate": "milestone", "components": ["real renderer", "local storage", "fresh sqlite", "reload"] }],
       "replay": { "seed": "r5-ai-preference-hydration-v1", "command": "pnpm run test:desktop:renderer-contract -- --grep preferences", "actions": ["seed rule mode", "bootstrap", "reload", "compare"] }, "fixCommit": "35ad1600dc0c7f8b8afe09505a6fda7a7b5a3185", "relatedCommits": [], "permanentGate": "milestone",
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
+    },
+    {
+      "id": "R5-REG-027", "slug": "NSIS-RUNTIME-INJECTION-INTERMITTENT", "kind": "release_blocker", "severity": "P0", "status": "blocked_root_cause", "title": "NSIS first launch can intermittently omit desktop runtime injection",
+      "userVisibleSymptom": "The installed window opens at tauri.localhost but the desktop runtime never becomes available, so training cannot start.",
+      "rootCause": { "status": "unconfirmed", "detail": "One final-head milestone run lacked runtime injection after the preceding surface sequence; four isolated or repeated NSIS runs then passed, and Windows Defender/Application logs contained no matching event." },
+      "affectedLayers": ["nsis", "tauri", "runtime_injection", "sidecar_startup", "webview2"],
+      "minimumReproduction": { "environment": "Final-head scratch NSIS after the canonical multi-surface sequence", "steps": ["Run development, static, staged, no-bundle, and extracted Portable surfaces.", "Silently install NSIS into a fresh scratch directory.", "Launch with a fresh WebView profile and SQLite directory.", "Assert runtime injection appears and archive stable Tauri failure codes if it does not."] },
+      "originalEvidence": { "head": "3ee1f3ec5debaacec5ed19de5fb20b2e4da3f656", "artifactSha256": null, "references": ["scripts/test-desktop-package-differential.mjs", "scripts/test-desktop-tauri-smoke.mjs", "external:local-milestone-2026-08-06T17-48-01-903Z"] },
+      "legacyGap": "The original smoke reported only runtime_missing and discarded the Tauri stable failure code after cleaning the scratch installation.",
+      "regressionTests": [{ "id": "R5-NSIS-RUNTIME-INJECTION-SEQUENCE", "status": "existing", "path": "scripts/test-desktop-package-differential.mjs", "gate": "milestone", "components": ["prior surfaces", "scratch nsis install", "tauri diagnostic", "runtime injection", "cleanup"] }],
+      "replay": { "seed": "r5-nsis-runtime-injection-v1", "command": "pnpm run test:desktop:package-differential -- --require-packages", "actions": ["run prior surfaces", "install NSIS", "launch", "capture stable failure code"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "milestone",
+      "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     }
   ]
 }

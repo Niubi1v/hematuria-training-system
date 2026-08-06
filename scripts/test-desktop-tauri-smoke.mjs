@@ -175,6 +175,7 @@ async function connectToWebView(port, child) {
   const deadline = Date.now() + 30_000;
   let browser;
   let cdpConnected = false;
+  let runtimeFailure = null;
   const observedOrigins = new Set();
   while (Date.now() < deadline) {
     if (child.exitCode !== null) throw new Error(`desktop_tauri_exited_before_runtime:${child.exitCode}`);
@@ -196,6 +197,19 @@ async function connectToWebView(port, child) {
             globalThis.__HEMATURIA_DESKTOP_RUNTIME__?.runtimeTarget === "desktop"
           ).catch(() => false);
           if (injected) return { browser, page };
+          runtimeFailure = await page.evaluate(async () => {
+            try {
+              const report = await globalThis.__TAURI_INTERNALS__?.invoke?.("desktop_diagnostic_snapshot");
+              return report ? {
+                productHead: report.productHead,
+                stableFailureCodes: report.stableFailureCodes,
+                lastFailure: report.lastFailure ? {
+                  category: report.lastFailure.category,
+                  code: report.lastFailure.code
+                } : null
+              } : null;
+            } catch { return null; }
+          }).catch(() => null);
         }
       }
     } catch {
@@ -215,7 +229,7 @@ async function connectToWebView(port, child) {
       http.push(`${index}:error`);
     }
   }
-  throw new Error(`desktop_tauri_runtime_injection_unavailable:${cdpConnected ? "runtime_missing" : "cdp_unreachable"}:origins=${origins}:debugProcesses=${debugState.processCount}:listeners=${debugState.listenerCount}:addresses=${debugState.addresses.join(",") || "none"}:http=${http.join(",")}`);
+  throw new Error(`desktop_tauri_runtime_injection_unavailable:${cdpConnected ? "runtime_missing" : "cdp_unreachable"}:origins=${origins}:debugProcesses=${debugState.processCount}:listeners=${debugState.listenerCount}:addresses=${debugState.addresses.join(",") || "none"}:http=${http.join(",")}:runtimeFailure=${JSON.stringify(runtimeFailure)}`);
 }
 
 async function closeNormally(child) {

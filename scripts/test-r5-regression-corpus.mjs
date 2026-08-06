@@ -33,7 +33,8 @@ const REQUIRED_SLUGS = [
   "MODEL-DIR-CONTRACT",
   "NSIS-IDENTITY",
   "MENTOR-MACHINE-PREPARE-SAVE",
-  "AI-PREFERENCE-HYDRATION"
+  "AI-PREFERENCE-HYDRATION",
+  "NSIS-RUNTIME-INJECTION-INTERMITTENT"
 ];
 const STATUSES = new Set(["fixed", "regression_required", "open", "blocked_root_cause"]);
 const ROOT_CAUSE_STATUSES = new Set(["confirmed", "unconfirmed", "not_applicable"]);
