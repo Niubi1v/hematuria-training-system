@@ -1399,6 +1399,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [speechGestureDismissed, setSpeechGestureDismissed] = useState(false);
   const [lastSpokenText, setLastSpokenText] = useState("");
   const [aiMode, setAiMode] = useState<AiMode>("deepseek");
+  const [aiPreferenceReady, setAiPreferenceReady] = useState(false);
   const [aiStatus, setAiStatus] = useState<AiStatus>("unknown");
   const previousAiStatusRef = useRef<AiStatus>("unknown");
   const connectionTransitionsRef = useRef<ConnectionTransition[]>([]);
@@ -1751,6 +1752,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     setLang(targetLang);
     setLanguagePreferenceReady(true);
     if (savedAiMode === "deepseek" || savedAiMode === "rule" || savedAiMode === "debug") setAiMode(savedAiMode);
+    setAiPreferenceReady(true);
     const urlMode = new URLSearchParams(window.location.search).get("mode");
     const requestedMode: TrainingMode = urlMode === "random" ? "random" : urlMode === "osce" ? "osce" : urlMode === "rct" ? "rct" : mode;
     const targetMode: TrainingMode = practiceDeployment && (requestedMode === "osce" || requestedMode === "rct") ? "free" : requestedMode;
@@ -2014,9 +2016,10 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }, [attemptReady, logRetryNonce, pendingHistoryLogs]);
 
   useEffect(() => {
+    if (!aiPreferenceReady) return;
     try { localStorage.setItem("hematuria-ai-mode", aiMode); } catch { setStorageWarning("回答来源偏好无法保存。 "); }
     setAiStatus(aiMode === "rule" ? "degraded" : "unknown");
-  }, [aiMode]);
+  }, [aiMode, aiPreferenceReady]);
 
   useEffect(() => {
     if (!attemptReady) return;
