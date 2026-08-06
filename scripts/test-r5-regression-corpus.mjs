@@ -32,7 +32,8 @@ const REQUIRED_SLUGS = [
   "PRODUCT-HEAD-AUTHORITY",
   "MODEL-DIR-CONTRACT",
   "NSIS-IDENTITY",
-  "MENTOR-MACHINE-PREPARE-SAVE"
+  "MENTOR-MACHINE-PREPARE-SAVE",
+  "AI-PREFERENCE-HYDRATION"
 ];
 const STATUSES = new Set(["fixed", "regression_required", "open", "blocked_root_cause"]);
 const ROOT_CAUSE_STATUSES = new Set(["confirmed", "unconfirmed", "not_applicable"]);
@@ -59,7 +60,7 @@ function walk(value, visit, pathParts = []) {
 assert.equal(corpus.schemaVersion, 1, "unsupported regression corpus schemaVersion");
 assert.match(corpus.baselineHead, GIT_SHA, "baselineHead must be a full git SHA");
 assert.ok(Array.isArray(corpus.entries), "entries must be an array");
-assert.equal(corpus.entries.length, REQUIRED_SLUGS.length, "initial R5 corpus must contain exactly the required scenarios");
+assert.equal(corpus.entries.length, REQUIRED_SLUGS.length, "R5 corpus must contain every required scenario");
 
 const ids = new Set();
 const slugs = new Set();

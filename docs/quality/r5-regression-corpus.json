@@ -308,6 +308,18 @@
       "regressionTests": [{ "id": "R5-EXTERNAL-MENTOR-PREPARE-SAVE", "status": "planned", "path": "scripts/test-desktop-external-windows.ps1", "gate": "external_manual", "components": ["clean Windows", "default Defender", "tauri", "sidecar", "sqlite"] }],
       "replay": { "seed": "r5-mentor-prepare-save-v1", "command": "powershell -File scripts/test-desktop-external-windows.ps1 --scenario mentor-prepare-save", "actions": ["prepare", "save", "close", "reopen", "export diagnostics"] }, "fixCommit": null, "relatedCommits": ["21b4f6229fa4d871ffb6954f63193084169d9866", "99c206e1036472a562ee84ca26e762b9c09027a7"], "permanentGate": "external_manual",
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
+    },
+    {
+      "id": "R5-REG-026", "slug": "AI-PREFERENCE-HYDRATION", "kind": "historical_bug", "severity": "P1", "status": "fixed", "title": "Saved AI mode is overwritten during renderer hydration",
+      "userVisibleSymptom": "A saved rule-mode preference can silently return to local AI after opening another renderer surface.",
+      "rootCause": { "status": "confirmed", "detail": "The persistence effect wrote the default deepseek mode before the mount effect finished reading the saved preference." },
+      "affectedLayers": ["renderer", "browser_storage", "preference_hydration"],
+      "minimumReproduction": { "environment": "Real renderer with isolated browser storage", "steps": ["Save rule mode before navigation.", "Open a case with a fresh SQLite authority.", "Assert the preference remains rule before and after reload."] },
+      "originalEvidence": { "head": "db3fd2a14a4ea01f4f77b20733714839db1df56c", "artifactSha256": null, "references": ["tests/desktop/renderer-contract.spec.mjs", "src/components/ClinicalTrainingClient.tsx"] },
+      "legacyGap": "The preference test was timing-sensitive and prior isolated runs did not trigger the default-state write before hydration.",
+      "regressionTests": [{ "id": "R5-RENDERER-AI-PREFERENCE-HYDRATION", "status": "existing", "path": "tests/desktop/renderer-contract.spec.mjs", "gate": "milestone", "components": ["real renderer", "local storage", "fresh sqlite", "reload"] }],
+      "replay": { "seed": "r5-ai-preference-hydration-v1", "command": "pnpm run test:desktop:renderer-contract -- --grep preferences", "actions": ["seed rule mode", "bootstrap", "reload", "compare"] }, "fixCommit": "35ad1600dc0c7f8b8afe09505a6fda7a7b5a3185", "relatedCommits": [], "permanentGate": "milestone",
+      "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     }
   ]
 }
