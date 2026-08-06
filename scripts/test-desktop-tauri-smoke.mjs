@@ -147,6 +147,13 @@ function webViewDebugState(port) {
   }
 }
 
+async function assertWebViewDebugClosed(port) {
+  await eventually(() => {
+    const state = webViewDebugState(port);
+    return state.processCount === 0 && state.listenerCount === 0;
+  });
+}
+
 async function connectToWebView(port, child) {
   const endpoints = [
     `http://127.0.0.1:${port}`,
@@ -253,7 +260,7 @@ async function launch(dataDirectory, webViewDirectory) {
   try {
     const { browser, page } = await connectToWebView(cdpPort, child);
     page.on("dialog", (dialog) => void dialog.accept());
-    return { browser, child, diagnostics: () => diagnostics, llamaPidFile, page };
+    return { browser, cdpPort, child, diagnostics: () => diagnostics, llamaPidFile, page };
   } catch (error) {
     if (child.exitCode === null) child.kill("SIGKILL");
     await waitForExit(child).catch(() => undefined);
@@ -568,12 +575,14 @@ try {
   const closingAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
   assert.ok(closingAuthority.serverStateRevision >= firstAuthority.serverStateRevision);
   const firstOrigin = firstProbe.apiBaseUrl;
+  const firstCdpPort = running.cdpPort;
   await closeNormally(running.child);
   await running.browser.close().catch(() => undefined);
   running = undefined;
   assert.equal(processExists(firstDiagnostic.sidecarPid), false);
   await assertLoopbackClosed(firstOrigin);
   await assertLlamaClosed(firstLlama.pid, firstLlama.port);
+  await assertWebViewDebugClosed(firstCdpPort);
 
   running = await launch(dataDirectory, webViewDirectory);
   const secondLlama = await waitForLlama(running.page);
@@ -631,12 +640,14 @@ try {
     runtimeTarget: "desktop"
   });
   const finalOrigin = (await runtimeProbe(running.page)).apiBaseUrl;
+  const finalCdpPort = running.cdpPort;
   await closeNormally(running.child);
   await running.browser.close().catch(() => undefined);
   running = undefined;
   assert.equal(processExists(finalDiagnostic.sidecarPid), false);
   await assertLoopbackClosed(finalOrigin);
   await assertLlamaClosed(secondLlama.pid, secondLlama.port);
+  await assertWebViewDebugClosed(finalCdpPort);
   const database = databaseSummary(
     path.join(dataDirectory, "hematuria.sqlite3"),
     expectedProductHead,
