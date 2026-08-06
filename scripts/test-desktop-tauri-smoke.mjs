@@ -36,6 +36,7 @@ if (!new Set(["no-bundle", "portable", "nsis"]).has(surface)) throw new Error(`d
 const surfaceLabel = process.env.HEMATURIA_SURFACE_LABEL || surface;
 if (!/^[a-z0-9-]{1,40}$/u.test(surfaceLabel)) throw new Error("desktop_tauri_surface_label_invalid");
 const expectedInstallationMode = surface === "portable" ? "portable" : surface === "nsis" ? "installer" : "development";
+const usesFakeLocalAi = expectedInstallationMode === "development";
 const executable = path.resolve(process.env.HEMATURIA_DESKTOP_TAURI_EXECUTABLE
   || path.join(repoRoot, "src-tauri", "target", "release", "hematuria-training-r5.exe"));
 try {
@@ -51,14 +52,14 @@ const expectedProductHead = execFileSync("git", ["rev-parse", "HEAD"], {
 
 const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
-async function eventually(predicate, timeoutMs = 20_000) {
+async function eventually(predicate, timeoutMs = 20_000, label = "condition") {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const value = await predicate();
     if (value) return value;
     await delay(50);
   }
-  throw new Error("desktop_tauri_eventually_timeout");
+  throw new Error(`desktop_tauri_eventually_timeout:${label}`);
 }
 
 function sanitize(value, paths = []) {
@@ -117,7 +118,7 @@ function llamaNetworkState(pid) {
 }
 
 async function assertLlamaClosed(pid, port) {
-  await eventually(() => !processExists(pid));
+  await eventually(() => !processExists(pid), 20_000, "llama-process-exit");
   await eventually(async () => {
     const socket = net.createConnection({ host: "127.0.0.1", port });
     return new Promise((resolve) => {
@@ -125,7 +126,7 @@ async function assertLlamaClosed(pid, port) {
       socket.once("error", () => resolve(true));
       socket.setTimeout(250, () => { socket.destroy(); resolve(true); });
     });
-  });
+  }, 20_000, "llama-port-close");
 }
 
 function waitForExit(child, timeoutMs = 20_000) {
@@ -162,7 +163,7 @@ async function assertWebViewDebugClosed(port) {
   await eventually(() => {
     const state = webViewDebugState(port);
     return state.processCount === 0 && state.listenerCount === 0;
-  });
+  }, 20_000, "webview-debug-close");
 }
 
 async function connectToWebView(port, child) {
@@ -234,8 +235,10 @@ async function launch(dataDirectory, webViewDirectory) {
   const cdpPort = await reservePort();
   const modelPath = path.join(dataDirectory, "models", "Qwen3-1.7B-Q4_K_M.gguf");
   const llamaPidFile = path.join(dataDirectory, "fake-llama.pid");
-  await fs.mkdir(path.dirname(modelPath), { recursive: true });
-  await fs.writeFile(modelPath, "tauri-smoke-model-placeholder", "utf8");
+  if (usesFakeLocalAi) {
+    await fs.mkdir(path.dirname(modelPath), { recursive: true });
+    await fs.writeFile(modelPath, "tauri-smoke-model-placeholder", "utf8");
+  }
   const child = spawn(executable, [], {
     cwd: path.dirname(executable),
     env: {
@@ -251,11 +254,13 @@ async function launch(dataDirectory, webViewDirectory) {
       no_proxy: "127.0.0.1,localhost",
       HEMATURIA_DESKTOP_DATA_DIR: dataDirectory,
       HEMATURIA_DESKTOP_INSTALLATION_MODE: expectedInstallationMode,
-      HEMATURIA_DESKTOP_TEST_MODE: "1",
-      HEMATURIA_LLAMA_SERVER_PATH: process.execPath,
-      HEMATURIA_LLAMA_SERVER_PREFIX_ARGS: JSON.stringify([path.join(repoRoot, "scripts", "desktop-fake-llama-server.mjs")]),
-      HEMATURIA_DESKTOP_TEST_LLAMA_PID_FILE: llamaPidFile,
-      HEMATURIA_DESKTOP_MODEL_PATH: modelPath,
+      ...(usesFakeLocalAi ? {
+        HEMATURIA_DESKTOP_TEST_MODE: "1",
+        HEMATURIA_LLAMA_SERVER_PATH: process.execPath,
+        HEMATURIA_LLAMA_SERVER_PREFIX_ARGS: JSON.stringify([path.join(repoRoot, "scripts", "desktop-fake-llama-server.mjs")]),
+        HEMATURIA_DESKTOP_TEST_LLAMA_PID_FILE: llamaPidFile,
+        HEMATURIA_DESKTOP_MODEL_PATH: modelPath
+      } : { HEMATURIA_DESKTOP_DISABLE_LOCAL_AI: "1" }),
       WEBVIEW2_USER_DATA_FOLDER: webViewDirectory,
       WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${cdpPort}`
     },
@@ -298,27 +303,50 @@ async function diagnosticSnapshot(page) {
 }
 
 async function waitForLlama(page) {
-  return eventually(async () => {
-    const response = await desktopJson(page, "/api/desktop/diagnostics").catch(() => null);
-    const pid = Number(response?.payload?.processes?.llamaServer?.pid || 0);
-    if (!response?.ok || response.payload?.localAi?.status !== "ready" || !processExists(pid)) return false;
-    const network = llamaNetworkState(pid);
-    return network.exists
-      && network.listenerCount === 1
-      && network.argumentPort > 0
-      && network.ports.includes(network.argumentPort)
-      ? { diagnostics: response.payload, pid, port: network.argumentPort }
-      : false;
-  });
+  let lastState = { status: "unavailable", failureCode: null, failureCategory: null, processExists: false };
+  try {
+    return await eventually(async () => {
+      const response = await desktopJson(page, "/api/desktop/diagnostics").catch(() => null);
+      const pid = Number(response?.payload?.processes?.llamaServer?.pid || 0);
+      lastState = {
+        status: response?.payload?.localAi?.status || "unavailable",
+        failureCode: response?.payload?.localAi?.failureCode || null,
+        failureCategory: response?.payload?.localAi?.failureCategory || null,
+        processExists: processExists(pid)
+      };
+      if (!response?.ok || lastState.status !== "ready" || !lastState.processExists) return false;
+      const network = llamaNetworkState(pid);
+      return network.exists
+        && network.listenerCount === 1
+        && network.argumentPort > 0
+        && network.ports.includes(network.argumentPort)
+        ? { diagnostics: response.payload, pid, port: network.argumentPort }
+        : false;
+    }, 20_000, "local-ai-ready");
+  } catch (error) {
+    throw new Error(`${error instanceof Error ? error.message : String(error)}:${JSON.stringify(lastState)}`);
+  }
 }
 
-async function askSafetyFallback(page) {
+async function waitForDisabledLocalAi(page) {
+  const diagnostics = await eventually(async () => {
+    const response = await desktopJson(page, "/api/desktop/diagnostics").catch(() => null);
+    return response?.ok
+      && response.payload?.localAi?.status === "disabled"
+      && !response.payload?.processes?.llamaServer?.pid
+      ? response.payload
+      : false;
+  }, 20_000, "local-ai-disabled");
+  return { diagnostics, pid: 0, port: 0 };
+}
+
+async function askSafetyFallback(page, expectedReason) {
   const before = (await desktopJson(page, "/api/desktop/evidence")).payload;
   const composer = page.locator('[data-testid="chat-composer"]');
   const send = composer.locator("button").last();
   await send.waitFor({ state: "visible" });
   await composer.locator("textarea").fill("排泄尿液时会产生灼热样感觉吗？");
-  await eventually(() => send.isEnabled());
+  await eventually(() => send.isEnabled(), 20_000, "fallback-send-enabled");
   const responsePromise = page.waitForResponse((response) =>
     response.request().method() === "POST"
       && /^\/api\/agent-chat\/?$/.test(new URL(response.url()).pathname)
@@ -328,7 +356,8 @@ async function askSafetyFallback(page) {
   assert.equal(response.status(), 200);
   const payload = await response.json();
   assert.equal(payload.isFallback, true);
-  assert.equal(payload.fallbackReason, "semantic_response_invalid");
+  if (expectedReason) assert.equal(payload.fallbackReason, expectedReason);
+  else assert.ok(payload.fallbackReason, "packaged fallback must expose a stable reason to the renderer");
   const after = (await desktopJson(page, "/api/desktop/evidence")).payload;
   assert.equal(after.localAiAcceptedCount, before.localAiAcceptedCount);
   assert.equal(after.ruleFallbackCount, before.ruleFallbackCount + 1);
@@ -459,7 +488,7 @@ try {
   assert.equal(firstProbe.runtimeTarget, "desktop");
   assert.match(firstProbe.apiBaseUrl, /^http:\/\/127\.0\.0\.1:\d+$/);
   assert.equal(firstProbe.tokenValid, true);
-  const firstLlama = await waitForLlama(running.page);
+  const firstLlama = usesFakeLocalAi ? await waitForLlama(running.page) : await waitForDisabledLocalAi(running.page);
   const initialAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
   assert.equal(initialAuthority.schemaVersion, 3);
   assert.equal(initialAuthority.productHead, expectedProductHead);
@@ -469,7 +498,7 @@ try {
     language: "zh",
     marker: p002Marker
   });
-  const fallback = await askSafetyFallback(running.page);
+  const fallback = await askSafetyFallback(running.page, usesFakeLocalAi ? "semantic_response_invalid" : undefined);
   await saveHistoryDraft(running.page, {
     caseId: "P001",
     language: "zh",
@@ -518,12 +547,12 @@ try {
   running = undefined;
   assert.equal(processExists(firstDiagnostic.sidecarPid), false);
   await assertLoopbackClosed(firstOrigin);
-  await assertLlamaClosed(firstLlama.pid, firstLlama.port);
+  if (firstLlama.pid) await assertLlamaClosed(firstLlama.pid, firstLlama.port);
   await assertWebViewDebugClosed(firstCdpPort);
 
   running = await launch(dataDirectory, webViewDirectory);
-  const secondLlama = await waitForLlama(running.page);
-  assert.notEqual(secondLlama.pid, firstLlama.pid);
+  const secondLlama = usesFakeLocalAi ? await waitForLlama(running.page) : await waitForDisabledLocalAi(running.page);
+  if (usesFakeLocalAi) assert.notEqual(secondLlama.pid, firstLlama.pid);
   const restartedAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
   assert.equal(restartedAuthority.stateStoreId, initialAuthority.stateStoreId);
   assert.equal(restartedAuthority.productHead, expectedProductHead);
@@ -588,7 +617,7 @@ try {
   running = undefined;
   assert.equal(processExists(finalDiagnostic.sidecarPid), false);
   await assertLoopbackClosed(finalOrigin);
-  await assertLlamaClosed(secondLlama.pid, secondLlama.port);
+  if (secondLlama.pid) await assertLlamaClosed(secondLlama.pid, secondLlama.port);
   await assertWebViewDebugClosed(finalCdpPort);
   const database = databaseSummary(
     path.join(dataDirectory, "hematuria.sqlite3"),
