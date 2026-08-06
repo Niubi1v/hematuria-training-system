@@ -1357,6 +1357,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [caseData] = useState<StudentVisibleCase>(initialCaseData);
   const [runtimeMode, setRuntimeMode] = useState<TrainingMode>(mode);
   const [lang, setLang] = useState<LanguageCode>("zh");
+  const [languagePreferenceReady, setLanguagePreferenceReady] = useState(false);
   const [pendingLanguage, setPendingLanguage] = useState<LanguageCode | null>(null);
   const [attempt, setAttempt] = useState<AttemptIdentity>(() => createAttempt(initialCaseData.id, "free", "zh"));
   const [attemptReady, setAttemptReady] = useState(false);
@@ -1748,6 +1749,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     }
     const targetLang: LanguageCode = savedLang === "en" ? "en" : "zh";
     setLang(targetLang);
+    setLanguagePreferenceReady(true);
     if (savedAiMode === "deepseek" || savedAiMode === "rule" || savedAiMode === "debug") setAiMode(savedAiMode);
     const urlMode = new URLSearchParams(window.location.search).get("mode");
     const requestedMode: TrainingMode = urlMode === "random" ? "random" : urlMode === "osce" ? "osce" : urlMode === "rct" ? "rct" : mode;
@@ -1957,9 +1959,10 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }, [aiMode, attempt.attemptId, attemptReady, caseData, ensureTrainingStateToken, healthResolved, isDesktopRuntime, lang, runtimeMode, serviceHealth?.apiVersion, serviceHealth?.deploymentSha, serviceHealth?.gitSha]);
 
   useEffect(() => {
+    if (!languagePreferenceReady) return;
     try { localStorage.setItem("hematuria-language", lang); } catch { setStorageWarning("语言偏好无法保存。 "); }
     document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
-  }, [lang]);
+  }, [lang, languagePreferenceReady]);
 
   useEffect(() => {
     if (trainingStateTokenRef.current?.attemptId !== attempt.attemptId) trainingStateTokenRef.current = null;
