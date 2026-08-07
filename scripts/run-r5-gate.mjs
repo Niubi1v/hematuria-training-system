@@ -26,6 +26,7 @@ function desktopCommand(bin, ...args) {
 
 const fast = [
   command(process.execPath, "scripts/test-r5-regression-corpus.mjs"),
+  command(pnpm, "run", "test:desktop:health-probe"),
   command(pnpm, "run", "test:r5:state-model"),
   command(pnpm, "run", "test:attempts"),
   command(pnpm, "run", "test:evidence-graph"),
