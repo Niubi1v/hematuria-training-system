@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { execFileSync } from "node:child_process";
 import { inflateRawSync } from "node:zlib";
 import {
   readRuntimeManifest,
@@ -34,6 +35,7 @@ const TEXT_EXTENSIONS = new Set([
 ]);
 const PORTABLE_PATTERN = /^hematuria-desktop-r5-portable-.+-windows-x64\.zip$/i;
 const INSTALLER_PATTERN = /^hematuria-desktop-r5-(?:setup|installer)-.+-windows-x64\.exe$/i;
+const expectedProductHead = execFileSync("git", ["rev-parse", "HEAD"], { cwd: repoRoot, encoding: "utf8", windowsHide: true }).trim();
 
 function normalizedPath(value) {
   return value.replaceAll("\\", "/").replace(/^\.\/+/, "");
@@ -476,6 +478,7 @@ async function scanArtifactReceipt(artifacts, expectedManifest) {
   }
   if (
     receipt?.schemaVersion !== 1
+    || receipt?.productHead !== expectedProductHead
     || receipt?.platform !== "windows-x86_64"
     || receipt?.model?.fileName !== expectedManifest.model.fileName
     || receipt?.model?.bytes !== expectedManifest.model.size

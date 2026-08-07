@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 import {
   readRuntimeManifest,
   repoRoot,
@@ -26,6 +27,8 @@ async function fileRecord(filePath) {
 }
 
 const packageJson = JSON.parse(await fs.readFile(path.join(repoRoot, "package.json"), "utf8"));
+const productHead = execFileSync("git", ["rev-parse", "HEAD"], { cwd: repoRoot, encoding: "utf8", windowsHide: true }).trim();
+if (!/^[0-9a-f]{40}$/u.test(productHead)) throw new Error("desktop_artifact_product_head_invalid");
 const runtimeManifest = await readRuntimeManifest();
 const artifactRoot = process.env.HEMATURIA_DESKTOP_ARTIFACTS?.trim()
   ? path.resolve(process.env.HEMATURIA_DESKTOP_ARTIFACTS.trim())
@@ -50,6 +53,7 @@ const portableStage = path.join(
 const receipt = {
   schemaVersion: 1,
   product: "hematuria-training-r5",
+  productHead,
   version,
   platform: "windows-x86_64",
   artifacts: {
