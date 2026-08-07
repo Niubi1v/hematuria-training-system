@@ -148,8 +148,13 @@ try {
     : soakMinutes === 60 ? "PASS_60_MINUTE_SOAK" : "PASS_TARGETED_SOAK";
 } catch (error) {
   failure = error;
-  summary.status = "PHASE4_BLOCKED_BY_CONFIRMED_P0";
-  summary.firstFailure = { message: String(error instanceof Error ? error.message : error).slice(-4000) };
+  const message = String(error instanceof Error ? error.message : error).slice(-4000);
+  summary.status = message.includes("TEST_HARNESS_WRONG_WEBVIEW")
+    ? "PHASE4_TEST_HARNESS_FAILURE"
+    : message.includes("runtime_missing")
+      ? "PHASE4_BLOCKED_BY_CONFIRMED_P0"
+      : "PHASE4_FAILED_UNCLASSIFIED";
+  summary.firstFailure = { message };
 } finally {
   summary.finishedAt = new Date().toISOString();
   summary.elapsedMs = Date.parse(summary.finishedAt) - Date.parse(startedAt);
