@@ -683,7 +683,11 @@ fn classify_runtime_error(raw: &str) -> &'static str {
             "sqlite_open_failed"
         };
     }
-    if code.contains("loopback") || code.contains("port") || code.contains("api_bind") {
+    if code.contains("loopback")
+        || code.contains("health_probe")
+        || code.contains("port")
+        || code.contains("api_bind")
+    {
         return "loopback_unavailable";
     }
     if code.contains("model_missing") || code.contains("checksum") || code.contains("integrity") {
@@ -1051,7 +1055,15 @@ fn validate_ready_message(
             .and_then(|code| code.as_str())
             .filter(|code| !code.is_empty() && code.len() <= 120)
             .unwrap_or("desktop_sidecar_start_failed");
-        return Err(stable_runtime_code(code));
+        let phase = value
+            .get("phase")
+            .and_then(|phase| phase.as_str())
+            .unwrap_or("sidecar_startup");
+        return Err(format!(
+            "{}|{}",
+            stable_runtime_code(phase),
+            stable_runtime_code(code)
+        ));
     }
     let message: ReadyMessage = serde_json::from_value(value)
         .map_err(|_| "desktop_sidecar_handshake_invalid_json".to_string())?;
@@ -1628,7 +1640,12 @@ fn setup(app: &mut tauri::App) -> Result<(), Box<dyn Error>> {
                                         .install(sidecar, context, ready, bearer)
                                         .map_err(std::io::Error::other)?;
                                 }
-                                Err(code) => lifecycle.record_failure(&code, "sidecar_startup"),
+                                Err(failure) => {
+                                    let (phase, code) = failure
+                                        .split_once('|')
+                                        .unwrap_or(("sidecar_startup", failure.as_str()));
+                                    lifecycle.record_failure(code, phase);
+                                }
                             }
                         }
                         Err(_) => lifecycle
@@ -1785,6 +1802,11 @@ mod tests {
             ("desktop_sqlite_open_failed", "sqlite_open_failed"),
             ("desktop_sqlite_lock_corrupt", "sqlite_locked_or_corrupt"),
             ("desktop_loopback_unavailable", "loopback_unavailable"),
+            ("desktop_health_probe_connect_failed", "loopback_unavailable"),
+            ("desktop_health_probe_timeout", "loopback_unavailable"),
+            ("desktop_health_probe_http_failed", "loopback_unavailable"),
+            ("desktop_health_probe_payload_invalid", "loopback_unavailable"),
+            ("desktop_health_probe_status_not_ok", "loopback_unavailable"),
             ("model_missing", "model_missing_or_invalid"),
             ("llama_dependency_missing", "llama_dependency_missing"),
             ("llama_cpu_incompatible", "llama_cpu_incompatible"),
@@ -1796,6 +1818,20 @@ mod tests {
         for (code, expected) in cases {
             assert_eq!(classify_runtime_error(code), expected, "{code}");
         }
+    }
+
+    #[test]
+    fn sidecar_failure_preserves_health_probe_phase_and_code() {
+        let failure = validate_ready_message(
+            r#"{"event":"failure","code":"desktop_health_probe_connect_failed","phase":"loopback_health"}"#,
+            "unused",
+            1,
+        )
+        .expect_err("health probe failure must reject readiness");
+        assert_eq!(
+            failure,
+            "loopback_health|desktop_health_probe_connect_failed"
+        );
     }
 
     #[test]

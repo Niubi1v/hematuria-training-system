@@ -41,6 +41,7 @@
     "test:desktop:package-differential": "node scripts/test-desktop-package-differential.mjs",
     "test:desktop:nsis-reproduction": "node scripts/test-desktop-nsis-reproduction.mjs",
     "test:desktop:fault-injection": "node scripts/test-desktop-fault-injection.mjs",
+    "test:desktop:health-probe": "node scripts/test-desktop-health-probe.mjs",
     "test:ui:transition-visual": "node scripts/run-r5-playwright.mjs --grep @r5-visual --workers=1 --retries=0",
     "benchmark:desktop:model": "node scripts/desktop-model-benchmark.mjs",
     "test:desktop:phase4:lifecycle": "node scripts/test-desktop-phase4.mjs --mode lifecycle",

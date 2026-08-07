@@ -68,7 +68,7 @@ function recordRuntimeFailure(value, phase = runtimePhase) {
   const code = compatibility.normalizeRuntimeErrorCode(value);
   const category = compatibility.classifyRuntimeError(code);
   runtimePhase = phase;
-  lastFailure = { category, code, phase };
+  lastFailure = { category, code, phase, ...(value?.healthProbe || {}) };
   return lastFailure;
 }
 
@@ -115,7 +115,7 @@ activeModelAlias = modelModes[DEFAULT_MODEL_MODE].alias;
 function safeLog(event, metadata = {}) {
   const allowed = {};
   for (const [key, value] of Object.entries(metadata)) {
-    if (["status", "code", "category", "durationMs", "pid", "port", "phase", "exitCode", "schemaVersion"].includes(key)) {
+    if (["status", "code", "category", "durationMs", "attempts", "failureType", "systemErrorCode", "httpStatus", "pid", "port", "phase", "exitCode", "schemaVersion"].includes(key)) {
       allowed[key] = key === "code" ? compatibility.normalizeRuntimeErrorCode(value) : value;
     }
   }
@@ -1209,13 +1209,55 @@ async function listen(server) {
 }
 
 async function verifyHealth(origin) {
-  const response = await fetch(`${origin}/api/health/`, {
-    headers: { "X-Hematuria-Desktop-Token": bearer },
-    signal: AbortSignal.timeout(5000)
-  });
-  if (!response.ok) throw new Error("desktop_health_probe_failed");
-  const payload = await response.json();
-  if (payload.status !== "ok") throw new Error("desktop_health_probe_failed");
+  const startedAt = performance.now();
+  const attempts = 1;
+  const testFault = process.env.HEMATURIA_DESKTOP_TEST_MODE === "1"
+    ? String(process.env.HEMATURIA_DESKTOP_TEST_HEALTH_PROBE || "")
+    : "";
+  const failure = (code, failureType, extra = {}) => {
+    const error = new Error(code);
+    error.healthProbe = {
+      failureType,
+      durationMs: Math.round(performance.now() - startedAt),
+      attempts,
+      ...extra
+    };
+    return error;
+  };
+  if (["transient_connect", "permanent_connect"].includes(testFault)) {
+    throw failure("desktop_health_probe_connect_failed", "transport", { systemErrorCode: "ECONNREFUSED" });
+  }
+  let response;
+  try {
+    response = await fetch(`${origin}/api/health/`, {
+      headers: { "X-Hematuria-Desktop-Token": bearer },
+      signal: AbortSignal.timeout(5000)
+    });
+  } catch (error) {
+    const systemErrorCode = [error?.cause?.code, error?.code]
+      .find((code) => ["ECONNREFUSED", "ECONNRESET", "ETIMEDOUT", "UND_ERR_CONNECT_TIMEOUT"].includes(code));
+    const timedOut = error?.name === "TimeoutError" || ["ETIMEDOUT", "UND_ERR_CONNECT_TIMEOUT"].includes(systemErrorCode);
+    throw failure(
+      timedOut ? "desktop_health_probe_timeout" : "desktop_health_probe_connect_failed",
+      timedOut ? "timeout" : "transport",
+      systemErrorCode ? { systemErrorCode } : {}
+    );
+  }
+  if (testFault === "http_failed" || !response.ok) {
+    throw failure("desktop_health_probe_http_failed", "http", { httpStatus: testFault ? 503 : response.status });
+  }
+  if (testFault === "payload_invalid") {
+    throw failure("desktop_health_probe_payload_invalid", "payload");
+  }
+  let payload;
+  try {
+    payload = await response.json();
+  } catch {
+    throw failure("desktop_health_probe_payload_invalid", "payload");
+  }
+  if (testFault === "status_not_ok" || payload.status !== "ok") {
+    throw failure("desktop_health_probe_status_not_ok", "status");
+  }
 }
 
 async function waitForStartGate() {
@@ -1313,20 +1355,20 @@ process.once("SIGINT", () => void shutdown(0));
 process.once("SIGTERM", () => void shutdown(0));
 process.once("uncaughtException", (error) => {
   const failure = recordRuntimeFailure(error, runtimePhase);
-  process.stdout.write(`${JSON.stringify({ event: "failure", code: failure.code })}\n`);
-  safeLog("desktop_sidecar_uncaught_exception", { code: failure.code, category: failure.category, phase: failure.phase });
+  process.stdout.write(`${JSON.stringify({ event: "failure", ...failure })}\n`);
+  safeLog("desktop_sidecar_uncaught_exception", failure);
   void shutdown(1);
 });
 process.once("unhandledRejection", (error) => {
   const failure = recordRuntimeFailure(error, runtimePhase);
-  process.stdout.write(`${JSON.stringify({ event: "failure", code: failure.code })}\n`);
-  safeLog("desktop_sidecar_unhandled_rejection", { code: failure.code, category: failure.category, phase: failure.phase });
+  process.stdout.write(`${JSON.stringify({ event: "failure", ...failure })}\n`);
+  safeLog("desktop_sidecar_unhandled_rejection", failure);
   void shutdown(1);
 });
 
 main().catch((error) => {
   const failure = recordRuntimeFailure(error, runtimePhase);
-  process.stdout.write(`${JSON.stringify({ event: "failure", code: failure.code })}\n`);
-  safeLog("desktop_sidecar_start_failed", { code: failure.code, category: failure.category, phase: failure.phase });
+  process.stdout.write(`${JSON.stringify({ event: "failure", ...failure })}\n`);
+  safeLog("desktop_sidecar_start_failed", failure);
   void shutdown(1);
 });

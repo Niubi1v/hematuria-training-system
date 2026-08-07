@@ -134,7 +134,7 @@ function classifyRuntimeError(value) {
     return "sqlite_locked_or_corrupt";
   }
   if (/sqlite|database.*open/.test(code)) return "sqlite_open_failed";
-  if (/loopback|port|api_bind|connection_refused/.test(code)) return "loopback_unavailable";
+  if (/loopback|health_probe|port|api_bind|connection_refused/.test(code)) return "loopback_unavailable";
   if (/model.*(?:missing|invalid|checksum|integrity)|checksum_mismatch/.test(code)) {
     return "model_missing_or_invalid";
   }
