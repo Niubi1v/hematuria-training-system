@@ -251,7 +251,7 @@ async function connectToWebView(port, child, webViewDirectory, preLaunchInventor
     `http://localhost:${port}`,
     `http://[::1]:${port}`
   ];
-  const deadline = Date.now() + (realLocalAi ? 60_000 : 30_000);
+  const deadline = Date.now() + (realLocalAi || expectedInstallationMode !== "development" ? 60_000 : 30_000);
   let browser;
   let cdpConnected = false;
   let runtimeFailure = null;
