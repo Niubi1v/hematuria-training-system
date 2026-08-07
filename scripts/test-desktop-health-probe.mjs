@@ -10,15 +10,18 @@ import { fileURLToPath } from "node:url";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
 const compatibility = require("../server/desktopCompatibility.js");
-const codes = [
+const transientRuns = Number(process.env.HEMATURIA_HEALTH_PROBE_TRANSIENT_RUNS || 1);
+const permanentRuns = Number(process.env.HEMATURIA_HEALTH_PROBE_PERMANENT_RUNS || 1);
+const realRuns = Number(process.env.HEMATURIA_HEALTH_PROBE_REAL_RUNS || 1);
+for (const count of [transientRuns, permanentRuns, realRuns]) assert.ok(Number.isInteger(count) && count >= 1 && count <= 100);
+
+for (const code of [
   "desktop_health_probe_connect_failed",
   "desktop_health_probe_timeout",
   "desktop_health_probe_http_failed",
   "desktop_health_probe_payload_invalid",
   "desktop_health_probe_status_not_ok"
-];
-
-for (const code of codes) {
+]) {
   assert.equal(compatibility.classifyRuntimeError(code), "loopback_unavailable", code);
 }
 
@@ -53,7 +56,7 @@ function waitForExit(child) {
   return new Promise((resolve) => child.once("exit", resolve));
 }
 
-async function expectFailure(testFault, expectedCode, expectedType) {
+async function launch(testFault) {
   const temporaryRoot = await fs.mkdtemp(path.join(os.tmpdir(), "hematuria-health-probe-"));
   const bearer = secret();
   const handshake = secret();
@@ -75,50 +78,88 @@ async function expectFailure(testFault, expectedCode, expectedType) {
       HEMATURIA_DESKTOP_BEARER: bearer,
       HEMATURIA_DESKTOP_HANDSHAKE: handshake,
       HEMATURIA_DESKTOP_TEST_MODE: "1",
-      HEMATURIA_DESKTOP_TEST_HEALTH_PROBE: testFault
+      ...(testFault ? { HEMATURIA_DESKTOP_TEST_HEALTH_PROBE: testFault } : {})
     },
     stdio: ["pipe", "pipe", "pipe"],
     windowsHide: true
   });
   let stderr = "";
   child.stderr.on("data", (chunk) => { stderr += chunk.toString("utf8"); });
+  child.stdin.write("START\n");
+  return { bearer, child, handshake, line: JSON.parse(await readFirstLine(child.stdout)), stderr: () => stderr, temporaryRoot };
+}
+
+async function cleanup(runtime) {
+  if (runtime.child.exitCode === null) runtime.child.stdin.end();
+  await waitForExit(runtime.child);
+  await fs.rm(runtime.temporaryRoot, { recursive: true, force: true });
+}
+
+async function expectReady(testFault) {
+  const runtime = await launch(testFault);
   try {
-    child.stdin.write("START\n");
-    const failure = JSON.parse(await readFirstLine(child.stdout));
+    assert.equal(runtime.line.event, "ready", JSON.stringify(runtime.line));
+    assert.match(runtime.line.origin, /^http:\/\/127\.0\.0\.1:\d+$/u);
+    assert.equal(runtime.line.healthProbe.attempts, testFault === "transient_connect" ? 2 : 1);
+    const response = await fetch(`${runtime.line.origin}/api/health/`, {
+      headers: { "X-Hematuria-Desktop-Token": runtime.bearer },
+      signal: AbortSignal.timeout(2000)
+    });
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).status, "ok");
+    assert.equal(runtime.stderr().includes(runtime.bearer), false);
+    assert.equal(runtime.stderr().includes(runtime.handshake), false);
+    assert.equal(runtime.stderr().includes(runtime.temporaryRoot), false);
+  } finally {
+    await cleanup(runtime);
+  }
+}
+
+async function expectFailure(testFault, expectedCode, expectedType, expectedAttempts = 1) {
+  const runtime = await launch(testFault);
+  try {
+    const failure = runtime.line;
     assert.equal(failure.event, "failure");
     assert.equal(failure.code, expectedCode);
     assert.equal(failure.category, "loopback_unavailable", JSON.stringify(failure));
     assert.equal(failure.phase, "loopback_health");
     assert.equal(failure.failureType, expectedType);
-    assert.equal(failure.attempts, 1);
+    assert.equal(failure.attempts, expectedAttempts);
     assert.equal(Number.isSafeInteger(failure.durationMs), true);
-    assert.equal(await waitForExit(child), 1);
-    const log = stderr.trim().split(/\r?\n/u).map((line) => JSON.parse(line));
+    assert.equal(await waitForExit(runtime.child), 1);
+    const log = runtime.stderr().trim().split(/\r?\n/u).map((line) => JSON.parse(line));
     const diagnostic = log.find((entry) => entry.event === "desktop_sidecar_start_failed");
     assert.equal(diagnostic.code, expectedCode);
     assert.equal(diagnostic.category, "loopback_unavailable");
     assert.equal(diagnostic.phase, "loopback_health");
-    assert.equal(diagnostic.attempts, 1);
-    assert.equal(stderr.includes(bearer), false);
-    assert.equal(stderr.includes(handshake), false);
-    assert.equal(stderr.includes(temporaryRoot), false);
+    assert.equal(runtime.stderr().includes(runtime.bearer), false);
+    assert.equal(runtime.stderr().includes(runtime.handshake), false);
+    assert.equal(runtime.stderr().includes(runtime.temporaryRoot), false);
     return failure;
   } finally {
-    if (child.exitCode === null) child.kill("SIGKILL");
-    await waitForExit(child);
-    await fs.rm(temporaryRoot, { recursive: true, force: true });
+    await cleanup(runtime);
   }
 }
 
-const results = [];
+for (let index = 0; index < transientRuns; index += 1) await expectReady("transient_connect");
+const permanent = [];
+for (let index = 0; index < permanentRuns; index += 1) {
+  permanent.push(await expectFailure("permanent_connect", "desktop_health_probe_connect_failed", "transport", 4));
+}
 for (const scenario of [
-  ["transient_connect", "desktop_health_probe_connect_failed", "transport"],
-  ["permanent_connect", "desktop_health_probe_connect_failed", "transport"],
+  ["timeout", "desktop_health_probe_timeout", "timeout", 4],
   ["http_failed", "desktop_health_probe_http_failed", "http"],
   ["payload_invalid", "desktop_health_probe_payload_invalid", "payload"],
   ["status_not_ok", "desktop_health_probe_status_not_ok", "status"]
 ]) {
-  results.push(await expectFailure(...scenario));
+  await expectFailure(...scenario);
 }
+for (let index = 0; index < realRuns; index += 1) await expectReady("");
 
-console.log(JSON.stringify({ status: "passed", singleShotTransientFailure: true, scenarios: results.map(({ code, phase, failureType, attempts }) => ({ code, phase, failureType, attempts })) }));
+console.log(JSON.stringify({
+  status: "passed",
+  transientRecovered: transientRuns,
+  permanentFailedClosed: permanent.length,
+  realStartClose: realRuns,
+  permanentAttempts: [...new Set(permanent.map((failure) => failure.attempts))]
+}));

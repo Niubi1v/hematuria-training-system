@@ -1210,53 +1210,69 @@ async function listen(server) {
 
 async function verifyHealth(origin) {
   const startedAt = performance.now();
-  const attempts = 1;
+  const deadline = Date.now() + 5000;
   const testFault = process.env.HEMATURIA_DESKTOP_TEST_MODE === "1"
     ? String(process.env.HEMATURIA_DESKTOP_TEST_HEALTH_PROBE || "")
     : "";
-  const failure = (code, failureType, extra = {}) => {
-    const error = new Error(code);
-    error.healthProbe = {
-      failureType,
-      durationMs: Math.round(performance.now() - startedAt),
-      attempts,
-      ...extra
+  for (let attempts = 1; attempts <= 4; attempts += 1) {
+    const failure = (code, failureType, extra = {}) => {
+      const error = new Error(code);
+      error.healthProbe = {
+        failureType,
+        durationMs: Math.round(performance.now() - startedAt),
+        attempts,
+        ...extra
+      };
+      return error;
     };
-    return error;
-  };
-  if (["transient_connect", "permanent_connect"].includes(testFault)) {
-    throw failure("desktop_health_probe_connect_failed", "transport", { systemErrorCode: "ECONNREFUSED" });
-  }
-  let response;
-  try {
-    response = await fetch(`${origin}/api/health/`, {
-      headers: { "X-Hematuria-Desktop-Token": bearer },
-      signal: AbortSignal.timeout(5000)
-    });
-  } catch (error) {
-    const systemErrorCode = [error?.cause?.code, error?.code]
-      .find((code) => ["ECONNREFUSED", "ECONNRESET", "ETIMEDOUT", "UND_ERR_CONNECT_TIMEOUT"].includes(code));
-    const timedOut = error?.name === "TimeoutError" || ["ETIMEDOUT", "UND_ERR_CONNECT_TIMEOUT"].includes(systemErrorCode);
-    throw failure(
-      timedOut ? "desktop_health_probe_timeout" : "desktop_health_probe_connect_failed",
-      timedOut ? "timeout" : "transport",
-      systemErrorCode ? { systemErrorCode } : {}
-    );
-  }
-  if (testFault === "http_failed" || !response.ok) {
-    throw failure("desktop_health_probe_http_failed", "http", { httpStatus: testFault ? 503 : response.status });
-  }
-  if (testFault === "payload_invalid") {
-    throw failure("desktop_health_probe_payload_invalid", "payload");
-  }
-  let payload;
-  try {
-    payload = await response.json();
-  } catch {
-    throw failure("desktop_health_probe_payload_invalid", "payload");
-  }
-  if (testFault === "status_not_ok" || payload.status !== "ok") {
-    throw failure("desktop_health_probe_status_not_ok", "status");
+    try {
+      if (testFault === "permanent_connect" || (testFault === "transient_connect" && attempts === 1)) {
+        throw failure("desktop_health_probe_connect_failed", "transport", { systemErrorCode: "ECONNREFUSED" });
+      }
+      if (testFault === "timeout") {
+        throw failure("desktop_health_probe_timeout", "timeout", { systemErrorCode: "ETIMEDOUT" });
+      }
+      let response;
+      try {
+        response = await fetch(`${origin}/api/health/`, {
+          headers: { "X-Hematuria-Desktop-Token": bearer },
+          signal: AbortSignal.timeout(Math.max(1, Math.min(1000, deadline - Date.now())))
+        });
+      } catch (error) {
+        const systemErrorCode = [error?.cause?.code, error?.code]
+          .find((code) => ["ECONNREFUSED", "ECONNRESET", "ETIMEDOUT", "UND_ERR_CONNECT_TIMEOUT"].includes(code));
+        const timedOut = error?.name === "TimeoutError" || ["ETIMEDOUT", "UND_ERR_CONNECT_TIMEOUT"].includes(systemErrorCode);
+        throw failure(
+          timedOut ? "desktop_health_probe_timeout" : "desktop_health_probe_connect_failed",
+          timedOut ? "timeout" : "transport",
+          systemErrorCode ? { systemErrorCode } : {}
+        );
+      }
+      if (testFault === "http_failed" || !response.ok) {
+        throw failure("desktop_health_probe_http_failed", "http", { httpStatus: testFault ? 503 : response.status });
+      }
+      if (testFault === "payload_invalid") {
+        throw failure("desktop_health_probe_payload_invalid", "payload");
+      }
+      let payload;
+      try {
+        payload = await response.json();
+      } catch {
+        throw failure("desktop_health_probe_payload_invalid", "payload");
+      }
+      if (testFault === "status_not_ok" || payload.status !== "ok") {
+        throw failure("desktop_health_probe_status_not_ok", "status");
+      }
+      return { attempts, durationMs: Math.round(performance.now() - startedAt) };
+    } catch (error) {
+      const probe = error?.healthProbe;
+      const retryable = probe?.failureType === "timeout"
+        || (probe?.failureType === "transport"
+          && ["ECONNREFUSED", "ECONNRESET", "ETIMEDOUT", "UND_ERR_CONNECT_TIMEOUT"].includes(probe.systemErrorCode));
+      const delayMs = [25, 75, 150][attempts - 1];
+      if (!retryable || attempts === 4 || !delayMs || Date.now() + delayMs >= deadline) throw error;
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
   }
 }
 
@@ -1332,7 +1348,7 @@ async function main() {
   const origin = await listen(apiServer);
   apiOrigin = origin;
   runtimePhase = "loopback_health";
-  await verifyHealth(origin);
+  const healthProbe = await verifyHealth(origin);
   runtimePhase = "ready";
 
   const ready = {
@@ -1342,10 +1358,11 @@ async function main() {
     pid: process.pid,
     origin,
     databaseSchemaVersion,
-    localAi: localAiState
+    localAi: localAiState,
+    healthProbe
   };
   process.stdout.write(`${JSON.stringify(ready)}\n`);
-  safeLog("desktop_sidecar_ready", { status: localAiState.status, pid: process.pid });
+  safeLog("desktop_sidecar_ready", { status: localAiState.status, pid: process.pid, ...healthProbe });
   if (localAiEnabled(sqliteStore)) {
     void reconfigureLocalAi(sqliteStore);
   }
