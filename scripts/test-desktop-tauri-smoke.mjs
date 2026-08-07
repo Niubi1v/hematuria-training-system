@@ -36,9 +36,11 @@ const surface = surfaceIndex >= 0 ? String(process.argv[surfaceIndex + 1] || "")
 if (!new Set(["no-bundle", "portable", "nsis"]).has(surface)) throw new Error(`desktop_tauri_surface_not_implemented:${surface}`);
 const surfaceLabel = process.env.HEMATURIA_SURFACE_LABEL || surface;
 const startupOnly = process.argv.includes("--startup-only");
+const realLocalAi = process.argv.includes("--real-local-ai");
 if (!/^[a-z0-9-]{1,40}$/u.test(surfaceLabel)) throw new Error("desktop_tauri_surface_label_invalid");
 const expectedInstallationMode = surface === "portable" ? "portable" : surface === "nsis" ? "installer" : "development";
-const usesFakeLocalAi = expectedInstallationMode === "development";
+const usesFakeLocalAi = expectedInstallationMode === "development" && !realLocalAi;
+const localAiEnabled = usesFakeLocalAi || realLocalAi;
 const executable = path.resolve(process.env.HEMATURIA_DESKTOP_TAURI_EXECUTABLE
   || path.join(repoRoot, "src-tauri", "target", "release", "hematuria-training-r5.exe"));
 try {
@@ -59,6 +61,15 @@ const expectedProductHead = execFileSync("git", ["rev-parse", "HEAD"], {
   encoding: "utf8",
   windowsHide: true
 }).trim();
+const configuredRealModelPath = String(process.env.HEMATURIA_DESKTOP_MODEL_PATH || "");
+const realModelPath = realLocalAi && configuredRealModelPath ? path.resolve(configuredRealModelPath) : "";
+if (realLocalAi) {
+  assert.ok(realModelPath, "desktop_real_model_path_required");
+  const manifest = JSON.parse(await fs.readFile(path.join(repoRoot, "desktop", "runtime-manifest.json"), "utf8"));
+  const model = manifest.models.lightweight;
+  assert.equal((await fs.stat(realModelPath)).size, model.size, "desktop_real_model_size_mismatch");
+  assert.equal(await fileSha256(realModelPath), model.sha256, "desktop_real_model_sha256_mismatch");
+}
 const evidenceRoot = path.resolve(process.env.HEMATURIA_NSIS_P0_EVIDENCE_ROOT
   || "D:\\HematuriaDesktopArtifacts\\R5-Handoffs");
 
@@ -111,6 +122,29 @@ function processInventory() {
   } catch {
     return { available: false, productPids: [], webViewPids: [] };
   }
+}
+
+function peakWorkingSetBytes(pid) {
+  if (!pid) return 0;
+  const result = spawnSync("powershell.exe", [
+    "-NoProfile", "-NonInteractive", "-Command",
+    `(Get-Process -Id ${Number(pid)} -ErrorAction Stop).PeakWorkingSet64`
+  ], { encoding: "utf8", windowsHide: true });
+  const value = Number(String(result.stdout || "").trim());
+  return result.status === 0 && Number.isFinite(value) ? value : 0;
+}
+
+async function directoryBytes(directory) {
+  let total = 0;
+  let entries;
+  try { entries = await fs.readdir(directory, { withFileTypes: true }); }
+  catch (error) { if (error?.code === "ENOENT") return 0; throw error; }
+  for (const entry of entries) {
+    const child = path.join(directory, entry.name);
+    if (entry.isDirectory()) total += await directoryBytes(child);
+    else total += (await fs.stat(child)).size;
+  }
+  return total;
 }
 
 async function reservePort() {
@@ -341,7 +375,7 @@ async function launch(dataDirectory, webViewDirectory) {
   if (preLaunchInventory.productPids.length || preLaunchInventory.webViewPids.length) {
     throw Object.assign(new Error("desktop_tauri_preexisting_product_process"), { cdpPort, preLaunchInventory });
   }
-  const modelPath = path.join(dataDirectory, "models", "Qwen3-1.7B-Q4_K_M.gguf");
+  const modelPath = realLocalAi ? realModelPath : path.join(dataDirectory, "models", "Qwen3-1.7B-Q4_K_M.gguf");
   const llamaPidFile = path.join(dataDirectory, "fake-llama.pid");
   if (usesFakeLocalAi) {
     await fs.mkdir(path.dirname(modelPath), { recursive: true });
@@ -367,6 +401,8 @@ async function launch(dataDirectory, webViewDirectory) {
         HEMATURIA_LLAMA_SERVER_PATH: process.execPath,
         HEMATURIA_LLAMA_SERVER_PREFIX_ARGS: JSON.stringify([path.join(repoRoot, "scripts", "desktop-fake-llama-server.mjs")]),
         HEMATURIA_DESKTOP_TEST_LLAMA_PID_FILE: llamaPidFile,
+        HEMATURIA_DESKTOP_MODEL_PATH: modelPath
+      } : realLocalAi ? {
         HEMATURIA_DESKTOP_MODEL_PATH: modelPath
       } : { HEMATURIA_DESKTOP_DISABLE_LOCAL_AI: "1" }),
       WEBVIEW2_USER_DATA_FOLDER: webViewDirectory,
@@ -436,7 +472,7 @@ async function waitForLlama(page) {
         && network.ports.includes(network.argumentPort)
         ? { diagnostics: response.payload, pid, port: network.argumentPort }
         : false;
-    }, 20_000, "local-ai-ready");
+    }, realLocalAi ? 180_000 : 20_000, "local-ai-ready");
   } catch (error) {
     throw new Error(`${error instanceof Error ? error.message : String(error)}:${JSON.stringify(lastState)}`);
   }
@@ -454,12 +490,12 @@ async function waitForDisabledLocalAi(page) {
   return { diagnostics, pid: 0, port: 0 };
 }
 
-async function askSafetyFallback(page, expectedReason) {
+async function askGovernedQuestion(page, expectedReason, requireLocalClassifier = false) {
   const before = (await desktopJson(page, "/api/desktop/evidence")).payload;
   const composer = page.locator('[data-testid="chat-composer"]');
   const send = composer.locator("button").last();
   await send.waitFor({ state: "visible" });
-  await composer.locator("textarea").fill("排泄尿液时会产生灼热样感觉吗？");
+  await composer.locator("textarea").fill(requireLocalClassifier ? "小便红了有多久？" : "排泄尿液时会产生灼热样感觉吗？");
   await eventually(() => send.isEnabled(), 20_000, "fallback-send-enabled");
   const responsePromise = page.waitForResponse((response) =>
     response.request().method() === "POST"
@@ -469,20 +505,36 @@ async function askSafetyFallback(page, expectedReason) {
   const response = await responsePromise;
   assert.equal(response.status(), 200);
   const payload = await response.json();
-  assert.equal(payload.isFallback, true);
-  if (expectedReason) assert.equal(payload.fallbackReason, expectedReason);
-  else assert.ok(payload.fallbackReason, "packaged fallback must expose a stable reason to the renderer");
+  if (requireLocalClassifier) {
+    assert.equal(payload.classificationSource, "local_ai");
+    assert.ok(["accepted", "rejected", "timeout"].includes(payload.classifierStatus));
+    if (payload.classifierStatus === "accepted") {
+      assert.equal(payload.isFallback, false);
+      assert.equal(payload.provider, "local");
+    } else {
+      assert.equal(payload.isFallback, true);
+      assert.equal(payload.provider, "rule");
+      assert.ok(payload.fallbackReason);
+    }
+  } else {
+    assert.equal(payload.isFallback, true);
+    if (expectedReason) assert.equal(payload.fallbackReason, expectedReason);
+    else assert.ok(payload.fallbackReason, "packaged fallback must expose a stable reason to the renderer");
+  }
   const after = (await desktopJson(page, "/api/desktop/evidence")).payload;
-  assert.equal(after.localAiAcceptedCount, before.localAiAcceptedCount);
-  assert.equal(after.ruleFallbackCount, before.ruleFallbackCount + 1);
+  const acceptedDelta = after.localAiAcceptedCount - before.localAiAcceptedCount;
+  const fallbackDelta = after.ruleFallbackCount - before.ruleFallbackCount;
+  assert.equal(acceptedDelta + fallbackDelta, 1);
   assert.equal(after.cloudRequestCount, 0);
   const conversation = page.getByRole("log", { name: "模拟问诊对话" });
   await conversation.locator(".history-message").last().waitFor({ state: "visible" });
-  assert.doesNotMatch(await conversation.innerText(), /answerSource|fallbackReason|rule_fallback|semantic_response_invalid|local_ai/i);
+  assert.doesNotMatch(await conversation.innerText(), /answerSource|fallbackReason|classificationSource|classifierStatus|provider|rule_fallback|semantic_response_invalid|local_ai/i);
   return {
-    acceptedDelta: after.localAiAcceptedCount - before.localAiAcceptedCount,
-    fallbackDelta: after.ruleFallbackCount - before.ruleFallbackCount,
-    cloudRequestCount: after.cloudRequestCount
+    acceptedDelta,
+    fallbackDelta,
+    cloudRequestCount: after.cloudRequestCount,
+    classificationSource: payload.classificationSource || null,
+    classifierStatus: payload.classifierStatus || null
   };
 }
 
@@ -624,10 +676,11 @@ async function sidecarLogSummary(dataDirectory) {
   }
 }
 
-async function archiveNsisFailure(error, dataDirectory, webViewDirectory) {
+async function archiveRuntimeFailure(error, dataDirectory, webViewDirectory) {
   const installRoot = path.dirname(executable);
   const resourceRoot = path.join(installRoot, "resources");
-  const archive = path.join(evidenceRoot, `${safeTimestamp()}-R5-NSIS-P0-Reproduction-${expectedProductHead}`);
+  const label = surface === "nsis" ? "R5-NSIS-P0-Reproduction" : "R5-Runtime-P0-Reproduction";
+  const archive = path.join(evidenceRoot, `${safeTimestamp()}-${label}-${expectedProductHead}`);
   const evidence = {
     schemaVersion: 1,
     status: "runtime_startup_failed",
@@ -732,8 +785,8 @@ if (startupOnly) {
       await waitForExit(running.child).catch(() => undefined);
       await running.browser.close().catch(() => undefined);
     }
-    if (failure && surface === "nsis") {
-      try { failureArchive = await archiveNsisFailure(failure, dataDirectory, webViewDirectory); }
+    if (failure && (surface === "nsis" || realLocalAi)) {
+      try { failureArchive = await archiveRuntimeFailure(failure, dataDirectory, webViewDirectory); }
       catch (error) { cleanupFailure = error; }
     }
     if (!failure && !keepSuccessfulRoot) {
@@ -750,12 +803,15 @@ if (startupOnly) {
 } else {
 try {
   await fs.mkdir(dataDirectory, { recursive: true });
+  const firstCycleStarted = performance.now();
   running = await launch(dataDirectory, webViewDirectory);
+  const firstRuntimeReadyMs = Math.round(performance.now() - firstCycleStarted);
   const firstProbe = await runtimeProbe(running.page);
   assert.equal(firstProbe.runtimeTarget, "desktop");
   assert.match(firstProbe.apiBaseUrl, /^http:\/\/127\.0\.0\.1:\d+$/);
   assert.equal(firstProbe.tokenValid, true);
-  const firstLlama = usesFakeLocalAi ? await waitForLlama(running.page) : await waitForDisabledLocalAi(running.page);
+  const firstLlama = localAiEnabled ? await waitForLlama(running.page) : await waitForDisabledLocalAi(running.page);
+  const firstModelReadyMs = Math.round(performance.now() - firstCycleStarted);
   const initialAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
   assert.equal(initialAuthority.schemaVersion, 3);
   assert.equal(initialAuthority.productHead, expectedProductHead);
@@ -765,7 +821,9 @@ try {
     language: "zh",
     marker: p002Marker
   });
-  const fallback = await askSafetyFallback(running.page, usesFakeLocalAi ? "semantic_response_invalid" : undefined);
+  const answerStarted = performance.now();
+  const fallback = await askGovernedQuestion(running.page, usesFakeLocalAi ? "semantic_response_invalid" : undefined, realLocalAi);
+  const firstAnswerMs = Math.round(performance.now() - answerStarted);
   await saveHistoryDraft(running.page, {
     caseId: "P001",
     language: "zh",
@@ -793,6 +851,11 @@ try {
   const firstAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
   assert.ok(firstAuthority.serverStateRevision > initialAuthority.serverStateRevision);
   const firstDiagnostic = await diagnosticSnapshot(running.page);
+  const firstMemory = {
+    tauri: peakWorkingSetBytes(running.child.pid),
+    sidecar: peakWorkingSetBytes(firstDiagnostic.sidecarPid),
+    llama: peakWorkingSetBytes(firstLlama.pid)
+  };
   assertStartupEvidence(firstDiagnostic.startup, firstDiagnostic.bootstrap);
   assert.equal(firstDiagnostic.productIdentity, "hematuria-training-r5");
   assert.equal(firstDiagnostic.installationMode, expectedInstallationMode);
@@ -818,9 +881,12 @@ try {
   if (firstLlama.pid) await assertLlamaClosed(firstLlama.pid, firstLlama.port);
   await assertWebViewDebugClosed(firstCdpPort);
 
+  const secondCycleStarted = performance.now();
   running = await launch(dataDirectory, webViewDirectory);
-  const secondLlama = usesFakeLocalAi ? await waitForLlama(running.page) : await waitForDisabledLocalAi(running.page);
-  if (usesFakeLocalAi) assert.notEqual(secondLlama.pid, firstLlama.pid);
+  const secondRuntimeReadyMs = Math.round(performance.now() - secondCycleStarted);
+  const secondLlama = localAiEnabled ? await waitForLlama(running.page) : await waitForDisabledLocalAi(running.page);
+  const secondModelReadyMs = Math.round(performance.now() - secondCycleStarted);
+  if (localAiEnabled) assert.notEqual(secondLlama.pid, firstLlama.pid);
   const restartedAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
   assert.equal(restartedAuthority.stateStoreId, initialAuthority.stateStoreId);
   assert.equal(restartedAuthority.productHead, expectedProductHead);
@@ -869,6 +935,11 @@ try {
   assert.equal(finalAuthority.productHead, expectedProductHead);
   assert.ok(finalAuthority.serverStateRevision > postReplayAuthority.serverStateRevision);
   const finalDiagnostic = await diagnosticSnapshot(running.page);
+  const secondMemory = {
+    tauri: peakWorkingSetBytes(running.child.pid),
+    sidecar: peakWorkingSetBytes(finalDiagnostic.sidecarPid),
+    llama: peakWorkingSetBytes(secondLlama.pid)
+  };
   assertStartupEvidence(finalDiagnostic.startup, finalDiagnostic.bootstrap);
   assert.equal(finalDiagnostic.productIdentity, "hematuria-training-r5");
   assert.equal(finalDiagnostic.installationMode, expectedInstallationMode);
@@ -942,6 +1013,21 @@ try {
     cloudRequestCount: 0,
     lifecycleCycles: 2,
     processCleanup: true,
+    realLocalAi,
+    performance: {
+      firstRuntimeReadyMs,
+      firstModelReadyMs,
+      firstAnswerMs,
+      secondRuntimeReadyMs,
+      secondModelReadyMs,
+      peakWorkingSetBytes: {
+        tauri: Math.max(firstMemory.tauri, secondMemory.tauri),
+        sidecar: Math.max(firstMemory.sidecar, secondMemory.sidecar),
+        llama: Math.max(firstMemory.llama, secondMemory.llama)
+      },
+      sqliteBytes: (await fs.stat(path.join(dataDirectory, "hematuria.sqlite3"))).size,
+      logBytes: await directoryBytes(path.join(dataDirectory, "logs"))
+    },
     checkpoint
   };
 } catch (error) {
@@ -952,9 +1038,9 @@ try {
     await waitForExit(running.child).catch(() => undefined);
     await running.browser.close().catch(() => undefined);
   }
-  if (failure && surface === "nsis") {
+  if (failure && (surface === "nsis" || realLocalAi)) {
     try {
-      failureArchive = await archiveNsisFailure(failure, dataDirectory, webViewDirectory);
+      failureArchive = await archiveRuntimeFailure(failure, dataDirectory, webViewDirectory);
     } catch (error) {
       cleanupFailure = error;
     }

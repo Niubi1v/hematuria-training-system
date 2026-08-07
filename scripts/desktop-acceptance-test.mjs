@@ -281,25 +281,29 @@ function recordSourceContract(reply, expectation, label, language, turnNumber) {
     expectedIntent,
     expectedSlot,
     matchedFact = expectedIntent,
+    category = "canonical",
     allowsUnknown = false,
-    requiresContext = false
+    requiresContext = false,
+    expectGovernedBoundary = false,
+    expectRuleRoute = false
   } = expectation;
+  const expectedIntents = expectation.expectedIntents || [expectedIntent];
+  const expectedSlots = expectation.expectedSlots || [expectedSlot];
+  const matchedFacts = expectation.matchedFacts || (matchedFact ? [matchedFact] : []);
   assert.ok(String(reply.replyText || "").trim(), `${label} must return a non-empty governed answer`);
   assert.ok(Array.isArray(reply.matchedFacts), `${label} must expose matchedFacts`);
-  if (matchedFact) {
-    assert.ok(reply.matchedFacts.includes(matchedFact), `${label} must resolve ${matchedFact}`);
-  }
+  for (const fact of matchedFacts) assert.ok(reply.matchedFacts.includes(fact), `${label} must resolve ${fact}`);
   assert.equal(
     reply.usedModel,
-    realLocalAi ? selectedModel.alias : "local-rule",
-    realLocalAi
+    realLocalAi && !expectGovernedBoundary && !expectRuleRoute ? selectedModel.alias : "local-rule",
+    realLocalAi && !expectGovernedBoundary && !expectRuleRoute
       ? `${label} must report the selected validator model even when rejected`
       : `${label} must not claim that a disabled model was used`
   );
   assert.equal(reply.thinkingMode, "disabled", `${label} must keep thinking disabled`);
   assert.equal(reply.thinkingExecuted, false, `${label} must not execute model thinking`);
   assert.ok(
-    ["governed_planner", "safety_boundary"].includes(reply.generationSource),
+    ["governed_planner", "rule_fallback", "safety_boundary"].includes(reply.generationSource),
     `${label} generation must remain under the governed planner or an explicit safety boundary`
   );
   assert.notEqual(reply.factSource, "local_ai", `${label} must keep model output outside the fact authority path`);
@@ -323,8 +327,8 @@ function recordSourceContract(reply, expectation, label, language, turnNumber) {
   assert.ok(Number.isSafeInteger(reply.desktopEvidence.latency), `${label} must report bounded latency`);
   const actualIntent = String(reply.desktopEvidence.intent || "");
   const actualSlot = String(reply.desktopEvidence.requestedSlot || "");
-  const intentMatch = actualIntent === expectedIntent;
-  const slotMatch = actualSlot === expectedSlot;
+  const intentMatch = expectedIntents.includes(actualIntent);
+  const slotMatch = expectedSlots.includes(actualSlot);
   assert.ok(String(reply.desktopEvidence.factState || ""), `${label} must report the nine-state classification`);
   const unknown = String(reply.desktopEvidence.unknown || "") || null;
   const erroneousUnknown = !allowsUnknown
@@ -336,15 +340,33 @@ function recordSourceContract(reply, expectation, label, language, turnNumber) {
     || reply.desktopEvidence.fallbackReason === "local_context_reference_mismatch"
   ));
   if (requiresContext && !contextLost) contextAppliedCount += 1;
-  if (realLocalAi) {
+  if (realLocalAi && (expectGovernedBoundary || expectRuleRoute)) {
+    if (expectRuleRoute && !allowsUnknown) {
+      assert.equal(intentMatch, true, `${label} governed rule route must preserve an expected intent`);
+      assert.equal(slotMatch, true, `${label} governed rule route must preserve an expected slot`);
+    }
+    assert.equal(reply.classificationSource, "none", `${label} governed rule routes must bypass the model classifier`);
+    assert.equal(reply.classifierStatus, "not_invoked", `${label} governed rule routes must not invoke the classifier`);
+    assert.equal(reply.providerConfigured, expectRuleRoute, `${label} governed rule route provider readiness must be truthful`);
+    assert.equal(reply.providerHttpSuccess, false, `${label} governed rule routes must not call the provider`);
+    assert.equal(reply.isFallback, true, `${label} must identify the governed rule route`);
+    assert.equal(reply.provider, "rule", `${label} must use the governed rule route`);
+    assert.equal(reply.desktopEvidence.llamaServerReady, true, `${label} llama-server must remain ready`);
+    assert.equal(reply.desktopEvidence.localModelReady, true, `${label} model readiness must remain truthful`);
+    assert.equal(reply.desktopEvidence.answerSource, "rule_fallback", `${label} must report rule_fallback`);
+    if (expectGovernedBoundary) {
+      assert.equal(reply.fallbackReason, "medical_bilingual_conflict_pending_review", `${label} must preserve the medical quarantine reason`);
+      assert.equal(reply.desktopEvidence.fallbackReason, null, `${label} public diagnostics must not expand the medical quarantine detail`);
+    }
+  } else if (realLocalAi) {
     assert.equal(reply.classificationSource, "local_ai", `${label} must invoke the local classifier`);
     assert.ok(["accepted", "rejected", "timeout"].includes(reply.classifierStatus), `${label} classifier status must be truthful`);
     assert.equal(reply.providerConfigured, true, `${label} must report the configured loopback provider`);
     assert.equal(reply.desktopEvidence.llamaServerReady, true, `${label} llama-server must be ready`);
     assert.equal(reply.desktopEvidence.localModelReady, true, `${label} Qwen model must be loaded`);
     if (reply.classifierStatus === "accepted") {
-      assert.equal(intentMatch, true, `${label} accepted local metadata must report intent ${expectedIntent}`);
-      assert.equal(slotMatch, true, `${label} accepted local metadata must report slot ${expectedSlot}`);
+      assert.equal(intentMatch, true, `${label} accepted local metadata must report an expected intent`);
+      assert.equal(slotMatch, true, `${label} accepted local metadata must report an expected slot`);
       assert.equal(reply.providerHttpSuccess, true, `${label} accepted metadata must complete a real llama-server request`);
       assert.equal(reply.desktopEvidence.answerSource, "local_ai", `${label} accepted metadata must report local_ai`);
       assert.equal(reply.isFallback, false, `${label} accepted metadata must use the local route`);
@@ -356,8 +378,8 @@ function recordSourceContract(reply, expectation, label, language, turnNumber) {
       assert.ok(String(reply.desktopEvidence.fallbackReason || ""), `${label} rejected metadata must expose its safe rejection reason`);
     }
   } else {
-    assert.equal(intentMatch, true, `${label} deterministic fallback must preserve governed intent ${expectedIntent}`);
-    assert.equal(slotMatch, true, `${label} deterministic fallback must preserve governed slot ${expectedSlot}`);
+    assert.equal(intentMatch, true, `${label} deterministic fallback must preserve an expected governed intent`);
+    assert.equal(slotMatch, true, `${label} deterministic fallback must preserve an expected governed slot`);
     assert.equal(reply.classificationSource, "deterministic", `${label} must not claim local_ai while the model is disabled`);
     assert.equal(reply.classifierStatus, "not_invoked", `${label} classifier status must be truthful`);
     assert.equal(reply.providerConfigured, false, `${label} must not report a configured model provider`);
@@ -383,6 +405,8 @@ function recordSourceContract(reply, expectation, label, language, turnNumber) {
   const answerSource = String(reply.desktopEvidence.answerSource || "unknown");
   answerSourceCounts.set(answerSource, (answerSourceCounts.get(answerSource) || 0) + 1);
   turnDiagnostics.push({
+    label,
+    category,
     language,
     turn: turnNumber,
     answerSource,
@@ -855,10 +879,37 @@ const enTurns = [
   { question: "Do you drink alcohol?", expectedIntent: "alcohol_history", expectedSlot: "LIFE_ALCOHOL", matchedFact: null, allowsUnknown: true }
 ];
 
+const p003Turns = [
+  { question: "哪里不舒服？", expectedIntent: "chief_complaint", expectedSlot: "chief_complaint", category: "symptom_present" },
+  { question: "多少天？", expectedIntent: "hematuria_onset", expectedSlot: "hematuria_onset", requiresContext: true, category: "coarse_time_context" },
+  { question: "那小便时疼吗？", expectedIntent: "dysuria", expectedSlot: "dysuria", matchedFact: null, allowsUnknown: true, requiresContext: true, expectGovernedBoundary: true, category: "context_ellipsis" },
+  { question: "以前有过这种红尿吗？", expectedIntent: "intermittent_hematuria", expectedSlot: "hematuria_frequency", matchedFact: null, requiresContext: true, allowsUnknown: true, category: "context_ellipsis" }
+];
+
+const selectedTurns = [
+  { question: "What brought you in?", expectedIntent: "chief_complaint", expectedSlot: "chief_complaint", category: "symptom_present" },
+  { question: "How many days?", expectedIntent: "hematuria_onset", expectedSlot: "hematuria_onset", matchedFact: null, allowsUnknown: true, requiresContext: true, expectRuleRoute: true, category: "coarse_time_context" },
+  { question: "You do not have pain when urinating, right?", expectedIntent: "dysuria", expectedSlot: "dysuria", category: "negated" },
+  {
+    question: "Do you have urinary frequency, urgency, or pain when urinating?",
+    expectedIntent: "urinary_frequency",
+    expectedSlot: "urinary_frequency",
+    expectedIntents: ["urinary_frequency", "urinary_urgency", "dysuria"],
+    expectedSlots: ["urinary_frequency", "urinary_urgency", "dysuria"],
+    matchedFact: null,
+    category: "compound"
+  },
+  { question: "Are you sure exactly when it started?", expectedIntent: "hematuria_onset", expectedSlot: "hematuria_onset", category: "uncertainty" },
+  { question: "Have you ever had this before?", expectedIntent: "intermittent_hematuria", expectedSlot: "hematuria_frequency", matchedFact: null, requiresContext: true, allowsUnknown: true, expectRuleRoute: true, category: "previous_episode" }
+];
+
 const suffix = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
 const p001ZhAttemptId = `desktop-p001-zh-${suffix}`;
 const p001EnAttemptId = `desktop-p001-en-${suffix}`;
 const p003AttemptId = `desktop-p003-zh-${suffix}`;
+const replayCases = ["P005", "P006", "P009"];
+const selectedCaseId = replayCases[Number.parseInt(productHead.slice(0, 8), 16) % replayCases.length];
+const selectedAttemptId = `desktop-${selectedCaseId.toLowerCase()}-en-${suffix}`;
 let fallbackSevenStage = null;
 let completedRestartVerified = false;
 
@@ -947,13 +998,19 @@ try {
     label: "P001 English"
   });
 
-  const p003InitialToken = await initAttempt(runtime, "P003", "zh", p003AttemptId);
+  const p003Interview = realLocalAi ? await runInterview(runtime, {
+    caseId: "P003",
+    language: "zh",
+    attemptId: p003AttemptId,
+    turns: p003Turns
+  }) : null;
+  const p003InitialToken = p003Interview?.stateToken || await initAttempt(runtime, "P003", "zh", p003AttemptId);
   const p003Submission = await submitHistoryStage(runtime, {
     caseId: "P003",
     language: "zh",
     attemptId: p003AttemptId,
     stateToken: p003InitialToken,
-    askedQuestions: []
+    askedQuestions: p003Interview?.askedQuestions || []
   });
   await validateStageTwo(runtime, {
     caseId: "P003",
@@ -962,6 +1019,28 @@ try {
     stateToken: p003Submission.stateToken,
     label: "P003 zero-round"
   });
+  if (realLocalAi) {
+    const selectedInterview = await runInterview(runtime, {
+      caseId: selectedCaseId,
+      language: "en",
+      attemptId: selectedAttemptId,
+      turns: selectedTurns
+    });
+    const selectedSubmission = await submitHistoryStage(runtime, {
+      caseId: selectedCaseId,
+      language: "en",
+      attemptId: selectedAttemptId,
+      stateToken: selectedInterview.stateToken,
+      askedQuestions: selectedInterview.askedQuestions
+    });
+    await validateStageTwo(runtime, {
+      caseId: selectedCaseId,
+      language: "en",
+      attemptId: selectedAttemptId,
+      stateToken: selectedSubmission.stateToken,
+      label: `${selectedCaseId} English HEAD-selected`
+    });
+  }
   finalRuntimeEvidence = (await requestJson(runtime, "/api/desktop/evidence/", { method: "GET" })).payload;
   assert.equal(finalRuntimeEvidence.schemaVersion, 1);
   assert.equal(finalRuntimeEvidence.runtimeTarget, "desktop");
@@ -1007,13 +1086,14 @@ try {
   try {
     const schema = database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get();
     assert.equal(Number(schema?.value), 3);
+    const acceptanceAttemptIds = [p001ZhAttemptId, p001EnAttemptId, p003AttemptId, ...(realLocalAi ? [selectedAttemptId] : [])];
     const attemptRows = database.prepare(`
       SELECT attempt_id, state_json
       FROM attempts
-      WHERE attempt_id IN (?, ?, ?)
+      WHERE attempt_id IN (${acceptanceAttemptIds.map(() => "?").join(", ")})
       ORDER BY attempt_id
-    `).all(p001ZhAttemptId, p001EnAttemptId, p003AttemptId);
-    assert.equal(attemptRows.length, 3, "all three acceptance attempts must be durable");
+    `).all(...acceptanceAttemptIds);
+    assert.equal(attemptRows.length, acceptanceAttemptIds.length, "all acceptance attempts must be durable");
     for (const row of attemptRows) {
       const state = JSON.parse(row.state_json);
       const completedFallbackAttempt = !realLocalAi && row.attempt_id === p001ZhAttemptId;
@@ -1054,7 +1134,8 @@ try {
 
   const sourceSummary = Object.fromEntries([...sourceCounts.entries()].sort(([left], [right]) => left.localeCompare(right)));
   const answerSourceSummary = Object.fromEntries([...answerSourceCounts.entries()].sort(([left], [right]) => left.localeCompare(right)));
-  assert.equal(turnDiagnostics.length, 16, "acceptance must record exactly eight safe diagnostic rows per language");
+  const expectedTurns = realLocalAi ? zhTurns.length + enTurns.length + p003Turns.length + selectedTurns.length : zhTurns.length + enTurns.length;
+  assert.equal(turnDiagnostics.length, expectedTurns, "acceptance must record every safe diagnostic row without answer text");
   assert.ok(contextAppliedCount > 0, "follow-up intent and slot context must be retained");
   if (realLocalAi) {
     assert.ok((answerSourceCounts.get("local_ai") || 0) > 0, "the real model run must accept at least one local classification");
@@ -1079,8 +1160,10 @@ try {
     modelMode,
     model: selectedModel.fileName,
     ...(realLocalAi ? { modelSha256Verified: modelSha256 === selectedModel.sha256 } : {}),
-    attempts: { p001Zh: realLocalAi ? "stage2" : "completed", p001En: "stage2", p003ZeroRound: "stage2" },
-    questions: zhTurns.length + enTurns.length,
+    replaySeed: productHead,
+    selectedCases: realLocalAi ? ["P001", "P003", selectedCaseId] : ["P001", "P003"],
+    attempts: { p001Zh: realLocalAi ? "stage2" : "completed", p001En: "stage2", p003: "stage2", ...(realLocalAi ? { [selectedCaseId]: "stage2" } : {}) },
+    questions: expectedTurns,
     restoredSession: true,
     completedRestartVerified,
     persistentIdempotency: true,
