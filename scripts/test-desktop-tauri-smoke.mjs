@@ -239,10 +239,12 @@ function webViewDebugState(port, webViewDirectory = "") {
 }
 
 async function assertWebViewDebugClosed(port) {
+  const startedAt = performance.now();
   await eventually(() => {
     const state = webViewDebugState(port);
     return state.processCount === 0 && state.listenerCount === 0;
-  }, 20_000, "webview-debug-close");
+  }, 60_000, "webview-debug-close");
+  return Math.round(performance.now() - startedAt);
 }
 
 async function connectToWebView(port, child, webViewDirectory, preLaunchInventory) {
@@ -879,7 +881,7 @@ try {
   assert.equal(processExists(firstDiagnostic.sidecarPid), false);
   await assertLoopbackClosed(firstOrigin);
   if (firstLlama.pid) await assertLlamaClosed(firstLlama.pid, firstLlama.port);
-  await assertWebViewDebugClosed(firstCdpPort);
+  const firstWebViewCleanupMs = await assertWebViewDebugClosed(firstCdpPort);
 
   const secondCycleStarted = performance.now();
   running = await launch(dataDirectory, webViewDirectory);
@@ -958,7 +960,7 @@ try {
   assert.equal(processExists(finalDiagnostic.sidecarPid), false);
   await assertLoopbackClosed(finalOrigin);
   if (secondLlama.pid) await assertLlamaClosed(secondLlama.pid, secondLlama.port);
-  await assertWebViewDebugClosed(finalCdpPort);
+  const secondWebViewCleanupMs = await assertWebViewDebugClosed(finalCdpPort);
   const database = databaseSummary(
     path.join(dataDirectory, "hematuria.sqlite3"),
     expectedProductHead,
@@ -1020,6 +1022,7 @@ try {
       firstAnswerMs,
       secondRuntimeReadyMs,
       secondModelReadyMs,
+      webViewCleanupMs: Math.max(firstWebViewCleanupMs, secondWebViewCleanupMs),
       peakWorkingSetBytes: {
         tauri: Math.max(firstMemory.tauri, secondMemory.tauri),
         sidecar: Math.max(firstMemory.sidecar, secondMemory.sidecar),

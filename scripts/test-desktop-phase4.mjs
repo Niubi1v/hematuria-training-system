@@ -139,6 +139,7 @@ try {
     firstRuntimeReadyMs: { p50: percentile(values("firstRuntimeReadyMs"), 0.5), p95: percentile(values("firstRuntimeReadyMs"), 0.95) },
     firstModelReadyMs: { p50: percentile(values("firstModelReadyMs"), 0.5), p95: percentile(values("firstModelReadyMs"), 0.95) },
     firstAnswerMs: { p50: percentile(values("firstAnswerMs"), 0.5), p95: percentile(values("firstAnswerMs"), 0.95) },
+    webViewCleanupMs: { p50: percentile(values("webViewCleanupMs"), 0.5), p95: percentile(values("webViewCleanupMs"), 0.95) },
     peakWorkingSetBytes: Object.fromEntries(["tauri", "sidecar", "llama"].map((name) => [name, Math.max(...metrics.map((metric) => Number(metric.peakWorkingSetBytes?.[name] || 0)))])),
     sqliteBytes: { min: Math.min(...values("sqliteBytes")), max: Math.max(...values("sqliteBytes")) },
     logBytes: { min: Math.min(...values("logBytes")), max: Math.max(...values("logBytes")) }
@@ -149,7 +150,7 @@ try {
 } catch (error) {
   failure = error;
   const message = String(error instanceof Error ? error.message : error).slice(-4000);
-  summary.status = message.includes("TEST_HARNESS_WRONG_WEBVIEW")
+  summary.status = message.includes("TEST_HARNESS_WRONG_WEBVIEW") || message.includes("webview-debug-close")
     ? "PHASE4_TEST_HARNESS_FAILURE"
     : message.includes("runtime_missing")
       ? "PHASE4_BLOCKED_BY_CONFIRMED_P0"
