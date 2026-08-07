@@ -916,6 +916,9 @@ try {
     percentageOnlyBoundary: publicBoundary.percentageScore === 75,
     diagnosticExport: publicBoundary.exported,
     processCleanup: true,
+    startup: finalDiagnostic.startup,
+    bootstrap: finalDiagnostic.bootstrap,
+    preLaunchClean: true,
     r4DataUnchanged: false
   };
   result = {

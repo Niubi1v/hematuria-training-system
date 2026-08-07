@@ -108,8 +108,11 @@ try {
   const summary = {
     status: "passed",
     productHead: expectedHead,
-    surfaces: checkpoints.map(({ surface, artifactSha, installationMode, attemptCount, snapshotCount, requestCount, serverStateRevision }) => ({
-      surface, artifactSha, installationMode, attemptCount, snapshotCount, requestCount, serverStateRevision
+    surfaces: checkpoints.map(({ surface, artifactSha, installationMode, attemptCount, snapshotCount, requestCount, serverStateRevision, startup, bootstrap, preLaunchClean }) => ({
+      surface, artifactSha, installationMode, attemptCount, snapshotCount, requestCount, serverStateRevision,
+      startup: startup || null,
+      bootstrap: bootstrap || null,
+      preLaunchClean: preLaunchClean ?? null
     })),
     comparableOutcome: reference,
     portableExecutedFromExtractedDirectories: requirePackages && !nsisOnly,

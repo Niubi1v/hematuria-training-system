@@ -88,10 +88,15 @@ function commonEnv(extra = {}) {
 
 async function record(matrix, round, result, variant = null) {
   const startup = result.startup || null;
+  const surfaces = Array.isArray(result.surfaces) ? result.surfaces : [];
   if (startup) {
     assert.ok(Object.values(startup).every((value) => value === true), "startup_phase_not_complete");
     assert.equal(result.preLaunchInventory?.productPids?.length || 0, 0);
     assert.equal(result.preLaunchInventory?.webViewPids?.length || 0, 0);
+  }
+  for (const surface of surfaces.filter((item) => item.startup)) {
+    assert.ok(Object.values(surface.startup).every((value) => value === true), `${surface.surface}_startup_phase_not_complete`);
+    assert.equal(surface.preLaunchClean, true);
   }
   summary.completed[matrix] += 1;
   summary.rounds.push({
@@ -100,8 +105,10 @@ async function record(matrix, round, result, variant = null) {
     variant,
     status: "passed",
     productHead: result.productHead,
-    artifactSha: result.artifactSha || null,
-    surfaceCount: Array.isArray(result.surfaces) ? result.surfaces.length : 1,
+    artifactShas: surfaces.length
+      ? surfaces.map(({ surface, artifactSha }) => ({ surface, artifactSha }))
+      : [{ surface: result.surface || "nsis", artifactSha: result.artifactSha || null }],
+    surfaceCount: surfaces.length || 1,
     startupOnly: Boolean(result.startupOnly),
     processCleanup: result.processCleanup !== false,
     cloudRequestCount: Number(result.cloudRequestCount || result.comparableOutcome?.cloudRequestCount || 0)
