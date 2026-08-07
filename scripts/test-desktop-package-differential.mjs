@@ -4,10 +4,11 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { assertSurfaceCheckpoint, comparableOutcome } from "../tests/desktop/surface-checkpoint.mjs";
+import { assertSurfaceCheckpoint, comparableOutcome, fileSha256 } from "../tests/desktop/surface-checkpoint.mjs";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const requirePackages = process.argv.includes("--require-packages");
+const nsisOnly = process.argv.includes("--nsis-only");
 const expectedHead = String(process.env.HEMATURIA_PRODUCT_HEAD || "");
 assert.match(expectedHead, /^[0-9a-f]{40}$/u, "HEMATURIA_PRODUCT_HEAD must be the full product SHA");
 const packageVersion = JSON.parse(await fs.readFile(path.join(repoRoot, "package.json"), "utf8")).version;
@@ -40,12 +41,13 @@ async function runRenderer(surface, appRoot = repoRoot) {
   checkpoints.push(assertSurfaceCheckpoint(JSON.parse(await fs.readFile(checkpointPath, "utf8"))));
 }
 
-async function runTauri(surface, label, executable) {
+async function runTauri(surface, label, executable, env = {}) {
   const checkpointPath = path.join(temporaryRoot, `${label}.json`);
   run(process.execPath, [path.join(repoRoot, "scripts", "test-desktop-tauri-smoke.mjs"), "--surface", surface], {
     HEMATURIA_DESKTOP_TAURI_EXECUTABLE: executable,
     HEMATURIA_SURFACE_LABEL: label,
-    HEMATURIA_SURFACE_CHECKPOINT: checkpointPath
+    HEMATURIA_SURFACE_CHECKPOINT: checkpointPath,
+    ...env
   });
   checkpoints.push(assertSurfaceCheckpoint(JSON.parse(await fs.readFile(checkpointPath, "utf8"))));
 }
@@ -69,10 +71,12 @@ async function installNsis(installer) {
 }
 
 try {
-  await runRenderer("development-renderer");
-  await runRenderer("static-renderer");
-  await runRenderer("staged-desktop", path.join(repoRoot, "src-tauri", "resources", "app"));
-  await runTauri("no-bundle", "no-bundle", path.join(repoRoot, "src-tauri", "target", "release", "hematuria-training-r5.exe"));
+  if (!nsisOnly) {
+    await runRenderer("development-renderer");
+    await runRenderer("static-renderer");
+    await runRenderer("staged-desktop", path.join(repoRoot, "src-tauri", "resources", "app"));
+    await runTauri("no-bundle", "no-bundle", path.join(repoRoot, "src-tauri", "target", "release", "hematuria-training-r5.exe"));
+  }
 
   const artifactRoot = process.env.HEMATURIA_DESKTOP_ARTIFACTS;
   const portableArchive = process.env.HEMATURIA_DESKTOP_PORTABLE_ZIP
@@ -80,19 +84,23 @@ try {
   const nsisInstaller = process.env.HEMATURIA_DESKTOP_NSIS_INSTALLER
     || (artifactRoot && path.join(artifactRoot, `hematuria-desktop-r5-setup-${packageVersion}-windows-x64.exe`));
   if (requirePackages) {
-    assert.ok(portableArchive, "HEMATURIA_DESKTOP_PORTABLE_ZIP is required");
+    if (!nsisOnly) assert.ok(portableArchive, "HEMATURIA_DESKTOP_PORTABLE_ZIP is required");
     assert.ok(nsisInstaller, "HEMATURIA_DESKTOP_NSIS_INSTALLER is required");
-    await fs.access(portableArchive);
-    const portableVariants = [
-      ["portable-normal", "portable-normal"],
-      ["portable-unicode-space", "中文 空格/portable"],
-      ["portable-long-path", `${"long-segment/".repeat(10)}portable`]
-    ];
-    for (const [label, relative] of portableVariants) {
-      await runTauri("portable", label, await extractPortable(portableArchive, relative));
+    if (!nsisOnly) {
+      await fs.access(portableArchive);
+      const portableVariants = [
+        ["portable-normal", "portable-normal"],
+        ["portable-unicode-space", "中文 空格/portable"],
+        ["portable-long-path", `${"long-segment/".repeat(10)}portable`]
+      ];
+      for (const [label, relative] of portableVariants) {
+        await runTauri("portable", label, await extractPortable(portableArchive, relative));
+      }
     }
     await fs.access(nsisInstaller);
-    await runTauri("nsis", "nsis", await installNsis(nsisInstaller));
+    await runTauri("nsis", "nsis", await installNsis(nsisInstaller), {
+      HEMATURIA_NSIS_ARTIFACT_SHA256: await fileSha256(nsisInstaller)
+    });
   }
 
   const reference = comparableOutcome(checkpoints[0]);
@@ -104,7 +112,7 @@ try {
       surface, artifactSha, installationMode, attemptCount, snapshotCount, requestCount, serverStateRevision
     })),
     comparableOutcome: reference,
-    portableExecutedFromExtractedDirectories: requirePackages,
+    portableExecutedFromExtractedDirectories: requirePackages && !nsisOnly,
     externalR4Coexistence: "BLOCKED_EXTERNAL"
   };
   process.stdout.write(`${JSON.stringify(summary)}\n`);

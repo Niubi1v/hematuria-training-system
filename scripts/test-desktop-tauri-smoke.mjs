@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import net from "node:net";
 import os from "node:os";
@@ -34,6 +35,7 @@ const surfaceIndex = process.argv.indexOf("--surface");
 const surface = surfaceIndex >= 0 ? String(process.argv[surfaceIndex + 1] || "") : "no-bundle";
 if (!new Set(["no-bundle", "portable", "nsis"]).has(surface)) throw new Error(`desktop_tauri_surface_not_implemented:${surface}`);
 const surfaceLabel = process.env.HEMATURIA_SURFACE_LABEL || surface;
+const startupOnly = process.argv.includes("--startup-only");
 if (!/^[a-z0-9-]{1,40}$/u.test(surfaceLabel)) throw new Error("desktop_tauri_surface_label_invalid");
 const expectedInstallationMode = surface === "portable" ? "portable" : surface === "nsis" ? "installer" : "development";
 const usesFakeLocalAi = expectedInstallationMode === "development";
@@ -44,11 +46,21 @@ try {
 } catch {
   throw new Error("desktop_tauri_executable_missing");
 }
+if (expectedInstallationMode !== "development") {
+  const resources = path.join(path.dirname(executable), "resources");
+  for (const required of [
+    path.join(resources, "runtime", "node", "node.exe"),
+    path.join(resources, "app", "desktop", "sidecar", "index.cjs"),
+    path.join(resources, "app", "desktop", "runtime-manifest.json")
+  ]) await fs.access(required);
+}
 const expectedProductHead = execFileSync("git", ["rev-parse", "HEAD"], {
   cwd: repoRoot,
   encoding: "utf8",
   windowsHide: true
 }).trim();
+const evidenceRoot = path.resolve(process.env.HEMATURIA_NSIS_P0_EVIDENCE_ROOT
+  || "D:\\HematuriaDesktopArtifacts\\R5-Handoffs");
 
 const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
@@ -72,6 +84,33 @@ function sanitize(value, paths = []) {
     output = output.replace(new RegExp(escaped.replaceAll("\\\\", "[/\\\\]"), "giu"), "<redacted>");
   }
   return output;
+}
+
+function powershellLiteral(value) {
+  return `'${String(value).replaceAll("'", "''")}'`;
+}
+
+function safeTimestamp() {
+  return new Date().toISOString().replace(/[-:]/g, "").replace("T", "-").slice(0, 15);
+}
+
+function processInventory() {
+  const result = spawnSync("powershell.exe", [
+    "-NoProfile",
+    "-NonInteractive",
+    "-Command",
+    "$items=@(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.Name -in @('hematuria-training-r5.exe','msedgewebview2.exe') }); @{available=$true;productPids=@($items | Where-Object Name -eq 'hematuria-training-r5.exe' | ForEach-Object ProcessId);webViewPids=@($items | Where-Object { $_.Name -eq 'msedgewebview2.exe' -and [string]$_.CommandLine -match 'hematuria' } | ForEach-Object ProcessId)} | ConvertTo-Json -Compress"
+  ], { encoding: "utf8", windowsHide: true });
+  try {
+    const value = JSON.parse(String(result.stdout || ""));
+    return {
+      available: Boolean(value.available),
+      productPids: (Array.isArray(value.productPids) ? value.productPids : value.productPids ? [value.productPids] : []).map(Number),
+      webViewPids: (Array.isArray(value.webViewPids) ? value.webViewPids : value.webViewPids ? [value.webViewPids] : []).map(Number)
+    };
+  } catch {
+    return { available: false, productPids: [], webViewPids: [] };
+  }
 }
 
 async function reservePort() {
@@ -140,22 +179,28 @@ function waitForExit(child, timeoutMs = 20_000) {
   });
 }
 
-function webViewDebugState(port) {
+function webViewDebugState(port, webViewDirectory = "") {
+  const profile = powershellLiteral(webViewDirectory);
   const result = spawnSync("powershell.exe", [
     "-NoProfile",
     "-NonInteractive",
     "-Command",
-    `$processCount=@(Get-CimInstance Win32_Process -Filter "Name='msedgewebview2.exe'" | Where-Object { $_.CommandLine -like '*--remote-debugging-port=${port}*' }).Count; $listeners=@(Get-NetTCPConnection -State Listen -LocalPort ${port} -ErrorAction SilentlyContinue); @{processCount=$processCount;listenerCount=$listeners.Count;addresses=@($listeners | ForEach-Object LocalAddress | Sort-Object -Unique)} | ConvertTo-Json -Compress`
+    `$profile=${profile}; $processes=@(Get-CimInstance Win32_Process -Filter "Name='msedgewebview2.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like '*--remote-debugging-port=${port}*' }); $listeners=@(Get-NetTCPConnection -State Listen -LocalPort ${port} -ErrorAction SilentlyContinue); @{processCount=$processes.Count;listenerCount=$listeners.Count;addresses=@($listeners | ForEach-Object LocalAddress | Sort-Object -Unique);processes=@($processes | ForEach-Object { @{pid=[int]$_.ProcessId;parentPid=[int]$_.ParentProcessId;profileMatch=[bool]([string]$_.CommandLine -like "*$profile*")} })} | ConvertTo-Json -Depth 4 -Compress`
   ], { encoding: "utf8", windowsHide: true });
   try {
     const value = JSON.parse(String(result.stdout || ""));
     return {
       processCount: Number(value.processCount || 0),
       listenerCount: Number(value.listenerCount || 0),
-      addresses: Array.isArray(value.addresses) ? value.addresses : value.addresses ? [value.addresses] : []
+      addresses: Array.isArray(value.addresses) ? value.addresses : value.addresses ? [value.addresses] : [],
+      processes: (Array.isArray(value.processes) ? value.processes : value.processes ? [value.processes] : []).map((item) => ({
+        pid: Number(item.pid || 0),
+        parentPid: Number(item.parentPid || 0),
+        profileMatch: Boolean(item.profileMatch)
+      }))
     };
   } catch {
-    return { processCount: -1, listenerCount: -1, addresses: [] };
+    return { processCount: -1, listenerCount: -1, addresses: [], processes: [] };
   }
 }
 
@@ -166,7 +211,7 @@ async function assertWebViewDebugClosed(port) {
   }, 20_000, "webview-debug-close");
 }
 
-async function connectToWebView(port, child) {
+async function connectToWebView(port, child, webViewDirectory, preLaunchInventory) {
   const endpoints = [
     `http://127.0.0.1:${port}`,
     `http://localhost:${port}`,
@@ -176,6 +221,7 @@ async function connectToWebView(port, child) {
   let browser;
   let cdpConnected = false;
   let runtimeFailure = null;
+  let pageEvidence = [];
   const observedOrigins = new Set();
   while (Date.now() < deadline) {
     if (child.exitCode !== null) throw new Error(`desktop_tauri_exited_before_runtime:${child.exitCode}`);
@@ -190,26 +236,46 @@ async function connectToWebView(port, child) {
       }
       if (!browser) throw new Error("desktop_tauri_cdp_connect_failed");
       cdpConnected = true;
+      pageEvidence = [];
       for (const context of browser.contexts()) {
         for (const page of context.pages()) {
           try { observedOrigins.add(new URL(page.url()).origin); } catch { observedOrigins.add("unparseable"); }
-          const injected = await page.evaluate(() =>
-            globalThis.__HEMATURIA_DESKTOP_RUNTIME__?.runtimeTarget === "desktop"
-          ).catch(() => false);
-          if (injected) return { browser, page };
-          runtimeFailure = await page.evaluate(async () => {
+          const pageState = await page.evaluate(async () => {
             try {
               const report = await globalThis.__TAURI_INTERNALS__?.invoke?.("desktop_diagnostic_snapshot");
-              return report ? {
-                productHead: report.productHead,
-                stableFailureCodes: report.stableFailureCodes,
-                lastFailure: report.lastFailure ? {
-                  category: report.lastFailure.category,
-                  code: report.lastFailure.code
+              const bootstrap = globalThis.__HEMATURIA_DESKTOP_BOOTSTRAP__ || null;
+              return {
+                bootstrap,
+                diagnosticProductHead: globalThis.__HEMATURIA_DESKTOP_DIAGNOSTIC__?.productHead || null,
+                runtimeDefined: globalThis.__HEMATURIA_DESKTOP_RUNTIME__?.runtimeTarget === "desktop",
+                runtimeProductHead: report?.productHead || null,
+                report: report ? {
+                  productHead: report.productHead,
+                  installationMode: report.installationMode,
+                  stableFailureCodes: report.stableFailureCodes,
+                  lastFailure: report.lastFailure ? {
+                    category: report.lastFailure.category,
+                    code: report.lastFailure.code,
+                    phase: report.lastFailure.phase
+                  } : null,
+                  startup: report.startup || null
                 } : null
-              } : null;
-            } catch { return null; }
+              };
+            } catch {
+              return { bootstrap: globalThis.__HEMATURIA_DESKTOP_BOOTSTRAP__ || null, runtimeDefined: false, report: null };
+            }
           }).catch(() => null);
+          pageEvidence.push({ origin: (() => { try { return new URL(page.url()).origin; } catch { return "unparseable"; } })(), ...pageState });
+          runtimeFailure = pageState?.report || runtimeFailure;
+          const bootstrap = pageState?.bootstrap;
+          if (pageState?.runtimeDefined
+            && pageState.runtimeProductHead === expectedProductHead
+            && bootstrap?.scriptExecuted === true
+            && bootstrap.runtimeExpected === true
+            && bootstrap.runtimeDefined === true
+            && bootstrap.diagnosticDefined === true) {
+            return { browser, page, bootstrap, startup: pageState.report.startup };
+          }
         }
       }
     } catch {
@@ -219,7 +285,7 @@ async function connectToWebView(port, child) {
   }
   await browser?.close().catch(() => undefined);
   const origins = [...observedOrigins].sort().join(",") || "none";
-  const debugState = webViewDebugState(port);
+  const debugState = webViewDebugState(port, webViewDirectory);
   const http = [];
   for (const [index, endpoint] of endpoints.entries()) {
     try {
@@ -229,7 +295,30 @@ async function connectToWebView(port, child) {
       http.push(`${index}:error`);
     }
   }
-  throw new Error(`desktop_tauri_runtime_injection_unavailable:${cdpConnected ? "runtime_missing" : "cdp_unreachable"}:origins=${origins}:debugProcesses=${debugState.processCount}:listeners=${debugState.listenerCount}:addresses=${debugState.addresses.join(",") || "none"}:http=${http.join(",")}:runtimeFailure=${JSON.stringify(runtimeFailure)}`);
+  const runtimeConfigAvailable = runtimeFailure?.startup?.runtimeConfigAvailable;
+  const hasExpectedRuntimePage = pageEvidence.some((page) => page.runtimeDefined && page.runtimeProductHead === expectedProductHead);
+  const profileMatches = debugState.processes.some((item) => item.profileMatch);
+  const classification = runtimeConfigAvailable === false
+    ? "RUNTIME_NOT_CREATED"
+    : !profileMatches || pageEvidence.some((page) => page.runtimeDefined && page.runtimeProductHead !== expectedProductHead)
+      ? "TEST_HARNESS_WRONG_WEBVIEW"
+      : runtimeConfigAvailable === true && !hasExpectedRuntimePage
+      ? "RUNTIME_CREATED_BUT_INJECTION_MISSING"
+      : "TEST_HARNESS_WRONG_WEBVIEW";
+  const evidence = {
+    classification,
+    cdpConnected,
+    cdpPort: port,
+    debugState,
+    expectedProfileObserved: profileMatches,
+    http,
+    origins: [...observedOrigins].sort(),
+    pageCount: pageEvidence.length,
+    pages: pageEvidence,
+    preLaunchInventory,
+    runtimeFailure
+  };
+  throw Object.assign(new Error(`desktop_tauri_runtime_injection_unavailable:${cdpConnected ? "runtime_missing" : "cdp_unreachable"}:classification=${classification}:origins=${origins}`), { runtimeEvidence: evidence });
 }
 
 async function closeNormally(child) {
@@ -247,6 +336,11 @@ async function closeNormally(child) {
 
 async function launch(dataDirectory, webViewDirectory) {
   const cdpPort = await reservePort();
+  const preLaunchInventory = processInventory();
+  assert.equal(preLaunchInventory.available, true, "desktop_tauri_process_inventory_unavailable");
+  if (preLaunchInventory.productPids.length || preLaunchInventory.webViewPids.length) {
+    throw Object.assign(new Error("desktop_tauri_preexisting_product_process"), { cdpPort, preLaunchInventory });
+  }
   const modelPath = path.join(dataDirectory, "models", "Qwen3-1.7B-Q4_K_M.gguf");
   const llamaPidFile = path.join(dataDirectory, "fake-llama.pid");
   if (usesFakeLocalAi) {
@@ -288,16 +382,20 @@ async function launch(dataDirectory, webViewDirectory) {
     });
   }
   try {
-    const { browser, page } = await connectToWebView(cdpPort, child);
+    const { browser, page, bootstrap, startup } = await connectToWebView(cdpPort, child, webViewDirectory, preLaunchInventory);
     page.on("dialog", (dialog) => void dialog.accept());
-    return { browser, cdpPort, child, diagnostics: () => diagnostics, llamaPidFile, page };
+    return { bootstrap, browser, cdpPort, child, diagnostics: () => diagnostics, llamaPidFile, page, preLaunchInventory, startup };
   } catch (error) {
     if (child.exitCode === null) child.kill("SIGKILL");
     await waitForExit(child).catch(() => undefined);
-    throw new Error(sanitize(
+    throw Object.assign(new Error(sanitize(
       `${error instanceof Error ? error.message : String(error)}\n${diagnostics}`.trim(),
       [dataDirectory, webViewDirectory]
-    ));
+    )), {
+      cdpPort,
+      preLaunchInventory,
+      runtimeEvidence: error?.runtimeEvidence || null
+    });
   }
 }
 
@@ -307,11 +405,13 @@ async function diagnosticSnapshot(page) {
     if (!bridge?.invoke) throw new Error("tauri_bridge_unavailable");
     const report = await bridge.invoke("desktop_diagnostic_snapshot");
     return {
+      bootstrap: globalThis.__HEMATURIA_DESKTOP_BOOTSTRAP__ || null,
       installationMode: report.installationMode,
       productIdentity: report.productIdentity,
       productHead: report.productHead,
       sidecarPid: Number(report.sidecar?.pid || 0),
-      runtimeTarget: report.runtimeTarget
+      runtimeTarget: report.runtimeTarget,
+      startup: report.startup || null
     };
   });
 }
@@ -482,7 +582,105 @@ function databaseSummary(databasePath, expectedProductHead, stageRequestId, stag
   }
 }
 
-const temporaryRoot = await fs.mkdtemp(path.join(os.tmpdir(), "hematuria-tauri-smoke-"));
+function assertStartupEvidence(startup, bootstrap) {
+  for (const key of [
+    "setupEntered",
+    "dataDirectoryResolved",
+    "runtimeLayoutResolved",
+    "sidecarSpawned",
+    "sidecarReady",
+    "runtimeConfigAvailable",
+    "initializationScriptBuilt",
+    "runtimeInjectionExpected",
+    "windowBuildStarted",
+    "windowBuilt"
+  ]) assert.equal(startup?.[key], true, `desktop_startup_phase_missing:${key}`);
+  assert.deepEqual(bootstrap, {
+    scriptExecuted: true,
+    runtimeExpected: true,
+    runtimeDefined: true,
+    diagnosticDefined: true,
+    schemaVersion: 1
+  });
+}
+
+async function fileSummary(file) {
+  try {
+    const stat = await fs.stat(file);
+    return { present: stat.isFile(), bytes: stat.size, sha256: stat.isFile() ? await fileSha256(file) : null };
+  } catch {
+    return { present: false, bytes: 0, sha256: null };
+  }
+}
+
+async function sidecarLogSummary(dataDirectory) {
+  const file = path.join(dataDirectory, "logs", "sidecar-current.log");
+  try {
+    const bytes = await fs.readFile(file);
+    const codes = [...new Set(bytes.toString("utf8").match(/(?:desktop|llama|model|sqlite)_[a-z0-9_]+|SQLITE_[A-Z_]+|EADDRINUSE/giu) || [])].sort();
+    return { bytes: bytes.length, sha256: crypto.createHash("sha256").update(bytes).digest("hex"), stableCodes: codes };
+  } catch {
+    return { bytes: 0, sha256: null, stableCodes: [] };
+  }
+}
+
+async function archiveNsisFailure(error, dataDirectory, webViewDirectory) {
+  const installRoot = path.dirname(executable);
+  const resourceRoot = path.join(installRoot, "resources");
+  const archive = path.join(evidenceRoot, `${safeTimestamp()}-R5-NSIS-P0-Reproduction-${expectedProductHead}`);
+  const evidence = {
+    schemaVersion: 1,
+    status: "runtime_startup_failed",
+    productHead: expectedProductHead,
+    installationMode: expectedInstallationMode,
+    classification: error?.runtimeEvidence?.classification || "UNCLASSIFIED",
+    stableFailureCodes: error?.runtimeEvidence?.runtimeFailure?.stableFailureCodes || [],
+    lastFailure: error?.runtimeEvidence?.runtimeFailure?.lastFailure || null,
+    startup: error?.runtimeEvidence?.runtimeFailure?.startup || null,
+    bootstrapPages: error?.runtimeEvidence?.pages || [],
+    webViewOrigins: error?.runtimeEvidence?.origins || [],
+    cdp: {
+      port: Number(error?.runtimeEvidence?.cdpPort || error?.cdpPort || 0),
+      connected: Boolean(error?.runtimeEvidence?.cdpConnected),
+      pageCount: Number(error?.runtimeEvidence?.pageCount || 0),
+      debugState: error?.runtimeEvidence?.debugState || null
+    },
+    processTree: {
+      before: error?.preLaunchInventory || error?.runtimeEvidence?.preLaunchInventory || null,
+      after: processInventory()
+    },
+    oldProductProcessPresent: Boolean((error?.preLaunchInventory?.productPids || []).length),
+    oldWebViewProcessPresent: Boolean((error?.preLaunchInventory?.webViewPids || []).length),
+    expectedWebViewProfileObserved: Boolean(error?.runtimeEvidence?.expectedProfileObserved),
+    nsisSha256: process.env.HEMATURIA_NSIS_ARTIFACT_SHA256 || null,
+    installedExecutable: await fileSummary(executable),
+    installationStructureHash: await directoryFingerprint(installRoot),
+    resources: {
+      runtimeManifest: await fileSummary(path.join(resourceRoot, "app", "desktop", "runtime-manifest.json")),
+      node: await fileSummary(path.join(resourceRoot, "runtime", "node", "node.exe")),
+      sidecar: await fileSummary(path.join(resourceRoot, "app", "desktop", "sidecar", "index.cjs")),
+      staticApp: { embeddedInExecutable: true, executableSha256: (await fileSummary(executable)).sha256 }
+    },
+    sidecarLog: await sidecarLogSummary(dataDirectory),
+    sanitizedError: sanitize(error instanceof Error ? error.message : String(error), [dataDirectory, webViewDirectory, installRoot]),
+    rawScratchRetained: true,
+    evidencePolicy: "sanitized_copy_completed_before_raw_scratch_cleanup"
+  };
+  const serialized = `${JSON.stringify(evidence, null, 2)}\n`;
+  assert.doesNotMatch(serialized, /authToken|bearer|handshake|stateToken|prompt|reasoning|patientQuestions/iu);
+  assert.doesNotMatch(serialized, /[A-Za-z]:[\\/](?:Users|Documents and Settings)[\\/][^\\/"]+/iu);
+  await fs.mkdir(archive, { recursive: false });
+  await fs.writeFile(path.join(archive, "diagnostic-evidence.json"), serialized, "utf8");
+  await fs.writeFile(path.join(archive, "manifest.sha256"), `${crypto.createHash("sha256").update(serialized).digest("hex")} *diagnostic-evidence.json\n`, "utf8");
+  return archive;
+}
+
+const configuredRoot = process.env.HEMATURIA_TAURI_SMOKE_ROOT?.trim();
+const temporaryRoot = configuredRoot
+  ? path.resolve(configuredRoot)
+  : await fs.mkdtemp(path.join(os.tmpdir(), "hematuria-tauri-smoke-"));
+if (configuredRoot) await fs.mkdir(temporaryRoot, { recursive: true });
+const keepSuccessfulRoot = process.env.HEMATURIA_TAURI_SMOKE_KEEP_ROOT === "1";
 const dataDirectory = path.join(temporaryRoot, "data");
 const webViewDirectory = path.join(temporaryRoot, "webview");
 const r4Directory = path.join(process.env.LOCALAPPDATA || os.tmpdir(), "HematuriaTraining", "MentorLocalAI-FinalCandidate");
@@ -493,8 +691,63 @@ const p003Marker = `P003 tauri random ${Date.now()}`;
 let running;
 let failure;
 let cleanupFailure;
+let failureArchive;
 let result;
 
+if (startupOnly) {
+  try {
+    await fs.mkdir(dataDirectory, { recursive: true });
+    running = await launch(dataDirectory, webViewDirectory);
+    const diagnostic = await diagnosticSnapshot(running.page);
+    assertStartupEvidence(diagnostic.startup, diagnostic.bootstrap);
+    assert.equal(diagnostic.productHead, expectedProductHead);
+    assert.equal(diagnostic.installationMode, expectedInstallationMode);
+    const origin = (await runtimeProbe(running.page)).apiBaseUrl;
+    const cdpPort = running.cdpPort;
+    const sidecarPid = diagnostic.sidecarPid;
+    const preLaunchInventory = running.preLaunchInventory;
+    await closeNormally(running.child);
+    await running.browser.close().catch(() => undefined);
+    running = undefined;
+    assert.equal(processExists(sidecarPid), false);
+    await assertLoopbackClosed(origin);
+    await assertWebViewDebugClosed(cdpPort);
+    result = {
+      status: "passed",
+      surface: surfaceLabel,
+      startupOnly: true,
+      productHead: expectedProductHead,
+      artifactSha: await fileSha256(executable),
+      startup: diagnostic.startup,
+      bootstrap: diagnostic.bootstrap,
+      preLaunchInventory,
+      cloudRequestCount: 0,
+      processCleanup: true
+    };
+  } catch (error) {
+    failure = error;
+  } finally {
+    if (running) {
+      if (running.child.exitCode === null) running.child.kill("SIGKILL");
+      await waitForExit(running.child).catch(() => undefined);
+      await running.browser.close().catch(() => undefined);
+    }
+    if (failure && surface === "nsis") {
+      try { failureArchive = await archiveNsisFailure(failure, dataDirectory, webViewDirectory); }
+      catch (error) { cleanupFailure = error; }
+    }
+    if (!failure && !keepSuccessfulRoot) {
+      try { await fs.rm(temporaryRoot, { recursive: true, force: true, maxRetries: 20, retryDelay: 250 }); }
+      catch (error) { cleanupFailure = error; }
+    }
+  }
+  if (failure) {
+    const archive = failureArchive ? `:evidence=${failureArchive}` : "";
+    throw new Error(`${sanitize(failure instanceof Error ? failure.message : String(failure), [temporaryRoot])}${archive}`);
+  }
+  if (cleanupFailure) throw cleanupFailure;
+  process.stdout.write(`${JSON.stringify(result)}\n`);
+} else {
 try {
   await fs.mkdir(dataDirectory, { recursive: true });
   running = await launch(dataDirectory, webViewDirectory);
@@ -540,6 +793,7 @@ try {
   const firstAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
   assert.ok(firstAuthority.serverStateRevision > initialAuthority.serverStateRevision);
   const firstDiagnostic = await diagnosticSnapshot(running.page);
+  assertStartupEvidence(firstDiagnostic.startup, firstDiagnostic.bootstrap);
   assert.equal(firstDiagnostic.productIdentity, "hematuria-training-r5");
   assert.equal(firstDiagnostic.installationMode, expectedInstallationMode);
   assert.equal(firstDiagnostic.productHead, expectedProductHead);
@@ -615,6 +869,7 @@ try {
   assert.equal(finalAuthority.productHead, expectedProductHead);
   assert.ok(finalAuthority.serverStateRevision > postReplayAuthority.serverStateRevision);
   const finalDiagnostic = await diagnosticSnapshot(running.page);
+  assertStartupEvidence(finalDiagnostic.startup, finalDiagnostic.bootstrap);
   assert.equal(finalDiagnostic.productIdentity, "hematuria-training-r5");
   assert.equal(finalDiagnostic.installationMode, expectedInstallationMode);
   assert.equal(finalDiagnostic.productHead, expectedProductHead);
@@ -694,8 +949,15 @@ try {
     await waitForExit(running.child).catch(() => undefined);
     await running.browser.close().catch(() => undefined);
   }
+  if (failure && surface === "nsis") {
+    try {
+      failureArchive = await archiveNsisFailure(failure, dataDirectory, webViewDirectory);
+    } catch (error) {
+      cleanupFailure = error;
+    }
+  }
   try {
-    await fs.rm(temporaryRoot, { recursive: true, force: true, maxRetries: 20, retryDelay: 250 });
+    if (!failure && !keepSuccessfulRoot) await fs.rm(temporaryRoot, { recursive: true, force: true, maxRetries: 20, retryDelay: 250 });
   } catch (error) {
     cleanupFailure = error;
   }
@@ -703,8 +965,10 @@ try {
 }
 
 if (failure) {
-  throw new Error(sanitize(failure instanceof Error ? failure.message : String(failure), [temporaryRoot]));
+  const archive = failureArchive ? `:evidence=${failureArchive}` : "";
+  throw new Error(`${sanitize(failure instanceof Error ? failure.message : String(failure), [temporaryRoot])}${archive}`);
 }
 if (cleanupFailure) throw new Error("desktop_tauri_temp_cleanup_failed");
 await writeSurfaceCheckpoint(result.checkpoint);
 process.stdout.write(`${JSON.stringify(result)}\n`);
+}

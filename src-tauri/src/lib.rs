@@ -24,7 +24,8 @@ const MAX_WINDOW_DIMENSION: u32 = 16_384;
 const R4_DATA_DIRECTORY_NAME: &str = "MentorLocalAI-FinalCandidate";
 const R5_DATA_DIRECTORY_NAME: &str = "MentorLocalAI-R5";
 const R5_PRODUCT_IDENTITY: &str = "hematuria-training-r5";
-const DIAGNOSTIC_SCHEMA_VERSION: u32 = 2;
+const DIAGNOSTIC_SCHEMA_VERSION: u32 = 3;
+const BOOTSTRAP_SCHEMA_VERSION: u32 = 1;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -72,6 +73,21 @@ struct DiagnosticFailure {
     phase: String,
 }
 
+#[derive(Clone, Debug, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct StartupEvidence {
+    setup_entered: bool,
+    data_directory_resolved: bool,
+    runtime_layout_resolved: bool,
+    sidecar_spawned: bool,
+    sidecar_ready: bool,
+    runtime_config_available: bool,
+    initialization_script_built: bool,
+    runtime_injection_expected: bool,
+    window_build_started: bool,
+    window_built: bool,
+}
+
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct DesktopDiagnosticReport {
@@ -91,6 +107,7 @@ struct DesktopDiagnosticReport {
     sqlite: serde_json::Value,
     loopback: serde_json::Value,
     local_ai: serde_json::Value,
+    startup: StartupEvidence,
     last_failure: Option<DiagnosticFailure>,
     stable_failure_codes: Vec<String>,
     data_isolation: serde_json::Value,
@@ -108,6 +125,7 @@ struct RuntimeObservation {
     sidecar_exit_code: Option<i32>,
     last_failure: Option<DiagnosticFailure>,
     job_object_status: String,
+    startup: StartupEvidence,
 }
 
 #[derive(Clone)]
@@ -264,6 +282,12 @@ struct LifecycleState {
 }
 
 impl LifecycleState {
+    fn mark_startup(&self, update: impl FnOnce(&mut StartupEvidence)) {
+        if let Ok(mut observation) = self.observation.lock() {
+            update(&mut observation.startup);
+        }
+    }
+
     fn set_data_directory(
         &self,
         data_dir: PathBuf,
@@ -330,6 +354,7 @@ impl LifecycleState {
         observation.sidecar_exit_code = None;
         observation.last_failure = None;
         observation.job_object_status = "ready".to_string();
+        observation.startup.runtime_config_available = true;
         Ok(())
     }
 
@@ -1077,6 +1102,7 @@ fn wait_for_ready(
 fn start_sidecar(
     layout: &RuntimeLayout,
     data_dir: &Path,
+    lifecycle: &LifecycleState,
 ) -> Result<(ManagedSidecar, ReadyMessage, String), String> {
     let logs_dir = data_dir.join("logs");
     fs::create_dir_all(&logs_dir).map_err(|_| "desktop_data_dir_create_failed".to_string())?;
@@ -1121,6 +1147,7 @@ fn start_sidecar(
     let mut child = command
         .spawn()
         .map_err(|_| "desktop_sidecar_spawn_failed".to_string())?;
+    lifecycle.mark_startup(|startup| startup.sidecar_spawned = true);
     if let Err(error) = job.assign(&child) {
         terminate_process_tree_fallback(child.id());
         let _ = child.kill();
@@ -1147,18 +1174,33 @@ fn start_sidecar(
             return Err(error);
         }
     };
+    lifecycle.mark_startup(|startup| startup.sidecar_ready = true);
     Ok((ManagedSidecar { child, job }, ready, bearer))
+}
+
+fn bootstrap_marker_script(runtime_expected: bool, finalized: bool) -> String {
+    if finalized {
+        format!(
+            "globalThis.__HEMATURIA_DESKTOP_BOOTSTRAP__=Object.freeze({{scriptExecuted:true,runtimeExpected:{runtime_expected},runtimeDefined:globalThis.__HEMATURIA_DESKTOP_RUNTIME__?.runtimeTarget==='desktop',diagnosticDefined:Boolean(globalThis.__HEMATURIA_DESKTOP_DIAGNOSTIC__),schemaVersion:{BOOTSTRAP_SCHEMA_VERSION}}});"
+        )
+    } else {
+        format!(
+            "Object.defineProperty(globalThis,'__HEMATURIA_DESKTOP_BOOTSTRAP__',{{value:{{scriptExecuted:true,runtimeExpected:{runtime_expected},runtimeDefined:false,diagnosticDefined:false,schemaVersion:{BOOTSTRAP_SCHEMA_VERSION}}},writable:true,configurable:false,enumerable:false}});"
+        )
+    }
 }
 
 fn runtime_initialization_script(
     runtime: Option<&DesktopRuntimeConfig>,
     diagnostics: &DesktopDiagnosticReport,
 ) -> Result<String, String> {
+    let runtime_expected = runtime.is_some();
     let diagnostic = serde_json::to_string(diagnostics)
         .map_err(|_| "desktop_runtime_injection_serialize_failed".to_string())?;
-    let mut script = format!(
+    let mut script = bootstrap_marker_script(runtime_expected, false);
+    script.push_str(&format!(
         "Object.defineProperty(globalThis,'__HEMATURIA_DESKTOP_DIAGNOSTIC__',{{value:Object.freeze({diagnostic}),writable:true,configurable:false,enumerable:false}});"
-    );
+    ));
     if let Some(runtime) = runtime {
         let serialized = serde_json::to_string(runtime)
             .map_err(|_| "desktop_runtime_injection_serialize_failed".to_string())?;
@@ -1166,6 +1208,7 @@ fn runtime_initialization_script(
             "Object.defineProperty(globalThis,'__HEMATURIA_DESKTOP_RUNTIME__',{{value:Object.freeze({serialized}),writable:true,configurable:false,enumerable:false}});"
         ));
     }
+    script.push_str(&bootstrap_marker_script(runtime_expected, true));
     Ok(script)
 }
 
@@ -1354,6 +1397,7 @@ fn diagnostic_report<R: tauri::Runtime, M: tauri::Manager<R>>(
             "processId": null,
             "exitCode": null
         }),
+        startup: observation.startup.clone(),
         last_failure: failure.clone(),
         stable_failure_codes: failure.iter().map(|value| value.code.clone()).collect(),
         data_isolation: serde_json::json!({
@@ -1527,7 +1571,7 @@ fn desktop_restart_runtime(
         window_state_path: data_dir.join(WINDOW_STATE_FILE),
     };
     lifecycle.set_context(context.clone())?;
-    match start_sidecar(&context.layout, &context.data_dir) {
+    match start_sidecar(&context.layout, &context.data_dir, &lifecycle) {
         Ok((sidecar, ready, bearer)) => {
             lifecycle.install(sidecar, context, ready, bearer)?;
             Ok(DesktopRuntimeRestartResult {
@@ -1549,53 +1593,62 @@ fn desktop_restart_runtime(
 
 fn setup(app: &mut tauri::App) -> Result<(), Box<dyn Error>> {
     let lifecycle = app.state::<LifecycleState>();
+    lifecycle.mark_startup(|startup| startup.setup_entered = true);
     let mut restored_window_state = None;
-    if let Ok(data_dir) = desktop_data_directory(app) {
-        let window_state_path = data_dir.join(WINDOW_STATE_FILE);
-        lifecycle
-            .set_data_directory(data_dir.clone(), window_state_path.clone())
-            .map_err(std::io::Error::other)?;
-        if let Ok(layout) = resolve_runtime_layout(app) {
-            let context = RuntimeContext {
-                layout,
-                data_dir: data_dir.clone(),
-                window_state_path: window_state_path.clone(),
-            };
+    match desktop_data_directory(app) {
+        Ok(data_dir) => {
+            lifecycle.mark_startup(|startup| startup.data_directory_resolved = true);
+            let window_state_path = data_dir.join(WINDOW_STATE_FILE);
             lifecycle
-                .set_context(context.clone())
+                .set_data_directory(data_dir.clone(), window_state_path.clone())
                 .map_err(std::io::Error::other)?;
-            match fs::create_dir_all(&data_dir) {
-                Ok(()) => {
-                    restored_window_state = match load_window_state(&window_state_path) {
-                        Ok(state) => state,
-                        Err(code) => {
-                            eprintln!("{{\"event\":\"desktop_window_state_ignored\",\"code\":\"{code}\"}}");
-                            None
-                        }
+            match resolve_runtime_layout(app) {
+                Ok(layout) => {
+                    lifecycle.mark_startup(|startup| startup.runtime_layout_resolved = true);
+                    let context = RuntimeContext {
+                        layout,
+                        data_dir: data_dir.clone(),
+                        window_state_path: window_state_path.clone(),
                     };
-                    match start_sidecar(&context.layout, &data_dir) {
-                        Ok((sidecar, ready, bearer)) => {
-                            lifecycle
-                                .install(sidecar, context, ready, bearer)
-                                .map_err(std::io::Error::other)?;
+                    lifecycle
+                        .set_context(context.clone())
+                        .map_err(std::io::Error::other)?;
+                    match fs::create_dir_all(&data_dir) {
+                        Ok(()) => {
+                            restored_window_state = match load_window_state(&window_state_path) {
+                                Ok(state) => state,
+                                Err(code) => {
+                                    eprintln!("{{\"event\":\"desktop_window_state_ignored\",\"code\":\"{code}\"}}");
+                                    None
+                                }
+                            };
+                            match start_sidecar(&context.layout, &data_dir, &lifecycle) {
+                                Ok((sidecar, ready, bearer)) => {
+                                    lifecycle
+                                        .install(sidecar, context, ready, bearer)
+                                        .map_err(std::io::Error::other)?;
+                                }
+                                Err(code) => lifecycle.record_failure(&code, "sidecar_startup"),
+                            }
                         }
-                        Err(code) => lifecycle.record_failure(&code, "sidecar_startup"),
+                        Err(_) => lifecycle
+                            .record_failure("desktop_data_dir_create_failed", "data_directory"),
                     }
                 }
-                Err(_) => {
-                    lifecycle.record_failure("desktop_data_dir_create_failed", "data_directory")
-                }
+                Err(code) => lifecycle.record_failure(&code, "resource_resolution"),
             }
-        } else {
-            lifecycle.record_failure("desktop_sidecar_resources_missing", "resource_resolution");
         }
-    } else if let Err(code) = desktop_data_directory(app) {
-        lifecycle.record_failure(&code, "data_directory");
+        Err(code) => lifecycle.record_failure(&code, "data_directory"),
     }
     let diagnostic = diagnostic_report(app, &lifecycle).map_err(std::io::Error::other)?;
     let runtime = lifecycle.runtime_config().map_err(std::io::Error::other)?;
     let initialization_script = runtime_initialization_script(runtime.as_ref(), &diagnostic)
         .map_err(std::io::Error::other)?;
+    lifecycle.mark_startup(|startup| {
+        startup.initialization_script_built = true;
+        startup.runtime_injection_expected = runtime.is_some();
+        startup.window_build_started = true;
+    });
 
     let mut builder =
         tauri::WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
@@ -1610,6 +1663,7 @@ fn setup(app: &mut tauri::App) -> Result<(), Box<dyn Error>> {
         builder = builder.maximized(true);
     }
     let window = builder.build()?;
+    lifecycle.mark_startup(|startup| startup.window_built = true);
     if let Some(state) = restored_window_state {
         window.set_size(tauri::PhysicalSize::new(state.width, state.height))?;
         if window_state_intersects_monitor(&window, &state) {
@@ -1742,6 +1796,18 @@ mod tests {
         for (code, expected) in cases {
             assert_eq!(classify_runtime_error(code), expected, "{code}");
         }
+    }
+
+    #[test]
+    fn bootstrap_marker_is_non_sensitive_and_classifies_runtime_definition() {
+        let started = bootstrap_marker_script(true, false);
+        let finalized = bootstrap_marker_script(true, true);
+        assert!(started.contains("scriptExecuted:true"));
+        assert!(started.contains("runtimeExpected:true"));
+        assert!(started.contains("runtimeDefined:false"));
+        assert!(finalized.contains("__HEMATURIA_DESKTOP_RUNTIME__?.runtimeTarget==='desktop'"));
+        assert!(!format!("{started}{finalized}").contains("authToken"));
+        assert!(!format!("{started}{finalized}").contains("bearer"));
     }
 
     #[test]
