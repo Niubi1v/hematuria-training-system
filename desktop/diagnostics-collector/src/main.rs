@@ -182,7 +182,10 @@ fn collect(i: &Inputs, forced: Option<&Path>) -> Result<Bundle, String> {
     }
     write_new(&folder.join("redacted-log-tail.txt"), log.as_bytes())?;
     write_new(&folder.join("README.txt"), readme().as_bytes())?;
-    manifest_file(&folder)?;
+    if let Err(error) = manifest_file(&folder) {
+        let _ = write_new(&folder.join("collector-error.txt"), error.as_bytes());
+        return Err(error);
+    }
     let z = unique(&root, &stem, ".zip");
     let zip = zip_dir(&folder, &z).ok().map(|_| z);
     Ok(Bundle {
@@ -791,7 +794,7 @@ fn sha256(p: &Path) -> Result<String, String> {
     }
     let result = (|| {
         let mut f = File::open(p).map_err(|_| "sha256_open_failed")?;
-        let mut b = [0u8; 1024 * 1024];
+        let mut b = vec![0u8; 64 * 1024];
         loop {
             let n = f.read(&mut b).map_err(|_| "sha256_read_failed")?;
             if n == 0 {
