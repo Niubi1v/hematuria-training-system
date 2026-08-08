@@ -222,7 +222,8 @@ test("P005 approved results survive a real sidecar and SQLite restart", async ({
     await input.fill(fiveOrders);
     await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
     await expect(page.getByRole("status").filter({ hasText: "5项医嘱" })).toContainText("已有结果2份");
-    await expect(page.getByTestId("report-card")).toHaveCount(2);
+    await expect(page.getByTestId("report-card")).toHaveCount(4);
+    await expect(page.getByTestId("investigation-selection-summary")).toContainText("已返回检查报告 2 份");
 
     await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
     await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
@@ -246,7 +247,7 @@ test("P005 approved results survive a real sidecar and SQLite restart", async ({
     })).payload.snapshot;
     assert.equal(restored.activeStageNo, 3);
     assert.equal(restored.answers?.historySummary, marker);
-    assert.equal(restored.orderLogs?.reduce((count, log) => count + (log.results?.length || 0), 0), 2);
+    assert.equal(restored.orderLogs?.reduce((count, log) => count + (log.results?.length || 0), 0), 4, "duplicate logs must keep both existing reports viewable");
     const database = new DatabaseSync(path.join(dataDirectory, "hematuria.sqlite3"), { readOnly: true });
     try {
       const row = database.prepare("SELECT state_json FROM attempts WHERE case_id = ?").get("P005");
