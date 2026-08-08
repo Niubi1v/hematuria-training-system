@@ -32,6 +32,7 @@ const fast = [
   command(pnpm, "run", "test:evidence-graph"),
   command(pnpm, "run", "test:ui-clinical-stage3"),
   command(pnpm, "run", "test:human-approved-medical-results"),
+  command(pnpm, "run", "test:stage2:persistence"),
   command(pnpm, "run", "test:order-result-student-presentation"),
   command(pnpm, "run", "test:desktop:effective-model-mode"),
   command(pnpm, "run", "test:desktop:state-authority"),
@@ -46,6 +47,7 @@ const fast = [
 ];
 const milestone = [
   ...fast,
+  command(pnpm, "run", "test:stage2:all-orders"),
   command(pnpm, "run", "test:r5:state-model", "--", "--runs", "200", "--steps", "50", "--integration"),
   command(pnpm, "run", "test"),
   command(process.execPath, "scripts/run-r5-playwright.mjs", "--workers=4", "--retries=0"),

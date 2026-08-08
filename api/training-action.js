@@ -325,7 +325,7 @@ function reportOrderIds(report) {
   return [...new Set([report?.orderId, ...(report?.coveredOrderIds || [])].filter(Boolean))];
 }
 
-const humanDecisionClassifications = new Set(["human_approved_projection", "human_rejected_mapping", "human_mapping_invalid"]);
+const governedDecisionClassifications = new Set(["human_approved_projection", "human_rejected_mapping", "human_mapping_invalid", "medical_author_simulation", "medical_author_not_performed"]);
 
 function mergeReports(reports) {
   const merged = new Map();
@@ -388,6 +388,9 @@ function studentOrderPayload(result, previousReports, language) {
     }
     if (item.status === "unrecognized") {
       return { orderId: item.orderId, displayName: item.displayName, status: "unrecognized", message: item.message };
+    }
+    if (["not_performed", "no_indication", "no_specimen"].includes(item.status)) {
+      return { orderId: item.orderId, displayName: item.displayName, status: item.status, message: item.message };
     }
     return { orderId: item.orderId, displayName: item.displayName, status: "unavailable", message: unavailableStudentMessage(item.displayName, language) };
   });
@@ -487,7 +490,7 @@ function handleOrder(caseData, input, previousOrderIds, language, previousReport
   const reportable = sourceRows.filter(({ order, result }) => {
     const canonicalId = sourceOrderId(order);
     return orderResultIsReportable(result)
-      && !humanDecisionClassifications.has(triageRowsByOrderId.get(canonicalId)?.classification)
+      && !governedDecisionClassifications.has(triageRowsByOrderId.get(canonicalId)?.classification)
       && sourceAssessmentByOrderId.get(canonicalId)?.compatible === true;
   });
   const unmetPrerequisites = [...new Set(sourceRows.flatMap(({ result }) => (result.prerequisites || []).filter((id) => !available.has(id))))];
@@ -495,6 +498,7 @@ function handleOrder(caseData, input, previousOrderIds, language, previousReport
     const canonicalId = sourceOrderId(order);
     if (duplicateOrderIds.includes(canonicalId)) return false;
     const result = sourceRowsByOrderId.get(canonicalId);
+    if (triageRowsByOrderId.get(canonicalId)?.classification === "medical_author_not_performed") return true;
     return !result || (result.prerequisites || []).every((id) => available.has(id));
   }).map(sourceOrderId);
   const pendingPrerequisiteOrderIds = orders
@@ -544,15 +548,44 @@ function handleOrder(caseData, input, previousOrderIds, language, previousReport
     const sourceResult = sourceRowsByOrderId.get(canonicalId);
     const triaged = triageRowsByOrderId.get(canonicalId);
     const triageAssessment = triageAssessmentByOrderId.get(canonicalId);
+    if (acceptedOrderIds.includes(canonicalId) && triaged?.classification === "medical_author_simulation") {
+      return [{
+        caseId: caseData.id,
+        orderId: canonicalId,
+        resultId: triaged.resultId,
+        coveredOrderIds: [canonicalId],
+        status: "final",
+        result: triaged.result,
+        provenance: triaged.provenance,
+        scoringEligible: false,
+        diagnosticEligible: false,
+        affectsDiagnosis: false,
+        affectsScore: false
+      }];
+    }
+    if (acceptedOrderIds.includes(canonicalId) && triaged?.classification === "human_approved_projection" && triaged.decisionType === "APPROVE_SOURCE_DERIVED") {
+      return [{
+        caseId: caseData.id,
+        orderId: triaged.targetOrderId,
+        resultId: triaged.resultId,
+        coveredOrderIds: triaged.coveredOrderIds,
+        status: "final",
+        result: triaged.result,
+        provenance: triaged.provenance,
+        scoringEligible: false,
+        diagnosticEligible: true,
+        affectsScore: false
+      }];
+    }
     if (acceptedOrderIds.includes(canonicalId) && triaged?.classification === "human_approved_projection") {
       const ownerOrder = catalog.find((item) => sourceOrderId(item) === triaged.targetOrderId)
         || sourceCatalog.find((item) => item.orderId === triaged.targetOrderId)
         || order;
       const projected = {
         caseId: caseData.id,
-        orderId: triaged.targetOrderId,
+        orderId: triaged.targetOrderId || canonicalId,
         resultId: triaged.resultId,
-        coveredOrderIds: triaged.coveredOrderIds,
+        coveredOrderIds: triaged.coveredOrderIds || [canonicalId],
         status: "final",
         value: triaged.result,
         result: triaged.result,
@@ -564,10 +597,11 @@ function handleOrder(caseData, input, previousOrderIds, language, previousReport
       };
       return [{
         ...presentOrderResult(ownerOrder, projected, language),
-        coveredOrderIds: triaged.coveredOrderIds,
+        coveredOrderIds: triaged.coveredOrderIds || [canonicalId],
         provenance: triaged.provenance,
         scoringEligible: false,
-        diagnosticEligible: true,
+        diagnosticEligible: triaged.diagnosticEligible === true,
+        affectsDiagnosis: triaged.affectsDiagnosis === true,
         affectsScore: false
       }];
     }
@@ -616,6 +650,10 @@ function handleOrder(caseData, input, previousOrderIds, language, previousReport
     }
     const canonicalId = sourceOrderId(order);
     const displayName = presentMatchedOrder(order, language).displayName;
+    const result = sourceRowsByOrderId.get(canonicalId);
+    const triaged = triageRowsByOrderId.get(canonicalId);
+    const sourceAssessment = sourceAssessmentByOrderId.get(canonicalId);
+    const triageAssessment = triageAssessmentByOrderId.get(canonicalId);
     if (unavailableOrders.includes(order)) {
       return {
         orderId: canonicalId, displayName, status: "unavailable", provenance: "review_required",
@@ -623,18 +661,24 @@ function handleOrder(caseData, input, previousOrderIds, language, previousReport
       };
     }
     if (duplicateOrderIds.includes(canonicalId)) {
+      if (triaged?.classification === "medical_author_not_performed") {
+        return { orderId: canonicalId, displayName, status: "not_performed", provenance: triaged.provenance, scoringEligible: false, diagnosticEligible: false, possibleUnnecessary: true, message: triaged.result };
+      }
       return {
         orderId: canonicalId, displayName, status: "duplicate", provenance: "configured_case_result",
         message: language === "en" ? `${displayName}: already ordered; no duplicate report was released.` : `${displayName}：已开立过，本次不重复释放报告。`
       };
     }
-    const result = sourceRowsByOrderId.get(canonicalId);
-    const triaged = triageRowsByOrderId.get(canonicalId);
-    const sourceAssessment = sourceAssessmentByOrderId.get(canonicalId);
-    const triageAssessment = triageAssessmentByOrderId.get(canonicalId);
     const sharedReport = results.find((item) => reportOrderIds(item).includes(canonicalId));
     const releasedSharedReport = releasedReportByOrderId.get(sharedOwnerByOrderId.get(canonicalId));
     const missingPrerequisites = (result?.prerequisites || []).filter((id) => !available.has(id));
+    if (triaged?.classification === "medical_author_not_performed") {
+      return {
+        orderId: canonicalId, displayName, status: "not_performed", provenance: triaged.provenance,
+        scoringEligible: false, diagnosticEligible: false, possibleUnnecessary: true,
+        message: triaged.result
+      };
+    }
     if (missingPrerequisites.length) {
       return {
         orderId: canonicalId, displayName, status: "prerequisite_missing", provenance: "configured_case_result",
@@ -1157,8 +1201,10 @@ module.exports = async function handler(req, res) {
           provenance: item.provenance || "unknown"
         }
       }));
+      const existingOutcomeKeys = new Set(state.events.filter((event) => event.type === "order_outcome").map((event) => `${event.actionId}:${event.metadata?.outcomeStatus}`));
       const outcomeEvents = result.orderOutcomes
         .filter((item) => item.orderId && !["reported", "duplicate", "unrecognized", "unavailable"].includes(item.status))
+        .filter((item) => !existingOutcomeKeys.has(`${item.orderId}:${item.status}`))
         .map((item) => ({
           eventId: `srv-${state.sequence + 1}-outcome-${item.orderId}`,
           type: "order_outcome",

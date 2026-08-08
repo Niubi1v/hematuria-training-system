@@ -254,7 +254,7 @@ async function testPrerequisiteRecovery() {
     assert.equal(resultIds(response.payload).includes(item.resultId), expectedReport);
     if (!expectedReport) {
       assert.equal(
-        ((response.payload.orderOutcomes || []) as Array<{ orderId: string; status: string }>).some((outcome) => outcome.orderId === item.orderId && outcome.status === "unavailable"),
+        ((response.payload.orderOutcomes || []) as Array<{ orderId: string; status: string }>).some((outcome) => outcome.orderId === item.orderId && ["reported", "unavailable", "no_indication", "not_performed", "no_specimen"].includes(outcome.status)),
         true
       );
     }

@@ -62,12 +62,13 @@ assert.match(String(ultrasound?.result), /膀胱小梁小房形成.*前列腺增
 assert.doesNotMatch(String(ultrasound?.result), /心脏|冠脉|EF55/u);
 assert.equal(first.payload.newReportCount, 2);
 assert.equal(first.payload.existingReportCount, 0);
-assert.equal(first.payload.unavailableResultCount, 2);
+assert.equal(first.payload.unavailableResultCount, 1);
 
 const outcomes = first.payload.orderOutcomes as Array<{ orderId: string; status: string; message: string }>;
 assert.equal(outcomes.length, 5);
 assert.equal(outcomes.find((item) => item.orderId === "LAB-UR-002")?.status, "reported");
-assert.ok(outcomes.filter((item) => item.status === "unavailable").length === 2);
+assert.equal(outcomes.filter((item) => item.status === "unavailable").length, 1);
+assert.equal(outcomes.filter((item) => item.status === "no_specimen").length, 1);
 
 const repeated = await call({ action: "order", caseId: "P005", attemptId: zh.attemptId, mode: "free", language: "zh", input: fiveOrders }, first.token);
 assert.equal(repeated.statusCode, 200);

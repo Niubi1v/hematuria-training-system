@@ -4,6 +4,45 @@
   "reviewBasis": "User-supplied final human medical decisions, 2026-08-08",
   "decisions": [
     {
+      "id": "R5-MEDICAL-AUTHOR-P003-IMG-CT-001",
+      "caseId": "P003",
+      "sourceOrderId": "IMG-CT-001",
+      "source": { "file": "data/cases.json", "jsonPath": "$[2].investigations[1].result", "sha256": "3c4c2b990269a97b54e1e7e7ed851615751ebf620570de6d37d4bea1ce7cc9c9" },
+      "sourceFragments": ["泌尿系CT提示：右肾盂内软组织病变，大小约2*3cm"],
+      "targetOrderId": "IMG-CT-001",
+      "coveredOrderIds": ["IMG-CT-001"],
+      "displayText": "泌尿系CT提示：右肾盂内软组织病变，大小约2×3 cm。",
+      "decisionType": "APPROVE_SOURCE_DERIVED",
+      "humanReviewStatus": "approved",
+      "reviewBasis": "Imported verbatim from the approved medical-author decision file; source governance inherited."
+    },
+    {
+      "id": "R5-MEDICAL-AUTHOR-P009-IMG-CT-001",
+      "caseId": "P009",
+      "sourceOrderId": "IMG-CT-001",
+      "source": { "file": "data/cases.json", "jsonPath": "$[8].clinical.specialTests", "sha256": "b78409a50d12c068481417dd59797e7a755c138c65adc30e9e7c2f7ceb556fd0" },
+      "sourceFragments": ["1、双肾+盆腔CT平扫提示：右肾多发结石，最大10*12mm, 输尿管上端结石9*8mm"],
+      "targetOrderId": "IMG-CT-001",
+      "coveredOrderIds": ["IMG-CT-001"],
+      "displayText": "双肾+盆腔CT平扫：右肾多发结石，最大约10×12 mm；右侧输尿管上段结石约9×8 mm。",
+      "decisionType": "APPROVE_SOURCE_DERIVED",
+      "humanReviewStatus": "approved",
+      "reviewBasis": "Imported verbatim from the approved medical-author decision file; source governance inherited."
+    },
+    {
+      "id": "R5-MEDICAL-AUTHOR-P011-LAB-UR-004",
+      "caseId": "P011",
+      "sourceOrderId": "LAB-UR-004",
+      "source": { "file": "data/cases.json", "jsonPath": "$[10].urineTestResult", "sha256": "d101230400f00df1b994c792940290e24ec113f21376af2fd2cccb2b9c7743b6" },
+      "sourceFragments": ["尿蛋白+"],
+      "targetOrderId": "LAB-UR-004",
+      "coveredOrderIds": ["LAB-UR-004"],
+      "displayText": "尿蛋白：+。病例原始资料未提供可独立核验的UPCR精确值。",
+      "decisionType": "APPROVE_SOURCE_DERIVED",
+      "humanReviewStatus": "approved",
+      "reviewBasis": "Imported verbatim from the approved medical-author decision file; source governance inherited."
+    },
+    {
       "id": "R5-HUMAN-P001-IMG-US-001",
       "caseId": "P001",
       "sourceOrderId": "IMG-US-001",

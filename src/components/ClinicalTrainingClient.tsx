@@ -712,7 +712,7 @@ function orderOutcomeLabel(status: string, lang: LanguageCode) {
 const internalOrderResultText = /等待医学审核|待审核|等待审核元数据|当前不进入诊断、治疗或评分证据|awaiting medical review|awaiting review|awaiting reviewed metadata|\b(?:source|provenance|reviewerStatus|medical_review_pending|needs_review|not_available|diagnosticEligible|scoringEligible)\b/iu;
 
 function studentOrderOutcome(outcome: NonNullable<OrderResultLog["orderOutcomes"]>[number], lang: LanguageCode) {
-  if (["medical_review_pending", "unavailable", "no_indication", "not_performed", "no_specimen", "not_provided", "prerequisite_missing"].includes(outcome.status)) {
+  if (["medical_review_pending", "unavailable", "not_provided", "prerequisite_missing"].includes(outcome.status)) {
     return {
       status: "unavailable",
       label: lang === "en" ? "No result available" : "暂无可显示结果",

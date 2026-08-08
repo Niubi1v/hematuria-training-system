@@ -13,8 +13,10 @@ process.env.HEMATURIA_RUNTIME_TARGET = "desktop";
 const handler = require("../api/training-action.js");
 const cases = require("../data/cases.json");
 const decisions = require("../desktop/human-approved-result-mappings.json");
+const medicalAuthor = require("../desktop/medical-author-approved-stage2-results.json");
+const structuredResults = require("../data/order_results_structured.json");
 const { desktopClinicalTriageSummary, humanDecisionSourceValid } = require("../server/desktopClinicalContentProjection.js");
-const { resetMemoryAttemptStore } = require("../server/trainingAttemptStore.js");
+const { digest, loadAttempt, resetMemoryAttemptStore } = require("../server/trainingAttemptStore.js");
 
 let requestCounter = 0;
 async function call(body, token = "") {
@@ -60,7 +62,7 @@ function report(response, orderId) {
 }
 
 function assertPublic(payload) {
-  assert.doesNotMatch(JSON.stringify(payload), /human.?review|medical.?review|approved|sourceMatch|sourceSha|fingerprint|provenance|diagnosticEligible|scoringEligible/iu);
+  assert.doesNotMatch(JSON.stringify(payload), /human.?review|medical.?review|approved|simulated|sourceMatch|sourceSha|fingerprint|provenance|diagnosticEligible|scoringEligible|affectsDiagnosis|affectsScore/iu);
 }
 
 resetMemoryAttemptStore();
@@ -73,9 +75,13 @@ assert.deepEqual(desktopClinicalTriageSummary(), {
   noReportOrNotIndicated: 952,
   medicalReviewPending: 1023,
   medicalConflicts: 1,
-  humanApprovedMappings: 18,
+  humanApprovedMappings: 21,
   humanRejectedMappings: 4,
-  humanInvalidMappings: 0
+  humanInvalidMappings: 0,
+  medicalAuthorAuthoritySha256: "f846a35c3ed80899d29c535da0ec46309ef2cd810e2c6f7fe2ae99865f7707d9",
+  medicalAuthorSimulatedReports: 103,
+  medicalAuthorNotPerformed: 34,
+  medicalAuthorSourceDerivedReports: 3
 });
 
 for (const decision of decisions.decisions) {
@@ -147,9 +153,59 @@ assertPublic(p027.response.payload);
 for (const [caseId, orderId] of [["P008", "IMG-CT-002"], ["P024", "IMG-US-001"], ["P040", "IMG-US-001"], ["P042", "END-001"]]) {
   const placed = await order(caseId, orderId);
   assert.equal(placed.response.payload.results.length, 0, `${caseId}/${orderId}:rejected_mapping_released`);
-  assert.equal(placed.response.payload.orderOutcomes[0].status, "unavailable");
-  assert.match(placed.response.payload.orderOutcomes[0].message, /本病例当前无可提供的该项检查结果/u);
+  assert.equal(placed.response.payload.orderOutcomes[0].status, "not_performed");
+  assert.equal(placed.response.payload.orderOutcomes[0].message, medicalAuthor.items.find((item) => item.caseId === caseId && item.orderId === orderId).finalTerminalText);
   assertPublic(placed.response.payload);
 }
 
-console.log("R5-HUMAN-APPROVED-MEDICAL-RESULT-MAPPING passed: 18 approved, 4 rejected, exact-source fingerprints, strict panel splits, public boundary");
+assert.equal(medicalAuthor.items.length, 140);
+let checked = 0;
+let duplicateSimulationChecked = false;
+let duplicateNotPerformedChecked = false;
+for (const item of medicalAuthor.items) {
+  const configured = structuredResults.find((row) => row.caseId === (cases.find((entry) => entry.displayCaseId === item.caseId)?.id || item.caseId) && row.orderId === item.orderId);
+  const input = [...new Set([...(configured?.prerequisites || []), item.orderId])].join(";");
+  const placed = await order(item.caseId, input);
+  const payloadText = JSON.stringify(placed.response.payload);
+  assertPublic(placed.response.payload);
+  assert.doesNotMatch(payloadText, /等待医学审核|等待审核元数据/u, `${item.caseId}/${item.orderId}:waiting_copy`);
+  if (item.finalTerminalType === "NOT_PERFORMED") {
+    const outcome = placed.response.payload.orderOutcomes.find((row) => row.orderId === item.orderId);
+    assert.equal(outcome?.status, "not_performed", `${item.caseId}/${item.orderId}:not_performed_status`);
+    assert.equal(outcome?.message, item.finalTerminalText, `${item.caseId}/${item.orderId}:not_performed_text`);
+    if (!duplicateNotPerformedChecked) {
+      const repeated = await call({ action: "order", caseId: placed.runtimeCaseId, attemptId: placed.attemptId, mode: "free", language: "zh", input: item.orderId }, placed.response.token);
+      assert.equal(repeated.payload.orderOutcomes[0].status, "not_performed");
+      const stored = await loadAttempt({ caseId: placed.runtimeCaseId, attemptId: placed.attemptId, token: repeated.token, requestId: "inspect-not-performed", requestDigest: digest("inspect-not-performed") });
+      assert.equal(stored.state.events.filter((event) => event.type === "order_outcome" && event.actionId === item.orderId).length, 1);
+      duplicateNotPerformedChecked = true;
+    }
+  } else {
+    const released = report(placed.response, item.orderId);
+    assert.equal(released?.result, item.finalTerminalText, `${item.caseId}/${item.orderId}:report_text`);
+    const stored = await loadAttempt({ caseId: placed.runtimeCaseId, attemptId: placed.attemptId, token: placed.response.token, requestId: `inspect-${item.index}`, requestDigest: digest(`inspect-${item.index}`) });
+    const internal = stored.state.releasedReports.find((row) => row.orderId === item.orderId || row.coveredOrderIds?.includes(item.orderId));
+    assert(internal, `${item.caseId}/${item.orderId}:internal_report_missing`);
+    assert.equal(internal.scoringEligible, false);
+    if (item.finalTerminalType === "SIMULATED_REPORT") {
+      assert.equal(internal.provenance, "teaching_simulation_medical_author_approved");
+      assert.equal(internal.diagnosticEligible, false);
+      assert.equal(internal.affectsDiagnosis, false);
+      assert.equal(internal.affectsScore, false);
+      if (!duplicateSimulationChecked) {
+        const repeated = await call({ action: "order", caseId: placed.runtimeCaseId, attemptId: placed.attemptId, mode: "free", language: "zh", input: item.orderId }, placed.response.token);
+        assert.equal(repeated.payload.results[0]?.result, item.finalTerminalText);
+        const repeatedStored = await loadAttempt({ caseId: placed.runtimeCaseId, attemptId: placed.attemptId, token: repeated.token, requestId: "inspect-simulation", requestDigest: digest("inspect-simulation") });
+        assert.equal(repeatedStored.state.events.filter((event) => event.type === "result_returned" && event.actionId === item.orderId).length, 1);
+        duplicateSimulationChecked = true;
+      }
+    } else {
+      assert.equal(internal.provenance, "human_approved_source_projection");
+      assert.equal(internal.diagnosticEligible, true);
+    }
+  }
+  checked += 1;
+}
+
+assert.equal(checked, 140);
+console.log("R5-HUMAN-APPROVED-MEDICAL-RESULT-MAPPING passed: 140/140 author decisions, 21 source mappings, 4 preserved rejections, duplicates, public boundary");

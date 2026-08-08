@@ -11,6 +11,7 @@ const require = createRequire(import.meta.url);
 const handler = require("../api/training-action.js");
 const cases = require("../data/cases.json");
 const runtime = require("../desktop/clinical-content-triage-runtime.json");
+const medicalAuthor = require("../desktop/medical-author-approved-stage2-results.json");
 const { desktopClinicalTriageSummary } = require("../server/desktopClinicalContentProjection.js");
 const { digest, loadAttempt, resetMemoryAttemptStore } = require("../server/trainingAttemptStore.js");
 const { containsCjk } = require("../shared/dataAgentPresentation.js");
@@ -89,9 +90,13 @@ assert.deepEqual(summary, {
   noReportOrNotIndicated: 952,
   medicalReviewPending: 1023,
   medicalConflicts: 1,
-  humanApprovedMappings: 18,
+  humanApprovedMappings: 21,
   humanRejectedMappings: 4,
-  humanInvalidMappings: 0
+  humanInvalidMappings: 0,
+  medicalAuthorAuthoritySha256: "f846a35c3ed80899d29c535da0ec46309ef2cd810e2c6f7fe2ae99865f7707d9",
+  medicalAuthorSimulatedReports: 103,
+  medicalAuthorNotPerformed: 34,
+  medicalAuthorSourceDerivedReports: 3
 });
 
 const semanticReasons = ["cross_domain_or_mixed_order_content", "cross_order_duplicate_result", "multiple_timepoints_or_states", "recommendation_or_uncertain_result"];
@@ -137,12 +142,9 @@ for (const journey of representativeCases) {
   }
 
   response = await placeOrder(response, journey.caseId, attemptId, "LAB-BL-001");
-  const unsafeCbc = outcome(response, "unavailable", "LAB-BL-001");
-  assert(unsafeCbc, `${journey.caseId}:cross_domain_cbc_not_isolated`);
-  assert.equal("scoringEligible" in unsafeCbc, false);
-  assert.equal("diagnosticEligible" in unsafeCbc, false);
-  assert.equal((response.payload.results || []).length, 0);
-  if (journey.caseId === "P001") assert.doesNotMatch(JSON.stringify(response.payload), /糖化血红蛋白|梅毒抗体/u);
+  assert(outcome(response, "reported", "LAB-BL-001"), `${journey.caseId}:approved_simulated_cbc_missing`);
+  assert.equal(response.payload.results[0]?.result, medicalAuthor.items.find((item) => item.caseId === journey.caseId && item.orderId === "LAB-BL-001").finalTerminalText);
+  assert.doesNotMatch(JSON.stringify(response.payload), /simulated|provenance|diagnosticEligible|scoringEligible/iu);
 
   if (journey.caseId === "P001") {
     response = await placeOrder(response, journey.caseId, attemptId, "LAB-UR-002");
@@ -155,13 +157,13 @@ for (const journey of representativeCases) {
     assert.equal("scoringEligible" in response.payload, false);
     assert.equal("diagnosticEligible" in response.payload, false);
     response = await placeOrder(response, journey.caseId, attemptId, "KUB腹部平片");
-    assert(outcome(response, "unavailable"));
+    assert(outcome(response, "no_indication"));
   }
 
   if (journey.caseId === "P006") {
     response = await placeOrder(response, journey.caseId, attemptId, "LAB-UR-008");
-    assert(outcome(response, "unavailable", "LAB-UR-008"), "hypothetical culture result must remain unavailable to the learner");
-    assert.equal((response.payload.results || []).length, 0);
+    assert(outcome(response, "reported", "LAB-UR-008"), "medical-author-approved simulated culture result must be visible");
+    assert.equal(response.payload.results[0]?.result, medicalAuthor.items.find((item) => item.caseId === "P006" && item.orderId === "LAB-UR-008").finalTerminalText);
   }
 
   if (journey.caseId === "P011") {
@@ -171,8 +173,14 @@ for (const journey of representativeCases) {
     assert(outcome(response, "reported", "LAB-BL-011"), "P011 C3 must use the approved source fragment");
     for (const orderId of ["LAB-BL-012", "LAB-BL-003", "IMG-US-001"]) {
       response = await placeOrder(response, journey.caseId, attemptId, orderId);
-      assert(outcome(response, "unavailable"), `${journey.caseId}/${orderId}:unapproved_result_not_isolated`);
-      assert.equal((response.payload.results || []).length, 0);
+      const authored = medicalAuthor.items.find((item) => item.caseId === journey.caseId && item.orderId === orderId);
+      if (authored?.finalTerminalType === "SIMULATED_REPORT") {
+        assert(outcome(response, "reported", orderId), `${journey.caseId}/${orderId}:approved_simulation_missing`);
+        assert.equal(response.payload.results[0]?.result, authored.finalTerminalText);
+      } else {
+        assert(["unavailable", "no_indication", "no_specimen", "not_performed"].some((status) => outcome(response, status)), `${journey.caseId}/${orderId}:unapproved_result_not_isolated`);
+        assert.equal((response.payload.results || []).length, 0);
+      }
     }
   }
 
@@ -243,9 +251,10 @@ for (const journey of representativeCases) {
 
 const english = await startStageTwo("P001", "english-stage-1-3", "en");
 let englishResponse = await placeOrder(english.response, "P001", english.attemptId, "CBC", "en");
-assert(outcome(englishResponse, "unavailable", "LAB-BL-001"));
-assert.equal((englishResponse.payload.results || []).length, 0);
-assert.equal(containsCjk(JSON.stringify(englishResponse.payload)), false);
+assert(outcome(englishResponse, "reported", "LAB-BL-001"));
+assert.equal(englishResponse.payload.results[0]?.result, medicalAuthor.items.find((item) => item.caseId === "P001" && item.orderId === "LAB-BL-001").finalTerminalText);
+assert.equal(containsCjk(JSON.stringify(englishResponse.payload)), true, "approved Chinese medical text must not be machine-translated or rewritten");
+assert.doesNotMatch(JSON.stringify(englishResponse.payload), /simulated|provenance|diagnosticEligible|scoringEligible/iu);
 englishResponse = await stage(englishResponse, "P001", english.attemptId, "orders", {}, "en");
 const englishEvidence = englishResponse.payload.evidenceOptions || [];
 const englishSelected = englishEvidence.filter((item) => item.sourceStage <= 2).slice(0, 2).map((item) => item.evidenceId);

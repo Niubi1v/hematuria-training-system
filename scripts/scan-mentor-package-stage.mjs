@@ -22,6 +22,7 @@ const required = [
   "App/resources/runtime/llama/llama-server.exe",
   "App/resources/app/desktop/clinical-content-triage-runtime.json",
   "App/resources/app/desktop/human-approved-result-mappings.json",
+  "App/resources/app/desktop/medical-author-approved-stage2-results.json",
   "Model/Qwen3-1.7B-Q4_K_M.gguf"
 ];
 for (const relative of required) assert(relativeFiles.includes(relative), `mentor_required_file_missing:${relative}`);
@@ -67,17 +68,19 @@ assert.deepEqual(readmeLines.slice(0, 3), [
 ]);
 assert.match(readme, /医学教学 Beta.*不用于真实诊疗/u);
 assert.match(readme, /source projection 保留并应用 4 项.*运行时拒绝总数 121 项/u);
-assert.match(readme, /1023 项等待医学审核.*1 项医学冲突/u);
-assert.match(readme, /18 项人工批准映射.*4 项人工拒绝映射/u);
+assert.match(readme, /1023 项等待医学审核.*79 项已由最终医学决定覆盖.*剩余 944 项.*1 项医学冲突/u);
+assert.match(readme, /21 项人工批准映射.*4 项人工拒绝映射/u);
+assert.match(readme, /103 项教学模拟报告.*34 项未实施.*3 项来源派生报告/u);
 const testInstructions = await fs.readFile(path.join(stage, "TEST-INSTRUCTIONS.md"), "utf8");
 assert.match(testInstructions, /启动血尿训练系统\.cmd/u);
 assert.match(testInstructions, /开立并返回结果/u);
 assert.match(testInstructions, /关闭窗口后重新启动/u);
 const limitations = await fs.readFile(path.join(stage, "KNOWN_LIMITATIONS.txt"), "utf8");
 assert.match(limitations, /保留并应用 4 项.*拒绝总数为 121 项/u);
-assert.match(limitations, /1023 项等待医学审核.*fail-closed/u);
+assert.match(limitations, /1023 项等待医学审核.*79 项已由最终医学决定覆盖.*剩余 944 项.*fail-closed/u);
 assert.match(limitations, /1 项医学冲突/u);
-assert.match(limitations, /18 项人工批准映射.*4 项人工拒绝映射/u);
+assert.match(limitations, /21 项人工批准映射.*4 项人工拒绝映射/u);
+assert.match(limitations, /103 项教学模拟报告.*34 项未实施.*3 项来源派生报告/u);
 
 const version = JSON.parse((await fs.readFile(path.join(stage, "VERSION.json"), "utf8")).replace(/^\uFEFF/u, ""));
 assert.match(version.channel, /^mentor-local-ai-r5(?:-r5)?$/u);
@@ -85,10 +88,15 @@ assert.match(version.productHead, /^[0-9a-f]{40}$/u);
 assert.equal(version.medicalGovernance.sourceProjectionApplied, 4);
 assert.equal(version.medicalGovernance.sourceProjectionWithdrawn, 62);
 assert.equal(version.medicalGovernance.sourceProjectionRejected, 121);
-assert.equal(version.medicalGovernance.medicalReviewPending, 1023);
+assert.equal(version.medicalGovernance.runtimeMedicalReviewPending, 1023);
+assert.equal(version.medicalGovernance.medicalReviewPending, 944);
 assert.equal(version.medicalGovernance.medicalConflict, 1);
-assert.equal(version.medicalGovernance.humanApprovedMappings, 18);
+assert.equal(version.medicalGovernance.humanApprovedMappings, 21);
 assert.equal(version.medicalGovernance.humanRejectedMappings, 4);
+assert.equal(version.medicalGovernance.medicalAuthorSimulatedReports, 103);
+assert.equal(version.medicalGovernance.medicalAuthorNotPerformed, 34);
+assert.equal(version.medicalGovernance.medicalAuthorSourceDerivedReports, 3);
+assert.equal(version.medicalGovernance.medicalAuthorAuthoritySha256, "f846a35c3ed80899d29c535da0ec46309ef2cd810e2c6f7fe2ae99865f7707d9");
 assert.equal(version.runtimeSecurity.cloudRequestAllowed, false);
 assert.equal(version.runtimeSecurity.listenAddress, "127.0.0.1");
 
@@ -100,6 +108,8 @@ assert.doesNotMatch(launcher, /Get-CimInstance|Get-NetTCPConnection/u);
 assert.doesNotMatch(launcher, /\.ProcessId/u);
 const runtime = JSON.parse(await fs.readFile(path.join(stage, "App", "resources", "app", "desktop", "clinical-content-triage-runtime.json"), "utf8"));
 const humanMappings = JSON.parse(await fs.readFile(path.join(stage, "App", "resources", "app", "desktop", "human-approved-result-mappings.json"), "utf8"));
+const medicalAuthorPath = path.join(stage, "App", "resources", "app", "desktop", "medical-author-approved-stage2-results.json");
+const medicalAuthor = JSON.parse(await fs.readFile(medicalAuthorPath, "utf8"));
 assert.equal(runtime.sourceProjection.length, 4);
 assert.equal(runtime.sourceProjectionRejected.length, 121);
 assert.equal(runtime.medicalReviewPending.length, 1023);
@@ -108,9 +118,13 @@ assert.equal(runtime.noSpecimenOrNotIndicated.length, 552);
 assert.equal(runtime.noReportOrNotIndicated.length, 952);
 assert.equal(runtime.medicalConflicts.length, 1);
 assert(runtime.safeSimulatedNormal.every((item) => item.scoringEligible === false && item.diagnosticEligible === false));
-assert.equal(humanMappings.decisions.filter((item) => !item.decisionType.startsWith("REJECT_")).length, 18);
+assert.equal(humanMappings.decisions.filter((item) => !item.decisionType.startsWith("REJECT_")).length, 21);
 assert.equal(humanMappings.decisions.filter((item) => item.decisionType.startsWith("REJECT_")).length, 4);
 assert(humanMappings.decisions.every((item) => item.humanReviewStatus === "approved" && /^[0-9a-f]{64}$/u.test(item.source.sha256)));
+assert.equal(await sha256(medicalAuthorPath), "f846a35c3ed80899d29c535da0ec46309ef2cd810e2c6f7fe2ae99865f7707d9");
+assert.equal(medicalAuthor.items.filter((item) => item.finalTerminalType === "SIMULATED_REPORT").length, 103);
+assert.equal(medicalAuthor.items.filter((item) => item.finalTerminalType === "NOT_PERFORMED").length, 34);
+assert.equal(medicalAuthor.items.filter((item) => item.finalTerminalType === "SOURCE_DERIVED_REPORT").length, 3);
 
 console.log(JSON.stringify({
   stage,
@@ -119,5 +133,5 @@ console.log(JSON.stringify({
   secretFindings: 0,
   forbiddenFindings: 0,
   rootLauncher: true,
-  triageRuntime: { sourceProjectionApplied: 4, sourceProjectionRejected: 121, medicalReviewPending: 1023, medicalConflicts: 1, humanApprovedMappings: 18, humanRejectedMappings: 4 }
+  triageRuntime: { sourceProjectionApplied: 4, sourceProjectionRejected: 121, medicalReviewPending: 1023, medicalConflicts: 1, humanApprovedMappings: 21, humanRejectedMappings: 4, medicalAuthorSimulatedReports: 103, medicalAuthorNotPerformed: 34, medicalAuthorSourceDerivedReports: 3 }
 }));

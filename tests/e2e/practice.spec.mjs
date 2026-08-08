@@ -558,11 +558,12 @@ test("@order-result-human-path P005 five-order mentor replay presents approved r
     await expect(feedback).toBeFocused();
     await expect(feedback).toContainText("新返回2份报告");
     await expect(feedback).toContainText("同一报告另覆盖1项医嘱");
-    await expect(feedback).toContainText("2项当前无可提供结果");
+    await expect(feedback).toContainText("1项当前无可提供结果");
     await expect(page.getByTestId("report-card")).toHaveCount(2);
     await expect(page.getByTestId("report-card")).toContainText([/红细胞/u, /膀胱小梁小房形成.*前列腺增大.*56\*65\*47/u]);
     await expect(page.getByTestId("report-card").filter({ hasText: /心脏|冠脉|EF55/u })).toHaveCount(0);
     await expect(page.getByTestId("order-outcome")).toHaveCount(5);
+    await expect(page.getByTestId("order-outcome").filter({ hasText: "未取材" })).toContainText("本病例未采集该标本，因此无结果");
     await expect(page.getByTestId("report-card").getByText("单位", { exact: true })).toHaveCount(0);
     await expect(page.getByTestId("report-card").getByText("参考范围", { exact: true })).toHaveCount(0);
     await expect(page.locator("body")).not.toContainText(/等待医学审核|待审核|等待审核元数据|当前不进入诊断、治疗或评分证据|medical_review_pending|needs_review|not_available|diagnosticEligible|scoringEligible/u);
@@ -575,6 +576,27 @@ test("@order-result-human-path P005 five-order mentor replay presents approved r
     await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
     await expect(page.getByTestId("diagnosis-builder")).toBeVisible();
     await expect(page.getByTestId("diagnosis-builder").locator("fieldset").first().locator('input[type="checkbox"]')).toHaveCount(2);
+  } finally {
+    if (previousRuntimeTarget === undefined) delete process.env.HEMATURIA_RUNTIME_TARGET;
+    else process.env.HEMATURIA_RUNTIME_TARGET = previousRuntimeTarget;
+  }
+});
+
+test("@medical-author-stage2 approved simulation and not-performed outcome render without internal metadata", async ({ page }) => {
+  const previousRuntimeTarget = process.env.HEMATURIA_RUNTIME_TARGET;
+  process.env.HEMATURIA_RUNTIME_TARGET = "desktop";
+  try {
+    await routeTrainingApiThroughHandler(page, []);
+    await page.goto("/cases/P001/");
+    await enterInvestigationStage(page, "zh");
+    const orderInput = page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜");
+    await orderInput.fill("END-001;IMG-CT-001");
+    await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
+    await expect(page.getByTestId("report-result-line")).toContainText([/膀胱镜：膀胱左侧壁见多发不规则宽基底肿物，最大约3 cm，表面血管丰富并有接触性出血/u, /建议TURBT取材明确病理及肌层受侵情况。/u]);
+    await expect(page.getByTestId("order-outcome").filter({ hasText: "未实施" })).toContainText("当前病例未安排该项影像检查，本次无影像报告");
+    await expect(page.locator("body")).not.toContainText(/simulated|provenance|medical_review_pending|diagnosticEligible|scoringEligible|affectsDiagnosis|affectsScore/iu);
+    await page.reload();
+    await expect(page.getByTestId("report-card")).toContainText("膀胱镜：膀胱左侧壁见多发不规则宽基底肿物");
   } finally {
     if (previousRuntimeTarget === undefined) delete process.env.HEMATURIA_RUNTIME_TARGET;
     else process.env.HEMATURIA_RUNTIME_TARGET = previousRuntimeTarget;

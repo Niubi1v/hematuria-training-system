@@ -91,10 +91,15 @@ $versionRecord = [ordered]@{
     sourceProjectionApplied = 4
     sourceProjectionWithdrawn = 62
     sourceProjectionRejected = 121
-    medicalReviewPending = 1023
+    runtimeMedicalReviewPending = 1023
+    medicalReviewPending = 944
     medicalConflict = 1
-    humanApprovedMappings = 18
+    humanApprovedMappings = 21
     humanRejectedMappings = 4
+    medicalAuthorSimulatedReports = 103
+    medicalAuthorNotPerformed = 34
+    medicalAuthorSourceDerivedReports = 3
+    medicalAuthorAuthoritySha256 = "f846a35c3ed80899d29c535da0ec46309ef2cd810e2c6f7fe2ae99865f7707d9"
   }
   runtimeSecurity = [ordered]@{
     cloudRequestAllowed = $false
