@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { test, expect } from "@playwright/test";
 import {
   desktopJson,
@@ -192,6 +193,75 @@ test("real renderer persists through the real sidecar and SQLite", async ({ brow
     if (cleanupError) throw cleanupError;
   }
   await writeSurfaceCheckpoint(checkpoint);
+});
+
+test("P005 approved results survive a real sidecar and SQLite restart", async ({ browser, baseURL }) => {
+  assert.ok(baseURL);
+  const pageOrigin = new URL(baseURL).origin;
+  const dataDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "hematuria-p005-approved-results-"));
+  const marker = `P005 approved results ${Date.now()}`;
+  let sidecar;
+  let context;
+  try {
+    sidecar = await startDesktopSidecar({ allowedOrigin: pageOrigin, dataDirectory, installationMode: "development" });
+    context = await browser.newContext({ baseURL });
+    await installDesktopRuntime(context, sidecar.runtime, "zh");
+    let page = await context.newPage();
+    page.on("dialog", (dialog) => void dialog.accept());
+    await saveHistoryDraft(page, { baseURL, caseId: "P005", language: "zh", marker });
+    await submitHistoryAndEnterStageTwo(page, { caseId: "P005", language: "zh", marker });
+
+    const input = page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜");
+    const fiveOrders = "尿常规；尿沉渣镜检；尿抗酸杆菌/结核分枝杆菌检查；PSA；彩超泌尿系（双肾、输尿管及膀胱）+残余尿";
+    await input.fill(fiveOrders);
+    await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
+    await expect(page.getByTestId("report-card")).toHaveCount(2);
+    await expect(page.getByTestId("report-card")).toContainText([/红细胞/u, /膀胱小梁小房形成.*前列腺增大.*56\*65\*47/u]);
+    await expect(page.getByTestId("report-card").filter({ hasText: /心脏|冠脉|EF55|等待医学审核|待审核|medical_review_pending|diagnosticEligible|scoringEligible/u })).toHaveCount(0);
+
+    await input.fill(fiveOrders);
+    await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
+    await expect(page.getByRole("status").filter({ hasText: "5项医嘱" })).toContainText("已有结果2份");
+    await expect(page.getByTestId("report-card")).toHaveCount(2);
+
+    await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
+    await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
+    await expect(page.getByTestId("diagnosis-builder")).toBeVisible();
+    await expect(page.getByTestId("diagnosis-builder").locator("fieldset").first().locator('input[type="checkbox"]')).toHaveCount(2);
+
+    await context.close();
+    context = undefined;
+    await sidecar.stop({ removeData: false });
+    sidecar = undefined;
+
+    sidecar = await startDesktopSidecar({ allowedOrigin: pageOrigin, dataDirectory, installationMode: "development" });
+    context = await browser.newContext({ baseURL });
+    await installDesktopRuntime(context, sidecar.runtime, "zh");
+    page = await context.newPage();
+    page.on("dialog", (dialog) => void dialog.accept());
+    await page.goto(new URL("/cases/P005/", baseURL).toString());
+    await expect(page.getByTestId("diagnosis-builder")).toBeVisible();
+    const restored = (await desktopJson(page, "/api/desktop/attempt/state", {
+      body: { action: "load", caseId: "P005", mode: "free", language: "zh" }
+    })).payload.snapshot;
+    assert.equal(restored.activeStageNo, 3);
+    assert.equal(restored.answers?.historySummary, marker);
+    assert.equal(restored.orderLogs?.reduce((count, log) => count + (log.results?.length || 0), 0), 2);
+    const database = new DatabaseSync(path.join(dataDirectory, "hematuria.sqlite3"), { readOnly: true });
+    try {
+      const row = database.prepare("SELECT state_json FROM attempts WHERE case_id = ?").get("P005");
+      const durableState = JSON.parse(row.state_json);
+      assert.equal(durableState.events.filter((event) => event.type === "result_returned").length, 2);
+    } finally {
+      database.close();
+    }
+    await expect(page.getByTestId("diagnosis-builder").locator("fieldset").first().locator('input[type="checkbox"]')).toHaveCount(2);
+    assert.equal((await desktopJson(page, "/api/desktop/evidence")).payload.cloudRequestCount, 0);
+  } finally {
+    await context?.close();
+    await sidecar?.stop({ removeData: false });
+    await fs.rm(dataDirectory, { recursive: true, force: true });
+  }
 });
 
 test("fresh SQLite authority clears stale training cache without clearing preferences", async ({ browser, baseURL }) => {

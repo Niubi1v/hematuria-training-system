@@ -27,6 +27,7 @@
     "test:desktop:local-ai": "node scripts/test-local-llm-structured.mjs",
     "test:desktop:clinical-review-pack": "node scripts/test-desktop-clinical-review-pack.mjs",
     "test:desktop:clinical-triage": "node scripts/verify-desktop-clinical-triage.mjs && node scripts/test-desktop-clinical-triage.mjs",
+    "test:human-approved-medical-results": "node scripts/test-human-approved-medical-result-mapping.mjs",
     "audit:r5:order-results": "node scripts/verify-desktop-clinical-triage.mjs",
     "desktop:clinical-review-pack": "node scripts/build-desktop-clinical-review-pack.mjs",
     "test:desktop:runtime-evidence": "node scripts/test-desktop-runtime-evidence.mjs",

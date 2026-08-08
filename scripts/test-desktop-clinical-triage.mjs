@@ -88,7 +88,10 @@ assert.deepEqual(summary, {
   noSpecimenOrNotIndicated: 552,
   noReportOrNotIndicated: 952,
   medicalReviewPending: 1023,
-  medicalConflicts: 1
+  medicalConflicts: 1,
+  humanApprovedMappings: 18,
+  humanRejectedMappings: 4,
+  humanInvalidMappings: 0
 });
 
 const semanticReasons = ["cross_domain_or_mixed_order_content", "cross_order_duplicate_result", "multiple_timepoints_or_states", "recommendation_or_uncertain_result"];
@@ -121,24 +124,16 @@ for (const journey of representativeCases) {
   const { attemptId } = started;
 
   response = await placeOrder(response, journey.caseId, attemptId, "LAB-UR-001");
-  if (journey.caseId === "P011") {
-    const unavailable = outcome(response, "unavailable", "LAB-UR-001");
-    assert(unavailable);
-    assert.equal("scoringEligible" in unavailable, false);
-    assert.equal("diagnosticEligible" in unavailable, false);
-    assert.equal((response.payload.results || []).length, 0);
-  } else {
-    const reported = outcome(response, "reported", "LAB-UR-001");
-    assert(reported, `${journey.caseId}:urinalysis_not_reported`);
-    const urinalysis = (response.payload.results || []).find((item) => item.orderId === "LAB-UR-001");
-    assert(urinalysis);
-    assert(String(urinalysis.result).trim());
-    assert.doesNotMatch(urinalysis.result, /尿检\s*[:：]/u);
-    assert.equal(urinalysis.result.split("\n").length, 1, `${journey.caseId}:duplicate_urinalysis_result`);
-    if (journey.caseId === "P001") {
-      assert.equal(urinalysis.result, "红细胞 5562个/μl");
-      assert.equal((urinalysis.result.match(/红细胞\s*5562个\/μl/gu) || []).length, 1);
-    }
+  const reported = outcome(response, "reported", "LAB-UR-001");
+  assert(reported, `${journey.caseId}:urinalysis_not_reported`);
+  const urinalysis = (response.payload.results || []).find((item) => item.orderId === "LAB-UR-001");
+  assert(urinalysis);
+  assert(String(urinalysis.result).trim());
+  assert.doesNotMatch(urinalysis.result, /尿检\s*[:：]/u);
+  assert.equal(urinalysis.result.split("\n").length, 1, `${journey.caseId}:duplicate_urinalysis_result`);
+  if (journey.caseId === "P001") {
+    assert.equal(urinalysis.result, "红细胞 5562个/μl");
+    assert.equal((urinalysis.result.match(/红细胞\s*5562个\/μl/gu) || []).length, 1);
   }
 
   response = await placeOrder(response, journey.caseId, attemptId, "LAB-BL-001");
@@ -170,9 +165,13 @@ for (const journey of representativeCases) {
   }
 
   if (journey.caseId === "P011") {
-    for (const orderId of ["LAB-UR-003", "LAB-BL-003", "IMG-US-001"]) {
+    response = await placeOrder(response, journey.caseId, attemptId, "LAB-UR-003");
+    assert(outcome(response, "reported", "LAB-UR-003"), "P011 urine protein must use the approved split");
+    response = await placeOrder(response, journey.caseId, attemptId, "LAB-BL-011");
+    assert(outcome(response, "reported", "LAB-BL-011"), "P011 C3 must use the approved source fragment");
+    for (const orderId of ["LAB-BL-012", "LAB-BL-003", "IMG-US-001"]) {
       response = await placeOrder(response, journey.caseId, attemptId, orderId);
-      assert(outcome(response, "unavailable"), `${journey.caseId}/${orderId}:uncertain_or_mixed_result_not_isolated`);
+      assert(outcome(response, "unavailable"), `${journey.caseId}/${orderId}:unapproved_result_not_isolated`);
       assert.equal((response.payload.results || []).length, 0);
     }
   }
@@ -182,8 +181,11 @@ for (const journey of representativeCases) {
   const historyEvidence = evidenceOptions.filter((item) => item.sourceStage === 1);
   const measurementEvidence = evidenceOptions.filter((item) => item.sourceStage === 2);
   assert(historyEvidence.length >= 1);
-  if (journey.caseId === "P011") assert.equal(measurementEvidence.length, 0, "unconfirmed P011 results must not enter evidence options");
-  else assert(measurementEvidence.some((item) => /红细胞|尿常规/u.test(item.label)), `${journey.caseId}:urinalysis_not_in_evidence_graph`);
+  assert(measurementEvidence.some((item) => /红细胞|尿常规/u.test(item.label)), `${journey.caseId}:urinalysis_not_in_evidence_graph`);
+  if (journey.caseId === "P011") {
+    assert.equal(measurementEvidence.length, 3, "only the three explicitly approved P011 results may enter evidence options");
+    assert(measurementEvidence.some((item) => /C3|补体/u.test(item.label)), "approved P011 C3 must enter evidence options");
+  }
   assert(!evidenceOptions.some((item) => /糖化血红蛋白|梅毒抗体|双侧腰部未触及明显包块/u.test(item.label)));
   const selectedIds = [historyEvidence[0].evidenceId, ...(measurementEvidence[0] ? [measurementEvidence[0].evidenceId] : [])];
 

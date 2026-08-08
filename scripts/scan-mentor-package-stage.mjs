@@ -21,6 +21,7 @@ const required = [
   "App/resources/runtime/node/node.exe",
   "App/resources/runtime/llama/llama-server.exe",
   "App/resources/app/desktop/clinical-content-triage-runtime.json",
+  "App/resources/app/desktop/human-approved-result-mappings.json",
   "Model/Qwen3-1.7B-Q4_K_M.gguf"
 ];
 for (const relative of required) assert(relativeFiles.includes(relative), `mentor_required_file_missing:${relative}`);
@@ -67,6 +68,7 @@ assert.deepEqual(readmeLines.slice(0, 3), [
 assert.match(readme, /医学教学 Beta.*不用于真实诊疗/u);
 assert.match(readme, /source projection 保留并应用 4 项.*运行时拒绝总数 121 项/u);
 assert.match(readme, /1023 项等待医学审核.*1 项医学冲突/u);
+assert.match(readme, /18 项人工批准映射.*4 项人工拒绝映射/u);
 const testInstructions = await fs.readFile(path.join(stage, "TEST-INSTRUCTIONS.md"), "utf8");
 assert.match(testInstructions, /启动血尿训练系统\.cmd/u);
 assert.match(testInstructions, /开立并返回结果/u);
@@ -75,6 +77,7 @@ const limitations = await fs.readFile(path.join(stage, "KNOWN_LIMITATIONS.txt"),
 assert.match(limitations, /保留并应用 4 项.*拒绝总数为 121 项/u);
 assert.match(limitations, /1023 项等待医学审核.*fail-closed/u);
 assert.match(limitations, /1 项医学冲突/u);
+assert.match(limitations, /18 项人工批准映射.*4 项人工拒绝映射/u);
 
 const version = JSON.parse((await fs.readFile(path.join(stage, "VERSION.json"), "utf8")).replace(/^\uFEFF/u, ""));
 assert.match(version.channel, /^mentor-local-ai-r5(?:-r5)?$/u);
@@ -84,6 +87,8 @@ assert.equal(version.medicalGovernance.sourceProjectionWithdrawn, 62);
 assert.equal(version.medicalGovernance.sourceProjectionRejected, 121);
 assert.equal(version.medicalGovernance.medicalReviewPending, 1023);
 assert.equal(version.medicalGovernance.medicalConflict, 1);
+assert.equal(version.medicalGovernance.humanApprovedMappings, 18);
+assert.equal(version.medicalGovernance.humanRejectedMappings, 4);
 assert.equal(version.runtimeSecurity.cloudRequestAllowed, false);
 assert.equal(version.runtimeSecurity.listenAddress, "127.0.0.1");
 
@@ -94,6 +99,7 @@ for (const signal of ["正在启动本地患者服务", "127.0.0.1", "Get-FileHa
 assert.doesNotMatch(launcher, /Get-CimInstance|Get-NetTCPConnection/u);
 assert.doesNotMatch(launcher, /\.ProcessId/u);
 const runtime = JSON.parse(await fs.readFile(path.join(stage, "App", "resources", "app", "desktop", "clinical-content-triage-runtime.json"), "utf8"));
+const humanMappings = JSON.parse(await fs.readFile(path.join(stage, "App", "resources", "app", "desktop", "human-approved-result-mappings.json"), "utf8"));
 assert.equal(runtime.sourceProjection.length, 4);
 assert.equal(runtime.sourceProjectionRejected.length, 121);
 assert.equal(runtime.medicalReviewPending.length, 1023);
@@ -102,6 +108,9 @@ assert.equal(runtime.noSpecimenOrNotIndicated.length, 552);
 assert.equal(runtime.noReportOrNotIndicated.length, 952);
 assert.equal(runtime.medicalConflicts.length, 1);
 assert(runtime.safeSimulatedNormal.every((item) => item.scoringEligible === false && item.diagnosticEligible === false));
+assert.equal(humanMappings.decisions.filter((item) => !item.decisionType.startsWith("REJECT_")).length, 18);
+assert.equal(humanMappings.decisions.filter((item) => item.decisionType.startsWith("REJECT_")).length, 4);
+assert(humanMappings.decisions.every((item) => item.humanReviewStatus === "approved" && /^[0-9a-f]{64}$/u.test(item.source.sha256)));
 
 console.log(JSON.stringify({
   stage,
@@ -110,5 +119,5 @@ console.log(JSON.stringify({
   secretFindings: 0,
   forbiddenFindings: 0,
   rootLauncher: true,
-  triageRuntime: { sourceProjectionApplied: 4, sourceProjectionRejected: 121, medicalReviewPending: 1023, medicalConflicts: 1 }
+  triageRuntime: { sourceProjectionApplied: 4, sourceProjectionRejected: 121, medicalReviewPending: 1023, medicalConflicts: 1, humanApprovedMappings: 18, humanRejectedMappings: 4 }
 }));

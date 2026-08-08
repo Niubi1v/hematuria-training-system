@@ -25,7 +25,7 @@ const {
   validateEvidenceIds
 } = require("../server/evidenceGraph.js");
 const { commitAttempt, digest, loadAttempt, registerAttempt } = require("../server/trainingAttemptStore.js");
-const { desktopClinicalContent } = require("../server/desktopClinicalContentProjection.js");
+const { desktopClinicalContent, desktopClinicalSharedOwner } = require("../server/desktopClinicalContentProjection.js");
 const { assessClinicalResult } = require("../shared/clinicalResultSemantics.js");
 const { sanitizeClinicalTrajectory } = require("../shared/clinicalTrajectoryPresentation.js");
 const { BILINGUAL_CONFLICT_REASON, filterQuarantinedEvents } = require("../server/bilingualConflictQuarantine.js");
@@ -325,6 +325,8 @@ function reportOrderIds(report) {
   return [...new Set([report?.orderId, ...(report?.coveredOrderIds || [])].filter(Boolean))];
 }
 
+const humanDecisionClassifications = new Set(["human_approved_projection", "human_rejected_mapping", "human_mapping_invalid"]);
+
 function mergeReports(reports) {
   const merged = new Map();
   for (const report of reports) {
@@ -470,13 +472,24 @@ function handleOrder(caseData, input, previousOrderIds, language, previousReport
   const sharedOwnerByOrderId = new Map(orders.flatMap((order) => {
     const canonicalId = sourceOrderId(order);
     const triaged = triageRowsByOrderId.get(canonicalId);
-    return triaged?.reason === "cross_order_duplicate_result" && triaged.coveredByOrderId
-      ? [[canonicalId, triaged.coveredByOrderId]]
+    const ownerId = triaged?.reason === "cross_order_duplicate_result" && triaged.coveredByOrderId
+      ? triaged.coveredByOrderId
+      : desktopClinicalSharedOwner({
+        caseId: caseData.id,
+        itemIds: [order.catalogId, order.orderId, canonicalId],
+        displayName: order.displayName
+      });
+    return ownerId
+      ? [[canonicalId, ownerId]]
       : [];
   }));
   const releasedReportByOrderId = new Map(previousReports.flatMap((report) => reportOrderIds(report).map((orderId) => [orderId, report])));
-  const reportable = sourceRows.filter(({ order, result }) => orderResultIsReportable(result)
-    && sourceAssessmentByOrderId.get(sourceOrderId(order))?.compatible === true);
+  const reportable = sourceRows.filter(({ order, result }) => {
+    const canonicalId = sourceOrderId(order);
+    return orderResultIsReportable(result)
+      && !humanDecisionClassifications.has(triageRowsByOrderId.get(canonicalId)?.classification)
+      && sourceAssessmentByOrderId.get(canonicalId)?.compatible === true;
+  });
   const unmetPrerequisites = [...new Set(sourceRows.flatMap(({ result }) => (result.prerequisites || []).filter((id) => !available.has(id))))];
   const acceptedOrderIds = orders.filter((order) => {
     const canonicalId = sourceOrderId(order);
@@ -531,6 +544,33 @@ function handleOrder(caseData, input, previousOrderIds, language, previousReport
     const sourceResult = sourceRowsByOrderId.get(canonicalId);
     const triaged = triageRowsByOrderId.get(canonicalId);
     const triageAssessment = triageAssessmentByOrderId.get(canonicalId);
+    if (acceptedOrderIds.includes(canonicalId) && triaged?.classification === "human_approved_projection") {
+      const ownerOrder = catalog.find((item) => sourceOrderId(item) === triaged.targetOrderId)
+        || sourceCatalog.find((item) => item.orderId === triaged.targetOrderId)
+        || order;
+      const projected = {
+        caseId: caseData.id,
+        orderId: triaged.targetOrderId,
+        resultId: triaged.resultId,
+        coveredOrderIds: triaged.coveredOrderIds,
+        status: "final",
+        value: triaged.result,
+        result: triaged.result,
+        unit: "",
+        referenceRange: "",
+        impression: "",
+        abnormalFlags: [],
+        prerequisites: []
+      };
+      return [{
+        ...presentOrderResult(ownerOrder, projected, language),
+        coveredOrderIds: triaged.coveredOrderIds,
+        provenance: triaged.provenance,
+        scoringEligible: false,
+        diagnosticEligible: true,
+        affectsScore: false
+      }];
+    }
     if (!acceptedOrderIds.includes(canonicalId)
       || configuredResultOrderIds.has(canonicalId)
       || sourceResult?.status === "not_performed"
@@ -615,6 +655,13 @@ function handleOrder(caseData, input, previousOrderIds, language, previousReport
         orderId: canonicalId, displayName, status: "duplicate", provenance: "existing_report",
         resultId: releasedSharedReport.resultId,
         message: language === "en" ? `${displayName}: covered by an existing shared report.` : `${displayName}：已由现有共享报告覆盖。`
+      };
+    }
+    if (triaged?.classification === "human_rejected_mapping" || triaged?.classification === "human_mapping_invalid") {
+      return {
+        orderId: canonicalId, displayName, status: "medical_review_pending", provenance: triaged.provenance,
+        reviewStatus: "pending_human_medical_review", scoringEligible: false, diagnosticEligible: false,
+        message: unavailableStudentMessage(displayName, language)
       };
     }
     if (orderResultIsReportable(result) && sourceAssessment?.compatible !== true) {

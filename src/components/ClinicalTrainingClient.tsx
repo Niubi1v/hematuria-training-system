@@ -743,8 +743,12 @@ function visibleOrderLogMessage(log: OrderResultLog, lang: LanguageCode) {
     : `可查看${log.results.length}份报告；${unavailable}项检查在本病例中暂无可提供结果。`;
 }
 
+function reportIdentity(item: OrderResultLog["results"][number]) {
+  return item.sourceReportId || item.resultId || `${item.orderId}:${item.result}`;
+}
+
 function uniqueReportCount(logs: OrderResultLog[]) {
-  return new Set(logs.flatMap((log) => log.results.map((item) => item.sourceReportId || item.resultId || `${item.orderId}:${item.result}`))).size;
+  return new Set(logs.flatMap((log) => log.results.map(reportIdentity))).size;
 }
 
 function percentageScore(rawScore: number) {
@@ -2741,15 +2745,16 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     setOrderFeedback("");
     try {
       const matchedLog = await trainingAction<OrderResultLog>({ action: "order", input: text });
-      const hasReport = matchedLog.results.length > 0;
-      const previousResultIds = new Set(orderLogs.flatMap((log) => log.results.map((item) => item.sourceReportId || item.resultId)));
+      const previousResultIds = new Set(orderLogs.flatMap((log) => log.results.map(reportIdentity)));
+      const newResults = matchedLog.results.filter((item) => !previousResultIds.has(reportIdentity(item)));
+      const hasReport = newResults.length > 0;
       const log: OrderResultLog = hasReport
-        ? { ...matchedLog, returnedAt: new Date().toISOString(), status: "reported" }
-        : matchedLog;
+        ? { ...matchedLog, results: newResults, returnedAt: new Date().toISOString(), status: "reported" }
+        : { ...matchedLog, results: [] };
       setOrderLogs((current) => [...current, log]);
       addTimeline("order", lang === "en" ? "Order placed" : "开立医嘱", text, 2);
       if (hasReport) {
-        const timelineResults = matchedLog.results.filter((item) => !previousResultIds.has(item.sourceReportId || item.resultId)).map((item) => {
+        const timelineResults = newResults.map((item) => {
           const result = safeText(item.result || item.value || item.impression);
           if (!result) return "";
           const category = safeText(item.orderCategory);

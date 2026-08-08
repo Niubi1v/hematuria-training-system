@@ -542,7 +542,7 @@ test("@order-result-human-path selected orders use the primary action and return
   await expect(page.getByTestId("diagnosis-builder").locator("fieldset").first().locator('input[type="checkbox"]')).toHaveCount(1);
 });
 
-test("@order-result-human-path P005 five-order mentor replay presents one shared report without governance leakage", async ({ page }) => {
+test("@order-result-human-path P005 five-order mentor replay presents approved reports without governance leakage", async ({ page }) => {
   const previousRuntimeTarget = process.env.HEMATURIA_RUNTIME_TARGET;
   process.env.HEMATURIA_RUNTIME_TARGET = "desktop";
   try {
@@ -556,10 +556,12 @@ test("@order-result-human-path P005 five-order mentor replay presents one shared
 
     const feedback = page.getByRole("status").filter({ hasText: "5项医嘱" });
     await expect(feedback).toBeFocused();
-    await expect(feedback).toContainText("新返回1份报告");
+    await expect(feedback).toContainText("新返回2份报告");
     await expect(feedback).toContainText("同一报告另覆盖1项医嘱");
-    await expect(feedback).toContainText("3项当前无可提供结果");
-    await expect(page.getByTestId("report-card")).toHaveCount(1);
+    await expect(feedback).toContainText("2项当前无可提供结果");
+    await expect(page.getByTestId("report-card")).toHaveCount(2);
+    await expect(page.getByTestId("report-card")).toContainText([/红细胞/u, /膀胱小梁小房形成.*前列腺增大.*56\*65\*47/u]);
+    await expect(page.getByTestId("report-card").filter({ hasText: /心脏|冠脉|EF55/u })).toHaveCount(0);
     await expect(page.getByTestId("order-outcome")).toHaveCount(5);
     await expect(page.getByTestId("report-card").getByText("单位", { exact: true })).toHaveCount(0);
     await expect(page.getByTestId("report-card").getByText("参考范围", { exact: true })).toHaveCount(0);
@@ -567,8 +569,12 @@ test("@order-result-human-path P005 five-order mentor replay presents one shared
 
     await orderInput.fill("尿常规；尿沉渣镜检；尿抗酸杆菌/结核分枝杆菌检查；PSA；彩超泌尿系（双肾、输尿管及膀胱）+残余尿");
     await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
-    await expect(page.getByRole("status").filter({ hasText: "5项医嘱" })).toContainText("已有结果1份");
-    await expect(page.getByTestId("investigation-selection-summary")).toContainText("已返回检查报告 1 份");
+    await expect(page.getByRole("status").filter({ hasText: "5项医嘱" })).toContainText("已有结果2份");
+    await expect(page.getByTestId("investigation-selection-summary")).toContainText("已返回检查报告 2 份");
+    await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
+    await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
+    await expect(page.getByTestId("diagnosis-builder")).toBeVisible();
+    await expect(page.getByTestId("diagnosis-builder").locator("fieldset").first().locator('input[type="checkbox"]')).toHaveCount(2);
   } finally {
     if (previousRuntimeTarget === undefined) delete process.env.HEMATURIA_RUNTIME_TARGET;
     else process.env.HEMATURIA_RUNTIME_TARGET = previousRuntimeTarget;

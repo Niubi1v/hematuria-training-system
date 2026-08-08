@@ -65,6 +65,10 @@ await Promise.all([
     path.join(appDestination, "desktop", "clinical-content-triage-runtime.json")
   ),
   fs.copyFile(
+    path.join(repoRoot, "desktop", "human-approved-result-mappings.json"),
+    path.join(appDestination, "desktop", "human-approved-result-mappings.json")
+  ),
+  fs.copyFile(
     path.join(repoRoot, "desktop", "THIRD_PARTY_NOTICES.txt"),
     path.join(appDestination, "desktop", "THIRD_PARTY_NOTICES.txt")
   )

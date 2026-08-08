@@ -1,6 +1,7 @@
 ﻿param(
   [string]$Version = "0.5.0",
   [string]$ArtifactsDirectory = "D:\HematuriaDesktopArtifacts",
+  [string]$PackageSourceDirectory = "",
   [string]$ModelPath = "$env:LOCALAPPDATA\HematuriaTraining\MentorLocalAI-R5\models\Qwen3-1.7B-Q4_K_M.gguf",
   [string]$ProductHead = "",
   [ValidateSet("", "R5")][string]$CandidateSuffix = ""
@@ -12,13 +13,14 @@ $scriptsDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = [System.IO.Path]::GetFullPath((Join-Path $scriptsDirectory ".."))
 $mentorSource = Join-Path $repoRoot "desktop\mentor"
 $artifactsRoot = [System.IO.Path]::GetFullPath($ArtifactsDirectory)
+$packageSourceRoot = [System.IO.Path]::GetFullPath($(if ($PackageSourceDirectory) { $PackageSourceDirectory } else { $ArtifactsDirectory }))
 $candidateName = if ($CandidateSuffix) { "MentorLocalAI-R5-$CandidateSuffix" } else { "MentorLocalAI-R5" }
 $fileSuffix = if ($CandidateSuffix) { "-$CandidateSuffix" } else { "" }
 $outputRoot = Join-Path $artifactsRoot $candidateName
 $outputStageRoot = Join-Path $artifactsRoot ".$candidateName.partial-$PID"
 $stageRoot = Join-Path $repoRoot ".desktop-cache\$($candidateName.ToLowerInvariant())"
-$portableSource = Join-Path $ArtifactsDirectory "hematuria-desktop-r5-portable-$Version-windows-x64.zip"
-$installerSource = Join-Path $ArtifactsDirectory "hematuria-desktop-r5-setup-$Version-windows-x64.exe"
+$portableSource = Join-Path $packageSourceRoot "hematuria-desktop-r5-portable-$Version-windows-x64.zip"
+$installerSource = Join-Path $packageSourceRoot "hematuria-desktop-r5-setup-$Version-windows-x64.exe"
 $portableFileName = "HematuriaTraining-R5-Mentor-LocalAI-Portable$fileSuffix.zip"
 $installerFileName = "HematuriaTraining-R5-Mentor-LocalAI-Setup$fileSuffix.exe"
 $zipFileName = "HematuriaTraining-R5-Mentor-LocalAI$fileSuffix.zip"
@@ -91,6 +93,8 @@ $versionRecord = [ordered]@{
     sourceProjectionRejected = 121
     medicalReviewPending = 1023
     medicalConflict = 1
+    humanApprovedMappings = 18
+    humanRejectedMappings = 4
   }
   runtimeSecurity = [ordered]@{
     cloudRequestAllowed = $false
