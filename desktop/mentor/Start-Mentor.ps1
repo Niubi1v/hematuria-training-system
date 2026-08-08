@@ -18,22 +18,13 @@ function Stop-WithRepair([string]$message) {
   exit 1
 }
 
-function Get-DescendantProcesses([int]$rootPid) {
-  $all = @(Get-CimInstance Win32_Process -ErrorAction Stop)
-  $known = [System.Collections.Generic.HashSet[int]]::new()
-  [void]$known.Add($rootPid)
-  $changed = $true
-  while ($changed) {
-    $changed = $false
-    foreach ($process in $all) {
-      if ($known.Contains([int]$process.ParentProcessId) -and $known.Add([int]$process.ProcessId)) {
-        $changed = $true
-      }
-    }
-  }
-  return @($all | Where-Object { $known.Contains([int]$_.ProcessId) })
+function Get-PackageProcesses([string]$name, [string]$expectedPath) {
+  return @(Get-Process -Name $name -ErrorAction SilentlyContinue | Where-Object {
+    try { [System.IO.Path]::GetFullPath($_.Path) -ieq $expectedPath } catch { $false }
+  })
 }
 
+$appProcess = $null
 try {
   if (-not (Test-Path -LiteralPath $appPath -PathType Leaf)) { Stop-WithRepair "应用文件缺失。" }
   if (-not (Test-Path -LiteralPath $nodePath -PathType Leaf)) { Stop-WithRepair "内置业务运行时缺失；无需另装Node，请重新完整解压。" }
@@ -52,20 +43,27 @@ try {
   $env:HEMATURIA_DESKTOP_DATA_DIR = $mentorData
   Remove-Item Env:HEMATURIA_DESKTOP_DISABLE_LOCAL_AI -ErrorAction SilentlyContinue
   Write-Host "正在启动本地患者服务……首次加载可能需要数十秒。" -ForegroundColor Cyan
-  $appProcess = Start-Process -FilePath $appPath -WorkingDirectory (Split-Path -Parent $appPath) -PassThru
+  $startInfo = [System.Diagnostics.ProcessStartInfo]::new($appPath)
+  $startInfo.WorkingDirectory = Split-Path -Parent $appPath
+  $startInfo.UseShellExecute = $false
+  $appProcess = [System.Diagnostics.Process]::Start($startInfo)
+  if (-not $appProcess) { Stop-WithRepair "应用进程未能创建。" }
 
   $deadline = (Get-Date).AddMinutes(4)
   $lastProgress = Get-Date
   $ready = $false
   while ((Get-Date) -lt $deadline) {
     if ($appProcess.HasExited) { Stop-WithRepair "应用在本地患者服务就绪前退出。" }
-    $descendants = @(Get-DescendantProcesses $appProcess.Id)
-    $node = @($descendants | Where-Object { $_.Name -ieq "node.exe" })
-    $llama = @($descendants | Where-Object { $_.Name -ieq "llama-server.exe" })
+    $node = @(Get-PackageProcesses "node" $nodePath)
+    $llama = @(Get-PackageProcesses "llama-server" $llamaPath)
     if ($node.Count -gt 0 -and $llama.Count -gt 0) {
       $runtimePids = @($node + $llama | ForEach-Object { [int]$_.ProcessId })
-      $listeners = @(Get-NetTCPConnection -State Listen -ErrorAction Stop | Where-Object { $runtimePids -contains [int]$_.OwningProcess })
-      $nonLoopback = @($listeners | Where-Object { $_.LocalAddress -notin @("127.0.0.1", "::1") })
+      $listeners = @(& "$env:SystemRoot\System32\netstat.exe" -ano -p TCP | ForEach-Object {
+        if ($_ -match '^\s*TCP\s+(\S+)\s+\S+\s+LISTENING\s+(\d+)\s*$' -and $runtimePids -contains [int]$Matches[2]) {
+          [PSCustomObject]@{ LocalEndpoint = $Matches[1]; OwningProcess = [int]$Matches[2] }
+        }
+      })
+      $nonLoopback = @($listeners | Where-Object { $_.LocalEndpoint -notmatch '^(127\.0\.0\.1:|\[::1\]:)' })
       if ($nonLoopback.Count -gt 0) {
         Stop-Process -Id $appProcess.Id -Force -ErrorAction SilentlyContinue
         Stop-WithRepair "检测到本地服务未严格绑定回环地址，已安全停止。"
@@ -97,5 +95,8 @@ try {
   Start-Sleep -Seconds 3
   exit 0
 } catch {
+  if ($appProcess -and -not $appProcess.HasExited) {
+    Stop-Process -Id $appProcess.Id -Force -ErrorAction SilentlyContinue
+  }
   Stop-WithRepair "启动检查失败（$($_.Exception.Message)）。"
 }

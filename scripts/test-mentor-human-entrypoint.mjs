@@ -9,7 +9,10 @@ if (process.platform !== "win32") throw new Error("mentor_human_entrypoint_requi
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const packageIndex = process.argv.indexOf("--package");
 const packagePath = path.resolve(packageIndex >= 0 ? String(process.argv[packageIndex + 1] || "") : "");
+const variantsIndex = process.argv.indexOf("--variants");
+const variantCount = variantsIndex >= 0 ? Number(process.argv[variantsIndex + 1]) : 3;
 if (packageIndex < 0) throw new Error("usage: node scripts/test-mentor-human-entrypoint.mjs --package FULL_ZIP");
+if (![1, 3].includes(variantCount)) throw new Error("mentor_entrypoint_variants_must_be_1_or_3");
 await fs.access(packagePath);
 const productHead = execFileSync("git", ["rev-parse", "HEAD"], { cwd: repoRoot, encoding: "utf8", windowsHide: true }).trim();
 const root = await fs.mkdtemp(path.join(os.tmpdir(), "hematuria-mentor-entrypoint-"));
@@ -21,7 +24,7 @@ const variants = [
 const results = [];
 
 try {
-  for (let index = 0; index < variants.length; index += 1) {
+  for (let index = 0; index < variantCount; index += 1) {
     const extractionRoot = path.join(root, variants[index]);
     await fs.mkdir(extractionRoot, { recursive: true });
     const extracted = spawnSync("tar.exe", ["-xf", packagePath, "-C", extractionRoot], { encoding: "utf8", windowsHide: true });
@@ -48,6 +51,7 @@ try {
     assert.equal(result.productHead, productHead);
     assert.equal(result.mentorHumanEntrypoint, true);
     assert.equal(result.realLocalAi, true);
+    assert.ok(result.mentorLocalAcceptedCount > 0);
     assert.equal(result.stageTwo.reports, 2);
     assert.ok(result.stageTwo.evidenceCount >= 2);
     assert.equal(result.cloudRequestCount, 0);
@@ -62,7 +66,7 @@ console.log(JSON.stringify({
   status: "passed",
   productHead,
   package: path.basename(packagePath),
-  variants: results.map(({ pathVariant, stageTwo, lifecycleCycles, processCleanup, cloudRequestCount }) => ({
-    pathVariant, stageTwo, lifecycleCycles, processCleanup, cloudRequestCount
+  variants: results.map(({ pathVariant, stageTwo, lifecycleCycles, processCleanup, cloudRequestCount, mentorLocalAcceptedCount }) => ({
+    pathVariant, stageTwo, lifecycleCycles, processCleanup, cloudRequestCount, mentorLocalAcceptedCount
   }))
 }));

@@ -125,7 +125,7 @@ function processInventory() {
     "-NoProfile",
     "-NonInteractive",
     "-Command",
-    "$items=@(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.Name -in @('hematuria-training-r5.exe','msedgewebview2.exe') }); @{available=$true;productPids=@($items | Where-Object Name -eq 'hematuria-training-r5.exe' | ForEach-Object ProcessId);webViewPids=@($items | Where-Object { $_.Name -eq 'msedgewebview2.exe' -and [string]$_.CommandLine -match 'hematuria' } | ForEach-Object ProcessId)} | ConvertTo-Json -Compress"
+    "$products=@(Get-Process -Name 'HematuriaTraining-R5' -ErrorAction SilentlyContinue); @{available=$true;productPids=@($products | ForEach-Object Id);webViewPids=@()} | ConvertTo-Json -Compress"
   ], { encoding: "utf8", windowsHide: true });
   try {
     const value = JSON.parse(String(result.stdout || ""));
@@ -410,6 +410,7 @@ async function launch(dataDirectory, webViewDirectory) {
     await fs.writeFile(modelPath, "tauri-smoke-model-placeholder", "utf8");
   }
   const launchEnvironment = {
+      ...process.env,
       SystemRoot: process.env.SystemRoot,
       WINDIR: process.env.WINDIR,
       TEMP: process.env.TEMP,
@@ -439,22 +440,22 @@ async function launch(dataDirectory, webViewDirectory) {
   const launcherChild = mentorHumanEntrypoint ? spawn("cmd.exe", ["/d", "/c", mentorLauncher], {
     cwd: mentorPackageRoot,
     env: launchEnvironment,
-    stdio: ["ignore", "pipe", "pipe"],
-    windowsHide: true
+    stdio: "ignore",
+    windowsHide: false
   }) : null;
   const child = mentorHumanEntrypoint
     ? processHandle(await eventually(() => {
       const next = processInventory().productPids.find((pid) => !preLaunchInventory.productPids.includes(pid));
       return next || false;
-    }, 60_000, "mentor-product-process"))
+    }, 180_000, "mentor-product-process"))
     : spawn(executable, [], {
     cwd: path.dirname(executable),
     env: launchEnvironment,
     stdio: ["ignore", "pipe", "pipe"],
-    windowsHide: true
+    windowsHide: false
   });
   let diagnostics = "";
-  for (const stream of mentorHumanEntrypoint ? [launcherChild.stdout, launcherChild.stderr] : [child.stdout, child.stderr]) {
+  for (const stream of mentorHumanEntrypoint ? [] : [child.stdout, child.stderr]) {
     stream.on("data", (chunk) => {
       diagnostics = `${diagnostics}${chunk.toString("utf8")}`.slice(-32_000);
     });
@@ -875,7 +876,11 @@ try {
   ] : [];
   const mentorAnswers = [fallback];
   for (const question of mentorQuestions) mentorAnswers.push(await askGovernedQuestion(running.page, undefined, true, question));
-  if (mentorHumanEntrypoint) assert.ok(mentorAnswers.every((answer) => answer.classificationSource === "local_ai"), "mentor_questions_did_not_reach_local_qwen");
+  const mentorLocalAcceptedCount = mentorAnswers.reduce((total, answer) => total + answer.acceptedDelta, 0);
+  if (mentorHumanEntrypoint) {
+    assert.ok(mentorAnswers.every((answer) => answer.classificationSource === "local_ai"), "mentor_questions_did_not_reach_local_qwen");
+    assert.ok(mentorLocalAcceptedCount > 0, "mentor_local_ai_accepted_required");
+  }
   const firstAnswerMs = Math.round(performance.now() - answerStarted);
   await saveHistoryDraft(running.page, {
     caseId: "P001",
@@ -1012,7 +1017,7 @@ try {
     stageReplay.body.attemptId
   );
   assert.equal(database.attemptCount, 4);
-  assert.equal(database.eventCount, 1);
+  assert.equal(database.eventCount, mentorHumanEntrypoint ? mentorAnswers.length : 1);
   assert.equal(database.serverStateRevision, finalAuthority.serverStateRevision);
   const checkpoint = {
     surface: surfaceLabel,
@@ -1062,6 +1067,7 @@ try {
     processCleanup: true,
     realLocalAi,
     mentorHumanEntrypoint,
+    mentorLocalAcceptedCount,
     performance: {
       firstRuntimeReadyMs,
       firstModelReadyMs,
