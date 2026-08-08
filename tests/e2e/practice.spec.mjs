@@ -575,7 +575,7 @@ test("@order-result-human-path P005 five-order mentor replay presents one shared
   }
 });
 
-test("@order-result-human-path duplicate English order stays single and isolated by case", async ({ page }) => {
+test("@order-result-human-path duplicate English order resurfaces one stored report and stays isolated by case", async ({ page }) => {
   const observations = [];
   await routeTrainingApiThroughHandler(page, observations);
   await page.goto("/cases/P003/");
@@ -593,9 +593,10 @@ test("@order-result-human-path duplicate English order stays single and isolated
 
   await primary.click();
   await expect.poll(() => observations.filter((item) => item.action === "order").length).toBe(2);
-  await expect(page.getByTestId("report-card")).toHaveCount(1);
+  await expect(page.getByTestId("report-card")).toHaveCount(2);
+  await expect(page.getByTestId("investigation-selection-summary")).toContainText("1 reports returned");
   await page.reload();
-  await expect(page.getByTestId("report-card")).toHaveCount(1);
+  await expect(page.getByTestId("report-card")).toHaveCount(2);
 
   await page.goto("/cases/P001/");
   await page.getByRole("button", { name: "中文" }).click();
@@ -606,7 +607,8 @@ test("@order-result-human-path duplicate English order stays single and isolated
   await expect(page.getByRole("heading", { name: "History taking", exact: true })).toBeVisible();
   await page.goto("/cases/P003/");
   await expect(page.getByTestId("investigation-selection-summary")).toBeVisible();
-  await expect(page.getByTestId("report-card")).toHaveCount(1);
+  await expect(page.getByTestId("report-card")).toHaveCount(2);
+  await expect(page.getByTestId("investigation-selection-summary")).toContainText("1 reports returned");
 });
 
 test("case catalog switches public labels without exposing complaints", async ({ page }) => {
