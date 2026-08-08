@@ -310,9 +310,9 @@ function recordSourceContract(reply, expectation, label, language, turnNumber) {
   assert.ok(reply.desktopEvidence, `${label} must include authenticated desktop runtime evidence`);
   assert.equal(reply.desktopEvidence.productHead, productHead, `${label} must use the desktop product HEAD authority`);
   assert.deepEqual(Object.keys(reply.desktopEvidence).sort(), [
-    "answerSource", "cloudRequestCount", "factState", "fallbackReason", "intent", "latency",
+    "answerSource", "cloudRequestCount", "configuredMode", "effectiveMode", "effectiveModel", "factState", "fallbackReason", "intent", "latency",
     "llamaServerReady", "localModelReady", "model", "modelProfile", "productHead", "requestedSlot",
-    "responseErrors", "runtimeTarget", "sessionStartedAt", "unknown"
+    "overrideSource", "responseErrors", "runtimeTarget", "sessionStartedAt", "unknown"
   ].sort(), `${label} diagnostics must remain on the safe whitelist`);
   assert.ok(Array.isArray(reply.desktopEvidence.responseErrors), `${label} response errors must remain a bounded list`);
   const allowedResponseErrors = new Set([
@@ -323,6 +323,10 @@ function recordSourceContract(reply, expectation, label, language, turnNumber) {
     `${label} response errors must remain on the closed safe enum`
   );
   assert.equal(reply.desktopEvidence.cloudRequestCount, 0, `${label} must make no cloud request`);
+  assert.equal(reply.desktopEvidence.configuredMode, modelMode, `${label} must report the configured model mode`);
+  assert.equal(reply.desktopEvidence.effectiveMode, modelMode, `${label} must report the effective model mode`);
+  assert.equal(reply.desktopEvidence.effectiveModel, selectedModel.alias, `${label} must report the effective model`);
+  assert.equal(reply.desktopEvidence.overrideSource, "mentor_package", `${label} must report the launcher override`);
   assert.equal(reply.desktopEvidence.model, selectedModel.alias, `${label} must report the selected model`);
   assert.ok(Number.isSafeInteger(reply.desktopEvidence.latency), `${label} must report bounded latency`);
   const actualIntent = String(reply.desktopEvidence.intent || "");
@@ -670,8 +674,13 @@ async function placeIndependentOrder(runtime, { caseId, language, attemptId, sta
   assert.equal(outcomes.length, 1, "one requested order must produce exactly one outcome");
   assert.equal(outcomes[0].orderId, "LAB-UR-001", "urinalysis must resolve to its canonical order");
   assert.equal(outcomes[0].status, "reported", "P001 urinalysis must return its configured case-source report");
-  assert.equal(outcomes[0].provenance, "configured_case_result", "the critical urinalysis report must retain source provenance");
+  assert.equal(outcomes[0].provenance, undefined, "student outcomes must not expose internal source provenance");
   assert.equal(result.payload.returnedReportCount, 1, "the independent order must return one report");
+  assert.doesNotMatch(
+    JSON.stringify(result.payload),
+    /sourceProvenance|reviewStatus|diagnosticEligible|scoringEligible|teachingUse|medical_review_pending|needs_review/,
+    "stage 2 student results must stay on the public medical boundary"
+  );
   assert.doesNotMatch(JSON.stringify(result.payload), /undefined/, "stage 2 order result must not expose undefined");
   return { payload: result.payload, stateToken: result.stateToken };
 }
