@@ -53,9 +53,10 @@ try {
     assert.equal(result.mentorHumanEntrypoint, true);
     assert.equal(result.realLocalAi, true);
     assert.ok(result.mentorLocalAcceptedCount > 0);
-    assert.equal(result.stageTwo.reports, 8);
+    assert.equal(result.stageTwo.reports, 7);
     assert.equal(result.stageTwo.outcomes, 10);
     assert.equal(result.stageTwo.notPerformed, 2);
+    assert.equal(result.stageTwo.noCaseResult, 1);
     assert.ok(result.stageTwo.evidenceCount >= 2);
     assert.equal(result.cloudRequestCount, 0);
     assert.equal(result.processCleanup, true);

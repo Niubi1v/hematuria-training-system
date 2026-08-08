@@ -383,9 +383,9 @@ export async function orderReportsAndEnterStageThree(page, { mentorFinal = false
   const search = page.getByPlaceholder("搜索医嘱名称或同义词，例如 CTU、尿培养、膀胱镜");
   const groups = mentorFinal
     ? [
-        ["检验", ["尿常规", "血常规", "肾功能/eGFR", "尿脱落细胞学", "中段尿培养+药敏"]],
-        ["检查", ["泌尿系超声+残余尿", "泌尿系CT平扫/低剂量NCCT KUB"]],
-        ["病理/操作", ["膀胱镜", "TURBT病理", "肾活检病理"]]
+        ["检验", ["尿常规", "血常规", "肾功能/eGFR", "中段尿培养+药敏"]],
+        ["检查", ["彩超泌尿系（双肾、输尿管及膀胱）+残余尿", "双肾+输尿管CT平扫", "膀胱镜"]],
+        ["病理/操作", ["常规石蜡病理", "穿刺活检病理", "尿脱落细胞学"]]
       ]
     : [
         ["检验", ["尿常规"]],
@@ -405,14 +405,15 @@ export async function orderReportsAndEnterStageThree(page, { mentorFinal = false
   }, { timeout: 30_000 });
   await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
   assert.equal((await orderResponse).status(), 200);
-  const expectedReports = mentorFinal ? 8 : 2;
+  const expectedReports = mentorFinal ? 7 : 2;
   const expectedOutcomes = mentorFinal ? 10 : 2;
-  await page.getByTestId("report-card").nth(expectedReports - 1).waitFor({ state: "visible" });
-  assert.equal(await page.getByTestId("report-card").count(), expectedReports);
+  await page.getByTestId("order-outcome").nth(expectedOutcomes - 1).waitFor({ state: "visible" });
   assert.equal(await page.getByTestId("order-outcome").count(), expectedOutcomes);
+  assert.equal(await page.getByTestId("report-card").count(), expectedReports, "mentor_final_report_count");
   assert.match(await summary.innerText(), new RegExp(`已返回检查报告\\s*${expectedReports}\\s*份`, "u"));
   if (mentorFinal) {
     assert.ok(await page.getByTestId("order-outcome").filter({ hasText: /未实施|不适用/u }).count() >= 2);
+    assert.equal(await page.getByTestId("order-outcome").filter({ hasText: "本病例当前无可提供的该项检查结果" }).count(), 1);
     assert.doesNotMatch(
       [
         ...(await page.getByTestId("report-card").allTextContents()),
@@ -437,7 +438,7 @@ export async function orderReportsAndEnterStageThree(page, { mentorFinal = false
   await saved;
   const evidenceCount = await page.getByTestId("diagnosis-builder").locator("fieldset").first().locator('input[type="checkbox"]').count();
   assert.ok(evidenceCount >= 2, `stage3_evidence_insufficient:${evidenceCount}`);
-  return { evidenceCount, reports: expectedReports, outcomes: expectedOutcomes, notPerformed: mentorFinal ? 2 : 0 };
+  return { evidenceCount, reports: expectedReports, outcomes: expectedOutcomes, notPerformed: mentorFinal ? 2 : 0, noCaseResult: mentorFinal ? 1 : 0 };
 }
 
 export async function expectSubmittedStageThree(page, { baseURL, marker, expectedReports = 2 }) {
