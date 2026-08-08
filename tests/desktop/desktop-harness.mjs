@@ -285,7 +285,7 @@ function caseUrl(page, caseId, mode, baseURL) {
 
 let languageSelection = 0;
 
-async function selectLanguage(page, language) {
+export async function selectLanguage(page, language) {
   const selection = ++languageSelection;
   const apply = ({ language, selection }) => {
     const key = "hematuria-test-language-selection";
@@ -374,6 +374,57 @@ export async function submitHistoryAndEnterStageTwo(page, { caseId, language, ma
   await next.click();
   await stageTwoSaved;
   await page.getByTestId("investigation-selection-summary").waitFor({ state: "visible" });
+}
+
+export async function orderReportsAndEnterStageThree(page) {
+  const summary = page.getByTestId("investigation-selection-summary");
+  const search = page.getByPlaceholder("搜索医嘱名称或同义词，例如 CTU、尿培养、膀胱镜");
+  await search.fill("尿常规");
+  await page.locator("label").filter({ hasText: "尿常规" }).first().getByRole("checkbox").check();
+  await page.getByRole("button", { name: "检查", exact: true }).click();
+  await search.fill("盆腔MR平扫");
+  await page.locator("label").filter({ hasText: "盆腔MR平扫" }).first().getByRole("checkbox").check();
+  await search.fill("");
+  const orderResponse = page.waitForResponse((response) => {
+    if (response.request().method() !== "POST" || !/^\/api\/training-action\/?$/.test(new URL(response.url()).pathname)) return false;
+    try { return response.request().postDataJSON()?.action === "order"; } catch { return false; }
+  }, { timeout: 30_000 });
+  await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
+  assert.equal((await orderResponse).status(), 200);
+  await page.getByTestId("report-card").nth(1).waitFor({ state: "visible" });
+  assert.match(await summary.innerText(), /已返回检查报告\s*2\s*份/u);
+  await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
+  const saved = page.waitForResponse((response) => {
+    if (response.request().method() !== "POST" || new URL(response.url()).pathname !== "/api/desktop/attempt/state") return false;
+    try {
+      const body = response.request().postDataJSON();
+      return response.status() === 200
+        && body?.action === "save"
+        && body?.caseId === "P001"
+        && body?.snapshot?.activeStageNo === 3
+        && body?.snapshot?.orderLogs?.reduce((count, log) => count + (log.results?.length || 0), 0) === 2;
+    } catch { return false; }
+  }, { timeout: 30_000 });
+  await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
+  await saved;
+  const evidenceCount = await page.getByTestId("diagnosis-builder").locator("fieldset").first().locator('input[type="checkbox"]').count();
+  assert.ok(evidenceCount >= 2, `stage3_evidence_insufficient:${evidenceCount}`);
+  return { evidenceCount, reports: 2 };
+}
+
+export async function expectSubmittedStageThree(page, { baseURL, marker }) {
+  await selectLanguage(page, "zh");
+  await page.goto(caseUrl(page, "P001", "free", baseURL));
+  const snapshot = (await desktopJson(page, "/api/desktop/attempt/state", {
+    body: { action: "load", caseId: "P001", mode: "free", language: "zh" }
+  })).payload.snapshot;
+  assert.equal(snapshot.activeStageNo, 3);
+  assert.equal(snapshot.answers?.historySummary, marker);
+  assert.equal(snapshot.orderLogs?.reduce((count, log) => count + (log.results?.length || 0), 0), 2);
+  await page.getByTestId("diagnosis-builder").waitFor({ state: "visible" });
+  const evidenceCount = await page.getByTestId("diagnosis-builder").locator("fieldset").first().locator('input[type="checkbox"]').count();
+  assert.ok(evidenceCount >= 2, `restored_stage3_evidence_insufficient:${evidenceCount}`);
+  return snapshot;
 }
 
 export async function expectSubmittedStageTwo(page, {

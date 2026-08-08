@@ -10,6 +10,8 @@ import { chromium } from "@playwright/test";
 import {
   assertLoopbackClosed,
   desktopJson,
+  expectSubmittedStageThree,
+  orderReportsAndEnterStageThree,
   repoRoot,
   runtimeProbe,
   runtimeEvidence,
@@ -82,6 +84,11 @@ const evidenceRoot = path.resolve(process.env.HEMATURIA_NSIS_P0_EVIDENCE_ROOT
   || "D:\\HematuriaDesktopArtifacts\\R5-Handoffs");
 
 const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+async function step(label, promise) {
+  try { return await promise; }
+  catch (error) { throw new Error(`${label}:${error instanceof Error ? error.message : String(error)}`); }
+}
 
 async function eventually(predicate, timeoutMs = 20_000, label = "condition") {
   const deadline = Date.now() + timeoutMs;
@@ -574,59 +581,6 @@ async function askGovernedQuestion(page, expectedReason, requireLocalClassifier 
   };
 }
 
-async function orderStageTwoReports(page) {
-  const summary = page.getByTestId("investigation-selection-summary");
-  const search = page.getByPlaceholder("搜索医嘱名称或同义词，例如 CTU、尿培养、膀胱镜");
-  for (const name of ["尿常规", "盆腔MR平扫"]) {
-    await search.fill(name);
-    await page.locator("label").filter({ hasText: name }).first().getByRole("checkbox").check();
-  }
-  await search.fill("");
-  const responsePromise = page.waitForResponse((response) => {
-    if (response.request().method() !== "POST" || !/^\/api\/training-action\/?$/.test(new URL(response.url()).pathname)) return false;
-    try { return response.request().postDataJSON()?.action === "order"; } catch { return false; }
-  }, { timeout: 30_000 });
-  await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
-  assert.equal((await responsePromise).status(), 200);
-  await eventually(async () => await page.getByTestId("report-card").count() === 2, 30_000, "stage2-report-cards");
-  assert.match(await summary.innerText(), /已返回检查报告\s*2\s*份/u);
-  await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
-  const stageThreeSaved = page.waitForResponse((response) => {
-    if (response.request().method() !== "POST" || new URL(response.url()).pathname !== "/api/desktop/attempt/state") return false;
-    try {
-      const body = response.request().postDataJSON();
-      return response.status() === 200
-        && body?.action === "save"
-        && body?.caseId === "P001"
-        && body?.snapshot?.activeStageNo === 3
-        && body?.snapshot?.releasedReports?.length === 2;
-    } catch { return false; }
-  }, { timeout: 30_000 });
-  await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
-  await stageThreeSaved;
-  const evidenceCount = await page.getByTestId("diagnosis-builder").locator("fieldset").first().locator('input[type="checkbox"]').count();
-  assert.ok(evidenceCount >= 2, `stage3_evidence_insufficient:${evidenceCount}`);
-  return { evidenceCount, reports: 2 };
-}
-
-async function expectRestoredStageThree(page, marker) {
-  const loaded = page.waitForResponse((response) => {
-    if (response.request().method() !== "POST" || new URL(response.url()).pathname !== "/api/desktop/attempt/state") return false;
-    try {
-      const body = response.request().postDataJSON();
-      return response.status() === 200 && body?.action === "load" && body?.caseId === "P001" && body?.language === "zh";
-    } catch { return false; }
-  }, { timeout: 30_000 });
-  await page.goto(new URL("/cases/P001/", page.url()).toString());
-  const snapshot = (await (await loaded).json()).snapshot;
-  assert.equal(snapshot.activeStageNo, 3);
-  assert.equal(snapshot.answers?.historySummary, marker);
-  assert.equal(snapshot.releasedReports?.length, 2);
-  await page.getByTestId("diagnosis-builder").waitFor({ state: "visible" });
-  const evidenceCount = await page.getByTestId("diagnosis-builder").locator("fieldset").first().locator('input[type="checkbox"]').count();
-  assert.ok(evidenceCount >= 2, `restored_stage3_evidence_insufficient:${evidenceCount}`);
-}
-
 async function verifyPublicBoundaryAndExport(page, redactions) {
   const score = page.getByTestId("final-percentage-score");
   try {
@@ -967,7 +921,7 @@ try {
     runtimeTarget: "desktop"
   });
   assert.equal(processExists(firstDiagnostic.sidecarPid), true);
-  const stageTwo = await orderStageTwoReports(running.page);
+  const stageTwo = await orderReportsAndEnterStageThree(running.page);
   await running.page.waitForLoadState("networkidle");
   const closingAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
   assert.ok(closingAuthority.serverStateRevision >= firstAuthority.serverStateRevision);
@@ -991,7 +945,7 @@ try {
   assert.equal(restartedAuthority.stateStoreId, initialAuthority.stateStoreId);
   assert.equal(restartedAuthority.productHead, expectedProductHead);
   assert.equal(restartedAuthority.serverStateRevision, closingAuthority.serverStateRevision);
-  await expectRestoredStageThree(running.page, p001Marker);
+  await expectSubmittedStageThree(running.page, { marker: p001Marker });
   await running.page.waitForLoadState("networkidle");
   const restoredAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
   assert.ok(restoredAuthority.serverStateRevision >= restartedAuthority.serverStateRevision);
@@ -1000,14 +954,14 @@ try {
   assert.equal(replayed.stateToken, stageReplay.responseStateToken);
   const postReplayAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
   assert.equal(postReplayAuthority.serverStateRevision, restoredAuthority.serverStateRevision);
-  const random = await saveHistoryDraft(running.page, {
+  const random = await step("p003-random-save", saveHistoryDraft(running.page, {
     caseId: "P003",
     language: "en",
     marker: p003Marker,
     requestedMode: "random"
-  });
+  }));
   assert.equal(random.durableMode, "free");
-  await expectRestoredStageThree(running.page, p001Marker);
+  await expectSubmittedStageThree(running.page, { marker: p001Marker });
   const canonicalState = (await desktopJson(running.page, "/api/desktop/attempt/state", {
     body: { action: "load", caseId: "P001", mode: "free", language: "zh" }
   })).payload.snapshot;

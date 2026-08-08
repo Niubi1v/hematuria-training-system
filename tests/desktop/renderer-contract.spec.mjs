@@ -5,7 +5,8 @@ import path from "node:path";
 import { test, expect } from "@playwright/test";
 import {
   desktopJson,
-  expectSubmittedStageTwo,
+  expectSubmittedStageThree,
+  orderReportsAndEnterStageThree,
   installDesktopRuntime,
   runtimeProbe,
   runtimeEvidence,
@@ -59,6 +60,7 @@ test("real renderer persists through the real sidecar and SQLite", async ({ brow
       }
     });
     await submitHistoryAndEnterStageTwo(page, { caseId: "P001", language: "zh", marker: p001Marker });
+    await orderReportsAndEnterStageThree(page);
     const stageResponse = await stageResponsePromise;
     const stageReplay = {
       body: stageResponse.request().postDataJSON(),
@@ -89,10 +91,8 @@ test("real renderer persists through the real sidecar and SQLite", async ({ brow
     await installDesktopRuntime(context, sidecar.runtime, "zh");
     page = await context.newPage();
     page.on("dialog", (dialog) => void dialog.accept());
-    await expectSubmittedStageTwo(page, {
+    await expectSubmittedStageThree(page, {
       baseURL,
-      caseId: "P001",
-      language: "zh",
       marker: p001Marker
     });
     await page.waitForLoadState("networkidle");
@@ -123,13 +123,11 @@ test("real renderer persists through the real sidecar and SQLite", async ({ brow
       page.off("response", observeSave);
     }
     expect(random).toEqual({ caseId: "P003", language: "en", durableMode: "free", status: 200 });
-    await expectSubmittedStageTwo(page, {
+    await expectSubmittedStageThree(page, {
       baseURL,
-      caseId: "P001",
-      language: "zh",
       marker: p001Marker
     });
-    await expect(page.getByTestId("investigation-selection-summary")).toBeVisible();
+    await expect(page.getByTestId("diagnosis-builder")).toBeVisible();
     const restored = (await desktopJson(page, "/api/desktop/attempt/state", {
       body: { action: "load", caseId: "P001", mode: "free", language: "zh" }
     })).payload.snapshot;

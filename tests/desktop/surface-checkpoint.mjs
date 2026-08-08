@@ -59,8 +59,8 @@ export function assertSurfaceCheckpoint(checkpoint) {
   assert.match(checkpoint.productHead, /^[0-9a-f]{40}$/u);
   assert.match(checkpoint.artifactSha, /^[0-9a-f]{64}$/u);
   assert.equal(checkpoint.durableMode, "free");
-  assert.equal(checkpoint.activeStage, 2);
-  assert.equal(checkpoint.submittedStageCount, 1);
+  assert.equal(checkpoint.activeStage, 3);
+  assert.equal(checkpoint.submittedStageCount, 2);
   assert.equal(checkpoint.schemaVersion, 3);
   assert.equal(checkpoint.attemptCount, checkpoint.snapshotCount);
   assert.equal(checkpoint.uniqueRequests, true);
