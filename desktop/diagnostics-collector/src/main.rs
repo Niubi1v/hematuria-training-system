@@ -13,7 +13,7 @@ use std::{
 };
 
 const SCHEMA: u32 = 1;
-const TARGET_HEAD: &str = "28e342d878999d71fc840808dd77437b3c817893";
+const TARGET_HEAD: &str = "931af77374dd56d258d4b7acf0f223e0d95a2dd2";
 const R5: &str = "MentorLocalAI-R5";
 const R4: &str = "MentorLocalAI-FinalCandidate";
 const EXES: &[&str] = &["hematuria-training-r5.exe", "HematuriaTraining-R5.exe"];
