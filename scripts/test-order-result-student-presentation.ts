@@ -7,7 +7,7 @@ process.env.TRAINING_API_RATE_LIMIT_PER_MINUTE = "100000";
 process.env.HEMATURIA_RUNTIME_TARGET = "desktop";
 
 const handler = require("../api/training-action.js");
-const { loadAttempt, resetMemoryAttemptStore } = require("../server/trainingAttemptStore.js");
+const { digest, loadAttempt, resetMemoryAttemptStore } = require("../server/trainingAttemptStore.js");
 
 let requestCounter = 0;
 async function call(body: Record<string, unknown>, token = "") {
@@ -73,8 +73,16 @@ assert.equal(repeated.payload.existingReportCount, 1);
 assert.equal((repeated.payload.results as unknown[]).length, 1, "duplicate order must resurface the one existing panel");
 assert.match(String(repeated.payload.message), /已有结果/u);
 
-const stored = await loadAttempt({ caseId: "P005", attemptId: zh.attemptId, token: repeated.token, requestId: "inspect-student-result", requestDigest: "inspect-student-result" });
+const stored = await loadAttempt({ caseId: "P005", attemptId: zh.attemptId, token: repeated.token, requestId: "inspect-student-result", requestDigest: digest("inspect-student-result") });
 assert.equal(stored.state.events.filter((event: { type: string }) => event.type === "result_returned").length, 1, "resurfacing must not create duplicate evidence");
+
+const sequential = await stageTwo("zh");
+const urinalysis = await call({ action: "order", caseId: "P005", attemptId: sequential.attemptId, mode: "free", language: "zh", input: "LAB-UR-001" }, sequential.token);
+const sediment = await call({ action: "order", caseId: "P005", attemptId: sequential.attemptId, mode: "free", language: "zh", input: "LAB-UR-002" }, urinalysis.token);
+assert.equal((sediment.payload.orderOutcomes as Array<{ status: string }>)[0].status, "existing_report");
+assert.equal((sediment.payload.results as unknown[]).length, 1, "a later shared-panel order must resurface the existing report");
+const sequentialStored = await loadAttempt({ caseId: "P005", attemptId: sequential.attemptId, token: sediment.token, requestId: "inspect-sequential-result", requestDigest: digest("inspect-sequential-result") });
+assert.equal(sequentialStored.state.events.filter((event: { type: string }) => event.type === "result_returned").length, 1, "a later shared-panel order must not duplicate evidence");
 
 const en = await stageTwo("en");
 const english = await call({

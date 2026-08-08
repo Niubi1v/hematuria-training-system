@@ -1,11 +1,11 @@
 const { projectClinicalResult } = require("./clinicalResultSemantics.js");
 
 const CJK_PATTERN = /[\u3400-\u9fff]/u;
-const ENGLISH_ORDER_PLACEHOLDER = "Awaiting reviewed order-name translation";
-const ENGLISH_CATEGORY_PLACEHOLDER = "Awaiting reviewed category translation";
-const ENGLISH_RESULT_PLACEHOLDER = "Awaiting reviewed result translation";
-const ENGLISH_EXAM_PLACEHOLDER = "Awaiting reviewed examination translation";
-const ENGLISH_METADATA_PLACEHOLDER = "Awaiting reviewed metadata";
+const ENGLISH_ORDER_PLACEHOLDER = "Order name unavailable in English";
+const ENGLISH_CATEGORY_PLACEHOLDER = "Category unavailable in English";
+const ENGLISH_RESULT_PLACEHOLDER = "Result text unavailable in English";
+const ENGLISH_EXAM_PLACEHOLDER = "Examination name unavailable in English";
+const ENGLISH_METADATA_PLACEHOLDER = "Metadata unavailable in English";
 
 const primaryCategoryLabels = Object.freeze({
   检验: "Laboratory tests",
@@ -16,9 +16,9 @@ const primaryCategoryLabels = Object.freeze({
 
 const statusLabels = Object.freeze({
   final: Object.freeze({ zh: "已出报告", en: "Reported" }),
-  not_available: Object.freeze({ zh: "等待医学审核", en: "Awaiting medical review" }),
+  not_available: Object.freeze({ zh: "暂无可显示结果", en: "No result available" }),
   not_performed: Object.freeze({ zh: "未实施", en: "Not performed" }),
-  needs_review: Object.freeze({ zh: "待审核", en: "Awaiting review" })
+  needs_review: Object.freeze({ zh: "暂无可显示结果", en: "No result available" })
 });
 
 const simulatedNormalPhysicalExamPolicies = Object.freeze({
@@ -179,7 +179,7 @@ function presentOrderCatalogItem(order, language = "zh") {
     displayName: alias || ENGLISH_ORDER_PLACEHOLDER,
     primaryCategoryLabel: primaryCategoryLabels[order.primaryCategory] || ENGLISH_CATEGORY_PLACEHOLDER,
     secondaryCategoryLabel: safeEnglishText(order.secondaryCategory, ENGLISH_CATEGORY_PLACEHOLDER),
-    priorityLabel: safeEnglishText(order.priority, "Awaiting reviewed priority translation"),
+    priorityLabel: safeEnglishText(order.priority, "Priority unavailable in English"),
     studentDisplayHintLabel: safeEnglishText(order.studentDisplayHint, ENGLISH_CATEGORY_PLACEHOLDER),
     translationAvailable: Boolean(alias)
   };
@@ -263,10 +263,10 @@ function presentExamResult(result, language = "zh") {
 function reportStatusPresentation(item, language = "zh") {
   const signal = [...(item?.abnormalFlags || []), item?.abnormalLevel || ""].join(" ").toLowerCase();
   const rawStatus = String(item?.status || "").toLowerCase();
-  const needsReview = /待审核|需审核|needs.review|review/.test(`${signal} ${rawStatus}`);
+  const needsReview = ["not_available", "needs_review"].includes(rawStatus) || /待审核|需审核|needs.review|review/.test(`${signal} ${rawStatus}`);
   const abnormal = !needsReview && /异常|阳性|升高|降低|abnormal|positive|high|low|critical/.test(signal);
   const normal = !needsReview && !abnormal && /正常|阴性|normal|negative/.test(signal);
-  const state = needsReview ? "needs-review" : abnormal ? "abnormal" : normal ? "normal" : "reported";
+  const state = needsReview ? "unavailable" : abnormal ? "abnormal" : normal ? "normal" : "reported";
   const label = needsReview
     ? statusLabels.needs_review[language]
     : abnormal

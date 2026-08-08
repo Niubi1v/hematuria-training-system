@@ -6,14 +6,19 @@ import process from "node:process";
 import { inflateRawSync } from "node:zlib";
 import { fileURLToPath } from "node:url";
 import clinicalResultSemantics from "../shared/clinicalResultSemantics.js";
+import dataAgentPresentation from "../shared/dataAgentPresentation.js";
 
 const { assessClinicalResult, clinicalResultFingerprint, projectClinicalResult } = clinicalResultSemantics;
+const { buildStudentOrderCatalog, sourceOrderId } = dataAgentPresentation;
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const defaultPackPath = "D:\\HematuriaReview\\desktop-clinical-content-review-pack-triaged.zip";
 const packPath = path.resolve(process.env.HEMATURIA_TRIAGED_REVIEW_PACK || defaultPackPath);
 const runtimePath = path.join(repoRoot, "desktop", "clinical-content-triage-runtime.json");
 const writeRuntime = process.argv.includes("--write-runtime");
+const auditOutputIndex = process.argv.indexOf("--audit-output");
+const auditOutput = auditOutputIndex >= 0 ? path.resolve(String(process.argv[auditOutputIndex + 1] || "")) : "";
+if (auditOutputIndex >= 0 && !process.argv[auditOutputIndex + 1]) throw new Error("audit_output_directory_required");
 
 const EXPECTED_PACK_SHA256 = "832cd6c0935a129258b5844db403f12a471949cabc36caecd6120173e8b68a46";
 const EXPECTED_COUNTS = Object.freeze({
@@ -236,7 +241,14 @@ const sourceProjectionRejected = [];
 const sourceProjectionSemanticAudit = [];
 const fingerprintOwnersByCase = new Map();
 for (const result of structuredOrderResults.filter((item) => item.status === "final")) {
-  const fingerprint = clinicalResultFingerprint(projectClinicalResult(result).result);
+  const projected = projectClinicalResult(result).result;
+  const ownerAssessment = assessClinicalResult({
+    domain: String(result.orderId || "").startsWith("LAB-") ? "laboratory" : "",
+    itemId: result.orderId,
+    result: projected
+  });
+  if (ownerAssessment.compatible !== true) continue;
+  const fingerprint = clinicalResultFingerprint(projected);
   if (!fingerprint) continue;
   const owners = fingerprintOwnersByCase.get(result.caseId) || new Map();
   if (!owners.has(fingerprint)) owners.set(fingerprint, { itemId: result.orderId, source: "configured_order_result" });
@@ -287,7 +299,10 @@ for (const item of categories.auto_apply_after_source_match) {
   if (fingerprint && !owners.has(fingerprint)) owners.set(fingerprint, { itemId: item.itemId, source: "source_projection_candidate" });
   fingerprintOwnersByCase.set(item.caseId, owners);
   if (!retained) {
-    sourceProjectionRejected.push(publicItem(item, { reason }));
+    sourceProjectionRejected.push(publicItem(item, {
+      reason,
+      ...(duplicate ? { coveredByOrderId: duplicateOwner.itemId } : {})
+    }));
     continue;
   }
   sourceProjection.push(publicItem(item, {
@@ -385,6 +400,107 @@ if (writeRuntime) {
   assert.equal(committed, serialized, "desktop_triage_runtime_is_stale");
 }
 
+function csvCell(value) {
+  return `"${String(value ?? "").replaceAll('"', '""').replaceAll("\r", "").replaceAll("\n", "\\n")}"`;
+}
+
+function rowKey(caseId, itemId) {
+  return `${caseId}:${itemId}`;
+}
+
+const cases = JSON.parse(await fs.readFile(path.join(repoRoot, "data", "cases.json"), "utf8"));
+const catalogFiles = ["order_catalog_labs.json", "order_catalog_imaging.json", "order_catalog_procedures.json", "order_catalog_perioperative.json"];
+const studentCatalog = buildStudentOrderCatalog((await Promise.all(catalogFiles.map(async (file) => JSON.parse(await fs.readFile(path.join(repoRoot, "data", file), "utf8"))))).flat());
+const exactResults = new Map(structuredOrderResults.map((item) => [rowKey(item.caseId, item.orderId), item]));
+const triageCandidates = new Map(Object.values(categories).flat().filter((item) => item.domain !== "physical_exam").map((item) => [rowKey(item.caseId, item.itemId), item]));
+const semanticAudits = new Map(sourceProjectionSemanticAudit.map((item) => [rowKey(item.caseId, item.orderId), item]));
+const runtimeRows = new Map([
+  ...runtime.sourceProjection.map((item) => [rowKey(item.caseId, item.itemId), { ...item, classification: "source_projection" }]),
+  ...runtime.sourceProjectionRejected.map((item) => [rowKey(item.caseId, item.itemId), { ...item, classification: "source_projection_rejected" }]),
+  ...runtime.noSpecimenOrNotIndicated.map((item) => [rowKey(item.caseId, item.itemId), { ...item, classification: "no_specimen" }]),
+  ...runtime.noReportOrNotIndicated.map((item) => [rowKey(item.caseId, item.itemId), { ...item, classification: "no_indication" }]),
+  ...runtime.medicalReviewPending.map((item) => [rowKey(item.caseId, item.itemId), { ...item, classification: "medical_review_pending" }]),
+  ...runtime.medicalConflicts.map((item) => [rowKey(item.caseId, item.itemId), { ...item, classification: "medical_conflict" }])
+]);
+
+const auditCases = cases.filter((item) => /^P\d{3}$/u.test(String(item.displayCaseId || "")));
+const auditRows = auditCases.flatMap((caseData) => studentCatalog.map((order) => {
+  const studentOrderId = String(order.catalogId || order.orderId);
+  const sourceId = sourceOrderId(order);
+  const key = rowKey(caseData.id, sourceId);
+  const exact = exactResults.get(key);
+  const triage = runtimeRows.get(key);
+  const candidate = triageCandidates.get(key);
+  const semanticAudit = semanticAudits.get(key);
+  const candidateText = projectClinicalResult(exact || { value: candidate?.suggestedResult || "" }, order.displayName).result;
+  const exactAssessment = exact?.status === "final" ? assessClinicalResult({
+    domain: String(order.primaryCategory || "") === "检验" ? "laboratory" : "",
+    itemId: sourceId,
+    displayName: order.displayName,
+    result: candidateText
+  }) : null;
+  let recommendedAction = "NO_SOURCE_RESULT";
+  let reason = triage?.reason || candidate?.triageCategory || exact?.status || "no_case_source_result";
+  let semanticCompatibility = exactAssessment?.compatible === true ? "compatible" : exactAssessment ? "incompatible" : "not_applicable";
+  if (exact?.status === "final" && exactAssessment?.compatible === true) {
+    recommendedAction = "SAFE_EXISTING_MAPPING";
+  } else if (triage?.classification === "source_projection") {
+    recommendedAction = "SAFE_EXISTING_MAPPING";
+    semanticCompatibility = "compatible";
+  } else if (triage?.reason === "cross_order_duplicate_result" && triage.coveredByOrderId) {
+    const owner = exactResults.get(rowKey(caseData.id, triage.coveredByOrderId));
+    const ownerText = projectClinicalResult(owner || {}).result;
+    const ownerAssessment = owner ? assessClinicalResult({ itemId: triage.coveredByOrderId, result: ownerText }) : null;
+    if (owner?.status === "final" && ownerAssessment?.compatible === true) {
+      recommendedAction = "SHARED_PANEL_MAPPING";
+      semanticCompatibility = "compatible";
+      reason = `same_source_fingerprint_as:${triage.coveredByOrderId}`;
+    } else {
+      recommendedAction = "AMBIGUOUS_SOURCE_NEEDS_HUMAN_REVIEW";
+    }
+  } else if (exact?.status === "final"
+    || triage?.classification === "medical_conflict"
+    || candidate?.triageCategory === "needs_case_specific_medical_review"
+    || (semanticAudit && semanticAudit.reason !== "suggested_result_not_directly_located_in_source")) {
+    recommendedAction = "AMBIGUOUS_SOURCE_NEEDS_HUMAN_REVIEW";
+  }
+  return {
+    caseId: caseData.displayCaseId,
+    studentOrderId,
+    displayName: order.displayName,
+    sourceOrderId: sourceId,
+    sourceResultCandidate: candidateText || candidate?.suggestedResult || "",
+    currentStatus: exact?.status || triage?.classification || "missing",
+    semanticCompatibility,
+    reason,
+    recommendedAction,
+    expectedReportType: order.resultShouldInclude || "",
+    sourceLocation: semanticAudit?.sourceLocation || candidate?.existingSource || "",
+    currentDiagnosticEligible: false,
+    currentScoringEligible: false
+  };
+}));
+
+assert.equal(auditCases.length, 42, "mapping_audit_requires_42_cases");
+assert.equal(auditRows.length, 42 * studentCatalog.length, "mapping_audit_requires_every_case_order_pair");
+assert(auditRows.every((item) => ["SAFE_EXISTING_MAPPING", "SHARED_PANEL_MAPPING", "NO_SOURCE_RESULT", "AMBIGUOUS_SOURCE_NEEDS_HUMAN_REVIEW"].includes(item.recommendedAction)));
+
+if (auditOutput) {
+  await fs.mkdir(auditOutput, { recursive: false });
+  const headers = ["caseId", "studentOrderId", "displayName", "sourceOrderId", "sourceResultCandidate", "currentStatus", "semanticCompatibility", "reason", "recommendedAction"];
+  const csv = (rows) => `\uFEFF${headers.join(",")}\n${rows.map((row) => headers.map((header) => csvCell(row[header])).join(",")).join("\n")}\n`;
+  const ambiguous = auditRows.filter((item) => item.recommendedAction === "AMBIGUOUS_SOURCE_NEEDS_HUMAN_REVIEW");
+  const shared = auditRows.filter((item) => item.recommendedAction === "SHARED_PANEL_MAPPING");
+  const counts = Object.fromEntries(["SAFE_EXISTING_MAPPING", "SHARED_PANEL_MAPPING", "NO_SOURCE_RESULT", "AMBIGUOUS_SOURCE_NEEDS_HUMAN_REVIEW"].map((action) => [action, auditRows.filter((item) => item.recommendedAction === action).length]));
+  await Promise.all([
+    fs.writeFile(path.join(auditOutput, "order-result-audit.csv"), csv(auditRows), "utf8"),
+    fs.writeFile(path.join(auditOutput, "needs-source-review.csv"), csv(ambiguous), "utf8"),
+    fs.writeFile(path.join(auditOutput, "shared-panel-mapping.csv"), csv(shared), "utf8"),
+    fs.writeFile(path.join(auditOutput, "summary.md"), `# R5 medical result mapping audit\n\n- Cases: 42\n- Student orders: ${studentCatalog.length}\n- Rows: ${auditRows.length}\n- SAFE_EXISTING_MAPPING: ${counts.SAFE_EXISTING_MAPPING}\n- SHARED_PANEL_MAPPING: ${counts.SHARED_PANEL_MAPPING}\n- NO_SOURCE_RESULT: ${counts.NO_SOURCE_RESULT}\n- AMBIGUOUS_SOURCE_NEEDS_HUMAN_REVIEW: ${counts.AMBIGUOUS_SOURCE_NEEDS_HUMAN_REVIEW}\n- Medical facts changed: no\n- data/** changed: no\n`, "utf8"),
+    fs.writeFile(path.join(auditOutput, "medical-result-human-review.md"), `# Medical result human review\n\nOnly AMBIGUOUS_SOURCE_NEEDS_HUMAN_REVIEW items are listed. No new value, unit, range, normal result, or negative result was generated.\n\n${ambiguous.map((item, index) => `## ${index + 1}. ${item.caseId} / ${item.displayName}\n\n- caseId: ${item.caseId}\n- 学生检查名称: ${item.displayName}\n- source order/result候选: ${item.sourceOrderId}\n- source中的原文/原值: ${item.sourceResultCandidate || "未安全定位"}\n- 为什么当前无法归属: ${item.reason}\n- 当前代码期待的报告类型: ${item.expectedReportType || "未声明"}\n- 是否会影响诊断: 当前不会（保持隔离）\n- 是否会影响评分: 当前不会（保持隔离）\n- source位置: ${item.sourceLocation || "未安全定位"}\n`).join("\n")}\n`, "utf8")
+  ]);
+}
+
 console.log(JSON.stringify({
   packSha256: EXPECTED_PACK_SHA256,
   triageCounts: EXPECTED_COUNTS,
@@ -401,5 +517,13 @@ console.log(JSON.stringify({
   sourceProjectionMatchFailedPending: rejectedSourceProjectionPending.length,
   medicalReviewPendingTotal: runtime.medicalReviewPending.length,
   medicalConflicts: runtime.medicalConflicts.length,
-  runtimePath
+  runtimePath,
+  mappingAudit: {
+    cases: 42,
+    studentOrders: studentCatalog.length,
+    rows: auditRows.length,
+    ambiguous: auditRows.filter((item) => item.recommendedAction === "AMBIGUOUS_SOURCE_NEEDS_HUMAN_REVIEW").length,
+    shared: auditRows.filter((item) => item.recommendedAction === "SHARED_PANEL_MAPPING").length,
+    output: auditOutput || null
+  }
 }));

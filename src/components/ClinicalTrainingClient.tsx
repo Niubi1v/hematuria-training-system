@@ -39,7 +39,6 @@ import physicalExamItemsJson from "@/data/physical_exam_items.json";
 import {
   ENGLISH_CATEGORY_PLACEHOLDER,
   ENGLISH_EXAM_PLACEHOLDER,
-  ENGLISH_METADATA_PLACEHOLDER,
   ENGLISH_ORDER_PLACEHOLDER,
   ENGLISH_RESULT_PLACEHOLDER,
   buildStudentOrderCatalog,
@@ -699,14 +698,53 @@ function orderOutcomeLabel(status: string, lang: LanguageCode) {
     no_indication: ["无明确适应证", "No clear indication"],
     not_performed: ["未实施", "Not performed"],
     no_specimen: ["未取材", "No specimen collected"],
-    medical_review_pending: ["等待医学审核", "Awaiting medical review"],
+    medical_review_pending: ["暂无可显示结果", "No result available"],
     prerequisite_missing: ["前置条件未满足", "Prerequisite not met"],
-    duplicate: ["已重复", "Duplicate order"],
+    duplicate: ["已有结果", "Existing report"],
+    existing_report: ["已有结果", "Existing report"],
     unrecognized: ["未识别", "Not recognized"],
     unavailable: ["暂不可用", "Unavailable"],
     not_provided: ["未实施", "Not performed"]
   };
   return (labels[status] || ["状态已更新", "Status updated"])[lang === "en" ? 1 : 0];
+}
+
+const internalOrderResultText = /等待医学审核|待审核|等待审核元数据|当前不进入诊断、治疗或评分证据|awaiting medical review|awaiting review|awaiting reviewed metadata|\b(?:source|provenance|reviewerStatus|medical_review_pending|needs_review|not_available|diagnosticEligible|scoringEligible)\b/iu;
+
+function studentOrderOutcome(outcome: NonNullable<OrderResultLog["orderOutcomes"]>[number], lang: LanguageCode) {
+  if (["medical_review_pending", "unavailable", "no_indication", "not_performed", "no_specimen", "not_provided", "prerequisite_missing"].includes(outcome.status)) {
+    return {
+      status: "unavailable",
+      label: lang === "en" ? "No result available" : "暂无可显示结果",
+      message: lang === "en"
+        ? `${safeStudentFacingText(outcome.displayName, lang, ENGLISH_ORDER_PLACEHOLDER)}: this case currently has no result available to display for this examination.`
+        : `${outcome.displayName}：本病例当前无可提供的该项检查结果。`
+    };
+  }
+  if (["duplicate", "existing_report"].includes(outcome.status)) {
+    return {
+      status: "existing_report",
+      label: lang === "en" ? "Existing report" : "已有结果",
+      message: lang === "en"
+        ? `${safeStudentFacingText(outcome.displayName, lang, ENGLISH_ORDER_PLACEHOLDER)}: the existing report is shown below.`
+        : `${outcome.displayName}：已有报告已在下方显示。`
+    };
+  }
+  const safeMessage = studentFacingClinicalText(safeStudentFacingText(outcome.message, lang, ENGLISH_RESULT_PLACEHOLDER), lang);
+  return { status: outcome.status, label: orderOutcomeLabel(outcome.status, lang), message: internalOrderResultText.test(safeMessage) ? (lang === "en" ? "Result status updated." : "检查结果状态已更新。") : safeMessage };
+}
+
+function visibleOrderLogMessage(log: OrderResultLog, lang: LanguageCode) {
+  const message = studentFacingClinicalText(log.message, lang);
+  if (!internalOrderResultText.test(message)) return message;
+  const unavailable = (log.orderOutcomes || []).filter((item) => ["medical_review_pending", "unavailable", "no_indication", "not_performed", "no_specimen", "not_provided", "prerequisite_missing"].includes(item.status)).length;
+  return lang === "en"
+    ? `${log.results.length} report(s) available; ${unavailable} order(s) have no result available in this case.`
+    : `可查看${log.results.length}份报告；${unavailable}项检查在本病例中暂无可提供结果。`;
+}
+
+function uniqueReportCount(logs: OrderResultLog[]) {
+  return new Set(logs.flatMap((log) => log.results.map((item) => item.sourceReportId || item.resultId || `${item.orderId}:${item.result}`))).size;
 }
 
 function percentageScore(rawScore: number) {
@@ -964,29 +1002,24 @@ function ReportCard({ item, lang }: { item: OrderResultLog["results"][number]; l
   const resultText = safeStudentFacingText(item.result, lang, ENGLISH_RESULT_PLACEHOLDER);
   const impression = safeStudentFacingText(item.impression, lang, ENGLISH_RESULT_PLACEHOLDER);
   const orderCategory = safeStudentFacingText(item.orderCategory, lang, ENGLISH_CATEGORY_PLACEHOLDER);
-  const teachingExplanation = safeStudentFacingText(item.teachingExplanation, lang, ENGLISH_RESULT_PLACEHOLDER);
   const valueFingerprints = new Set(formatReportLines(safeStudentFacingText(item.value, lang, ENGLISH_RESULT_PLACEHOLDER)).map((line) => clinicalResultFingerprint(line)));
   const lines = formatReportLines(resultText).filter((line) => !valueFingerprints.has(clinicalResultFingerprint(line)));
   const status = reportStatusPresentation(item, lang);
-  const statusClass = status.state === "needs-review" ? "ui-status-warning" : status.state === "abnormal" ? "ui-status-danger" : status.state === "normal" ? "ui-status-success" : "ui-status-info";
-  const missingReviewedMetadata = item.metadataStatus === "awaiting_reviewed_metadata"
-    || (item.status === "final" && /\d/.test(String(item.value || "")) && (!item.unit || !item.referenceRange));
-  const unit = item.unit || (missingReviewedMetadata ? (lang === "en" ? ENGLISH_METADATA_PLACEHOLDER : "等待审核元数据") : "—");
-  const referenceRange = item.referenceRange || (missingReviewedMetadata ? (lang === "en" ? ENGLISH_METADATA_PLACEHOLDER : "等待审核元数据") : "—");
+  const statusClass = status.state === "unavailable" ? "ui-status-warning" : status.state === "abnormal" ? "ui-status-danger" : status.state === "normal" ? "ui-status-success" : "ui-status-info";
   return (
     <article data-testid="report-card" data-status={status.state} className="mt-3 rounded-xl border border-clinic-line bg-white p-4 text-sm leading-6 shadow-soft">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-semibold text-clinic-blue">{orderCategory}</p>
         <span className={`ui-status ${statusClass}`}>
-          {status.state === "needs-review" ? <AlertTriangle size={14} aria-hidden="true" /> : status.state === "abnormal" ? <CircleAlert size={14} aria-hidden="true" /> : status.state === "normal" ? <CircleCheck size={14} aria-hidden="true" /> : <FileText size={14} aria-hidden="true" />}
+          {status.state === "unavailable" ? <AlertTriangle size={14} aria-hidden="true" /> : status.state === "abnormal" ? <CircleAlert size={14} aria-hidden="true" /> : status.state === "normal" ? <CircleCheck size={14} aria-hidden="true" /> : <FileText size={14} aria-hidden="true" />}
           {status.label}
         </span>
       </div>
       {(item.value || item.unit || item.referenceRange) && (
         <dl className="mt-3 grid gap-2 rounded-lg bg-clinic-paper p-3 sm:grid-cols-3">
-          <div><dt className="text-xs text-clinic-muted">{lang === "en" ? "Value" : "结果"}</dt><dd className="mt-0.5 whitespace-pre-line font-semibold text-clinic-ink">{safeStudentFacingText(item.value, lang, ENGLISH_RESULT_PLACEHOLDER) || "—"}</dd></div>
-          <div><dt className="text-xs text-clinic-muted">{lang === "en" ? "Unit" : "单位"}</dt><dd className="mt-0.5 text-clinic-ink">{unit}</dd></div>
-          <div><dt className="text-xs text-clinic-muted">{lang === "en" ? "Reference range" : "参考范围"}</dt><dd className="mt-0.5 text-clinic-ink">{referenceRange}</dd></div>
+          {item.value && <div><dt className="text-xs text-clinic-muted">{lang === "en" ? "Value" : "结果"}</dt><dd className="mt-0.5 whitespace-pre-line font-semibold text-clinic-ink">{safeStudentFacingText(item.value, lang, ENGLISH_RESULT_PLACEHOLDER)}</dd></div>}
+          {item.unit && <div><dt className="text-xs text-clinic-muted">{lang === "en" ? "Unit" : "单位"}</dt><dd className="mt-0.5 text-clinic-ink">{item.unit}</dd></div>}
+          {item.referenceRange && <div><dt className="text-xs text-clinic-muted">{lang === "en" ? "Reference range" : "参考范围"}</dt><dd className="mt-0.5 text-clinic-ink">{item.referenceRange}</dd></div>}
         </dl>
       )}
       {lines.length > 0 && <div className="mt-3 grid gap-2">
@@ -995,7 +1028,6 @@ function ReportCard({ item, lang }: { item: OrderResultLog["results"][number]; l
         ))}
       </div>}
       {item.impression && <p className="mt-3 border-l-2 border-clinic-blue pl-3"><span className="font-semibold">{lang === "en" ? "Impression" : "印象"}：</span>{impression}</p>}
-      {item.teachingExplanation && <p className="mt-3 text-xs leading-5 text-clinic-muted">{t(lang, "releaseRule")}：{teachingExplanation}</p>}
     </article>
   );
 }
@@ -1476,6 +1508,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const patientReplyAbortRef = useRef<AbortController | null>(null);
   const patientSubmitLockRef = useRef(false);
   const orderSubmitLockRef = useRef(false);
+  const orderResultSummaryRef = useRef<HTMLParagraphElement | null>(null);
   const stageSubmitLockRef = useRef(false);
   const historyLogSyncRef = useRef(false);
   const historyLogRetryTimerRef = useRef(0);
@@ -2700,13 +2733,14 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     try {
       const matchedLog = await trainingAction<OrderResultLog>({ action: "order", input: text });
       const hasReport = matchedLog.results.length > 0;
+      const previousResultIds = new Set(orderLogs.flatMap((log) => log.results.map((item) => item.sourceReportId || item.resultId)));
       const log: OrderResultLog = hasReport
         ? { ...matchedLog, returnedAt: new Date().toISOString(), status: "reported" }
         : matchedLog;
       setOrderLogs((current) => [...current, log]);
       addTimeline("order", lang === "en" ? "Order placed" : "开立医嘱", text, 2);
       if (hasReport) {
-        const timelineResults = matchedLog.results.map((item) => {
+        const timelineResults = matchedLog.results.filter((item) => !previousResultIds.has(item.sourceReportId || item.resultId)).map((item) => {
           const result = safeText(item.result || item.value || item.impression);
           if (!result) return "";
           const category = safeText(item.orderCategory);
@@ -2715,9 +2749,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         if (timelineResults.length) addTimeline("result", lang === "en" ? "Report returned" : "返回检查结果", timelineResults.join("\n"), 2);
       }
       setOrderInput("");
-      setOrderFeedback(hasReport
-        ? (lang === "en" ? `${matchedLog.results.length} report(s) returned.` : `已返回 ${matchedLog.results.length} 份检查报告。`)
-        : studentFacingClinicalText(matchedLog.message, lang));
+      setOrderFeedback(studentFacingClinicalText(matchedLog.message, lang));
+      globalThis.requestAnimationFrame(() => {
+        orderResultSummaryRef.current?.focus({ preventScroll: true });
+        orderResultSummaryRef.current?.scrollIntoView({ block: "nearest" });
+      });
     } catch (error) {
       setStorageWarning(orderSubmissionFailureMessage(error, lang));
     } finally {
@@ -2940,7 +2976,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     patientAnswers: Math.max(0, messages.filter((item) => item.role === "patient").length - 1),
     exams: examLogs.length,
     orders: unique([...answers.selectedOrders, ...orderLogs.flatMap((log) => log.matchedOrders.map((item) => item.displayName))]).length,
-    reports: orderLogs.reduce((sum, log) => sum + log.results.length, 0)
+    reports: uniqueReportCount(orderLogs)
   };
   const healthNotice = healthCheckFailed
     ? (lang === "en" ? "Interview readiness could not be confirmed. Text practice remains available." : "暂时无法确认问诊准备状态，仍可继续文字练习。")
@@ -3247,8 +3283,8 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
               <section data-testid="investigation-selection-summary" className="investigation-selection-summary rounded-lg bg-clinic-paper px-4 py-3 text-sm leading-6 text-clinic-muted">
                 <p className="font-medium text-clinic-ink">{lang === "en" ? "Current investigation summary" : "当前检查摘要"}</p>
                 <p>{lang === "en"
-                  ? `${answers.selectedOrders.length} orders selected · ${examLogs.length} examination records returned · ${orderLogs.reduce((sum, log) => sum + log.results.length, 0)} reports returned`
-                  : `已勾选医嘱 ${answers.selectedOrders.length} 项 · 已返回查体记录 ${examLogs.length} 项 · 已返回检查报告 ${orderLogs.reduce((sum, log) => sum + log.results.length, 0)} 份`}</p>
+                  ? `${answers.selectedOrders.length} orders selected · ${examLogs.length} examination records returned · ${uniqueReportCount(orderLogs)} reports returned`
+                  : `已勾选医嘱 ${answers.selectedOrders.length} 项 · 已返回查体记录 ${examLogs.length} 项 · 已返回检查报告 ${uniqueReportCount(orderLogs)} 份`}</p>
                 {answers.selectedOrders.length > 0 && <p className="mt-1 line-clamp-2">{answers.selectedOrders.join(lang === "en" ? "; " : "；")}</p>}
               </section>
               <section>
@@ -3315,7 +3351,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                   <input value={orderInput} onChange={(event) => setOrderInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") submitOrder(); }} className="ui-input min-w-[220px] flex-1" placeholder={t(lang, "orderPlaceholder")} />
                   <button onClick={() => submitOrder()} disabled={orderSubmitting || (!orderInput.trim() && answers.selectedOrders.length === 0 && !answers.customOrders.trim())} className="ui-button-primary">{orderSubmitting ? (lang === "en" ? "Submitting..." : "提交中……") : t(lang, "orderAndReturn")}</button>
                 </div>
-                {orderFeedback && <p role="status" aria-live="polite" className="mt-2 text-sm font-medium text-clinic-blue">{orderFeedback}</p>}
+                {orderFeedback && <p ref={orderResultSummaryRef} tabIndex={-1} role="status" aria-live="polite" className="mt-2 text-sm font-medium text-clinic-blue outline-none focus-visible:ring-2 focus-visible:ring-clinic-blue">{orderFeedback}</p>}
                 <div className="mt-4 space-y-3">
                   {orderLogs.map((log) => (
                     <div key={log.id} className="rounded-md border border-clinic-line p-3">
@@ -3327,21 +3363,18 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                       </p>
                       {log.matchedOrders.length > 0 && <p className="mt-1 text-xs text-clinic-muted">{t(lang, "recognizedOrders")}：{log.matchedOrders.map((item) => safeStudentFacingText(item.displayName, lang, ENGLISH_ORDER_PLACEHOLDER)).join("；")}</p>}
                       {log.duplicateOrderIds && log.duplicateOrderIds.length > 0 && <p className="mt-1 text-xs text-amber-800">{t(lang, "duplicateOrder")}</p>}
-                      <p className="mt-1 text-sm text-clinic-muted">{studentFacingClinicalText(log.message, lang)}</p>
+                      <p className="mt-1 text-sm text-clinic-muted">{visibleOrderLogMessage(log, lang)}</p>
                       {log.orderOutcomes && log.orderOutcomes.length > 0 && (
                         <div className="mt-3 space-y-2" aria-label={lang === "en" ? "Per-order result status" : "逐项医嘱结果状态"}>
-                          {log.orderOutcomes.map((outcome, index) => (
-                            <div data-testid="order-outcome" key={`${log.id}-${outcome.orderId || outcome.displayName}-${index}`} className={`rounded-md border px-3 py-2 text-sm ${
-                              outcome.status === "reported"
-                                ? "border-emerald-200 bg-emerald-50 text-emerald-950"
-                                : outcome.status === "no_indication" || outcome.status === "not_performed" || outcome.status === "no_specimen" || outcome.status === "not_provided" || outcome.status === "medical_review_pending" || outcome.status === "prerequisite_missing"
-                                  ? "border-amber-200 bg-amber-50 text-amber-950"
-                                  : "border-clinic-line bg-clinic-paper text-clinic-muted"
-                            }`}>
-                              <p className="font-medium">{orderOutcomeLabel(outcome.status, lang)}</p>
-                              <p className="mt-1">{studentFacingClinicalText(safeStudentFacingText(outcome.message, lang, ENGLISH_RESULT_PLACEHOLDER), lang)}</p>
-                            </div>
-                          ))}
+                          {log.orderOutcomes.map((outcome, index) => {
+                            const presented = studentOrderOutcome(outcome, lang);
+                            return (
+                              <div data-testid="order-outcome" key={`${log.id}-${outcome.orderId || outcome.displayName}-${index}`} className={`rounded-md border px-3 py-2 text-sm ${presented.status === "reported" || presented.status === "existing_report" ? "border-emerald-200 bg-emerald-50 text-emerald-950" : presented.status === "unavailable" ? "border-amber-200 bg-amber-50 text-amber-950" : "border-clinic-line bg-clinic-paper text-clinic-muted"}`}>
+                                <p className="font-medium">{presented.label}</p>
+                                <p className="mt-1">{presented.message}</p>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                       {log.status === "ordered" && <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-clinic-paper"><div className="h-full w-1/2 animate-pulse rounded-full bg-clinic-teal" /></div>}

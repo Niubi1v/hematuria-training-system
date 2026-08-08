@@ -84,7 +84,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P001",
@@ -98,21 +99,24 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P003",
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P004",
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P004",
@@ -126,7 +130,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P005",
@@ -147,14 +152,15 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P007",
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_domain_or_mixed_order_content"
     },
     {
       "caseId": "P007",
@@ -168,28 +174,31 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P009",
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P010",
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P011",
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_domain_or_mixed_order_content"
     },
     {
       "caseId": "P012",
@@ -217,7 +226,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P014",
@@ -231,7 +241,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P014",
@@ -245,14 +256,16 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P016",
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P017",
@@ -280,7 +293,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P019",
@@ -294,7 +308,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P020",
@@ -308,7 +323,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P021",
@@ -322,7 +338,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P022",
@@ -336,7 +353,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P023",
@@ -350,14 +368,16 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P024",
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P025",
@@ -371,7 +391,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P026",
@@ -385,7 +406,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P027",
@@ -399,7 +421,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P028",
@@ -427,7 +450,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P030",
@@ -441,7 +465,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P030",
@@ -462,7 +487,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P032",
@@ -476,7 +502,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P033",
@@ -490,7 +517,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P033",
@@ -511,7 +539,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P035",
@@ -525,7 +554,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P035",
@@ -546,7 +576,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P037",
@@ -574,7 +605,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P039",
@@ -602,7 +634,8 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P041",
@@ -616,14 +649,16 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P042",
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result"
+      "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001"
     },
     {
       "caseId": "P001",
@@ -35758,6 +35793,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -35788,6 +35824,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -35803,6 +35840,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -35818,6 +35856,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -35848,6 +35887,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -35893,6 +35933,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -35907,7 +35948,7 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result",
+      "reason": "cross_domain_or_mixed_order_content",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -35938,6 +35979,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -35953,6 +35995,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -35968,6 +36011,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -35982,7 +36026,7 @@
       "domain": "laboratory",
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
-      "reason": "cross_order_duplicate_result",
+      "reason": "cross_domain_or_mixed_order_content",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36043,6 +36087,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36073,6 +36118,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36103,6 +36149,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36118,6 +36165,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36178,6 +36226,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36208,6 +36257,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36238,6 +36288,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36268,6 +36319,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36298,6 +36350,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36328,6 +36381,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36343,6 +36397,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36373,6 +36428,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36403,6 +36459,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36433,6 +36490,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36493,6 +36551,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36523,6 +36582,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36568,6 +36628,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36598,6 +36659,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36628,6 +36690,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36673,6 +36736,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36703,6 +36767,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36748,6 +36813,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36808,6 +36874,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36868,6 +36935,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36898,6 +36966,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,
@@ -36913,6 +36982,7 @@
       "itemId": "LAB-UR-002",
       "displayName": "尿沉渣镜检",
       "reason": "cross_order_duplicate_result",
+      "coveredByOrderId": "LAB-UR-001",
       "status": "medical_review_pending",
       "provenance": "source_projection_match_failed",
       "scoringEligible": false,

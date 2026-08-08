@@ -321,7 +321,109 @@ function attachDiagnosisEvidenceIds(events, submission) {
   });
 }
 
-function handleOrder(caseData, input, previousOrderIds, language) {
+function reportOrderIds(report) {
+  return [...new Set([report?.orderId, ...(report?.coveredOrderIds || [])].filter(Boolean))];
+}
+
+function mergeReports(reports) {
+  const merged = new Map();
+  for (const report of reports) {
+    const key = report.resultId || `${report.orderId}:${report.result || report.value || report.impression || ""}`;
+    const previous = merged.get(key);
+    merged.set(key, previous
+      ? { ...previous, coveredOrderIds: [...new Set([...reportOrderIds(previous), ...reportOrderIds(report)])] }
+      : { ...report, sourceReportId: report.resultId, coveredOrderIds: reportOrderIds(report) });
+  }
+  return [...merged.values()];
+}
+
+function studentReport(report) {
+  return Object.fromEntries(Object.entries({
+    caseId: report.caseId,
+    orderId: report.orderId,
+    resultId: report.resultId,
+    sourceReportId: report.sourceReportId || report.resultId,
+    coveredOrderIds: reportOrderIds(report),
+    status: report.status,
+    orderCategory: report.orderCategory,
+    result: report.result,
+    value: report.value,
+    unit: report.unit || undefined,
+    referenceRange: report.referenceRange || undefined,
+    impression: report.impression || undefined,
+    abnormalFlags: report.abnormalFlags,
+    abnormalLevel: report.abnormalLevel
+  }).filter(([, value]) => value !== undefined && value !== ""));
+}
+
+function unavailableStudentMessage(displayName, language) {
+  return language === "en"
+    ? `${displayName}: this case currently has no result available to display for this examination.`
+    : `${displayName}：本病例当前无可提供的该项检查结果。`;
+}
+
+function studentOrderPayload(result, previousReports, language) {
+  const requestedIds = new Set(result.matchedOrders.map((item) => item.orderId));
+  const newReports = mergeReports(result.results);
+  const newIds = new Set(newReports.map((item) => item.resultId));
+  const expandedPreviousReports = (previousReports || []).map((item) => ({
+    ...item,
+    coveredOrderIds: [...new Set([
+      ...reportOrderIds(item),
+      ...(result.sharedPanelLinks || []).filter((link) => reportOrderIds(item).includes(link.sourceOrderId)).map((link) => link.coveredOrderId)
+    ])]
+  }));
+  const existingReports = mergeReports(expandedPreviousReports.filter((item) => reportOrderIds(item).some((id) => requestedIds.has(id))))
+    .filter((item) => !newIds.has(item.resultId));
+  const surfacedReports = mergeReports([...newReports, ...existingReports]);
+  const surfacedOrderIds = new Set(surfacedReports.flatMap(reportOrderIds));
+  const orderOutcomes = result.orderOutcomes.map((item) => {
+    if (item.status === "reported") {
+      return { orderId: item.orderId, displayName: item.displayName, status: "reported", resultId: item.resultId, message: language === "en" ? `${item.displayName}: report available.` : `${item.displayName}：已有报告可查看。` };
+    }
+    if (item.status === "duplicate" && surfacedOrderIds.has(item.orderId)) {
+      return { orderId: item.orderId, displayName: item.displayName, status: "existing_report", message: language === "en" ? `${item.displayName}: the existing report is shown again below.` : `${item.displayName}：已开立过，已有报告已在下方重新显示。` };
+    }
+    if (item.status === "unrecognized") {
+      return { orderId: item.orderId, displayName: item.displayName, status: "unrecognized", message: item.message };
+    }
+    return { orderId: item.orderId, displayName: item.displayName, status: "unavailable", message: unavailableStudentMessage(item.displayName, language) };
+  });
+  const unavailableResultCount = orderOutcomes.filter((item) => item.status === "unavailable").length;
+  const sharedCoverageCount = surfacedReports.reduce((count, item) => count + Math.max(0, reportOrderIds(item).filter((id) => requestedIds.has(id)).length - 1), 0);
+  const summary = language === "en"
+    ? `${result.recognizedOrderCount} order(s): ${newReports.length} new report(s), ${existingReports.length} existing report(s), ${sharedCoverageCount} additional order(s) covered by the same report, and ${unavailableResultCount} with no result available.`
+    : `${result.recognizedOrderCount}项医嘱：新返回${newReports.length}份报告，已有结果${existingReports.length}份，同一报告另覆盖${sharedCoverageCount}项医嘱，${unavailableResultCount}项当前无可提供结果。`;
+  return {
+    ...result,
+    sharedPanelLinks: undefined,
+    results: surfacedReports.map(studentReport),
+    orderOutcomes,
+    newReportCount: newReports.length,
+    existingReportCount: existingReports.length,
+    unavailableResultCount,
+    returnedReportCount: surfacedReports.length,
+    status: surfacedReports.length ? "reported" : "no-result",
+    message: summary
+  };
+}
+
+function studentExamPayload(result, language) {
+  if (result.status === "medical_review_pending") {
+    return {
+      input: result.input,
+      examId: result.examId,
+      at: result.at,
+      status: "unavailable",
+      result: language === "en"
+        ? "This case currently has no examination result available to display."
+        : "本病例当前无可提供的该项查体结果。"
+    };
+  }
+  return { input: result.input, examId: result.examId, at: result.at, status: result.status, result: result.result };
+}
+
+function handleOrder(caseData, input, previousOrderIds, language, previousReports = []) {
   const resolution = resolveOrders(input, caseData.sex);
   const resolvedOrders = resolution.orders;
   const unavailableOrders = language === "en"
@@ -365,6 +467,14 @@ function handleOrder(caseData, input, previousOrderIds, language) {
       projection: true
     }) : null];
   }));
+  const sharedOwnerByOrderId = new Map(orders.flatMap((order) => {
+    const canonicalId = sourceOrderId(order);
+    const triaged = triageRowsByOrderId.get(canonicalId);
+    return triaged?.reason === "cross_order_duplicate_result" && triaged.coveredByOrderId
+      ? [[canonicalId, triaged.coveredByOrderId]]
+      : [];
+  }));
+  const releasedReportByOrderId = new Map(previousReports.flatMap((report) => reportOrderIds(report).map((orderId) => [orderId, report])));
   const reportable = sourceRows.filter(({ order, result }) => orderResultIsReportable(result)
     && sourceAssessmentByOrderId.get(sourceOrderId(order))?.compatible === true);
   const unmetPrerequisites = [...new Set(sourceRows.flatMap(({ result }) => (result.prerequisites || []).filter((id) => !available.has(id))))];
@@ -382,6 +492,7 @@ function handleOrder(caseData, input, previousOrderIds, language) {
       caseId: caseData.id,
       orderId: sourceOrderId(order),
       resultId: result.resultId,
+      coveredOrderIds: [sourceOrderId(order), ...orders.filter((candidate) => sharedOwnerByOrderId.get(sourceOrderId(candidate)) === sourceOrderId(order)).map(sourceOrderId)],
       status: result.status,
       ...presentOrderResult(order, result, language),
       provenance: "configured_case_result",
@@ -389,6 +500,32 @@ function handleOrder(caseData, input, previousOrderIds, language) {
       teachingExplanation: language === "en" ? "Released only for this exact case and placed order." : "仅按当前病例与已开立医嘱精确释放。"
     }));
   const configuredResultOrderIds = new Set(configuredResults.map((item) => item.orderId));
+  const sharedResults = orders.flatMap((order) => {
+    const canonicalId = sourceOrderId(order);
+    const ownerId = sharedOwnerByOrderId.get(canonicalId);
+    if (!ownerId || !acceptedOrderIds.includes(canonicalId) || configuredResultOrderIds.has(ownerId) || releasedReportByOrderId.has(ownerId)) return [];
+    const ownerResult = structuredResults.find((item) => item.caseId === caseData.id && item.orderId === ownerId);
+    const ownerOrder = catalog.find((item) => sourceOrderId(item) === ownerId) || sourceCatalog.find((item) => item.orderId === ownerId);
+    if (!ownerOrder || !orderResultIsReportable(ownerResult)) return [];
+    const assessment = assessClinicalResult({
+      domain: String(ownerOrder.primaryCategory || "") === "检验" ? "laboratory" : "",
+      itemId: ownerId,
+      displayName: ownerOrder.displayName,
+      result: [ownerResult.value, ownerResult.impression, ownerResult.result].filter(Boolean).join("\n")
+    });
+    if (assessment.compatible !== true) return [];
+    return [{
+      caseId: caseData.id,
+      orderId: ownerId,
+      resultId: ownerResult.resultId,
+      coveredOrderIds: [canonicalId],
+      status: ownerResult.status,
+      ...presentOrderResult(ownerOrder, ownerResult, language),
+      provenance: "case_source_projection",
+      scoringEligible: false,
+      diagnosticEligible: true
+    }];
+  });
   const projectedResults = orders.flatMap((order) => {
     const canonicalId = sourceOrderId(order);
     const sourceResult = sourceRowsByOrderId.get(canonicalId);
@@ -424,7 +561,7 @@ function handleOrder(caseData, input, previousOrderIds, language) {
         : "由病例 source 机械一致性核验后逐项释放，不参与评分。"
     }];
   });
-  const results = [...configuredResults, ...projectedResults];
+  const results = mergeReports([...configuredResults, ...sharedResults, ...projectedResults]);
   const orderOutcomes = resolution.matches.map(({ input: requestedName, order }) => {
     if (!order) {
       return {
@@ -455,6 +592,8 @@ function handleOrder(caseData, input, previousOrderIds, language) {
     const triaged = triageRowsByOrderId.get(canonicalId);
     const sourceAssessment = sourceAssessmentByOrderId.get(canonicalId);
     const triageAssessment = triageAssessmentByOrderId.get(canonicalId);
+    const sharedReport = results.find((item) => reportOrderIds(item).includes(canonicalId));
+    const releasedSharedReport = releasedReportByOrderId.get(sharedOwnerByOrderId.get(canonicalId));
     const missingPrerequisites = (result?.prerequisites || []).filter((id) => !available.has(id));
     if (missingPrerequisites.length) {
       return {
@@ -462,6 +601,20 @@ function handleOrder(caseData, input, previousOrderIds, language) {
         message: language === "en"
           ? `${displayName}: prerequisite missing (${missingPrerequisites.join(", ")}); the report remains locked.`
           : `${displayName}：缺少前置条件（${missingPrerequisites.join("、")}），暂不释放报告。`
+      };
+    }
+    if (sharedReport) {
+      return {
+        orderId: canonicalId, displayName, status: "reported", provenance: sharedReport.provenance,
+        resultId: sharedReport.resultId,
+        message: language === "en" ? `${displayName}: covered by the available shared report.` : `${displayName}：已由同一份现有报告覆盖。`
+      };
+    }
+    if (releasedSharedReport) {
+      return {
+        orderId: canonicalId, displayName, status: "duplicate", provenance: "existing_report",
+        resultId: releasedSharedReport.resultId,
+        message: language === "en" ? `${displayName}: covered by an existing shared report.` : `${displayName}：已由现有共享报告覆盖。`
       };
     }
     if (orderResultIsReportable(result) && sourceAssessment?.compatible !== true) {
@@ -564,6 +717,7 @@ function handleOrder(caseData, input, previousOrderIds, language) {
     matchedOrders: orders.map((item) => presentMatchedOrder(item, language)), results, orderOutcomes,
     duplicateOrderIds, acceptedOrderIds, pendingPrerequisiteOrderIds, unmetPrerequisites,
     unavailableOrderCount: unavailableOrders.length,
+    sharedPanelLinks: [...sharedOwnerByOrderId].map(([coveredOrderId, sourceOrderId]) => ({ sourceOrderId, coveredOrderId })),
     selectedOrderCount: resolution.segments.length,
     recognizedOrderCount: orders.length, returnedReportCount: results.length, at, placedAt: at, stageNo: 2,
     status: results.length ? "reported" : "no-result",
@@ -931,10 +1085,11 @@ module.exports = async function handler(req, res) {
         const event = { eventId: `srv-${state.sequence + 1}-exam-${result.examId}`, type: "physical_exam_performed", actionId: result.examId, stageNo: 2, at, text: result.input, metadata: { validated: result.scoringEligible === true, scoringEligible: result.scoringEligible === true, diagnosticEligible: result.diagnosticEligible === true, provenance: result.provenance } };
         appendClinicalEvents(state, caseData.id, [event], { [event.eventId]: { triggerAction: result.input, result: result.result, provenance: result.provenance, scoringEligible: result.scoringEligible === true, diagnosticEligible: result.diagnosticEligible === true } });
       }
-      return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: { ...result, evidenceOptions: studentEvidenceOptions(state, language) } });
+      return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: { ...studentExamPayload(result, language), evidenceOptions: studentEvidenceOptions(state, language) } });
     }
     if (body.action === "order") {
-      const result = handleOrder(caseData, body.input, state.orders, language);
+      const releasedReports = Array.isArray(state.releasedReports) ? state.releasedReports : [];
+      const result = handleOrder(caseData, body.input, state.orders, language, releasedReports);
       const newOrderIds = result.acceptedOrderIds.filter((id) => !state.orders.includes(id));
       state.orders = [...new Set([...state.orders, ...newOrderIds])];
       const orderEvents = result.matchedOrders
@@ -979,13 +1134,18 @@ module.exports = async function handler(req, res) {
         ...outcomeEvents.map((event) => [event.eventId, { triggerAction: event.actionId, result: event.text, provenance: event.metadata.provenance, scoringEligible: false, diagnosticEligible: false, outcomeStatus: event.metadata.outcomeStatus, possibleUnnecessary: event.metadata.possibleUnnecessary }])
       ]);
       appendClinicalEvents(state, caseData.id, [...orderEvents, ...resultEvents, ...outcomeEvents], orderContexts);
-      const releasedReports = Array.isArray(state.releasedReports) ? state.releasedReports : [];
       const knownResultIds = new Set(releasedReports.map((item) => item.resultId));
       state.releasedReports = [
-        ...releasedReports,
+        ...releasedReports.map((item) => ({
+          ...item,
+          coveredOrderIds: [...new Set([
+            ...reportOrderIds(item),
+            ...(result.sharedPanelLinks || []).filter((link) => reportOrderIds(item).includes(link.sourceOrderId)).map((link) => link.coveredOrderId)
+          ])]
+        })),
         ...result.results.filter((item) => item.resultId && !knownResultIds.has(item.resultId))
       ];
-      return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: { ...result, evidenceOptions: studentEvidenceOptions(state, language) } });
+      return commitResponse(res, { state, previousToken, requestId, requestDigest, payload: { ...studentOrderPayload(result, releasedReports, language), evidenceOptions: studentEvidenceOptions(state, language) } });
     }
     if (body.action === "mdt") {
       const consultRequests = validatedConsultRequests(state, body.consultRequests);

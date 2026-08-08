@@ -245,7 +245,7 @@ async function testPrerequisiteRecovery() {
     assert.equal(ids(response.payload, "unmetPrerequisites").includes(prerequisiteId), true);
     assert.equal(ids(response.payload, "acceptedOrderIds").includes(item.orderId), false);
     assert.equal(
-      ((response.payload.orderOutcomes || []) as Array<{ orderId: string; status: string }>).some((outcome) => outcome.orderId === item.orderId && outcome.status === "prerequisite_missing"),
+      ((response.payload.orderOutcomes || []) as Array<{ orderId: string; status: string }>).some((outcome) => outcome.orderId === item.orderId && outcome.status === "unavailable"),
       true
     );
 
@@ -253,9 +253,8 @@ async function testPrerequisiteRecovery() {
     response = await order(recovery.attemptId, item.caseId, language, item.orderId, response);
     assert.equal(resultIds(response.payload).includes(item.resultId), expectedReport);
     if (!expectedReport) {
-      const expectedStatus = item.status === "not_performed" ? "not_performed" : "medical_review_pending";
       assert.equal(
-        ((response.payload.orderOutcomes || []) as Array<{ orderId: string; status: string }>).some((outcome) => outcome.orderId === item.orderId && outcome.status === expectedStatus),
+        ((response.payload.orderOutcomes || []) as Array<{ orderId: string; status: string }>).some((outcome) => outcome.orderId === item.orderId && outcome.status === "unavailable"),
         true
       );
     }

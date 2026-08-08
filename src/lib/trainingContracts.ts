@@ -63,6 +63,8 @@ export type OrderResultLog = {
     caseId: string;
     orderId: string;
     resultId?: string;
+    sourceReportId?: string;
+    coveredOrderIds?: string[];
     status?: string;
     orderCategory: string;
     result: string;
@@ -72,21 +74,11 @@ export type OrderResultLog = {
     impression?: string;
     abnormalFlags?: string[];
     abnormalLevel: string;
-    teachingExplanation: string;
-    metadataStatus?: "complete" | "awaiting_reviewed_metadata";
-    translationStatus?: string;
-    provenance?: "configured_case_result" | "case_source_projection" | "simulated_normal" | "not_provided" | "medical_review_pending" | "source_not_collected" | "source_not_performed" | "source_not_available" | "medical_conflict" | "source_projection_match_failed";
-    scoringEligible?: boolean;
   }>;
   orderOutcomes?: Array<{
     orderId: string;
     displayName: string;
-    status: "reported" | "no_indication" | "not_performed" | "no_specimen" | "not_provided" | "medical_review_pending" | "prerequisite_missing" | "duplicate" | "unrecognized" | "unavailable";
-    provenance: string;
-    reviewStatus?: "pending_human_medical_review" | "not_required";
-    reviewReason?: string;
-    scoringEligible?: boolean;
-    diagnosticEligible?: boolean;
+    status: "reported" | "existing_report" | "unavailable" | "no_indication" | "not_performed" | "no_specimen" | "not_provided" | "medical_review_pending" | "prerequisite_missing" | "duplicate" | "unrecognized";
     resultId?: string;
     message: string;
   }>;
@@ -106,6 +98,9 @@ export type OrderResultLog = {
   selectedOrderCount?: number;
   recognizedOrderCount?: number;
   returnedReportCount?: number;
+  newReportCount?: number;
+  existingReportCount?: number;
+  unavailableResultCount?: number;
 };
 
 export type ExamResultLog = {
@@ -113,13 +108,7 @@ export type ExamResultLog = {
   result: string;
   at: string;
   examId?: string;
-  translationStatus?: string;
-  provenance?: "configured_case_result" | "case_source_projection" | "simulated_normal" | "not_provided" | "medical_review_pending" | "source_not_collected" | "source_not_performed" | "source_not_available" | "medical_conflict" | "source_projection_match_failed";
-  scoringEligible?: boolean;
-  affectsDiagnosis?: false;
-  affectsScore?: false;
-  reviewerStatus?: "not_required";
-  simulationPolicyId?: string;
+  status?: "reported" | "unavailable";
   evidenceOptions?: StudentEvidenceOption[];
 };
 

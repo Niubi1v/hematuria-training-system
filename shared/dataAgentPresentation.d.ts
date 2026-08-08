@@ -72,5 +72,5 @@ export function presentExamResult(result: unknown, language?: DataAgentLanguage)
 export function reportStatusPresentation(
   item: { status?: string; abnormalFlags?: string[]; abnormalLevel?: string },
   language?: DataAgentLanguage
-): { state: "needs-review" | "abnormal" | "normal" | "reported"; label: string };
+): { state: "unavailable" | "abnormal" | "normal" | "reported"; label: string };
 export function safeStudentFacingText(value: unknown, language?: DataAgentLanguage, placeholder?: string): string;

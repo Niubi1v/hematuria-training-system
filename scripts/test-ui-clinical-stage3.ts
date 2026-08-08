@@ -116,13 +116,10 @@ async function main() {
 }, attempt.token);
   assert.equal(response.statusCode, 200);
   assert.deepEqual((response.payload.results as Array<{ orderId: string }>).map((item) => item.orderId).sort(), []);
-  const p008Outcomes = response.payload.orderOutcomes as Array<{ orderId: string; status: string; provenance: string; diagnosticEligible?: boolean; scoringEligible?: boolean }>;
-  assert(p008Outcomes.some((item) => item.orderId === "LAB-BL-003" && item.status === "medical_review_pending"));
-  assert(p008Outcomes.some((item) => item.orderId === "IMG-CT-002"
-    && item.status === "medical_review_pending"
-    && item.provenance === "source_result_semantic_mismatch"
-    && item.diagnosticEligible === false
-    && item.scoringEligible === false));
+  const p008Outcomes = response.payload.orderOutcomes as Array<{ orderId: string; status: string }>;
+  assert(p008Outcomes.some((item) => item.orderId === "LAB-BL-003" && item.status === "unavailable"));
+  assert(p008Outcomes.some((item) => item.orderId === "IMG-CT-002" && item.status === "unavailable"));
+  assert.doesNotMatch(JSON.stringify(response.payload), /provenance|reviewStatus|medical_review_pending|scoringEligible|diagnosticEligible|等待医学审核/);
   assert((response.payload.matchedOrders as Array<{ displayName: string }>).some((item) => item.displayName === "双肾CTU平扫+增强"));
 
   attempt = await investigationAttempt("P008");
@@ -136,9 +133,7 @@ async function main() {
 }, attempt.token);
   assert.equal(response.statusCode, 200);
   assert.equal((response.payload.results as Array<{ orderId: string }>).some((item) => item.orderId === "IMG-CT-002"), false);
-  assert((response.payload.orderOutcomes as Array<{ orderId: string; status: string; provenance: string }>).some((item) => item.orderId === "IMG-CT-002"
-    && item.status === "medical_review_pending"
-    && item.provenance === "source_result_semantic_mismatch"));
+  assert((response.payload.orderOutcomes as Array<{ orderId: string; status: string }>).some((item) => item.orderId === "IMG-CT-002" && item.status === "unavailable"));
 
   attempt = await investigationAttempt("P001");
   response = await call({
@@ -154,17 +149,13 @@ async function main() {
     (response.payload.results as Array<{ orderId: string }>).map((item) => item.orderId).sort(),
     ["LAB-UR-001"]
   );
-  const p001Results = response.payload.results as Array<{ orderId: string; result: string; diagnosticEligible?: boolean; scoringEligible?: boolean }>;
+  const p001Results = response.payload.results as Array<{ orderId: string; result: string }>;
   assert.equal(p001Results[0]?.result, "红细胞 5562个/μl");
   assert.equal((p001Results[0]?.result.match(/红细胞\s*5562个\/μl/gu) || []).length, 1);
-  const p001Outcomes = response.payload.orderOutcomes as Array<{ orderId: string; status: string; provenance: string; diagnosticEligible?: boolean; scoringEligible?: boolean }>;
+  const p001Outcomes = response.payload.orderOutcomes as Array<{ orderId: string; status: string }>;
   assert.equal(p001Outcomes.filter((item) => item.status === "reported").length, 1);
   for (const orderId of ["LAB-BL-001", "IMG-US-001"]) {
-    assert(p001Outcomes.some((item) => item.orderId === orderId
-      && item.status === "medical_review_pending"
-      && item.provenance === "source_result_semantic_mismatch"
-      && item.diagnosticEligible === false
-      && item.scoringEligible === false));
+    assert(p001Outcomes.some((item) => item.orderId === orderId && item.status === "unavailable"));
   }
   assert.doesNotMatch(JSON.stringify(response.payload), /糖化血红蛋白|梅毒抗体|LAD|RCA|LCX/u);
 
@@ -179,11 +170,10 @@ async function main() {
   }, attempt.token);
   assert.equal(response.statusCode, 200);
   assert.equal((response.payload.results as unknown[]).length, 0);
-  const missingOutcomes = response.payload.orderOutcomes as Array<{ displayName: string; status: string; provenance: string; message: string }>;
+  const missingOutcomes = response.payload.orderOutcomes as Array<{ displayName: string; status: string; message: string }>;
   assert.equal(missingOutcomes.length, 2);
-  assert(missingOutcomes.every((item) => item.status === "medical_review_pending"));
-  assert(missingOutcomes.every((item) => ["source_not_available", "medical_review_pending"].includes(item.provenance)));
-  assert(missingOutcomes.some((item) => item.displayName === "X光膀胱造影" && /等待医学审核/.test(item.message)));
+  assert(missingOutcomes.every((item) => item.status === "unavailable"));
+  assert(missingOutcomes.some((item) => item.displayName === "X光膀胱造影" && /当前无可提供/.test(item.message)));
 
   const safeSimulation = await investigationAttempt("P001");
   response = await call({
@@ -195,10 +185,8 @@ async function main() {
     input: "阴囊"
   }, safeSimulation.token);
   assert.equal(response.statusCode, 200);
-  assert.equal(response.payload.provenance, "simulated_normal");
-  assert.equal(response.payload.affectsDiagnosis, false);
-  assert.equal(response.payload.affectsScore, false);
-  assert.equal(response.payload.reviewerStatus, "not_required");
+  assert.equal(response.payload.provenance, undefined);
+  assert.equal(response.payload.scoringEligible, undefined);
   assert.match(String(response.payload.result), /未见明显异常/);
 
   const criticalMissing = await investigationAttempt("P001");
@@ -211,9 +199,8 @@ async function main() {
     input: "腰部包块"
   }, criticalMissing.token);
   assert.equal(response.statusCode, 200);
-  assert.equal(response.payload.provenance, "medical_review_pending");
-  assert.equal(response.payload.scoringEligible, false);
-  assert.equal(response.payload.result, "该项目等待医学审核，本次训练不将其作为诊断、治疗或评分依据。");
+  assert.equal(response.payload.status, "unavailable");
+  assert.equal(response.payload.result, "本病例当前无可提供的该项查体结果。");
 
   const female = await investigationAttempt("P002");
   response = await call({
@@ -226,9 +213,8 @@ async function main() {
 }, female.token);
   assert.equal(response.statusCode, 200);
   assert.equal(response.payload.examId, undefined);
-  assert.equal(response.payload.result, "该项目等待医学审核，本次训练不将其作为诊断、治疗或评分依据。");
-  assert.equal(response.payload.provenance, "medical_review_pending");
-  assert.notEqual(response.payload.provenance, "simulated_normal");
+  assert.equal(response.payload.result, "本病例当前无可提供的该项查体结果。");
+  assert.equal(response.payload.provenance, undefined);
   assert.doesNotMatch(String(response.payload.result), /\d|正常|阴性/);
 
   const male = await investigationAttempt("P001");
@@ -242,7 +228,7 @@ async function main() {
 }, male.token);
   assert.equal(response.statusCode, 200);
   assert.equal(response.payload.examId, undefined);
-  assert.equal(response.payload.provenance, "medical_review_pending");
+  assert.equal(response.payload.status, "unavailable");
 
   const perioperativeAttemptId = `ui-stage6-P001-${Date.now()}-${Math.random()}`;
   response = await call({ action: "init-attempt", caseId: "P001", attemptId: perioperativeAttemptId, mode: "free", language: "zh" });

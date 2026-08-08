@@ -94,13 +94,14 @@ assert.deepEqual(summary, {
 const semanticReasons = ["cross_domain_or_mixed_order_content", "cross_order_duplicate_result", "multiple_timepoints_or_states", "recommendation_or_uncertain_result"];
 const withdrawalReasons = Object.fromEntries(semanticReasons.map((reason) => [reason, runtime.sourceProjectionRejected.filter((item) => item.reason === reason).length]));
 assert.deepEqual(withdrawalReasons, {
-  cross_domain_or_mixed_order_content: 7,
-  cross_order_duplicate_result: 37,
+  cross_domain_or_mixed_order_content: 9,
+  cross_order_duplicate_result: 35,
   multiple_timepoints_or_states: 1,
   recommendation_or_uncertain_result: 17
 });
 assert.equal(runtime.sourceProjection.length, 4);
 assert.equal(Object.values(withdrawalReasons).reduce((sum, count) => sum + count, 0), 62);
+assert(runtime.sourceProjectionRejected.filter((item) => item.reason === "cross_order_duplicate_result").every((item) => item.coveredByOrderId));
 assert(runtime.sourceProjection.every((item) => item.itemId === "LAB-UR-001" && item.diagnosticEligible === true && item.scoringEligible === false));
 
 const representativeCases = [
@@ -121,10 +122,10 @@ for (const journey of representativeCases) {
 
   response = await placeOrder(response, journey.caseId, attemptId, "LAB-UR-001");
   if (journey.caseId === "P011") {
-    const pending = outcome(response, "medical_review_pending", "LAB-UR-001");
-    assert(pending);
-    assert.equal(pending.scoringEligible, false);
-    assert.equal(pending.diagnosticEligible, false);
+    const unavailable = outcome(response, "unavailable", "LAB-UR-001");
+    assert(unavailable);
+    assert.equal("scoringEligible" in unavailable, false);
+    assert.equal("diagnosticEligible" in unavailable, false);
     assert.equal((response.payload.results || []).length, 0);
   } else {
     const reported = outcome(response, "reported", "LAB-UR-001");
@@ -141,36 +142,37 @@ for (const journey of representativeCases) {
   }
 
   response = await placeOrder(response, journey.caseId, attemptId, "LAB-BL-001");
-  const unsafeCbc = outcome(response, "medical_review_pending", "LAB-BL-001");
+  const unsafeCbc = outcome(response, "unavailable", "LAB-BL-001");
   assert(unsafeCbc, `${journey.caseId}:cross_domain_cbc_not_isolated`);
-  assert.equal(unsafeCbc.scoringEligible, false);
-  assert.equal(unsafeCbc.diagnosticEligible, false);
+  assert.equal("scoringEligible" in unsafeCbc, false);
+  assert.equal("diagnosticEligible" in unsafeCbc, false);
   assert.equal((response.payload.results || []).length, 0);
   if (journey.caseId === "P001") assert.doesNotMatch(JSON.stringify(response.payload), /糖化血红蛋白|梅毒抗体/u);
 
   if (journey.caseId === "P001") {
     response = await placeOrder(response, journey.caseId, attemptId, "LAB-UR-002");
-    assert(outcome(response, "medical_review_pending", "LAB-UR-002"));
-    assert.equal((response.payload.results || []).length, 0);
+    assert(outcome(response, "existing_report", "LAB-UR-002"));
+    assert.equal((response.payload.results || []).length, 1);
     response = await call({ action: "exam", caseId: journey.caseId, attemptId, mode: "free", language: "zh", input: "腰部包块" }, response.token);
     assert.equal(response.statusCode, 200);
-    assert.equal(response.payload.provenance, "simulated_normal");
-    assert.equal(response.payload.scoringEligible, false);
-    assert.equal(response.payload.diagnosticEligible, false);
+    assert.equal(response.payload.status, "reported");
+    assert.equal("provenance" in response.payload, false);
+    assert.equal("scoringEligible" in response.payload, false);
+    assert.equal("diagnosticEligible" in response.payload, false);
     response = await placeOrder(response, journey.caseId, attemptId, "KUB腹部平片");
-    assert(outcome(response, "no_indication"));
+    assert(outcome(response, "unavailable"));
   }
 
   if (journey.caseId === "P006") {
     response = await placeOrder(response, journey.caseId, attemptId, "LAB-UR-008");
-    assert(outcome(response, "medical_review_pending", "LAB-UR-008"), "hypothetical culture result must remain pending review");
+    assert(outcome(response, "unavailable", "LAB-UR-008"), "hypothetical culture result must remain unavailable to the learner");
     assert.equal((response.payload.results || []).length, 0);
   }
 
   if (journey.caseId === "P011") {
     for (const orderId of ["LAB-UR-003", "LAB-BL-003", "IMG-US-001"]) {
       response = await placeOrder(response, journey.caseId, attemptId, orderId);
-      assert(outcome(response, "medical_review_pending"), `${journey.caseId}/${orderId}:uncertain_or_mixed_result_not_isolated`);
+      assert(outcome(response, "unavailable"), `${journey.caseId}/${orderId}:uncertain_or_mixed_result_not_isolated`);
       assert.equal((response.payload.results || []).length, 0);
     }
   }
@@ -239,7 +241,7 @@ for (const journey of representativeCases) {
 
 const english = await startStageTwo("P001", "english-stage-1-3", "en");
 let englishResponse = await placeOrder(english.response, "P001", english.attemptId, "CBC", "en");
-assert(outcome(englishResponse, "medical_review_pending", "LAB-BL-001"));
+assert(outcome(englishResponse, "unavailable", "LAB-BL-001"));
 assert.equal((englishResponse.payload.results || []).length, 0);
 assert.equal(containsCjk(JSON.stringify(englishResponse.payload)), false);
 englishResponse = await stage(englishResponse, "P001", english.attemptId, "orders", {}, "en");
@@ -256,8 +258,8 @@ assert.equal(englishResponse.statusCode, 200);
 
 const conflict = await startStageTwo("P004", "conflict");
 const conflictOrder = await placeOrder(conflict.response, "P004", conflict.attemptId, "双肾+输尿管CT平扫+增强");
-assert(outcome(conflictOrder, "medical_review_pending"));
-assert.equal(outcome(conflictOrder, "medical_review_pending").provenance, "medical_conflict");
+assert(outcome(conflictOrder, "unavailable"));
+assert.equal("provenance" in outcome(conflictOrder, "unavailable"), false);
 assert.equal((conflictOrder.payload.results || []).length, 0);
 
 assert.doesNotMatch(JSON.stringify(journeyResults), /undefined|\[object Object\]/iu);

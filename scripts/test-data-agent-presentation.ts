@@ -142,7 +142,7 @@ for (const language of ["zh", "en"] as const) {
   const final = reportStatusPresentation({ status: "final", abnormalFlags: [], abnormalLevel: "final" }, language);
   assert.equal(final.state, "reported");
   assert.equal(final.label, language === "en" ? "Reported" : "已出报告");
-  assert.equal(reportStatusPresentation({ status: "not_available" }, language).label, language === "en" ? "Awaiting medical review" : "等待医学审核");
+  assert.deepEqual(reportStatusPresentation({ status: "not_available" }, language), { state: "unavailable", label: language === "en" ? "No result available" : "暂无可显示结果" });
   assert.equal(reportStatusPresentation({ status: "not_performed" }, language).label, language === "en" ? "Not performed" : "未实施");
 }
 
@@ -177,10 +177,8 @@ async function main() {
   response = await call({ action: "order", caseId: "P008", attemptId, mode: "free", language: "en", input: "CBC" }, response.token);
   assert.equal(response.statusCode, 200);
   assert.equal((response.payload.results as unknown[]).length, 0, "P008 unavailable CBC placeholder must not be presented as a report");
-  assert.deepEqual(
-    (response.payload.orderOutcomes as Array<{ status: string; provenance: string }>).map((item) => [item.status, item.provenance]),
-    [["medical_review_pending", "source_not_available"]]
-  );
+  assert.deepEqual((response.payload.orderOutcomes as Array<{ status: string }>).map((item) => item.status), ["unavailable"]);
+  assert.doesNotMatch(JSON.stringify(response.payload), /provenance|reviewStatus|medical_review_pending|scoringEligible|diagnosticEligible|awaiting review/i);
   assert.equal(containsCjk(JSON.stringify(response.payload)), false, "English API payload must not expose CJK");
 
   console.log(JSON.stringify({

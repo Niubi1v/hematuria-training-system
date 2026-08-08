@@ -351,8 +351,8 @@ test("@ui-clinical-stage3 male case hides initial answers and restores released 
   await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
   await expect(page.getByTestId("report-card")).toHaveCount(1);
   await expect(page.getByTestId("order-outcome")).toHaveCount(3);
-  await expect(page.getByText("血常规：现有 source 结果无法安全归属于该检查，等待医学审核；当前不进入诊断、治疗或评分证据。", { exact: true })).toBeVisible();
-  await expect(page.getByText("彩超泌尿系（双肾、输尿管及膀胱）+残余尿：现有 source 结果无法安全归属于该检查，等待医学审核；当前不进入诊断、治疗或评分证据。", { exact: true })).toBeVisible();
+  await expect(page.getByText("血常规：本病例当前无可提供的该项检查结果。", { exact: true })).toBeVisible();
+  await expect(page.getByText("彩超泌尿系（双肾、输尿管及膀胱）+残余尿：本病例当前无可提供的该项检查结果。", { exact: true })).toBeVisible();
   await expect(page.getByText("第2阶段 · 检查与开单", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("第2阶段", { exact: true })).toHaveCount(0);
   await expect(page.getByText("开单服务暂时不可用，未释放报告。")).toHaveCount(0);
@@ -367,7 +367,7 @@ test("@ui-clinical-stage3 male case hides initial answers and restores released 
     button.click();
   });
   await expect.poll(() => observations.filter((item) => item.action === "order").length).toBe(orderCountBeforeDoubleClick + 1);
-  await expect(page.getByText(/X光膀胱造影：等待医学审核，当前不进入诊断、治疗或评分证据。/)).toBeVisible();
+  await expect(page.getByText("X光膀胱造影：本病例当前无可提供的该项检查结果。", { exact: true })).toBeVisible();
 });
 
 test("@ui-clinical-stage3 female case shows only applicable examination and imaging entries", async ({ page }) => {
@@ -407,8 +407,8 @@ test("@ui-clinical-stage3 female case shows only applicable examination and imag
   await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
   await expect(page.getByTestId("report-card")).toHaveCount(1);
   await expect(page.getByTestId("order-outcome")).toHaveCount(3);
-  await expect(page.getByText("血常规：现有 source 结果无法安全归属于该检查，等待医学审核；当前不进入诊断、治疗或评分证据。", { exact: true })).toBeVisible();
-  await expect(page.getByText("彩超泌尿系（双肾、输尿管及膀胱）+残余尿：现有 source 结果无法安全归属于该检查，等待医学审核；当前不进入诊断、治疗或评分证据。", { exact: true })).toBeVisible();
+  await expect(page.getByText("血常规：本病例当前无可提供的该项检查结果。", { exact: true })).toBeVisible();
+  await expect(page.getByText("彩超泌尿系（双肾、输尿管及膀胱）+残余尿：本病例当前无可提供的该项检查结果。", { exact: true })).toBeVisible();
   await page.reload();
   await expect(page.getByTestId("report-card")).toHaveCount(1);
   await expect(page.getByTestId("order-outcome")).toHaveCount(3);
@@ -540,6 +540,39 @@ test("@order-result-human-path selected orders use the primary action and return
   await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
   await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
   await expect(page.getByTestId("diagnosis-builder").locator("fieldset").first().locator('input[type="checkbox"]')).toHaveCount(1);
+});
+
+test("@order-result-human-path P005 five-order mentor replay presents one shared report without governance leakage", async ({ page }) => {
+  const previousRuntimeTarget = process.env.HEMATURIA_RUNTIME_TARGET;
+  process.env.HEMATURIA_RUNTIME_TARGET = "desktop";
+  try {
+    await routeTrainingApiThroughHandler(page, []);
+    await page.goto("/cases/P005/");
+    await enterInvestigationStage(page, "zh");
+
+    const orderInput = page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜");
+    await orderInput.fill("尿常规；尿沉渣镜检；尿抗酸杆菌/结核分枝杆菌检查；PSA；彩超泌尿系（双肾、输尿管及膀胱）+残余尿");
+    await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
+
+    const feedback = page.getByRole("status").filter({ hasText: "5项医嘱" });
+    await expect(feedback).toBeFocused();
+    await expect(feedback).toContainText("新返回1份报告");
+    await expect(feedback).toContainText("同一报告另覆盖1项医嘱");
+    await expect(feedback).toContainText("3项当前无可提供结果");
+    await expect(page.getByTestId("report-card")).toHaveCount(1);
+    await expect(page.getByTestId("order-outcome")).toHaveCount(5);
+    await expect(page.getByTestId("report-card").getByText("单位", { exact: true })).toHaveCount(0);
+    await expect(page.getByTestId("report-card").getByText("参考范围", { exact: true })).toHaveCount(0);
+    await expect(page.locator("body")).not.toContainText(/等待医学审核|待审核|等待审核元数据|当前不进入诊断、治疗或评分证据|medical_review_pending|needs_review|not_available|diagnosticEligible|scoringEligible/u);
+
+    await orderInput.fill("尿常规；尿沉渣镜检；尿抗酸杆菌/结核分枝杆菌检查；PSA；彩超泌尿系（双肾、输尿管及膀胱）+残余尿");
+    await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
+    await expect(page.getByRole("status").filter({ hasText: "5项医嘱" })).toContainText("已有结果1份");
+    await expect(page.getByTestId("investigation-selection-summary")).toContainText("已返回检查报告 1 份");
+  } finally {
+    if (previousRuntimeTarget === undefined) delete process.env.HEMATURIA_RUNTIME_TARGET;
+    else process.env.HEMATURIA_RUNTIME_TARGET = previousRuntimeTarget;
+  }
 });
 
 test("@order-result-human-path duplicate English order stays single and isolated by case", async ({ page }) => {
@@ -1238,14 +1271,14 @@ test("English investigation presentation fails closed without exposing untransla
   const investigation = page.locator(".workbench-main");
   const visibleControls = await investigation.locator("h3, h4, label, input[placeholder]").allTextContents();
   expect(visibleControls.join(" ")).not.toMatch(/[\u3400-\u9fff]/u);
-  const untranslatedOrders = page.getByText("Awaiting reviewed order-name translation", { exact: true });
+  const untranslatedOrders = page.getByText("Order name unavailable in English", { exact: true });
   await expect(untranslatedOrders.first()).toBeVisible();
   await expect(untranslatedOrders.first().locator("xpath=ancestor::label[1]").getByRole("checkbox")).toBeDisabled();
 
   await page.getByPlaceholder("Example: urinalysis and sediment, CTU, cystoscopy").fill("CBC");
   await page.getByRole("button", { name: "Order and return results", exact: true }).click();
   await expect(page.getByTestId("report-card")).toHaveCount(0);
-  const unavailable = page.getByText("CBC: the result is awaiting medical content review and is excluded from diagnosis, treatment, and scoring for this attempt.", { exact: true });
+  const unavailable = page.getByText("CBC: this case currently has no result available to display for this examination.", { exact: true });
   await expect(unavailable).toBeVisible();
   await expect(unavailable).not.toContainText(/[\u3400-\u9fff]/u);
   expect(observations.filter((item) => item.action === "order")).toEqual([
@@ -1253,7 +1286,7 @@ test("English investigation presentation fails closed without exposing untransla
   ]);
 });
 
-test("pending CBC remains excluded instead of rendering an unreviewed report", async ({ page }) => {
+test("unavailable CBC remains excluded without exposing internal review state", async ({ page }) => {
   await routeTrainingApiThroughHandler(page, []);
   await page.goto("/cases/P001/");
   await enterInvestigationStage(page, "zh");
@@ -1261,8 +1294,9 @@ test("pending CBC remains excluded instead of rendering an unreviewed report", a
   await page.getByPlaceholder("例如：尿常规+尿沉渣、CTU、膀胱镜").fill("血常规");
   await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
   await expect(page.getByTestId("report-card")).toHaveCount(0);
-  await expect(page.getByText("等待医学审核", { exact: true })).toBeVisible();
-  await expect(page.getByText("血常规：现有 source 结果无法安全归属于该检查，等待医学审核；当前不进入诊断、治疗或评分证据。", { exact: true })).toBeVisible();
+  await expect(page.getByText("暂无可显示结果", { exact: true })).toBeVisible();
+  await expect(page.getByText("血常规：本病例当前无可提供的该项检查结果。", { exact: true })).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(/等待医学审核|待审核|source|provenance|diagnosticEligible|scoringEligible/u);
 });
 
 test("report status labels are localized and abnormal evidence takes priority over final", async ({ page }) => {
