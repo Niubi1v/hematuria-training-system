@@ -1378,6 +1378,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   const [examLogs, setExamLogs] = useState<ExamResultLog[]>([]);
   const [orderLogs, setOrderLogs] = useState<OrderResultLog[]>([]);
   const [orderSubmitting, setOrderSubmitting] = useState(false);
+  const [orderFeedback, setOrderFeedback] = useState("");
   const [mdtOpinions, setMdtOpinions] = useState<MdtOpinion[]>([]);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [serverEvidenceOptions, setServerEvidenceOptions] = useState<StudentEvidenceOption[]>([]);
@@ -2690,10 +2691,12 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
 
   async function submitOrder(textOverride?: string) {
     if (osceLocked || orderSubmitLockRef.current) return;
-    const text = (textOverride ?? orderInput).trim();
+    const selectedText = unique([...answers.selectedOrders, answers.customOrders]).join("；");
+    const text = (textOverride ?? orderInput).trim() || selectedText;
     if (!text) return;
     orderSubmitLockRef.current = true;
     setOrderSubmitting(true);
+    setOrderFeedback("");
     try {
       const matchedLog = await trainingAction<OrderResultLog>({ action: "order", input: text });
       const hasReport = matchedLog.results.length > 0;
@@ -2712,17 +2715,15 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         if (timelineResults.length) addTimeline("result", lang === "en" ? "Report returned" : "返回检查结果", timelineResults.join("\n"), 2);
       }
       setOrderInput("");
+      setOrderFeedback(hasReport
+        ? (lang === "en" ? `${matchedLog.results.length} report(s) returned.` : `已返回 ${matchedLog.results.length} 份检查报告。`)
+        : studentFacingClinicalText(matchedLog.message, lang));
     } catch (error) {
       setStorageWarning(orderSubmissionFailureMessage(error, lang));
     } finally {
       orderSubmitLockRef.current = false;
       setOrderSubmitting(false);
     }
-  }
-
-  function submitSelectedOrders() {
-    const text = unique([...answers.selectedOrders, answers.customOrders]).join("；");
-    if (text) submitOrder(text);
   }
 
   function toggleDepartment(item: string) {
@@ -3312,9 +3313,9 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
                 <label className="mt-4 block"><span className="font-medium">{t(lang, "otherOrders")}</span><textarea value={answers.customOrders} onChange={(event) => updateAnswer("customOrders", event.target.value)} rows={4} className="mt-2 w-full rounded-md border border-clinic-line px-3 py-2 outline-none focus:border-clinic-blue" /></label>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <input value={orderInput} onChange={(event) => setOrderInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") submitOrder(); }} className="ui-input min-w-[220px] flex-1" placeholder={t(lang, "orderPlaceholder")} />
-                  <button onClick={() => submitOrder()} disabled={orderSubmitting} className="ui-button-primary">{orderSubmitting ? (lang === "en" ? "Submitting..." : "提交中……") : t(lang, "orderAndReturn")}</button>
-                  <button onClick={submitSelectedOrders} disabled={orderSubmitting} className="ui-button-secondary">{t(lang, "selectedOrderResults")}</button>
+                  <button onClick={() => submitOrder()} disabled={orderSubmitting || (!orderInput.trim() && answers.selectedOrders.length === 0 && !answers.customOrders.trim())} className="ui-button-primary">{orderSubmitting ? (lang === "en" ? "Submitting..." : "提交中……") : t(lang, "orderAndReturn")}</button>
                 </div>
+                {orderFeedback && <p role="status" aria-live="polite" className="mt-2 text-sm font-medium text-clinic-blue">{orderFeedback}</p>}
                 <div className="mt-4 space-y-3">
                   {orderLogs.map((log) => (
                     <div key={log.id} className="rounded-md border border-clinic-line p-3">
