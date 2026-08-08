@@ -57,10 +57,10 @@ try {
     $node = @(Get-PackageProcesses "node" $nodePath)
     $llama = @(Get-PackageProcesses "llama-server" $llamaPath)
     if ($node.Count -gt 0 -and $llama.Count -gt 0) {
-      $runtimePids = @($node + $llama | ForEach-Object { [int]$_.ProcessId })
+      $runtimePids = @($node + $llama | ForEach-Object { [int]$_.Id })
       $listeners = @(& "$env:SystemRoot\System32\netstat.exe" -ano -p TCP | ForEach-Object {
         if ($_ -match '^\s*TCP\s+(\S+)\s+\S+\s+LISTENING\s+(\d+)\s*$' -and $runtimePids -contains [int]$Matches[2]) {
-          [PSCustomObject]@{ LocalEndpoint = $Matches[1]; OwningProcess = [int]$Matches[2] }
+          [PSCustomObject]@{ LocalEndpoint = $Matches[1]; LocalPort = [int]($Matches[1] -replace '^.*:', ''); OwningProcess = [int]$Matches[2] }
         }
       })
       $nonLoopback = @($listeners | Where-Object { $_.LocalEndpoint -notmatch '^(127\.0\.0\.1:|\[::1\]:)' })
@@ -68,8 +68,8 @@ try {
         Stop-Process -Id $appProcess.Id -Force -ErrorAction SilentlyContinue
         Stop-WithRepair "检测到本地服务未严格绑定回环地址，已安全停止。"
       }
-      $nodeListener = @($listeners | Where-Object { $node.ProcessId -contains [int]$_.OwningProcess })
-      $llamaListener = @($listeners | Where-Object { $llama.ProcessId -contains [int]$_.OwningProcess })
+      $nodeListener = @($listeners | Where-Object { $node.Id -contains [int]$_.OwningProcess })
+      $llamaListener = @($listeners | Where-Object { $llama.Id -contains [int]$_.OwningProcess })
       if ($nodeListener.Count -gt 0 -and $llamaListener.Count -gt 0) {
         $ports = @($listeners | Select-Object -ExpandProperty LocalPort -Unique)
         if ($ports.Count -lt 2) {

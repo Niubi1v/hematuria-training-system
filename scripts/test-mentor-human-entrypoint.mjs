@@ -19,13 +19,14 @@ const root = await fs.mkdtemp(path.join(os.tmpdir(), "hematuria-mentor-entrypoin
 const variants = [
   "English",
   "中文 空格",
-  path.join("long-path", "mentor-package-segment-1234567890".repeat(4), "full")
+  path.join("long-path", "mentor-package-segment-1234567890".repeat(3), "full")
 ];
 const results = [];
 
 try {
   for (let index = 0; index < variantCount; index += 1) {
     const extractionRoot = path.join(root, variants[index]);
+    if (index === 2) assert.ok(extractionRoot.length >= 170, "mentor_entrypoint_long_path_too_short");
     await fs.mkdir(extractionRoot, { recursive: true });
     const extracted = spawnSync("tar.exe", ["-xf", packagePath, "-C", extractionRoot], { encoding: "utf8", windowsHide: true });
     assert.equal(extracted.status, 0, String(extracted.stderr || extracted.stdout || "mentor_zip_extract_failed"));

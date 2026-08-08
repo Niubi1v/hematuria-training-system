@@ -88,10 +88,11 @@ assert.equal(version.runtimeSecurity.cloudRequestAllowed, false);
 assert.equal(version.runtimeSecurity.listenAddress, "127.0.0.1");
 
 const launcher = await fs.readFile(path.join(stage, "tools", "Start-Mentor.ps1"), "utf8");
-for (const signal of ["正在启动本地患者服务", "127.0.0.1", "Get-FileHash", "netstat.exe", "Get-PackageProcesses", "ProcessStartInfo", "UseShellExecute = $false", "llama-server.exe", "node.exe"]) {
+for (const signal of ["正在启动本地患者服务", "127.0.0.1", "Get-FileHash", "netstat.exe", "Get-PackageProcesses", "LocalPort", "$_.Id", "$node.Id", "$llama.Id", "ProcessStartInfo", "UseShellExecute = $false", "llama-server.exe", "node.exe"]) {
   assert(launcher.includes(signal), `mentor_launcher_contract_missing:${signal}`);
 }
 assert.doesNotMatch(launcher, /Get-CimInstance|Get-NetTCPConnection/u);
+assert.doesNotMatch(launcher, /\.ProcessId/u);
 const runtime = JSON.parse(await fs.readFile(path.join(stage, "App", "resources", "app", "desktop", "clinical-content-triage-runtime.json"), "utf8"));
 assert.equal(runtime.sourceProjection.length, 4);
 assert.equal(runtime.sourceProjectionRejected.length, 121);
