@@ -77,6 +77,10 @@ function runtimeSnapshot() {
       || snapshot.cloudRequestCount < 0
       || typeof snapshot.sessionStartedAt !== "string"
       || !["lightweight", "standard"].includes(snapshot.modelProfile)
+      || (snapshot.configuredMode !== null && !["lightweight", "standard"].includes(snapshot.configuredMode))
+      || snapshot.effectiveMode !== snapshot.modelProfile
+      || snapshot.effectiveModel !== snapshot.model
+      || !["mentor_package", "configured_preference", "runtime_default"].includes(snapshot.overrideSource)
       || snapshot.runtimeTarget !== "desktop"
       || typeof snapshot.productHead !== "string"
     ) {
@@ -87,6 +91,10 @@ function runtimeSnapshot() {
       localModelReady: snapshot.localModelReady,
       model: snapshot.model,
       modelProfile: snapshot.modelProfile,
+      configuredMode: snapshot.configuredMode,
+      effectiveMode: snapshot.effectiveMode,
+      effectiveModel: snapshot.effectiveModel,
+      overrideSource: snapshot.overrideSource,
       productHead: snapshot.productHead,
       runtimeTarget: snapshot.runtimeTarget,
       sessionStartedAt: snapshot.sessionStartedAt,
@@ -234,6 +242,10 @@ function desktopRuntimeSummary() {
     runtimeTarget: runtime.runtimeTarget,
     model: runtime.model,
     modelProfile: runtime.modelProfile,
+    configuredMode: runtime.configuredMode,
+    effectiveMode: runtime.effectiveMode,
+    effectiveModel: runtime.effectiveModel,
+    overrideSource: runtime.overrideSource,
     productHead: runtime.productHead,
     llamaServerReady: runtime.llamaServerReady,
     localModelReady: runtime.localModelReady,

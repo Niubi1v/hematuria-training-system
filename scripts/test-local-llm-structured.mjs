@@ -487,6 +487,10 @@ async function main() {
       localModelReady: true,
       model: DEFAULT_LOCAL_MODEL,
       modelProfile: "lightweight",
+      configuredMode: null,
+      effectiveMode: "lightweight",
+      effectiveModel: DEFAULT_LOCAL_MODEL,
+      overrideSource: "runtime_default",
       productHead: "a".repeat(40),
       cloudRequestCount: 0
     });
@@ -521,7 +525,8 @@ async function main() {
     assert.notEqual(apiLocal.payload.answerSource, "local");
     assert.deepEqual(Object.keys(apiLocal.payload.desktopEvidence).sort(), [
       "answerSource", "cloudRequestCount", "factState", "fallbackReason", "intent", "latency",
-      "llamaServerReady", "localModelReady", "model", "modelProfile", "productHead", "requestedSlot",
+      "llamaServerReady", "localModelReady", "model", "modelProfile", "configuredMode", "effectiveMode",
+      "effectiveModel", "overrideSource", "productHead", "requestedSlot",
       "responseErrors", "runtimeTarget", "sessionStartedAt", "unknown"
     ].sort());
     assert.equal(apiLocal.payload.desktopEvidence.model, DEFAULT_LOCAL_MODEL);
@@ -562,6 +567,10 @@ async function main() {
       localModelReady: false,
       model: DEFAULT_LOCAL_MODEL,
       modelProfile: "lightweight",
+      configuredMode: null,
+      effectiveMode: "lightweight",
+      effectiveModel: DEFAULT_LOCAL_MODEL,
+      overrideSource: "runtime_default",
       productHead: "a".repeat(40),
       cloudRequestCount: 0
     });
@@ -605,6 +614,10 @@ async function main() {
       localModelReady: true,
       model: DEFAULT_LOCAL_MODEL,
       modelProfile: "lightweight",
+      configuredMode: null,
+      effectiveMode: "lightweight",
+      effectiveModel: DEFAULT_LOCAL_MODEL,
+      overrideSource: "runtime_default",
       productHead: "a".repeat(40),
       cloudRequestCount: 0
     });

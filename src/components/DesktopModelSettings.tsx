@@ -11,6 +11,10 @@ import { readStringStorage } from "@/src/lib/safeStorage";
 type DesktopSettings = {
   modelMode: "lightweight" | "standard";
   modelAlias: "Qwen3-1.7B" | "Qwen3-4B";
+  configuredMode: "lightweight" | "standard" | null;
+  effectiveMode: "lightweight" | "standard";
+  effectiveModel: "Qwen3-1.7B" | "Qwen3-4B";
+  overrideSource: "mentor_package" | "configured_preference" | "runtime_default";
   modelDirectory: string;
   modelFilePath: string;
   modelPresent: boolean;
@@ -35,6 +39,10 @@ type DesktopRuntimeSummary = {
   runtimeTarget: "desktop";
   model: "Qwen3-1.7B" | "Qwen3-4B";
   modelProfile: "lightweight" | "standard";
+  configuredMode: "lightweight" | "standard" | null;
+  effectiveMode: "lightweight" | "standard";
+  effectiveModel: "Qwen3-1.7B" | "Qwen3-4B";
+  overrideSource: "mentor_package" | "configured_preference" | "runtime_default";
   productHead: string;
   llamaServerReady: boolean;
   localModelReady: boolean;
@@ -57,6 +65,10 @@ function isRuntimeDiagnostic(value: DesktopDiagnostics): value is DesktopDiagnos
 const emptySettings: DesktopSettings = {
   modelMode: "lightweight",
   modelAlias: "Qwen3-1.7B",
+  configuredMode: null,
+  effectiveMode: "lightweight",
+  effectiveModel: "Qwen3-1.7B",
+  overrideSource: "runtime_default",
   modelDirectory: "",
   modelFilePath: "",
   modelPresent: false,
@@ -332,6 +344,7 @@ export default function DesktopModelSettings() {
                   <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
                     <dt>{lang === "en" ? "Local interview service" : "本地问诊服务"}</dt><dd>{diagnostics.llamaServerReady && diagnostics.localModelReady ? (lang === "en" ? "Ready" : "已就绪") : (lang === "en" ? "Not ready" : "未就绪")}</dd>
                     <dt>{lang === "en" ? "Local resource profile" : "本地资源方案"}</dt><dd>{diagnostics.modelProfile === "lightweight" ? (lang === "en" ? "Lightweight" : "轻量") : (lang === "en" ? "Standard" : "标准")}</dd>
+                    <dt>{lang === "en" ? "Effective local model" : "当前有效模型"}</dt><dd>{diagnostics.model}</dd>
                     <dt>{lang === "en" ? "Accepted local answers this start" : "本次启动已接受的本地回答"}</dt><dd>{diagnostics.localAiAcceptedCount}</dd>
                     <dt>{lang === "en" ? "Safe fallback answers this start" : "本次启动安全降级回答"}</dt><dd>{diagnostics.ruleFallbackCount}</dd>
                     <dt>{lang === "en" ? "Runtime audit" : "运行审计"}</dt><dd>{diagnostics.runtimeAuditHealthy ? (lang === "en" ? "Healthy" : "正常") : (lang === "en" ? `Unavailable (${diagnostics.eventWriteFailureCount} write failures)` : `不可用（${diagnostics.eventWriteFailureCount} 次写入失败）`)}</dd>

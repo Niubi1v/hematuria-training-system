@@ -196,15 +196,24 @@ function validateModelMode(value) {
   return mode;
 }
 
-function selectedModelMode(store) {
-  const configuredMode = store.getDesktopSetting("localAi.modelMode");
-  return configuredMode === undefined
-    ? DEFAULT_MODEL_MODE
-    : validateModelMode(configuredMode);
+function modelModeSelection(store) {
+  const configured = store.getDesktopSetting("localAi.modelMode");
+  const configuredMode = configured === undefined ? null : validateModelMode(configured);
+  const environmentOverride = Object.hasOwn(process.env, "HEMATURIA_DESKTOP_MODEL_MODE");
+  const effectiveMode = environmentOverride
+    ? validateModelMode(process.env.HEMATURIA_DESKTOP_MODEL_MODE)
+    : configuredMode || DEFAULT_MODEL_MODE;
+  return {
+    configuredMode,
+    effectiveMode,
+    effectiveModel: modelModes[effectiveMode].alias,
+    overrideSource: environmentOverride ? "mentor_package" : configuredMode ? "configured_preference" : "runtime_default"
+  };
 }
 
 function selectedModel(store) {
-  const modelMode = selectedModelMode(store);
+  const selection = modelModeSelection(store);
+  const modelMode = selection.effectiveMode;
   const descriptor = modelModes[modelMode];
   const environmentModelPath = String(process.env.HEMATURIA_DESKTOP_MODEL_PATH || "");
   if (environmentModelPath) {
@@ -212,13 +221,13 @@ function selectedModel(store) {
       throw new Error("desktop_model_path_invalid");
     }
     const modelFilePath = path.normalize(environmentModelPath);
-    return { modelMode, descriptor, modelAlias: descriptor.alias, modelDirectory: path.dirname(modelFilePath), modelFilePath };
+    return { ...selection, modelMode, descriptor, modelAlias: descriptor.alias, modelDirectory: path.dirname(modelFilePath), modelFilePath };
   }
   const configuredDirectory = store.getDesktopSetting("localAi.modelDirectory");
   if (configuredDirectory !== undefined) {
     const modelDirectory = validateModelDirectory(configuredDirectory);
     return {
-      modelMode,
+      ...selection, modelMode,
       descriptor,
       modelAlias: descriptor.alias,
       modelDirectory,
@@ -232,7 +241,7 @@ function selectedModel(store) {
     }
     const legacyDirectory = path.dirname(path.normalize(legacyModelPath));
     return {
-      modelMode,
+      ...selection, modelMode,
       descriptor,
       modelAlias: descriptor.alias,
       modelDirectory: legacyDirectory,
@@ -241,7 +250,7 @@ function selectedModel(store) {
   }
   const modelDirectory = path.join(dataDirectory, "models");
   return {
-    modelMode,
+    ...selection, modelMode,
     descriptor,
     modelAlias: descriptor.alias,
     modelDirectory,
@@ -543,10 +552,14 @@ function reconfigureLocalAi(store) {
 }
 
 function desktopSettingsSnapshot(store) {
-  const { modelMode, modelAlias, modelDirectory, modelFilePath } = selectedModel(store);
+  const { configuredMode, effectiveMode, effectiveModel, overrideSource, modelMode, modelAlias, modelDirectory, modelFilePath } = selectedModel(store);
   return {
     modelMode,
     modelAlias,
+    configuredMode,
+    effectiveMode,
+    effectiveModel,
+    overrideSource,
     modelDirectory,
     modelFilePath,
     modelPresent: isRegularFile(modelFilePath),
@@ -567,7 +580,7 @@ function desktopAttemptKey(caseId, attemptId) {
 
 function installDesktopRuntimeEvidence(store) {
   globalThis.__hematuriaDesktopRuntimeEvidence = () => {
-    const { modelAlias, modelFilePath } = selectedModel(store);
+    const { configuredMode, effectiveMode, effectiveModel, overrideSource, modelAlias, modelFilePath } = selectedModel(store);
     const llamaServerReady = localAiState.status === "ready"
       && Boolean(llamaChild)
       && llamaChild.exitCode === null;
@@ -577,7 +590,11 @@ function installDesktopRuntimeEvidence(store) {
       llamaServerReady,
       localModelReady: llamaServerReady && isRegularFile(modelFilePath),
       model: modelAlias,
-      modelProfile: selectedModelMode(store),
+      modelProfile: effectiveMode,
+      configuredMode,
+      effectiveMode,
+      effectiveModel,
+      overrideSource,
       productHead: process.env.HEMATURIA_PRODUCT_HEAD || process.env.NEXT_PUBLIC_GIT_SHA || "desktop-local",
       cloudRequestCount: networkAudit.cloudRequestCount
     };
@@ -681,6 +698,10 @@ function desktopRuntimeDiagnostics(store) {
     localAi: {
       status: localAiState.status,
       model: selected?.modelAlias || activeModelAlias,
+      configuredMode: selected?.configuredMode ?? null,
+      effectiveMode: selected?.effectiveMode || DEFAULT_MODEL_MODE,
+      effectiveModel: selected?.effectiveModel || activeModelAlias,
+      overrideSource: selected?.overrideSource || "runtime_default",
       modelValidation: modelShaStatus,
       failureCategory: localAiState.failureCategory || null,
       failureCode: localAiState.failureCode || null,

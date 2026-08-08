@@ -29,6 +29,10 @@ function runtime(overrides = {}) {
     runtimeTarget: "desktop",
     model: "Qwen3-1.7B",
     modelProfile: "lightweight",
+    configuredMode: null,
+    effectiveMode: "lightweight",
+    effectiveModel: "Qwen3-1.7B",
+    overrideSource: "runtime_default",
     productHead: "a".repeat(40),
     llamaServerReady: true,
     localModelReady: true,
@@ -83,6 +87,10 @@ const childRuntime = `
     runtimeTarget: "desktop",
     model: "Qwen3-1.7B",
     modelProfile: "lightweight",
+    configuredMode: null,
+    effectiveMode: "lightweight",
+    effectiveModel: "Qwen3-1.7B",
+    overrideSource: "runtime_default",
     productHead: "${"b".repeat(40)}",
     llamaServerReady: true,
     localModelReady: true,
@@ -119,6 +127,10 @@ try {
     sessionStartedAt: "2026-08-01T12:00:00.000Z",
     runtimeTarget: "desktop",
     modelProfile: "lightweight",
+    configuredMode: null,
+    effectiveMode: "lightweight",
+    effectiveModel: "Qwen3-1.7B",
+    overrideSource: "runtime_default",
     productHead: "a".repeat(40),
     llamaServerReady: true,
     localModelReady: true,
@@ -137,6 +149,10 @@ try {
     sessionStartedAt: "2026-08-01T12:00:00.000Z",
     runtimeTarget: "desktop",
     modelProfile: "lightweight",
+    configuredMode: null,
+    effectiveMode: "lightweight",
+    effectiveModel: "Qwen3-1.7B",
+    overrideSource: "runtime_default",
     productHead: "a".repeat(40),
     llamaServerReady: true,
     localModelReady: true,
@@ -162,7 +178,14 @@ try {
     "rule_fallback"
   );
 
-  globalThis.__hematuriaDesktopRuntimeEvidence = () => runtime({ llamaServerReady: false, localModelReady: false, model: "Qwen3-4B" });
+  globalThis.__hematuriaDesktopRuntimeEvidence = () => runtime({
+    llamaServerReady: false,
+    localModelReady: false,
+    model: "Qwen3-4B",
+    modelProfile: "standard",
+    effectiveMode: "standard",
+    effectiveModel: "Qwen3-4B"
+  });
   const unavailable = desktopPatientEvidence(patient());
   assert.equal(unavailable.answerSource, "rule_fallback");
   assert.equal(unavailable.llamaServerReady, false);
@@ -191,6 +214,10 @@ try {
     runtimeTarget: "desktop",
     model: "Qwen3-1.7B",
     modelProfile: "lightweight",
+    configuredMode: null,
+    effectiveMode: "lightweight",
+    effectiveModel: "Qwen3-1.7B",
+    overrideSource: "runtime_default",
     productHead: "a".repeat(40),
     llamaServerReady: true,
     localModelReady: true,
@@ -272,6 +299,10 @@ try {
       runtimeTarget: "desktop",
       model: "Qwen3-1.7B",
       modelProfile: "lightweight",
+      configuredMode: null,
+      effectiveMode: "lightweight",
+      effectiveModel: "Qwen3-1.7B",
+      overrideSource: "runtime_default",
       productHead: "${"b".repeat(40)}",
       llamaServerReady: true,
       localModelReady: true,
@@ -300,6 +331,10 @@ try {
       runtimeTarget: "desktop",
       model: "Qwen3-1.7B",
       modelProfile: "lightweight",
+      configuredMode: null,
+      effectiveMode: "lightweight",
+      effectiveModel: "Qwen3-1.7B",
+      overrideSource: "runtime_default",
       productHead: "${"b".repeat(40)}",
       llamaServerReady: true,
       localModelReady: true,
