@@ -60,6 +60,7 @@ Copy-Item -LiteralPath (Join-Path $mentorSource "启动血尿训练系统.cmd") 
 Copy-Item -LiteralPath (Join-Path $mentorSource "Start-Mentor.ps1") -Destination (Join-Path $resolvedStage "tools")
 Copy-Item -LiteralPath (Join-Path $mentorSource "VERIFY-PACKAGE.ps1") -Destination $resolvedStage
 Copy-Item -LiteralPath (Join-Path $mentorSource "README_导师验收.txt") -Destination $resolvedStage
+Copy-Item -LiteralPath (Join-Path $mentorSource "TEST-INSTRUCTIONS.md") -Destination $resolvedStage
 Copy-Item -LiteralPath (Join-Path $mentorSource "KNOWN_LIMITATIONS.txt") -Destination $resolvedStage
 
 if ([string]::IsNullOrWhiteSpace($ProductHead)) { $ProductHead = (& git -C $repoRoot rev-parse HEAD).Trim() }
@@ -107,6 +108,7 @@ $criticalFiles = @(
   "tools\Start-Mentor.ps1",
   "VERIFY-PACKAGE.ps1",
   "README_导师验收.txt",
+  "TEST-INSTRUCTIONS.md",
   "KNOWN_LIMITATIONS.txt",
   "VERSION.json"
 )
@@ -151,6 +153,7 @@ try {
 Copy-Item -LiteralPath (Join-Path $resolvedStage "Model\Qwen3-1.7B-Q4_K_M.gguf") -Destination $modelOutput
 Copy-Item -LiteralPath (Join-Path $resolvedStage "启动血尿训练系统.cmd") -Destination $resolvedOutputStage
 Copy-Item -LiteralPath (Join-Path $resolvedStage "README_导师验收.txt") -Destination $resolvedOutputStage
+Copy-Item -LiteralPath (Join-Path $resolvedStage "TEST-INSTRUCTIONS.md") -Destination $resolvedOutputStage
 Copy-Item -LiteralPath (Join-Path $resolvedStage "KNOWN_LIMITATIONS.txt") -Destination $resolvedOutputStage
 Copy-Item -LiteralPath (Join-Path $resolvedStage "VERSION.json") -Destination $resolvedOutputStage
 Copy-Item -LiteralPath (Join-Path $resolvedStage "VERIFY-PACKAGE.ps1") -Destination $resolvedOutputStage
@@ -162,6 +165,7 @@ $artifactSums = foreach ($target in @(
   $modelOutput,
   (Join-Path $resolvedOutputStage "启动血尿训练系统.cmd"),
   (Join-Path $resolvedOutputStage "README_导师验收.txt"),
+  (Join-Path $resolvedOutputStage "TEST-INSTRUCTIONS.md"),
   (Join-Path $resolvedOutputStage "VERSION.json"),
   (Join-Path $resolvedOutputStage "VERIFY-PACKAGE.ps1"),
   (Join-Path $resolvedOutputStage "KNOWN_LIMITATIONS.txt")

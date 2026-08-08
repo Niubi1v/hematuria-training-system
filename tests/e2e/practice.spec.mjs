@@ -542,6 +542,40 @@ test("@order-result-human-path selected orders use the primary action and return
   await expect(page.getByTestId("diagnosis-builder").locator("fieldset").first().locator('input[type="checkbox"]')).toHaveCount(1);
 });
 
+test("@order-result-human-path duplicate English order stays single and isolated by case", async ({ page }) => {
+  const observations = [];
+  await routeTrainingApiThroughHandler(page, observations);
+  await page.goto("/cases/P003/");
+  await page.getByRole("button", { name: "English" }).click();
+  await enterInvestigationStage(page, "en");
+
+  await page.getByRole("button", { name: "Pathology / procedure", exact: true }).click();
+  await page.getByPlaceholder("Search orders or synonyms, e.g. CTU, urine culture, cystoscopy").fill("voided cytology");
+  await page.locator("label").filter({ hasText: "voided cytology" }).first().getByRole("checkbox").check();
+  const primary = page.getByRole("button", { name: "Order and return results", exact: true });
+  await primary.dblclick();
+  await expect.poll(() => observations.filter((item) => item.action === "order").length).toBe(1);
+  await expect(page.getByTestId("report-card")).toHaveCount(1);
+  await expect(page.getByTestId("investigation-selection-summary")).toContainText("1 reports returned");
+
+  await primary.click();
+  await expect.poll(() => observations.filter((item) => item.action === "order").length).toBe(2);
+  await expect(page.getByTestId("report-card")).toHaveCount(1);
+  await page.reload();
+  await expect(page.getByTestId("report-card")).toHaveCount(1);
+
+  await page.goto("/cases/P001/");
+  await page.getByRole("button", { name: "中文" }).click();
+  await enterInvestigationStage(page, "zh");
+  await expect(page.getByTestId("report-card")).toHaveCount(0);
+  await page.getByRole("button", { name: "English" }).click();
+  await page.getByRole("button", { name: "确认切换", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "History taking", exact: true })).toBeVisible();
+  await page.goto("/cases/P003/");
+  await expect(page.getByTestId("investigation-selection-summary")).toBeVisible();
+  await expect(page.getByTestId("report-card")).toHaveCount(1);
+});
+
 test("case catalog switches public labels without exposing complaints", async ({ page }) => {
   await page.goto("/cases/");
   await page.getByRole("button", { name: "English" }).click();

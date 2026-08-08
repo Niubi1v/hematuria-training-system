@@ -18,6 +18,7 @@
     "desktop:dev": "node scripts/desktop-dev.mjs",
     "desktop:build": "node scripts/desktop-build.mjs",
     "desktop:package:mentor": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/desktop-package-mentor-beta.ps1",
+    "test:desktop:mentor-human-entrypoint": "node scripts/test-mentor-human-entrypoint.mjs",
     "desktop:clean": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/desktop-clean.ps1",
     "desktop:clean:all": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/desktop-clean.ps1 -IncludeRuntime",
     "test:desktop:lifecycle": "node scripts/desktop-lifecycle-test.mjs",

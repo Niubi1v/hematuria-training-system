@@ -11,6 +11,7 @@ const relativeFiles = files.map((file) => path.relative(stage, file).replaceAll(
 const required = [
   "启动血尿训练系统.cmd",
   "README_导师验收.txt",
+  "TEST-INSTRUCTIONS.md",
   "KNOWN_LIMITATIONS.txt",
   "VERSION.json",
   "VERIFY-PACKAGE.ps1",
@@ -23,6 +24,8 @@ const required = [
   "Model/Qwen3-1.7B-Q4_K_M.gguf"
 ];
 for (const relative of required) assert(relativeFiles.includes(relative), `mentor_required_file_missing:${relative}`);
+assert.deepEqual(relativeFiles.filter((relative) => !relative.includes("/") && /\.cmd$/iu.test(relative)), ["启动血尿训练系统.cmd"], "mentor_root_launcher_must_be_unique");
+assert.equal(relativeFiles.some((relative) => !relative.includes("/") && /\.exe$/iu.test(relative)), false, "mentor_root_executable_forbidden");
 
 const forbiddenDirectory = /(?:^|\/)(?:\.git|node_modules|test-results|playwright-report|coverage|screenshots?|traces?|logs?|cache)(?:\/|$)/iu;
 const forbiddenFile = /(?:^|\/)(?:\.env(?:\..*)?|id_(?:rsa|dsa|ecdsa|ed25519)(?:\.pub)?)$|\.(?:map|pdb|dmp|trace|sqlite3?|db(?:-wal|-shm)?|log|pem|key|p12|pfx|jks|woff2?|ttf|otf)$/iu;
@@ -64,6 +67,10 @@ assert.deepEqual(readmeLines.slice(0, 3), [
 assert.match(readme, /医学教学 Beta.*不用于真实诊疗/u);
 assert.match(readme, /source projection 保留并应用 4 项.*运行时拒绝总数 121 项/u);
 assert.match(readme, /1023 项等待医学审核.*1 项医学冲突/u);
+const testInstructions = await fs.readFile(path.join(stage, "TEST-INSTRUCTIONS.md"), "utf8");
+assert.match(testInstructions, /启动血尿训练系统\.cmd/u);
+assert.match(testInstructions, /开立并返回结果/u);
+assert.match(testInstructions, /关闭窗口后重新启动/u);
 const limitations = await fs.readFile(path.join(stage, "KNOWN_LIMITATIONS.txt"), "utf8");
 assert.match(limitations, /保留并应用 4 项.*拒绝总数为 121 项/u);
 assert.match(limitations, /1023 项等待医学审核.*fail-closed/u);

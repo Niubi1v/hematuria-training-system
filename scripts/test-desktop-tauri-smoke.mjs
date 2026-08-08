@@ -10,7 +10,6 @@ import { chromium } from "@playwright/test";
 import {
   assertLoopbackClosed,
   desktopJson,
-  expectSubmittedStageTwo,
   repoRoot,
   runtimeProbe,
   runtimeEvidence,
@@ -34,19 +33,26 @@ process.env.no_proxy = noProxy;
 const surfaceIndex = process.argv.indexOf("--surface");
 const surface = surfaceIndex >= 0 ? String(process.argv[surfaceIndex + 1] || "") : "no-bundle";
 if (!new Set(["no-bundle", "portable", "nsis"]).has(surface)) throw new Error(`desktop_tauri_surface_not_implemented:${surface}`);
+const mentorHumanEntrypoint = process.argv.includes("--mentor-human-entrypoint");
+const mentorPackageRoot = mentorHumanEntrypoint ? path.resolve(process.env.HEMATURIA_MENTOR_PACKAGE_ROOT || "") : "";
+if (mentorHumanEntrypoint && !process.env.HEMATURIA_MENTOR_PACKAGE_ROOT) throw new Error("mentor_package_root_required");
 const surfaceLabel = process.env.HEMATURIA_SURFACE_LABEL || surface;
 const startupOnly = process.argv.includes("--startup-only");
-const realLocalAi = process.argv.includes("--real-local-ai");
+const realLocalAi = mentorHumanEntrypoint || process.argv.includes("--real-local-ai");
 if (!/^[a-z0-9-]{1,40}$/u.test(surfaceLabel)) throw new Error("desktop_tauri_surface_label_invalid");
-const expectedInstallationMode = surface === "portable" ? "portable" : surface === "nsis" ? "installer" : "development";
+const expectedInstallationMode = mentorHumanEntrypoint || surface === "portable" ? "portable" : surface === "nsis" ? "installer" : "development";
 const usesFakeLocalAi = expectedInstallationMode === "development" && !realLocalAi;
 const localAiEnabled = usesFakeLocalAi || realLocalAi;
-const executable = path.resolve(process.env.HEMATURIA_DESKTOP_TAURI_EXECUTABLE
+const executable = mentorHumanEntrypoint
+  ? path.join(mentorPackageRoot, "App", "HematuriaTraining-R5.exe")
+  : path.resolve(process.env.HEMATURIA_DESKTOP_TAURI_EXECUTABLE
   || path.join(repoRoot, "src-tauri", "target", "release", "hematuria-training-r5.exe"));
+const mentorLauncher = mentorHumanEntrypoint ? path.join(mentorPackageRoot, "启动血尿训练系统.cmd") : "";
 try {
   await fs.access(executable);
+  if (mentorHumanEntrypoint) await fs.access(mentorLauncher);
 } catch {
-  throw new Error("desktop_tauri_executable_missing");
+  throw new Error(mentorHumanEntrypoint ? "mentor_human_entrypoint_missing" : "desktop_tauri_executable_missing");
 }
 if (expectedInstallationMode !== "development") {
   const resources = path.join(path.dirname(executable), "resources");
@@ -62,7 +68,9 @@ const expectedProductHead = execFileSync("git", ["rev-parse", "HEAD"], {
   windowsHide: true
 }).trim();
 const configuredRealModelPath = String(process.env.HEMATURIA_DESKTOP_MODEL_PATH || "");
-const realModelPath = realLocalAi && configuredRealModelPath ? path.resolve(configuredRealModelPath) : "";
+const realModelPath = mentorHumanEntrypoint
+  ? path.join(mentorPackageRoot, "Model", "Qwen3-1.7B-Q4_K_M.gguf")
+  : realLocalAi && configuredRealModelPath ? path.resolve(configuredRealModelPath) : "";
 if (realLocalAi) {
   assert.ok(realModelPath, "desktop_real_model_path_required");
   const manifest = JSON.parse(await fs.readFile(path.join(repoRoot, "desktop", "runtime-manifest.json"), "utf8"));
@@ -203,6 +211,7 @@ async function assertLlamaClosed(pid, port) {
 }
 
 function waitForExit(child, timeoutMs = 20_000) {
+  if (typeof child.once !== "function") return eventually(() => child.exitCode === null ? false : { code: child.exitCode }, timeoutMs, "process-exit").then(({ code }) => code);
   return new Promise((resolve, reject) => {
     if (child.exitCode !== null) return resolve(child.exitCode);
     const timeout = setTimeout(() => reject(new Error("desktop_tauri_exit_timeout")), timeoutMs);
@@ -211,6 +220,16 @@ function waitForExit(child, timeoutMs = 20_000) {
       resolve(code);
     });
   });
+}
+
+function processHandle(pid) {
+  return {
+    pid,
+    get exitCode() { return processExists(pid) ? null : 0; },
+    kill() {
+      spawnSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", `Stop-Process -Id ${Number(pid)} -Force -ErrorAction SilentlyContinue`], { windowsHide: true });
+    }
+  };
 }
 
 function webViewDebugState(port, webViewDirectory = "") {
@@ -383,22 +402,22 @@ async function launch(dataDirectory, webViewDirectory) {
     await fs.mkdir(path.dirname(modelPath), { recursive: true });
     await fs.writeFile(modelPath, "tauri-smoke-model-placeholder", "utf8");
   }
-  const child = spawn(executable, [], {
-    cwd: path.dirname(executable),
-    env: {
+  const launchEnvironment = {
       SystemRoot: process.env.SystemRoot,
       WINDIR: process.env.WINDIR,
       TEMP: process.env.TEMP,
       TMP: process.env.TMP,
-      LOCALAPPDATA: process.env.LOCALAPPDATA,
-      APPDATA: process.env.APPDATA,
+      LOCALAPPDATA: mentorHumanEntrypoint ? isolatedLocalAppData : process.env.LOCALAPPDATA,
+      APPDATA: mentorHumanEntrypoint ? path.join(isolatedLocalAppData, "Roaming") : process.env.APPDATA,
       USERPROFILE: process.env.USERPROFILE,
       PATH: process.env.PATH,
       NO_PROXY: "127.0.0.1,localhost",
       no_proxy: "127.0.0.1,localhost",
-      HEMATURIA_DESKTOP_DATA_DIR: dataDirectory,
-      HEMATURIA_DESKTOP_INSTALLATION_MODE: expectedInstallationMode,
-      ...(usesFakeLocalAi ? {
+      ...(mentorHumanEntrypoint ? {} : {
+        HEMATURIA_DESKTOP_DATA_DIR: dataDirectory,
+        HEMATURIA_DESKTOP_INSTALLATION_MODE: expectedInstallationMode
+      }),
+      ...(mentorHumanEntrypoint ? {} : usesFakeLocalAi ? {
         HEMATURIA_DESKTOP_TEST_MODE: "1",
         HEMATURIA_LLAMA_SERVER_PATH: process.execPath,
         HEMATURIA_LLAMA_SERVER_PREFIX_ARGS: JSON.stringify([path.join(repoRoot, "scripts", "desktop-fake-llama-server.mjs")]),
@@ -409,12 +428,26 @@ async function launch(dataDirectory, webViewDirectory) {
       } : { HEMATURIA_DESKTOP_DISABLE_LOCAL_AI: "1" }),
       WEBVIEW2_USER_DATA_FOLDER: webViewDirectory,
       WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${cdpPort}`
-    },
+    };
+  const launcherChild = mentorHumanEntrypoint ? spawn("cmd.exe", ["/d", "/c", mentorLauncher], {
+    cwd: mentorPackageRoot,
+    env: launchEnvironment,
+    stdio: ["ignore", "pipe", "pipe"],
+    windowsHide: true
+  }) : null;
+  const child = mentorHumanEntrypoint
+    ? processHandle(await eventually(() => {
+      const next = processInventory().productPids.find((pid) => !preLaunchInventory.productPids.includes(pid));
+      return next || false;
+    }, 60_000, "mentor-product-process"))
+    : spawn(executable, [], {
+    cwd: path.dirname(executable),
+    env: launchEnvironment,
     stdio: ["ignore", "pipe", "pipe"],
     windowsHide: true
   });
   let diagnostics = "";
-  for (const stream of [child.stdout, child.stderr]) {
+  for (const stream of mentorHumanEntrypoint ? [launcherChild.stdout, launcherChild.stderr] : [child.stdout, child.stderr]) {
     stream.on("data", (chunk) => {
       diagnostics = `${diagnostics}${chunk.toString("utf8")}`.slice(-32_000);
     });
@@ -422,10 +455,11 @@ async function launch(dataDirectory, webViewDirectory) {
   try {
     const { browser, page, bootstrap, startup } = await connectToWebView(cdpPort, child, webViewDirectory, preLaunchInventory);
     page.on("dialog", (dialog) => void dialog.accept());
-    return { bootstrap, browser, cdpPort, child, diagnostics: () => diagnostics, llamaPidFile, page, preLaunchInventory, startup };
+    return { bootstrap, browser, cdpPort, child, diagnostics: () => diagnostics, launcherChild, llamaPidFile, page, preLaunchInventory, startup };
   } catch (error) {
     if (child.exitCode === null) child.kill("SIGKILL");
     await waitForExit(child).catch(() => undefined);
+    if (launcherChild?.exitCode === null) launcherChild.kill("SIGKILL");
     throw Object.assign(new Error(sanitize(
       `${error instanceof Error ? error.message : String(error)}\n${diagnostics}`.trim(),
       [dataDirectory, webViewDirectory]
@@ -492,12 +526,12 @@ async function waitForDisabledLocalAi(page) {
   return { diagnostics, pid: 0, port: 0 };
 }
 
-async function askGovernedQuestion(page, expectedReason, requireLocalClassifier = false) {
+async function askGovernedQuestion(page, expectedReason, requireLocalClassifier = false, question = "") {
   const before = (await desktopJson(page, "/api/desktop/evidence")).payload;
   const composer = page.locator('[data-testid="chat-composer"]');
   const send = composer.locator("button").last();
   await send.waitFor({ state: "visible" });
-  await composer.locator("textarea").fill(requireLocalClassifier ? "小便红了有多久？" : "排泄尿液时会产生灼热样感觉吗？");
+  await composer.locator("textarea").fill(question || (requireLocalClassifier ? "小便红了有多久？" : "排泄尿液时会产生灼热样感觉吗？"));
   await eventually(() => send.isEnabled(), 20_000, "fallback-send-enabled");
   const responsePromise = page.waitForResponse((response) =>
     response.request().method() === "POST"
@@ -538,6 +572,59 @@ async function askGovernedQuestion(page, expectedReason, requireLocalClassifier 
     classificationSource: payload.classificationSource || null,
     classifierStatus: payload.classifierStatus || null
   };
+}
+
+async function orderStageTwoReports(page) {
+  const summary = page.getByTestId("investigation-selection-summary");
+  const search = page.getByPlaceholder("搜索医嘱名称或同义词，例如 CTU、尿培养、膀胱镜");
+  for (const name of ["尿常规", "盆腔MR平扫"]) {
+    await search.fill(name);
+    await page.locator("label").filter({ hasText: name }).first().getByRole("checkbox").check();
+  }
+  await search.fill("");
+  const responsePromise = page.waitForResponse((response) => {
+    if (response.request().method() !== "POST" || !/^\/api\/training-action\/?$/.test(new URL(response.url()).pathname)) return false;
+    try { return response.request().postDataJSON()?.action === "order"; } catch { return false; }
+  }, { timeout: 30_000 });
+  await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
+  assert.equal((await responsePromise).status(), 200);
+  await eventually(async () => await page.getByTestId("report-card").count() === 2, 30_000, "stage2-report-cards");
+  assert.match(await summary.innerText(), /已返回检查报告\s*2\s*份/u);
+  await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
+  const stageThreeSaved = page.waitForResponse((response) => {
+    if (response.request().method() !== "POST" || new URL(response.url()).pathname !== "/api/desktop/attempt/state") return false;
+    try {
+      const body = response.request().postDataJSON();
+      return response.status() === 200
+        && body?.action === "save"
+        && body?.caseId === "P001"
+        && body?.snapshot?.activeStageNo === 3
+        && body?.snapshot?.releasedReports?.length === 2;
+    } catch { return false; }
+  }, { timeout: 30_000 });
+  await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
+  await stageThreeSaved;
+  const evidenceCount = await page.getByTestId("diagnosis-builder").locator("fieldset").first().locator('input[type="checkbox"]').count();
+  assert.ok(evidenceCount >= 2, `stage3_evidence_insufficient:${evidenceCount}`);
+  return { evidenceCount, reports: 2 };
+}
+
+async function expectRestoredStageThree(page, marker) {
+  const loaded = page.waitForResponse((response) => {
+    if (response.request().method() !== "POST" || new URL(response.url()).pathname !== "/api/desktop/attempt/state") return false;
+    try {
+      const body = response.request().postDataJSON();
+      return response.status() === 200 && body?.action === "load" && body?.caseId === "P001" && body?.language === "zh";
+    } catch { return false; }
+  }, { timeout: 30_000 });
+  await page.goto(new URL("/cases/P001/", page.url()).toString());
+  const snapshot = (await (await loaded).json()).snapshot;
+  assert.equal(snapshot.activeStageNo, 3);
+  assert.equal(snapshot.answers?.historySummary, marker);
+  assert.equal(snapshot.releasedReports?.length, 2);
+  await page.getByTestId("diagnosis-builder").waitFor({ state: "visible" });
+  const evidenceCount = await page.getByTestId("diagnosis-builder").locator("fieldset").first().locator('input[type="checkbox"]').count();
+  assert.ok(evidenceCount >= 2, `restored_stage3_evidence_insufficient:${evidenceCount}`);
 }
 
 async function verifyPublicBoundaryAndExport(page, redactions) {
@@ -736,7 +823,10 @@ const temporaryRoot = configuredRoot
   : await fs.mkdtemp(path.join(os.tmpdir(), "hematuria-tauri-smoke-"));
 if (configuredRoot) await fs.mkdir(temporaryRoot, { recursive: true });
 const keepSuccessfulRoot = process.env.HEMATURIA_TAURI_SMOKE_KEEP_ROOT === "1";
-const dataDirectory = path.join(temporaryRoot, "data");
+const isolatedLocalAppData = path.join(temporaryRoot, "localappdata");
+const dataDirectory = mentorHumanEntrypoint
+  ? path.join(isolatedLocalAppData, "HematuriaTraining", "MentorLocalAI-R5")
+  : path.join(temporaryRoot, "data");
 const webViewDirectory = path.join(temporaryRoot, "webview");
 const r4Directory = path.join(process.env.LOCALAPPDATA || os.tmpdir(), "HematuriaTraining", "MentorLocalAI-FinalCandidate");
 const r4Before = await directoryFingerprint(r4Directory);
@@ -825,6 +915,13 @@ try {
   });
   const answerStarted = performance.now();
   const fallback = await askGovernedQuestion(running.page, usesFakeLocalAi ? "semantic_response_invalid" : undefined, realLocalAi);
+  const mentorQuestions = mentorHumanEntrypoint ? [
+    "这种红色小便是一直有，还是时有时无？",
+    "小便的时候疼不疼，有没有发烧？"
+  ] : [];
+  const mentorAnswers = [fallback];
+  for (const question of mentorQuestions) mentorAnswers.push(await askGovernedQuestion(running.page, undefined, true, question));
+  if (mentorHumanEntrypoint) assert.ok(mentorAnswers.every((answer) => answer.classificationSource === "local_ai"), "mentor_questions_did_not_reach_local_qwen");
   const firstAnswerMs = Math.round(performance.now() - answerStarted);
   await saveHistoryDraft(running.page, {
     caseId: "P001",
@@ -870,6 +967,7 @@ try {
     runtimeTarget: "desktop"
   });
   assert.equal(processExists(firstDiagnostic.sidecarPid), true);
+  const stageTwo = await orderStageTwoReports(running.page);
   await running.page.waitForLoadState("networkidle");
   const closingAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
   assert.ok(closingAuthority.serverStateRevision >= firstAuthority.serverStateRevision);
@@ -893,11 +991,7 @@ try {
   assert.equal(restartedAuthority.stateStoreId, initialAuthority.stateStoreId);
   assert.equal(restartedAuthority.productHead, expectedProductHead);
   assert.equal(restartedAuthority.serverStateRevision, closingAuthority.serverStateRevision);
-  await expectSubmittedStageTwo(running.page, {
-    caseId: "P001",
-    language: "zh",
-    marker: p001Marker
-  });
+  await expectRestoredStageThree(running.page, p001Marker);
   await running.page.waitForLoadState("networkidle");
   const restoredAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
   assert.ok(restoredAuthority.serverStateRevision >= restartedAuthority.serverStateRevision);
@@ -913,11 +1007,7 @@ try {
     requestedMode: "random"
   });
   assert.equal(random.durableMode, "free");
-  await expectSubmittedStageTwo(running.page, {
-    caseId: "P001",
-    language: "zh",
-    marker: p001Marker
-  });
+  await expectRestoredStageThree(running.page, p001Marker);
   const canonicalState = (await desktopJson(running.page, "/api/desktop/attempt/state", {
     body: { action: "load", caseId: "P001", mode: "free", language: "zh" }
   })).payload.snapshot;
@@ -1010,12 +1100,14 @@ try {
     ],
     database,
     fallback,
+    stageTwo,
     publicBoundary,
     randomDurableMode: "free",
     cloudRequestCount: 0,
     lifecycleCycles: 2,
     processCleanup: true,
     realLocalAi,
+    mentorHumanEntrypoint,
     performance: {
       firstRuntimeReadyMs,
       firstModelReadyMs,

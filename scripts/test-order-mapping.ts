@@ -47,6 +47,20 @@ assert(partial.recognizedOrderCount === 0 && partial.results.length === 0, "subs
 const duplicate = matchOrderResults(p008, "LAB-BL-001", { previousOrderIds: ["LAB-BL-001"] });
 assert(duplicate.duplicateOrderIds?.includes("LAB-BL-001") && duplicate.results.length === 0, "duplicate orders must not return or score duplicate evidence");
 
+for (const [caseId, order, expected] of [
+  ["P001", "LAB-UR-001", "reported"],
+  ["P001", "IMG-MR-001", "reported"],
+  ["P003", "voided cytology", "reported"],
+  ["P003", "CBC", "medical_review_pending"],
+  ["P001", "END-001", "medical_review_pending"]
+] as const) {
+  const caseData = (casesJson as CaseData[]).find((item) => item.id === caseId)!;
+  const mapped = matchOrderResults(caseData, order);
+  assert(mapped.orderOutcomes?.some((item) => item.status === expected), `${caseId}/${order}: representative Stage 2 category must preserve its governed outcome`);
+  if (expected === "reported") assert(mapped.results.length === 1, `${caseId}/${order}: reportable representative must return exactly one result`);
+  else assert(mapped.results.length === 0, `${caseId}/${order}: non-reportable representative must not invent a result`);
+}
+
 const cases = casesJson as CaseData[];
 const studentCatalog = buildStudentOrderCatalog([...labs, ...imaging, ...procedures, ...perioperative]);
 let finalMappings = 0;
