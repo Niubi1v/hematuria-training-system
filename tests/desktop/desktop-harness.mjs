@@ -73,7 +73,8 @@ export async function startDesktopSidecar({
   allowedOrigin,
   appRoot = process.env.HEMATURIA_DESKTOP_CONTRACT_APP_ROOT || repoRoot,
   dataDirectory,
-  installationMode = process.env.HEMATURIA_DESKTOP_INSTALLATION_MODE || "development"
+  installationMode = process.env.HEMATURIA_DESKTOP_INSTALLATION_MODE || "development",
+  environment = {}
 }) {
   assert.match(String(allowedOrigin), /^http:\/\/127\.0\.0\.1:\d+$/);
   const resolvedAppRoot = path.resolve(appRoot);
@@ -113,7 +114,8 @@ export async function startDesktopSidecar({
       HEMATURIA_DESKTOP_DISABLE_LOCAL_AI: "1",
       HEMATURIA_DESKTOP_DEBUG_RUNTIME: "1",
       HEMATURIA_PRODUCT_HEAD: productHead,
-      NEXT_PUBLIC_GIT_SHA: productHead
+      NEXT_PUBLIC_GIT_SHA: productHead,
+      ...environment
     },
     windowsHide: true,
     stdio: ["pipe", "pipe", "pipe"]

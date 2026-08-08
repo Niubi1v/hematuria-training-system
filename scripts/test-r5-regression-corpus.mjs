@@ -36,7 +36,9 @@ const REQUIRED_SLUGS = [
   "AI-PREFERENCE-HYDRATION",
   "NSIS-RUNTIME-INJECTION-INTERMITTENT",
   "MENTOR-FULL-HUMAN-ENTRYPOINT-LOCAL-AI",
-  "STAGE2-ORDER-RESULT-NOT-RETURNED"
+  "STAGE2-ORDER-RESULT-NOT-RETURNED",
+  "MENTOR-EFFECTIVE-MODEL-MODE",
+  "STAGE2-STUDENT-RESULT-PRESENTATION"
 ];
 const STATUSES = new Set(["fixed", "regression_required", "open", "blocked_root_cause"]);
 const ROOT_CAUSE_STATUSES = new Set(["confirmed", "unconfirmed", "not_applicable"]);
