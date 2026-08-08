@@ -14,6 +14,7 @@ const labs = require("../data/order_catalog_labs.json");
 const imaging = require("../data/order_catalog_imaging.json");
 const procedures = require("../data/order_catalog_procedures.json");
 const perioperative = require("../data/order_catalog_perioperative.json");
+const medicalAuthor = require("../desktop/medical-author-approved-stage2-results.json");
 const { buildStudentOrderCatalog, orderApplicableForSex, sourceOrderId } = require("../shared/dataAgentPresentation.js");
 const { resetMemoryAttemptStore } = require("../server/trainingAttemptStore.js");
 
@@ -37,6 +38,15 @@ let total = 0;
 let blank = 0;
 let missingTerminal = 0;
 let waiting = 0;
+const classifications = {
+  REAL_REPORT: 0,
+  SHARED_REAL_REPORT: 0,
+  SIMULATED_REPORT: 0,
+  SOURCE_DERIVED_REPORT: 0,
+  NOT_PERFORMED_OR_NOT_APPLICABLE: 0,
+  NO_CASE_RESULT: 0
+};
+const authorTypes = new Map(medicalAuthor.items.map((item) => [`${item.caseId}:${item.orderId}`, item.finalTerminalType]));
 for (const caseData of cases) {
   const applicable = catalog.filter((order) => orderApplicableForSex(order, caseData.sex));
   const ids = [...new Set(applicable.map(sourceOrderId))];
@@ -52,6 +62,22 @@ for (const caseData of cases) {
     assert.doesNotMatch(JSON.stringify(response.payload), forbidden, `${caseData.id}/${order.displayName}:public_boundary`);
     const reports = response.payload.results || [];
     const outcome = outcomes[0];
+    const report = reports.find((item) => item.orderId === outcome.orderId || item.coveredOrderIds?.includes(outcome.orderId));
+    const authorType = authorTypes.get(`${caseData.id}:${outcome.orderId}`);
+    const classification = authorType === "SIMULATED_REPORT"
+      ? "SIMULATED_REPORT"
+      : authorType === "SOURCE_DERIVED_REPORT"
+        ? "SOURCE_DERIVED_REPORT"
+        : authorType === "NOT_PERFORMED"
+          ? "NOT_PERFORMED_OR_NOT_APPLICABLE"
+          : report
+            ? report.orderId !== outcome.orderId && report.coveredOrderIds?.includes(outcome.orderId)
+              ? "SHARED_REAL_REPORT"
+              : "REAL_REPORT"
+            : ["not_performed", "no_indication", "no_specimen", "not_provided"].includes(outcome.status)
+              ? "NOT_PERFORMED_OR_NOT_APPLICABLE"
+              : "NO_CASE_RESULT";
+    classifications[classification] += 1;
     total += 1;
     if (!String(outcome.status || "").trim()) missingTerminal += 1;
     if (!String(outcome.message || "").trim()) blank += 1;
@@ -67,4 +93,5 @@ assert.equal(total, 2742);
 assert.equal(missingTerminal, 0);
 assert.equal(blank, 0);
 assert.equal(waiting, 0);
-console.log(JSON.stringify({ totalOrders: total, missingTerminal, blankResults: blank, waitingReviewCopy: waiting, visibleOutcome: total }));
+assert.equal(Object.values(classifications).reduce((sum, count) => sum + count, 0), total);
+console.log(JSON.stringify({ totalOrders: total, classifications, missingTerminal, blankResults: blank, waitingReviewCopy: waiting, visibleOutcome: total }));

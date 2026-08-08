@@ -872,7 +872,9 @@ try {
   const fallback = await askGovernedQuestion(running.page, usesFakeLocalAi ? "semantic_response_invalid" : undefined, realLocalAi);
   const mentorQuestions = mentorHumanEntrypoint ? [
     "这种红色小便是一直有，还是时有时无？",
-    "小便的时候疼不疼，有没有发烧？"
+    "小便的时候疼不疼，有没有发烧？",
+    "这个情况持续多久了？",
+    "最近有没有抽烟或喝酒？"
   ] : [];
   const mentorAnswers = [fallback];
   for (const question of mentorQuestions) mentorAnswers.push(await askGovernedQuestion(running.page, undefined, true, question));
@@ -926,7 +928,7 @@ try {
     runtimeTarget: "desktop"
   });
   assert.equal(processExists(firstDiagnostic.sidecarPid), true);
-  const stageTwo = await orderReportsAndEnterStageThree(running.page);
+  const stageTwo = await orderReportsAndEnterStageThree(running.page, { mentorFinal: mentorHumanEntrypoint });
   await running.page.waitForLoadState("networkidle");
   const closingAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
   assert.ok(closingAuthority.serverStateRevision >= firstAuthority.serverStateRevision);
@@ -950,7 +952,7 @@ try {
   assert.equal(restartedAuthority.stateStoreId, initialAuthority.stateStoreId);
   assert.equal(restartedAuthority.productHead, expectedProductHead);
   assert.equal(restartedAuthority.serverStateRevision, closingAuthority.serverStateRevision);
-  await expectSubmittedStageThree(running.page, { marker: p001Marker });
+  await expectSubmittedStageThree(running.page, { marker: p001Marker, expectedReports: stageTwo.reports });
   await running.page.waitForLoadState("networkidle");
   const restoredAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
   assert.ok(restoredAuthority.serverStateRevision >= restartedAuthority.serverStateRevision);
@@ -966,7 +968,7 @@ try {
     requestedMode: "random"
   }));
   assert.equal(random.durableMode, "free");
-  await expectSubmittedStageThree(running.page, { marker: p001Marker });
+  await expectSubmittedStageThree(running.page, { marker: p001Marker, expectedReports: stageTwo.reports });
   const canonicalState = (await desktopJson(running.page, "/api/desktop/attempt/state", {
     body: { action: "load", caseId: "P001", mode: "free", language: "zh" }
   })).payload.snapshot;

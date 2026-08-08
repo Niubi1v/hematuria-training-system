@@ -378,14 +378,27 @@ export async function submitHistoryAndEnterStageTwo(page, { caseId, language, ma
   await page.getByTestId("investigation-selection-summary").waitFor({ state: "visible" });
 }
 
-export async function orderReportsAndEnterStageThree(page) {
+export async function orderReportsAndEnterStageThree(page, { mentorFinal = false } = {}) {
   const summary = page.getByTestId("investigation-selection-summary");
   const search = page.getByPlaceholder("搜索医嘱名称或同义词，例如 CTU、尿培养、膀胱镜");
-  await search.fill("尿常规");
-  await page.locator("label").filter({ hasText: "尿常规" }).first().getByRole("checkbox").check();
-  await page.getByRole("button", { name: "检查", exact: true }).click();
-  await search.fill("盆腔MR平扫");
-  await page.locator("label").filter({ hasText: "盆腔MR平扫" }).first().getByRole("checkbox").check();
+  const selectedNames = mentorFinal
+    ? [
+        "尿常规",
+        "泌尿系超声+残余尿",
+        "膀胱镜",
+        "泌尿系CT平扫/低剂量NCCT KUB",
+        "血常规",
+        "肾功能/eGFR",
+        "TURBT病理",
+        "肾活检病理",
+        "尿脱落细胞学",
+        "中段尿培养+药敏"
+      ]
+    : ["尿常规", "盆腔MR平扫"];
+  for (const displayName of selectedNames) {
+    await search.fill(displayName);
+    await page.locator("label").filter({ hasText: displayName }).first().getByRole("checkbox").check();
+  }
   await search.fill("");
   const orderResponse = page.waitForResponse((response) => {
     if (response.request().method() !== "POST" || !/^\/api\/training-action\/?$/.test(new URL(response.url()).pathname)) return false;
@@ -393,8 +406,22 @@ export async function orderReportsAndEnterStageThree(page) {
   }, { timeout: 30_000 });
   await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
   assert.equal((await orderResponse).status(), 200);
-  await page.getByTestId("report-card").nth(1).waitFor({ state: "visible" });
-  assert.match(await summary.innerText(), /已返回检查报告\s*2\s*份/u);
+  const expectedReports = mentorFinal ? 8 : 2;
+  const expectedOutcomes = mentorFinal ? 10 : 2;
+  await page.getByTestId("report-card").nth(expectedReports - 1).waitFor({ state: "visible" });
+  assert.equal(await page.getByTestId("report-card").count(), expectedReports);
+  assert.equal(await page.getByTestId("order-outcome").count(), expectedOutcomes);
+  assert.match(await summary.innerText(), new RegExp(`已返回检查报告\\s*${expectedReports}\\s*份`, "u"));
+  if (mentorFinal) {
+    assert.ok(await page.getByTestId("order-outcome").filter({ hasText: /未实施|不适用/u }).count() >= 2);
+    assert.doesNotMatch(
+      [
+        ...(await page.getByTestId("report-card").allTextContents()),
+        ...(await page.getByTestId("order-outcome").allTextContents())
+      ].join("\n"),
+      /simulated|source|provenance|medical_review_pending|diagnosticEligible|scoringEligible|affectsDiagnosis|affectsScore|等待医学审核|等待审核元数据/iu
+    );
+  }
   await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
   const saved = page.waitForResponse((response) => {
     if (response.request().method() !== "POST" || new URL(response.url()).pathname !== "/api/desktop/attempt/state") return false;
@@ -404,17 +431,17 @@ export async function orderReportsAndEnterStageThree(page) {
         && body?.action === "save"
         && body?.caseId === "P001"
         && body?.snapshot?.activeStageNo === 3
-        && body?.snapshot?.orderLogs?.reduce((count, log) => count + (log.results?.length || 0), 0) === 2;
+        && body?.snapshot?.orderLogs?.reduce((count, log) => count + (log.results?.length || 0), 0) === expectedReports;
     } catch { return false; }
   }, { timeout: 30_000 });
   await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
   await saved;
   const evidenceCount = await page.getByTestId("diagnosis-builder").locator("fieldset").first().locator('input[type="checkbox"]').count();
   assert.ok(evidenceCount >= 2, `stage3_evidence_insufficient:${evidenceCount}`);
-  return { evidenceCount, reports: 2 };
+  return { evidenceCount, reports: expectedReports, outcomes: expectedOutcomes, notPerformed: mentorFinal ? 2 : 0 };
 }
 
-export async function expectSubmittedStageThree(page, { baseURL, marker }) {
+export async function expectSubmittedStageThree(page, { baseURL, marker, expectedReports = 2 }) {
   await selectLanguage(page, "zh");
   await page.goto(caseUrl(page, "P001", "free", baseURL));
   const snapshot = (await desktopJson(page, "/api/desktop/attempt/state", {
@@ -422,7 +449,7 @@ export async function expectSubmittedStageThree(page, { baseURL, marker }) {
   })).payload.snapshot;
   assert.equal(snapshot.activeStageNo, 3);
   assert.equal(snapshot.answers?.historySummary, marker);
-  assert.equal(snapshot.orderLogs?.reduce((count, log) => count + (log.results?.length || 0), 0), 2);
+  assert.equal(snapshot.orderLogs?.reduce((count, log) => count + (log.results?.length || 0), 0), expectedReports);
   await page.getByTestId("diagnosis-builder").waitFor({ state: "visible" });
   const evidenceCount = await page.getByTestId("diagnosis-builder").locator("fieldset").first().locator('input[type="checkbox"]').count();
   assert.ok(evidenceCount >= 2, `restored_stage3_evidence_insufficient:${evidenceCount}`);
