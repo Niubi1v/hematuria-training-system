@@ -785,6 +785,9 @@ function desktopDiagnosticsHandler(store) {
 
 const RUNTIME_DIAGNOSTIC_KEYS = new Set([
   "cloudRequestCount",
+  "configuredMode",
+  "effectiveMode",
+  "effectiveModel",
   "eventWriteFailureCount",
   "generatedAt",
   "llamaServerReady",
@@ -792,6 +795,7 @@ const RUNTIME_DIAGNOSTIC_KEYS = new Set([
   "localModelReady",
   "model",
   "modelProfile",
+  "overrideSource",
   "productHead",
   "ruleFallbackCount",
   "runtimeAuditHealthy",

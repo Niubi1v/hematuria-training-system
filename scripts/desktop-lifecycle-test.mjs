@@ -195,6 +195,9 @@ try {
   assert.equal(settings.status, 200);
   const settingsPayload = await settings.json();
   assert.deepEqual(Object.keys(settingsPayload).sort(), [
+    "configuredMode",
+    "effectiveMode",
+    "effectiveModel",
     "llamaStatus",
     "localAiEnabled",
     "modelAlias",
@@ -203,8 +206,13 @@ try {
     "modelMode",
     "modelPresent",
     "modelValidation",
+    "overrideSource",
     "version"
   ].sort());
+  assert.equal(settingsPayload.configuredMode, null);
+  assert.equal(settingsPayload.effectiveMode, "lightweight");
+  assert.equal(settingsPayload.effectiveModel, "Qwen3-1.7B");
+  assert.equal(settingsPayload.overrideSource, "runtime_default");
   assert.equal(settingsPayload.modelPresent, true);
   assert.equal(settingsPayload.modelMode, "lightweight");
   assert.equal(settingsPayload.modelAlias, "Qwen3-1.7B");
@@ -269,8 +277,12 @@ try {
 
   const debugEvidence = await authorizedFetch(first, "/api/desktop/evidence/");
   assert.equal(debugEvidence.status, 200);
-  assert.deepEqual(Object.keys(await debugEvidence.json()).sort(), [
+  const debugEvidencePayload = await debugEvidence.json();
+  assert.deepEqual(Object.keys(debugEvidencePayload).sort(), [
     "cloudRequestCount",
+    "configuredMode",
+    "effectiveMode",
+    "effectiveModel",
     "eventWriteFailureCount",
     "generatedAt",
     "llamaServerReady",
@@ -278,6 +290,7 @@ try {
     "localAiAcceptedCount",
     "model",
     "modelProfile",
+    "overrideSource",
     "productHead",
     "ruleFallbackCount",
     "runtimeAuditHealthy",
@@ -285,9 +298,14 @@ try {
     "schemaVersion",
     "sessionStartedAt"
   ].sort());
+  assert.equal(debugEvidencePayload.configuredMode, "standard");
+  assert.equal(debugEvidencePayload.effectiveMode, "standard");
+  assert.equal(debugEvidencePayload.effectiveModel, "Qwen3-4B");
+  assert.equal(debugEvidencePayload.overrideSource, "configured_preference");
   const copiedEvidence = await authorizedFetch(first, "/api/desktop/evidence/copy/", { method: "POST" });
-  assert.equal(copiedEvidence.status, 200);
-  assert.match((await copiedEvidence.json()).sha256, /^[a-f0-9]{64}$/);
+  const copiedEvidencePayload = await copiedEvidence.json();
+  assert.equal(copiedEvidence.status, 200, JSON.stringify(copiedEvidencePayload));
+  assert.match(copiedEvidencePayload.sha256, /^[a-f0-9]{64}$/);
   const exportedEvidence = await authorizedFetch(first, "/api/desktop/evidence/export/", { method: "POST" });
   assert.equal(exportedEvidence.status, 200);
   const exportedPayload = await exportedEvidence.json();
@@ -487,5 +505,5 @@ try {
       // Test cleanup remains scoped to children created by this process.
     }
   }
-  await fs.rm(temporaryRoot, { recursive: true, force: true });
+  await fs.rm(temporaryRoot, { recursive: true, force: true, maxRetries: 20, retryDelay: 50 });
 }
