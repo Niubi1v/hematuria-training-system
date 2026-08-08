@@ -1533,6 +1533,15 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     if (event) console.info("ai_connection_transition", event);
     previousAiStatusRef.current = next;
   }, [aiStatus]);
+
+  useEffect(() => {
+    if (!orderFeedback) return;
+    const frame = window.requestAnimationFrame(() => {
+      orderResultSummaryRef.current?.focus({ preventScroll: true });
+      orderResultSummaryRef.current?.scrollIntoView({ block: "nearest" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [orderFeedback, orderLogs.length]);
   const isOsce = !practiceDeployment && runtimeMode === "osce";
   const osceLocked = isOsce && osceTimeLeft === 0;
   const display = caseDisplay(caseData, lang);
@@ -2750,10 +2759,6 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       }
       setOrderInput("");
       setOrderFeedback(studentFacingClinicalText(matchedLog.message, lang));
-      globalThis.requestAnimationFrame(() => {
-        orderResultSummaryRef.current?.focus({ preventScroll: true });
-        orderResultSummaryRef.current?.scrollIntoView({ block: "nearest" });
-      });
     } catch (error) {
       setStorageWarning(orderSubmissionFailureMessage(error, lang));
     } finally {
