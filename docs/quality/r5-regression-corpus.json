@@ -322,6 +322,30 @@
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     },
     {
+      "id": "R5-REG-028", "slug": "MENTOR-FULL-HUMAN-ENTRYPOINT-LOCAL-AI", "kind": "historical_bug", "severity": "P0", "status": "blocked_root_cause", "title": "Mentor Full human entrypoint did not load bundled local AI",
+      "userVisibleSymptom": "After fully extracting the mentor Full package and opening the visible application executable, the window started but the local Qwen service never became ready and the UI reported the model missing.",
+      "rootCause": { "status": "unconfirmed", "detail": "The frozen package contains the model and launcher, but prior acceptance injected the developer-machine model path and did not replay a zero-environment launch through the package root entrypoint; packaging guidance, entrypoint choice, and launcher runtime behavior still require separate proof." },
+      "affectedLayers": ["mentor_package", "human_entrypoint", "tauri", "sidecar", "local_ai"],
+      "minimumReproduction": { "environment": "Fresh extraction with scratch R5 data and no desktop model environment variables", "steps": ["Extract the exact Full ZIP once.", "Clear desktop model-path, model-mode, and test-mode variables.", "Run only the package root launcher and verify the bundled Qwen model becomes ready."] },
+      "originalEvidence": { "head": "28e342d878999d71fc840808dd77437b3c817893", "artifactSha256": "f6461137bcdff6f9ee0bdea02de28616549cce494bd4f5951f116a37c47d1466", "references": ["external:mentor-human-full-entrypoint-report", "scripts/test-desktop-phase4.mjs", "desktop/mentor/Start-Mentor.ps1"] },
+      "legacyGap": "Phase 4 real-model automation supplied HEMATURIA_DESKTOP_MODEL_PATH and launched the application executable directly, so it could pass without proving the package's human entrypoint or bundled model context.",
+      "regressionTests": [{ "id": "MENTOR-HUMAN-ENTRYPOINT-REAL-MODEL", "status": "planned", "path": "scripts/test-mentor-human-entrypoint.mjs", "gate": "candidate", "components": ["final Full ZIP", "root launcher", "tauri", "sidecar", "bundled Qwen", "sqlite"] }],
+      "replay": { "seed": "r5-mentor-human-entrypoint-v1", "command": "node scripts/test-mentor-human-entrypoint.mjs --package FINAL_FULL_ZIP", "actions": ["fresh extract", "clear model environment", "root launcher", "three local turns", "save", "restart", "cleanup"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "candidate",
+      "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
+    },
+    {
+      "id": "R5-REG-029", "slug": "STAGE2-ORDER-RESULT-NOT-RETURNED", "kind": "historical_bug", "severity": "P0", "status": "blocked_root_cause", "title": "Stage 2 selected orders did not return results",
+      "userVisibleSymptom": "The learner selected investigations and used the main order action, but no result appeared and the training flow could not reliably proceed to diagnostic evidence.",
+      "rootCause": { "status": "unconfirmed", "detail": "Initial renderer tracing shows selected checkbox state and the primary order action use different inputs; the API, result mapping, evidence projection, and durable restart path still require independent verification before the root cause is marked confirmed." },
+      "affectedLayers": ["renderer", "training_action", "data_agent", "evidence_graph", "sqlite"],
+      "minimumReproduction": { "environment": "Real renderer contract with the real training handler", "steps": ["Enter Stage 2 for P001.", "Select a reportable order using the catalog checkbox.", "Use the primary order action and require exactly one report, evidence item, timeline entry, reload, and restart persistence."] },
+      "originalEvidence": { "head": "28e342d878999d71fc840808dd77437b3c817893", "artifactSha256": null, "references": ["external:mentor-stage2-order-result-report", "tests/e2e/practice.spec.mjs", "api/training-action.js"] },
+      "legacyGap": "Existing renderer tests either typed free-text orders or used the separate selected-results button, while API tests constructed order actions directly and therefore never exercised the learner's primary click path.",
+      "regressionTests": [{ "id": "ORDER-TO-RESULT-TO-EVIDENCE", "status": "existing", "path": "tests/e2e/practice.spec.mjs", "gate": "milestone", "components": ["ClinicalTrainingClient", "training handler", "Data Agent", "evidence graph", "autosave"] }, { "id": "TAURI-STAGE2-ORDER-RESULT-PERSISTENCE", "status": "planned", "path": "scripts/test-desktop-tauri-smoke.mjs", "gate": "candidate", "components": ["tauri", "renderer", "sidecar", "sqlite", "restart"] }],
+      "replay": { "seed": "r5-stage2-order-result-v1", "command": "pnpm run test:e2e -- --grep @order-result-human-path --workers=1 --retries=0", "actions": ["select", "primary submit", "result", "evidence", "reload", "stage 3"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "milestone",
+      "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
+    },
+    {
       "id": "R5-REG-027", "slug": "NSIS-RUNTIME-INJECTION-INTERMITTENT", "kind": "release_blocker", "severity": "P0", "status": "fixed", "title": "Sidecar loopback self-health startup can intermittently prevent desktop runtime injection",
       "userVisibleSymptom": "The installed window opens at tauri.localhost but the desktop runtime never becomes available, so training cannot start.",
       "rootCause": { "status": "confirmed", "detail": "Desktop sidecar startup used a single-shot self-loopback health probe as a fatal readiness gate. A transient localhost transport failure therefore terminated an otherwise correctly spawned sidecar before it could publish the ready handshake; diagnostic normalization also collapsed the health-probe failure into unknown_runtime_failure." },

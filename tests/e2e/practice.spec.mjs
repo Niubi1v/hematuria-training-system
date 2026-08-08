@@ -468,7 +468,7 @@ test("@r5-visual @r5-historical @ui-ia investigation and diagnosis directories k
   await page.getByPlaceholder("搜索医嘱名称或同义词，例如 CTU、尿培养、膀胱镜").fill("尿常规");
   await page.locator("label").filter({ hasText: "尿常规" }).first().getByRole("checkbox").check();
   await expect(summary).toContainText("已勾选医嘱 1 项");
-  await page.getByRole("button", { name: "返回已选项目结果", exact: true }).click();
+  await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
   await expect(summary).toContainText("已返回检查报告 1 份");
   const main = page.locator(".workbench-main");
   await main.evaluate((element) => element.scrollTo({ top: 700, behavior: "auto" }));
@@ -514,6 +514,32 @@ test("@r5-visual @r5-historical @ui-ia investigation and diagnosis directories k
   await primary.nth(1).check();
   await expect(checklists.first().locator("summary")).toContainText("2/2");
   await expectStudentCopyPublic(page);
+});
+
+test("@order-result-human-path selected orders use the primary action and return durable evidence", async ({ page }) => {
+  const observations = [];
+  await routeTrainingApiThroughHandler(page, observations);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/cases/P001/");
+  await enterInvestigationStage(page, "zh");
+
+  const summary = page.getByTestId("investigation-selection-summary");
+  await page.getByPlaceholder("搜索医嘱名称或同义词，例如 CTU、尿培养、膀胱镜").fill("尿常规");
+  await page.locator("label").filter({ hasText: "尿常规" }).first().getByRole("checkbox").check();
+  await expect(summary).toContainText("已勾选医嘱 1 项");
+
+  const orderCount = observations.filter((item) => item.action === "order").length;
+  await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
+  await expect.poll(() => observations.filter((item) => item.action === "order").length).toBe(orderCount + 1);
+  await expect(page.getByTestId("report-card")).toHaveCount(1);
+  await expect(summary).toContainText("已返回检查报告 1 份");
+
+  await page.reload();
+  await expect(page.getByTestId("report-card")).toHaveCount(1);
+  await expect(summary).toContainText("已返回检查报告 1 份");
+  await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
+  await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
+  await expect(page.getByTestId("diagnosis-builder").locator("fieldset").first().locator('input[type="checkbox"]')).toHaveCount(1);
 });
 
 test("case catalog switches public labels without exposing complaints", async ({ page }) => {
