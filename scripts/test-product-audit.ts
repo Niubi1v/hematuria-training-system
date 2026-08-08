@@ -55,7 +55,8 @@ assert.ok(cases.every((item) => englishIds.has(item.id)), "中英文病例ID必�
 
 const clinicalSource = fs.readFileSync(path.join(process.cwd(), "src/components/ClinicalTrainingClient.tsx"), "utf8");
 assert.match(clinicalSource, /!isOsce \|\| activeStageNo === 7/, "OSCE阶段反馈必须延迟到终末复盘");
-assert.match(clinicalSource, /matchedLog\.results\.length > 0[\s\S]{0,240}status: "reported"/, "服务端已返回的检查报告应立即进入已报告状态");
+assert.match(clinicalSource, /const hasReport = matchedLog\.results\.length > 0/, "服务端返回结果必须驱动报告状态");
+assert.match(clinicalSource, /const log: OrderResultLog = hasReport\s*\?\s*\{ \.\.\.matchedLog, returnedAt: new Date\(\)\.toISOString\(\), status: "reported" \}/, "服务端已返回的检查报告应立即进入已报告状态");
 assert.doesNotMatch(clinicalSource, /pendingResults: matchedLog\.results/, "不得把已返回报告降级为仅由前端定时器释放的pending状态");
 assert.doesNotMatch(clinicalSource, /修改后重新提交|Resubmit this stage/, "阶段提交后不得继续暴露重新提交操作");
 assert.match(clinicalSource, /currentStageSubmitted && activeStageNo !== 7[\s\S]{0,320}data-testid="next-stage"/, "阶段提交后应只显示进入下一阶段操作");
