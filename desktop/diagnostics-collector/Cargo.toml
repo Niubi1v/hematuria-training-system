@@ -1,0 +1,27 @@
+[package]
+name = "hematuria-r5-diagnostics-collector"
+version = "1.0.0"
+edition = "2021"
+rust-version = "1.85"
+
+[[bin]]
+name = "Hematuria-R5-Diagnostics-Collector"
+path = "src/main.rs"
+
+[dependencies]
+serde_json = "=1.0.151"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "=0.61.2", features = [
+  "Win32_Foundation",
+  "Win32_Security_Cryptography",
+  "Win32_System_SystemInformation",
+  "Win32_UI_WindowsAndMessaging"
+] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true
