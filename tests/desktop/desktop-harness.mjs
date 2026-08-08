@@ -381,23 +381,22 @@ export async function submitHistoryAndEnterStageTwo(page, { caseId, language, ma
 export async function orderReportsAndEnterStageThree(page, { mentorFinal = false } = {}) {
   const summary = page.getByTestId("investigation-selection-summary");
   const search = page.getByPlaceholder("搜索医嘱名称或同义词，例如 CTU、尿培养、膀胱镜");
-  const selectedNames = mentorFinal
+  const groups = mentorFinal
     ? [
-        "尿常规",
-        "泌尿系超声+残余尿",
-        "膀胱镜",
-        "泌尿系CT平扫/低剂量NCCT KUB",
-        "血常规",
-        "肾功能/eGFR",
-        "TURBT病理",
-        "肾活检病理",
-        "尿脱落细胞学",
-        "中段尿培养+药敏"
+        ["检验", ["尿常规", "血常规", "肾功能/eGFR", "尿脱落细胞学", "中段尿培养+药敏"]],
+        ["检查", ["泌尿系超声+残余尿", "泌尿系CT平扫/低剂量NCCT KUB"]],
+        ["病理/操作", ["膀胱镜", "TURBT病理", "肾活检病理"]]
       ]
-    : ["尿常规", "盆腔MR平扫"];
-  for (const displayName of selectedNames) {
-    await search.fill(displayName);
-    await page.locator("label").filter({ hasText: displayName }).first().getByRole("checkbox").check();
+    : [
+        ["检验", ["尿常规"]],
+        ["检查", ["盆腔MR平扫"]]
+      ];
+  for (const [category, names] of groups) {
+    await page.getByRole("button", { name: category, exact: true }).click();
+    for (const displayName of names) {
+      await search.fill(displayName);
+      await page.locator("label").filter({ hasText: displayName }).first().getByRole("checkbox").check();
+    }
   }
   await search.fill("");
   const orderResponse = page.waitForResponse((response) => {
