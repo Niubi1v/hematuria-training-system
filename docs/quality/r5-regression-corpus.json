@@ -409,6 +409,30 @@
       "regressionTests": [{ "id": "R5-PATIENT-SPOKEN-LANGUAGE-REALISM", "status": "existing", "path": "scripts/test-patient-spoken-language-realism.mjs", "gate": "fast", "components": ["P035 exact replay", "42 cases", "20 fixed natural questions", "governed facts", "deterministic fallback"] }],
       "replay": { "seed": "r5-patient-spoken-language-realism-v1", "command": "pnpm run test:patient-spoken-language-realism", "actions": ["P035 six questions", "42 by 20 replay", "reject chart language", "reject question echo"] }, "fixCommit": "46eb519a896db728e731d521e36b6cf6876c442f", "relatedCommits": [], "permanentGate": "fast",
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
+    },
+    {
+      "id": "R5-REG-034", "slug": "CASE-ORDER-APPLICABILITY", "kind": "historical_bug", "severity": "P0", "status": "fixed", "title": "Student catalog offered investigations that were anatomically or physiologically inapplicable",
+      "userVisibleSymptom": "Learners could order PSA for female cases without prostate anatomy or a pregnancy test for male and explicitly non-pregnancy-potential cases, inviting fabricated negative reports.",
+      "rootCause": { "status": "confirmed", "detail": "The catalog applied only partial sex filters and did not share a case-level age, pregnancy-potential, and anatomy applicability predicate across the renderer and training handler." },
+      "affectedLayers": ["student_order_catalog", "renderer", "training_action", "medical_governance"],
+      "minimumReproduction": { "environment": "All 42 approved cases and the student order catalog", "steps": ["Enumerate every case and catalog order.", "Apply sex, age, pregnancy-potential, anatomy, and declared prerequisite rules.", "Assert every inapplicable case-order is absent before ordering and no applicable order is hidden."] },
+      "originalEvidence": { "head": "931af77374dd56d258d4b7acf0f223e0d95a2dd2", "artifactSha256": null, "references": ["external:medical-author-final-applicability-decision", "shared/dataAgentPresentation.js", "scripts/test-case-order-applicability.mjs"] },
+      "legacyGap": "The prior 2742-order audit treated selectability as fixed and therefore tried to manufacture terminal outcomes for medically inapplicable combinations instead of auditing the catalog boundary.",
+      "regressionTests": [{ "id": "R5-CASE-ORDER-APPLICABILITY", "status": "existing", "path": "scripts/test-case-order-applicability.mjs", "gate": "fast", "components": ["42 cases", "student catalog", "sex", "age", "pregnancy potential", "anatomy", "procedure prerequisites"] }],
+      "replay": { "seed": "r5-case-order-applicability-v1", "command": "pnpm run test:case-order-applicability", "actions": ["enumerate", "filter", "count exclusions", "assert zero conflicts"] }, "fixCommit": "2b4d5709d8694440facca315eeb093745bf32c66", "relatedCommits": [], "permanentGate": "fast",
+      "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
+    },
+    {
+      "id": "R5-REG-035", "slug": "EVERY-SELECTABLE-ORDER-HAS-REPORT", "kind": "historical_bug", "severity": "P0", "status": "fixed", "title": "Medically applicable selectable orders could end without a visible report card",
+      "userVisibleSymptom": "A learner could select an applicable investigation and receive a blank, unavailable, not-performed, or review-waiting state instead of a hospital-style report card.",
+      "rootCause": { "status": "confirmed", "detail": "The result projection covered approved source mappings but left the remaining applicable case-order combinations in governance placeholders; no deterministic case-specific teaching report layer completed the student-visible contract." },
+      "affectedLayers": ["training_action", "clinical_content_projection", "renderer", "sqlite_persistence", "diagnostic_governance", "scoring_governance"],
+      "minimumReproduction": { "environment": "All 42 approved cases after applicability filtering", "steps": ["Order every selectable investigation for every case.", "Require a non-empty visible report card for each case-order.", "Replay and restart, then assert deterministic content, no duplicate event, no cross-case leakage, and no diagnostic or scoring eligibility."] },
+      "originalEvidence": { "head": "931af77374dd56d258d4b7acf0f223e0d95a2dd2", "artifactSha256": null, "references": ["external:mentor-stage2-empty-result-report", "scripts/test-stage2-all-order-outcomes.mjs", "server/desktopClinicalContentProjection.js"] },
+      "legacyGap": "Earlier tests validated a small approved mapping set and accepted no-result or review placeholders as terminal, so they did not prove task completion for every selectable case-order combination.",
+      "regressionTests": [{ "id": "R5-EVERY-SELECTABLE-ORDER-HAS-REPORT", "status": "existing", "path": "scripts/test-stage2-all-order-outcomes.mjs", "gate": "milestone", "components": ["42 cases", "2692 selectable orders", "visible report cards", "deterministic replay", "units", "source priority", "diagnostic and scoring isolation"] }],
+      "replay": { "seed": "r5-every-selectable-order-report-v1", "command": "pnpm run test:stage2:all-orders", "actions": ["enumerate applicable catalog", "order all", "inspect reports", "replay", "audit governance"] }, "fixCommit": "2b4d5709d8694440facca315eeb093745bf32c66", "relatedCommits": [], "permanentGate": "milestone",
+      "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     }
   ]
 }

@@ -40,7 +40,9 @@ const REQUIRED_SLUGS = [
   "MENTOR-EFFECTIVE-MODEL-MODE",
   "STAGE2-STUDENT-RESULT-PRESENTATION",
   "DIRECT-EXE-LOCAL-AI-READY",
-  "PATIENT-SPOKEN-LANGUAGE-REALISM"
+  "PATIENT-SPOKEN-LANGUAGE-REALISM",
+  "CASE-ORDER-APPLICABILITY",
+  "EVERY-SELECTABLE-ORDER-HAS-REPORT"
 ];
 const STATUSES = new Set(["fixed", "regression_required", "open", "blocked_root_cause"]);
 const ROOT_CAUSE_STATUSES = new Set(["confirmed", "unconfirmed", "not_applicable"]);
