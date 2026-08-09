@@ -97,6 +97,19 @@ assert.equal(version.medicalGovernance.medicalAuthorSimulatedReports, 103);
 assert.equal(version.medicalGovernance.medicalAuthorNotPerformed, 34);
 assert.equal(version.medicalGovernance.medicalAuthorSourceDerivedReports, 3);
 assert.equal(version.medicalGovernance.medicalAuthorAuthoritySha256, "f846a35c3ed80899d29c535da0ec46309ef2cd810e2c6f7fe2ae99865f7707d9");
+assert.deepEqual(version.medicalGovernance.selectableOutcomeAudit, {
+  applicableCaseOrders: 2692,
+  reportCards: 2692,
+  realReports: 83,
+  sharedRealReports: 14,
+  existingSimulatedReports: 84,
+  generatedTeachingSimulationReports: 2508,
+  sourceDerivedReports: 3,
+  notPerformed: 0,
+  noCaseResult: 0,
+  inapplicableExcluded: 50,
+  applicabilityConflicts: 0
+});
 assert.equal(version.runtimeSecurity.cloudRequestAllowed, false);
 assert.equal(version.runtimeSecurity.listenAddress, "127.0.0.1");
 

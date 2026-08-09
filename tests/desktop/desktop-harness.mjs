@@ -405,15 +405,15 @@ export async function orderReportsAndEnterStageThree(page, { mentorFinal = false
   }, { timeout: 30_000 });
   await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
   assert.equal((await orderResponse).status(), 200);
-  const expectedReports = mentorFinal ? 7 : 2;
+  const expectedReports = mentorFinal ? 10 : 2;
   const expectedOutcomes = mentorFinal ? 10 : 2;
   await page.getByTestId("order-outcome").nth(expectedOutcomes - 1).waitFor({ state: "visible" });
   assert.equal(await page.getByTestId("order-outcome").count(), expectedOutcomes);
   assert.equal(await page.getByTestId("report-card").count(), expectedReports, "mentor_final_report_count");
   assert.match(await summary.innerText(), new RegExp(`已返回检查报告\\s*${expectedReports}\\s*份`, "u"));
   if (mentorFinal) {
-    assert.ok(await page.getByTestId("order-outcome").filter({ hasText: /未实施|不适用/u }).count() >= 2);
-    assert.equal(await page.getByTestId("order-outcome").filter({ hasText: "本病例当前无可提供的该项检查结果" }).count(), 1);
+    assert.equal(await page.getByTestId("order-outcome").filter({ hasText: /未实施|不适用/u }).count(), 0);
+    assert.equal(await page.getByTestId("order-outcome").filter({ hasText: "本病例当前无可提供的该项检查结果" }).count(), 0);
     assert.doesNotMatch(
       [
         ...(await page.getByTestId("report-card").allTextContents()),
@@ -438,7 +438,7 @@ export async function orderReportsAndEnterStageThree(page, { mentorFinal = false
   await saved;
   const evidenceCount = await page.getByTestId("diagnosis-builder").locator("fieldset").first().locator('input[type="checkbox"]').count();
   assert.ok(evidenceCount >= 2, `stage3_evidence_insufficient:${evidenceCount}`);
-  return { evidenceCount, reports: expectedReports, outcomes: expectedOutcomes, notPerformed: mentorFinal ? 2 : 0, noCaseResult: mentorFinal ? 1 : 0 };
+  return { evidenceCount, reports: expectedReports, outcomes: expectedOutcomes, notPerformed: 0, noCaseResult: 0 };
 }
 
 export async function expectSubmittedStageThree(page, { baseURL, marker, expectedReports = 2 }) {

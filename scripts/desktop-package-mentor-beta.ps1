@@ -100,6 +100,19 @@ $versionRecord = [ordered]@{
     medicalAuthorNotPerformed = 34
     medicalAuthorSourceDerivedReports = 3
     medicalAuthorAuthoritySha256 = "f846a35c3ed80899d29c535da0ec46309ef2cd810e2c6f7fe2ae99865f7707d9"
+    selectableOutcomeAudit = [ordered]@{
+      applicableCaseOrders = 2692
+      reportCards = 2692
+      realReports = 83
+      sharedRealReports = 14
+      existingSimulatedReports = 84
+      generatedTeachingSimulationReports = 2508
+      sourceDerivedReports = 3
+      notPerformed = 0
+      noCaseResult = 0
+      inapplicableExcluded = 50
+      applicabilityConflicts = 0
+    }
   }
   runtimeSecurity = [ordered]@{
     cloudRequestAllowed = $false
