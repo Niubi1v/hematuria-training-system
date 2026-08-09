@@ -215,15 +215,18 @@ test("P005 approved results survive a real sidecar and SQLite restart", async ({
     const fiveOrders = "尿常规；尿沉渣镜检；尿抗酸杆菌/结核分枝杆菌检查；PSA；彩超泌尿系（双肾、输尿管及膀胱）+残余尿";
     await input.fill(fiveOrders);
     await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
-    await expect(page.getByTestId("report-card")).toHaveCount(2);
-    await expect(page.getByTestId("report-card")).toContainText([/红细胞/u, /膀胱小梁小房形成.*前列腺增大.*56\*65\*47/u]);
+    await expect(page.getByTestId("report-card")).toHaveCount(4);
+    await expect(page.getByTestId("report-card").filter({ hasText: /红细胞/u })).toHaveCount(1);
+    await expect(page.getByTestId("report-card").filter({ hasText: /抗酸染色阴性.*结核分枝杆菌核酸检测阴性/u })).toHaveCount(1);
+    await expect(page.getByTestId("report-card").filter({ hasText: /总PSA 6\.8 ng\/mL/u })).toHaveCount(1);
+    await expect(page.getByTestId("report-card").filter({ hasText: /膀胱小梁小房形成.*前列腺增大.*56\*65\*47/u })).toHaveCount(1);
     await expect(page.getByTestId("report-card").filter({ hasText: /心脏|冠脉|EF55|等待医学审核|待审核|medical_review_pending|diagnosticEligible|scoringEligible/u })).toHaveCount(0);
 
     await input.fill(fiveOrders);
     await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
-    await expect(page.getByRole("status").filter({ hasText: "5项医嘱" })).toContainText("已有结果2份");
-    await expect(page.getByTestId("report-card")).toHaveCount(4);
-    await expect(page.getByTestId("investigation-selection-summary")).toContainText("已返回检查报告 2 份");
+    await expect(page.getByRole("status").filter({ hasText: "5项医嘱" })).toContainText("已有结果4份");
+    await expect(page.getByTestId("report-card")).toHaveCount(8);
+    await expect(page.getByTestId("investigation-selection-summary")).toContainText("已返回检查报告 4 份");
 
     await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
     await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
@@ -247,12 +250,12 @@ test("P005 approved results survive a real sidecar and SQLite restart", async ({
     })).payload.snapshot;
     assert.equal(restored.activeStageNo, 3);
     assert.equal(restored.answers?.historySummary, marker);
-    assert.equal(restored.orderLogs?.reduce((count, log) => count + (log.results?.length || 0), 0), 4, "duplicate logs must keep both existing reports viewable");
+    assert.equal(restored.orderLogs?.reduce((count, log) => count + (log.results?.length || 0), 0), 8, "duplicate logs must keep all four existing reports viewable");
     const database = new DatabaseSync(path.join(dataDirectory, "hematuria.sqlite3"), { readOnly: true });
     try {
       const row = database.prepare("SELECT state_json FROM attempts WHERE case_id = ?").get("P005");
       const durableState = JSON.parse(row.state_json);
-      assert.equal(durableState.events.filter((event) => event.type === "result_returned").length, 2);
+      assert.equal(durableState.events.filter((event) => event.type === "result_returned").length, 4);
     } finally {
       database.close();
     }
