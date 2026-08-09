@@ -213,42 +213,67 @@ function modelModeSelection(store) {
 
 function selectedModel(store) {
   const selection = modelModeSelection(store);
-  const modelMode = selection.effectiveMode;
-  const descriptor = modelModes[modelMode];
+  let modelMode = selection.effectiveMode;
+  let descriptor = modelModes[modelMode];
   const environmentModelPath = String(process.env.HEMATURIA_DESKTOP_MODEL_PATH || "");
+  let modelDirectory;
+  let modelFilePath;
   if (environmentModelPath) {
     if (!path.isAbsolute(environmentModelPath) || environmentModelPath.includes("\0")) {
       throw new Error("desktop_model_path_invalid");
     }
-    const modelFilePath = path.normalize(environmentModelPath);
-    return { ...selection, modelMode, descriptor, modelAlias: descriptor.alias, modelDirectory: path.dirname(modelFilePath), modelFilePath };
-  }
-  const configuredDirectory = store.getDesktopSetting("localAi.modelDirectory");
-  if (configuredDirectory !== undefined) {
-    const modelDirectory = validateModelDirectory(configuredDirectory);
-    return {
-      ...selection, modelMode,
-      descriptor,
-      modelAlias: descriptor.alias,
-      modelDirectory,
-      modelFilePath: path.join(modelDirectory, descriptor.fileName)
-    };
-  }
-  const legacyModelPath = store.getDesktopSetting("localAi.modelPath");
-  if (legacyModelPath !== undefined) {
-    if (typeof legacyModelPath !== "string" || !path.isAbsolute(legacyModelPath) || legacyModelPath.includes("\0")) {
-      throw new Error("desktop_model_path_invalid");
+    modelFilePath = path.normalize(environmentModelPath);
+    modelDirectory = path.dirname(modelFilePath);
+  } else {
+    const configuredDirectory = store.getDesktopSetting("localAi.modelDirectory");
+    if (configuredDirectory !== undefined) {
+      modelDirectory = validateModelDirectory(configuredDirectory);
+    } else {
+      const legacyModelPath = store.getDesktopSetting("localAi.modelPath");
+      if (legacyModelPath !== undefined) {
+        if (typeof legacyModelPath !== "string" || !path.isAbsolute(legacyModelPath) || legacyModelPath.includes("\0")) {
+          throw new Error("desktop_model_path_invalid");
+        }
+        modelDirectory = path.dirname(path.normalize(legacyModelPath));
+      } else {
+        modelDirectory = path.join(dataDirectory, "models");
+      }
     }
-    const legacyDirectory = path.dirname(path.normalize(legacyModelPath));
-    return {
-      ...selection, modelMode,
-      descriptor,
-      modelAlias: descriptor.alias,
-      modelDirectory: legacyDirectory,
-      modelFilePath: path.join(legacyDirectory, descriptor.fileName)
-    };
+    modelFilePath = path.join(modelDirectory, descriptor.fileName);
   }
-  const modelDirectory = path.join(dataDirectory, "models");
+
+  const fileMatches = (filePath, expected) => {
+    try {
+      const stat = fs.statSync(filePath);
+      return path.basename(filePath) === expected.fileName
+        && stat.isFile()
+        && (process.env.HEMATURIA_DESKTOP_TEST_MODE === "1" || stat.size === expected.size);
+    } catch {
+      return false;
+    }
+  };
+  if (modelMode === "standard" && !fileMatches(modelFilePath, descriptor)) {
+    const lightweight = modelModes.lightweight;
+    const lightweightPath = path.basename(modelFilePath) === lightweight.fileName
+      ? modelFilePath
+      : path.join(modelDirectory, lightweight.fileName);
+    if (fileMatches(lightweightPath, lightweight)) {
+      modelMode = "lightweight";
+      descriptor = lightweight;
+      modelFilePath = lightweightPath;
+      return {
+        ...selection,
+        effectiveMode: modelMode,
+        effectiveModel: descriptor.alias,
+        overrideSource: "packaged_model_fallback",
+        modelMode,
+        descriptor,
+        modelAlias: descriptor.alias,
+        modelDirectory,
+        modelFilePath
+      };
+    }
+  }
   return {
     ...selection, modelMode,
     descriptor,
@@ -563,6 +588,10 @@ function desktopSettingsSnapshot(store) {
     modelDirectory,
     modelFilePath,
     modelPresent: isRegularFile(modelFilePath),
+    modelAvailability: {
+      lightweight: isRegularFile(path.join(modelDirectory, modelModes.lightweight.fileName)),
+      standard: isRegularFile(path.join(modelDirectory, modelModes.standard.fileName))
+    },
     localAiEnabled: localAiEnabled(store),
     llamaStatus: localAiState.status,
     modelValidation: localAiState.modelValidation

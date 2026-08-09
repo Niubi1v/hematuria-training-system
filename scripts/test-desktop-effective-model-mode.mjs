@@ -54,7 +54,10 @@ const lightweightPath = path.join(scratch, "Model", manifest.models.lightweight.
 const standardPath = path.join(scratch, "Model", manifest.models.standard.fileName);
 
 try {
+  await fs.mkdir(path.dirname(lightweightPath), { recursive: true });
+  await fs.writeFile(lightweightPath, "test-lightweight-model");
   const staleStandard = await settingsFor("stale-standard", "standard", {
+    HEMATURIA_DESKTOP_TEST_MODE: "1",
     HEMATURIA_DESKTOP_MODEL_MODE: "lightweight",
     HEMATURIA_DESKTOP_MODEL_PATH: lightweightPath
   });
@@ -66,8 +69,18 @@ try {
   assert.equal(staleStandard.effectiveModel, "Qwen3-1.7B");
   assert.equal(staleStandard.overrideSource, "mentor_package");
 
+  const packagedFallback = await settingsFor("packaged-fallback", "standard", {
+    HEMATURIA_DESKTOP_TEST_MODE: "1",
+    HEMATURIA_DESKTOP_MODEL_PATH: lightweightPath
+  });
+  assert.equal(packagedFallback.configuredMode, "standard");
+  assert.equal(packagedFallback.effectiveMode, "lightweight");
+  assert.equal(packagedFallback.effectiveModel, "Qwen3-1.7B");
+  assert.equal(packagedFallback.overrideSource, "packaged_model_fallback");
+
   for (const configuredMode of [undefined, "lightweight"]) {
     const settings = await settingsFor(`lightweight-${configuredMode || "unset"}`, configuredMode, {
+      HEMATURIA_DESKTOP_TEST_MODE: "1",
       HEMATURIA_DESKTOP_MODEL_MODE: "lightweight",
       HEMATURIA_DESKTOP_MODEL_PATH: lightweightPath
     });
@@ -91,7 +104,7 @@ try {
     /desktop_model_mode_invalid/
   );
 
-  console.log("R5-MENTOR-EFFECTIVE-MODEL-MODE passed: 5/5");
+  console.log("R5-MENTOR-EFFECTIVE-MODEL-MODE passed: 6/6");
 } finally {
   await fs.rm(scratch, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
 }

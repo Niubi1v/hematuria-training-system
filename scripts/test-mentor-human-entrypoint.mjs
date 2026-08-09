@@ -32,11 +32,12 @@ try {
     assert.equal(extracted.status, 0, String(extracted.stderr || extracted.stdout || "mentor_zip_extract_failed"));
     const version = JSON.parse((await fs.readFile(path.join(extractionRoot, "VERSION.json"), "utf8")).replace(/^\uFEFF/u, ""));
     assert.equal(version.productHead, productHead);
+    for (const entryMode of ["root_launcher", "direct_app_exe"]) {
     const environment = {
       ...process.env,
       HEMATURIA_MENTOR_PACKAGE_ROOT: extractionRoot,
-      HEMATURIA_SURFACE_LABEL: `mentor-full-${index + 1}`,
-      HEMATURIA_TAURI_SMOKE_ROOT: path.join(root, `runtime-${index + 1}`),
+      HEMATURIA_SURFACE_LABEL: `mentor-${entryMode === "root_launcher" ? "root" : "direct"}-${index + 1}`,
+      HEMATURIA_TAURI_SMOKE_ROOT: path.join(root, `runtime-${entryMode}-${index + 1}`),
       HEMATURIA_PRODUCT_HEAD: productHead
     };
     delete environment.HEMATURIA_DESKTOP_MODEL_PATH;
@@ -45,12 +46,14 @@ try {
     delete environment.HEMATURIA_DESKTOP_DISABLE_LOCAL_AI;
     const run = spawnSync(process.execPath, [
       path.join(repoRoot, "scripts", "test-desktop-tauri-smoke.mjs"),
-      "--surface", "portable", "--mentor-human-entrypoint"
+      "--surface", "portable", "--mentor-human-entrypoint",
+      ...(entryMode === "direct_app_exe" ? ["--direct-app-exe"] : [])
     ], { cwd: repoRoot, env: environment, encoding: "utf8", windowsHide: true, timeout: 12 * 60_000 });
     assert.equal(run.status, 0, String(run.stderr || run.stdout || "mentor_human_entrypoint_failed"));
     const result = JSON.parse(String(run.stdout || "").trim().split(/\r?\n/u).at(-1));
     assert.equal(result.productHead, productHead);
     assert.equal(result.mentorHumanEntrypoint, true);
+    assert.equal(result.mentorEntryMode, entryMode);
     assert.equal(result.realLocalAi, true);
     assert.ok(result.mentorLocalAcceptedCount > 0);
     assert.equal(result.stageTwo.reports, 7);
@@ -60,7 +63,8 @@ try {
     assert.ok(result.stageTwo.evidenceCount >= 2);
     assert.equal(result.cloudRequestCount, 0);
     assert.equal(result.processCleanup, true);
-    results.push({ pathVariant: index + 1, ...result });
+    results.push({ pathVariant: index + 1, entryMode, ...result });
+    }
   }
 } finally {
   await fs.rm(root, { recursive: true, force: true, maxRetries: 20, retryDelay: 250 });
@@ -70,7 +74,7 @@ console.log(JSON.stringify({
   status: "passed",
   productHead,
   package: path.basename(packagePath),
-  variants: results.map(({ pathVariant, stageTwo, lifecycleCycles, processCleanup, cloudRequestCount, mentorLocalAcceptedCount }) => ({
-    pathVariant, stageTwo, lifecycleCycles, processCleanup, cloudRequestCount, mentorLocalAcceptedCount
+  variants: results.map(({ pathVariant, entryMode, stageTwo, lifecycleCycles, processCleanup, cloudRequestCount, mentorLocalAcceptedCount }) => ({
+    pathVariant, entryMode, stageTwo, lifecycleCycles, processCleanup, cloudRequestCount, mentorLocalAcceptedCount
   }))
 }));

@@ -849,6 +849,25 @@ fn configured_absolute_path(name: &str) -> Result<Option<PathBuf>, String> {
     Ok(Some(path))
 }
 
+fn configured_model_mode() -> Result<Option<String>, String> {
+    match env::var("HEMATURIA_DESKTOP_MODEL_MODE") {
+        Ok(value) if matches!(value.as_str(), "lightweight" | "standard") => Ok(Some(value)),
+        Ok(_) | Err(env::VarError::NotUnicode(_)) => {
+            Err("desktop_model_mode_invalid".to_string())
+        }
+        Err(env::VarError::NotPresent) => Ok(None),
+    }
+}
+
+fn packaged_lightweight_model_path() -> Option<PathBuf> {
+    let executable_directory = env::current_exe().ok()?.parent()?.to_path_buf();
+    let file_name = "Qwen3-1.7B-Q4_K_M.gguf";
+    first_file([
+        executable_directory.join("Model").join(file_name),
+        executable_directory.parent()?.join("Model").join(file_name),
+    ])
+}
+
 fn desktop_data_directory(_app: &tauri::App) -> Result<PathBuf, String> {
     let candidate = configured_absolute_path("HEMATURIA_DESKTOP_DATA_DIR")?.map_or_else(
         || {
@@ -1016,8 +1035,13 @@ fn sanitized_child_environment(
         option_env!("HEMATURIA_PRODUCT_HEAD").unwrap_or("desktop-local"),
     );
 
-    if let Some(model_path) = configured_absolute_path("HEMATURIA_DESKTOP_MODEL_PATH")? {
+    if let Some(model_path) = configured_absolute_path("HEMATURIA_DESKTOP_MODEL_PATH")?
+        .or_else(packaged_lightweight_model_path)
+    {
         command.env("HEMATURIA_DESKTOP_MODEL_PATH", model_path);
+    }
+    if let Some(model_mode) = configured_model_mode()? {
+        command.env("HEMATURIA_DESKTOP_MODEL_MODE", model_mode);
     }
     if let Some(disabled) = env::var_os("HEMATURIA_DESKTOP_DISABLE_LOCAL_AI") {
         command.env("HEMATURIA_DESKTOP_DISABLE_LOCAL_AI", disabled);
@@ -1291,7 +1315,11 @@ fn diagnostic_report<R: tauri::Runtime, M: tauri::Manager<R>>(
     let app_root = layout.map(|value| value.app_root.as_path());
     let database_path = data_dir.map(|path| path.join("hematuria.sqlite3"));
     let log_directory = data_dir.map(|path| path.join("logs"));
-    let model_path = data_dir.map(|path| path.join("models").join("Qwen3-1.7B-Q4_K_M.gguf"));
+    let model_path = configured_absolute_path("HEMATURIA_DESKTOP_MODEL_PATH")
+        .ok()
+        .flatten()
+        .or_else(packaged_lightweight_model_path)
+        .or_else(|| data_dir.map(|path| path.join("models").join("Qwen3-1.7B-Q4_K_M.gguf")));
     let legacy_path = env::var_os("LOCALAPPDATA").map(|root| {
         PathBuf::from(root)
             .join("HematuriaTraining")

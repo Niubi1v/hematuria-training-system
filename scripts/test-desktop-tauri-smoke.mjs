@@ -5,6 +5,7 @@ import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync, spawn, spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
 import { DatabaseSync } from "node:sqlite";
 import { chromium } from "@playwright/test";
 import {
@@ -36,6 +37,8 @@ const surfaceIndex = process.argv.indexOf("--surface");
 const surface = surfaceIndex >= 0 ? String(process.argv[surfaceIndex + 1] || "") : "no-bundle";
 if (!new Set(["no-bundle", "portable", "nsis"]).has(surface)) throw new Error(`desktop_tauri_surface_not_implemented:${surface}`);
 const mentorHumanEntrypoint = process.argv.includes("--mentor-human-entrypoint");
+const mentorDirectExe = process.argv.includes("--direct-app-exe");
+if (mentorDirectExe && !mentorHumanEntrypoint) throw new Error("direct_app_exe_requires_mentor_package");
 const mentorPackageRoot = mentorHumanEntrypoint ? path.resolve(process.env.HEMATURIA_MENTOR_PACKAGE_ROOT || "") : "";
 if (mentorHumanEntrypoint && !process.env.HEMATURIA_MENTOR_PACKAGE_ROOT) throw new Error("mentor_package_root_required");
 const surfaceLabel = process.env.HEMATURIA_SURFACE_LABEL || surface;
@@ -52,7 +55,7 @@ const executable = mentorHumanEntrypoint
 const mentorLauncher = mentorHumanEntrypoint ? path.join(mentorPackageRoot, "启动血尿训练系统.cmd") : "";
 try {
   await fs.access(executable);
-  if (mentorHumanEntrypoint) await fs.access(mentorLauncher);
+  if (mentorHumanEntrypoint && !mentorDirectExe) await fs.access(mentorLauncher);
 } catch {
   throw new Error(mentorHumanEntrypoint ? "mentor_human_entrypoint_missing" : "desktop_tauri_executable_missing");
 }
@@ -437,13 +440,19 @@ async function launch(dataDirectory, webViewDirectory) {
       WEBVIEW2_USER_DATA_FOLDER: webViewDirectory,
       WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${cdpPort}`
     };
-  const launcherChild = mentorHumanEntrypoint ? spawn("cmd.exe", ["/d", "/c", mentorLauncher], {
+  if (mentorHumanEntrypoint) {
+    delete launchEnvironment.HEMATURIA_DESKTOP_MODEL_PATH;
+    delete launchEnvironment.HEMATURIA_DESKTOP_MODEL_MODE;
+    delete launchEnvironment.HEMATURIA_DESKTOP_TEST_MODE;
+    delete launchEnvironment.HEMATURIA_DESKTOP_DISABLE_LOCAL_AI;
+  }
+  const launcherChild = mentorHumanEntrypoint && !mentorDirectExe ? spawn("cmd.exe", ["/d", "/c", mentorLauncher], {
     cwd: mentorPackageRoot,
     env: launchEnvironment,
     stdio: "ignore",
     windowsHide: false
   }) : null;
-  const child = mentorHumanEntrypoint
+  const child = mentorHumanEntrypoint && !mentorDirectExe
     ? processHandle(await eventually(() => {
       const next = processInventory().productPids.find((pid) => !preLaunchInventory.productPids.includes(pid));
       return next || false;
@@ -794,6 +803,24 @@ let cleanupFailure;
 let failureArchive;
 let result;
 
+function seedStaleStandardMode() {
+  const databasePath = path.join(dataDirectory, "hematuria.sqlite3");
+  const previousDataDirectory = process.env.HEMATURIA_DESKTOP_DATA_DIR;
+  const previousDatabasePath = process.env.HEMATURIA_DESKTOP_DATABASE_PATH;
+  process.env.HEMATURIA_DESKTOP_DATA_DIR = dataDirectory;
+  process.env.HEMATURIA_DESKTOP_DATABASE_PATH = databasePath;
+  const store = createRequire(import.meta.url)("../server/desktopSqliteStore.js");
+  try {
+    store.setDesktopSetting("localAi.modelMode", "standard");
+  } finally {
+    store.closeDesktopSqliteStore();
+    if (previousDataDirectory === undefined) delete process.env.HEMATURIA_DESKTOP_DATA_DIR;
+    else process.env.HEMATURIA_DESKTOP_DATA_DIR = previousDataDirectory;
+    if (previousDatabasePath === undefined) delete process.env.HEMATURIA_DESKTOP_DATABASE_PATH;
+    else process.env.HEMATURIA_DESKTOP_DATABASE_PATH = previousDatabasePath;
+  }
+}
+
 if (startupOnly) {
   try {
     await fs.mkdir(dataDirectory, { recursive: true });
@@ -850,6 +877,7 @@ if (startupOnly) {
 } else {
 try {
   await fs.mkdir(dataDirectory, { recursive: true });
+  if (mentorHumanEntrypoint) seedStaleStandardMode();
   const firstCycleStarted = performance.now();
   running = await launch(dataDirectory, webViewDirectory);
   const firstRuntimeReadyMs = Math.round(performance.now() - firstCycleStarted);
@@ -858,6 +886,12 @@ try {
   assert.match(firstProbe.apiBaseUrl, /^http:\/\/127\.0\.0\.1:\d+$/);
   assert.equal(firstProbe.tokenValid, true);
   const firstLlama = localAiEnabled ? await waitForLlama(running.page) : await waitForDisabledLocalAi(running.page);
+  if (mentorHumanEntrypoint) {
+    assert.equal(firstLlama.diagnostics.localAi.configuredMode, "standard");
+    assert.equal(firstLlama.diagnostics.localAi.effectiveMode, "lightweight");
+    assert.equal(firstLlama.diagnostics.localAi.effectiveModel, "Qwen3-1.7B");
+    assert.equal(firstLlama.diagnostics.localAi.overrideSource, mentorDirectExe ? "packaged_model_fallback" : "mentor_package");
+  }
   const firstModelReadyMs = Math.round(performance.now() - firstCycleStarted);
   const initialAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
   assert.equal(initialAuthority.schemaVersion, 3);
@@ -1069,6 +1103,7 @@ try {
     processCleanup: true,
     realLocalAi,
     mentorHumanEntrypoint,
+    mentorEntryMode: mentorDirectExe ? "direct_app_exe" : "root_launcher",
     mentorLocalAcceptedCount,
     performance: {
       firstRuntimeReadyMs,

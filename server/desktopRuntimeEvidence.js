@@ -80,7 +80,7 @@ function runtimeSnapshot() {
       || (snapshot.configuredMode !== null && !["lightweight", "standard"].includes(snapshot.configuredMode))
       || snapshot.effectiveMode !== snapshot.modelProfile
       || snapshot.effectiveModel !== snapshot.model
-      || !["mentor_package", "configured_preference", "runtime_default"].includes(snapshot.overrideSource)
+      || !["mentor_package", "packaged_model_fallback", "configured_preference", "runtime_default"].includes(snapshot.overrideSource)
       || snapshot.runtimeTarget !== "desktop"
       || typeof snapshot.productHead !== "string"
     ) {

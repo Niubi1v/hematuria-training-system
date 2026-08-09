@@ -14,10 +14,11 @@ type DesktopSettings = {
   configuredMode: "lightweight" | "standard" | null;
   effectiveMode: "lightweight" | "standard";
   effectiveModel: "Qwen3-1.7B" | "Qwen3-4B";
-  overrideSource: "mentor_package" | "configured_preference" | "runtime_default";
+  overrideSource: "mentor_package" | "packaged_model_fallback" | "configured_preference" | "runtime_default";
   modelDirectory: string;
   modelFilePath: string;
   modelPresent: boolean;
+  modelAvailability: { lightweight: boolean; standard: boolean };
   localAiEnabled: boolean;
   llamaStatus:
     | "initializing"
@@ -42,7 +43,7 @@ type DesktopRuntimeSummary = {
   configuredMode: "lightweight" | "standard" | null;
   effectiveMode: "lightweight" | "standard";
   effectiveModel: "Qwen3-1.7B" | "Qwen3-4B";
-  overrideSource: "mentor_package" | "configured_preference" | "runtime_default";
+  overrideSource: "mentor_package" | "packaged_model_fallback" | "configured_preference" | "runtime_default";
   productHead: string;
   llamaServerReady: boolean;
   localModelReady: boolean;
@@ -72,6 +73,7 @@ const emptySettings: DesktopSettings = {
   modelDirectory: "",
   modelFilePath: "",
   modelPresent: false,
+  modelAvailability: { lightweight: false, standard: false },
   localAiEnabled: false,
   llamaStatus: "stopped",
   modelValidation: "not_checked",
@@ -304,9 +306,10 @@ export default function DesktopModelSettings() {
                 onChange={(event) => setDraftModelMode(event.target.value as DesktopSettings["modelMode"])}
               >
                 <option value="lightweight">{lang === "en" ? "Lightweight (recommended)" : "轻量（推荐）"}</option>
-                <option value="standard">{lang === "en" ? "Standard (higher resource use)" : "标准（占用更多资源）"}</option>
+                <option value="standard" disabled={!settings.modelAvailability.standard}>{lang === "en" ? "Standard (higher resource use)" : "标准（占用更多资源）"}</option>
               </select>
             </label>
+            {!settings.modelAvailability.standard && <p className="mt-2 text-xs text-clinic-muted">{lang === "en" ? "Standard is unavailable because its model is not installed; lightweight remains active." : "标准模型未安装，当前自动使用轻量方案。"}</p>}
             <p className="mt-2 text-xs text-clinic-muted">{lang === "en" ? "Use the lightweight profile first; choose standard only when the device has sufficient resources." : "建议先使用轻量方案；设备资源充足时再选择标准方案。"}</p>
 
             <div className="mt-5 flex flex-wrap items-center gap-2">
