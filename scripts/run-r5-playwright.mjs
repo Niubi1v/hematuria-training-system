@@ -26,8 +26,8 @@ async function waitForNext(child) {
   while (Date.now() < deadline) {
     if (child.exitCode !== null) throw new Error(`Next exited before readiness with code ${child.exitCode}`);
     try {
-      const response = await fetch(origin, { signal: AbortSignal.timeout(1500) });
-      if (response.ok) return;
+      const responses = await Promise.all(["/", "/cases/P001/"].map((pathname) => fetch(`${origin}${pathname}`, { signal: AbortSignal.timeout(5000) })));
+      if (responses.every((response) => response.ok)) return;
     } catch {
       // Next is still starting.
     }
