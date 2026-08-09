@@ -43,6 +43,8 @@ const fast = [
   command(pnpm, "run", "test:data-agent-authority"),
   command(pnpm, "run", "test:bilingual-conflict-quarantine"),
   command(pnpm, "run", "test:patient-spoken-language-realism"),
+  command(pnpm, "run", "test:patient-semantic-coverage"),
+  command(pnpm, "run", "test:patient-knowledge-grounding"),
   command(pnpm, "run", "test:desktop:install-identity"),
   command(pnpm, "run", "typecheck"),
   command(pnpm, "run", "lint")

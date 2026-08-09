@@ -9,6 +9,7 @@ const {
 } = require("./llmClient.runtime.js");
 const { BILINGUAL_CONFLICT_REASON, quarantineForMatchedSlots, uncertainConflictReply } = require("./bilingualConflictQuarantine.js");
 const { matchStructuredFacts } = require("./structuredFacts.js");
+const { matchPatientKnowableFacts } = require("./patientKnowableFacts.js");
 const { matchCanonicalPatientFacts, projectCanonicalPatientFacts } = require("./canonicalFacts.js");
 const {
   matchPatientFactOntology,
@@ -606,6 +607,9 @@ function allowedHistoryTerms(matchedSlotIds = []) {
   if (matchedSlotIds.some((slotId) => ["GYNE_MENSTRUAL", "GYNE_PREGNANCY"].includes(slotId))) {
     allowed.add("治疗");
   }
+  if (matchedSlotIds.includes("PATIENT_PRIOR_DIAGNOSIS")) allowed.add("诊断");
+  if (matchedSlotIds.some((slotId) => ["PATIENT_PRIOR_TREATMENT", "PATIENT_CURRENT_PROBLEM_MEDICATION", "PATIENT_TREATMENT_RESPONSE"].includes(slotId))) allowed.add("治疗");
+  if (matchedSlotIds.some((slotId) => ["PATIENT_PRIOR_INVESTIGATIONS", "PATIENT_PRIOR_RESULTS"].includes(slotId))) allowed.add("膀胱镜");
   return allowed;
 }
 
@@ -921,7 +925,9 @@ function projectSemanticPatientFacts(caseId, caseData, semanticDecision, languag
       const projectionQuestion = semanticProjectionQuestion(definition, language);
       current = definition.domain === "structured_history"
         ? matchStructuredFacts(caseData, projectionQuestion, language)
-        : matchCanonicalPatientFacts(caseId, projectionQuestion, language);
+        : definition.domain === "patient_knowledge"
+          ? matchPatientKnowableFacts(caseData, projectionQuestion, language)
+          : matchCanonicalPatientFacts(caseId, projectionQuestion, language);
     }
     projected = mergePatientFactMatches(projected, current);
   }
@@ -969,6 +975,8 @@ function patientEntityForPlan(plan, replyText, previousEntity = "") {
   if (intent === "smoking_history") return "smoking";
   if (intent === "alcohol_history") return "alcohol";
   if (intent === "past_medical_history_summary") return "past_medical_history";
+  if (["prior_medical_visit", "prior_investigations", "prior_investigation_results_patient_aware"].includes(intent)) return "prior_investigation";
+  if (["prior_treatment", "prior_medication_for_current_problem", "treatment_response"].includes(intent)) return "prior_treatment";
   return intent || previousEntity;
 }
 
@@ -1025,6 +1033,8 @@ function recordConversationState(session, result, traceInput = {}) {
         ? (
             isMock
               ? "mock"
+              : localProvider
+                ? "local_ai"
               : String(configured.provider || "").toLowerCase() === "deepseek"
                 ? "deepseek_live_ai"
                 : "live_ai"
@@ -1187,20 +1197,19 @@ async function naturalizeGovernedPatientAnswer({
   patientControl
 }) {
   const config = getLLMProviderConfig();
+  const localMetadata = isLocalProvider(config.provider) && localMetadataApplied
+    ? publicLocalMetadata(semanticDecision)
+    : null;
   if (isLocalProvider(config.provider)) {
-    const metadata = localMetadataApplied ? publicLocalMetadata(semanticDecision) : null;
-    return {
+    if (!localMetadata) return {
       ...fallback,
-      provider: metadata ? config.provider : "rule",
-      model: metadata ? config.model : "local-rule",
-      isFallback: !metadata,
+      provider: "rule",
+      model: "local-rule",
+      isFallback: true,
       filter: { ok: true, hits: [] },
-      fallbackReason: metadata
-        ? ""
-        : fallback.fallbackReason || semanticDecision?.reason || "local_metadata_not_applied",
+      fallbackReason: fallback.fallbackReason || semanticDecision?.reason || "local_metadata_not_applied",
       allowedAnswer: fallback.replyText,
-      localMetadataApplied: Boolean(metadata),
-      ...(metadata ? { localMetadata: metadata } : {}),
+      localMetadataApplied: false,
       providerDurationMs: Number(semanticDecision?.durationMs || 0),
       thinkingMode: "disabled",
       thinkingExecuted: false
@@ -1317,7 +1326,8 @@ async function naturalizeGovernedPatientAnswer({
         isFallback: true,
         filter: { ...filter, hits: [] },
         safetyFlags: [...(fallback.safetyFlags || []), "ai_response_blocked"],
-        fallbackReason: "ai_response_blocked"
+        fallbackReason: "ai_response_blocked",
+        ...(localMetadata ? { localMetadata, localMetadataApplied: true } : {})
       };
     }
     const result = {
@@ -1333,7 +1343,8 @@ async function naturalizeGovernedPatientAnswer({
       providerDurationMs: response.durationMs + (acceptedResponse === response ? 0 : acceptedResponse.durationMs),
       providerFirstTokenMs: acceptedResponse.firstTokenMs ?? response.firstTokenMs,
       thinkingMode: thinking.mode,
-      thinkingExecuted: thinking.mode !== "disabled"
+      thinkingExecuted: thinking.mode !== "disabled",
+      ...(localMetadata ? { localMetadata, localMetadataApplied: true } : {})
     };
     cacheSet(answerCache, answerKey, result, ANSWER_TTL_MS, ANSWER_CACHE_MAX);
     return result;
@@ -1346,7 +1357,8 @@ async function naturalizeGovernedPatientAnswer({
       model: config.model,
       isFallback: true,
       filter: { ok: true, hits: [] },
-      fallbackReason: fallback.fallbackReason || fallbackReason
+      fallbackReason: fallback.fallbackReason || fallbackReason,
+      ...(localMetadata ? { localMetadata, localMetadataApplied: true } : {})
     };
   }
 }
@@ -1366,7 +1378,8 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   // discard a recognized clause from the other.
   let canonical = matchCanonicalPatientFacts(caseId, routedInput, language);
   let structured = matchStructuredFacts(caseData, routedInput, language);
-  let matched = mergePatientFactMatches(canonical, structured);
+  const patientKnowledge = matchPatientKnowableFacts(caseData, routedInput, language);
+  let matched = mergePatientFactMatches(mergePatientFactMatches(canonical, structured), patientKnowledge);
   if (!matched) matched = recoverRecentResolvedFact(session, contextResolution, routedInput, language);
   const safeMissingMatch = !matched
     ? matchPatientFactOntology(routedInput, language, ["safe_missing"])[0]
@@ -1401,6 +1414,18 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     };
   }
   const matchedSlotIds = matched?.matchedSlotIds || [];
+  const matchedFactIds = matched?.matchedFacts || [];
+  const patientKnowledgePlans = matched?.answerPlans || [];
+  const invasiveReportRequest = /(?:膀胱镜|病理|活检|cystoscopy|pathology|biopsy)/i.test(String(routedInput || ""));
+  const crossSectionalReportRequest = /(?:CTU|CT|MRI|磁共振|计算机断层)/i.test(String(routedInput || ""));
+  const patientKnownReport = patientKnowledgePlans.some((plan) =>
+    ["prior_investigations", "prior_investigation_results_patient_aware"].includes(plan.intent)
+    && !invasiveReportRequest
+    && (!crossSectionalReportRequest || plan.factState !== FACT_STATES.EXACT_VALUE)
+  );
+  const patientKnownDiagnosis = patientKnowledgePlans.some((plan) =>
+    plan.intent === "prior_diagnosis_patient_aware" && plan.factState === FACT_STATES.EXACT_VALUE
+  );
   const isExplicitHistoryQuestion = explicitHistoryContext.test(String(studentInput || ""))
     && !boundaryDetailIntent.test(String(routedInput || ""))
     && matchedSlotIds.length > 0
@@ -1408,10 +1433,10 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   const isTemporalFindingQuestion = matchedSlotIds.includes("hematuria_onset")
     && /什么时候|多久|几天|几周|几个月|何时|when|how long/i.test(String(routedInput || ""))
     && !/结果|数值|多少个|显示|提示|报告内容|what.*result|result.*(?:show|value)|report.*(?:show|say)/i.test(String(routedInput || ""));
-  if (!isExplicitHistoryQuestion && hasAny(studentInput, language === "en" ? diagnosisWordsEn : diagnosisWords)) {
+  if (!isExplicitHistoryQuestion && !patientKnownDiagnosis && hasAny(studentInput, language === "en" ? diagnosisWordsEn : diagnosisWords)) {
     return { replyText: language === "en" ? "I do not know the diagnosis. The doctor will need to decide." : "这个我不清楚，需要医生判断。", provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, safetyFlags: ["blocked_diagnosis_request"], matchedSlotIds: [], matchedFacts: [], answerSource: "rule", confidence: 1, fallbackReason: "diagnosis_boundary", clauseOutcomes: [{ intent: null, sourceSlotId: null, status: "rejected_boundary", factState: FACT_STATES.MISSING, unknownReason: null }], contextResolution };
   }
-  if (!isExplicitHistoryQuestion && !isTemporalFindingQuestion && hasAny(studentInput, language === "en" ? reportWordsEn : reportWords)) {
+  if (!isExplicitHistoryQuestion && !isTemporalFindingQuestion && !patientKnownReport && hasAny(studentInput, language === "en" ? reportWordsEn : reportWords)) {
     return { replyText: language === "en" ? "I cannot explain the exact results. Please check the formal report." : "我说不清楚，得看检查报告。", provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, safetyFlags: ["blocked_report_request"], matchedSlotIds: [], matchedFacts: [], answerSource: "rule", confidence: 1, fallbackReason: "report_boundary", clauseOutcomes: [{ intent: null, sourceSlotId: null, status: "rejected_boundary", factState: FACT_STATES.MISSING, unknownReason: null }], contextResolution };
   }
   const configuredProvider = getLLMProviderConfig();
@@ -1598,6 +1623,16 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     contextResolution,
     quarantinedSlotIds: matched?.quarantinedSlotIds || []
   };
+  const groundedPlan = [...(matched?.answerPlans || [])].reverse().find((plan) => plan?.intent) || null;
+  if (groundedPlan) {
+    governedFallback.groundedIntent = groundedPlan.intent;
+    governedFallback.matchedPatientFactDomain = matchedFactIds.some((intent) => patientFactOntology.find((definition) => definition.key === intent)?.domain === "patient_knowledge")
+      ? "patient_knowledge"
+      : "patient_history";
+    governedFallback.factState = groundedPlan.factState;
+    governedFallback.sourceBacked = groundedPlan.provenance === "repo_patient_knowable_projection"
+      && groundedPlan.factState === FACT_STATES.EXACT_VALUE;
+  }
   const patientControl = createPatientControlContext({
     result: governedFallback,
     runtimeProfile,
@@ -1619,7 +1654,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   return recordConversationState(session, result, {
     caseId,
     semanticDecision,
-    providerInvoked: !localStructuredMode && !result.isFallback,
+    providerInvoked: !result.isFallback,
     localMetadataApplied,
     language
   });
