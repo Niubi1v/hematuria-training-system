@@ -433,6 +433,30 @@
       "regressionTests": [{ "id": "R5-EVERY-SELECTABLE-ORDER-HAS-REPORT", "status": "existing", "path": "scripts/test-stage2-all-order-outcomes.mjs", "gate": "milestone", "components": ["42 cases", "2692 selectable orders", "visible report cards", "deterministic replay", "units", "source priority", "diagnostic and scoring isolation"] }],
       "replay": { "seed": "r5-every-selectable-order-report-v1", "command": "pnpm run test:stage2:all-orders", "actions": ["enumerate applicable catalog", "order all", "inspect reports", "replay", "audit governance"] }, "fixCommit": "2b4d5709d8694440facca315eeb093745bf32c66", "relatedCommits": [], "permanentGate": "milestone",
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
+    },
+    {
+      "id": "R5-REG-036", "slug": "PATIENT-SEMANTIC-COVERAGE", "kind": "historical_bug", "severity": "P0", "status": "fixed", "title": "Natural prior-care questions fell through to generic patient unknown",
+      "userVisibleSymptom": "A learner could ask ordinary variants about prior visits or investigations even when the case contained answerable facts, yet the patient repeatedly returned a generic memory failure.",
+      "rootCause": { "status": "confirmed", "detail": "The governed Patient Agent ontology covered fixed symptom and history prompts but had no shared semantic domains for prior visits, investigations, prior results, treatment, current-problem medication, or treatment response; unmatched wording therefore reached the generic fallback." },
+      "affectedLayers": ["patient_intent", "context_resolution", "answer_planner", "spoken_realizer", "local_ai"],
+      "minimumReproduction": { "environment": "Case P031 in a real Patient Session with provider disabled", "steps": ["Ask multiple natural variants about prior investigations.", "Observe the generic unknown despite source-backed urine and ultrasound facts.", "Replay context and compound follow-ups through the same session entrypoint."] },
+      "originalEvidence": { "head": "df4a48029aaff7b65761b478c1d506fb19284796", "artifactSha256": null, "references": ["external:mentor-human-patient-semantic-report", "server/patientSession.js", "src/lib/patientIntentCatalog.js"] },
+      "legacyGap": "The previous 42-case suite repeated a fixed twenty-question inventory and proved wording realism only after routing, so it never exercised the missing semantic families or context-dependent follow-ups.",
+      "regressionTests": [{ "id": "R5-PATIENT-SEMANTIC-COVERAGE", "status": "existing", "path": "scripts/test-patient-semantic-coverage.mjs", "gate": "fast", "components": ["18 semantic domains", "10 natural rewrites per domain", "real Patient Session", "context", "compound questions", "diagnosis and report boundaries"] }],
+      "replay": { "seed": "r5-patient-semantic-coverage-v1", "command": "pnpm run test:patient-semantic-coverage", "actions": ["route 180 rewrites", "preserve protected boundaries", "assert zero missed semantic domains"] }, "fixCommit": "9b8f2a960419e944e3ed4cec455f5b585f9190c1", "relatedCommits": [], "permanentGate": "fast",
+      "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
+    },
+    {
+      "id": "R5-REG-037", "slug": "PATIENT-KNOWLEDGE-GROUNDING", "kind": "historical_bug", "severity": "P0", "status": "fixed", "title": "Patient prior-care answers lacked a source-bounded knowledge layer",
+      "userVisibleSymptom": "Known prior tests could be omitted while current encounters, absent treatment, or unrelated history risked being projected as answerable patient facts.",
+      "rootCause": { "status": "confirmed", "detail": "Patient routing had no dedicated fail-closed projection between repository case facts and answer plans. Broad narrative matching could not distinguish a current visit from a prior visit, a treatment denial from treatment response, or slot-specific output permissions." },
+      "affectedLayers": ["case_fact_projection", "patient_knowledge", "answer_plan", "output_filter", "local_ai"],
+      "minimumReproduction": { "environment": "All 42 cases plus P001, P018, P020, P022, and P031 boundary fixtures", "steps": ["Project seven prior-care domains for every case.", "Require source-backed facts or explicit missing states.", "Inject teacher-only and Stage 2 sentinel fields and require zero projection.", "Generate five hundred replayable non-fixture questions and compare grounded plans."] },
+      "originalEvidence": { "head": "df4a48029aaff7b65761b478c1d506fb19284796", "artifactSha256": null, "references": ["external:mentor-human-patient-semantic-report", "server/patientSession.js", "data/cases.json"] },
+      "legacyGap": "Existing tests treated non-empty output as success and did not independently assert current-versus-prior visit, negated treatment, teacher-field exclusion, slot-level vocabulary isolation, or answerable generic-unknown counts.",
+      "regressionTests": [{ "id": "R5-PATIENT-KNOWLEDGE-GROUNDING", "status": "existing", "path": "scripts/test-patient-semantic-coverage.mjs", "gate": "fast", "components": ["42 cases by 7 domains", "P031 human replay", "source and missing states", "teacher and Stage 2 exclusion", "slot vocabulary isolation", "500 generated black-box questions", "Qwen3-1.7B grounded-plan parity"] }],
+      "replay": { "seed": "r5-patient-knowledge-grounding-v1", "command": "pnpm run test:patient-knowledge-grounding", "actions": ["project 294 case-domain pairs", "replay P031", "audit generic unknown and leakage", "generate 500 unique natural questions"] }, "fixCommit": "9b8f2a960419e944e3ed4cec455f5b585f9190c1", "relatedCommits": [], "permanentGate": "fast",
+      "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     }
   ]
 }

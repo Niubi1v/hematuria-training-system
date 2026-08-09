@@ -42,7 +42,9 @@ const REQUIRED_SLUGS = [
   "DIRECT-EXE-LOCAL-AI-READY",
   "PATIENT-SPOKEN-LANGUAGE-REALISM",
   "CASE-ORDER-APPLICABILITY",
-  "EVERY-SELECTABLE-ORDER-HAS-REPORT"
+  "EVERY-SELECTABLE-ORDER-HAS-REPORT",
+  "PATIENT-SEMANTIC-COVERAGE",
+  "PATIENT-KNOWLEDGE-GROUNDING"
 ];
 const STATUSES = new Set(["fixed", "regression_required", "open", "blocked_root_cause"]);
 const ROOT_CAUSE_STATUSES = new Set(["confirmed", "unconfirmed", "not_applicable"]);
