@@ -1,4 +1,5 @@
 const { matchPatientFactOntology } = require("../src/lib/patientIntentCatalog.js");
+const { verifiedPatientKnowableRecords } = require("./patientKnowableAllowlist.js");
 const {
   FACT_STATES,
   UNKNOWN_REASON_CODES,
@@ -17,7 +18,7 @@ const SLOT_BY_INTENT = Object.freeze({
 });
 
 const PLAN_ONLY = /(?:建议|必要时|按需|用于|用来|需(?:要)?(?:排除|完善|评估)|通常不需|可考虑|若.*再|进一步评估|尚未|未完成|等待)/;
-const RESULT_WORD = /(?:提示|发现|显示|可见|未见|无异常|阴性|阳性|增大|积水|结石|占位|病变|异常|升高|降低|\+|RBC|WBC)/i;
+const RESULT_WORD = /(?:提示|发现|显示|可见|未见|无异常|阴性|阳性|增大|积水|结石|占位|病变|异常|升高|降低|血尿|蛋白|\+|RBC|WBC)/i;
 const UNSAFE_NARRATIVE = /(?:癌|肿瘤|占位|病理|转移|分期|分级|评分|教师|标准答案|CT提示|CTU提示|超声提示|彩超提示)/;
 const ABSENT_TREATMENT = /(?:未|没有|否认|尚未).{0,10}(?:用药|服药|吃药|抗菌药|抗生素|治疗|输液|处理)/;
 function unique(values) {
@@ -50,6 +51,22 @@ function sourceNarrative(caseData) {
   );
 }
 
+const PRIOR_CARE_CONTEXT = /(?:此前|之前|曾|当地|外院|来我院前|\d+(?:个)?(?:天|周|月|年)(?:余)?前|\d+(?:个)?(?:天|周|月|年)内)/;
+const NO_PRIOR_INVESTIGATION = /(?:没|没有|未)(?:有)?(?:做|查|验)[^。]{0,12}(?:检查|化验|尿|血|B超|彩超|超声|CT|MRI|磁共振|膀胱镜|病理|活检)/i;
+const COMPLETED_INVESTIGATION = /(?:做|查|验)(?:了|过)?[^。]{0,20}(?:尿|血|B超|彩超|超声|CT|MRI|磁共振|膀胱镜|病理|活检|检查)|(?:尿检|尿常规|B超|彩超|超声|CT|MRI|磁共振|膀胱镜|病理|活检).{0,20}(?:提示|显示|发现|结果|均|说)/i;
+
+function patientAwareInvestigationNarrative(caseData) {
+  const explicitPriorCare = sentences(caseData?.presentIllness?.priorCare, caseData?.patientAnswers?.priorCare);
+  const anchoredHistory = sentences(caseData?.presentIllness?.onset, caseData?.raw?.symptomsDetail)
+    .filter((line) => PRIOR_CARE_CONTEXT.test(line));
+  return unique([...explicitPriorCare, ...anchoredHistory]);
+}
+
+function patientAwareInvestigations(lines) {
+  return unique(lines.filter((line) => COMPLETED_INVESTIGATION.test(line) && !NO_PRIOR_INVESTIGATION.test(line) && !PLAN_ONLY.test(line)))
+    .map((line) => ({ type: modality("", line), result: line }));
+}
+
 function modality(type, result) {
   const typeText = String(type || "");
   const resultText = String(result || "").split(/[；;]/)[0];
@@ -77,6 +94,10 @@ function isCompletedInvestigation(item) {
 function urineSummary(value, language) {
   const text = String(value || "");
   if (!text) return "";
+  const negative = /(?:未见|未发现|无)[^。；，,]{0,12}(?:红细胞|潜血|血尿)|(?:红细胞|潜血|尿蛋白|蛋白)[^。；，,]{0,8}(?:阴性|未见|未发现)/.test(text);
+  if (negative) return language === "en"
+    ? "I had a urine test; I was told there was no obvious abnormality."
+    : "我查过尿，医生说没有看到明显异常。";
   if (language === "en") {
     const details = [/(?:RBC|红细胞|潜血|血尿)/i.test(text) && "blood was found in my urine", /蛋白/i.test(text) && "there was also some protein", /WBC|白细胞|亚硝酸盐|培养/i.test(text) && "there were signs that may relate to inflammation"].filter(Boolean);
     return details.length ? `I had a urine test; ${details.join(", ")}.` : "I had a urine test, but I cannot recall the details.";
@@ -89,13 +110,23 @@ function investigationSummary(item, language) {
   const kind = modality(item?.type, item?.result);
   const result = String(item?.result || "");
   if (kind === "尿检") return urineSummary(result, language);
-  const negative = /(?:未见|无异常|阴性|无占位|无结石|未见异常)/.test(result);
-  if (language === "en") return negative
+  const negative = /(?:未见|未发现|阴性|无(?:明显)?(?:异常|占位|结石))/.test(result);
+  const negatedStone = /(?:无|未见|未发现)[^。；，,]{0,12}结石|排除[^。；，,]{0,12}结石/.test(result);
+  const negatedHydronephrosis = /(?:无|未见|未发现)[^。；，,]{0,12}(?:积水|积液扩张|肾盂扩张)/.test(result);
+  const negatedProstate = /(?:无|未见|未发现)[^。；，,]{0,12}前列腺[^。；，,]{0,12}(?:增大|增生)|前列腺[^。；，,]{0,12}(?:无|未见|未发现)[^。；，,]{0,12}(?:增大|增生)/.test(result);
+  const coarseFinding = /结石/.test(result) && !negatedStone
+    ? (language === "en" ? "I was told there was a stone." : "医生说有个结石。")
+    : /积水|积液扩张|肾盂扩张/.test(result) && !negatedHydronephrosis
+      ? (language === "en" ? "I was told there was some swelling." : "医生说有点积水。")
+      : /前列腺.{0,12}(?:增大|增生)/.test(result) && !negatedProstate
+        ? (language === "en" ? "I was told my prostate was a little enlarged." : "医生说前列腺有点大。")
+        : "";
+  if (language === "en") return coarseFinding || (negative
     ? `I had ${kind}; I was told there was no obvious abnormality.`
-    : `I had ${kind}; I was told something needed further review.`;
-  return negative
+    : `I had ${kind}; I was told something needed further review.`);
+  return coarseFinding || (negative
     ? `我做过${kind}，医生说没有看到明显异常。`
-    : `我做过${kind}，医生说有个地方需要继续看。`;
+    : `我做过${kind}，医生说还得再看看。`);
 }
 
 function missingAnswer(intent, index, language) {
@@ -103,29 +134,29 @@ function missingAnswer(intent, index, language) {
   if (language === "en") {
     if (intent === "prior_investigations" && knownTests.length) return `I remember having ${unique(knownTests).join(" and ")}.`;
     if (intent === "prior_investigation_results_patient_aware" && index.resultSummaries.length) return joinSummaries(index.resultSummaries, language);
-    if (intent === "prior_medication_for_current_problem" && index.longTermMedicationNegative) return "I do not take regular medication; I do not have a reliable record of medicine for this episode.";
+    if (intent === "prior_medication_for_current_problem" && index.longTermMedicationNegative) return "I do not take regular medication; I honestly cannot remember whether I took anything for this episode.";
     return {
-      prior_medical_visit: "The available history does not say whether I sought care for this before.",
-      prior_investigations: "The available history does not say which tests I had before.",
-      prior_investigation_results_patient_aware: "The available history does not contain a test result that I can reliably describe.",
-      prior_diagnosis_patient_aware: "The available history does not say what diagnosis I was previously told.",
-      prior_treatment: "The available history does not say whether I received treatment before.",
-      prior_medication_for_current_problem: "The available history does not say whether I took medicine for this episode.",
-      treatment_response: "The available history does not record how I responded to prior treatment."
-    }[intent] || "The available history does not contain a reliable answer to that.";
+      prior_medical_visit: "I'm not sure whether I saw a doctor for this before.",
+      prior_investigations: "I'm not sure what tests I had before.",
+      prior_investigation_results_patient_aware: "I don't remember being told the test result.",
+      prior_diagnosis_patient_aware: "I don't remember what the doctor told me it was.",
+      prior_treatment: "I'm not sure whether anything was done for it before.",
+      prior_medication_for_current_problem: "I honestly cannot remember whether I took medicine for this.",
+      treatment_response: "I honestly cannot remember whether it got better afterward."
+    }[intent] || "I'm not sure about that.";
   }
   if (intent === "prior_investigations" && knownTests.length) return `我记得做过${unique(knownTests).join("和")}。`;
   if (intent === "prior_investigation_results_patient_aware" && index.resultSummaries.length) return joinSummaries(index.resultSummaries, language);
-  if (intent === "prior_medication_for_current_problem" && index.longTermMedicationNegative) return "我平时没有长期服药；这次有没有用药，现有记录没有写清楚。";
+  if (intent === "prior_medication_for_current_problem" && index.longTermMedicationNegative) return "我平时没有长期服药；这次有没有用过药，我确实记不清了。";
   return {
-    prior_medical_visit: "现有病史没有写清我以前是否为这个问题就诊过。",
-    prior_investigations: "现有病史没有写清我以前做过哪些检查。",
-    prior_investigation_results_patient_aware: "现有病史没有记录我能说清的检查结果。",
-    prior_diagnosis_patient_aware: "现有病史没有写清医生以前给过什么说法。",
-    prior_treatment: "现有病史没有写清我以前是否接受过治疗。",
-    prior_medication_for_current_problem: "现有病史没有写清我这次是否用过药。",
-    treatment_response: "现有病史没有记录治疗后的变化，我不能凭空说好转或没好转。"
-  }[intent] || "这件事现有病史没有写清楚。";
+    prior_medical_visit: "之前有没有去看过，我记不太准了。",
+    prior_investigations: "之前有没有做过检查，我记不太准了。",
+    prior_investigation_results_patient_aware: "具体结果我记不清了。",
+    prior_diagnosis_patient_aware: "医生以前怎么说的，我记不清了。",
+    prior_treatment: "之前有没有处理过，我记不太准了。",
+    prior_medication_for_current_problem: "有没有用过药我确实记不清了。",
+    treatment_response: "后来有没有好转，我确实记不清了。"
+  }[intent] || "这个我不太清楚。";
 }
 
 function firstMatchingNarrative(lines, pattern, forbidden = null) {
@@ -144,35 +175,63 @@ function patientClause(raw, pattern, language) {
   return patientSentence(clause, language);
 }
 
-function priorVisitAnswer(lines, language) {
-  const priorVisit = lines.some((line) => /(?:此前|之前|曾|多次|反复|当地|外院).{0,40}(?:就诊|门诊|急诊|看过医生|去医院)/.test(line));
+function priorVisitAnswer(caseData, language) {
+  const lines = sentences(caseData?.presentIllness?.priorCare, caseData?.patientAnswers?.priorCare, caseData?.raw?.symptomsDetail, caseData?.presentIllness?.onset);
+  const priorVisit = lines.some((line) => {
+    const history = line.replace(/(?:遂)?(?:来|至)我院(?:急诊|门诊)?(?:就诊|收入院)?/g, "");
+    return /(?:当时)?(?:到|前往)?(?:当地|外院|社区)[^。]{0,20}(?:医院|门诊|急诊)[^。]{0,20}(?:看了|看过|就诊)/.test(history)
+      || /(?:此前|之前|曾|多次)[^。]{0,40}(?:医院|门诊|急诊|医生)[^。]{0,20}(?:看了|看过|就诊|使用|治疗)/.test(history);
+  });
   if (!priorVisit) return "";
   return language === "en" ? "I sought medical care for this before." : "我之前为这个问题去医院看过。";
 }
 
 function buildPatientKnowableFactIndex(caseData, language = "zh") {
+  const caseId = String(caseData?.displayCaseId || caseData?.id || "");
+  if (/^P\d{3}$/.test(caseId)) {
+    const records = verifiedPatientKnowableRecords(caseData);
+    const facts = Object.fromEntries(Object.keys(SLOT_BY_INTENT).map((intent) => [intent, ""]));
+    if (language === "zh") {
+      for (const record of records) facts[record.intent] = record.patientAwareZh;
+    }
+    const investigationRecords = records.filter((record) => record.intent === "prior_investigations");
+    const resultRecords = records.filter((record) => record.intent === "prior_investigation_results_patient_aware");
+    return {
+      caseId,
+      completedInvestigations: investigationRecords.flatMap((record) =>
+        record.modalities.map((type) => ({ type, result: record.patientAwareZh }))
+      ),
+      resultSummaries: resultRecords.map((record) => record.patientAwareZh),
+      explicitNoPriorInvestigations: records.some((record) => record.noPriorInvestigations),
+      longTermMedicationNegative: false,
+      facts,
+      allowlistRecords: records
+    };
+  }
   const narrative = sourceNarrative(caseData);
   const currentProblemNarrative = sentences(caseData?.presentIllness?.onset, caseData?.raw?.symptomsDetail);
-  const investigations = Array.isArray(caseData?.investigations) ? caseData.investigations : [];
-  const urine = String(caseData?.urineTestResult || "").trim();
-  const completedInvestigations = investigations.filter(isCompletedInvestigation);
-  if (urine && !completedInvestigations.some((item) => modality(item.type, item.result) === "尿检")) {
-    completedInvestigations.unshift({ type: "尿检", result: urine });
-  }
-  const resultSummaries = unique(completedInvestigations.map((item) => investigationSummary(item, language)));
+  const investigationNarrative = patientAwareInvestigationNarrative(caseData);
+  const explicitNoPriorInvestigations = investigationNarrative.some((line) => NO_PRIOR_INVESTIGATION.test(line));
+  const completedInvestigations = patientAwareInvestigations(investigationNarrative);
+  const resultSummaries = unique(completedInvestigations.filter(isCompletedInvestigation).map((item) => investigationSummary(item, language)));
   const diagnosis = firstMatchingNarrative(narrative, /(?:被诊断为|医生说是|诊断过)/, /(?:否认|无|未)/);
-  const treatment = firstMatchingNarrative(currentProblemNarrative, /(?:治疗|输液|抗菌药|抗生素|保守处理|导尿)/, /(?:未|没有|否认|尚未|无|癌|肿瘤|占位|病理|转移|分期|分级|评分|教师|标准答案)/);
-  const currentMedication = firstMatchingNarrative(currentProblemNarrative, /(?:用药|服药|吃药|抗菌药|抗生素|止痛药)/, /(?:未|没有|否认|尚未|无|癌|肿瘤|占位|病理|转移|分期|分级|评分|教师|标准答案)/);
+  const treatment = firstMatchingNarrative(currentProblemNarrative, /(?:治疗|输液|抗菌药|抗生素|保守处理|导尿)/, /(?:未|没有|否认|尚未|无|癌|肿瘤|占位|病理|转移|分期|分级|评分|教师|标准答案|长期|慢性|降尿酸)/);
+  const currentMedication = firstMatchingNarrative(currentProblemNarrative, /(?:用药|服药|吃药|抗菌药|抗生素|止痛药)/, /(?:未|没有|否认|尚未|无|癌|肿瘤|占位|病理|转移|分期|分级|评分|教师|标准答案|长期|慢性|降尿酸)/);
   const response = firstMatchingNarrative(currentProblemNarrative, /(?:治疗|用药|服药|吃药|抗菌药|抗生素|输液|处理)[^。]{0,60}(?:缓解|好转|无效|复发)|(?:缓解|好转|无效|复发)[^。]{0,60}(?:治疗|用药|服药|吃药|抗菌药|抗生素|输液|处理)/, new RegExp(`${UNSAFE_NARRATIVE.source}|${ABSENT_TREATMENT.source}`));
   return {
-    caseId: caseData?.displayCaseId || caseData?.id || "",
+    caseId,
     completedInvestigations,
     resultSummaries,
+    explicitNoPriorInvestigations,
     longTermMedicationNegative: /(?:无长期用药|没有长期服药|不服用长期药)/.test(String(caseData?.medication || caseData?.sourceFacts?.medication || "")),
     facts: {
-      prior_medical_visit: priorVisitAnswer(narrative, language),
-      prior_investigations: completedInvestigations.length ? missingAnswer("prior_investigations", { completedInvestigations, resultSummaries }, language) : "",
-      prior_investigation_results_patient_aware: joinSummaries(resultSummaries, language),
+      prior_medical_visit: priorVisitAnswer(caseData, language),
+      prior_investigations: completedInvestigations.length
+        ? missingAnswer("prior_investigations", { completedInvestigations, resultSummaries }, language)
+        : explicitNoPriorInvestigations ? (language === "en" ? "I did not have any tests before." : "之前没有做过检查。") : "",
+      prior_investigation_results_patient_aware: resultSummaries.length
+        ? joinSummaries(resultSummaries, language)
+        : explicitNoPriorInvestigations ? (language === "en" ? "I did not have a test result before." : "之前没做过检查，也没有检查结果。") : "",
       prior_diagnosis_patient_aware: diagnosis ? patientSentence(diagnosis, language) : "",
       prior_treatment: treatment ? patientClause(treatment, /(?:治疗|输液|抗菌药|抗生素|保守处理|导尿)/, language) : "",
       prior_medication_for_current_problem: currentMedication ? patientClause(currentMedication, /(?:用药|服药|吃药|抗菌药|抗生素|止痛药)/, language) : "",
@@ -212,10 +271,13 @@ function matchPatientKnowableFacts(caseData, question, language = "zh") {
         if (item) answer = intent === "prior_investigations"
           ? (language === "en" ? `Yes, I had ${requested}.` : `有，我做过${requested}。`)
           : investigationSummary(item, language);
-        else {
+        else if (index.explicitNoPriorInvestigations) {
+          answer = language === "en" ? "I did not have any tests before." : "之前没有做过检查。";
+          state = FACT_STATES.EXACT_VALUE;
+        } else {
           answer = language === "en"
-            ? `I only remember the tests already mentioned; I cannot confirm that I had ${requested}.`
-            : `我只记得前面这些检查，现有病史不能确认我做过${requested}。`;
+            ? `I'm not sure whether I had ${requested} before.`
+            : `之前有没有做过${requested}，我记不太准了。`;
           state = FACT_STATES.PATIENT_NOT_AWARE;
         }
       }

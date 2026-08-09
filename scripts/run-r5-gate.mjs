@@ -45,6 +45,8 @@ const fast = [
   command(pnpm, "run", "test:patient-spoken-language-realism"),
   command(pnpm, "run", "test:patient-semantic-coverage"),
   command(pnpm, "run", "test:patient-knowledge-grounding"),
+  command(pnpm, "run", "test:patient-knowable-allowlist"),
+  command(pnpm, "run", "test:patient-adversarial-corpus"),
   command(pnpm, "run", "test:desktop:install-identity"),
   command(pnpm, "run", "typecheck"),
   command(pnpm, "run", "lint")

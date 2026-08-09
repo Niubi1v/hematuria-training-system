@@ -26,6 +26,7 @@ const blackboxCount = blackboxIndex >= 0 ? Number(process.argv[blackboxIndex + 1
 const genericUnknown = /这个我现在记不清了|这项情况我现在不太清楚|医生，您能问得再具体一点吗|不太明白您想问哪方面/;
 const internalLeak = /simulated|provenance|medical_review|eligibility|diagnosticEligible|scoringEligible|sourceSlotId|matchedPatientFactDomain|groundedIntent|teacherOnly|评分点|标准答案/i;
 const stage2Detail = /\d+(?:\.\d+)?\s*(?:个\/|HPF|μl|ul|ng\/ml|mm|cm)|PI-?RADS|TURBT|病理分级|TNM/i;
+const systemPatientWording = /现有病史|现有记录|病例资料|资料没有写清|不能凭空|\bsource\b|\bfact\b|字段|记录显示/iu;
 const knowledgeIntents = [
   "prior_medical_visit",
   "prior_investigations",
@@ -131,6 +132,7 @@ function assertSafe(answer, label) {
   assert.ok(String(answer.replyText || "").trim(), `${label}: empty answer`);
   assert.doesNotMatch(answer.replyText, internalLeak, `${label}: internal field leak`);
   assert.doesNotMatch(answer.replyText, stage2Detail, `${label}: Stage 2/report detail leak`);
+  assert.doesNotMatch(answer.replyText, systemPatientWording, `${label}: system or chart wording reached the patient voice`);
 }
 
 async function ask(session, caseId, question, language = "zh") {
@@ -203,17 +205,18 @@ async function groundingCoverage() {
   assert.equal(stage2Leak, 0, "Stage 2/full report details must not leak");
   assert.equal(internalLeaks, 0, "internal governance fields must not leak");
 
-  const p001 = cases.find((item) => item.displayCaseId === "P001");
-  assert.equal(
-    buildPatientKnowableFactIndex(p001, "zh").facts.prior_medical_visit,
-    "",
-    "the current encounter must not be projected as a prior medical visit"
+  assert.deepEqual(
+    cases
+      .filter((caseData) => buildPatientKnowableFactIndex(caseData, "zh").facts.prior_medical_visit)
+      .map((caseData) => caseData.displayCaseId),
+    ["P001", "P002", "P003", "P004", "P005", "P007", "P026"],
+    "current-encounter wording became a prior medical visit"
   );
   const p018 = cases.find((item) => item.displayCaseId === "P018");
-  assert.equal(
+  assert.match(
     buildPatientKnowableFactIndex(p018, "zh").facts.treatment_response,
-    "",
-    "symptom relief before explicitly absent medication must not become a treatment response"
+    /多喝水后稍微缓解/,
+    "the reviewed patient-known response to drinking water was not projected"
   );
   const p022 = cases.find((item) => item.displayCaseId === "P022");
   const p022Facts = buildPatientKnowableFactIndex(p022, "zh").facts;
@@ -221,15 +224,65 @@ async function groundingCoverage() {
     assert.match(p022Facts[intent], /抗菌药/);
     assert.doesNotMatch(p022Facts[intent], /尿频|尿急|尿痛|低热/, `${intent} must not recite unasked symptoms`);
   }
+  const p039 = cases.find((item) => item.displayCaseId === "P039");
+  assert.equal(
+    buildPatientKnowableFactIndex(p039, "zh").facts.prior_medication_for_current_problem,
+    "",
+    "unrelated long-term analgesics became medication for the current problem"
+  );
+  const p027 = cases.find((item) => item.displayCaseId === "P027");
+  assert.equal(
+    buildPatientKnowableFactIndex(p027, "zh").facts.prior_treatment,
+    "",
+    "chronic urate-lowering treatment became treatment for the current problem"
+  );
+  const plannedOnly = buildPatientKnowableFactIndex({
+    presentIllness: { priorCare: "此前医生建议做CT检查，但尚未完成。" }
+  }, "zh");
+  assert.equal(plannedOnly.facts.prior_investigations, "", "a planned investigation became a completed investigation");
+  assert.equal(plannedOnly.facts.prior_investigation_results_patient_aware, "", "a planned investigation became a known result");
+  assert.match(
+    buildPatientKnowableFactIndex({ presentIllness: { priorCare: "此前做过B超，医生说前列腺未见增大。" } }, "zh")
+      .facts.prior_investigation_results_patient_aware,
+    /没有看到明显异常/,
+    "a negated prostate finding became a positive enlargement"
+  );
+  for (const [sourceText, forbidden] of [
+    ["此前查过尿，医生说尿里未见红细胞，蛋白阴性。", /尿里有血|还有蛋白/],
+    ["此前做过CT，医生说未发现结石。", /有个结石/],
+    ["此前做过B超，医生说未发现积水。", /有点积水/]
+  ]) {
+    const summary = buildPatientKnowableFactIndex({ presentIllness: { priorCare: sourceText } }, "zh")
+      .facts.prior_investigation_results_patient_aware;
+    assert.match(summary, /没有看到明显异常/, `negative patient-aware result lost: ${sourceText}`);
+    assert.doesNotMatch(summary, forbidden, `negative patient-aware result flipped polarity: ${sourceText}`);
+  }
+  for (const [sourceText, expected] of [
+    ["此前做过B超，医生说有个结石。", /医生说有个结石/],
+    ["之前查过超声，医生说有点积水。", /医生说有点积水/],
+    ["以前做过B超，医生说前列腺增大。", /医生说前列腺有点大/]
+  ]) {
+    const summary = buildPatientKnowableFactIndex({ presentIllness: { priorCare: sourceText } }, "zh").facts.prior_investigation_results_patient_aware;
+    assert.match(summary, expected, `patient-aware source was over-generalized: ${sourceText}`);
+    assert.doesNotMatch(summary, stage2Detail, `patient-aware coarse result exposed exact report detail: ${sourceText}`);
+  }
   const forbiddenOnly = buildPatientKnowableFactIndex({
     id: "BOUNDARY-SENTINEL",
+    urineTestResult: "尿RBC+++，蛋白++",
+    investigations: [{ type: "影像", result: "CT提示占位" }],
     clinical: { requiredLabs: "尿常规", specialTests: "CT提示占位", imagingAndProcedures: "膀胱镜" },
     teacherOnlyData: { diagnosis: "hidden" },
     diagnosis: "hidden",
     scoringKey: { answer: "hidden" },
     stageTasks: [{ result: "hidden" }]
   }, "zh");
-  assert.ok(Object.values(forbiddenOnly.facts).every((value) => value === ""), "teacher, Stage 2, diagnosis, and scoring fields must remain outside the patient-knowable layer");
+  assert.ok(Object.values(forbiddenOnly.facts).every((value) => value === ""), "root reports, teacher, Stage 2, diagnosis, and scoring fields must remain outside the patient-knowable layer");
+  const p031Index = buildPatientKnowableFactIndex(cases.find((item) => item.displayCaseId === "P031"), "zh");
+  assert.equal(p031Index.facts.prior_investigations, "", "P031 teacher-only reports became a patient-known prior investigation");
+  assert.equal(p031Index.facts.prior_investigation_results_patient_aware, "", "P031 teacher-only reports became a patient-known result");
+  const p042Index = buildPatientKnowableFactIndex(cases.find((item) => item.displayCaseId === "P042"), "zh");
+  assert.match(p042Index.facts.prior_investigations, /尿检/, "P042 explicit prior urinalyses were not patient-known");
+  assert.match(p042Index.facts.prior_investigation_results_patient_aware, /两次尿检都查到过血/, "P042 explicit patient-aware urine result was lost");
   assert.equal(
     filterPatientOutput("我做过尿检，也接受过手术治疗。", ["PATIENT_PRIOR_INVESTIGATIONS"]).ok,
     false,
@@ -237,22 +290,46 @@ async function groundingCoverage() {
   );
   assert.equal(filterPatientOutput("医生以前给过诊断。", ["PATIENT_PRIOR_DIAGNOSIS"]).ok, true);
   assert.equal(filterPatientOutput("我之前为这个问题接受过治疗。", ["PATIENT_PRIOR_TREATMENT"]).ok, true);
+  for (const wording of ["现有病史", "现有记录", "病例资料", "资料没有写清", "不能凭空", "source", "fact", "字段", "记录显示"]) {
+    assert.equal(filterPatientOutput(wording, []).ok, false, `patient filter allowed system wording: ${wording}`);
+  }
 
   const case31 = cases.find((item) => item.displayCaseId === "P031");
   assert.ok(case31, "P031 source case missing");
   const session31 = await initSession({ caseId: case31.id, attemptId: "r5-p031-human-replay", language: "zh" });
   const case31Questions = [
-    "有没有做什么检查？", "做检查了吗？", "之前去医院查过吗？", "查过尿吗？", "做过B超吗？", "做过CT吗？",
-    "检查结果怎么说？", "医生怎么跟你说的？", "之前怎么治疗的？", "吃过药吗？", "后来好点了吗？"
+    ["有没有做什么检查？", [["prior_investigations", "missing"]]],
+    ["做检查了吗？", [["prior_investigations", "missing"]]],
+    ["之前去医院查过吗？", [["prior_medical_visit", "missing"], ["prior_investigations", "missing"]]],
+    ["查过尿吗？", [["prior_investigations", "patient_not_aware"]]],
+    ["做过B超吗？", [["prior_investigations", "patient_not_aware"]]],
+    ["做过CT吗？", [["prior_investigations", "patient_not_aware"]]],
+    ["检查结果怎么说？", [["prior_investigation_results_patient_aware", "missing"]]],
+    ["医生怎么跟你说的？", [["prior_investigation_results_patient_aware", "missing"]]],
+    ["之前怎么治疗的？", [["prior_treatment", "missing"]]],
+    ["吃过药吗？", [["prior_medication_for_current_problem", "missing"]]],
+    ["后来好点了吗？", [["treatment_response", "missing"]]]
   ];
   const case31Results = [];
-  for (const question of case31Questions) {
+  for (const [question, expectedPlans] of case31Questions) {
     const answer = await ask(session31, case31.id, question);
-    assert.ok(answer.groundedIntent, `P031 missing grounded intent: ${question}`);
+    assert.deepEqual(
+      (answer.answerPlans || []).map((plan) => [plan.intent, plan.factState]),
+      expectedPlans,
+      `P031 grounded plans changed: ${question}`
+    );
     assert.doesNotMatch(answer.replyText, genericUnknown, `P031 generic unknown: ${question}`);
     assertSafe(answer, `P031:${question}`);
-    case31Results.push({ question, replyText: answer.replyText, groundedIntent: answer.groundedIntent, factState: answer.factState, sourceBacked: answer.sourceBacked });
+    case31Results.push({ question, replyText: answer.replyText, plans: expectedPlans });
   }
+  const diagnosisSession = await initSession({ caseId: case31.id, attemptId: "r5-p031-prior-diagnosis", language: "zh" });
+  const priorDiagnosis = await ask(diagnosisSession, case31.id, "以前医生有没有告诉过你是什么病？");
+  assert.deepEqual(
+    (priorDiagnosis.answerPlans || []).map((plan) => [plan.intent, plan.factState]),
+    [["prior_diagnosis_patient_aware", "missing"]],
+    "P031 true-missing prior diagnosis did not stay in the patient-knowledge boundary"
+  );
+  assertSafe(priorDiagnosis, "P031:prior-diagnosis");
 
   const compound = await ask(session31, case31.id, "做过什么检查，结果怎么样，之前怎么治疗的？");
   for (const intent of ["prior_investigations", "prior_investigation_results_patient_aware", "prior_treatment"]) {
@@ -297,6 +374,7 @@ async function groundingCoverage() {
     hallucination,
     stage2Leak,
     internalLeaks,
+    systemPatientWording: 0,
     compoundClauseDrop: 0,
     case31Results
   };
@@ -344,10 +422,10 @@ async function realLocalCoverage(runtime) {
   const case31 = cases.find((item) => item.displayCaseId === "P031");
   const session = await initSession({ caseId: case31.id, attemptId: "r5-real-local-p031", language: "zh" });
   const questions = [
-    ["有没有做什么检查？", "prior_investigations", "exact_value"], ["做检查了吗？", "prior_investigations", "exact_value"],
-    ["之前去医院查过吗？", "prior_investigations", "exact_value"], ["查过尿吗？", "prior_investigations", "exact_value"],
-    ["做过B超吗？", "prior_investigations", "exact_value"], ["做过CT吗？", "prior_investigations", "patient_not_aware"],
-    ["检查结果怎么说？", "prior_investigation_results_patient_aware", "exact_value"], ["医生怎么跟你说的？", "prior_investigation_results_patient_aware", "exact_value"],
+    ["有没有做什么检查？", "prior_investigations", "missing"], ["做检查了吗？", "prior_investigations", "missing"],
+    ["之前去医院查过吗？", "prior_investigations", "missing"], ["查过尿吗？", "prior_investigations", "patient_not_aware"],
+    ["做过B超吗？", "prior_investigations", "patient_not_aware"], ["做过CT吗？", "prior_investigations", "patient_not_aware"],
+    ["检查结果怎么说？", "prior_investigation_results_patient_aware", "missing"], ["医生怎么跟你说的？", "prior_investigation_results_patient_aware", "missing"],
     ["之前怎么治疗的？", "prior_treatment", "missing"], ["吃过药吗？", "prior_medication_for_current_problem", "missing"],
     ["后来好点了吗？", "treatment_response", "missing"]
   ];

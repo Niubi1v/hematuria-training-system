@@ -1,0 +1,242 @@
+{
+  "schemaVersion": 1,
+  "description": "Independent Patient Agent questions and literal expected intents. This fixture is not generated from production aliases or patterns.",
+  "caseOrder": ["P001", "P002", "P003", "P006", "P005", "P010", "P007", "P008", "P009", "P004", "P011", "P012", "P013", "P014", "P015", "P016", "P017", "P018", "P019", "P020", "P021", "P022", "P023", "P024", "P025", "P026", "P027", "P028", "P029", "P030", "P031", "P032", "P033", "P034", "P035", "P036", "P037", "P038", "P039", "P040", "P041", "P042"],
+  "patientKnowledgeExactCases": {
+    "prior_medical_visit": ["P001", "P002", "P003", "P004", "P005", "P007", "P026"],
+    "prior_investigations": ["P001", "P002", "P003", "P004", "P012", "P022", "P030", "P033", "P035", "P037", "P040", "P041", "P042"],
+    "prior_investigation_results_patient_aware": ["P001", "P002", "P003", "P004", "P012", "P022", "P030", "P033", "P035", "P037", "P040", "P041", "P042"],
+    "prior_diagnosis_patient_aware": ["P001", "P002", "P005", "P007", "P014", "P019", "P021", "P022", "P023", "P024", "P025", "P026", "P027", "P028", "P029", "P040"],
+    "prior_treatment": ["P001", "P002", "P005", "P006", "P007", "P012", "P014", "P016", "P018", "P019", "P021", "P022", "P025", "P026", "P028", "P029", "P036"],
+    "prior_medication_for_current_problem": ["P001", "P002", "P005", "P006", "P007", "P012", "P014", "P019", "P021", "P022", "P025", "P026", "P028", "P029"],
+    "treatment_response": ["P001", "P002", "P005", "P006", "P007", "P012", "P014", "P016", "P018", "P019", "P021", "P022", "P025", "P026", "P029", "P036"]
+  },
+  "domains": [
+    {
+      "expectedIntent": "chief_complaint",
+      "groups": {
+        "colloquial": ["您今儿主要是哪儿不得劲", "这趟过来最难受的是啥", "先跟我唠唠这回咋回事", "是哪点不舒服把您折腾来了", "今个儿找医生主要为啥", "身上哪块让您最受不了", "您这次最想解决啥不舒服", "开头先说，哪里不对劲"],
+        "ellipsis": ["主要哪儿难受", "这回为啥来", "最不舒服的呢", "先说症状"],
+        "inversion": ["把您带到医院来的，是什么不舒服", "最先想跟医生讲的，是哪件事", "要挑一个最难受的，您会说啥", "这次来看，起因是什么"],
+        "typo_or_grammar": ["哪儿不舒服来着", "你这回咋个不舒坦", "主要难受啥子呀", "今儿来看是咋回事儿"],
+        "referential": ["刚才说身体不对劲，具体是哪儿", "您提到来看看，最主要的问题是啥", "这件让您来医院的事，先讲讲", "眼下最困扰您的那个症状是什么"],
+        "natural": ["请先用自己的话讲这次的不适", "此次就医最主要的原因是什么", "现在最希望医生先了解什么", "从最主要的不舒服开始说吧"]
+      }
+    },
+    {
+      "expectedIntent": "gross_hematuria",
+      "groups": {
+        "colloquial": ["尿红的时候自己一眼能看出来不", "小便里那血是肉眼瞧得见的吗", "撒出来的尿看着就发红吗", "不拿化验单也能看见尿里有血吗", "尿盆里能直接瞅出红色来吗", "您自己看到过小便变红没", "那尿血是看得见的那种不", "上厕所时眼睛能瞧见血色吗"],
+        "ellipsis": ["肉眼看得见不", "尿真红了吗", "自己能看到血吗", "外观看着红不红"],
+        "inversion": ["能直接看见的，是血尿吗", "不用显微镜就看得出尿红，是这样吗", "小便外观变红这件事，您见到了吗", "您看到的是红尿，还是化验才知道"],
+        "typo_or_grammar": ["尿红能看见没得", "小便有木有红出来", "肉眼瞅着尿血不", "尿看起来红了没嘛"],
+        "referential": ["刚说尿不对，那颜色肉眼明显吗", "那个血，是您自己看见的吗", "您提到小便变化，外表能看到红吗", "这回事发作时尿杯里会显红吗"],
+        "natural": ["血尿是否肉眼可见", "尿液外观有没有明显发红", "您是否亲眼见过红色尿液", "这次是肉眼血尿还是仅化验异常"]
+      }
+    },
+    {
+      "expectedIntent": "hematuria_onset",
+      "groups": {
+        "colloquial": ["尿开始红是啥时候的事", "这毛病打哪天起有的", "头一回发现小便不对劲是哪会儿", "尿血到今儿有多长日子了", "最早是啥时候出现的", "这情况拖了多久啦", "从第一次发作算起多久了", "这情况是哪阵开始的"],
+        "ellipsis": ["啥时候开始", "有多久了", "头回是哪天", "起病多长时间"],
+        "inversion": ["最先出现这情况的时间，您还记得吗", "从哪一天起开始不舒服", "到现在有多久，是几天还是几月", "最早那次发作是在什么时候"],
+        "typo_or_grammar": ["这个症状多长时侯了", "啥会开始有的呀", "这症状有多久久", "哪天起有这个症状来着"],
+        "referential": ["刚才那种变化，最早何时出现", "您说的这回事已经多久", "那个情况第一次发生是哪天", "这阵不舒服从什么时候算起"],
+        "natural": ["请回忆血尿首次出现的时间", "症状起始至今有多长时间", "最初发现这个情况是在何时", "这次病程大约有多久"]
+      }
+    },
+    {
+      "expectedIntent": "urine_color",
+      "groups": {
+        "colloquial": ["那泡尿到底像啥颜色", "小便是鲜亮的红还是发暗", "那尿瞅着跟茶水一个色不", "您看尿像洗肉水还是酱油", "尿杯里呈的是哪种红", "小便变色时偏红还是偏褐", "尿液看上去深不深", "具体说说那泡尿啥颜色"],
+        "ellipsis": ["什么颜色", "偏鲜还是偏暗", "像茶色吗", "尿色呢"],
+        "inversion": ["鲜红、暗红、茶色，最像哪一个", "您看到的颜色，能怎么形容", "小便呈出来的，是红色还是褐色", "颜色这块儿到底有什么变化"],
+        "typo_or_grammar": ["尿是啥颜涩", "小便啥色儿的", "尿色看着咋个样", "是红的还是茶茶色"],
+        "referential": ["刚才说它变色，具体变成什么色", "那一泡看起来是什么颜色", "您提到尿不一样，是颜色哪里不同", "发作时那个颜色深浅怎样"],
+        "natural": ["请描述血尿的具体颜色", "尿液外观更接近哪种颜色", "这次尿色是鲜红还是暗红", "实际看到的尿液颜色是什么"]
+      }
+    },
+    {
+      "expectedIntent": "blood_clots",
+      "groups": {
+        "colloquial": ["尿里头带没带一坨坨的血", "上厕所时冲出过血疙瘩没", "小便里见着凝成块的东西不", "有没有尿出像小肉条那样的血块", "小便里面夹没夹血块", "您瞅见过成团的血没", "尿盆里有过小血团吗", "排尿时有没有块状的血出来"],
+        "ellipsis": ["带血块不", "有凝块吗", "血疙瘩呢", "成块没有"],
+        "inversion": ["成块的血，您排出来过吗", "此外还见过血块没有", "条状或团状的东西有没有", "尿里的血是散的还是结成块"],
+        "typo_or_grammar": ["有血快没", "尿里血疙达有不", "带没带血块块", "排出凝血快了吗"],
+        "referential": ["刚说小便变化，里面有成块的吗", "那里面有没有像胶冻一样的东西", "发作那会儿还带出血团不", "您看到的尿里夹着块状物吗"],
+        "natural": ["血尿中是否伴有血凝块", "排尿时有没有排出血块", "尿液内可曾见到条状血块", "这次血尿是否带有凝血块"]
+      }
+    },
+    {
+      "expectedIntent": "dysuria",
+      "groups": {
+        "colloquial": ["撒尿那会儿疼不疼", "小便冲出来时有没有刺痛", "解手的时候尿道烧得慌吗", "排尿过程中会不会火辣辣地疼", "尿出来那一下痛不痛", "上厕所小便会难受发疼吗", "尿道口在排尿时刺不刺", "每回小便都疼还是不疼"],
+        "ellipsis": ["尿疼不", "排尿刺痛吗", "烧灼感呢", "解小便痛吗"],
+        "inversion": ["疼是在小便的时候出现吗", "排尿这一动作会引起疼痛吗", "小便时的感觉，是痛还是不痛", "有没有那种一尿就疼的情况"],
+        "typo_or_grammar": ["撒尿痛不痛呀", "小便疼木有", "尿的时候痛了没", "排尿有木刺疼"],
+        "referential": ["刚说上厕所不舒服，是尿的时候疼吗", "那个不适跟排尿同时出现不", "这阵发作时，小便过程会痛吗", "您说难受，具体是不是尿痛"],
+        "natural": ["排尿时是否伴有疼痛", "有没有尿道烧灼或刺痛", "小便过程中疼痛明显吗", "此次发作有无排尿痛"]
+      }
+    },
+    {
+      "expectedIntent": "flank_pain",
+      "groups": {
+        "colloquial": ["后腰两边有没有疼起来", "肾那块儿会不会酸痛", "腰窝子疼不疼", "侧腰有没有一阵阵绞着痛", "您右边或左边腰疼过没", "腰后头会不会难受", "肋骨下面靠后的地方痛吗", "这回有没有闹腰疼"],
+        "ellipsis": ["腰疼不", "肾区痛吗", "侧腰呢", "后腰难受吗"],
+        "inversion": ["疼痛有没有落在腰的一侧", "腰部这块儿，是酸还是痛", "这次发作后腰也疼吗", "有没有从腰窝开始的疼"],
+        "typo_or_grammar": ["腰藤不藤", "后腰疼木有", "肾那边痛了没嘛", "腰侧有痛不"],
+        "referential": ["刚才那个疼，是在腰后面吗", "您说不舒服，侧腰有没有份", "这次发作时那边腰也痛吗", "那个痛点靠近肾区不"],
+        "natural": ["是否伴有腰部或肾区疼痛", "这次有无单侧腰痛", "腰背部有没有酸胀或绞痛", "血尿发作时腰部是否疼痛"]
+      }
+    },
+    {
+      "expectedIntent": "fever",
+      "groups": {
+        "colloquial": ["这阵身上烧没烧起来", "有没有发热打冷战", "摸着额头烫过不", "最近体温蹿高过吗", "发作时人会不会发烧", "这两天烧得慌没", "有没有一阵冷一阵热", "量体温发现高过没有"],
+        "ellipsis": ["发烧没", "体温高吗", "寒战呢", "身上烫不烫"],
+        "inversion": ["体温升高这件事有没有", "同时出现的还有发热吗", "是只有这症状，还是也烧起来", "有没有先冷后热的情况"],
+        "typo_or_grammar": ["发稍了没", "体温高木有", "有烧不嘛", "这次伴发热没得"],
+        "referential": ["刚说那次发作，当时烧吗", "那个时候体温有没有变化", "症状起来时人发不发热", "这回事期间量过高体温吗"],
+        "natural": ["此次是否伴有发热", "近期体温有没有升高", "发病时有无寒战或高热", "您是否测到过异常体温"]
+      }
+    },
+    {
+      "expectedIntent": "smoking_history",
+      "groups": {
+        "colloquial": ["您平常抽不抽烟", "一天大概点几根烟", "烟这个东西沾不沾", "以前有过烟瘾没有", "现在还在抽烟吗", "从年轻时就抽上了吗", "平常一天能抽多少烟", "总共抽烟多少年了"],
+        "ellipsis": ["抽烟吗", "烟龄有几年", "一天几支", "戒了没有"],
+        "inversion": ["开始抽烟有多少年了", "有没有长期吸烟这回事", "现在不抽的话，以前抽过吗", "一天的吸烟量能说说吗"],
+        "typo_or_grammar": ["抽言不抽", "烟抽多少跟", "有吸烟习惯没得", "以前抽过烟木有"],
+        "referential": ["刚才说生活习惯，烟这方面呢", "那个烟瘾现在还有吗", "平时这些习惯里包括抽烟不", "您说以前有习惯，是指吸烟吗"],
+        "natural": ["请说明是否有吸烟史", "目前每天吸烟多少", "既往烟龄一共有几年", "您是否已经戒烟"]
+      }
+    },
+    {
+      "expectedIntent": "medication_list",
+      "groups": {
+        "colloquial": ["平时手头都吃着哪些药", "每天固定吞的药有啥", "有没有常年不断的用药", "您兜里常备什么药", "平常按时吃的药能说说不", "长期吃药这块儿都有哪几种", "每天早晚要服什么药", "自己一直备着吃的药有哪些"],
+        "ellipsis": ["常用药呢", "长期吃啥", "每天的药有哪些", "平时服药吗"],
+        "inversion": ["药物方面，哪些是您天天用的", "如果列一张单子，平时吃的药有什么", "长期用着的，是哪几种药", "除了临时用药，还有固定药吗"],
+        "typo_or_grammar": ["长其吃啥药", "平时药有哪写", "每天服啥子药", "常年用药木有"],
+        "referential": ["刚才提到慢性病，对应吃什么药", "那些每天要用的药，名字记得吗", "您说一直在治疗，平时药物呢", "生活里固定服的那几种药是什么"],
+        "natural": ["请列出目前长期服用的药物", "平时是否规律使用处方药", "您现在有哪些常规用药", "既往长期用药情况如何"]
+      }
+    },
+    {
+      "expectedIntent": "family_history",
+      "groups": {
+        "colloquial": ["家里人有谁也有过类似症状", "爹妈兄弟姐妹有没有肾上的毛病", "亲戚里有没有跟您一样的情况", "家里有没有人年纪轻轻肾不好", "这毛病在您家里常见不", "父母那边有人得过类似病吗", "兄弟姐妹身体上有同样问题没", "家族里有没有遗传下来的病"],
+        "ellipsis": ["家里人呢", "家族有类似吗", "父母兄妹情况呢", "遗传病有没有"],
+        "inversion": ["同样症状在家人身上出现过吗", "家族中患过肾病的是谁", "父母和同胞，有没有类似病史", "有没有一家几个人都出现这种情况"],
+        "typo_or_grammar": ["家簇里有人这样没", "父母兄弟有肾并吗", "家里类似毛病木有", "有遗传的情形没得"],
+        "referential": ["刚才说到您自己，家里其他人呢", "这个情况亲属中出现过不", "您提到身体问题，父母那边有吗", "这种情况家人也有过吗"],
+        "natural": ["请说明有无相关家族史", "直系亲属中是否有人患肾病", "家属有无类似血尿表现", "家族中是否存在早发肾功能问题"]
+      }
+    },
+    {
+      "expectedIntent": "prior_medical_visit",
+      "groups": {
+        "colloquial": ["你前头是不是去看过", "来这儿前找别的大夫瞧过没", "这事以前跑过医院不", "这症状出现后头一站去哪看的", "之前为这个挂过号吗", "外院大夫给看过这毛病没有", "早先有没有上门诊问过", "这回来之前求过医没"],
+        "ellipsis": ["前头看过没", "去过医院不", "外院就诊呢", "先前找医生了吗"],
+        "inversion": ["医院以前去过，是因为这次的问题吗", "为这事看医生，之前有过吗", "最早找人看病是在这次之前吗", "在别处先看过，然后才来这里吗"],
+        "typo_or_grammar": ["前头去看过医声没", "以前上医远看了吗", "这事找过大扶不", "有先去门珍没得"],
+        "referential": ["刚才说这事拖了一阵，期间找医生了吗", "那个问题以前让大夫看过不", "在来这里以前，这回事就诊过吗", "您提到症状发作，中间去看病了吗"],
+        "natural": ["此前是否因同一问题就医", "这次来院前有无其他就诊经历", "既往是否为血尿咨询过医生", "您曾在外院处理过这个问题吗"]
+      }
+    },
+    {
+      "expectedIntent": "prior_investigations",
+      "groups": {
+        "colloquial": ["那医院都给你弄了啥检查", "前头大夫让你查过哪几样", "之前验过尿还是拍过片子", "外院给您折腾过什么项目", "来这前做没做过化验", "早先为这事查了些啥", "医院当时给你做了哪些查看", "以前有没有抽血拍片"],
+        "ellipsis": ["前面查了啥", "做过项目没", "验过哪些", "片子拍了吗"],
+        "inversion": ["检查这一块，先前完成过哪些", "化验、抽血、拍片，您做过哪种", "在别处做过的项目能数一下吗", "此前完成的检查都是什么"],
+        "typo_or_grammar": ["前头作过啥检察", "医院给查哪写了", "有做化验木有", "之前拍过片没得"],
+        "referential": ["刚才说去过医院，那边给查什么了", "那次就诊以后做了哪些项目", "您提到外院，检查这块儿怎么安排的", "为这个问题之前有过哪些检测"],
+        "natural": ["请回忆既往完成过的检查项目", "来院前是否接受过尿检或影像检查", "此前医生安排了哪些检验", "既往检查经历包括哪些项目"]
+      }
+    },
+    {
+      "expectedIntent": "prior_investigation_results_patient_aware",
+      "groups": {
+        "colloquial": ["片子怎么说的", "那些化验最后查出啥", "尿一验大夫咋讲", "那些项目结束后人家告诉你啥了", "报告上大概是个什么说法", "外院检查有没有说出点东西", "查完以后医生咋跟你解释的", "那堆结果您记得个大概不"],
+        "ellipsis": ["结果咋样", "片子说啥", "化验结论呢", "查出什么了"],
+        "inversion": ["医生告诉您的检查结论是什么", "做完以后得到的说法，您还记得吗", "报告里面的大意能讲一下吗", "最终查到的是什么情况"],
+        "typo_or_grammar": ["检察结果咋讲", "片子怎么硕的", "化验查处啥了", "结果大概啥样子嘛"],
+        "referential": ["刚才那些项目，结果分别怎么说", "那张片子后来给了什么说法", "您提到那份结果，它发现什么了吗", "前面那次化验医生怎么解释"],
+        "natural": ["请描述您记得的既往检查结论", "医生曾如何解释检查结果", "此前报告的大致内容是什么", "既往检查是否发现异常"]
+      }
+    },
+    {
+      "expectedIntent": "prior_diagnosis_patient_aware",
+      "groups": {
+        "colloquial": ["医生当时咋跟你讲的", "外院说这算个啥毛病", "前头大夫给这事起过名没", "那会儿人家说您得的是啥", "以前医生有没有下个说法", "大夫当时认为什么问题", "之前有人明确告诉你病名吗", "外院给出的说法您还记得不"],
+        "ellipsis": ["当时说啥病", "给过诊断没", "医生啥说法", "病名记得吗"],
+        "inversion": ["被告知的诊断，当时是什么", "医生认为是什么原因，您知道吗", "以前有没有一个明确病名", "外院给您的结论算诊断吗"],
+        "typo_or_grammar": ["医生说啥并来着", "以前诊段过没", "大扶讲是啥问题", "外院有个说发没"],
+        "referential": ["刚说去看过，那位医生怎么定性的", "那个检查以后，大夫说是什么病", "您提到外院，他们给过什么诊断", "这件事先前有没有被明确叫过什么"],
+        "natural": ["此前医生是否告知过明确诊断", "您记得外院给出的疾病名称吗", "以前那位医生认为是什么问题", "先前是否有人解释过病因"]
+      }
+    },
+    {
+      "expectedIntent": "prior_treatment",
+      "groups": {
+        "colloquial": ["后来给处理没有", "前头医院拿这事怎么弄的", "大夫以前给你治过啥", "这问题后来有没有接受什么处置", "早先为这问题打针输液没", "外院当时采取了啥办法", "之前医生怎么收拾这个毛病的", "来这里前接受过处理不"],
+        "ellipsis": ["以前咋处理", "治过没有", "做了啥处置", "输液了吗"],
+        "inversion": ["后来采取了哪种处理办法", "曾经接受的治疗包括哪些", "医生当时采取的办法是什么", "为这个问题做过任何治疗吗"],
+        "typo_or_grammar": ["之前咋冶的", "医院处里过没", "有做治辽木有", "前头给弄啥没得"],
+        "referential": ["刚说去过医院，那边后来怎么处理", "那个问题以前有人给治过吗", "前一次发作以后采取了什么办法", "您提到看过医生，后续处置呢"],
+        "natural": ["请说明此前接受过的相关治疗", "来院前是否进行过任何处理", "既往医生为此采取了什么措施", "先前有无输液或其他治疗"]
+      }
+    },
+    {
+      "expectedIntent": "prior_medication_for_current_problem",
+      "groups": {
+        "colloquial": ["这回症状以后吃了啥药", "来之前大夫给开药没", "为这事自己找药吃过不", "症状起来后有没有吞过药片", "前头是不是用药顶了一阵", "医院让你吃什么药了", "这次不舒服打针吃药没有", "为当前这个问题服过药吗"],
+        "ellipsis": ["这次吃药没", "开了啥药", "来前用药呢", "为这事服过吗"],
+        "inversion": ["药是因为这次症状才吃的吗", "针对这次症状，您用了哪种药", "医生有没有为当前问题开处方", "来院前用过的药物是什么"],
+        "typo_or_grammar": ["这回吃啥要了", "尿红后服药木有", "医生开要没得", "为这症状用过啥药药"],
+        "referential": ["当时其中有没有给药", "那次发作以后具体吃药了吗", "这个问题医生开药没有", "针对刚才说的不适，用过药吗"],
+        "natural": ["此次发作前后是否使用过药物", "请说明为当前问题服用的药物", "来院前有没有接受药物治疗", "医生曾为这次症状开过什么药"]
+      }
+    },
+    {
+      "expectedIntent": "treatment_response",
+      "groups": {
+        "colloquial": ["吃了以后管事没", "处理完症状松快点不", "那药下肚后有没有好些", "输液以后症状还在吗", "治了一回能不能维持住", "后来是缓过来了还是照旧", "大夫处理后有没有见效", "用完药这毛病还犯不犯"],
+        "ellipsis": ["管用没", "后来好点吗", "治后怎样", "还复发不"],
+        "inversion": ["好转是在治疗以后出现的吗", "药物带来的变化是什么", "处理前后症状有区别吗", "治疗有没有让发作减少"],
+        "typo_or_grammar": ["吃药后管亊不", "后来有好砖没", "治完还反付吗", "处理后见校木有"],
+        "referential": ["刚说吃了药，那以后怎么样", "那次处理做完后症状变了吗", "您提到用药，效果能不能维持", "前面那个办法到底有没有用"],
+        "natural": ["此前治疗后症状是否改善", "药物使用后有无明确效果", "既往处理是否出现复发", "请描述治疗前后的变化"]
+      }
+    }
+  ],
+  "sequences": [
+    {"caseId":"P031","turns":[{"question":"前头医院给你查过些什么","expectedIntents":["prior_investigations"]},{"question":"那结果呢","expectedIntents":["prior_investigation_results_patient_aware"]}]},
+    {"caseId":"P042","turns":[{"question":"以前化验过小便没有","expectedIntents":["prior_investigations"]},{"question":"医生咋解释的","expectedIntents":["prior_investigation_results_patient_aware"]}]},
+    {"caseId":"P022","turns":[{"question":"之前医院怎么给你处理的","expectedIntents":["prior_treatment"]},{"question":"吃了以后管事没","expectedIntents":["treatment_response"]}]},
+    {"caseId":"P026","turns":[{"question":"为这事先前用过药吗","expectedIntents":["prior_medication_for_current_problem"]},{"question":"后来还犯不犯","expectedIntents":["treatment_response"]}]},
+    {"caseId":"P003","turns":[{"question":"外院给你做过哪种检查","expectedIntents":["prior_investigations"]},{"question":"那张片子怎么讲","expectedIntents":["prior_investigation_results_patient_aware"]}]},
+    {"caseId":"P001","turns":[{"question":"来这里前去看过医生没","expectedIntents":["prior_medical_visit"]},{"question":"那医院查了啥","expectedIntents":["prior_investigations"]}]},
+    {"caseId":"P007","turns":[{"question":"以前怎么处理过这个问题","expectedIntents":["prior_treatment"]},{"question":"之后怎么样了","expectedIntents":["treatment_response"]}]},
+    {"caseId":"P039","turns":[{"question":"这次问题来前吃过药不","expectedIntents":["prior_medication_for_current_problem"]},{"question":"那药有效吗","expectedIntents":["treatment_response"]}]},
+    {"caseId":"P004","turns":[{"question":"之前在别处看过没有","expectedIntents":["prior_medical_visit"]},{"question":"当时检查是怎么说的","expectedIntents":["prior_investigation_results_patient_aware"]}]},
+    {"caseId":"P033","turns":[{"question":"过去做过什么化验","expectedIntents":["prior_investigations"]},{"question":"那个结果大概怎样","expectedIntents":["prior_investigation_results_patient_aware"]}]},
+    {"caseId":"P005","turns":[{"question":"前面找大夫看过这事吗","expectedIntents":["prior_medical_visit"]},{"question":"他当时怎么说的","expectedIntents":["prior_diagnosis_patient_aware"]}]},
+    {"caseId":"P018","turns":[{"question":"这毛病之前处理过吗","expectedIntents":["prior_treatment"]},{"question":"后来好些没有","expectedIntents":["treatment_response"]}]}
+  ],
+  "compounds": [
+    {"caseId":"P001","question":"尿红是肉眼能看到的吗，具体啥颜色，还夹血块不","expectedIntents":["gross_hematuria","urine_color","blood_clots"]},
+    {"caseId":"P009","question":"这事啥时候开始的，腰窝疼不疼，当时发烧没有","expectedIntents":["hematuria_onset","flank_pain","fever"]},
+    {"caseId":"P003","question":"来这里前看过医生没，外院做过啥检查，片子怎么说","expectedIntents":["prior_medical_visit","prior_investigations","prior_investigation_results_patient_aware"]},
+    {"caseId":"P022","question":"以前怎么处理的，为这次吃过什么药，吃完管用吗","expectedIntents":["prior_treatment","prior_medication_for_current_problem","treatment_response"]},
+    {"caseId":"P005","question":"平时抽不抽烟，长期吃啥药，家里有人得过类似毛病吗","expectedIntents":["smoking_history","medication_list","family_history"]},
+    {"caseId":"P031","question":"小便时疼不疼，腰后面酸不酸，有没有发热","expectedIntents":["dysuria","flank_pain","fever"]},
+    {"caseId":"P042","question":"什么时候头回发现的，尿肉眼红不红，是什么颜色","expectedIntents":["hematuria_onset","gross_hematuria","urine_color"]},
+    {"caseId":"P026","question":"先前去医院了吗，做过哪些项目，后来又怎么处理","expectedIntents":["prior_medical_visit","prior_investigations","prior_treatment"]},
+    {"caseId":"P012","question":"尿里带块吗，排尿会痛吗，旁边腰会不会疼","expectedIntents":["blood_clots","dysuria","flank_pain"]},
+    {"caseId":"P039","question":"这回来主要为什么，症状多久了，来前吃药没有","expectedIntents":["chief_complaint","hematuria_onset","prior_medication_for_current_problem"]},
+    {"caseId":"P033","question":"过去查过什么，化验结果如何，医生有没有说是什么病","expectedIntents":["prior_investigations","prior_investigation_results_patient_aware","prior_diagnosis_patient_aware"]},
+    {"caseId":"P007","question":"前头看过大夫没有，当时怎么治疗，处理后好转了吗","expectedIntents":["prior_medical_visit","prior_treatment","treatment_response"]}
+  ]
+}

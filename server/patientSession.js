@@ -10,6 +10,7 @@ const {
 const { BILINGUAL_CONFLICT_REASON, quarantineForMatchedSlots, uncertainConflictReply } = require("./bilingualConflictQuarantine.js");
 const { matchStructuredFacts } = require("./structuredFacts.js");
 const { matchPatientKnowableFacts } = require("./patientKnowableFacts.js");
+const { routePatientIntents } = require("./patientIntentOnlyRouter.js");
 const { matchCanonicalPatientFacts, projectCanonicalPatientFacts } = require("./canonicalFacts.js");
 const {
   matchPatientFactOntology,
@@ -98,8 +99,17 @@ const teacherOnlyKeys = [
 
 const patientBlockedTerms = [
   "根据原始病史",
+  "现有病史",
+  "现有记录",
   "根据病例资料",
+  "病例资料",
   "病例资料显示",
+  "资料没有写清",
+  "不能凭空",
+  "记录显示",
+  "字段",
+  "source",
+  "fact",
   "未主动诉",
   "未诉",
   "需追问",
@@ -160,7 +170,12 @@ function hasAny(text, words) {
 
 function blockedHits(text) {
   const value = String(text || "").toLowerCase();
-  return patientBlockedTerms.filter((term) => value.includes(String(term).toLowerCase()));
+  return patientBlockedTerms.filter((term) => {
+    const blocked = String(term).toLowerCase();
+    return /^[a-z]+$/.test(blocked)
+      ? new RegExp(`\\b${blocked}\\b`, "i").test(value)
+      : value.includes(blocked);
+  });
 }
 
 function cleanPatientValue(value) {
@@ -908,9 +923,10 @@ function semanticProjectionQuestion(definition, language) {
     || "";
 }
 
-function projectSemanticPatientFacts(caseId, caseData, semanticDecision, language) {
+function projectRoutedPatientFacts(caseId, caseData, routes, language) {
   let projected = null;
-  for (const intent of semanticDecision?.intents || []) {
+  for (const route of routes || []) {
+    const intent = String(route?.intent || "");
     const definition = patientFactOntology.find((item) => item.key === intent);
     if (!definition) continue;
     let current = null;
@@ -919,7 +935,7 @@ function projectSemanticPatientFacts(caseId, caseData, semanticDecision, languag
         caseId,
         [intent],
         language,
-        semanticDecision.clauses?.[0]?.text || ""
+        String(route?.text || "")
       );
     } else {
       const projectionQuestion = semanticProjectionQuestion(definition, language);
@@ -931,6 +947,19 @@ function projectSemanticPatientFacts(caseId, caseData, semanticDecision, languag
     }
     projected = mergePatientFactMatches(projected, current);
   }
+  return projected;
+}
+
+function projectSemanticPatientFacts(caseId, caseData, semanticDecision, language) {
+  const projected = projectRoutedPatientFacts(
+    caseId,
+    caseData,
+    (semanticDecision?.intents || []).map((intent) => ({
+      intent,
+      text: semanticDecision.clauses?.find((clause) => clause.intent === intent)?.text || ""
+    })),
+    language
+  );
   if (!projected) return null;
   return {
     ...projected,
@@ -1380,6 +1409,20 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   let structured = matchStructuredFacts(caseData, routedInput, language);
   const patientKnowledge = matchPatientKnowableFacts(caseData, routedInput, language);
   let matched = mergePatientFactMatches(mergePatientFactMatches(canonical, structured), patientKnowledge);
+  const offlineRoutes = routePatientIntents(
+    routedInput,
+    language,
+    contextResolution.sourceIntent || session?.conversationState?.currentTopic
+  )
+    .filter((route) => INTENT_WHITELIST.includes(route.intent));
+  if (offlineRoutes.length) {
+    matched = projectRoutedPatientFacts(
+      caseId,
+      caseData,
+      offlineRoutes,
+      language
+    );
+  }
   if (!matched) matched = recoverRecentResolvedFact(session, contextResolution, routedInput, language);
   const safeMissingMatch = !matched
     ? matchPatientFactOntology(routedInput, language, ["safe_missing"])[0]
@@ -1423,8 +1466,8 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     && !invasiveReportRequest
     && (!crossSectionalReportRequest || plan.factState !== FACT_STATES.EXACT_VALUE)
   );
-  const patientKnownDiagnosis = patientKnowledgePlans.some((plan) =>
-    plan.intent === "prior_diagnosis_patient_aware" && plan.factState === FACT_STATES.EXACT_VALUE
+  const priorDiagnosisHandled = patientKnowledgePlans.some((plan) =>
+    plan.intent === "prior_diagnosis_patient_aware"
   );
   const isExplicitHistoryQuestion = explicitHistoryContext.test(String(studentInput || ""))
     && !boundaryDetailIntent.test(String(routedInput || ""))
@@ -1433,7 +1476,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   const isTemporalFindingQuestion = matchedSlotIds.includes("hematuria_onset")
     && /什么时候|多久|几天|几周|几个月|何时|when|how long/i.test(String(routedInput || ""))
     && !/结果|数值|多少个|显示|提示|报告内容|what.*result|result.*(?:show|value)|report.*(?:show|say)/i.test(String(routedInput || ""));
-  if (!isExplicitHistoryQuestion && !patientKnownDiagnosis && hasAny(studentInput, language === "en" ? diagnosisWordsEn : diagnosisWords)) {
+  if (!isExplicitHistoryQuestion && !priorDiagnosisHandled && hasAny(studentInput, language === "en" ? diagnosisWordsEn : diagnosisWords)) {
     return { replyText: language === "en" ? "I do not know the diagnosis. The doctor will need to decide." : "这个我不清楚，需要医生判断。", provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, safetyFlags: ["blocked_diagnosis_request"], matchedSlotIds: [], matchedFacts: [], answerSource: "rule", confidence: 1, fallbackReason: "diagnosis_boundary", clauseOutcomes: [{ intent: null, sourceSlotId: null, status: "rejected_boundary", factState: FACT_STATES.MISSING, unknownReason: null }], contextResolution };
   }
   if (!isExplicitHistoryQuestion && !isTemporalFindingQuestion && !patientKnownReport && hasAny(studentInput, language === "en" ? reportWordsEn : reportWords)) {

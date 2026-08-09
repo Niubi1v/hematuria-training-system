@@ -136,6 +136,8 @@
     "test:patient-spoken-language-realism": "node scripts/test-patient-spoken-language-realism.mjs",
     "test:patient-semantic-coverage": "node scripts/test-patient-semantic-coverage.mjs --semantic",
     "test:patient-knowledge-grounding": "node scripts/test-patient-semantic-coverage.mjs --grounding --blackbox 500",
+    "test:patient-knowable-allowlist": "node scripts/test-patient-knowable-allowlist.mjs",
+    "test:patient-adversarial-corpus": "node scripts/test-patient-adversarial-corpus.mjs",
     "test:patient-control-layer": "node scripts/test-patient-control-layer.mjs",
     "test:teacher-cors": "tsx scripts/test-teacher-cors-contract.ts",
     "test:data-agent-presentation": "tsx scripts/test-data-agent-presentation.ts",
