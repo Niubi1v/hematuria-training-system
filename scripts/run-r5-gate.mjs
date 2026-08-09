@@ -41,6 +41,7 @@ const fast = [
   command(pnpm, "run", "test:desktop:student-score-projection"),
   command(pnpm, "run", "test:data-agent-authority"),
   command(pnpm, "run", "test:bilingual-conflict-quarantine"),
+  command(pnpm, "run", "test:patient-spoken-language-realism"),
   command(pnpm, "run", "test:desktop:install-identity"),
   command(pnpm, "run", "typecheck"),
   command(pnpm, "run", "lint")

@@ -86,12 +86,12 @@ function classifyPriorityIntent(intentKey, slot) {
     },
     flank_pain: {
       zhUnknown: /未诉|需追问|没(?:有)?注意|不详/, enUnknown: /not noticed|not sure|do not know/,
-      zhNegative: /(?:无|没有|否认)[^。；,，]*(?:腰痛|腰背部.*痛|肾区痛)/, zhPositive: /腰痛|腰疼|腰部.*(?:痛|疼)|肾区.*(?:痛|疼)|腰背部.*(?:痛|疼)/,
+      zhNegative: /(?:无|没有|否认)[^。；,，]*(?:腰痛|腰部.*(?:痛|疼)|腰背部.*痛|肾区痛)/, zhPositive: /腰痛|腰疼|腰部.*(?:痛|疼)|肾区.*(?:痛|疼)|腰背部.*(?:痛|疼)/,
       enNegative: /do not have flank pain|no flank pain|without flank pain/, enPositive: /have pain in my flank|flank pain|loin pain/
     },
     fever: {
       zhUnknown: /未诉|需追问|没(?:有)?注意|不详/, enUnknown: /not noticed|not sure|do not know/,
-      zhNegative: /(?:无|没有|否认)[^。；,，]*(?:发热|发烧|寒战)/, zhPositive: /发热|发烧|高热|体温.*(?:高|度)|寒战/,
+      zhNegative: /(?:无|没有|否认)[^。；,，]*(?:发热|发烧|寒战)/, zhPositive: /发热|发烧|低热|高热|体温.*(?:高|度)|寒战/,
       enNegative: /not had fever|no fever|without fever/, enPositive: /have had fever|fever|high temperature/
     },
     foamy_urine: {

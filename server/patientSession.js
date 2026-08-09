@@ -639,6 +639,79 @@ function formatPatientReply(text) {
     .join("\n");
 }
 
+function spokenChineseChiefComplaint(text) {
+  let reply = String(text || "").replace(/[。！？]+$/, "");
+  reply = reply
+    .replace(/伴面部皮疹/g, "，脸上还起了皮疹")
+    .replace(/尿检(?:发现|提示)(?:镜下)?血尿/g, "检查时才知道尿里有血")
+    .replace(/体检(?:反复)?发现尿检有血/g, "体检时发现尿里有血")
+    .replace(/尿潜血阳性/g, "检查时发现尿里有血")
+    .replace(/镜下血尿/g, "检查时发现尿里有血")
+    .replace(/肉眼血尿/g, "小便能看出红色")
+    .replace(/泡沫尿/g, "小便泡沫多")
+    .replace(/排尿困难/g, "小便费劲")
+    .replace(/面部皮疹/g, "脸上起了皮疹")
+    .replace(/眼睑水肿/g, "眼皮肿")
+    .replace(/进行性/g, "越来越")
+    .replace(/急性加重/g, "突然加重")
+    .replace(/伴/g, "，还")
+    .replace(/、/g, "，")
+    .replace(/，{2,}/g, "，")
+    .replace(/^体检/, "我体检")
+    .replace(/^经期体检/, "我经期体检");
+  reply = reply.replace(/^(小便泡沫多，检查时才知道尿里有血，脸上还起了皮疹)([半\d一二两三四五六七八九十]+(?:天|周|月|年)(?:余|多)?)$/, "$1，差不多$2了");
+  return /^[我]/.test(reply) ? `${reply}。` : `我${reply}。`;
+}
+
+function spokenPatientText(text, intent, language) {
+  const formatted = formatPatientReply(text);
+  if (!formatted || language !== "zh") return formatted;
+  const singleLine = formatted.replace(/\n+/g, "，");
+  if (intent === "chief_complaint") return spokenChineseChiefComplaint(singleLine);
+  if (intent === "hematuria_onset") {
+    const eventOnset = singleLine.match(/^(?:患者)?(?:完成)?(.{1,40}?后(?:数小时|数天|半天|当天)?)(?:发现|出现)/u);
+    if (eventOnset) return `我是${eventOnset[1]}发现的。`;
+  }
+  const reply = singleLine
+    .replace(/尿检(?:发现|提示)(?:镜下)?血尿/g, "检查时才知道尿里有血")
+    .replace(/镜下血尿/g, "检查时才知道尿里有血")
+    .replace(/肉眼血尿/g, "小便能看出红色")
+    .replace(/^可呈/u, "我看着可能是")
+    .replace(/，伴/g, "，还会有")
+    .replace(/^外观多正常或茶色。?$/, "我大多数时候看着和平常一样，偶尔像茶一样。")
+    .replace(/^大约(.+)前开始的。?$/, "我是差不多$1前发现的。")
+    .replace(/^腰侧有没有疼，我现在说不准。?$/, "我之前没特别留意腰疼不疼。")
+    .replace(/^有没有发热，我之前没有量清楚。?$/, "我之前没量过体温，说不准有没有发烧。")
+    .replace(/^小便时是否疼，我现在说不准。?$/, "我记不清小便时疼不疼了。")
+    .replace(/^有没有尿急，我之前没特别留意。?$/, "我之前没特别留意有没有突然憋不住尿。")
+    .replace(/^尿里有没有血块，我之前没仔细看。?$/, "我之前没仔细看尿里有没有血块。")
+    .replace(/^尿里泡沫多不多，我之前没特别注意。?$/, "我之前没特别留意小便泡沫多不多。")
+    .replace(/^有没有水肿，我之前没特别注意。?$/, "我之前没特别留意眼皮或腿脚有没有肿。")
+    .replace(/^尿线是不是变细，我之前没特别留意。?$/, "我之前没特别留意小便是不是变细了。")
+    .replace(/^尿完是否排干净，我之前没特别留意。?$/, "我之前没特别留意尿完后是不是还没排干净。")
+    .replace(/^有没有完全尿不出来过，我现在说不准。?$/, "我记不清以前有没有完全尿不出来过。")
+    .replace(/^低热。?$/, "有，我有点低烧。")
+    .replace(/^没有，没有明显腰痛。?$/, "没有，我没有腰疼。")
+    .replace(/^有，出现过发热。?$/, "有，我发过烧。")
+    .replace(/^没有，没有发热。?$/, "没有，我没有发烧。")
+    .replace(/^这项情况我现在不太清楚。?$/, "这个我现在记不清了。");
+  return reply;
+}
+
+function realizeSpokenPatientAnswer(result, language) {
+  if (language !== "zh") return result;
+  const plans = (result?.answerPlans || []).map((plan) => answerPlanFromRendered({
+    ...plan,
+    renderedAnswer: wrapPatientReply(spokenPatientText(renderAnswerPlan(plan), plan.intent, language))
+  }));
+  if (!plans.length) return { ...result, replyText: spokenPatientText(result?.replyText, "", language) };
+  return {
+    ...result,
+    replyText: [...new Set(plans.map(renderAnswerPlan).filter(Boolean))].join("\n"),
+    answerPlans: plans
+  };
+}
+
 const patientNaturalizerPrompt = `
 You are the standardized patient in a clinical interview, not a doctor, teacher, database, or AI assistant.
 currentAllowedAnswer is the only medical content permitted for this turn. Preserve every positive or negative fact, number, unit, and time expression, and do not add facts.
@@ -1433,7 +1506,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     };
   }
   const clauseOutcomes = matched?.clauseOutcomes || clauseOutcomesForMatch(matched);
-  const fallback = conciseDeterministicReply(matched
+  const fallback = realizeSpokenPatientAnswer(conciseDeterministicReply(matched
     ? {
         ...matched,
         matchedSlotIds: matched.collectableSlotIds || matched.matchedSlotIds,
@@ -1444,7 +1517,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
         clauseOutcomes,
         contextResolution
       }
-    : { ...genericFallback, clauseOutcomes, contextResolution }, language);
+    : { ...genericFallback, clauseOutcomes, contextResolution }, language), language);
   if (matched?.unresolvedReason && !(matched.collectableSlotIds || []).length) {
     return {
       ...fallback,

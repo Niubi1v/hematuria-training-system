@@ -108,7 +108,7 @@ async function main() {
 
   const zhSession = await (require("../server/patientSession.js")).initSession({ caseId: "P001", language: "zh" });
   const zhUnmatched = await (require("../server/patientSession.js")).generatePatientAnswer({ sessionId: zhSession.sessionId, caseId: "P001", studentInput: "你今天心情怎么样？", language: "zh" });
-  assert(zhUnmatched.replyText === "这项情况我现在不太清楚。", `Chinese unmatched fallback must be concise and natural: ${zhUnmatched.replyText}`);
+  assert(zhUnmatched.replyText === "这个我现在记不清了。", `Chinese unmatched fallback must be concise and natural: ${zhUnmatched.replyText}`);
   assertNotContains(zhUnmatched.replyText, ["患者因", "现病史关键", "诊断", "评分"], "Chinese unmatched fallback");
 
   const enSession = await (require("../server/patientSession.js")).initSession({ caseId: "P001", language: "en" });
