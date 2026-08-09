@@ -201,6 +201,7 @@ try {
     "llamaStatus",
     "localAiEnabled",
     "modelAlias",
+    "modelAvailability",
     "modelDirectory",
     "modelFilePath",
     "modelMode",
