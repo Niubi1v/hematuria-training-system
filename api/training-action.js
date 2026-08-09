@@ -25,7 +25,7 @@ const {
   validateEvidenceIds
 } = require("../server/evidenceGraph.js");
 const { commitAttempt, digest, loadAttempt, registerAttempt } = require("../server/trainingAttemptStore.js");
-const { desktopClinicalContent, desktopClinicalSharedOwner } = require("../server/desktopClinicalContentProjection.js");
+const { desktopClinicalContent, desktopClinicalSharedOwner, desktopTeachingSimulation } = require("../server/desktopClinicalContentProjection.js");
 const { assessClinicalResult } = require("../shared/clinicalResultSemantics.js");
 const { sanitizeClinicalTrajectory } = require("../shared/clinicalTrajectoryPresentation.js");
 const { BILINGUAL_CONFLICT_REASON, filterQuarantinedEvents } = require("../server/bilingualConflictQuarantine.js");
@@ -33,7 +33,7 @@ const { setServerTiming } = require("../server/performanceTiming.js");
 const { parseJsonBody } = require("../server/requestSecurity.js");
 const {
   buildStudentOrderCatalog,
-  orderApplicableForSex,
+  orderApplicableForCase,
   orderResultIsReportable,
   presentExamResult,
   presentMatchedOrder,
@@ -179,14 +179,14 @@ function languageForState(state) {
   return state?.language === "en" ? "en" : "zh";
 }
 
-function resolveOrders(input, sex) {
+function resolveOrders(input, caseData) {
   const segments = splitOrderInput(input);
   const matches = segments.map((part) => {
     const key = normalize(part);
     const legacyExact = sourceCatalog.find((item) => String(item.orderId).toLowerCase() === String(part).toLowerCase());
     const order = legacyExact || catalog.find((item) => String(item.orderId).toLowerCase() === String(part).toLowerCase()
       || [item.displayName, ...(item.synonyms || [])].some((name) => normalize(name) === key));
-    return order && orderApplicableForSex(order, sex) ? { input: part, order } : { input: part };
+    return order && orderApplicableForCase(order, caseData) ? { input: part, order } : { input: part };
   });
   const orders = matches.flatMap((item) => item.order ? [item.order] : [])
     .filter((item, index, all) => all.findIndex((other) => sourceOrderId(other) === sourceOrderId(item)) === index);
@@ -429,7 +429,7 @@ function studentExamPayload(result, language) {
 }
 
 function handleOrder(caseData, input, previousOrderIds, language, previousReports = []) {
-  const resolution = resolveOrders(input, caseData.sex);
+  const resolution = resolveOrders(input, caseData);
   const resolvedOrders = resolution.orders;
   const unavailableOrders = language === "en"
     ? resolvedOrders.filter((item) => !presentOrderCatalogItem(item, language).translationAvailable)
@@ -443,6 +443,7 @@ function handleOrder(caseData, input, previousOrderIds, language, previousReport
     return result ? [{ order, result }] : [];
   });
   const sourceRowsByOrderId = new Map(sourceRows.map((item) => [sourceOrderId(item.order), item.result]));
+  const requestedOrderIds = new Set(orders.map(sourceOrderId));
   const sourceAssessmentByOrderId = new Map(sourceRows.map(({ order, result }) => {
     const canonicalId = sourceOrderId(order);
     return [canonicalId, assessClinicalResult({
@@ -454,12 +455,34 @@ function handleOrder(caseData, input, previousOrderIds, language, previousReport
   }));
   const triageRowsByOrderId = new Map(orders.map((order) => {
     const canonicalId = sourceOrderId(order);
-    const triaged = desktopClinicalContent({
+    const existing = desktopClinicalContent({
       caseId: caseData.id,
       itemIds: [order.catalogId, order.orderId, canonicalId],
       displayName: order.displayName
     });
-    return [canonicalId, triaged];
+    const sourceResult = sourceRowsByOrderId.get(canonicalId);
+    const sourceAssessment = sourceAssessmentByOrderId.get(canonicalId);
+    const sourceProjectionAssessment = existing?.classification === "source_projection" ? assessClinicalResult({
+      domain: existing.domain,
+      itemId: canonicalId,
+      displayName: order.displayName,
+      result: existing.result,
+      projection: true
+    }) : null;
+    const existingSharedOwner = desktopClinicalSharedOwner({
+      caseId: caseData.id,
+      itemIds: [order.catalogId, order.orderId, canonicalId],
+      displayName: order.displayName
+    });
+    const keepExisting = existing?.classification === "human_approved_projection"
+      || existing?.classification === "medical_author_simulation"
+      || (existing?.classification === "source_projection" && sourceProjectionAssessment?.compatible === true)
+      || (existingSharedOwner && requestedOrderIds.has(existingSharedOwner))
+      || previousReports.some((report) => reportOrderIds(report).some((id) => id === canonicalId || id === existingSharedOwner))
+      || (orderResultIsReportable(sourceResult)
+        && sourceAssessment?.compatible === true
+        && !governedDecisionClassifications.has(existing?.classification));
+    return [canonicalId, keepExisting ? existing : desktopTeachingSimulation({ caseData, orderId: canonicalId, displayName: order.displayName })];
   }));
   const triageAssessmentByOrderId = new Map(orders.map((order) => {
     const canonicalId = sourceOrderId(order);
@@ -498,7 +521,7 @@ function handleOrder(caseData, input, previousOrderIds, language, previousReport
     const canonicalId = sourceOrderId(order);
     if (duplicateOrderIds.includes(canonicalId)) return false;
     const result = sourceRowsByOrderId.get(canonicalId);
-    if (triageRowsByOrderId.get(canonicalId)?.classification === "medical_author_not_performed") return true;
+    if (["medical_author_simulation", "medical_author_not_performed"].includes(triageRowsByOrderId.get(canonicalId)?.classification)) return true;
     return !result || (result.prerequisites || []).every((id) => available.has(id));
   }).map(sourceOrderId);
   const pendingPrerequisiteOrderIds = orders
@@ -553,7 +576,7 @@ function handleOrder(caseData, input, previousOrderIds, language, previousReport
         caseId: caseData.id,
         orderId: canonicalId,
         resultId: triaged.resultId,
-        coveredOrderIds: [canonicalId],
+        coveredOrderIds: [canonicalId, ...orders.filter((candidate) => sharedOwnerByOrderId.get(sourceOrderId(candidate)) === canonicalId).map(sourceOrderId)],
         status: "final",
         result: triaged.result,
         provenance: triaged.provenance,
@@ -661,9 +684,6 @@ function handleOrder(caseData, input, previousOrderIds, language, previousReport
       };
     }
     if (duplicateOrderIds.includes(canonicalId)) {
-      if (triaged?.classification === "medical_author_not_performed") {
-        return { orderId: canonicalId, displayName, status: "not_performed", provenance: triaged.provenance, scoringEligible: false, diagnosticEligible: false, possibleUnnecessary: true, message: triaged.result };
-      }
       return {
         orderId: canonicalId, displayName, status: "duplicate", provenance: "configured_case_result",
         message: language === "en" ? `${displayName}: already ordered; no duplicate report was released.` : `${displayName}：已开立过，本次不重复释放报告。`
@@ -672,6 +692,13 @@ function handleOrder(caseData, input, previousOrderIds, language, previousReport
     const sharedReport = results.find((item) => reportOrderIds(item).includes(canonicalId));
     const releasedSharedReport = releasedReportByOrderId.get(sharedOwnerByOrderId.get(canonicalId));
     const missingPrerequisites = (result?.prerequisites || []).filter((id) => !available.has(id));
+    if (sharedReport) {
+      return {
+        orderId: canonicalId, displayName, status: "reported", provenance: sharedReport.provenance,
+        resultId: sharedReport.resultId,
+        message: language === "en" ? `${displayName}: covered by the available report.` : `${displayName}：已有正式报告可查看。`
+      };
+    }
     if (triaged?.classification === "medical_author_not_performed") {
       return {
         orderId: canonicalId, displayName, status: "not_performed", provenance: triaged.provenance,
@@ -685,13 +712,6 @@ function handleOrder(caseData, input, previousOrderIds, language, previousReport
         message: language === "en"
           ? `${displayName}: prerequisite missing (${missingPrerequisites.join(", ")}); the report remains locked.`
           : `${displayName}：缺少前置条件（${missingPrerequisites.join("、")}），暂不释放报告。`
-      };
-    }
-    if (sharedReport) {
-      return {
-        orderId: canonicalId, displayName, status: "reported", provenance: sharedReport.provenance,
-        resultId: sharedReport.resultId,
-        message: language === "en" ? `${displayName}: covered by the available shared report.` : `${displayName}：已由同一份现有报告覆盖。`
       };
     }
     if (releasedSharedReport) {

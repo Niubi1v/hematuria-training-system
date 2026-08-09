@@ -7,6 +7,7 @@ import perioperative from "../data/order_catalog_perioperative.json";
 import procedures from "../data/order_catalog_procedures.json";
 import {
   buildStudentOrderCatalog,
+  orderApplicableForCase,
   orderApplicableForSex
 } from "../shared/dataAgentPresentation.js";
 
@@ -102,6 +103,17 @@ assert(maleOnly.some((item) => item.displayName === "前列腺MR平扫"));
 assert(maleOnly.every((item) => orderApplicableForSex(item, "男") && !orderApplicableForSex(item, "女")));
 assert(femaleOnly.some((item) => item.displayName === "彩超女性生殖系统"));
 assert(femaleOnly.every((item) => orderApplicableForSex(item, "女") && !orderApplicableForSex(item, "男")));
+const psa = catalog.find((item) => item.orderId === "LAB-BL-015");
+const pregnancy = catalog.find((item) => item.orderId === "LAB-BL-010");
+const prostateMr = catalog.find((item) => item.orderId === "IMG-MR-004");
+assert(psa && pregnancy && prostateMr);
+assert.equal(orderApplicableForCase(psa, { age: 65, sex: "女" }), false);
+assert.equal(orderApplicableForCase(psa, { age: 65, sex: "男" }), true);
+assert.equal(orderApplicableForCase(psa, { age: 16, sex: "男" }), false);
+assert.equal(orderApplicableForCase(prostateMr, { age: 16, sex: "男" }), false);
+assert.equal(orderApplicableForCase(pregnancy, { id: "P006", age: 23, sex: "女" }), true);
+assert.equal(orderApplicableForCase(pregnancy, { id: "P002", age: 67, sex: "女" }), false);
+assert.equal(orderApplicableForCase(pregnancy, { age: 23, sex: "男" }), false);
 
 async function main() {
   resetMemoryAttemptStore();

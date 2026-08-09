@@ -39,7 +39,8 @@ try {
   let p001 = await start("P001", "medical-author-p001");
   p001 = await call({ action: "order", caseId: "P001", attemptId: "medical-author-p001", mode: "free", language: "zh", input: "END-001;IMG-CT-001" }, p001.token);
   assert.equal(p001.payload.results[0]?.result, "膀胱镜：膀胱左侧壁见多发不规则宽基底肿物，最大约3 cm，表面血管丰富并有接触性出血；建议TURBT取材明确病理及肌层受侵情况。");
-  assert.equal(p001.payload.orderOutcomes.find((item) => item.orderId === "IMG-CT-001")?.status, "not_performed");
+  assert.equal(p001.payload.orderOutcomes.find((item) => item.orderId === "IMG-CT-001")?.status, "reported");
+  assert.match(p001.payload.results.find((item) => item.orderId === "IMG-CT-001")?.resultId || "", /^TCH-/u);
   p001 = await call({ action: "stage-feedback", caseId: "P001", attemptId: "medical-author-p001", mode: "free", language: "zh", stageKey: "orders", submission: {} }, p001.token);
 
   let p003 = await start("P003", "medical-author-p003");
@@ -53,6 +54,11 @@ try {
   const reopenedP003 = await loadAttempt({ caseId: "P003", attemptId: "medical-author-p003", token: p003.token, requestId: "reopen-p003", requestDigest: digest("reopen-p003") });
   assert.equal(reopenedP001.state.currentStage, 3);
   assert.equal(reopenedP001.state.releasedReports[0]?.result, "膀胱镜：膀胱左侧壁见多发不规则宽基底肿物，最大约3 cm，表面血管丰富并有接触性出血；建议TURBT取材明确病理及肌层受侵情况。");
+  const reopenedSimulation = reopenedP001.state.releasedReports.find((item) => item.orderId === "IMG-CT-001");
+  assert.match(reopenedSimulation?.resultId || "", /^TCH-/u);
+  assert.equal(reopenedSimulation?.provenance, "teaching_simulation_medical_author_approved");
+  assert.equal(reopenedSimulation?.diagnosticEligible, false);
+  assert.equal(reopenedSimulation?.scoringEligible, false);
   assert.equal(reopenedP003.state.releasedReports[0]?.result, "泌尿系CT提示：右肾盂内软组织病变，大小约2×3 cm。");
   assert(!JSON.stringify(reopenedP001.state).includes("右肾盂内软组织病变"));
   assert(!JSON.stringify(reopenedP003.state).includes("膀胱左侧壁见多发不规则宽基底肿物"));

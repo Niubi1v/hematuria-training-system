@@ -152,9 +152,10 @@ assertPublic(p027.response.payload);
 
 for (const [caseId, orderId] of [["P008", "IMG-CT-002"], ["P024", "IMG-US-001"], ["P040", "IMG-US-001"], ["P042", "END-001"]]) {
   const placed = await order(caseId, orderId);
-  assert.equal(placed.response.payload.results.length, 0, `${caseId}/${orderId}:rejected_mapping_released`);
-  assert.equal(placed.response.payload.orderOutcomes[0].status, "not_performed");
-  assert.equal(placed.response.payload.orderOutcomes[0].message, medicalAuthor.items.find((item) => item.caseId === caseId && item.orderId === orderId).finalTerminalText);
+  assert.equal(placed.response.payload.results.length, 1, `${caseId}/${orderId}:fallback_report_missing`);
+  assert.match(placed.response.payload.results[0].resultId, /^TCH-/u);
+  assert.equal(placed.response.payload.orderOutcomes[0].status, "reported");
+  assert.notEqual(placed.response.payload.results[0].result, medicalAuthor.items.find((item) => item.caseId === caseId && item.orderId === orderId).finalTerminalText);
   assertPublic(placed.response.payload);
 }
 
@@ -171,13 +172,22 @@ for (const item of medicalAuthor.items) {
   assert.doesNotMatch(payloadText, /等待医学审核|等待审核元数据/u, `${item.caseId}/${item.orderId}:waiting_copy`);
   if (item.finalTerminalType === "NOT_PERFORMED") {
     const outcome = placed.response.payload.orderOutcomes.find((row) => row.orderId === item.orderId);
-    assert.equal(outcome?.status, "not_performed", `${item.caseId}/${item.orderId}:not_performed_status`);
-    assert.equal(outcome?.message, item.finalTerminalText, `${item.caseId}/${item.orderId}:not_performed_text`);
+    const released = report(placed.response, item.orderId);
+    assert.equal(outcome?.status, "reported", `${item.caseId}/${item.orderId}:fallback_status`);
+    assert.match(released?.resultId || "", /^TCH-/u, `${item.caseId}/${item.orderId}:fallback_id`);
+    assert.notEqual(released?.result, item.finalTerminalText, `${item.caseId}/${item.orderId}:not_performed_text_leaked`);
+    const stored = await loadAttempt({ caseId: placed.runtimeCaseId, attemptId: placed.attemptId, token: placed.response.token, requestId: `inspect-not-performed-${item.index}`, requestDigest: digest(`inspect-not-performed-${item.index}`) });
+    const internal = stored.state.releasedReports.find((row) => row.orderId === item.orderId || row.coveredOrderIds?.includes(item.orderId));
+    assert.equal(internal?.provenance, "teaching_simulation_medical_author_approved");
+    assert.equal(internal?.diagnosticEligible, false);
+    assert.equal(internal?.scoringEligible, false);
+    assert.equal(internal?.affectsDiagnosis, false);
+    assert.equal(internal?.affectsScore, false);
     if (!duplicateNotPerformedChecked) {
       const repeated = await call({ action: "order", caseId: placed.runtimeCaseId, attemptId: placed.attemptId, mode: "free", language: "zh", input: item.orderId }, placed.response.token);
-      assert.equal(repeated.payload.orderOutcomes[0].status, "not_performed");
-      const stored = await loadAttempt({ caseId: placed.runtimeCaseId, attemptId: placed.attemptId, token: repeated.token, requestId: "inspect-not-performed", requestDigest: digest("inspect-not-performed") });
-      assert.equal(stored.state.events.filter((event) => event.type === "order_outcome" && event.actionId === item.orderId).length, 1);
+      assert.equal(repeated.payload.orderOutcomes[0].status, "existing_report");
+      const repeatedStored = await loadAttempt({ caseId: placed.runtimeCaseId, attemptId: placed.attemptId, token: repeated.token, requestId: "inspect-not-performed", requestDigest: digest("inspect-not-performed") });
+      assert.equal(repeatedStored.state.events.filter((event) => event.type === "result_returned" && event.actionId === item.orderId).length, 1);
       duplicateNotPerformedChecked = true;
     }
   } else {
@@ -208,4 +218,4 @@ for (const item of medicalAuthor.items) {
 }
 
 assert.equal(checked, 140);
-console.log("R5-HUMAN-APPROVED-MEDICAL-RESULT-MAPPING passed: 140/140 author decisions, 21 source mappings, 4 preserved rejections, duplicates, public boundary");
+console.log("R5-HUMAN-APPROVED-MEDICAL-RESULT-MAPPING passed: 140/140 decisions retained, rejected source mappings isolated, deterministic report fallback, duplicates, public boundary");

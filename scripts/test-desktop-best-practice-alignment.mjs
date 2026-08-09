@@ -8,6 +8,7 @@ process.env.TRAINING_API_RATE_LIMIT_PER_MINUTE = "1000000";
 process.env.LLM_ENABLE_AI_AGENTS = "false";
 process.env.LLM_ENABLE_AI_PATIENT = "false";
 process.env.PATIENT_SEMANTIC_CLASSIFIER_ENABLED = "false";
+process.env.HEMATURIA_RUNTIME_TARGET = "desktop";
 
 const require = createRequire(import.meta.url);
 const handler = require("../api/training-action.js");
@@ -17,10 +18,10 @@ const { digest, loadAttempt, resetMemoryAttemptStore } = require("../server/trai
 
 const journeys = [
   { caseId: "P001", language: "zh", cohort: "tumor", orderId: "LAB-UR-001", department: "肿瘤科" },
-  { caseId: "P001", language: "en", cohort: "tumor", orderId: "LAB-BL-001", department: "Oncology", expectedOrderStatus: "medical_review_pending" },
+  { caseId: "P001", language: "en", cohort: "tumor", orderId: "LAB-BL-001", department: "Oncology", expectedDiagnostic: false },
   { caseId: "P006", language: "zh", cohort: "infection_female", orderId: "LAB-UR-001", department: "感染科" },
   { caseId: "P009", language: "zh", cohort: "stone_female", orderId: "IMG-US-001", department: "影像科" },
-  { caseId: "P002", language: "zh", cohort: "tumor_female", orderId: "IMG-US-001", department: "肿瘤科", expectedOrderStatus: "medical_review_pending" }
+  { caseId: "P002", language: "zh", cohort: "tumor_female", orderId: "IMG-US-001", department: "肿瘤科" }
 ];
 
 const questions = {
@@ -191,20 +192,12 @@ for (const journey of journeys) {
   metrics.orders += 1;
   const returned = Array.isArray(response.payload.results) ? response.payload.results : [];
   const outcomes = Array.isArray(response.payload.orderOutcomes) ? response.payload.orderOutcomes : [];
-  const expectedPending = journey.expectedOrderStatus === "medical_review_pending";
-  const matched = expectedPending
-    ? returned.every((item) => item.orderId !== journey.orderId)
-      && outcomes.some((item) => item.orderId === journey.orderId
-        && item.status === "medical_review_pending"
-        && item.provenance === "source_result_semantic_mismatch"
-        && item.diagnosticEligible === false
-        && item.scoringEligible === false)
-    : returned.some((item) => item.orderId === journey.orderId
-      && item.caseId === journey.caseId
-      && item.provenance === "configured_case_result");
+  const expectedNonDiagnostic = journey.expectedDiagnostic === false;
+  const matched = returned.some((item) => item.orderId === journey.orderId && item.caseId === journey.caseId)
+    && outcomes.some((item) => item.orderId === journey.orderId && item.status === "reported")
+    && !/provenance|diagnosticEligible|scoringEligible|medical_review_pending/iu.test(JSON.stringify(response.payload));
   if (matched) metrics.actionResultMatches += 1;
   assert(matched, `${attemptId} did not return the governed outcome for ${journey.orderId}`);
-  if (expectedPending && journey.language === "en") assert.doesNotMatch(JSON.stringify(response.payload), /[\u3400-\u9fff]/u);
 
   response = await stage(response, journey, attemptId, "orders", {});
   metrics.stageSubmissions += 1;
@@ -212,7 +205,7 @@ for (const journey of journeys) {
   const historyEvidence = evidenceOptions.filter((item) => item.sourceStage === 1);
   const measurementEvidence = evidenceOptions.filter((item) => item.sourceStage === 2);
   assert(historyEvidence.length >= 2, `${attemptId} must expose two collected history evidence IDs`);
-  if (expectedPending) assert.equal(measurementEvidence.length, 0, `${attemptId} must not expose an unreviewed result as diagnostic evidence`);
+  if (expectedNonDiagnostic) assert.equal(measurementEvidence.length, 0, `${attemptId} must not expose a teaching simulation as diagnostic evidence`);
   else assert(measurementEvidence.length >= 1, `${attemptId} must expose the released measurement evidence ID`);
   const comparisonEvidence = measurementEvidence[0] || historyEvidence[1];
   const primaryEvidenceIds = [historyEvidence[0].evidenceId, comparisonEvidence.evidenceId];

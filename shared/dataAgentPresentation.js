@@ -70,6 +70,11 @@ const projectedSourceIds = new Set([
   "IMG-US-002",
   "LAB-PATH-002"
 ]);
+const intrinsicSexApplicability = Object.freeze({
+  "LAB-BL-010": Object.freeze(["女"]),
+  "LAB-BL-015": Object.freeze(["男"])
+});
+const noPregnancyPotentialCaseIds = new Set(["P002", "P014", "HX-ADD-002", "P021", "HX-ADD-009", "P022", "HX-ADD-010", "P026", "HX-ADD-014"]);
 
 function uniqueStrings(values) {
   return [...new Set(values.map((value) => String(value || "").trim()).filter(Boolean))];
@@ -100,7 +105,9 @@ function buildStudentOrderCatalog(catalog) {
       ])
     };
   });
-  return [...retained, ...projected];
+  return [...retained, ...projected].map((item) => item.applicableSex || !intrinsicSexApplicability[sourceOrderId(item)]
+    ? item
+    : { ...item, applicableSex: [...intrinsicSexApplicability[sourceOrderId(item)]] });
 }
 
 function sourceOrderId(order) {
@@ -110,6 +117,17 @@ function sourceOrderId(order) {
 function orderApplicableForSex(order, sex) {
   const applicableSex = order?.applicableSex;
   return !Array.isArray(applicableSex) || !applicableSex.length || applicableSex.includes(sex);
+}
+
+function orderApplicableForCase(order, caseData) {
+  if (!caseData || !orderApplicableForSex(order, caseData.sex)) return false;
+  const age = Number(caseData.age);
+  const orderId = sourceOrderId(order);
+  if (intrinsicSexApplicability[orderId] && !intrinsicSexApplicability[orderId].includes(caseData.sex)) return false;
+  if (Number.isFinite(age) && age < 18 && ["LAB-BL-015", "IMG-MR-004"].includes(orderId)) return false;
+  if (orderId === "LAB-BL-010" && (Number.isFinite(age) && age < 12
+    || [caseData.id, caseData.displayCaseId].some((id) => noPregnancyPotentialCaseIds.has(String(id || ""))))) return false;
+  return true;
 }
 
 function splitOrderInput(value) {
@@ -292,6 +310,7 @@ module.exports = {
   firstEnglishAlias,
   needsReviewedMetadata,
   orderApplicableForSex,
+  orderApplicableForCase,
   orderResultIsReportable,
   presentExamResult,
   presentMatchedOrder,

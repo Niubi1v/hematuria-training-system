@@ -31,6 +31,7 @@ const fast = [
   command(pnpm, "run", "test:attempts"),
   command(pnpm, "run", "test:evidence-graph"),
   command(pnpm, "run", "test:ui-clinical-stage3"),
+  command(pnpm, "run", "test:case-order-applicability"),
   command(pnpm, "run", "test:human-approved-medical-results"),
   command(pnpm, "run", "test:stage2:persistence"),
   command(pnpm, "run", "test:order-result-student-presentation"),

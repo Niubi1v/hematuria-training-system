@@ -42,7 +42,7 @@ import {
   ENGLISH_ORDER_PLACEHOLDER,
   ENGLISH_RESULT_PLACEHOLDER,
   buildStudentOrderCatalog,
-  orderApplicableForSex,
+  orderApplicableForCase,
   presentOrderCatalogItem,
   presentPhysicalExamItem,
   reportStatusPresentation,
@@ -1557,7 +1557,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     const keyword = orderSearch.trim().toLowerCase();
     const visible = orderCatalog.filter((item) => {
       if (item.primaryCategory !== activeOrderTab) return false;
-      if (!orderApplicableForSex(item, caseData.sex)) return false;
+      if (!orderApplicableForCase(item, caseData)) return false;
       if (!keyword) return true;
       return [item.displayName, item.secondaryCategory, item.priority, item.studentDisplayHint, ...item.synonyms].join(" ").toLowerCase().includes(keyword);
     });
@@ -1578,7 +1578,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         items
       };
     });
-  }, [activeOrderTab, caseData.sex, lang, orderSearch]);
+  }, [activeOrderTab, caseData, lang, orderSearch]);
 
   const consultGroups = useMemo(() => consultGroupOrder.map((group) => ({
     group,
@@ -1603,10 +1603,10 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   })), [answers.differentialAnalysis, answers.differentials, evidenceOptions]);
   const testPlans = useMemo(() => parseTestPlans(answers.confirmatoryTests), [answers.confirmatoryTests]);
   const availableTestOptions = useMemo(() => orderCatalog
-    .filter((item) => orderApplicableForSex(item, caseData.sex))
+    .filter((item) => orderApplicableForCase(item, caseData))
     .map((item) => presentOrderCatalogItem(item, lang) as PresentedOrderCatalogItem)
     .filter((item) => item.translationAvailable)
-    .slice(0, 160), [caseData.sex, lang]);
+    .slice(0, 160), [caseData, lang]);
   const consultPurposeByDepartment = useMemo(() => parseDepartmentField(answers.consultPurpose, answers.consultDepartments), [answers.consultDepartments, answers.consultPurpose]);
   const consultQuestionsByDepartment = useMemo(() => parseDepartmentField(answers.consultQuestions, answers.consultDepartments), [answers.consultDepartments, answers.consultQuestions]);
   const consultEvidenceByDepartment = useMemo(() => {

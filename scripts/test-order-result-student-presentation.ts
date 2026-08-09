@@ -52,7 +52,7 @@ assert.equal(first.payload.recognizedOrderCount, 5);
 assert.doesNotMatch(JSON.stringify(first.payload), forbiddenStudentText);
 
 const firstResults = first.payload.results as Array<{ orderId: string; resultId: string; result?: string; coveredOrderIds?: string[]; unit?: string; referenceRange?: string }>;
-assert.equal(firstResults.length, 2, "the shared urine panel and approved ultrasound must each render once");
+assert.equal(firstResults.length, 4, "the shared urine panel plus three independent orders must render four formal report cards");
 const urinePanel = firstResults.find((item) => item.orderId === "LAB-UR-001");
 assert.deepEqual(urinePanel?.coveredOrderIds, ["LAB-UR-001", "LAB-UR-002"]);
 assert.equal(urinePanel?.unit, undefined, "missing source unit must be omitted");
@@ -60,26 +60,25 @@ assert.equal(urinePanel?.referenceRange, undefined, "missing source range must b
 const ultrasound = firstResults.find((item) => item.orderId === "IMG-US-001");
 assert.match(String(ultrasound?.result), /膀胱小梁小房形成.*前列腺增大.*56\*65\*47.*内部回声不均匀/u);
 assert.doesNotMatch(String(ultrasound?.result), /心脏|冠脉|EF55/u);
-assert.equal(first.payload.newReportCount, 2);
+assert.equal(first.payload.newReportCount, 4);
 assert.equal(first.payload.existingReportCount, 0);
-assert.equal(first.payload.unavailableResultCount, 1);
+assert.equal(first.payload.unavailableResultCount, 0);
 
 const outcomes = first.payload.orderOutcomes as Array<{ orderId: string; status: string; message: string }>;
 assert.equal(outcomes.length, 5);
 assert.equal(outcomes.find((item) => item.orderId === "LAB-UR-002")?.status, "reported");
-assert.equal(outcomes.filter((item) => item.status === "unavailable").length, 1);
-assert.equal(outcomes.filter((item) => item.status === "no_specimen").length, 1);
+assert.equal(outcomes.filter((item) => item.status === "reported").length, 5);
 
 const repeated = await call({ action: "order", caseId: "P005", attemptId: zh.attemptId, mode: "free", language: "zh", input: fiveOrders }, first.token);
 assert.equal(repeated.statusCode, 200);
 assert.doesNotMatch(JSON.stringify(repeated.payload), forbiddenStudentText);
 assert.equal(repeated.payload.newReportCount, 0);
-assert.equal(repeated.payload.existingReportCount, 2);
-assert.equal((repeated.payload.results as unknown[]).length, 2, "duplicate order must resurface both existing reports");
+assert.equal(repeated.payload.existingReportCount, 4);
+assert.equal((repeated.payload.results as unknown[]).length, 4, "duplicate order must resurface all existing reports");
 assert.match(String(repeated.payload.message), /已有结果/u);
 
 const stored = await loadAttempt({ caseId: "P005", attemptId: zh.attemptId, token: repeated.token, requestId: "inspect-student-result", requestDigest: digest("inspect-student-result") });
-assert.equal(stored.state.events.filter((event: { type: string }) => event.type === "result_returned").length, 2, "resurfacing must not create duplicate evidence");
+assert.equal(stored.state.events.filter((event: { type: string }) => event.type === "result_returned").length, 4, "resurfacing must not create duplicate report events");
 
 const stageThree = await call({
   action: "stage-feedback", caseId: "P005", attemptId: zh.attemptId, mode: "free", language: "zh",
@@ -90,7 +89,7 @@ assert.equal(stageThree.payload.stageKey, "orders");
 assert.equal((stageThree.payload.evidenceOptions as unknown[]).length, 2, "only the two approved reports may enter stage 3 evidence selection");
 const reopened = await loadAttempt({ caseId: "P005", attemptId: zh.attemptId, token: stageThree.token, requestId: "inspect-stage-three", requestDigest: digest("inspect-stage-three") });
 assert.equal(reopened.state.currentStage, 3);
-assert.equal(reopened.state.events.filter((event: { type: string }) => event.type === "result_returned").length, 2);
+assert.equal(reopened.state.events.filter((event: { type: string }) => event.type === "result_returned").length, 4);
 
 const sequential = await stageTwo("zh");
 const urinalysis = await call({ action: "order", caseId: "P005", attemptId: sequential.attemptId, mode: "free", language: "zh", input: "LAB-UR-001" }, sequential.token);

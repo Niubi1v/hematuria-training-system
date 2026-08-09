@@ -157,7 +157,8 @@ for (const journey of representativeCases) {
     assert.equal("scoringEligible" in response.payload, false);
     assert.equal("diagnosticEligible" in response.payload, false);
     response = await placeOrder(response, journey.caseId, attemptId, "KUB腹部平片");
-    assert(outcome(response, "no_indication"));
+    assert(outcome(response, "reported", "IMG-XR-001"));
+    assert.match(response.payload.results[0]?.resultId || "", /^TCH-/u);
   }
 
   if (journey.caseId === "P006") {
@@ -178,8 +179,8 @@ for (const journey of representativeCases) {
         assert(outcome(response, "reported", orderId), `${journey.caseId}/${orderId}:approved_simulation_missing`);
         assert.equal(response.payload.results[0]?.result, authored.finalTerminalText);
       } else {
-        assert(["unavailable", "no_indication", "no_specimen", "not_performed"].some((status) => outcome(response, status)), `${journey.caseId}/${orderId}:unapproved_result_not_isolated`);
-        assert.equal((response.payload.results || []).length, 0);
+        assert(outcome(response, "reported", orderId), `${journey.caseId}/${orderId}:fallback_report_missing`);
+        assert.match(response.payload.results[0]?.resultId || "", /^TCH-/u);
       }
     }
   }
@@ -269,9 +270,9 @@ assert.equal(englishResponse.statusCode, 200);
 
 const conflict = await startStageTwo("P004", "conflict");
 const conflictOrder = await placeOrder(conflict.response, "P004", conflict.attemptId, "双肾+输尿管CT平扫+增强");
-assert(outcome(conflictOrder, "unavailable"));
-assert.equal("provenance" in outcome(conflictOrder, "unavailable"), false);
-assert.equal((conflictOrder.payload.results || []).length, 0);
+assert(outcome(conflictOrder, "reported", "IMG-CT-003"));
+assert.match(conflictOrder.payload.results[0]?.resultId || "", /^TCH-/u);
+assert.equal("provenance" in conflictOrder.payload.results[0], false);
 
 assert.doesNotMatch(JSON.stringify(journeyResults), /undefined|\[object Object\]/iu);
 console.log(`DESKTOP_CLINICAL_TRIAGE_RESULT ${JSON.stringify({
@@ -279,5 +280,5 @@ console.log(`DESKTOP_CLINICAL_TRIAGE_RESULT ${JSON.stringify({
   sourceProjectionAudit: { audited: 66, retained: 4, withdrawn: 62, withdrawalReasons, pendingMedicalReview: 1023 },
   journeys: journeyResults,
   englishP001StagesCompleted: 3,
-  medicalConflictPreserved: 1
+  medicalConflictIsolatedBehindTeachingReport: 1
 })}`);

@@ -21,6 +21,7 @@ export function buildStudentOrderCatalog<T extends Record<string, unknown>>(cata
 export function containsCjk(value: unknown): boolean;
 export function firstEnglishAlias(order: { orderId?: string; synonyms?: string[] }): string;
 export function orderApplicableForSex(order: object, sex: string): boolean;
+export function orderApplicableForCase(order: object, caseData: { id?: string; displayCaseId?: string; age?: string | number; sex?: string }): boolean;
 export function orderResultIsReportable(result: { status?: string } | undefined): boolean;
 export function splitOrderInput(value: unknown): string[];
 export function sourceOrderId(order: { orderId?: string; sourceOrderId?: string }): string;

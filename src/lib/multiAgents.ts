@@ -8,7 +8,7 @@ import physicalExamItemsJson from "@/data/physical_exam_items.json";
 import physicalExamResultsJson from "@/data/physical_exam_results.json";
 import {
   buildStudentOrderCatalog,
-  orderApplicableForSex,
+  orderApplicableForCase,
   orderResultIsReportable,
   presentOrderResult,
   simulatedPhysicalExamResult,
@@ -151,14 +151,14 @@ function includesAny(text: string, words: string[]) {
   return words.some((word) => word && target.includes(normalize(word)));
 }
 
-function exactOrderMatches(input: string, sex: string) {
+function exactOrderMatches(input: string, caseData: CaseData) {
   const requested = splitOrderInput(input.replace(/\s+和\s+|以及|并且/gi, "；"));
   const matched = requested.flatMap((segment) => {
     const normalized = normalize(segment);
     const legacyExact = sourceOrderCatalog.find((item) => item.orderId.toLowerCase() === segment.toLowerCase());
     const order = legacyExact || orderCatalog.find((item) => item.orderId.toLowerCase() === segment.toLowerCase()
       || [item.displayName, ...item.synonyms].some((name) => normalize(name) === normalized));
-    if (order && !orderApplicableForSex(order, sex)) return [];
+    if (order && !orderApplicableForCase(order, caseData)) return [];
     return order ? [order] : [];
   });
   return [...new Map(matched.map((item) => [sourceOrderId(item), item])).values()];
@@ -170,7 +170,7 @@ function caseMdt(caseId: string) {
 
 export function matchOrderResults(caseData: CaseData, input: string, context?: { previousOrderIds?: string[]; stageNo?: number }): OrderResultLog {
   const text = input.trim();
-  const matchedOrders = exactOrderMatches(text, caseData.sex);
+  const matchedOrders = exactOrderMatches(text, caseData);
   const previousOrderIds = context?.previousOrderIds ?? [];
   const duplicateOrderIds = matchedOrders.map(sourceOrderId).filter((orderId) => previousOrderIds.includes(orderId));
   const availableOrderIds = new Set([...previousOrderIds, ...matchedOrders.map(sourceOrderId)]);
