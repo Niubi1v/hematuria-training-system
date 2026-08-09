@@ -556,22 +556,27 @@ test("@order-result-human-path P005 five-order mentor replay presents approved r
 
     const feedback = page.getByRole("status").filter({ hasText: "5项医嘱" });
     await expect(feedback).toBeFocused();
-    await expect(feedback).toContainText("新返回2份报告");
+    await expect(feedback).toContainText("新返回4份报告");
     await expect(feedback).toContainText("同一报告另覆盖1项医嘱");
-    await expect(feedback).toContainText("1项当前无可提供结果");
-    await expect(page.getByTestId("report-card")).toHaveCount(2);
-    await expect(page.getByTestId("report-card")).toContainText([/红细胞/u, /膀胱小梁小房形成.*前列腺增大.*56\*65\*47/u]);
+    await expect(feedback).toContainText("0项当前无可提供结果");
+    await expect(page.getByTestId("report-card")).toHaveCount(4);
+    await expect(page.getByTestId("report-card").filter({ hasText: /红细胞/u })).toHaveCount(1);
+    await expect(page.getByTestId("report-card").filter({ hasText: /抗酸染色阴性.*结核分枝杆菌核酸检测阴性/u })).toHaveCount(1);
+    await expect(page.getByTestId("report-card").filter({ hasText: /总PSA 6\.8 ng\/mL/u })).toHaveCount(1);
+    await expect(page.getByTestId("report-card").filter({ hasText: /膀胱小梁小房形成.*前列腺增大.*56\*65\*47/u })).toHaveCount(1);
     await expect(page.getByTestId("report-card").filter({ hasText: /心脏|冠脉|EF55/u })).toHaveCount(0);
     await expect(page.getByTestId("order-outcome")).toHaveCount(5);
-    await expect(page.getByTestId("order-outcome").filter({ hasText: "未取材" })).toContainText("本病例未采集该标本，因此无结果");
+    await expect(page.getByTestId("order-outcome").filter({ hasText: "报告已返回" })).toHaveCount(5);
+    await expect(page.getByTestId("order-outcome").filter({ hasText: /未取材|未实施|暂无可显示结果/u })).toHaveCount(0);
     await expect(page.getByTestId("report-card").getByText("单位", { exact: true })).toHaveCount(0);
     await expect(page.getByTestId("report-card").getByText("参考范围", { exact: true })).toHaveCount(0);
     await expect(page.locator("body")).not.toContainText(/等待医学审核|待审核|等待审核元数据|当前不进入诊断、治疗或评分证据|medical_review_pending|needs_review|not_available|diagnosticEligible|scoringEligible/u);
 
     await orderInput.fill("尿常规；尿沉渣镜检；尿抗酸杆菌/结核分枝杆菌检查；PSA；彩超泌尿系（双肾、输尿管及膀胱）+残余尿");
     await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
-    await expect(page.getByRole("status").filter({ hasText: "5项医嘱" })).toContainText("已有结果2份");
-    await expect(page.getByTestId("investigation-selection-summary")).toContainText("已返回检查报告 2 份");
+    await expect(page.getByRole("status").filter({ hasText: "5项医嘱" })).toContainText("已有结果4份");
+    await expect(page.getByTestId("report-card")).toHaveCount(8);
+    await expect(page.getByTestId("investigation-selection-summary")).toContainText("已返回检查报告 4 份");
     await page.getByRole("button", { name: "提交本阶段", exact: true }).click();
     await page.getByRole("button", { name: "进入下一阶段", exact: true }).click();
     await expect(page.getByTestId("diagnosis-builder")).toBeVisible();
@@ -582,7 +587,7 @@ test("@order-result-human-path P005 five-order mentor replay presents approved r
   }
 });
 
-test("@medical-author-stage2 approved simulation and not-performed outcome render without internal metadata", async ({ page }) => {
+test("@medical-author-stage2 approved and deterministic teaching reports render without internal metadata", async ({ page }) => {
   const previousRuntimeTarget = process.env.HEMATURIA_RUNTIME_TARGET;
   process.env.HEMATURIA_RUNTIME_TARGET = "desktop";
   try {
@@ -593,10 +598,13 @@ test("@medical-author-stage2 approved simulation and not-performed outcome rende
     await orderInput.fill("END-001;IMG-CT-001");
     await page.getByRole("button", { name: "开立并返回结果", exact: true }).click();
     await expect(page.getByTestId("report-result-line")).toContainText([/膀胱镜：膀胱左侧壁见多发不规则宽基底肿物，最大约3 cm，表面血管丰富并有接触性出血/u, /建议TURBT取材明确病理及肌层受侵情况。/u]);
-    await expect(page.getByTestId("order-outcome").filter({ hasText: "未实施" })).toContainText("当前病例未安排该项影像检查，本次无影像报告");
+    await expect(page.getByTestId("report-card")).toHaveCount(2);
+    await expect(page.getByTestId("order-outcome").filter({ hasText: "报告已返回" })).toHaveCount(2);
+    await expect(page.getByTestId("order-outcome").filter({ hasText: /未实施|暂无可显示结果/u })).toHaveCount(0);
     await expect(page.locator("body")).not.toContainText(/simulated|provenance|medical_review_pending|diagnosticEligible|scoringEligible|affectsDiagnosis|affectsScore/iu);
     await page.reload();
-    await expect(page.getByTestId("report-card")).toContainText("膀胱镜：膀胱左侧壁见多发不规则宽基底肿物");
+    await expect(page.getByTestId("report-card")).toHaveCount(2);
+    await expect(page.getByTestId("report-card").filter({ hasText: "膀胱镜：膀胱左侧壁见多发不规则宽基底肿物" })).toHaveCount(1);
   } finally {
     if (previousRuntimeTarget === undefined) delete process.env.HEMATURIA_RUNTIME_TARGET;
     else process.env.HEMATURIA_RUNTIME_TARGET = previousRuntimeTarget;
@@ -2012,7 +2020,8 @@ test("desktop assistance settings fit the Windows 125 percent viewport", async (
     body: JSON.stringify({
       modelMode: "lightweight", modelAlias: "Qwen3-1.7B", modelDirectory: "C:\\TrainingResources",
       modelFilePath: "", modelPresent: false, localAiEnabled: false, llamaStatus: "model_missing",
-      modelValidation: "not_checked", version: 1
+      modelValidation: "not_checked", configuredMode: "lightweight", effectiveMode: "lightweight",
+      modelAvailability: { lightweight: false, standard: false }, version: 1
     })
   }));
   await page.setViewportSize({ width: 1093, height: 614 });
