@@ -385,6 +385,30 @@
       "regressionTests": [{ "id": "R5-ORDER-RESULT-STUDENT-PRESENTATION", "status": "existing", "path": "scripts/test-order-result-student-presentation.ts", "gate": "fast", "components": ["real training handler", "P005", "shared panel", "duplicate resurfacing", "public projection"] }],
       "replay": { "seed": "r5-stage2-student-result-presentation-v1", "command": "pnpm run test:order-result-student-presentation", "actions": ["order five", "inspect one shared panel", "repeat", "verify no duplicate evidence", "check bilingual public boundary"] }, "fixCommit": "d8dc4bc6063e2b1ad8568cb663d8a534cff6f20d", "relatedCommits": ["476f2bc200fd013335aa340e46c2e1500edab9ef"], "permanentGate": "fast",
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
+    },
+    {
+      "id": "R5-REG-032", "slug": "DIRECT-EXE-LOCAL-AI-READY", "kind": "historical_bug", "severity": "P0", "status": "fixed", "title": "Direct packaged executable did not discover or select the bundled lightweight model",
+      "userVisibleSymptom": "The extracted Full package opened, but local AI stayed unavailable when the learner launched the App executable directly and SQLite still preferred the absent standard model.",
+      "rootCause": { "status": "confirmed", "detail": "Tauri forwarded an explicit model path but not the validated model mode, and the direct executable had no package-root model discovery. The sidecar then honored the stale standard preference even though only the bundled lightweight model was present." },
+      "affectedLayers": ["mentor_package", "tauri", "sidecar", "sqlite_settings", "local_ai"],
+      "minimumReproduction": { "environment": "Extracted Full package with no model environment variables and scratch SQLite configured for standard", "steps": ["Launch App/HematuriaTraining-R5.exe directly.", "Require automatic discovery of Model/Qwen3-1.7B-Q4_K_M.gguf.", "Require configured standard but effective lightweight with packaged_model_fallback and local readiness."] },
+      "originalEvidence": { "head": "931af77374dd56d258d4b7acf0f223e0d95a2dd2", "artifactSha256": null, "references": ["external:mentor-human-direct-exe-local-ai-report", "src-tauri/src/lib.rs", "scripts/test-mentor-human-entrypoint.mjs"] },
+      "legacyGap": "The previous package acceptance supplied model environment variables, so it proved the sidecar with a fixture configuration rather than the root launcher and direct executable as humans actually run them.",
+      "regressionTests": [{ "id": "R5-DIRECT-EXE-LOCAL-AI-READY", "status": "existing", "path": "scripts/test-mentor-human-entrypoint.mjs", "gate": "candidate", "components": ["exact Full ZIP", "root launcher", "direct App executable", "stale SQLite standard preference", "bundled Qwen3-1.7B", "cloud zero"] }],
+      "replay": { "seed": "r5-direct-exe-local-ai-ready-v1", "command": "node scripts/test-mentor-human-entrypoint.mjs --package FINAL_FULL_ZIP", "actions": ["fresh extract", "seed standard", "root launcher", "direct executable", "verify local model", "cleanup"] }, "fixCommit": "b416aff666e90066995dba1fcfd21208a2b774b7", "relatedCommits": [], "permanentGate": "candidate",
+      "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
+    },
+    {
+      "id": "R5-REG-033", "slug": "PATIENT-SPOKEN-LANGUAGE-REALISM", "kind": "historical_bug", "severity": "P0", "status": "fixed", "title": "Patient answers exposed chart-like summaries instead of ordinary first-person speech",
+      "userVisibleSymptom": "A patient answered an open symptom question with a compressed chart phrase such as 'foamy urine, urine-test hematuria with facial rash for two weeks', and known low fever or absent flank pain could become question-shaped uncertainty.",
+      "rootCause": { "status": "confirmed", "detail": "The governed answer planner passed legacy source wording directly to the response, while the local model was limited to metadata classification. The deterministic fallback therefore bypassed spoken realization, and narrow fever/flank classifiers failed to recognize existing low-fever and no-flank-pain wording." },
+      "affectedLayers": ["patient_intent", "canonical_facts", "answer_planner", "spoken_realizer", "rule_fallback"],
+      "minimumReproduction": { "environment": "P035 with local model disabled", "steps": ["Ask the six reported P035 questions.", "Observe chart-like chief-complaint wording and question-shaped uncertainty.", "Replay twenty fixed natural questions across all 42 cases through the shared spoken realizer."] },
+      "originalEvidence": { "head": "931af77374dd56d258d4b7acf0f223e0d95a2dd2", "artifactSha256": null, "references": ["external:mentor-human-patient-language-report", "server/patientSession.js", "server/canonicalFacts.js"] },
+      "legacyGap": "Existing tests proved intent routing and fact preservation, but accepted chart fragments as valid output and did not assert ordinary first-person speech for a fixed 42-case natural-question corpus.",
+      "regressionTests": [{ "id": "R5-PATIENT-SPOKEN-LANGUAGE-REALISM", "status": "existing", "path": "scripts/test-patient-spoken-language-realism.mjs", "gate": "fast", "components": ["P035 exact replay", "42 cases", "20 fixed natural questions", "governed facts", "deterministic fallback"] }],
+      "replay": { "seed": "r5-patient-spoken-language-realism-v1", "command": "pnpm run test:patient-spoken-language-realism", "actions": ["P035 six questions", "42 by 20 replay", "reject chart language", "reject question echo"] }, "fixCommit": "46eb519a896db728e731d521e36b6cf6876c442f", "relatedCommits": [], "permanentGate": "fast",
+      "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     }
   ]
 }
