@@ -219,11 +219,11 @@ async function main() {
       conversationHistory: [],
       language: "en"
     });
-    assert(correctionCalls === 2, "a safe but fact-incomplete paraphrase should receive exactly one bounded correction");
+    assert(correctionCalls === 2, "an oversharing paraphrase should receive exactly one bounded correction");
     assert(correctedAnswer.isFallback === false, "a corrected governed answer should remain live");
     assert(correctedAnswer.runtimeTrace?.generationSource === "deepseek_live_ai", "a corrected governed DeepSeek answer should remain deepseek_live_ai");
-    assert(/menstruation/i.test(correctedAnswer.replyText), "the correction must restore the omitted governed fact");
-    assert(/\b1 day\b/i.test(correctedAnswer.replyText), "the correction must restore the governed duration");
+    assert(/urine test.*blood|blood.*urine test/i.test(correctedAnswer.replyText), "the correction must preserve the presenting clue");
+    assert(!/menstruation|\b1 day\b/i.test(correctedAnswer.replyText), "the correction must not disclose unasked chart detail");
   } finally {
     globalThis.fetch = originalFetch;
     for (const key of providerEnvironment) {

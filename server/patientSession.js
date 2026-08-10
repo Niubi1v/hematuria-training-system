@@ -35,6 +35,7 @@ const {
   classifyPatientResponseErrors,
   createPatientControlContext
 } = require("./patientControlLayer.js");
+const { applyPatientProgressiveDisclosure, validatePatientDisclosureOutput } = require("./patientProgressiveDisclosure.js");
 const { createSessionCapability, verifySessionCapability } = require("./sessionCapability.js");
 const {
   getDesktopSessionMetadata,
@@ -479,6 +480,7 @@ function initialConversationState() {
   return {
     currentTopic: "",
     currentEntity: "",
+    contextEntities: [],
     requestedSlot: "",
     lastResolvedFact: null,
     lastAnswerPlan: null
@@ -956,6 +958,10 @@ function mergePatientFactMatches(canonical, structured) {
     fallbackReason: canonical.fallbackReason || structured.fallbackReason || "",
     factStates: { ...(canonical.factStates || {}), ...(structured.factStates || {}) },
     answerPlans,
+    pastMedicalHistoryIntents: unique([
+      ...(canonical.pastMedicalHistoryIntents || []),
+      ...(structured.pastMedicalHistoryIntents || [])
+    ]),
     unknownReasonCodes: { ...(canonical.unknownReasonCodes || {}), ...(structured.unknownReasonCodes || {}) }
   };
 }
@@ -1031,7 +1037,10 @@ function evaluateNaturalizedPatientOutput(rawText, matchedSlotIds, language, all
   const preservesAnswer = shape.ok && filter.ok && languageOk
     ? preservesGovernedAnswer(replyText, allowedAnswer, answerPlans)
     : false;
-  return { shape, replyText, filter, languageOk, preservesAnswer };
+  const disclosure = preservesAnswer
+    ? validatePatientDisclosureOutput(replyText, allowedAnswer)
+    : { ok: false, reason: "governed_answer_not_preserved" };
+  return { shape, replyText, filter, languageOk, preservesAnswer, disclosure };
 }
 
 function omitPatientFactIntents(matched, omittedIntents) {
@@ -1087,6 +1096,7 @@ function conversationStateSnapshot(session) {
   return {
     currentTopic: String(state.currentTopic || ""),
     currentEntity: String(state.currentEntity || ""),
+    contextEntities: Array.isArray(state.contextEntities) ? state.contextEntities.map(String) : [],
     requestedSlot: String(state.requestedSlot || ""),
     lastResolvedFact: state.lastResolvedFact || null,
     lastAnswerPlan: state.lastAnswerPlan || null
@@ -1122,9 +1132,17 @@ function recordConversationState(session, result, traceInput = {}) {
   const plans = Array.isArray(result?.answerPlans) ? result.answerPlans : [];
   const resolvedPlan = [...plans].reverse().find((plan) => plan?.intent) || null;
   if (session && resolvedPlan) {
+    const contextEntities = Array.isArray(result?.disclosurePlan?.contextEntities)
+      ? result.disclosurePlan.contextEntities.map(String)
+      : [];
     session.conversationState = {
       currentTopic: String(resolvedPlan.intent || previous.currentTopic),
-      currentEntity: patientEntityForPlan(resolvedPlan, result.replyText, previous.currentEntity),
+      currentEntity: contextEntities.length === 1
+        ? contextEntities[0]
+        : contextEntities.length > 1
+          ? "past_medical_history_multiple"
+          : patientEntityForPlan(resolvedPlan, result.replyText, previous.currentEntity),
+      contextEntities,
       requestedSlot: String(resolvedPlan.sourceSlotId || previous.requestedSlot),
       lastResolvedFact: {
         intent: String(resolvedPlan.intent || ""),
@@ -1440,7 +1458,7 @@ async function naturalizeGovernedPatientAnswer({
     );
     const maySafelyCorrect = !evaluation.shape.ok
       || (evaluation.filter.hits.length === 0
-        && (!evaluation.filter.ok || !evaluation.languageOk || !evaluation.preservesAnswer));
+        && (!evaluation.filter.ok || !evaluation.languageOk || !evaluation.preservesAnswer || !evaluation.disclosure.ok));
     if (maySafelyCorrect) {
       acceptedResponse = await callLLM({
         systemPrompt: patientNaturalizerCorrectionPrompt,
@@ -1463,7 +1481,7 @@ async function naturalizeGovernedPatientAnswer({
         answerPlans
       );
     }
-    if (!evaluation.shape.ok || !evaluation.filter.ok || !evaluation.languageOk || !evaluation.preservesAnswer) {
+    if (!evaluation.shape.ok || !evaluation.filter.ok || !evaluation.languageOk || !evaluation.preservesAnswer || !evaluation.disclosure.ok) {
       return {
         ...fallback,
         provider: config.provider,
@@ -1518,6 +1536,43 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     session?.conversationState
   );
   const routedInput = contextResolution.question || studentInput;
+  if (contextResolution.clarification === "multiple_past_medical_conditions") {
+    const labels = (contextResolution.contextEntities || []).map((intent) => ({
+      hypertension_history: language === "en" ? "hypertension" : "高血压",
+      diabetes_history: language === "en" ? "diabetes" : "糖尿病",
+      coronary_history: language === "en" ? "coronary heart disease" : "冠心病",
+      stroke_history: language === "en" ? "stroke" : "脑卒中",
+      liver_disease_history: language === "en" ? "liver disease" : "肝病",
+      tuberculosis_history: language === "en" ? "tuberculosis" : "结核",
+      previous_stone: language === "en" ? "urinary stones" : "泌尿系结石",
+      previous_urinary_infection: language === "en" ? "urinary infection" : "尿路感染",
+      previous_malignancy: language === "en" ? "cancer" : "肿瘤"
+    }[intent])).filter(Boolean);
+    return recordConversationState(session, {
+      replyText: language === "en"
+        ? `Do you mean ${labels.join(" or ")}?`
+        : `您问${labels.join("还是")}？`,
+      provider: "rule",
+      model: "local-rule",
+      isFallback: true,
+      filter: { ok: true, hits: [] },
+      safetyFlags: [],
+      matchedSlotIds: [],
+      matchedFacts: [],
+      answerPlans: [],
+      answerSource: "governed_clarification",
+      confidence: 1,
+      fallbackReason: "context_clarification",
+      clauseOutcomes: [],
+      contextResolution,
+      disclosurePlan: {
+        authorizedIntents: [],
+        contextEntities: contextResolution.contextEntities || [],
+        clarification: contextResolution.clarification,
+        mode: "question_triggered"
+      }
+    }, { caseId });
+  }
   // Canonical symptoms and structured history are independent clauses. Resolve
   // both, then merge the governed projections so one layer cannot silently
   // discard a recognized clause from the other.
@@ -1525,11 +1580,16 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   let structured = matchStructuredFacts(caseData, routedInput, language);
   const patientKnowledge = matchPatientKnowableFacts(caseData, routedInput, language);
   let matched = mergePatientFactMatches(mergePatientFactMatches(canonical, structured), patientKnowledge);
+  if (contextResolution.reason === "contextual_past_medical_history_duration") {
+    matched = omitPatientFactIntents(matched, new Set(["hematuria_onset"]));
+  }
   const offlineRoutes = routePatientIntents(
-    studentInput,
+    contextResolution.reason === "contextual_past_medical_history_duration" ? routedInput : studentInput,
     language,
     contextResolution.sourceIntent || session?.conversationState?.currentTopic
   )
+    .filter((route) => contextResolution.reason !== "contextual_past_medical_history_duration"
+      || route.intent === contextResolution.sourceIntent)
     .filter((route) => INTENT_WHITELIST.includes(route.intent));
   if (offlineRoutes.length) {
     const previousMatchIndexes = new Map(
@@ -1609,9 +1669,13 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     [FACT_STATES.NEEDS_REVIEW, FACT_STATES.MEDICAL_CONFLICT].includes(plan.factState)
   );
   const isExplicitHistoryQuestion = explicitHistoryContext.test(String(studentInput || ""))
-    && !boundaryDetailIntent.test(String(routedInput || ""))
-    && matchedSlotIds.length > 0
-    && matchedSlotIds.some((slotId) => historyBoundarySlotIds.has(slotId));
+    && (
+      patientKnowledgePlans.some((plan) => plan.intent === "past_medical_history_summary")
+      || (
+        !boundaryDetailIntent.test(String(routedInput || ""))
+        && matchedSlotIds.some((slotId) => historyBoundarySlotIds.has(slotId))
+      )
+    );
   const isTemporalFindingQuestion = matchedSlotIds.includes("hematuria_onset")
     && /什么时候|多久|几天|几周|几个月|何时|when|how long/i.test(String(routedInput || ""))
     && !/结果|数值|多少个|显示|提示|报告内容|what.*result|result.*(?:show|value)|report.*(?:show|say)/i.test(String(routedInput || ""));
@@ -1712,6 +1776,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
       contextResolution
     };
   }
+  matched = applyPatientProgressiveDisclosure({ caseData, matched, language, contextResolution });
   const clauseOutcomes = matched?.clauseOutcomes || clauseOutcomesForMatch(matched);
   const fallback = realizeSpokenPatientAnswer(conciseDeterministicReply(matched
     ? {

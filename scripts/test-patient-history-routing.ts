@@ -115,6 +115,17 @@ const pastDiseaseLabels: Record<(typeof pastDiseaseKeys)[number], string> = {
   urinaryInfectionHistory: "尿路感染",
   malignancyHistory: "肿瘤"
 };
+const pastDiseaseSlots: Record<(typeof pastDiseaseKeys)[number], string> = {
+  hypertension: "PAST_HYPERTENSION",
+  diabetes: "PAST_DIABETES",
+  coronaryDisease: "PAST_CORONARY",
+  stroke: "PAST_STROKE",
+  liverDisease: "PAST_LIVER",
+  tuberculosis: "PAST_TB",
+  stoneHistory: "PAST_STONE",
+  urinaryInfectionHistory: "PAST_UTI",
+  malignancyHistory: "PAST_MALIGNANCY"
+};
 
 const categoryOnlyMedication = /^(?:降压药|降糖药|降脂药|止痛药|抗凝药|抗血小板药|利尿药|他汀(?:类)?(?:药)?|中药|保健品)$/i;
 
@@ -219,23 +230,27 @@ async function main() {
       const fact = currentCase.structuredHistory[key];
       return fact.status === "absent" && fact.provenance === "source" && !fact.teacherReviewRequired;
     });
-    for (const key of knownNegativeHistory) {
-      assert.ok(
-        historySummary.replyText.includes(pastDiseaseLabels[key]),
-        `${currentCase.id} history summary omitted known denial ${key}`
-      );
+    if (knownPositiveHistory.length) {
+      for (const key of knownNegativeHistory) {
+        assert.ok(
+          !historySummary.replyText.includes(pastDiseaseLabels[key]),
+          `${currentCase.id} history summary disclosed an unasked negative ${key}`
+        );
+      }
     }
     const summaryRuntimeRecommendations = historySummaryRecommendations(currentCase.id);
-    if (summaryRuntimeRecommendations.length) {
+    if (summaryRuntimeRecommendations.length && !knownPositiveHistory.length) {
       assert.match(
         historySummary.replyText,
-        /除此之外没有诊断过其他明确疾病/,
-        `${currentCase.id} completed runtime summary was not applied`
+        /没有.*(?:慢性病|其他病)/,
+        `${currentCase.id} governed negative summary was not applied`
       );
+    }
+    if (summaryRuntimeRecommendations.length) {
       assert.deepEqual(
         historySummary.matchedSlotIds || [],
-        [],
-        `${currentCase.id} teacher-reviewed runtime summary must remain non-collectable`
+        knownPositiveHistory.map((key) => pastDiseaseSlots[key]),
+        `${currentCase.id} summary may collect only source-approved positive diseases`
       );
     }
 

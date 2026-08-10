@@ -54,6 +54,7 @@ function matchStructuredFacts(caseData, question, language = "zh") {
   const collectableSlotIds = [];
   const sources = [];
   const answerPlans = [];
+  const pastMedicalHistoryIntents = [];
   let hasUnresolved = false;
   const clauses = ontologyMatches.map((definition, sourceOrder) => ({
     kind: specialIntents.has(definition.intentKey) ? "special" : "fact",
@@ -102,6 +103,11 @@ function matchStructuredFacts(caseData, question, language = "zh") {
       matchedFacts.push(intentKey);
       matchedSlotIds.push(sourceSlotId);
       if (
+        summary?.presentIntents?.length
+      ) {
+        collectableFacts.push(...summary.presentIntents);
+        collectableSlotIds.push(...summary.presentSlotIds);
+      } else if (
         !summary?.hasRuntimeGovernance
         && ![FACT_STATES.MISSING, FACT_STATES.NEEDS_REVIEW, FACT_STATES.MEDICAL_CONFLICT].includes(factState)
       ) {
@@ -110,6 +116,7 @@ function matchStructuredFacts(caseData, question, language = "zh") {
       }
       sources.push(...(summary?.sources || (medicationSelection.scope ? allMedicationSources : medicationSelection.medications)));
       hasUnresolved ||= Boolean(summary?.hasUnresolved || medicationHasUnresolved);
+      pastMedicalHistoryIntents.push(...(summary?.presentIntents || []));
       answerPlans.push(answerPlanFromRendered({
         intent: intentKey,
         sourceSlotId,
@@ -170,6 +177,7 @@ function matchStructuredFacts(caseData, question, language = "zh") {
     fallbackReason: hasUnresolved ? "medical_history_pending_review" : "",
     factStates: Object.fromEntries(answerPlans.map((plan) => [plan.intent, plan.factState])),
     answerPlans,
+    pastMedicalHistoryIntents: [...new Set(pastMedicalHistoryIntents)],
     unknownReasonCodes: Object.fromEntries(
       answerPlans.filter((plan) => plan.unknownReason).map((plan) => [plan.intent, plan.unknownReason])
     )

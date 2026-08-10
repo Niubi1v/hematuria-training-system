@@ -207,8 +207,8 @@ function defineOntologyFact(definition) {
 const canonicalLegacyIntentDefinitions = [
   {
     key: "chief_complaint", sourceSlotId: "chief_complaint", domain: "canonical_legacy", labelZh: "主诉", labelEn: "Chief complaint",
-    aliases: { zh: ["哪里不舒服", "为什么来", "主诉", "怎么回事"], en: ["what brings you", "what brought you in", "main complaint", "what is wrong"] },
-    pattern: /哪里不舒服|为什么来|主诉|怎么回事|用自己的话.*(?:不舒服|经过|为什么)|what brings you|what brought you(?: in)?|what is wrong|main complaint|main problem.*brought you|in your own words.*(?:why|what happened)|describe.*(?:main problem|what happened).*(?:brought you|in your own words)|why you came/i
+    aliases: { zh: ["哪里不舒服", "为什么来", "为什么来看病", "主诉", "怎么了", "怎么回事"], en: ["what brings you", "what brought you in", "main complaint", "what is wrong"] },
+    pattern: /哪里不舒服|为什么来(?:看病)?|主诉|怎么了|怎么回事|用自己的话.*(?:不舒服|经过|为什么)|what brings you|what brought you(?: in)?|what is wrong|main complaint|main problem.*brought you|in your own words.*(?:why|what happened)|describe.*(?:main problem|what happened).*(?:brought you|in your own words)|why you came/i
   },
   {
     key: "gross_hematuria", sourceSlotId: "hematuria_visibility", domain: "canonical_legacy", labelZh: "肉眼血尿", labelEn: "Gross hematuria",
@@ -316,8 +316,8 @@ const structuredHistoryIntentDefinitions = [
   ["family_history", "familyHistory", "FAMILY_HISTORY", "家族史", "Family history", /家族史|家里|父母|兄弟姐妹|遗传|family history|hereditary/i],
   ["menstrual_history", "menstrualHistory", "GYNE_MENSTRUAL", "月经史", "Menstrual history", /月经|经期|阴道出血|menstru|period/i],
   ["pregnancy_history", "pregnancyHistory", "GYNE_PREGNANCY", "妊娠史", "Pregnancy history", /怀孕|妊娠|pregnan/i],
-  ["past_medical_history_summary", null, "PAST_ALL", "其他疾病", "Other medical conditions", /有没有其他(?:疾病|病)|还有(?:没有)?什么(?:疾病|病)|其他(?:疾病|病史)|any other (?:diseases?|medical conditions?)|other medical conditions?/i],
-  ["medication_list", "medicationList", "MED_ALL", "用药史", "Medication history", /长期.*(?:吃|服|用).*药|平时.*(?:吃|服|用).*药|都吃什么药|用药史|长期用药|regular medication|medications do you take/i],
+  ["past_medical_history_summary", null, "PAST_ALL", "其他疾病", "Other medical conditions", /有没有其他(?:疾病|病)|还有(?:没有)?(?:什么)?其他(?:疾病|病)|有(?:没有)?基础病|以前有(?:没有|什么|哪些)?(?:疾病|病|毛病)|平时身体还有什么毛病|其他(?:疾病|病史)|any other (?:diseases?|medical conditions?)|any (?:other )?medical problems?|other medical conditions?/i],
+  ["medication_list", "medicationList", "MED_ALL", "用药史", "Medication history", /长期.*(?:吃|服|用).*药|平时.*(?:吃|服|用).*药|都吃什么药|用药史|长期用药|regular medications?|(?:medications?|medicines?) do you take/i],
   ["medication_name", "medicationList", "MED_ALL", "药物名称", "Medication name", /高血压.*(?:吃|服|用).*什么药|(?:吃|服|用)(?:的)?什么降压药|什么降压药|具体(?:的)?药名|药(?:物)?(?:的)?(?:具体)?名(?:称|字)|叫什么药|what (?:is|are) the (?:specific )?(?:medication|medicine|drug)(?: name)?|name of (?:the )?(?:medication|medicine|drug)|what.*(?:take|taking).*(?:hypertension|high blood pressure)/i],
   ["medication_dosage", "medicationList", "MED_ALL", "用药剂量", "Medication dose", /(?:具体)?剂量(?:是)?多少|(?:药|服用|每次).*(?:剂量|多少毫克|吃多少)|(?:剂量|多少毫克).*(?:药|服用)|medication dose|medicine dose|drug dose|how many milligrams|what(?:'s| is)? the dose|what dose/i],
   ["medication_frequency", "medicationList", "MED_ALL", "用药频次", "Medication frequency", /一天(?:吃|服|用)?(?:几次|多少次)|多久(?:吃|服|用)一次|(?:药|服药).*(?:频次|频率|吃法|怎么吃)|how often.*(?:medication|medicine|drug)|times? (?:a|per) day|medication frequency/i],
@@ -355,7 +355,7 @@ const patientKnowledgeIntentDefinitions = [
     key: "prior_diagnosis_patient_aware", sourceSlotId: "PATIENT_PRIOR_DIAGNOSIS", labelZh: "患者知晓的既往诊断", labelEn: "Patient-aware prior diagnosis",
     confusableWith: ["prior_medical_visit"],
     aliases: { zh: ["之前医生说是什么", "以前诊断过什么", "医生有没有说什么病", "之前被诊断过吗", "医院当时怎么说", "医生说你得了什么", "以前说是什么问题", "看病时说什么原因", "之前有没有明确说法", "外院给过诊断吗"], en: ["what did the doctor diagnose before", "were you given a diagnosis", "what did they say it was", "did the hospital name the condition", "what diagnosis were you told", "were you diagnosed with anything", "what did your previous doctor call it", "did they explain the cause", "was a diagnosis made earlier", "what were you told was wrong"] },
-    pattern: /(?:之前|以前|当时|外院|医院|医生).*(?:诊断|说是|什么病|什么问题|什么原因)|(?:被诊断|诊断过).*(?:什么|吗)|previous.*diagnos|given a diagnosis|what did.*doctor.*(?:say|call)|what were you told.*wrong/i
+    pattern: /(?:之前|以前|当时|外院|医院).*(?:医生.{0,12})?(?:诊断|说是)|医生.*(?:诊断|说是|什么病|什么问题|什么原因)|(?:被诊断|诊断过).*(?:什么|吗)|previous.*diagnos|given a diagnosis|what did.*doctor.*(?:say|call)|what were you told.*wrong/i
   },
   {
     key: "prior_treatment", sourceSlotId: "PATIENT_PRIOR_TREATMENT", labelZh: "本次问题既往处理", labelEn: "Prior treatment",
@@ -617,11 +617,57 @@ function resolveContextualPatientQuestion(question, conversationHistory = [], la
   const historyTopic = recentConversationTopic(conversationHistory, language);
   const stateTopic = String(conversationState?.currentTopic || "");
   const stateEntity = historyTopic ? "" : String(conversationState?.currentEntity || "");
+  const stateContextEntities = Array.isArray(conversationState?.contextEntities)
+    ? conversationState.contextEntities.map(String).filter(Boolean)
+    : [];
+  const pastMedicalIntents = new Set([
+    "hypertension_history", "diabetes_history", "coronary_history", "stroke_history",
+    "liver_disease_history", "tuberculosis_history", "previous_stone",
+    "previous_urinary_infection", "previous_malignancy"
+  ]);
+  const recentPatientReply = [...(Array.isArray(conversationHistory) ? conversationHistory : [])]
+    .reverse()
+    .find((entry) => entry?.role === "patient")?.text || "";
+  const historyContextEntities = matchPatientFactOntology(recentPatientReply, language, ["structured_history"])
+    .map((definition) => definition.intentKey)
+    .filter((intent) => pastMedicalIntents.has(intent));
+  const pastMedicalContextEntities = stateContextEntities.length ? stateContextEntities : [...new Set(historyContextEntities)];
   const topic = historyTopic || stateTopic;
   if (!original || !topic) {
     return { question: original, inherited: false, reason: "", sourceIntent: "" };
   }
   const compacted = compact(original);
+  const durationFollowup = language === "en"
+    ? /^(?:about )?(?:how long|since when|when did (?:it|that) start)\??$/i.test(original)
+    : /^(?:那|这个|这种情况)?(?:多少天|多久(?:了)?|从什么时候开始|什么时候开始)[呢吗]?[？?]?$/.test(compacted);
+  if (durationFollowup && pastMedicalContextEntities.length) {
+    if (pastMedicalContextEntities.length > 1) return {
+      question: original,
+      inherited: true,
+      reason: "contextual_past_medical_history_clarification",
+      sourceIntent: "past_medical_history_summary",
+      clarification: "multiple_past_medical_conditions",
+      contextEntities: pastMedicalContextEntities
+    };
+    const label = ({
+      hypertension_history: language === "en" ? "hypertension" : "高血压",
+      diabetes_history: language === "en" ? "diabetes" : "糖尿病",
+      coronary_history: language === "en" ? "coronary heart disease" : "冠心病",
+      stroke_history: language === "en" ? "stroke" : "脑卒中",
+      liver_disease_history: language === "en" ? "liver disease" : "肝病",
+      tuberculosis_history: language === "en" ? "tuberculosis" : "结核",
+      previous_stone: language === "en" ? "urinary stones" : "泌尿系结石",
+      previous_urinary_infection: language === "en" ? "urinary infection" : "尿路感染",
+      previous_malignancy: language === "en" ? "cancer" : "肿瘤"
+    })[pastMedicalContextEntities[0]];
+    if (label) return {
+      question: language === "en" ? `How long have you had ${label}?` : `${label}多久了？`,
+      inherited: true,
+      reason: "contextual_past_medical_history_duration",
+      sourceIntent: pastMedicalContextEntities[0],
+      contextEntities: pastMedicalContextEntities
+    };
+  }
   if (["prior_medical_visit", "prior_investigations", "prior_investigation_results_patient_aware"].includes(topic)) {
     const investigationFollowup = language === "en"
       ? /^(?:and )?(?:then what|what tests|what did they check|anything else)\??$/i.test(original)
@@ -730,9 +776,6 @@ function resolveContextualPatientQuestion(question, conversationHistory = [], la
       };
     }
   }
-  const durationFollowup = language === "en"
-    ? /^(?:about )?(?:how long|since when|when did (?:it|that) start)\??$/i.test(original)
-    : /^(?:那|这个|这种情况)?(?:多少天|多久(?:了)?|从什么时候开始|什么时候开始)[呢吗]?[？?]?$/.test(compacted);
   if (durationFollowup && (
     isHematuriaTopic
     || topic === "trauma"

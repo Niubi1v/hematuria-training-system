@@ -96,6 +96,7 @@
     "test:api-recovery": "tsx scripts/test-api-recovery.ts",
     "test:agent-api-security": "tsx scripts/test-agent-api-security.ts",
     "test:patient-public-api-minimal-surface": "tsx scripts/test-agent-api-security.ts --patient-public-api-minimal-surface",
+    "test:patient-sp-progressive-disclosure": "node scripts/test-patient-progressive-disclosure.mjs",
     "test:ai-recovery": "tsx scripts/test-ai-recovery.ts",
     "test:performance-timing": "tsx scripts/test-performance-timing.ts",
     "test:llm-streaming": "tsx scripts/test-llm-streaming.ts",

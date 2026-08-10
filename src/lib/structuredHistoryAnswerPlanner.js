@@ -8,15 +8,15 @@ const {
 } = require("./patientRuntimeRecommendations.js");
 
 const PAST_MEDICAL_FACTS = Object.freeze([
-  ["hypertension", "高血压", "hypertension"],
-  ["diabetes", "糖尿病", "diabetes"],
-  ["coronaryDisease", "冠心病", "coronary heart disease"],
-  ["stroke", "脑卒中", "stroke"],
-  ["liverDisease", "肝病", "liver disease"],
-  ["tuberculosis", "结核", "tuberculosis"],
-  ["stoneHistory", "泌尿系结石", "urinary stones"],
-  ["urinaryInfectionHistory", "尿路感染", "urinary tract infection"],
-  ["malignancyHistory", "肿瘤", "cancer"]
+  ["hypertension", "高血压", "hypertension", "hypertension_history", "PAST_HYPERTENSION"],
+  ["diabetes", "糖尿病", "diabetes", "diabetes_history", "PAST_DIABETES"],
+  ["coronaryDisease", "冠心病", "coronary heart disease", "coronary_history", "PAST_CORONARY"],
+  ["stroke", "脑卒中", "stroke", "stroke_history", "PAST_STROKE"],
+  ["liverDisease", "肝病", "liver disease", "liver_disease_history", "PAST_LIVER"],
+  ["tuberculosis", "结核", "tuberculosis", "tuberculosis_history", "PAST_TB"],
+  ["stoneHistory", "泌尿系结石", "urinary stones", "previous_stone", "PAST_STONE"],
+  ["urinaryInfectionHistory", "尿路感染", "urinary tract infection", "previous_urinary_infection", "PAST_UTI"],
+  ["malignancyHistory", "肿瘤", "cancer", "previous_malignancy", "PAST_MALIGNANCY"]
 ]);
 
 const categoryOnlyMedicationPattern = /^(?:降压药|降糖药|降脂药|止痛药|抗凝药|抗血小板药|利尿药|他汀(?:类)?(?:药)?|中药|保健品)$/i;
@@ -259,36 +259,25 @@ function buildPastMedicalHistorySummary(history, language = "zh", isBlocked = ()
     ? historySummaryRecommendations(options.caseId)
     : [];
   const coveredBlockedKeys = new Set(summaryRecommendations.map((item) => item.targetField));
-  for (const [key, labelZh, labelEn] of PAST_MEDICAL_FACTS) {
+  for (const [key, labelZh, labelEn, intent, sourceSlotId] of PAST_MEDICAL_FACTS) {
     const fact = history?.[key];
     if (!fact) continue;
-    const item = { key, label: language === "en" ? labelEn : labelZh, fact };
+    const item = { key, intent, sourceSlotId, label: language === "en" ? labelEn : labelZh, fact };
     if (isBlocked(key, fact)) blocked.push(item);
     else known.push(item);
   }
   const present = known.filter((item) => item.fact.status === "present");
-  const absent = known.filter((item) => item.fact.status === "absent");
   let renderedAnswer = "";
   if (present.length) {
     renderedAnswer = language === "en"
-      ? `My known medical history includes ${naturalList(present.map((item) => item.label), language)}.`
-      : `我已知有${naturalList(present.map((item) => item.label), language)}。`;
-  }
-  if (absent.length) {
-    renderedAnswer = language === "en"
-      ? `${renderedAnswer}${renderedAnswer ? " " : ""}I do not have ${naturalList(absent.map((item) => item.label), language)}.`
-      : `${renderedAnswer}${renderedAnswer ? " " : ""}已知没有${naturalList(absent.map((item) => item.label), language)}。`;
+      ? `I have ${naturalList(present.map((item) => item.label), language)}.`
+      : `我有${naturalList(present.map((item) => item.label), language)}。`;
   }
   const unresolvedBlocked = blocked.filter((item) => !coveredBlockedKeys.has(item.key));
-  if (summaryRecommendations.length) {
-    renderedAnswer += language === "en"
-      ? " No other definite disease has been diagnosed."
-      : " 除此之外没有诊断过其他明确疾病。";
-  }
-  if (unresolvedBlocked.length) {
-    renderedAnswer += language === "en"
-      ? " I cannot recall the rest clearly."
-      : " 其他既往病史我记不太清。";
+  if (!present.length && !unresolvedBlocked.length && (known.length || summaryRecommendations.length)) {
+    renderedAnswer = language === "en"
+      ? "No, I have not been told that I have any other chronic illness."
+      : "没有，平时没听说有什么其他慢性病。";
   }
   return {
     renderedAnswer: renderedAnswer || (language === "en"
@@ -305,7 +294,9 @@ function buildPastMedicalHistorySummary(history, language = "zh", isBlocked = ()
       summaryRecommendations.map((item) => [item.targetField, normalizeRecommendedFactState(item.factState)])
     ),
     hasRuntimeGovernance: summaryRecommendations.length > 0,
-    hasUncoveredBlocked: unresolvedBlocked.length > 0
+    hasUncoveredBlocked: unresolvedBlocked.length > 0,
+    presentIntents: present.map((item) => item.intent),
+    presentSlotIds: present.map((item) => item.sourceSlotId)
   };
 }
 
