@@ -134,6 +134,28 @@ async function main() {
   assert.match(compound.replyText, /二甲双胍|胰岛素|达格列净/);
   assert.doesNotMatch(compound.replyText, /20年|每天|一次|一片|qd/i);
 
+  const lifestyle = await converse("P003", [
+    "抽烟吗？", "每天多少？", "多少年了？", "喝酒吗？", "喝多少？", "多久喝一次？"
+  ]);
+  assert.deepEqual(lifestyle.map((answer) => answer.disclosurePlan?.authorizedIntents), [
+    ["smoking_history"], ["smoking_amount"], ["smoking_duration"],
+    ["alcohol_history"], ["alcohol_amount"], ["alcohol_frequency"]
+  ]);
+  assert.match(lifestyle[0].replyText, /抽烟/);
+  assert.doesNotMatch(lifestyle[0].replyText, /20|30|每天|年/u);
+  assert.match(lifestyle[1].replyText, /20支/);
+  assert.match(lifestyle[2].replyText, /30年/);
+  assert.match(lifestyle[3].replyText, /喝.*酒/);
+  assert.doesNotMatch(lifestyle[3].replyText, /偶尔|每天|多少|频率/u);
+  assert.deepEqual(lifestyle[5].matchedFacts, ["alcohol_frequency"]);
+
+  const investigations = await converse("HX-ADD-029", ["还有没有做其他检查？", "有没有做CT或者彩超？", "检查结果怎么说？"]);
+  assert.deepEqual(investigations.map((answer) => answer.disclosurePlan?.authorizedIntents), [
+    ["prior_investigations"], ["prior_investigations"], ["prior_investigation_results_patient_aware"]
+  ]);
+  assert.doesNotMatch(investigations[1].replyText, /得看检查报告/);
+  assert.notEqual(investigations[1].fallbackReason, "report_boundary");
+
   const english = await converse("P001", ["What brings you in?", "How long?", "Any other medical problems?", "What medicines do you take?"] , "en");
   assert.deepEqual(english.map((answer) => answer.disclosurePlan?.authorizedIntents), [
     ["presenting_clue"], ["hematuria_onset"], ["hypertension_history"], ["medication_list"]
@@ -147,6 +169,8 @@ async function main() {
     symptomTrajectory: symptomTrajectory.length,
     pastMedicalHistoryStates: 6,
     compoundChecks: 1,
+    progressiveLifestyleChecks: lifestyle.length,
+    investigationLayerChecks: investigations.length,
     bilingualChecks: english.length
   });
 }

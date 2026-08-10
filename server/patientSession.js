@@ -36,6 +36,7 @@ const {
   createPatientControlContext
 } = require("./patientControlLayer.js");
 const { applyPatientProgressiveDisclosure, validatePatientDisclosureOutput } = require("./patientProgressiveDisclosure.js");
+const { stage1HistoryIntent } = require("../src/lib/stage1HistoryIntentRegistry.js");
 const { createSessionCapability, verifySessionCapability } = require("./sessionCapability.js");
 const {
   getDesktopSessionMetadata,
@@ -1018,11 +1019,18 @@ function projectRoutedPatientFacts(caseId, caseData, routes, language) {
       );
     } else {
       const projectionQuestion = semanticProjectionQuestion(definition, language);
+      const routedProjectionQuestion = `${projectionQuestion} ${String(route?.text || "")}`.trim();
       current = definition.domain === "structured_history"
-        ? matchStructuredFacts(caseData, projectionQuestion, language)
+        ? matchStructuredFacts(caseData, routedProjectionQuestion, language)
         : definition.domain === "patient_knowledge"
-          ? matchPatientKnowableFacts(caseData, projectionQuestion, language)
+          ? matchPatientKnowableFacts(caseData, routedProjectionQuestion, language)
           : matchCanonicalPatientFacts(caseId, projectionQuestion, language);
+    }
+    if (intent !== "past_medical_history_summary" && current?.answerPlans?.length) {
+      current = omitPatientFactIntents(
+        current,
+        new Set(current.answerPlans.filter((plan) => plan.intent !== intent).map((plan) => plan.intent))
+      );
     }
     projected = mergePatientFactMatches(projected, current);
   }
@@ -1653,10 +1661,12 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   const matchedSlotIds = matched?.matchedSlotIds || [];
   const matchedFactIds = matched?.matchedFacts || [];
   const patientKnowledgePlans = matched?.answerPlans || [];
-  const invasiveReportRequest = /(?:膀胱镜|病理|活检|cystoscopy|pathology|biopsy)/i.test(String(routedInput || ""));
-  const crossSectionalReportRequest = /(?:CTU|CT|MRI|磁共振|计算机断层)/i.test(String(routedInput || ""));
-  const exactReportDetailRequest = boundaryDetailIntent.test(String(routedInput || ""))
-    && /具体|精确|数值|exact|specific|value/i.test(String(routedInput || ""));
+  const reportBoundaryInput = `${studentInput || ""} ${routedInput || ""}`;
+  const reportSubjectMentioned = hasAny(reportBoundaryInput, language === "en" ? reportWordsEn : reportWords);
+  const invasiveReportRequest = /(?:膀胱镜|病理|活检|cystoscopy|pathology|biopsy)/i.test(reportBoundaryInput);
+  const crossSectionalReportRequest = /(?:CTU|CT|MRI|磁共振|计算机断层)/i.test(reportBoundaryInput);
+  const exactReportDetailRequest = boundaryDetailIntent.test(reportBoundaryInput)
+    && /具体|精确|数值|exact|specific|value/i.test(reportBoundaryInput);
   const patientKnownReport = patientKnowledgePlans.some((plan) =>
     ["prior_investigations", "prior_investigation_results_patient_aware"].includes(plan.intent)
     && !exactReportDetailRequest
@@ -1682,7 +1692,10 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   if (!isExplicitHistoryQuestion && !priorDiagnosisHandled && isDiagnosisRequest(studentInput, language)) {
     return { replyText: language === "en" ? "I do not know the diagnosis. The doctor will need to decide." : "这个我不清楚，需要医生判断。", provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, safetyFlags: ["blocked_diagnosis_request"], matchedSlotIds: [], matchedFacts: [], answerSource: "rule", confidence: 1, fallbackReason: "diagnosis_boundary", clauseOutcomes: [{ intent: null, sourceSlotId: null, status: "rejected_boundary", factState: FACT_STATES.MISSING, unknownReason: null }], contextResolution };
   }
-  if (!isExplicitHistoryQuestion && !isTemporalFindingQuestion && !patientKnownReport && hasAny(studentInput, language === "en" ? reportWordsEn : reportWords)) {
+  const reportDetailRequested = reportSubjectMentioned
+    && (boundaryDetailIntent.test(reportBoundaryInput)
+      || /结果|怎么样|怎么说|result|how was|what did .* show/i.test(reportBoundaryInput));
+  if (!isExplicitHistoryQuestion && !priorDiagnosisHandled && !isTemporalFindingQuestion && reportDetailRequested && !patientKnownReport) {
     return { replyText: language === "en" ? "I cannot explain the exact results. Please check the formal report." : "我说不清楚，得看检查报告。", provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, safetyFlags: ["blocked_report_request"], matchedSlotIds: [], matchedFacts: [], answerSource: "rule", confidence: 1, fallbackReason: "report_boundary", clauseOutcomes: [{ intent: null, sourceSlotId: null, status: "rejected_boundary", factState: FACT_STATES.MISSING, unknownReason: null }], contextResolution };
   }
   const configuredProvider = getLLMProviderConfig();
@@ -1701,7 +1714,10 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
       forceMetadata: deterministicMetadataEligible
     });
     if (!matched && semanticDecision.accepted) {
-      if (localStructuredMode) {
+      const stage1SemanticRouteAllowed = semanticDecision.routingAuthorized !== false
+        && (semanticDecision.intents || []).length > 0
+        && semanticDecision.intents.every((intent) => stage1HistoryIntent(intent)?.semanticIntentFallback === true);
+      if (!stage1SemanticRouteAllowed) {
         semanticDecision = {
           ...semanticDecision,
           accepted: false,
@@ -1916,6 +1932,7 @@ module.exports = {
   validatePatientVisibleOutputShape,
   getSession,
   probePatientProvider,
+  projectRoutedPatientFacts,
   providerFallbackReason,
   teacherOnlyKeys
 };

@@ -393,7 +393,6 @@ a {
   }
 
   .history-composer {
-    order: 10;
     margin-top: 12px;
     border-color: rgb(199 206 209);
     border-radius: 9px;

@@ -3306,6 +3306,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
               <div className="history-dialogue relative">
               <div
                 ref={chatScrollRef}
+                data-testid="chat-transcript"
                 role="log"
                 aria-label={lang === "en" ? "Simulated patient conversation" : "模拟问诊对话"}
                 aria-live="polite"
@@ -3708,7 +3709,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
             </div>
           )}
 
-          <div className="workbench-actions mt-5 flex flex-wrap items-center gap-3 border-t border-clinic-line pt-4">
+          <div data-testid="stage-actions" className="workbench-actions mt-5 flex flex-wrap items-center gap-3 border-t border-clinic-line pt-4">
             <p className="min-w-0 flex-1 text-sm text-clinic-muted" role="status">
               {stageStatusMessage || (activeStageNo === 3
                 ? (lang === "en" ? `${diagnosisEvidence.selected.length} diagnostic findings · ${differentialRows.filter((row) => row.name.trim()).length}/3 differentials` : `诊断依据 ${diagnosisEvidence.selected.length} 条 · 鉴别诊断 ${differentialRows.filter((row) => row.name.trim()).length}/3 项`)

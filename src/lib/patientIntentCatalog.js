@@ -230,7 +230,7 @@ const canonicalLegacyIntentDefinitions = [
   {
     key: "intermittent_hematuria", sourceSlotId: "hematuria_frequency", domain: "canonical_legacy", labelZh: "间歇性血尿", labelEn: "Intermittent hematuria",
     aliases: { zh: ["间断血尿", "一阵有一阵没有", "反复尿红", "时有时无"], en: ["intermittent hematuria", "blood comes and goes", "red urine on and off"] },
-    pattern: /间断|持续|每次|频率|反复|时有时无|intermittent|continuous|every time|how often|frequency|keep(?:s)? coming back|come(?:s)? back|recur/i,
+    pattern: /间断|持续|每次|反复|时有时无|intermittent|continuous|every time|(?:血尿|尿红|尿血).{0,8}频率|频率.{0,8}(?:血尿|尿红|尿血)|how often.*(?:blood|red urine|hematuria)|(?:blood|red urine|hematuria).*(?:how often|frequency)|keep(?:s)? coming back|come(?:s)? back|recur/i,
     confusableWith: ["hematuria_onset"]
   },
   {
@@ -294,7 +294,11 @@ const canonicalLegacyIntentDefinitions = [
 
 const structuredHistoryIntentDefinitions = [
   ["smoking_history", "smokingHistory", "LIFE_SMOKING", "吸烟史", "Smoking history", /吸烟|抽烟|烟龄|每天.*(?:支|根|包)|一天抽多少|包年|smok|cigarettes?.*(?:day|daily)|how many cigarettes/i],
+  ["smoking_amount", "smokingHistory", "LIFE_SMOKING", "每日吸烟量", "Smoking amount", /一天(?:抽|吸)(?:多少|几)(?:支|根|包)?|每天(?:抽|吸)(?:多少|几)(?:支|根|包)?|烟量|多少支烟|how many cigarettes|cigarettes? per day/i],
+  ["smoking_duration", "smokingHistory", "LIFE_SMOKING", "吸烟时长", "Smoking duration", /抽烟(?:抽了)?多少年|吸烟(?:有)?多久|烟龄(?:多久|多少年)?|几年烟龄|how long.*smok|years?.*smok/i],
   ["alcohol_history", "alcoholHistory", "LIFE_ALCOHOL", "饮酒史", "Alcohol history", /喝酒|饮酒|酒量|白酒|啤酒|alcohol|drink/i],
+  ["alcohol_amount", "alcoholHistory", "LIFE_ALCOHOL", "饮酒量", "Alcohol amount", /喝多少(?:酒)?|酒量(?:多大|多少|怎么样)?|一次喝多少|白酒啤酒喝多少|how much.*(?:alcohol|drink)|amount.*alcohol/i],
+  ["alcohol_frequency", "alcoholHistory", "LIFE_ALCOHOL", "饮酒频率", "Alcohol frequency", /多久喝一次|多长时间喝一次|每天喝吗|一周喝几次|平时多常喝|喝得勤吗|how often.*(?:drink|alcohol)|drink.*frequency/i],
   ["occupation", "occupation", "LIFE_OCCUPATION", "职业", "Occupation", /什么工作|做什么工作|职业|occupation|job|what do you do for a living/i],
   ["occupational_exposure", "occupationalExposure", "LIFE_EXPOSURE", "职业暴露", "Occupational exposure", /染料|染发剂|油漆|橡胶|皮革|化工|重金属|芳香胺|职业暴露|(?:work|job|occupation|expos).*(?:chemical|dye|paint|rubber|leather)|(?:chemical|dye|paint|rubber|leather).*(?:work|job|occupation|expos)/i],
   ["hypertension_history", "hypertension", "PAST_HYPERTENSION", "高血压史", "Hypertension history", /高血压|hypertension/i],
@@ -317,7 +321,8 @@ const structuredHistoryIntentDefinitions = [
   ["menstrual_history", "menstrualHistory", "GYNE_MENSTRUAL", "月经史", "Menstrual history", /月经|经期|阴道出血|menstru|period/i],
   ["pregnancy_history", "pregnancyHistory", "GYNE_PREGNANCY", "妊娠史", "Pregnancy history", /怀孕|妊娠|pregnan/i],
   ["past_medical_history_summary", null, "PAST_ALL", "其他疾病", "Other medical conditions", /有没有其他(?:疾病|病)|还有(?:没有)?(?:什么)?其他(?:疾病|病)|有(?:没有)?基础病|以前有(?:没有|什么|哪些)?(?:疾病|病|毛病)|平时身体还有什么毛病|其他(?:疾病|病史)|any other (?:diseases?|medical conditions?)|any (?:other )?medical problems?|other medical conditions?/i],
-  ["medication_list", "medicationList", "MED_ALL", "用药史", "Medication history", /长期.*(?:吃|服|用).*药|平时.*(?:吃|服|用).*药|都吃什么药|用药史|长期用药|regular medications?|(?:medications?|medicines?) do you take/i],
+  ["medication_use", "medicationList", "MED_ALL", "是否长期用药", "Regular medication use", /平时(?:有没(?:有)?|是否)(?:吃|服|用)药|长期(?:有没(?:有)?|是否)(?:吃|服|用)药|有没(?:有)?长期用药|有没有常吃的药|现在吃药吗|do you take (?:any )?(?:regular )?(?:medication|medicine)|are you on (?:any )?(?:regular )?(?:medication|medicine)/i],
+  ["medication_list", "medicationList", "MED_ALL", "用药史", "Medication history", /长期.*(?:吃|服|用).*药|平时.*(?:吃|服|用).*药|(?:吃|服|用)(?:的)?什么药|都吃什么药|现在在吃哪些药|常吃的药|用药史|长期用药|regular medications?|what (?:medications?|medicines?) do you take|(?:medications?|medicines?) do you take/i],
   ["medication_name", "medicationList", "MED_ALL", "药物名称", "Medication name", /高血压.*(?:吃|服|用).*什么药|(?:吃|服|用)(?:的)?什么降压药|什么降压药|具体(?:的)?药名|药(?:物)?(?:的)?(?:具体)?名(?:称|字)|叫什么药|what (?:is|are) the (?:specific )?(?:medication|medicine|drug)(?: name)?|name of (?:the )?(?:medication|medicine|drug)|what.*(?:take|taking).*(?:hypertension|high blood pressure)/i],
   ["medication_dosage", "medicationList", "MED_ALL", "用药剂量", "Medication dose", /(?:具体)?剂量(?:是)?多少|(?:药|服用|每次).*(?:剂量|多少毫克|吃多少)|(?:剂量|多少毫克).*(?:药|服用)|medication dose|medicine dose|drug dose|how many milligrams|what(?:'s| is)? the dose|what dose/i],
   ["medication_frequency", "medicationList", "MED_ALL", "用药频次", "Medication frequency", /一天(?:吃|服|用)?(?:几次|多少次)|多久(?:吃|服|用)一次|(?:药|服药).*(?:频次|频率|吃法|怎么吃)|how often.*(?:medication|medicine|drug)|times? (?:a|per) day|medication frequency/i],
@@ -343,7 +348,7 @@ const patientKnowledgeIntentDefinitions = [
     key: "prior_investigations", sourceSlotId: "PATIENT_PRIOR_INVESTIGATIONS", labelZh: "既往检查项目", labelEn: "Prior investigations",
     confusableWith: ["prior_medical_visit"],
     aliases: { zh: ["有没有做什么检查", "做检查了吗", "做过哪些检查", "之前查过什么", "去医院查什么了", "都做了什么检查", "有没有验过", "以前检查过吗", "医院给你查了吗", "为这个做过检查没有"], en: ["what tests have you had", "did you have any tests", "were any investigations done", "what did the hospital check", "have you been tested for this", "which examinations were performed", "did they run any tests", "what tests were done before", "have you had investigations", "did the clinic test anything"] },
-    pattern: /(?:做|查|验)(?:了|过)?(?:什么|哪些)(?:检查|检验|项目)?|(?:做|查|验).{0,8}(?:检查|检验|项目).{0,8}(?:吗|了|没有|过)|(?:做过|查过|验过)(?:尿|血|CTU?|MRI|磁共振|B超|彩超|超声)(?:吗|没有)?|有没有(?:做过检查|查过|验过|检查过)|(?:以前|之前|医院).{0,8}(?:检查过|查过|验过|给你查)|(?:什么|哪些).*(?:检查|检验).*(?:做|查)|what tests|which (?:tests|examinations)|any (?:tests|investigations)|tests? (?:were|was|have been) done/i
+    pattern: /(?:做|查|验)(?:了|过)?(?:什么|哪些)(?:检查|检验|项目)|(?:做|查|验).{0,8}(?:检查|检验|项目).{0,8}(?:吗|了|没有|过)|(?:以前|之前|医院).{0,12}(?:做了哪些查看|查看过)|(?:有没(?:有)?|是否)?(?:做|查|验)(?:了|过)?(?:尿|血|CTU?|MRI|磁共振|B超|彩超|超声)(?:吗|没有)?|还有没有做其他检查|有没有(?:做过检查|查过|验过|检查过)|(?:以前|之前|医院).{0,8}(?:检查过|查过|验过|给你查)|(?:什么|哪些).*(?:检查|检验).*(?:做|查)|what tests|which (?:tests|examinations)|any (?:tests|investigations)|tests? (?:were|was|have been) done/i
   },
   {
     key: "prior_investigation_results_patient_aware", sourceSlotId: "PATIENT_PRIOR_RESULTS", labelZh: "患者知晓的既往检查结果", labelEn: "Patient-aware prior results",
@@ -365,9 +370,9 @@ const patientKnowledgeIntentDefinitions = [
   },
   {
     key: "prior_medication_for_current_problem", sourceSlotId: "PATIENT_CURRENT_PROBLEM_MEDICATION", labelZh: "本次问题既往用药", labelEn: "Medication for the current problem",
-    confusableWith: ["gross_hematuria"],
+    confusableWith: ["gross_hematuria", "medication_list"],
     aliases: { zh: ["为这个吃过药吗", "这次有没有用药", "之前吃了什么药", "尿血后吃药了吗", "医生给你开药了吗", "有没有服过药", "为这次症状用什么药", "来之前吃药没有", "之前打针吃药了吗", "这次问题用过药吗"], en: ["did you take medicine for this", "what medication did you take for this problem", "were you prescribed anything", "did you take any drugs before coming", "have you used medicine for these symptoms", "what did you take after the bleeding started", "did the doctor give you medication", "were you on treatment medicine", "did you take tablets for this", "any medication for the current episode"] },
-    pattern: /(?:为|因|这次|本次|尿血|尿红|症状|来之前).*(?:吃药|用药|服药|什么药|开药)|(?:吃|服|用|开).*(?:什么)?药.*(?:这次|之前|了吗|没有)|medicine.*(?:for this|current|symptom)|medication.*(?:for this|current|episode)|prescribed.*(?:anything|medicine)|take.*(?:drug|medicine).*before/i
+    pattern: /(?:为|因|这次|本次|尿血|尿红|症状|发作以后|来之前).*(?:吃药|用药|服药|什么药|开药)|(?:吃|服|用|开).*(?:什么)?药.*(?:这次|本次|尿血|尿红|症状|发作以后|来之前|来院前)|(?:医生|医院|大夫).*(?:开|给|让).{0,6}药|medicine.*(?:for this|current|symptom)|medication.*(?:for this|current|episode)|prescribed.*(?:anything|medicine)|take.*(?:drug|medicine).*before/i
   },
   {
     key: "treatment_response", sourceSlotId: "PATIENT_TREATMENT_RESPONSE", labelZh: "既往治疗反应", labelEn: "Treatment response",
@@ -522,6 +527,11 @@ function matchesNaturalPattern(question, intentKey, language) {
 function suppressConfusableFact(question, intentKey, language = "zh") {
   const normalized = normalizeIntentQuestion(question);
   const compacted = normalized.replace(/\s+/g, "");
+  if (intentKey === "hematuria_onset") {
+    return language === "zh"
+      ? /抽烟|吸烟|烟龄|喝酒|喝.{0,6}酒|饮酒|酒量|用药|吃药|服药|药物|病史|高血压|糖尿病/.test(String(question))
+      : /smok|cigarette|alcohol|drink|medicat|medicine|drug|medical history|hypertension|diabetes/i.test(String(question));
+  }
   if (intentKey === "urinary_frequency") {
     return language === "zh"
       ? /(?:尿完|排完|小便后|膀胱).*(?:还有尿|还想尿|没排干净|没排空)|总觉得还有尿/.test(compacted)
@@ -536,6 +546,14 @@ function suppressConfusableFact(question, intentKey, language = "zh") {
     return language === "zh"
       ? /高血压[^，。！？?]*(?:吃|服|用)(?:的)?什么药/.test(String(question))
       : /what[^,.!?]*(?:take|taking)[^,.!?]*(?:hypertension|high blood pressure)|(?:hypertension|high blood pressure)[^,.!?]*what[^,.!?]*(?:medicine|medication|drug)/i.test(String(question));
+  }
+  if (intentKey === "triggers") {
+    return language === "zh"
+      ? /外伤史|(?:以前|既往|曾经).{0,8}外伤|受过.{0,4}伤/.test(String(question))
+      : /(?:history of|previous|prior).{0,12}(?:injury|trauma)|injur(?:y|ies).{0,8}(?:before|previously)/i.test(String(question));
+  }
+  if (intentKey === "occupation") {
+    return /职业暴露|occupational exposure|expos.*(?:work|job|occupation)/i.test(String(question));
   }
   if (intentKey === "prior_treatment") {
     return language === "zh"
@@ -666,6 +684,46 @@ function resolveContextualPatientQuestion(question, conversationHistory = [], la
       reason: "contextual_past_medical_history_duration",
       sourceIntent: pastMedicalContextEntities[0],
       contextEntities: pastMedicalContextEntities
+    };
+  }
+  if (["smoking_history", "smoking_amount", "smoking_duration"].includes(topic)) {
+    const amountFollowup = language === "en"
+      ? /^(?:and )?(?:how much|how many|how many a day)\??$/i.test(original)
+      : /^(?:那|然后)?(?:多少|一天多少|每天多少|抽多少|多少支)[呢吗？?]*$/.test(compacted);
+    if (amountFollowup) return {
+      question: language === "en" ? "How many cigarettes do you smoke each day?" : "每天大约抽多少支烟？",
+      inherited: true,
+      reason: "contextual_smoking_amount",
+      sourceIntent: "smoking_amount"
+    };
+    const smokingDurationFollowup = language === "en"
+      ? /^(?:and )?(?:how long|for how many years)\??$/i.test(original)
+      : /^(?:那|然后)?(?:多久|多少年|几年)[呢吗了？?]*$/.test(compacted);
+    if (smokingDurationFollowup) return {
+      question: language === "en" ? "How many years have you smoked?" : "抽烟多少年了？",
+      inherited: true,
+      reason: "contextual_smoking_duration",
+      sourceIntent: "smoking_duration"
+    };
+  }
+  if (["alcohol_history", "alcohol_amount", "alcohol_frequency"].includes(topic)) {
+    const amountFollowup = language === "en"
+      ? /^(?:and )?(?:how much|what kind)\??$/i.test(original)
+      : /^(?:那|然后)?(?:多少|喝多少|酒量呢|什么酒)[呢吗？?]*$/.test(compacted);
+    if (amountFollowup) return {
+      question: language === "en" ? "How much alcohol do you drink?" : "平时喝多少酒？",
+      inherited: true,
+      reason: "contextual_alcohol_amount",
+      sourceIntent: "alcohol_amount"
+    };
+    const frequencyFollowup = language === "en"
+      ? /^(?:and )?(?:how often|every day)\??$/i.test(original)
+      : /^(?:那|然后)?(?:多久一次|多久喝一次|每天吗|一周几次|多常喝)[呢吗？?]*$/.test(compacted);
+    if (frequencyFollowup) return {
+      question: language === "en" ? "How often do you drink alcohol?" : "多久喝一次酒？",
+      inherited: true,
+      reason: "contextual_alcohol_frequency",
+      sourceIntent: "alcohol_frequency"
     };
   }
   if (["prior_medical_visit", "prior_investigations", "prior_investigation_results_patient_aware"].includes(topic)) {

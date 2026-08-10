@@ -100,6 +100,19 @@ function buildMedicationAnswerPlan(
     };
   };
 
+  if (intent === "medication_use") {
+    return {
+      renderedAnswer: noLongTermMedication(medicationAnswer, language)
+        ? (language === "en" ? "I do not take any long-term medication." : "我没有长期服药。")
+        : names.length
+          ? (language === "en" ? "I do take long-term medication." : "我平时有长期服药。")
+          : medicationAnswer,
+      factState: noLongTermMedication(medicationAnswer, language)
+        ? FACT_STATES.KNOWN_FALSE
+        : names.length ? FACT_STATES.KNOWN_TRUE : FACT_STATES.MISSING
+    };
+  }
+
   if (intent === "medication_list") {
     const partial = /具体.*(?:记不|不太清)|cannot recall.*specific/i.test(medicationAnswer);
     return {
@@ -300,8 +313,59 @@ function buildPastMedicalHistorySummary(history, language = "zh", isBlocked = ()
   };
 }
 
+function buildLifestyleAnswerPlan(fact, intent, language = "zh") {
+  const status = String(fact?.status || "").toLowerCase();
+  const absent = ["never", "none", "absent", "no"].includes(status);
+  const current = ["current", "present", "yes", "former"].includes(status);
+  const smoking = intent.startsWith("smoking_");
+  if (intent === "smoking_history" || intent === "alcohol_history") {
+    return {
+      renderedAnswer: absent
+        ? (language === "en" ? (smoking ? "I do not smoke." : "I do not drink alcohol.") : (smoking ? "我不抽烟。" : "我不喝酒。"))
+        : current
+          ? (language === "en" ? (smoking ? "I smoke." : "I drink some alcohol.") : (smoking ? "我抽烟。" : "我喝一点酒。"))
+          : String(language === "en" ? fact?.patientAnswerEn : fact?.patientAnswerZh || ""),
+      factState: absent ? FACT_STATES.KNOWN_FALSE : current ? FACT_STATES.KNOWN_TRUE : FACT_STATES.MISSING
+    };
+  }
+  if (absent) {
+    return {
+      renderedAnswer: language === "en" ? (smoking ? "I do not smoke." : "I do not drink alcohol.") : (smoking ? "我不抽烟。" : "我不喝酒。"),
+      factState: FACT_STATES.KNOWN_FALSE
+    };
+  }
+  if (intent === "smoking_amount") {
+    const amount = Number(fact?.cigarettesPerDay);
+    return amount > 0
+      ? { renderedAnswer: language === "en" ? `About ${amount} cigarettes a day.` : `每天大约抽${amount}支。`, factState: FACT_STATES.APPROXIMATE_VALUE }
+      : { renderedAnswer: language === "en" ? "I cannot recall how many cigarettes I smoke each day." : "每天抽多少支，我记不太清了。", factState: FACT_STATES.PATIENT_NOT_AWARE };
+  }
+  if (intent === "smoking_duration") {
+    const years = Number(fact?.years);
+    return years > 0
+      ? { renderedAnswer: language === "en" ? `I have smoked for about ${years} years.` : `大约抽了${years}年。`, factState: FACT_STATES.APPROXIMATE_VALUE }
+      : { renderedAnswer: language === "en" ? "I cannot recall how many years I smoked." : "具体抽了多少年，我记不太清了。", factState: FACT_STATES.PATIENT_NOT_AWARE };
+  }
+  if (intent === "alcohol_amount") {
+    const amount = String(fact?.amount || "").trim();
+    const type = String(fact?.type || "").trim();
+    const value = [type, amount && amount !== "0" ? amount : ""].filter(Boolean).join(language === "en" ? " " : "，");
+    return value
+      ? { renderedAnswer: language === "en" ? `I usually drink ${value}.` : `一般喝${value}。`, factState: FACT_STATES.APPROXIMATE_VALUE }
+      : { renderedAnswer: language === "en" ? "I cannot recall the amount clearly." : "具体喝多少，我记不太清了。", factState: FACT_STATES.PATIENT_NOT_AWARE };
+  }
+  const frequency = String(fact?.frequency || "").trim();
+  const frequencyText = language === "en"
+    ? ({ occasional: "I drink occasionally.", daily: "I drink every day." }[frequency] || "")
+    : ({ occasional: "我只是偶尔喝一点。", daily: "我每天都喝。" }[frequency] || "");
+  return frequencyText
+    ? { renderedAnswer: frequencyText, factState: FACT_STATES.APPROXIMATE_VALUE }
+    : { renderedAnswer: language === "en" ? "I cannot recall how often I drink." : "多久喝一次，我记不太清了。", factState: FACT_STATES.PATIENT_NOT_AWARE };
+}
+
 module.exports = {
   PAST_MEDICAL_FACTS,
+  buildLifestyleAnswerPlan,
   buildMedicationAnswerPlan,
   buildPastMedicalHistorySummary,
   medicationScopeFromQuestion,

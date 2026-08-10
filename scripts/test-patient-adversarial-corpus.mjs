@@ -49,6 +49,10 @@ function plans(answer) {
   return Array.isArray(answer.answerPlans) ? answer.answerPlans : [];
 }
 
+function adversarialDomain(intent) {
+  return ["smoking_amount", "smoking_duration"].includes(intent) ? "smoking_history" : intent;
+}
+
 function checkSafe(answer, metrics) {
   const reply = String(answer.replyText || "").trim();
   if (!reply) metrics.emptyAnswers += 1;
@@ -58,7 +62,7 @@ function checkSafe(answer, metrics) {
 }
 
 function checkIntents(answer, expected, label, routeFailures, question = "") {
-  const actual = sorted(plans(answer).map((plan) => plan.intent));
+  const actual = sorted(plans(answer).map((plan) => adversarialDomain(plan.intent)));
   const wanted = sorted(expected);
   if (JSON.stringify(actual) !== JSON.stringify(wanted)) routeFailures.push({ label, question, expected: wanted, actual });
   return actual;

@@ -1701,7 +1701,8 @@ test("@r5-visual @r5-historical interview composer and desktop workbench fit tar
     : [
         { width: 1093, height: 614 }, // 1366x768 at Windows 125% effective CSS viewport.
         { width: 1366, height: 768 },
-        { width: 1440, height: 900 }
+        { width: 1440, height: 900 },
+        { width: 1920, height: 1080 }
       ];
   for (const viewport of viewports) {
     for (const language of ["zh", "en"]) {
@@ -1711,7 +1712,10 @@ test("@r5-visual @r5-historical interview composer and desktop workbench fit tar
       const conversation = page.getByRole("log", { name: language === "en" ? "Simulated patient conversation" : "模拟问诊对话" });
       const opening = conversation.getByText(language === "en" ? englishOpening : chineseOpening, { exact: true });
       const input = page.getByRole("textbox", { name: language === "en" ? "Enter an interview question" : "输入问诊问题" });
+      const transcript = page.getByTestId("chat-transcript");
       const composer = page.getByTestId("chat-composer");
+      const historySummary = page.locator(".history-summary");
+      const stageActions = page.getByTestId("stage-actions");
       await expect(page.getByTestId("stage-heading")).toContainText(language === "en" ? "History taking" : "病史采集");
       await expect(page.getByText(language === "en" ? "Continue asking the patient." : "继续向患者提问，完成本阶段病史采集。", { exact: true })).toBeVisible();
       await expect(opening).toBeVisible();
@@ -1720,10 +1724,13 @@ test("@r5-visual @r5-historical interview composer and desktop workbench fit tar
         const box = await composer.boundingBox();
         return box ? Math.ceil(box.y + box.height) : Number.POSITIVE_INFINITY;
       }).toBeLessThanOrEqual(viewport.height);
-      const [openingBox, composerBox, actionsBox, layout] = await Promise.all([
+      await historySummary.evaluate((element) => element.scrollIntoView({ block: "center", behavior: "instant" }));
+      const [openingBox, transcriptBox, composerBox, summaryBox, actionsBox, layout] = await Promise.all([
         opening.boundingBox(),
+        transcript.boundingBox(),
         composer.boundingBox(),
-        page.locator(".workbench-actions").boundingBox(),
+        historySummary.boundingBox(),
+        stageActions.boundingBox(),
         page.evaluate(() => {
           const composerElement = document.querySelector('[data-testid="chat-composer"]');
           return {
@@ -1739,11 +1746,15 @@ test("@r5-visual @r5-historical interview composer and desktop workbench fit tar
         })
       ]);
       expect(openingBox).toBeTruthy();
+      expect(transcriptBox).toBeTruthy();
       expect(composerBox).toBeTruthy();
+      expect(summaryBox).toBeTruthy();
       expect(actionsBox).toBeTruthy();
+      expect(Math.ceil(transcriptBox.y + transcriptBox.height), `${viewport.width}x${viewport.height}/${language}/transcript-composer`).toBeLessThanOrEqual(Math.floor(composerBox.y));
+      expect(Math.ceil(composerBox.y + composerBox.height), `${viewport.width}x${viewport.height}/${language}/composer-summary`).toBeLessThanOrEqual(Math.floor(summaryBox.y));
+      expect(Math.ceil(summaryBox.y + summaryBox.height), `${viewport.width}x${viewport.height}/${language}/summary-actions`).toBeLessThanOrEqual(Math.floor(actionsBox.y));
       expect(composerBox.y, `${viewport.width}x${viewport.height}/${language}`).toBeGreaterThanOrEqual(openingBox.y + openingBox.height);
       expect(Math.ceil(composerBox.y + composerBox.height)).toBeLessThanOrEqual(viewport.height);
-      expect(Math.ceil(composerBox.y + composerBox.height), `${viewport.width}x${viewport.height}/${language}`).toBeLessThanOrEqual(Math.ceil(actionsBox.y));
       expect(layout.className).toContain("safe-area-inset-bottom");
       expect(layout.overflow).toBe(false);
       expect(Math.ceil(layout.mainRight)).toBeLessThanOrEqual(viewport.width + 1);

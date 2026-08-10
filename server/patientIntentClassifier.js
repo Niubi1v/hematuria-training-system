@@ -5,10 +5,12 @@ const {
   isLocalProvider,
   providerCredentialsAvailable
 } = require("./llmClient.runtime.js");
-const { normalizeIntentQuestion, patientFactOntology } = require("../src/lib/patientIntentCatalog.js");
+const { normalizeIntentQuestion } = require("../src/lib/patientIntentCatalog.js");
+const { stage1HistoryIntentDefinitions } = require("../src/lib/stage1HistoryIntentRegistry.js");
 
-const CLASSIFIER_DEFINITIONS = Object.freeze(patientFactOntology
-  .filter((definition) => definition.domain !== "safe_missing"));
+const CLASSIFIER_DEFINITIONS = Object.freeze(stage1HistoryIntentDefinitions
+  .filter((definition) => definition.semanticIntentFallback)
+  .map((definition) => definition.ontology));
 const INTENT_WHITELIST = Object.freeze(CLASSIFIER_DEFINITIONS
   .map((definition) => definition.key));
 const INTENT_SET = new Set(INTENT_WHITELIST);
@@ -136,9 +138,9 @@ function mightAskCanonicalFact(question, language = "zh") {
   const normalized = normalizeIntentQuestion(question);
   if (!normalized || normalized.length > 240) return false;
   if (language === "en") {
-    return /\b(?:urine|urination|urinate|pee|passing urine|blood|red|pain|hurt|burn|fever|temperature|swelling|stream|flow|bladder|night|clot|flank|back|medicine|medication|drug|history|disease|smoke|alcohol|drink)\b/i.test(normalized);
+    return /\b(?:urine|urination|urinate|pee|passing urine|blood|red|pain|hurt|burn|fever|temperature|swelling|stream|flow|bladder|night|clot|flank|back|medicine|medication|drug|history|disease|smoke|alcohol|drink|allergy|surgery|procedure|catheter|occupation|work|exposure|family|test|scan|ultrasound|ct|mri|doctor|hospital|diagnosis|treatment)\b/i.test(normalized);
   }
-  return /尿|小便|排尿|撒尿|解手|血|红|痛|疼|烧|发热|发烧|肿|腰|血块|夜里|起夜|憋不住|药|病|既往|以前|抽烟|吸烟|喝酒|饮酒/.test(normalized);
+  return /尿|小便|排尿|撒尿|解手|血|红|痛|疼|烧|发热|发烧|肿|腰|血块|夜里|起夜|憋不住|药|病|既往|以前|抽烟|吸烟|喝酒|饮酒|过敏|手术|操作|导尿|职业|工作|暴露|家里|家族|检查|化验|彩超|超声|CT|MRI|医生|医院|诊断|治疗|处理/.test(normalized);
 }
 
 function classificationId(question, language, recentUserQuestions = []) {

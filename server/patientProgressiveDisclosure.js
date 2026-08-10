@@ -1,6 +1,7 @@
 "use strict";
 
 const { FACT_STATES, answerPlanFromRendered, renderAnswerPlan } = require("../src/lib/patientFactState.js");
+const { stage1HistoryIntent } = require("../src/lib/stage1HistoryIntentRegistry.js");
 
 const historyLabels = {
   hypertension_history: /高血压|hypertension/i,
@@ -93,6 +94,13 @@ function applyPatientProgressiveDisclosure({ caseData, matched, language = "zh",
     answerPlans,
     disclosurePlan: {
       authorizedIntents,
+      granularity: Object.fromEntries(authorizedIntents.map((intent) => [
+        intent,
+        stage1HistoryIntent(intent)?.disclosureGranularity || "direct_fact"
+      ])),
+      permittedFollowUps: [...new Set(authorizedIntents.flatMap((intent) => (
+        stage1HistoryIntent(intent)?.followUpIntents || []
+      )))],
       mode: "question_triggered",
       contextEntities: authorizedIntents.filter((intent) => /_history$|^previous_/.test(intent)),
       contextReason: contextResolution?.reason || ""

@@ -270,8 +270,15 @@ async function main() {
       assert.ok(answer.clauseOutcomes?.some((item) => item.intent === personalProbe.intent), `${currentCase.id} ${personalProbe.intent} route missed`);
       if (fact.provenance === "source" && !fact.teacherReviewRequired) {
         assert.notEqual(answer.fallbackReason, "medical_history_pending_review", `${currentCase.id} source ${personalProbe.intent} was blocked`);
-        const sourceLead = fact.patientAnswerZh.split(/[。；]/)[0];
-        assert.ok(answer.replyText.includes(sourceLead), `${currentCase.id} source ${personalProbe.intent} was not answered`);
+        const absent = ["never", "none", "absent", "no"].includes(String(fact.status || "").toLowerCase());
+        assert.match(
+          answer.replyText,
+          personalProbe.intent === "smoking_history"
+            ? absent ? /不(?:抽|吸)烟/ : /(?:抽|吸)烟/
+            : absent ? /不喝酒/ : /喝.*酒/,
+          `${currentCase.id} source ${personalProbe.intent} was not answered`
+        );
+        assert.doesNotMatch(answer.replyText, /\d+.*(?:支|根|包|年|次|两|瓶)|每天|一周/u, `${currentCase.id} ${personalProbe.intent} leaked unasked amount/frequency`);
       } else {
         assert.equal(
           answer.factStates?.[personalProbe.intent],

@@ -8,6 +8,7 @@ const {
 } = require("../src/lib/patientFactState.js");
 const {
   buildMedicationAnswerPlan,
+  buildLifestyleAnswerPlan,
   buildPastMedicalHistorySummary,
   selectMedicationsForQuestion
 } = require("../src/lib/structuredHistoryAnswerPlanner.js");
@@ -38,9 +39,33 @@ function matchStructuredFacts(caseData, question, language = "zh") {
   const history = caseData?.structuredHistory;
   if (!history) return null;
   const text = String(question || "");
-  const ontologyMatches = matchPatientFactOntology(text, language, ["structured_history"]);
+  let ontologyMatches = matchPatientFactOntology(text, language, ["structured_history"]);
+  const routedIntents = new Set(ontologyMatches.map((match) => match.intentKey));
+  const supersededExistence = new Set();
+  const scopedMedicationNameQuestion = language === "en"
+    ? /(?:hypertension|high blood pressure)[^,.!?]*(?:take|taking)[^,.!?]*what[^,.!?]*(?:medicine|medication|drug)/i.test(text)
+    : /高血压[^，。！？?]*(?:吃|服|用)(?:的)?什么药/.test(text);
+  const asksAboutOtherMedication = language === "en"
+    ? /other[^,.!?]*(?:medication|medicine|drug)/i.test(text)
+    : /其他[^，。！？?]*(?:药|用药)/.test(text);
+  if (routedIntents.has("medication_list") && routedIntents.has("medication_name")) {
+    supersededExistence.add(scopedMedicationNameQuestion ? "medication_list" : "medication_name");
+  }
+  if (["smoking_amount", "smoking_duration"].some((intent) => routedIntents.has(intent))) supersededExistence.add("smoking_history");
+  if (["alcohol_amount", "alcohol_frequency"].some((intent) => routedIntents.has(intent))) supersededExistence.add("alcohol_history");
+  if (["medication_use", "medication_dosage", "medication_frequency", "other_medications"].some((intent) => routedIntents.has(intent))
+    || (routedIntents.has("medication_name") && !routedIntents.has("medication_list"))) {
+    supersededExistence.add("medication_list");
+  }
+  if (!asksAboutOtherMedication && ["anticoagulant_use", "antiplatelet_use"].some((intent) => routedIntents.has(intent))) {
+    supersededExistence.add("medication_list");
+    supersededExistence.add("medication_use");
+  }
+  if (routedIntents.has("occupational_exposure")) supersededExistence.add("occupation");
+  ontologyMatches = ontologyMatches.filter((match) => !supersededExistence.has(match.intentKey));
   const specialIntents = new Set([
     "past_medical_history_summary",
+    "medication_use",
     "medication_list",
     "medication_name",
     "medication_dosage",
@@ -135,9 +160,12 @@ function matchStructuredFacts(caseData, question, language = "zh") {
     const fact = history[key];
     if (!fact) continue;
     const blocked = unresolvedFact(caseData.id, key, fact);
+    const lifestyle = /^(?:smoking|alcohol)_(?:history|amount|duration|frequency)$/.test(intentKey)
+      ? buildLifestyleAnswerPlan(fact, intentKey, language)
+      : null;
     const renderedAnswer = blocked
       ? unresolvedStructuredReply(key, language)
-      : (language === "en" ? fact.patientAnswerEn : fact.patientAnswerZh);
+      : lifestyle?.renderedAnswer || (language === "en" ? fact.patientAnswerEn : fact.patientAnswerZh);
     answers.push(renderedAnswer);
     matchedFacts.push(intentKey);
     matchedSlotIds.push(slotId);
@@ -148,7 +176,7 @@ function matchStructuredFacts(caseData, question, language = "zh") {
       collectableSlotIds.push(slotId);
     }
     sources.push(fact);
-    const factState = factStateFromText(renderedAnswer, { needsReview: blocked });
+    const factState = blocked ? FACT_STATES.NEEDS_REVIEW : lifestyle?.factState || factStateFromText(renderedAnswer);
     answerPlans.push(answerPlanFromRendered({
       intent: intentKey,
       sourceSlotId: slotId,

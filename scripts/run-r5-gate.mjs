@@ -46,6 +46,8 @@ const fast = [
   command(pnpm, "run", "test:bilingual-conflict-quarantine"),
   command(pnpm, "run", "test:patient-spoken-language-realism"),
   command(pnpm, "run", "test:patient-sp-progressive-disclosure"),
+  command(pnpm, "run", "test:stage1-history-conversation-regressions"),
+  command(pnpm, "run", "test:stage1-history-conversational-coverage"),
   command(pnpm, "run", "test:patient-semantic-coverage"),
   command(pnpm, "run", "test:patient-knowledge-grounding"),
   command(pnpm, "run", "test:patient-knowable-allowlist"),

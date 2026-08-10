@@ -64,8 +64,8 @@ const knownStates = new Set(["known_true", "known_false", "exact_value", "approx
 
 function hasCorrectPolarity(plan: { factState: string; directAnswer: string; renderedAnswer: string }, language: "zh" | "en") {
   const text = String(plan.directAnswer || plan.renderedAnswer).trim();
-  if (plan.factState === "known_true") return language === "zh" ? /^(有|是|会)/.test(text) : /^(yes|it does|it is|there is|i do)/i.test(text);
-  if (plan.factState === "known_false") return language === "zh" ? /^(没有|不|不是|不会)/.test(text) : /^(no|it does not|it doesn't|it is not|i do not|i don't)/i.test(text);
+  if (plan.factState === "known_true") return language === "zh" ? /^(?:有|是|会|我(?:抽烟|吸烟|喝(?:酒|一点酒)?))/.test(text) : /^(yes|it does|it is|there is|i do)/i.test(text);
+  if (plan.factState === "known_false") return language === "zh" ? /^(?:我)?(?:没有|不|不是|不会)/.test(text) : /^(no|it does not|it doesn't|it is not|i do not|i don't)/i.test(text);
   return true;
 }
 

@@ -128,6 +128,15 @@ function planFor(answer, intent) {
   return (answer.answerPlans || []).find((plan) => plan.intent === intent);
 }
 
+function expectedSemanticPlanIntent(intent, question) {
+  if (intent === "smoking_history") {
+    if (/一天.*多少|每天.*多少/.test(question)) return "smoking_amount";
+    if (/烟龄|多少年/.test(question)) return "smoking_duration";
+  }
+  if (intent === "medication_list" && /有没有.*(?:吃药|长期用药)/.test(question)) return "medication_use";
+  return intent;
+}
+
 function assertSafe(answer, label) {
   assert.ok(String(answer.replyText || "").trim(), `${label}: empty answer`);
   assert.doesNotMatch(answer.replyText, internalLeak, `${label}: internal field leak`);
@@ -157,7 +166,7 @@ async function semanticCoverage() {
         `${intent}: ontology route missed ${question}`
       );
       const answer = await ask(session, semanticCase.id, question);
-      if (!planFor(answer, intent)) {
+      if (!planFor(answer, expectedSemanticPlanIntent(intent, question))) {
         assert.equal(intent, "prior_diagnosis_patient_aware", `${intent}: governed route missed ${question}`);
         assert.equal(answer.fallbackReason, "diagnosis_boundary", `${intent}: protected diagnosis wording lost its boundary`);
       }
