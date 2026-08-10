@@ -67,11 +67,12 @@ if (expectedInstallationMode !== "development") {
     path.join(resources, "app", "desktop", "runtime-manifest.json")
   ]) await fs.access(required);
 }
-const expectedProductHead = execFileSync("git", ["rev-parse", "HEAD"], {
+const expectedProductHead = String(process.env.HEMATURIA_EXPECTED_PRODUCT_HEAD || "").trim() || execFileSync("git", ["rev-parse", "HEAD"], {
   cwd: repoRoot,
   encoding: "utf8",
   windowsHide: true
 }).trim();
+if (!/^[0-9a-f]{40}$/u.test(expectedProductHead)) throw new Error("desktop_expected_product_head_invalid");
 const configuredRealModelPath = String(process.env.HEMATURIA_DESKTOP_MODEL_PATH || "");
 const realModelPath = mentorHumanEntrypoint
   ? path.join(mentorPackageRoot, "Model", "Qwen3-1.7B-Q4_K_M.gguf")
@@ -543,7 +544,17 @@ async function waitForDisabledLocalAi(page) {
   return { diagnostics, pid: 0, port: 0 };
 }
 
-async function askGovernedQuestion(page, expectedReason, requireLocalClassifier = false, question = "") {
+async function verifyMentorAssistanceAvailable(page) {
+  const button = page.getByRole("button", { name: /问诊辅助设置|Interview assistance settings/u }).first();
+  await button.click();
+  const dialog = page.getByRole("dialog", { name: /问诊辅助设置|Interview assistance settings/u });
+  await dialog.waitFor({ state: "visible" });
+  await eventually(async () => /辅助功能\s*可用|Assistance\s*Available/iu.test(await dialog.innerText()), 20_000, "mentor-assistance-available");
+  await dialog.getByRole("button", { name: /^(?:关闭|Close)$/u }).click();
+  return true;
+}
+
+async function askGovernedQuestion(page, expectedReason, requireLocalClassifier = false, question = "", allowGovernedWithoutClassifier = false) {
   const before = (await desktopJson(page, "/api/desktop/evidence")).payload;
   const composer = page.locator('[data-testid="chat-composer"]');
   const send = composer.locator("button").last();
@@ -559,12 +570,15 @@ async function askGovernedQuestion(page, expectedReason, requireLocalClassifier 
   assert.equal(response.status(), 200);
   const payload = await response.json();
   if (requireLocalClassifier) {
-    assert.equal(payload.classificationSource, "local_ai");
-    assert.ok(["accepted", "rejected", "timeout"].includes(payload.classifierStatus));
-    if (payload.classifierStatus === "accepted") {
+    if (!allowGovernedWithoutClassifier) assert.equal(payload.classificationSource, "local_ai");
+    else assert.ok(["local_ai", "deterministic", "none"].includes(payload.classificationSource));
+    assert.ok((allowGovernedWithoutClassifier
+      ? ["accepted", "rejected", "timeout", "not_invoked"]
+      : ["accepted", "rejected", "timeout"]).includes(payload.classifierStatus));
+    if (payload.classificationSource === "local_ai" && payload.classifierStatus === "accepted") {
       assert.equal(payload.isFallback, false);
       assert.equal(payload.provider, "local");
-    } else {
+    } else if (payload.classificationSource === "local_ai") {
       assert.equal(payload.isFallback, true);
       assert.equal(payload.provider, "rule");
       assert.ok(payload.fallbackReason);
@@ -585,9 +599,12 @@ async function askGovernedQuestion(page, expectedReason, requireLocalClassifier 
   return {
     acceptedDelta,
     fallbackDelta,
+    localAiAcceptedCount: after.localAiAcceptedCount,
+    ruleFallbackCount: after.ruleFallbackCount,
     cloudRequestCount: after.cloudRequestCount,
     classificationSource: payload.classificationSource || null,
-    classifierStatus: payload.classifierStatus || null
+    classifierStatus: payload.classifierStatus || null,
+    isFallback: Boolean(payload.isFallback)
   };
 }
 
@@ -787,6 +804,7 @@ const temporaryRoot = configuredRoot
   : await fs.mkdtemp(path.join(os.tmpdir(), "hematuria-tauri-smoke-"));
 if (configuredRoot) await fs.mkdir(temporaryRoot, { recursive: true });
 const keepSuccessfulRoot = process.env.HEMATURIA_TAURI_SMOKE_KEEP_ROOT === "1";
+const freshSettings = process.argv.includes("--fresh-settings");
 const isolatedLocalAppData = path.join(temporaryRoot, "localappdata");
 const dataDirectory = mentorHumanEntrypoint
   ? path.join(isolatedLocalAppData, "HematuriaTraining", "MentorLocalAI-R5")
@@ -812,6 +830,8 @@ function seedStaleStandardMode() {
   const store = createRequire(import.meta.url)("../server/desktopSqliteStore.js");
   try {
     store.setDesktopSetting("localAi.modelMode", "standard");
+    store.setDesktopSetting("localAi.modelPath", path.join(temporaryRoot, "stale-legacy", "Qwen3-4B-Q4_K_M.gguf"));
+    store.setDesktopSetting("localAi.modelDirectory", path.join(temporaryRoot, "stale-model-directory"));
   } finally {
     store.closeDesktopSqliteStore();
     if (previousDataDirectory === undefined) delete process.env.HEMATURIA_DESKTOP_DATA_DIR;
@@ -877,7 +897,7 @@ if (startupOnly) {
 } else {
 try {
   await fs.mkdir(dataDirectory, { recursive: true });
-  if (mentorHumanEntrypoint) seedStaleStandardMode();
+  if (mentorHumanEntrypoint && !freshSettings) seedStaleStandardMode();
   const firstCycleStarted = performance.now();
   running = await launch(dataDirectory, webViewDirectory);
   const firstRuntimeReadyMs = Math.round(performance.now() - firstCycleStarted);
@@ -886,11 +906,19 @@ try {
   assert.match(firstProbe.apiBaseUrl, /^http:\/\/127\.0\.0\.1:\d+$/);
   assert.equal(firstProbe.tokenValid, true);
   const firstLlama = localAiEnabled ? await waitForLlama(running.page) : await waitForDisabledLocalAi(running.page);
+  const firstSettings = mentorHumanEntrypoint ? (await desktopJson(running.page, "/api/desktop/settings")).payload : null;
+  const assistanceAvailable = mentorHumanEntrypoint ? await verifyMentorAssistanceAvailable(running.page) : null;
   if (mentorHumanEntrypoint) {
-    assert.equal(firstLlama.diagnostics.localAi.configuredMode, "standard");
+    assert.equal(firstSettings.modelPresent, true);
+    assert.equal(firstSettings.modelValidation, "verified");
+    assert.equal(firstSettings.llamaStatus, "ready");
+    assert.equal(firstSettings.effectiveModel, "Qwen3-1.7B");
+    assert.equal(firstLlama.diagnostics.localAi.configuredMode, freshSettings ? null : "standard");
     assert.equal(firstLlama.diagnostics.localAi.effectiveMode, "lightweight");
     assert.equal(firstLlama.diagnostics.localAi.effectiveModel, "Qwen3-1.7B");
-    assert.equal(firstLlama.diagnostics.localAi.overrideSource, mentorDirectExe ? "packaged_model_fallback" : "mentor_package");
+    assert.equal(firstLlama.diagnostics.localAi.overrideSource, mentorDirectExe
+      ? freshSettings ? "runtime_default" : "packaged_model_fallback"
+      : "mentor_package");
   }
   const firstModelReadyMs = Math.round(performance.now() - firstCycleStarted);
   const initialAuthority = (await desktopJson(running.page, "/api/desktop/state/bootstrap")).payload;
@@ -903,19 +931,40 @@ try {
     marker: p002Marker
   });
   const answerStarted = performance.now();
-  const fallback = await askGovernedQuestion(running.page, usesFakeLocalAi ? "semantic_response_invalid" : undefined, realLocalAi);
   const mentorQuestions = mentorHumanEntrypoint ? [
-    "这种红色小便是一直有，还是时有时无？",
-    "小便的时候疼不疼，有没有发烧？",
-    "这个情况持续多久了？",
-    "最近有没有抽烟或喝酒？"
+    "您这次主要为什么来看病？",
+    "尿是肉眼能看到红，还是体检尿检发现？",
+    "什么时候开始出现血尿或排尿症状？",
+    "血尿是持续还是间断？",
+    "刚开始红、快尿完红，还是从头到尾都红？",
+    "尿是什么颜色？",
+    "有没有血块？是什么形状？",
+    "小便时痛不痛？",
+    "有没有尿频尿急？",
+    "有没有发热或寒战？"
   ] : [];
-  const mentorAnswers = [fallback];
-  for (const question of mentorQuestions) mentorAnswers.push(await askGovernedQuestion(running.page, undefined, true, question));
+  const mentorAnswers = [];
+  for (const [index, question] of mentorQuestions.entries()) {
+    mentorAnswers.push(await step(`mentor-question-${index + 1}`, askGovernedQuestion(running.page, undefined, true, question, true)));
+  }
+  const fallback = mentorHumanEntrypoint
+    ? mentorAnswers[0]
+    : await askGovernedQuestion(running.page, usesFakeLocalAi ? "semantic_response_invalid" : undefined, realLocalAi);
   const mentorLocalAcceptedCount = mentorAnswers.reduce((total, answer) => total + answer.acceptedDelta, 0);
   if (mentorHumanEntrypoint) {
-    assert.ok(mentorAnswers.every((answer) => answer.classificationSource === "local_ai"), "mentor_questions_did_not_reach_local_qwen");
-    assert.ok(mentorLocalAcceptedCount > 0, "mentor_local_ai_accepted_required");
+    assert.equal(mentorAnswers.length, 10, "mentor_ten_patient_turns_required");
+    assert.ok(mentorLocalAcceptedCount > mentorAnswers.length - mentorLocalAcceptedCount, `mentor_local_ai_must_be_the_majority:${JSON.stringify(mentorAnswers.map(({ classificationSource, classifierStatus, acceptedDelta, fallbackDelta }) => ({ classificationSource, classifierStatus, acceptedDelta, fallbackDelta })))}`);
+    assert.ok(mentorAnswers.every((answer) => answer.acceptedDelta + answer.fallbackDelta === 1), "mentor_each_turn_must_have_one_runtime_outcome");
+    assert.ok(mentorAnswers.every((answer, index) => index === 0 || answer.localAiAcceptedCount >= mentorAnswers[index - 1].localAiAcceptedCount), "mentor_local_ai_count_regressed");
+  }
+  const mentorRuntimeEvidence = mentorHumanEntrypoint ? (await desktopJson(running.page, "/api/desktop/evidence")).payload : null;
+  if (mentorHumanEntrypoint) {
+    assert.equal(mentorRuntimeEvidence.llamaServerReady, true);
+    assert.equal(mentorRuntimeEvidence.localModelReady, true);
+    assert.equal(mentorRuntimeEvidence.effectiveModel, "Qwen3-1.7B");
+    assert.equal(mentorRuntimeEvidence.localAiAcceptedCount, mentorLocalAcceptedCount);
+    assert.equal(mentorRuntimeEvidence.ruleFallbackCount, mentorAnswers.length - mentorLocalAcceptedCount);
+    assert.equal(mentorRuntimeEvidence.cloudRequestCount, 0);
   }
   const firstAnswerMs = Math.round(performance.now() - answerStarted);
   await saveHistoryDraft(running.page, {
@@ -1105,6 +1154,18 @@ try {
     mentorHumanEntrypoint,
     mentorEntryMode: mentorDirectExe ? "direct_app_exe" : "root_launcher",
     mentorLocalAcceptedCount,
+    mentorRuleFallbackCount: mentorRuntimeEvidence?.ruleFallbackCount ?? null,
+    mentorAcceptedSequence: mentorAnswers.map((answer) => answer.localAiAcceptedCount),
+    assistanceAvailable,
+    localAiRuntime: mentorHumanEntrypoint ? {
+      modelPresent: firstSettings.modelPresent,
+      modelValidation: firstSettings.modelValidation,
+      llamaServerReady: mentorRuntimeEvidence.llamaServerReady,
+      localModelReady: mentorRuntimeEvidence.localModelReady,
+      effectiveModel: mentorRuntimeEvidence.effectiveModel,
+      cloudRequestCount: mentorRuntimeEvidence.cloudRequestCount,
+      settingsProfile: freshSettings ? "fresh" : "stale"
+    } : null,
     performance: {
       firstRuntimeReadyMs,
       firstModelReadyMs,
