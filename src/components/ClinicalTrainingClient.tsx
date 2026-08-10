@@ -1045,7 +1045,7 @@ async function requestAiPatientReply({ sessionId, caseId, question, messages, as
         conversationHistory: messages.slice(-6).map((message) => ({ role: message.role, text: message.text })),
         askedSlotIds: askedSlots,
         askedQuestions: messages.filter((message) => message.role === "student").map((message) => message.text)
-      }, { timeoutMs: PATIENT_REPLY_TIMEOUT_MS, retries: 2, signal, endpointName: "patient-reply", idempotencyKey: createIdempotencyKey(attemptId, "patient", recoveryCycle, question.trim().toLowerCase()) });
+      }, { timeoutMs: PATIENT_REPLY_TIMEOUT_MS, retries: 2, signal, endpointName: "patient-reply", idempotencyKey: createIdempotencyKey(attemptId, "patient", recoveryCycle, String(messages.length), question.trim().toLowerCase()) });
 }
 
 async function probeAiPatient({ caseId, sessionId, attemptId, mode, language, signal }: { caseId: string; sessionId: string; attemptId: string; mode: TrainingMode; language: LanguageCode; signal?: AbortSignal }) {

@@ -2277,6 +2277,33 @@ test("@ui-patient-reply-safety grounded compound patient reply is not replaced b
   });
 });
 
+test("@ui-patient-reply-safety repeated contextual question uses a new turn idempotency key", async ({ page }) => {
+  await routeTrainingApiThroughHandler(page);
+  const keys = [];
+  await page.route("**/api/agent-chat/**", (route) => {
+    const request = route.request();
+    const body = request.postDataJSON();
+    if (!body.probe) keys.push(request.headers()["x-idempotency-key"]);
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+      replyText: body.probe ? "" : "差不多三个月了。",
+      matchedSlotIds: body.probe ? [] : ["hematuria_onset"],
+      matchedFacts: body.probe ? [] : ["hematuria_onset"],
+      isFallback: false,
+      publicReplyState: "answered"
+    }) });
+  });
+
+  await page.goto("/cases/P001/");
+  for (let turn = 0; turn < 2; turn += 1) {
+    await page.getByPlaceholder("输入问诊问题").fill("多久了？");
+    await page.getByRole("button", { name: "发送", exact: true }).click();
+    await expect(page.getByRole("log", { name: "模拟问诊对话" }).getByText("多久了？", { exact: true })).toHaveCount(turn + 1);
+  }
+  expect(keys).toHaveLength(2);
+  expect(keys[0]).toBeTruthy();
+  expect(keys[1]).not.toBe(keys[0]);
+});
+
 test("@ui-patient-reply-safety JSON provider reply falls closed without collecting public metadata", async ({ page }) => {
   await routeTrainingApiThroughHandler(page);
   await page.route("**/api/agent-chat/**", (route) => {
