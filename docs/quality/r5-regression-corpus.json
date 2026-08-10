@@ -507,7 +507,7 @@
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     },
     {
-      "id": "R5-REG-042", "slug": "PATIENT-REPEATED-QUESTION-IDEMPOTENCY", "kind": "historical_bug", "severity": "P0", "status": "regression_required", "title": "A repeated contextual question reused an earlier Patient API idempotency key",
+      "id": "R5-REG-042", "slug": "PATIENT-REPEATED-QUESTION-IDEMPOTENCY", "kind": "historical_bug", "severity": "P0", "status": "fixed", "title": "A repeated contextual question reused an earlier Patient API idempotency key",
       "userVisibleSymptom": "After asking the same short follow-up text in a later conversational context, the Patient request returned HTTP 409 and the UI fell back instead of answering the newly referenced fact.",
       "rootCause": { "status": "confirmed", "detail": "The renderer derived Patient idempotency keys from attempt, recovery cycle, and normalized question text only. Repeating the same wording in a later turn therefore reused a key with a different conversation-history body, which the durable idempotency store correctly rejected." },
       "affectedLayers": ["renderer", "patient_api", "idempotency", "conversation_context"],
@@ -515,7 +515,7 @@
       "originalEvidence": { "head": "19fefa2e8692757ded13f17929b181c516338594", "artifactSha256": "78f1c29238fb1a662d57539a5d291df3cb520ec28b537c126afd0c910cb8ce28", "references": ["external:exact-zip-sp-progressive-disclosure-409", "src/components/ClinicalTrainingClient.tsx", "tests/e2e/practice.spec.mjs"] },
       "legacyGap": "Idempotency tests covered transport retries and repeated identical bodies, while conversation tests did not repeat the same question text after the history had advanced.",
       "regressionTests": [{ "id": "R5-PATIENT-REPEATED-QUESTION-IDEMPOTENCY", "status": "existing", "path": "tests/e2e/practice.spec.mjs", "gate": "milestone", "components": ["real renderer", "same question text", "different conversation turn", "distinct request keys", "retries zero"] }],
-      "replay": { "seed": "r5-repeated-question-v1", "command": "node scripts/run-r5-playwright.mjs --grep \"repeated contextual question uses a new turn idempotency key\" --project desktop-chromium --workers=1 --retries=0", "actions": ["send identical question twice", "capture public request headers", "require distinct turn keys"] }, "fixCommit": null, "relatedCommits": [], "permanentGate": "milestone",
+      "replay": { "seed": "r5-repeated-question-v1", "command": "node scripts/run-r5-playwright.mjs --grep \"repeated contextual question uses a new turn idempotency key\" --project desktop-chromium --workers=1 --retries=0", "actions": ["send identical question twice", "capture public request headers", "require distinct turn keys"] }, "fixCommit": "0a3b835bc6b6ef4431a9c2b6b54ccf6cba3d17c2", "relatedCommits": [], "permanentGate": "milestone",
       "boundaries": { "medicalFactsChanged": false, "scoringContractChanged": false, "privacySensitiveDataStored": false, "dataFilesChanged": false }
     }
   ]
