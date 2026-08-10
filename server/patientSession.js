@@ -1591,6 +1591,9 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   if (contextResolution.reason === "contextual_past_medical_history_duration") {
     matched = omitPatientFactIntents(matched, new Set(["hematuria_onset"]));
   }
+  const inheritedGovernedIntents = contextResolution.inherited
+    ? new Set(governedIntentKeys(matched))
+    : null;
   const offlineRoutes = routePatientIntents(
     contextResolution.reason === "contextual_past_medical_history_duration" ? routedInput : studentInput,
     language,
@@ -1598,7 +1601,8 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   )
     .filter((route) => contextResolution.reason !== "contextual_past_medical_history_duration"
       || route.intent === contextResolution.sourceIntent)
-    .filter((route) => INTENT_WHITELIST.includes(route.intent));
+    .filter((route) => INTENT_WHITELIST.includes(route.intent))
+    .filter((route) => !inheritedGovernedIntents?.size || inheritedGovernedIntents.has(route.intent));
   if (offlineRoutes.length) {
     const previousMatchIndexes = new Map(
       (matched?.answerPlans || []).map((plan) => [plan.intent, plan.matchIndex])

@@ -91,6 +91,10 @@ async function main() {
   assert.doesNotMatch(singleDisease[2].replyText, /每天|一次|一片|qd/i);
   assert.deepEqual(singleDisease[3].disclosurePlan?.authorizedIntents, ["medication_frequency"]);
 
+  const scopedDiseaseMedication = await converse("P001", ["还有其他病吗？", "多久了？", "吃什么药？"]);
+  assert.deepEqual(scopedDiseaseMedication[2].matchedFacts, ["medication_name"]);
+  assert.doesNotMatch(scopedDiseaseMedication[2].replyText, /阿司匹林/);
+
   const recoveredDiseaseDuration = await ask("P001", "多久了？", "zh", [
     { role: "student", text: "还有其他病吗？" },
     { role: "patient", text: singleDisease[0].replyText }
