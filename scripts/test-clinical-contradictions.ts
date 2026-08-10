@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import fs from "node:fs";
 import casesJson from "../data/cases.json";
 import type { CaseData } from "../src/lib/types";
@@ -52,6 +53,6 @@ if (p013.smokingHistory.cigarettesPerDay !== 20 || p013.smokingHistory.years !==
 if (p013.medicationList.map((item) => item.name).join("、") !== "氨氯地平" || p013.anticoagulantUse.status !== "absent" || p013.antiplateletUse.status !== "absent") add("HX-ADD-001", "fixedRegression", "P013 medication list still contains contaminated antithrombotic drugs");
 
 const report = { schemaVersion: "clinical-contradiction-v1", caseCount: cases.length, errorCount: issues.filter((item) => item.severity === "error").length, reviewCount: issues.filter((item) => item.severity === "review").length, issues };
-fs.writeFileSync("data/clinical_contradiction_report.json", `${JSON.stringify(report, null, 2)}\n`, "utf8");
 if (report.errorCount) throw new Error(`Clinical contradiction checks failed: ${report.errorCount}\n${issues.filter((item) => item.severity === "error").slice(0, 12).map((item) => `${item.caseId}.${item.field}: ${item.message}`).join("\n")}`);
+assert.deepEqual(JSON.parse(fs.readFileSync("data/clinical_contradiction_report.json", "utf8")), report, "clinical contradiction report is stale; update it only through the governed data workflow");
 console.log(`Clinical contradiction checks passed for ${cases.length} cases; ${report.reviewCount} author-added facts remain for expert review.`);
