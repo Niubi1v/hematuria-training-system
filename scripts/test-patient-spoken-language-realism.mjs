@@ -26,7 +26,7 @@ async function ask(caseId, sessionId, question) {
 }
 
 const p035 = [
-  ["你哪里不舒服？", /我小便泡沫多.*尿里有血.*脸上还起了皮疹.*2周/u],
+  ["你哪里不舒服？", /^我体检的时候尿检说有血。$/u],
   ["腰痛吗？", /^没有，我没有腰疼。$/u],
   ["血尿是什么颜色？", /^我大多数时候看着和平常一样，偶尔像茶一样。$/u],
   ["多久了？", /^我是差不多2周前发现的。$/u],
@@ -36,6 +36,9 @@ const p035 = [
 for (const [question, expected] of p035) {
   const answer = await ask("HX-ADD-023", "spoken-p035", question);
   assert.match(answer.replyText, expected, `P035 '${question}' was not realized as ordinary patient speech`);
+  if (question === "你哪里不舒服？") {
+    assert.doesNotMatch(answer.replyText, /泡沫|皮疹|2周/u, "P035 opening disclosed details before they were asked");
+  }
 }
 
 let checked = 0;
