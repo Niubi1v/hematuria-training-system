@@ -177,9 +177,6 @@ async function buildAgentResponse(body, agentId, caseData, startedAt) {
   if (agentId === "standardized_patient") {
     if (body.probe) {
       const probe = await probePatientProvider();
-      const publicProbe = { ...probe };
-      delete publicProbe.providerDurationMs;
-      delete publicProbe.providerFirstTokenMs;
       const probeProvider = String(probe.provider || "").toLowerCase();
       const probeClassificationSource = probe.isFallback
         ? "none"
@@ -202,7 +199,10 @@ async function buildAgentResponse(body, agentId, caseData, startedAt) {
           classificationSource: probeClassificationSource,
           classifierStatus: probe.isFallback ? "rejected" : "accepted",
           confidence: 1,
-          ...publicProbe
+          isFallback: Boolean(probe.isFallback),
+          provider: probe.provider,
+          model: probe.model,
+          fallbackReason: probe.fallbackReason || ""
         }
       };
     }

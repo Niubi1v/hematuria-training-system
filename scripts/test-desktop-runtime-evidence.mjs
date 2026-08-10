@@ -59,6 +59,7 @@ function patient({
       classificationSource,
       classifierStatus,
       providerHttpSuccess,
+      generationSource: "local_ai",
       model,
       fallbackReason,
       intent,
@@ -66,6 +67,8 @@ function patient({
       durationMs,
       responseErrors: []
     },
+    isFallback: false,
+    filter: { ok: true, hits: [] },
     contextResolution: { inherited },
     answerPlans: [{ intent, sourceSlotId: requestedSlot, factState, unknownReason }]
   };
@@ -103,10 +106,13 @@ const childPatient = `({
     classificationSource: "local_ai",
     classifierStatus: "accepted",
     providerHttpSuccess: true,
+    generationSource: "local_ai",
     model: "Qwen3-1.7B",
     durationMs: 10,
     responseErrors: []
   },
+  isFallback: false,
+  filter: { ok: true, hits: [] },
   answerPlans: []
 })`;
 

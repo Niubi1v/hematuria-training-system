@@ -156,7 +156,10 @@ function desktopPatientEvidence(patient, options = {}) {
     && runtime.localModelReady
     && classificationSource === "local_ai"
     && classifierStatus === "accepted"
-    && patient?.runtimeTrace?.providerHttpSuccess === true;
+    && patient?.runtimeTrace?.providerHttpSuccess === true
+    && patient?.isFallback === false
+    && patient?.filter?.ok === true
+    && ["local_ai", "ai_cache"].includes(String(patient?.runtimeTrace?.generationSource || ""));
 
   const evidence = {
     ...runtime,

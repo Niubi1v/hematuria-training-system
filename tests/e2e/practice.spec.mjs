@@ -2205,6 +2205,144 @@ test("HEM-P1-034 language switches bind each session to its own attempt token", 
   expect(Math.max(...Array.from(new Set(attemptInitCalls)).map((attemptId) => attemptInitCalls.filter((item) => item === attemptId).length))).toBe(1);
 });
 
+test("@ui-patient-reply-safety persisted internal patient protocol is not restored through messages or timeline", async ({ page }) => {
+  const attemptId = "patient-protocol-hydration";
+  await page.addInitScript(({ seededAttemptId }) => {
+    const attempt = {
+      attemptId: seededAttemptId,
+      caseId: "P001",
+      mode: "free",
+      language: "zh",
+      participantId: "practice-user",
+      schemaVersion: "attempt-v3",
+      createdAt: "2026-08-10T00:00:00.000Z"
+    };
+    const leaked = '{"currentAllowedAnswer":"之前没有做过检查。"}';
+    const internalRoleText = "持久化内部助手回答。";
+    localStorage.setItem("hematuria-language", "zh");
+    localStorage.setItem("hematuria-attempt-pointer-v3:P001:free:zh", JSON.stringify(attempt));
+    localStorage.setItem(`hematuria-attempt-v3:P001:free:zh:${seededAttemptId}`, JSON.stringify({
+      attempt,
+      activeStageNo: 1,
+      messages: [
+        { role: "patient", text: "医生您好。" },
+        { role: "student", text: "之前做过检查吗？" },
+        { role: "patient", text: leaked },
+        { role: "patient", text: { currentAllowedAnswer: "之前没有做过检查。" } },
+        { role: "assistant", text: internalRoleText }
+      ],
+      timeline: [
+        { id: "ask-1", stageNo: 1, type: "ask", label: "学生问", detail: "之前做过检查吗？", at: "2026-08-10T00:00:01.000Z" },
+        { id: "answer-1", stageNo: 1, type: "answer", label: "患者答", detail: leaked, at: "2026-08-10T00:00:02.000Z" },
+        { id: "assistant-1", stageNo: 1, type: "assistant", label: "内部助手", detail: internalRoleText, at: "2026-08-10T00:00:03.000Z" }
+      ]
+    }));
+  }, { seededAttemptId: attemptId });
+  await routeTrainingApiThroughHandler(page);
+
+  await page.goto("/cases/P001/");
+  await expect(page.getByRole("log", { name: "模拟问诊对话" }).getByText("之前做过检查吗？", { exact: true })).toBeVisible();
+  await expect(page.locator("body")).not.toContainText("currentAllowedAnswer");
+  await expect(page.locator("body")).not.toContainText("之前没有做过检查。");
+  await expect(page.locator("body")).not.toContainText("持久化内部助手回答。");
+});
+
+test("@ui-patient-reply-safety grounded compound patient reply is not replaced by the single-topic UI guard", async ({ page }) => {
+  await routeTrainingApiThroughHandler(page);
+  await page.route("**/api/agent-chat/**", (route) => {
+    const request = route.request().postDataJSON();
+    const payload = request.probe
+      ? { replyText: "", matchedSlotIds: [], matchedFacts: [], provider: "deepseek", isFallback: false }
+      : {
+          replyText: "有高血压。没有糖尿病。我长期服用缬沙坦、阿司匹林。",
+          matchedSlotIds: ["PAST_HYPERTENSION", "MED_ALL", "PAST_DIABETES"],
+          matchedFacts: ["hypertension_history", "medication_name", "diabetes_history", "medication_list"],
+          provider: "local-test",
+          generationSource: "local_ai",
+          isFallback: false
+        };
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(payload) });
+  });
+
+  await page.goto("/cases/P001/");
+  await page.getByPlaceholder("输入问诊问题").fill("有没有高血压、糖尿病，平时吃什么药？");
+  await page.getByRole("button", { name: "发送", exact: true }).click();
+
+  const conversation = page.getByRole("log", { name: "模拟问诊对话" });
+  await expect(conversation.getByText("有高血压。没有糖尿病。我长期服用缬沙坦、阿司匹林。", { exact: true })).toBeVisible();
+  await expect(conversation.getByText("医生，您能问得再具体一点吗？我不太明白您的意思。", { exact: true })).toHaveCount(0);
+  await expect.poll(async () => page.evaluate(() => {
+    const key = Object.keys(localStorage).find((item) => item.startsWith("hematuria-attempt-v3:P001:free:zh:"));
+    const saved = key ? JSON.parse(localStorage.getItem(key) || "null") : null;
+    const message = saved?.messages?.findLast?.((item) => item.role === "patient" && item.text.includes("缬沙坦"));
+    return message ? { matchedSlots: message.matchedSlots, matchedFacts: message.matchedFacts } : null;
+  })).toEqual({
+    matchedSlots: ["PAST_HYPERTENSION", "MED_ALL", "PAST_DIABETES"],
+    matchedFacts: ["hypertension_history", "medication_name", "diabetes_history", "medication_list"]
+  });
+});
+
+test("@ui-patient-reply-safety JSON provider reply falls closed without collecting public metadata", async ({ page }) => {
+  await routeTrainingApiThroughHandler(page);
+  await page.route("**/api/agent-chat/**", (route) => {
+    const request = route.request().postDataJSON();
+    const payload = request.probe
+      ? { replyText: "", matchedSlotIds: [], matchedFacts: [], provider: "local-test", isFallback: false }
+      : {
+          replyText: '{"currentAllowedAnswer":"我吸烟，每天一包。"}',
+          matchedSlotIds: ["smoking"],
+          matchedFacts: ["smoking_history"],
+          provider: "local-test",
+          generationSource: "local_ai",
+          isFallback: false
+        };
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(payload) });
+  });
+
+  await page.goto("/cases/P001/");
+  await page.getByPlaceholder("输入问诊问题").fill("抽烟吗？");
+  await page.getByRole("button", { name: "发送", exact: true }).click();
+
+  const conversation = page.getByRole("log", { name: "模拟问诊对话" });
+  await expect(conversation.getByText("医生，您能问得再具体一点吗？我不太明白您的意思。", { exact: true })).toBeVisible();
+  await expect(conversation).not.toContainText("currentAllowedAnswer");
+  await expect(conversation).not.toContainText("我吸烟，每天一包。");
+  await expect.poll(async () => page.evaluate(() => {
+    const key = Object.keys(localStorage).find((item) => item.startsWith("hematuria-attempt-v3:P001:free:zh:"));
+    const saved = key ? JSON.parse(localStorage.getItem(key) || "null") : null;
+    return saved ? { askedSlots: saved.askedSlots, smoking: saved.collected?.smoking } : null;
+  })).toEqual({ askedSlots: [], smoking: false });
+});
+
+test("@ui-patient-reply-safety recovered grounded compound patient reply uses the same scope-aware guard", async ({ page }) => {
+  await mockTrainingState(page);
+  await page.route("**/api/health/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" }) }));
+  await page.route("**/api/session/init/**", (route) => {
+    const request = route.request().postDataJSON();
+    const sessionId = request.forceRefresh ? "compound-session-recovered" : "compound-session-initial";
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId, caseId: "P001", language: "zh", mode: "free", patientOpeningStatement: "医生您好。", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) });
+  });
+  await page.route("**/api/agent-chat/**", (route) => {
+    const request = route.request().postDataJSON();
+    if (request.probe) return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "", matchedSlotIds: [], matchedFacts: [], provider: "deepseek", isFallback: false }) });
+    const recovered = request.sessionId === "compound-session-recovered";
+    const payload = recovered
+      ? { replyText: "有高血压。没有糖尿病。我长期服用缬沙坦、阿司匹林。", matchedSlotIds: ["PAST_HYPERTENSION", "MED_ALL", "PAST_DIABETES"], matchedFacts: ["hypertension_history", "medication_name", "diabetes_history", "medication_list"], provider: "local-test", generationSource: "local_ai", isFallback: false }
+      : { replyText: "这次回答暂时没有生成。", matchedSlotIds: [], matchedFacts: [], provider: "rule", generationSource: "rule_fallback", isFallback: true, fallbackReason: "provider_timeout" };
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(payload) });
+  });
+
+  await page.goto("/cases/P001/");
+  await page.getByPlaceholder("输入问诊问题").fill("有没有高血压、糖尿病，平时吃什么药？");
+  await page.getByRole("button", { name: "发送", exact: true }).click();
+  await expect(page.getByText("问诊辅助暂时不可用，仍可安全继续并稍后重试。")).toBeVisible();
+  await page.getByRole("button", { name: "重新连接", exact: true }).click();
+
+  const conversation = page.getByRole("log", { name: "模拟问诊对话" });
+  await expect(conversation.getByText("有高血压。没有糖尿病。我长期服用缬沙坦、阿司匹林。", { exact: true })).toBeVisible();
+  await expect(conversation.getByText("医生，您能问得再具体一点吗？我不太明白您的意思。", { exact: true })).toHaveCount(0);
+});
+
 test("HEM-P1-033 unsafe patient metadata cannot collect a hidden fact", async ({ page }) => {
   await mockTrainingState(page);
   await page.route("**/api/health/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" }) }));

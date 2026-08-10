@@ -352,13 +352,110 @@ const patientReplyForbiddenTerms = [
   "you need surgery"
 ];
 
-function isUnsafePatientReply(question: string, reply: string, language: LanguageCode) {
+const patientReplyInternalProtocolFields = [
+  "currentAllowedAnswer", "allowedAnswer", "groundedAnswer", "answerPlan", "answerPlans",
+  "matchedFacts", "matchedSlots", "matchedSlotIds", "sourceSlot", "provenance", "classifier",
+  "fallbackReason", "teacherOnly", "localMetadata", "clauseOutcomes"
+];
+
+const patientReplyControlEnvelopeFields = [
+  "intent", "replyText", "provider", "answerSource", "factState", "requestedSlot",
+  "generationSource", "classificationSource", "classifierStatus", "role", "content"
+];
+
+function containsJsonContainer(text: string) {
+  for (let start = 0; start < text.length; start += 1) {
+    if (text[start] !== "{" && text[start] !== "[") continue;
+    const stack: string[] = [];
+    let quote = "";
+    let escaped = false;
+    for (let index = start; index < text.length; index += 1) {
+      const character = text[index];
+      if (quote) {
+        if (escaped) escaped = false;
+        else if (character === "\\") escaped = true;
+        else if (character === quote) quote = "";
+        continue;
+      }
+      if (character === '"') {
+        quote = character;
+      } else if (character === "{" || character === "[") {
+        stack.push(character === "{" ? "}" : "]");
+      } else if (character === "}" || character === "]") {
+        if (stack.pop() !== character) break;
+        if (stack.length === 0) {
+          try {
+            const parsed = JSON.parse(text.slice(start, index + 1));
+            if (parsed && typeof parsed === "object") return true;
+          } catch {}
+          break;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+function hasInternalPatientProtocolShape(reply: unknown) {
+  if (typeof reply !== "string") return true;
+  const value = reply.trim();
+  if (value.length > 600) return true;
+  const protocolFields = [...patientReplyInternalProtocolFields, ...patientReplyControlEnvelopeFields].join("|");
+  const controlEnvelope = new RegExp(`(?:^|[\\r\\n])\\s*(?:${patientReplyControlEnvelopeFields.join("|")})\\s*[:=：]`, "i");
+  return /```/.test(value)
+    || /^(?:\{[\s\S]*\}|\[[\s\S]*\])$/.test(value)
+    || containsJsonContainer(value)
+    || /(?:^|[\r\n]|[:：])\s*[\[{][\s\S]*?[\]}]\s*(?=$|[\r\n])/.test(value)
+    || new RegExp(`["'](?:${protocolFields})["']\\s*:`, "i").test(value)
+    || /^(?:system|assistant)\s*[:：]/i.test(value)
+    || controlEnvelope.test(value)
+    || patientReplyInternalProtocolFields.some((field) => new RegExp(`\\b${field}\\b`, "i").test(value));
+}
+
+const patientReplyTopicScopes = [
+  { reply: /吸烟|抽烟|包年/g, question: /吸烟|抽烟|烟龄|几包|包年/, identifiers: /smoking_history|LIFE_SMOKING|(?:^|\s)smoking(?:=|\s|$)/i },
+  { reply: /饮酒|喝酒/g, question: /喝酒|饮酒|白酒|酒量/, identifiers: /alcohol_history|LIFE_ALCOHOL|(?:^|\s)alcohol(?:=|\s|$)/i },
+  { reply: /高血压/g, question: /高血压/, identifiers: /hypertension_history|PAST_HYPERTENSION|(?:^|\s)hypertension(?:=|\s|$)/i },
+  { reply: /糖尿病/g, question: /糖尿病/, identifiers: /diabetes_history|PAST_DIABETES|(?:^|\s)diabetes(?:=|\s|$)/i },
+  { reply: /乙肝|肝炎/g, question: /乙肝|肝炎/, identifiers: /hepatitis|liver_disease|PAST_LIVER/i },
+  { reply: /结核/g, question: /结核/, identifiers: /tuberculosis|PAST_TUBERCULOSIS/i },
+  { reply: /输血/g, question: /输血/, identifiers: /transfusion|PAST_TRANSFUSION/i },
+  { reply: /子女|父母/g, question: /子女|父母|家里|家族/, identifiers: /family_history|FAMILY_HISTORY/i },
+  { reply: /血尿|肉眼|无痛/g, question: /血尿|肉眼|无痛/, identifiers: /hematuria_|painless/i },
+  { reply: /血块|血凝块|凝血块/g, question: /血块|血凝块|凝血块/, identifiers: /blood_clots|(?:^|\s)clots(?:=|\s|$)/i },
+  { reply: /鲜红|暗红|洗肉水|茶色|酱油|红色/g, question: /颜色|鲜红|暗红|洗肉水|茶色|酱油|红色|尿色/, identifiers: /urine_color/i },
+  { reply: /全程|终末|起始|最后几滴|一直红/g, question: /全程|终末|起始|最后几滴|一直红/, identifiers: /hematuria_phase/i },
+  { reply: /CT|影像/g, question: /CT|影像|片子|B超|彩超|MRI|核磁/i, identifiers: /prior_investigation|PATIENT_PRIOR_INVESTIGATIONS/i },
+  { reply: /诊断/g, question: /诊断|什么病|医生.*(?:说|讲)/, identifiers: /prior_diagnosis_patient_aware/i },
+  { reply: /阿司匹林/g, question: /吃什么药|用什么药|服.*药|用药|药物/, identifiers: /medication|MED_/i },
+  { reply: /肿瘤|膀胱癌/g, question: /肿瘤|膀胱癌|癌/, identifiers: /malignancy_history|PAST_MALIGNANCY/i },
+  { reply: /高龄/g, question: /年龄|多大|高龄/, identifiers: /(?:^|\s)age(?:=|\s|$)/i }
+];
+
+function removeAuthorizedPatientReplyTopics(question: string, reply: string, matchedFacts: readonly string[], matchedSlotIds: readonly string[]) {
+  const identifiers = [...matchedFacts, ...matchedSlotIds].map(String).join(" ");
+  return patientReplyTopicScopes.reduce((remaining, topic) => (
+    topic.question.test(question) || topic.identifiers.test(identifiers)
+      ? remaining.replace(topic.reply, "")
+      : remaining
+  ), reply);
+}
+
+export function isUnsafePatientReply(
+  question: string,
+  reply: string,
+  language: LanguageCode,
+  matchedFacts: readonly string[] = [],
+  matchedSlotIds: readonly string[] = []
+) {
   const compactQuestion = question.replace(/\s+/g, "");
   const compactReply = reply.replace(/\s+/g, "");
   if (!reply.trim()) return true;
+  if (hasInternalPatientProtocolShape(reply)) return true;
   if (patientReplyForbiddenTerms.some((term) => reply.includes(term))) return true;
   if (language === "en" && /[\u3400-\u9fff]/.test(reply)) return true;
   if (compactReply.length > 600) return true;
+  const unscopedReply = removeAuthorizedPatientReplyTopics(compactQuestion, compactReply, matchedFacts, matchedSlotIds);
 
   const askedSmoking = /吸烟|抽烟|烟龄|几包|包年/.test(compactQuestion);
   const askedAlcohol = /喝酒|饮酒|白酒|酒量/.test(compactQuestion);
@@ -366,11 +463,11 @@ function isUnsafePatientReply(question: string, reply: string, language: Languag
   const askedColor = /颜色|鲜红|暗红|洗肉水|茶色|酱油|红色/.test(compactQuestion);
   const askedClot = /血块|血凝块|凝血块/.test(compactQuestion);
 
-  if (askedSmoking && /饮酒|喝酒|糖尿病|乙肝|肝炎|结核|输血|子女|父母|高血压|血尿|血块|肉眼|无痛|阿司匹林|肿瘤|膀胱癌|高龄/.test(compactReply)) return true;
-  if (askedAlcohol && /吸烟|抽烟|包年|糖尿病|乙肝|肝炎|结核|输血|子女|父母|高血压|血尿|血块|肉眼|无痛|阿司匹林|肿瘤|膀胱癌|高龄/.test(compactReply)) return true;
-  if (askedHypertension && /吸烟|抽烟|饮酒|喝酒|糖尿病|乙肝|肝炎|结核|输血|子女|父母/.test(compactReply)) return true;
-  if (askedColor && /CT|影像|血块|无痛|全程|终末|诊断/.test(compactReply)) return true;
-  if (askedClot && /鲜红|暗红|洗肉水|茶色|全程|终末|无痛|诊断/.test(compactReply)) return true;
+  if (askedSmoking && /饮酒|喝酒|糖尿病|乙肝|肝炎|结核|输血|子女|父母|高血压|血尿|血块|肉眼|无痛|阿司匹林|肿瘤|膀胱癌|高龄/.test(unscopedReply)) return true;
+  if (askedAlcohol && /吸烟|抽烟|包年|糖尿病|乙肝|肝炎|结核|输血|子女|父母|高血压|血尿|血块|肉眼|无痛|阿司匹林|肿瘤|膀胱癌|高龄/.test(unscopedReply)) return true;
+  if (askedHypertension && /吸烟|抽烟|饮酒|喝酒|糖尿病|乙肝|肝炎|结核|输血|子女|父母/.test(unscopedReply)) return true;
+  if (askedColor && /CT|影像|血块|无痛|全程|终末|诊断/.test(unscopedReply)) return true;
+  if (askedClot && /鲜红|暗红|洗肉水|茶色|全程|终末|无痛|诊断/.test(unscopedReply)) return true;
 
   return false;
 }
@@ -441,7 +538,9 @@ function sanitizeTimeline(value: unknown, lang: LanguageCode): TimelineEvent[] {
     const stageNo = Number(item.stageNo);
     if (!Number.isInteger(stageNo) || stageNo < 1 || stageNo > 7) return [];
     const allowedTypes = new Set<TimelineEvent["type"]>(["ask", "answer", "technical", "exam", "order", "result", "diagnosis", "mdt", "treatment", "perioperative", "submit", "timeout"]);
-    const type = allowedTypes.has(item.type as TimelineEvent["type"]) ? item.type as TimelineEvent["type"] : "technical";
+    if (!allowedTypes.has(item.type as TimelineEvent["type"])) return [];
+    const type = item.type as TimelineEvent["type"];
+    if (type === "answer" && hasInternalPatientProtocolShape(item.detail)) return [];
     const label = studentFacingClinicalText(item.label, lang, lang === "en" ? "Training record" : "训练记录");
     const rawDetail = studentFacingClinicalText(item.detail, lang);
     const detail = !rawDetail || /[:：]\s*$/u.test(rawDetail)
@@ -1874,7 +1973,11 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       if (saved.answers) setAnswers(sanitizeAnswers(saved.answers));
       if (saved.submitted) setSubmitted(saved.submitted);
       if (saved.finalReport) setFinalReport(saved.finalReport);
-      if (saved.messages) setMessages(saved.messages.map((message, index) => index === 0 && message.role === "patient" ? { ...message, text: patientOpening(targetLang) } : message));
+      if (saved.messages) setMessages(saved.messages
+        .filter((message) => (message?.role === "student" || message?.role === "patient")
+          && typeof message.text === "string"
+          && (message.role !== "patient" || !hasInternalPatientProtocolShape(message.text)))
+        .map((message, index) => index === 0 && message.role === "patient" ? { ...message, text: patientOpening(targetLang) } : message));
       if (saved.askedSlots) setAskedSlots(saved.askedSlots);
       if (saved.collected) setCollected(saved.collected);
       if (saved.examLogs) setExamLogs(saved.examLogs);
@@ -2547,7 +2650,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
         signal: controller.signal
       });
       if (generation !== aiGenerationRef.current) return;
-      const safeAiReply = aiResult.replyText && !isUnsafePatientReply(text, aiResult.replyText, lang);
+      const safeAiReply = aiResult.replyText && !isUnsafePatientReply(text, aiResult.replyText, lang, aiResult.matchedFacts, aiResult.matchedSlotIds);
       answerText = safeAiReply ? aiResult.replyText : ruleSafeFallback;
       matchedSlots = safeAiReply ? aiResult.matchedSlotIds || [] : [];
       matchedFacts = safeAiReply ? aiResult.matchedFacts || [] : [];
@@ -2598,7 +2701,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
   }
 
   function applyRecoveredReply(aiResult: PatientReplyApiResponse, pending: PendingFailedQuestion, eventLabel: string) {
-    if (!aiResult.replyText || aiResult.isFallback || isUnsafePatientReply(pending.question, aiResult.replyText, lang)) return false;
+    if (!aiResult.replyText || aiResult.isFallback || isUnsafePatientReply(pending.question, aiResult.replyText, lang, aiResult.matchedFacts, aiResult.matchedSlotIds)) return false;
     const matchedSlots = aiResult.matchedSlotIds || [];
     const matchedFacts = aiResult.matchedFacts || [];
     const matchedKeys = unique(matchedSlots.map((slot) => canonicalToCollected[slot]).filter(Boolean)) as KeyPointId[];

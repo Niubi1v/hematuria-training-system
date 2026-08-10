@@ -183,6 +183,70 @@ function blockedHits(text) {
   });
 }
 
+const patientInternalProtocolFields = [
+  "currentAllowedAnswer", "allowedAnswer", "groundedAnswer", "answerPlan", "answerPlans",
+  "matchedFacts", "matchedSlots", "matchedSlotIds", "sourceSlot", "provenance", "classifier",
+  "fallbackReason", "teacherOnly", "localMetadata", "clauseOutcomes"
+];
+
+const patientInternalControlEnvelopeFields = [
+  "intent", "replyText", "provider", "answerSource", "factState", "requestedSlot",
+  "generationSource", "classificationSource", "classifierStatus", "role", "content"
+];
+
+function containsJsonContainer(text) {
+  const value = String(text || "");
+  for (let start = 0; start < value.length; start += 1) {
+    if (value[start] !== "{" && value[start] !== "[") continue;
+    const stack = [];
+    let quote = "";
+    let escaped = false;
+    for (let index = start; index < value.length; index += 1) {
+      const character = value[index];
+      if (quote) {
+        if (escaped) escaped = false;
+        else if (character === "\\") escaped = true;
+        else if (character === quote) quote = "";
+        continue;
+      }
+      if (character === '"') {
+        quote = character;
+      } else if (character === "{" || character === "[") {
+        stack.push(character === "{" ? "}" : "]");
+      } else if (character === "}" || character === "]") {
+        if (stack.pop() !== character) break;
+        if (stack.length === 0) {
+          try {
+            const parsed = JSON.parse(value.slice(start, index + 1));
+            if (parsed && typeof parsed === "object") return true;
+          } catch {}
+          break;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+function validatePatientVisibleOutputShape(text) {
+  const value = String(text || "").trim();
+  const hits = [];
+  const protocolFields = [...patientInternalProtocolFields, ...patientInternalControlEnvelopeFields].join("|");
+  if (!value) hits.push("empty_output");
+  if (value.length > 600) hits.push("oversized_output");
+  if (/```/u.test(value)) hits.push("markdown_code_fence");
+  if (/^(?:\{[\s\S]*\}|\[[\s\S]*\])$/u.test(value)) hits.push("json_envelope");
+  if (containsJsonContainer(value)) hits.push("json_container");
+  if (/(?:^|[\r\n]|[:：])\s*[\[{][\s\S]*?[\]}]\s*(?=$|[\r\n])/u.test(value)) hits.push("embedded_json_envelope");
+  if (new RegExp(`["'](?:${protocolFields})["']\\s*:`, "iu").test(value)) hits.push("quoted_control_envelope");
+  if (/^(?:system|assistant)\s*[:：]/iu.test(value)) hits.push("role_envelope");
+  if (new RegExp(`(?:^|[\\r\\n])\\s*(?:${patientInternalControlEnvelopeFields.join("|")})\\s*[:=：]`, "iu").test(value)) hits.push("control_envelope");
+  for (const field of patientInternalProtocolFields) {
+    if (new RegExp(`\\b${field}\\b`, "i").test(value)) hits.push(field);
+  }
+  return { ok: hits.length === 0, hits: [...new Set(hits)] };
+}
+
 function cleanPatientValue(value) {
   const text = String(value || "")
     .replace(/\s+/g, " ")
@@ -635,12 +699,16 @@ function allowedHistoryTerms(matchedSlotIds = []) {
 
 function filterPatientOutput(text, matchedSlotIds = []) {
   const allowedTerms = allowedHistoryTerms(matchedSlotIds);
-  const hits = blockedHits(text).filter((term) => !allowedTerms.has(term));
+  const shape = validatePatientVisibleOutputShape(text);
+  const hits = [...new Set([
+    ...blockedHits(text).filter((term) => !allowedTerms.has(term)),
+    ...shape.hits
+  ])];
   const lines = String(text || "").split(/\n+/).map((line) => line.trim()).filter(Boolean);
   const hasBulletShape = lines.length > 0 && lines.every((line) => !/^[-•*#]/.test(line));
   const maxTotalLength = Math.max(180, matchedSlotIds.length * 80, lines.length * 80);
   const tooLong = lines.some((line) => line.length > 80) || String(text || "").length > maxTotalLength;
-  return { ok: hits.length === 0 && hasBulletShape && !tooLong, hits, hasBulletShape, tooLong };
+  return { ok: shape.ok && hits.length === 0 && hasBulletShape && !tooLong, hits, hasBulletShape, tooLong, shapeOk: shape.ok };
 }
 
 function readProfileField(profile, path) {
@@ -745,7 +813,7 @@ Use requiredOutputLanguage. Every item in requiredDirectAnswers must appear verb
 
 const patientNaturalizerCorrectionPrompt = `
 You are correcting a standardized-patient response that failed a strict governed-fact check.
-Return currentAllowedAnswer verbatim and nothing else. Do not paraphrase, translate, add, remove, or reorder any content.
+Return only the plain text that the patient would say in one or a few sentences. Do not output or return JSON, field names, explanations, code fences, currentAllowedAnswer, allowedAnswer, or any control envelope. Preserve the governed answer verbatim; do not paraphrase, translate, add, remove, or reorder any medical content.
 `.trim();
 
 function preservesGovernedAnswer(reply, allowedAnswer, answerPlans = []) {
@@ -953,6 +1021,17 @@ function projectRoutedPatientFacts(caseId, caseData, routes, language) {
     projected = mergePatientFactMatches(projected, current);
   }
   return projected;
+}
+
+function evaluateNaturalizedPatientOutput(rawText, matchedSlotIds, language, allowedAnswer, answerPlans) {
+  const shape = validatePatientVisibleOutputShape(rawText);
+  const replyText = formatPatientReply(rawText);
+  const filter = filterPatientOutput(replyText, matchedSlotIds);
+  const languageOk = language !== "en" || !/[\u3400-\u9fff]/u.test(replyText);
+  const preservesAnswer = shape.ok && filter.ok && languageOk
+    ? preservesGovernedAnswer(replyText, allowedAnswer, answerPlans)
+    : false;
+  return { shape, replyText, filter, languageOk, preservesAnswer };
 }
 
 function omitPatientFactIntents(matched, omittedIntents) {
@@ -1351,12 +1430,17 @@ async function naturalizeGovernedPatientAnswer({
       reasoningEffort: thinking.reasoningEffort
     });
     let acceptedResponse = response;
-    let replyText = formatPatientReply(response.text);
-    let filter = filterPatientOutput(replyText, matched?.governanceSlotIds || matched?.matchedSlotIds || []);
-    let languageOk = language !== "en" || !/[\u3400-\u9fff]/u.test(replyText);
-    let preservesAnswer = preservesGovernedAnswer(replyText, fallback.replyText, answerPlans);
-    const maySafelyCorrect = filter.hits.length === 0
-      && (!filter.ok || !languageOk || !preservesAnswer);
+    const filterSlotIds = matched?.governanceSlotIds || matched?.matchedSlotIds || [];
+    let evaluation = evaluateNaturalizedPatientOutput(
+      response.text,
+      filterSlotIds,
+      language,
+      fallback.replyText,
+      answerPlans
+    );
+    const maySafelyCorrect = !evaluation.shape.ok
+      || (evaluation.filter.hits.length === 0
+        && (!evaluation.filter.ok || !evaluation.languageOk || !evaluation.preservesAnswer));
     if (maySafelyCorrect) {
       acceptedResponse = await callLLM({
         systemPrompt: patientNaturalizerCorrectionPrompt,
@@ -1371,18 +1455,21 @@ async function naturalizeGovernedPatientAnswer({
         thinkingMode: thinking.thinkingMode,
         reasoningEffort: thinking.reasoningEffort
       });
-      replyText = formatPatientReply(acceptedResponse.text);
-      filter = filterPatientOutput(replyText, matched?.governanceSlotIds || matched?.matchedSlotIds || []);
-      languageOk = language !== "en" || !/[\u3400-\u9fff]/u.test(replyText);
-      preservesAnswer = preservesGovernedAnswer(replyText, fallback.replyText, answerPlans);
+      evaluation = evaluateNaturalizedPatientOutput(
+        acceptedResponse.text,
+        filterSlotIds,
+        language,
+        fallback.replyText,
+        answerPlans
+      );
     }
-    if (!filter.ok || !languageOk || !preservesAnswer) {
+    if (!evaluation.shape.ok || !evaluation.filter.ok || !evaluation.languageOk || !evaluation.preservesAnswer) {
       return {
         ...fallback,
         provider: config.provider,
         model: config.model,
         isFallback: true,
-        filter: { ...filter, hits: [] },
+        filter: { ...evaluation.filter, hits: [] },
         safetyFlags: [...(fallback.safetyFlags || []), "ai_response_blocked"],
         fallbackReason: "ai_response_blocked",
         ...(localMetadata ? { localMetadata, localMetadataApplied: true } : {})
@@ -1390,11 +1477,11 @@ async function naturalizeGovernedPatientAnswer({
     }
     const result = {
       ...fallback,
-      replyText,
+      replyText: evaluation.replyText,
       provider: acceptedResponse.provider,
       model: acceptedResponse.model,
       isFallback: false,
-      filter,
+      filter: evaluation.filter,
       safetyFlags: fallback.safetyFlags || [],
       fallbackReason: "",
       allowedAnswer: fallback.replyText,
@@ -1761,6 +1848,7 @@ module.exports = {
   buildRawPatientFacingProfile,
   buildTeacherOnlyData,
   filterPatientOutput,
+  validatePatientVisibleOutputShape,
   getSession,
   probePatientProvider,
   providerFallbackReason,

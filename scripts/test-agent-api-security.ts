@@ -200,11 +200,53 @@ async function verifyProviderTimingNonDisclosure(session: AuthorizedSession) {
     assert.match(response.headers["server-timing"], /^app;dur=\d+\.\d, provider;dur=\d+\.\d, firsttoken;dur=\d+\.\d$/);
     assert.equal("providerDurationMs" in (response.payload as Record<string, unknown>), false, "internal timing must stay out of the JSON body");
     assert.equal("providerFirstTokenMs" in (response.payload as Record<string, unknown>), false, "first-token timing must stay out of the JSON body");
+    for (const field of [
+      "allowedAnswer", "currentAllowedAnswer", "answerPlans", "clauseOutcomes", "localMetadata",
+      "provenance", "classifier", "teacherOnly", "source", "governance"
+    ]) {
+      assert.equal(field in (response.payload as Record<string, unknown>), false, `probe leaked internal field: ${field}`);
+    }
   } finally {
     globalThis.fetch = originalFetch;
     delete process.env.LLM_ENABLE_AI_PATIENT;
     delete process.env.LLM_API_BASE_URL;
     delete process.env.LLM_MODEL;
+  }
+}
+
+async function verifyPatientResponsePublicAllowlist(session: AuthorizedSession) {
+  const previousAiPatient = process.env.LLM_ENABLE_AI_PATIENT;
+  process.env.LLM_ENABLE_AI_PATIENT = "false";
+  try {
+    const response = await call(agentHandler, {
+      origin: "https://allowed.example",
+      ip: "patient-public-allowlist",
+      headers: { "x-idempotency-key": "patient-public-allowlist-request" },
+      body: authorizedBody(session, { agentId: "standardized_patient", sessionMode: session.mode, studentInput: "查过尿吗？" })
+    });
+    assert.equal(response.statusCode, 200);
+    const payload = response.payload as Record<string, unknown>;
+    const allowed = new Set([
+      "agentId", "replyText", "usedModel", "provider", "visibleToStudent", "revealedDataKeys", "blockedDataKeys",
+      "safetyFlags", "isFallback", "generationSource", "classificationSource", "classifierStatus", "matchedSlotIds",
+      "matchedFacts", "answerSource", "factSource", "confidence", "fallbackReason", "providerConfigured",
+      "providerHttpSuccess", "thinkingExecuted", "thinkingMode"
+    ]);
+    assert.equal(typeof payload.replyText, "string");
+    assert.ok(Array.isArray(payload.matchedSlotIds), "patient response matchedSlotIds must remain an array");
+    assert.ok(Array.isArray(payload.matchedFacts), "patient response matchedFacts must remain an array");
+    assert.equal("desktopEvidence" in payload, false, "non-debug patient response must not expose desktop diagnostics");
+    assert.doesNotMatch(String(payload.replyText), /currentAllowedAnswer|allowedAnswer|```|^[\[{]/);
+    assert.deepEqual(Object.keys(payload).filter((field) => !allowed.has(field)), [], "patient response exposed an unapproved public field");
+    for (const field of [
+      "allowedAnswer", "currentAllowedAnswer", "answerPlans", "clauseOutcomes", "localMetadata",
+      "provenance", "classifier", "teacherOnly", "source", "governance"
+    ]) {
+      assert.equal(field in payload, false, `patient response leaked internal field: ${field}`);
+    }
+  } finally {
+    if (previousAiPatient === undefined) delete process.env.LLM_ENABLE_AI_PATIENT;
+    else process.env.LLM_ENABLE_AI_PATIENT = previousAiPatient;
   }
 }
 
@@ -769,6 +811,7 @@ async function main() {
   const session = await createAuthorizedSession("shared-agent");
   await verifySessionCapabilityBoundary(session);
   await verifyGenerationSourceClassification(session);
+  await verifyPatientResponsePublicAllowlist(session);
   await verifyProviderTimingNonDisclosure(session);
   await verifyProviderFailureNonDisclosure(session);
   await verifyAgentIdempotency(session);
