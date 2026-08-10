@@ -168,6 +168,11 @@ function hasAny(text, words) {
   return words.some((word) => value.includes(normalize(word)));
 }
 
+function isDiagnosisRequest(text, language) {
+  return hasAny(text, language === "en" ? diagnosisWordsEn : diagnosisWords)
+    || (language !== "en" && /(?:判断|觉得).{0,8}(?:我)?(?:得的是|得了?|是).{0,3}(?:什么病|啥病|啥)$/.test(normalize(text)));
+}
+
 function blockedHits(text) {
   const value = String(text || "").toLowerCase();
   return patientBlockedTerms.filter((term) => {
@@ -813,7 +818,7 @@ function profileFallbackForQuestion(question, profile) {
 }
 
 function safeFallbackForQuestion(question, profile, language = "zh") {
-  if (hasAny(question, language === "en" ? diagnosisWordsEn : diagnosisWords)) return { replyText: language === "en" ? "I do not know the diagnosis. The doctor will need to decide." : "这个我不清楚，需要医生判断。", safetyFlags: ["blocked_diagnosis_request"] };
+  if (isDiagnosisRequest(question, language)) return { replyText: language === "en" ? "I do not know the diagnosis. The doctor will need to decide." : "这个我不清楚，需要医生判断。", safetyFlags: ["blocked_diagnosis_request"] };
   if (hasAny(question, language === "en" ? reportWordsEn : reportWords)) return { replyText: language === "en" ? "I cannot explain the exact results. Please check the formal report." : "我说不清楚，得看检查报告。", safetyFlags: ["blocked_report_request"] };
   const matched = language === "en" ? "" : profileFallbackForQuestion(question, profile);
   return { replyText: oneBullet(matched, language), safetyFlags: ["llm_error_fallback"] };
@@ -948,6 +953,30 @@ function projectRoutedPatientFacts(caseId, caseData, routes, language) {
     projected = mergePatientFactMatches(projected, current);
   }
   return projected;
+}
+
+function omitPatientFactIntents(matched, omittedIntents) {
+  if (!matched?.answerPlans?.length) return matched;
+  const answerPlans = matched.answerPlans.filter((plan) => !omittedIntents.has(plan.intent));
+  if (answerPlans.length === matched.answerPlans.length) return matched;
+  if (!answerPlans.length) return null;
+  const unique = (values) => [...new Set(values.filter(Boolean))];
+  const intents = new Set(answerPlans.map((plan) => plan.intent));
+  const slots = new Set(answerPlans.map((plan) => plan.sourceSlotId).filter(Boolean));
+  const keepIntents = (values) => unique((values || []).filter((value) => intents.has(value)));
+  const keepSlots = (values) => unique((values || []).filter((value) => slots.has(value)));
+  return {
+    ...matched,
+    replyText: unique(answerPlans.map(renderAnswerPlan)).join("\n"),
+    matchedSlotIds: unique(answerPlans.map((plan) => plan.sourceSlotId)),
+    matchedFacts: unique(answerPlans.map((plan) => plan.intent)),
+    governanceSlotIds: keepSlots(matched.governanceSlotIds || matched.matchedSlotIds),
+    collectableSlotIds: keepSlots(matched.collectableSlotIds || matched.matchedSlotIds),
+    collectableFacts: keepIntents(matched.collectableFacts || matched.matchedFacts),
+    factStates: Object.fromEntries(Object.entries(matched.factStates || {}).filter(([intent]) => intents.has(intent))),
+    answerPlans,
+    unknownReasonCodes: Object.fromEntries(Object.entries(matched.unknownReasonCodes || {}).filter(([intent]) => intents.has(intent)))
+  };
 }
 
 function projectSemanticPatientFacts(caseId, caseData, semanticDecision, language) {
@@ -1386,7 +1415,7 @@ async function naturalizeGovernedPatientAnswer({
       model: config.model,
       isFallback: true,
       filter: { ok: true, hits: [] },
-      fallbackReason: fallback.fallbackReason || fallbackReason,
+      fallbackReason,
       ...(localMetadata ? { localMetadata, localMetadataApplied: true } : {})
     };
   }
@@ -1410,17 +1439,35 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   const patientKnowledge = matchPatientKnowableFacts(caseData, routedInput, language);
   let matched = mergePatientFactMatches(mergePatientFactMatches(canonical, structured), patientKnowledge);
   const offlineRoutes = routePatientIntents(
-    routedInput,
+    studentInput,
     language,
     contextResolution.sourceIntent || session?.conversationState?.currentTopic
   )
     .filter((route) => INTENT_WHITELIST.includes(route.intent));
   if (offlineRoutes.length) {
-    matched = projectRoutedPatientFacts(
+    const previousMatchIndexes = new Map(
+      (matched?.answerPlans || []).map((plan) => [plan.intent, plan.matchIndex])
+    );
+    const projected = projectRoutedPatientFacts(
       caseId,
       caseData,
       offlineRoutes,
       language
+    );
+    const routed = projected && {
+      ...projected,
+      answerPlans: (projected.answerPlans || []).map((plan) => ({
+        ...plan,
+        matchIndex: previousMatchIndexes.get(plan.intent) ?? plan.matchIndex
+      }))
+    };
+    const routedIntents = offlineRoutes.map((route) => route.intent);
+    const routedConfusables = offlineRoutes.flatMap((route) =>
+      patientFactOntology.find((definition) => definition.key === route.intent)?.confusableWith || []
+    );
+    matched = mergePatientFactMatches(
+      omitPatientFactIntents(matched, new Set([...routedIntents, ...routedConfusables])),
+      routed
     );
   }
   if (!matched) matched = recoverRecentResolvedFact(session, contextResolution, routedInput, language);
@@ -1461,13 +1508,18 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   const patientKnowledgePlans = matched?.answerPlans || [];
   const invasiveReportRequest = /(?:膀胱镜|病理|活检|cystoscopy|pathology|biopsy)/i.test(String(routedInput || ""));
   const crossSectionalReportRequest = /(?:CTU|CT|MRI|磁共振|计算机断层)/i.test(String(routedInput || ""));
+  const exactReportDetailRequest = boundaryDetailIntent.test(String(routedInput || ""))
+    && /具体|精确|数值|exact|specific|value/i.test(String(routedInput || ""));
   const patientKnownReport = patientKnowledgePlans.some((plan) =>
     ["prior_investigations", "prior_investigation_results_patient_aware"].includes(plan.intent)
+    && !exactReportDetailRequest
     && !invasiveReportRequest
     && (!crossSectionalReportRequest || plan.factState !== FACT_STATES.EXACT_VALUE)
   );
   const priorDiagnosisHandled = patientKnowledgePlans.some((plan) =>
     plan.intent === "prior_diagnosis_patient_aware"
+  ) && !patientKnowledgePlans.some((plan) =>
+    [FACT_STATES.NEEDS_REVIEW, FACT_STATES.MEDICAL_CONFLICT].includes(plan.factState)
   );
   const isExplicitHistoryQuestion = explicitHistoryContext.test(String(studentInput || ""))
     && !boundaryDetailIntent.test(String(routedInput || ""))
@@ -1476,7 +1528,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
   const isTemporalFindingQuestion = matchedSlotIds.includes("hematuria_onset")
     && /什么时候|多久|几天|几周|几个月|何时|when|how long/i.test(String(routedInput || ""))
     && !/结果|数值|多少个|显示|提示|报告内容|what.*result|result.*(?:show|value)|report.*(?:show|say)/i.test(String(routedInput || ""));
-  if (!isExplicitHistoryQuestion && !priorDiagnosisHandled && hasAny(studentInput, language === "en" ? diagnosisWordsEn : diagnosisWords)) {
+  if (!isExplicitHistoryQuestion && !priorDiagnosisHandled && isDiagnosisRequest(studentInput, language)) {
     return { replyText: language === "en" ? "I do not know the diagnosis. The doctor will need to decide." : "这个我不清楚，需要医生判断。", provider: "rule", model: "local-rule", isFallback: true, filter: { ok: true, hits: [] }, safetyFlags: ["blocked_diagnosis_request"], matchedSlotIds: [], matchedFacts: [], answerSource: "rule", confidence: 1, fallbackReason: "diagnosis_boundary", clauseOutcomes: [{ intent: null, sourceSlotId: null, status: "rejected_boundary", factState: FACT_STATES.MISSING, unknownReason: null }], contextResolution };
   }
   if (!isExplicitHistoryQuestion && !isTemporalFindingQuestion && !patientKnownReport && hasAny(studentInput, language === "en" ? reportWordsEn : reportWords)) {

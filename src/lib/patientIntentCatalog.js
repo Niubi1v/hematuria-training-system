@@ -49,7 +49,7 @@ const priorityIntentDefinitions = Object.freeze([
       zh: Object.freeze(["腰痛", "腰疼", "腰部痛", "腰部疼", "肾区痛", "肾区疼", "后腰痛", "侧腰痛"]),
       en: Object.freeze(["flank pain", "loin pain", "pain in the side", "pain around the kidney", "side of your back hurt"])
     }),
-    confusableWith: Object.freeze(["abdominal_pain", "suprapubic_pain", "renal_colic"])
+    confusableWith: Object.freeze(["pain", "abdominal_pain", "suprapubic_pain", "renal_colic"])
   }),
   Object.freeze({
     key: "fever", sourceSlotId: "fever_chills", labelZh: "发热", labelEn: "Fever",
@@ -341,31 +341,37 @@ const patientKnowledgeIntentDefinitions = [
   },
   {
     key: "prior_investigations", sourceSlotId: "PATIENT_PRIOR_INVESTIGATIONS", labelZh: "既往检查项目", labelEn: "Prior investigations",
+    confusableWith: ["prior_medical_visit"],
     aliases: { zh: ["有没有做什么检查", "做检查了吗", "做过哪些检查", "之前查过什么", "去医院查什么了", "都做了什么检查", "有没有验过", "以前检查过吗", "医院给你查了吗", "为这个做过检查没有"], en: ["what tests have you had", "did you have any tests", "were any investigations done", "what did the hospital check", "have you been tested for this", "which examinations were performed", "did they run any tests", "what tests were done before", "have you had investigations", "did the clinic test anything"] },
     pattern: /(?:做|查|验)(?:了|过)?(?:什么|哪些)(?:检查|检验|项目)?|(?:做|查|验).{0,8}(?:检查|检验|项目).{0,8}(?:吗|了|没有|过)|(?:做过|查过|验过)(?:尿|血|CTU?|MRI|磁共振|B超|彩超|超声)(?:吗|没有)?|有没有(?:做过检查|查过|验过|检查过)|(?:以前|之前|医院).{0,8}(?:检查过|查过|验过|给你查)|(?:什么|哪些).*(?:检查|检验).*(?:做|查)|what tests|which (?:tests|examinations)|any (?:tests|investigations)|tests? (?:were|was|have been) done/i
   },
   {
     key: "prior_investigation_results_patient_aware", sourceSlotId: "PATIENT_PRIOR_RESULTS", labelZh: "患者知晓的既往检查结果", labelEn: "Patient-aware prior results",
+    confusableWith: ["prior_medical_visit"],
     aliases: { zh: ["检查结果怎么样", "结果出来了吗", "查出来什么", "报告怎么说", "尿检怎么样", "查尿结果呢", "B超结果呢", "CT结果呢", "医生说检查有什么", "检查发现什么了"], en: ["what did the tests show", "what were the results", "what did the report say", "how was the urine test", "what did the urine test show", "what was the ultrasound result", "what did the CT show", "did the results show anything", "what was found on testing", "what did the doctor say about the tests"] },
     pattern: /(?:检查|检验|尿检|尿常规|查尿|验尿|B超|彩超|超声|CT|CTU|MRI|磁共振|膀胱镜|病理|活检|报告).*(?:结果|怎么样|怎么说|发现|查出|显示|提示|有什么)|(?:结果|报告).*(?:什么|怎么|出来)|what did.*(?:test|scan|report).*(?:show|say)|what (?:were|was).*(?:result|finding)|what.*found.*(?:test|scan)/i
   },
   {
     key: "prior_diagnosis_patient_aware", sourceSlotId: "PATIENT_PRIOR_DIAGNOSIS", labelZh: "患者知晓的既往诊断", labelEn: "Patient-aware prior diagnosis",
+    confusableWith: ["prior_medical_visit"],
     aliases: { zh: ["之前医生说是什么", "以前诊断过什么", "医生有没有说什么病", "之前被诊断过吗", "医院当时怎么说", "医生说你得了什么", "以前说是什么问题", "看病时说什么原因", "之前有没有明确说法", "外院给过诊断吗"], en: ["what did the doctor diagnose before", "were you given a diagnosis", "what did they say it was", "did the hospital name the condition", "what diagnosis were you told", "were you diagnosed with anything", "what did your previous doctor call it", "did they explain the cause", "was a diagnosis made earlier", "what were you told was wrong"] },
     pattern: /(?:之前|以前|当时|外院|医院|医生).*(?:诊断|说是|什么病|什么问题|什么原因)|(?:被诊断|诊断过).*(?:什么|吗)|previous.*diagnos|given a diagnosis|what did.*doctor.*(?:say|call)|what were you told.*wrong/i
   },
   {
     key: "prior_treatment", sourceSlotId: "PATIENT_PRIOR_TREATMENT", labelZh: "本次问题既往处理", labelEn: "Prior treatment",
+    confusableWith: ["prior_medical_visit"],
     aliases: { zh: ["之前怎么治疗的", "为这个治过吗", "医院给你处理了吗", "以前接受过治疗吗", "这次症状治过没有", "之前做过什么处理", "医生给你怎么治", "去医院后怎么处理", "有没有输液治疗", "之前采取过什么办法"], en: ["how was this treated before", "did you receive treatment", "what treatment did they give you", "was anything done for this", "how did the hospital treat it", "did you have treatment for this problem", "what was done previously", "were you treated at the clinic", "did you receive an infusion", "what did the doctor do for it"] },
     pattern: /(?:之前|以前|此前|当时|医院|医生).*(?:治疗|处理|怎么治|输液)|(?:为|因|这次).*(?:治过|治疗过|处理过)|how was.*treated|receive.*treatment|what treatment|what was done.*(?:before|previous)|doctor do.*for it/i
   },
   {
     key: "prior_medication_for_current_problem", sourceSlotId: "PATIENT_CURRENT_PROBLEM_MEDICATION", labelZh: "本次问题既往用药", labelEn: "Medication for the current problem",
+    confusableWith: ["gross_hematuria"],
     aliases: { zh: ["为这个吃过药吗", "这次有没有用药", "之前吃了什么药", "尿血后吃药了吗", "医生给你开药了吗", "有没有服过药", "为这次症状用什么药", "来之前吃药没有", "之前打针吃药了吗", "这次问题用过药吗"], en: ["did you take medicine for this", "what medication did you take for this problem", "were you prescribed anything", "did you take any drugs before coming", "have you used medicine for these symptoms", "what did you take after the bleeding started", "did the doctor give you medication", "were you on treatment medicine", "did you take tablets for this", "any medication for the current episode"] },
     pattern: /(?:为|因|这次|本次|尿血|尿红|症状|来之前).*(?:吃药|用药|服药|什么药|开药)|(?:吃|服|用|开).*(?:什么)?药.*(?:这次|之前|了吗|没有)|medicine.*(?:for this|current|symptom)|medication.*(?:for this|current|episode)|prescribed.*(?:anything|medicine)|take.*(?:drug|medicine).*before/i
   },
   {
     key: "treatment_response", sourceSlotId: "PATIENT_TREATMENT_RESPONSE", labelZh: "既往治疗反应", labelEn: "Treatment response",
+    confusableWith: ["prior_treatment"],
     aliases: { zh: ["治疗后怎么样", "吃药后好点了吗", "用药有效果吗", "后来缓解了吗", "处理后有没有好转", "治了以后还发吗", "药吃了管用吗", "输液后怎么样", "治疗反应如何", "后来症状有变化吗"], en: ["did treatment help", "did you get better after medicine", "how did you respond to treatment", "what happened after treatment", "did the symptoms improve", "was the medication effective", "did it come back after treatment", "how were you after the infusion", "did treatment change anything", "did you feel better afterward"] },
     pattern: /(?:治疗|吃药|用药|服药|处理|输液|打针).*(?:后|以后).*(?:怎么样|好转|缓解|有效|管用|复发|加重)|(?:后来|之后).*(?:好点|缓解|复发|加重)|treatment.*(?:help|response|after|improve)|(?:better|improve|effective|come back).*(?:after|medicine|treatment)/i
   }

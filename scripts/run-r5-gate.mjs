@@ -15,6 +15,8 @@ const frozenHeads = [
 ];
 const pnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const git = process.platform === "win32" ? "git.exe" : "git";
+const [nodeMajor, nodeMinor] = process.versions.node.split(".").map(Number);
+if (nodeMajor !== 22 || nodeMinor < 14) throw new Error(`R5 gates require Node >=22.14 <23; received ${process.versions.node}`);
 
 function command(bin, ...args) {
   return { bin, args, desktopEnv: false };
@@ -110,7 +112,11 @@ function parseArguments(argv) {
 function run(bin, args, { capture = false, allowFailure = false, env = process.env } = {}) {
   let executable = bin;
   let executableArgs = args;
-  const npmExecPath = String(process.env.npm_execpath || "");
+  let npmExecPath = String(process.env.npm_execpath || "");
+  if (path.basename(npmExecPath).toLowerCase() === "pnpm.cjs") {
+    const pnpmModule = path.resolve(path.dirname(npmExecPath), "..", "dist", "pnpm.mjs");
+    if (existsSync(pnpmModule)) npmExecPath = pnpmModule;
+  }
   if (bin === pnpm && npmExecPath && existsSync(npmExecPath)) {
     executable = process.execPath;
     executableArgs = [npmExecPath, ...args];

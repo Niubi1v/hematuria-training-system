@@ -484,6 +484,67 @@ async function main() {
   assert.equal(hypertensionMedicationCases, 11, "all source-confirmed hypertension cases must have multi-turn medication coverage");
   assert.equal(personalHistoryChecks, 84, "smoking and alcohol routing must cover all 42 cases");
 
+  for (const probe of [
+    {
+      input: "有没有冠心病，平时吃什么药？",
+      intents: ["coronary_history", "medication_list"]
+    },
+    {
+      input: "有没有尿频，之前做过什么检查？",
+      intents: ["urinary_frequency", "prior_investigations"]
+    },
+    {
+      input: "家里有人得过肾病吗，你以前做过手术吗，之前怎么治疗的？",
+      intents: ["family_history", "surgery_history", "prior_treatment"]
+    }
+  ]) {
+    const answer = await generatePatientAnswer({
+      sessionId: `cross-system-compound-${probe.intents.join("-")}`,
+      caseId: "P001",
+      studentInput: probe.input,
+      language: "zh",
+      conversationHistory: []
+    });
+    const actualIntents = answer.clauseOutcomes?.map((item) => item.intent) || [];
+    for (const intent of probe.intents) {
+      assert.ok(actualIntents.includes(intent), `${probe.input} omitted ${intent}`);
+    }
+  }
+
+  for (const question of [
+    "这是什么病？",
+    "我是不是肿瘤？",
+    "你判断一下我得啥？",
+    "我的最终诊断是什么？"
+  ]) {
+    const answer = await generatePatientAnswer({
+      sessionId: `routing-current-diagnosis-${question}`,
+      caseId: "P001",
+      studentInput: question,
+      language: "zh",
+      conversationHistory: []
+    });
+    assert.equal(answer.fallbackReason, "diagnosis_boundary", `${question} must remain behind the diagnosis boundary`);
+    assert.ok(answer.safetyFlags?.includes("blocked_diagnosis_request"), `${question} must carry the diagnosis safety flag`);
+    assert.deepEqual(answer.matchedSlotIds || [], []);
+  }
+
+  for (const question of [
+    "以前医生说是什么病？",
+    "当时医生怎么告诉你的？",
+    "之前诊断叫什么？"
+  ]) {
+    const answer = await generatePatientAnswer({
+      sessionId: `routing-prior-diagnosis-${question}`,
+      caseId: "P001",
+      studentInput: question,
+      language: "zh",
+      conversationHistory: []
+    });
+    assert.ok(answer.matchedFacts?.includes("prior_diagnosis_patient_aware"), `${question} must use the patient-known prior diagnosis`);
+    assert.ok(!answer.safetyFlags?.includes("blocked_diagnosis_request"), `${question} must remain an allowed history question`);
+  }
+
   const diagnosis = await generatePatientAnswer({
     sessionId: "routing-diagnosis",
     caseId: "P001",

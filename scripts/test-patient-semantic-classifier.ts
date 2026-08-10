@@ -11,6 +11,8 @@ const { matchPriorityCanonicalIntents, patientFactOntology } = require("../src/l
 const { UNKNOWN_REASON_CODES } = require("../src/lib/patientFactState.js");
 const { projectCanonicalPatientFacts } = require("../server/canonicalFacts.js");
 const { matchStructuredFacts } = require("../server/structuredFacts.js");
+const { matchPatientKnowableFacts } = require("../server/patientKnowableFacts.js");
+const { routePatientIntents } = require("../server/patientIntentOnlyRouter.js");
 const cases = require("../data/cases.json");
 
 function classifierJson(
@@ -167,9 +169,18 @@ async function main() {
     providerCalls: 1
   });
 
-  const semanticQuestion = "排泄尿液时会产生灼热样感觉吗？";
-  assert.equal(matchPriorityCanonicalIntents(semanticQuestion, "zh").length, 0, "integration probe must really reach semantic fallback");
-  assert.equal(matchStructuredFacts(cases.find((item: { id: string }) => item.id === "P002"), semanticQuestion, "zh"), null);
+  const caseP002 = cases.find((item: { id: string }) => item.id === "P002");
+  const deterministicQuestion = "排泄尿液时会产生灼热样感觉吗？";
+  assert.equal(matchPriorityCanonicalIntents(deterministicQuestion, "zh").length, 0);
+  assert.equal(matchStructuredFacts(caseP002, deterministicQuestion, "zh"), null);
+  assert.equal(matchPatientKnowableFacts(caseP002, deterministicQuestion, "zh"), null);
+  assert.deepEqual(routePatientIntents(deterministicQuestion, "zh", "").map((route: { intent: string }) => route.intent), ["dysuria"]);
+
+  const semanticQuestion = "解手时尿道会不会像有针在扎？";
+  assert.equal(matchPriorityCanonicalIntents(semanticQuestion, "zh").length, 0, "semantic fallback probe must miss priority canonical routing");
+  assert.equal(matchStructuredFacts(caseP002, semanticQuestion, "zh"), null, "semantic fallback probe must miss structured routing");
+  assert.equal(matchPatientKnowableFacts(caseP002, semanticQuestion, "zh"), null, "semantic fallback probe must miss patient-knowledge routing");
+  assert.equal(routePatientIntents(semanticQuestion, "zh", "").length, 0, "semantic fallback probe must miss offline intent routing");
   const originalFetch = globalThis.fetch;
   process.env.PATIENT_SEMANTIC_CLASSIFIER_ENABLED = "true";
   process.env.LLM_PROVIDER = "deepseek";
@@ -182,16 +193,23 @@ async function main() {
   try {
     const { generatePatientAnswer } = require("../server/patientSession.js");
     let deterministicNetworkCalls = 0;
+    let deterministicClassifierCalls = 0;
     globalThis.fetch = async (_url, options) => {
       deterministicNetworkCalls += 1;
-      const requestBody = JSON.parse(String(options?.body || "{}")) as { messages?: Array<{ content?: string }> };
+      const requestBody = JSON.parse(String(options?.body || "{}")) as Record<string, unknown> & { messages?: Array<{ content?: string }> };
+      if ("response_format" in requestBody) {
+        deterministicClassifierCalls += 1;
+        return new Response(JSON.stringify({ choices: [{ message: { content: legacyClassifierJson("dysuria", 0.97) } }] }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
       const payload = JSON.parse(String(requestBody.messages?.[1]?.content || "{}")) as { currentAllowedAnswer?: string };
       return new Response(JSON.stringify({ choices: [{ message: { content: payload.currentAllowedAnswer || "" } }] }), { status: 200, headers: { "Content-Type": "application/json" } });
     };
-    const deterministicAnswer = await generatePatientAnswer({ sessionId: `deterministic-${Date.now()}`, caseId: "P002", studentInput: "小便痛不痛？", language: "zh" });
+    const deterministicAnswer = await generatePatientAnswer({ sessionId: `deterministic-${Date.now()}`, caseId: "P002", studentInput: deterministicQuestion, language: "zh" });
     assert.deepEqual(deterministicAnswer.matchedFacts, ["dysuria"]);
+    assert.equal(deterministicAnswer.answerSource, "case_bilingual_slot");
     assert.equal(deterministicAnswer.isFallback, false);
     assert.equal(deterministicAnswer.provider, "deepseek");
+    assert.equal(deterministicClassifierCalls, 0, "offline intent routing must not call the semantic classifier");
     assert.equal(deterministicNetworkCalls, 1, "deterministic routing must naturalize only the governed answer");
 
     resetPatientIntentClassifierState();
