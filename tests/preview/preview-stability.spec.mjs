@@ -142,15 +142,10 @@ async function askLiveQuestion(page, language, question) {
   return {
     patientStatus: patient.status(),
     historyStatus: history.status(),
-    generationSource: payload.generationSource,
-    provider: payload.provider,
-    model: payload.usedModel,
+    replyKeys: Object.keys(payload).sort(),
+    replyTextPresent: Boolean(String(payload.replyText || "").trim()),
+    publicReplyState: payload.publicReplyState,
     isFallback: payload.isFallback,
-    fallbackReason: payload.fallbackReason,
-    providerConfigured: payload.providerConfigured,
-    providerHttpSuccess: payload.providerHttpSuccess,
-    thinkingExecuted: payload.thinkingExecuted,
-    thinkingMode: payload.thinkingMode,
     uiDispatchMs,
     answerMs,
     clickToAnswerMs,
@@ -228,20 +223,16 @@ for (const language of ["zh", "en"]) {
           samples.push({ caseId, ...answer });
           expect(answer.patientStatus).toBe(200);
           expect(answer.historyStatus).toBe(200);
-          expect(answer.generationSource).toBe("live_ai");
+          expect(answer.replyKeys).toEqual(["isFallback", "matchedFacts", "matchedSlotIds", "publicReplyState", "replyText"]);
+          expect(answer.replyTextPresent).toBe(true);
+          expect(answer.publicReplyState).toBe("answered");
           expect(answer.isFallback).toBe(false);
-          expect(String(answer.provider || "").toLowerCase()).toBe("deepseek");
-          expect(answer.model).toBe("deepseek-v4-flash");
-          expect(answer.providerConfigured).toBe(true);
-          expect(answer.providerHttpSuccess).toBe(true);
-          expect(answer.thinkingExecuted).toBe(false);
-          expect(answer.thinkingMode).toBe("disabled");
           expect(answer.patientTiming.provider).toBeDefined();
           expect(answer.patientTiming.firsttoken).toBeDefined();
           expect(answer.historyTiming.history).toBeDefined();
         } catch (error) {
           if (!samples.some((item) => item.caseId === caseId)) {
-            samples.push({ caseId, patientStatus: 0, historyStatus: 0, generationSource: "not_reached", isFallback: undefined, error: safeFailureKind(error) });
+            samples.push({ caseId, patientStatus: 0, historyStatus: 0, publicReplyState: "not_reached", isFallback: undefined, error: safeFailureKind(error) });
           }
         } finally {
           await opened?.page.close().catch(() => undefined);
@@ -252,7 +243,12 @@ for (const language of ["zh", "en"]) {
     }
     const summary = {
       scenario: `preview-live-ai-${language}-5`,
-      successCount: samples.filter((item) => item.patientStatus === 200 && item.historyStatus === 200 && item.generationSource === "live_ai" && item.isFallback === false).length,
+      successCount: samples.filter((item) => item.patientStatus === 200
+        && item.historyStatus === 200
+        && item.publicReplyState === "answered"
+        && item.isFallback === false
+        && Number.isFinite(item.patientTiming?.provider)
+        && Number.isFinite(item.patientTiming?.firsttoken)).length,
       p95AnswerMs: percentile95(samples.map((item) => item.answerMs).filter(Number.isFinite)),
       p95UiDispatchMs: percentile95(samples.map((item) => item.uiDispatchMs).filter(Number.isFinite)),
       p95ClickToAnswerMs: percentile95(samples.map((item) => item.clickToAnswerMs).filter(Number.isFinite)),

@@ -14,6 +14,16 @@ const preview = resolvePreviewBlackboxConfig(process.env);
 if (preview.blocked) throw new Error(`${preview.reason}: ${preview.message}`);
 const enabled = process.env.PATIENT_CONVERSATION_ACCEPTANCE === "1";
 const caseIds = ["P001", "P002", "P003", "P004", "P005", "P006", "P007", "P008", "P009", "P010"];
+const patientPublicResponseKeys = ["isFallback", "matchedFacts", "matchedSlotIds", "publicReplyState", "replyText"];
+const publicSafetyReasons = new Set(["diagnosis_boundary", "report_boundary", "ai_response_blocked", "medical_bilingual_conflict_pending_review", "safety_filter", "unsafe_deterministic_answer"]);
+
+function expectedPublicSafetyBoundary(answer) {
+  if (!answer?.isFallback) return false;
+  const safetyFlags = Array.isArray(answer?.safetyFlags) ? answer.safetyFlags : [];
+  return publicSafetyReasons.has(answer?.fallbackReason)
+    || safetyFlags.some((flag) => flag.startsWith("blocked_")
+      || ["ai_response_blocked", "deterministic_answer_blocked", "medical_bilingual_conflict_pending_review", "safety_filter"].includes(flag));
+}
 
 function safeBody(request) {
   try { return request.postDataJSON() || {}; } catch { return {}; }
@@ -55,16 +65,18 @@ async function openReadyCase(browser, caseId, language) {
   const initialSession = page.waitForResponse((response) => isSessionInit(response, "zh"));
   const navigation = await page.goto(`/cases/${caseId}/`, { waitUntil: "domcontentloaded" });
   expect(navigation?.status()).toBe(200);
-  await Promise.all([initialAttempt, initialSession]);
+  const [, initialSessionResponse] = await Promise.all([initialAttempt, initialSession]);
+  let deploymentSha = (await initialSessionResponse.json()).deploymentSha;
   await expect(page.getByText(caseId, { exact: true }).first()).toBeVisible();
   if (language === "en") {
     const englishAttempt = page.waitForResponse((response) => isAction(response, "init-attempt") && safeBody(response.request()).language === "en");
     const englishSession = page.waitForResponse((response) => isSessionInit(response, "en"));
     page.once("dialog", (dialog) => dialog.accept());
     await page.getByRole("button", { name: "English", exact: true }).click();
-    await Promise.all([englishAttempt, englishSession]);
+    const [, englishSessionResponse] = await Promise.all([englishAttempt, englishSession]);
+    deploymentSha = (await englishSessionResponse.json()).deploymentSha;
   }
-  return { context, page };
+  return { context, page, deploymentSha };
 }
 
 async function seedThroughUi(page, language, question) {
@@ -142,7 +154,8 @@ test("generated 10-case bilingual conversation corpus preserves governed facts o
 
   for (const caseId of caseIds) {
     for (const language of ["zh", "en"]) {
-      const { context, page } = await openReadyCase(browser, caseId, language);
+      const { context, page, deploymentSha } = await openReadyCase(browser, caseId, language);
+      if (deploymentSha) deploymentShas.add(deploymentSha);
       try {
         const probes = corpus[language];
         const seeded = await seedThroughUi(page, language, probes[0].question);
@@ -163,7 +176,7 @@ test("generated 10-case bilingual conversation corpus preserves governed facts o
             failures.push(`${caseId}/${probe.id}: HTTP ${result.status} ${result.payload?.error || "unknown"}`);
             continue;
           }
-          if (result.payload?.debug?.deploymentCommit) deploymentShas.add(result.payload.debug.deploymentCommit);
+          expect(Object.keys(result.payload).sort()).toEqual(patientPublicResponseKeys);
           const expectedFacts = [...new Set(expected?.matchedFacts || [])].sort();
           const actualFacts = [...new Set(result.payload?.matchedFacts || [])].sort();
           const missingFacts = expectedFacts.filter((fact) => !actualFacts.includes(fact));
@@ -171,14 +184,12 @@ test("generated 10-case bilingual conversation corpus preserves governed facts o
             clauseDrops += missingFacts.length;
             failures.push(`${caseId}/${probe.id}: missing ${missingFacts.join(",")}`);
           }
-          if (result.payload?.safetyFlags?.includes("blocked_diagnosis_request")
-              && !expected?.safetyFlags?.includes("blocked_diagnosis_request")) {
-            diagnosisBoundaryMisclassifications += 1;
-            failures.push(`${caseId}/${probe.id}: false diagnosis boundary`);
-          }
-          if (result.payload?.safetyFlags?.includes("deterministic_answer_blocked")) {
+          const actualSafety = result.payload?.publicReplyState === "safety";
+          const expectedSafety = expectedPublicSafetyBoundary(expected);
+          if (actualSafety !== expectedSafety) {
+            if (actualSafety && !expectedSafety) diagnosisBoundaryMisclassifications += 1;
             safetyFilterFalseBlocks += 1;
-            failures.push(`${caseId}/${probe.id}: legal answer filtered`);
+            failures.push(`${caseId}/${probe.id}: public safety state drift`);
           }
           if (!probe.kind.startsWith("context_") && result.payload.replyText !== expected.replyText) {
             polarityErrors += 1;

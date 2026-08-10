@@ -27,10 +27,14 @@ const answerSourceCounts = new Map();
 const turnDiagnostics = [];
 let contextAppliedCount = 0;
 let finalRuntimeEvidence = null;
+const patientStudentKeys = ["isFallback", "matchedFacts", "matchedSlotIds", "publicReplyState", "replyText"];
+const patientStudentDebugKeys = [...patientStudentKeys, "desktopEvidence"].sort();
+const publicReplyStates = new Set(["answered", "governed", "safety", "connection_unavailable"]);
 const manifest = JSON.parse(await fsp.readFile(path.join(repoRoot, "desktop", "runtime-manifest.json"), "utf8"));
 const modelMode = String(process.env.HEMATURIA_DESKTOP_MODEL_MODE || manifest.defaultModelMode || "lightweight");
 const selectedModel = manifest.models?.[modelMode];
 assert.ok(selectedModel, `Unknown desktop model mode: ${modelMode}`);
+assert.equal(selectedModel.thinkingMode, "disabled", "desktop Patient model thinking must remain disabled");
 const llamaPath = path.join(repoRoot, "desktop-runtime", "llama", manifest.llamaCpp.entryPoint);
 const defaultModelPath = path.join(r5DataDirectory(process.env.LOCALAPPDATA), "models", selectedModel.fileName);
 const modelPath = process.env.HEMATURIA_DESKTOP_MODEL_PATH || defaultModelPath;
@@ -290,23 +294,13 @@ function recordSourceContract(reply, expectation, label, language, turnNumber) {
   const expectedIntents = expectation.expectedIntents || [expectedIntent];
   const expectedSlots = expectation.expectedSlots || [expectedSlot];
   const matchedFacts = expectation.matchedFacts || (matchedFact ? [matchedFact] : []);
+  assert.deepEqual(Object.keys(reply).sort(), patientStudentDebugKeys, `${label} must expose only the Student DTO and authorized desktopEvidence`);
+  assert.equal(typeof reply.isFallback, "boolean", `${label} must expose a boolean fallback state`);
+  assert.ok(publicReplyStates.has(reply.publicReplyState), `${label} must expose a public reply state`);
   assert.ok(String(reply.replyText || "").trim(), `${label} must return a non-empty governed answer`);
-  assert.ok(Array.isArray(reply.matchedFacts), `${label} must expose matchedFacts`);
+  assert.ok(Array.isArray(reply.matchedSlotIds) && reply.matchedSlotIds.every((value) => typeof value === "string"), `${label} must expose string matchedSlotIds`);
+  assert.ok(Array.isArray(reply.matchedFacts) && reply.matchedFacts.every((value) => typeof value === "string"), `${label} must expose string matchedFacts`);
   for (const fact of matchedFacts) assert.ok(reply.matchedFacts.includes(fact), `${label} must resolve ${fact}`);
-  assert.equal(
-    reply.usedModel,
-    realLocalAi && !expectGovernedBoundary && !expectRuleRoute ? selectedModel.alias : "local-rule",
-    realLocalAi && !expectGovernedBoundary && !expectRuleRoute
-      ? `${label} must report the selected validator model even when rejected`
-      : `${label} must not claim that a disabled model was used`
-  );
-  assert.equal(reply.thinkingMode, "disabled", `${label} must keep thinking disabled`);
-  assert.equal(reply.thinkingExecuted, false, `${label} must not execute model thinking`);
-  assert.ok(
-    ["governed_planner", "rule_fallback", "safety_boundary"].includes(reply.generationSource),
-    `${label} generation must remain under the governed planner or an explicit safety boundary`
-  );
-  assert.notEqual(reply.factSource, "local_ai", `${label} must keep model output outside the fact authority path`);
   assert.ok(reply.desktopEvidence, `${label} must include authenticated desktop runtime evidence`);
   assert.equal(reply.desktopEvidence.productHead, productHead, `${label} must use the desktop product HEAD authority`);
   assert.deepEqual(Object.keys(reply.desktopEvidence).sort(), [
@@ -344,69 +338,44 @@ function recordSourceContract(reply, expectation, label, language, turnNumber) {
     || reply.desktopEvidence.fallbackReason === "local_context_reference_mismatch"
   ));
   if (requiresContext && !contextLost) contextAppliedCount += 1;
+  const answerSource = String(reply.desktopEvidence.answerSource || "unknown");
   if (realLocalAi && (expectGovernedBoundary || expectRuleRoute)) {
     if (expectRuleRoute && !allowsUnknown) {
       assert.equal(intentMatch, true, `${label} governed rule route must preserve an expected intent`);
       assert.equal(slotMatch, true, `${label} governed rule route must preserve an expected slot`);
     }
-    assert.equal(reply.classificationSource, "none", `${label} governed rule routes must bypass the model classifier`);
-    assert.equal(reply.classifierStatus, "not_invoked", `${label} governed rule routes must not invoke the classifier`);
-    assert.equal(reply.providerConfigured, expectRuleRoute, `${label} governed rule route provider readiness must be truthful`);
-    assert.equal(reply.providerHttpSuccess, false, `${label} governed rule routes must not call the provider`);
     assert.equal(reply.isFallback, true, `${label} must identify the governed rule route`);
-    assert.equal(reply.provider, "rule", `${label} must use the governed rule route`);
     assert.equal(reply.desktopEvidence.llamaServerReady, true, `${label} llama-server must remain ready`);
     assert.equal(reply.desktopEvidence.localModelReady, true, `${label} model readiness must remain truthful`);
-    assert.equal(reply.desktopEvidence.answerSource, "rule_fallback", `${label} must report rule_fallback`);
+    assert.equal(answerSource, "rule_fallback", `${label} must report rule_fallback`);
     if (expectGovernedBoundary) {
-      assert.equal(reply.fallbackReason, "medical_bilingual_conflict_pending_review", `${label} must preserve the medical quarantine reason`);
+      assert.equal(reply.publicReplyState, "safety", `${label} must preserve the public medical-safety boundary`);
       assert.equal(reply.desktopEvidence.fallbackReason, null, `${label} public diagnostics must not expand the medical quarantine detail`);
-    }
+    } else assert.equal(reply.publicReplyState, "governed", `${label} must expose the governed rule state`);
   } else if (realLocalAi) {
-    assert.equal(reply.classificationSource, "local_ai", `${label} must invoke the local classifier`);
-    assert.ok(["accepted", "rejected", "timeout"].includes(reply.classifierStatus), `${label} classifier status must be truthful`);
-    assert.equal(reply.providerConfigured, true, `${label} must report the configured loopback provider`);
     assert.equal(reply.desktopEvidence.llamaServerReady, true, `${label} llama-server must be ready`);
     assert.equal(reply.desktopEvidence.localModelReady, true, `${label} Qwen model must be loaded`);
-    if (reply.classifierStatus === "accepted") {
+    if (answerSource === "local_ai") {
       assert.equal(intentMatch, true, `${label} accepted local metadata must report an expected intent`);
       assert.equal(slotMatch, true, `${label} accepted local metadata must report an expected slot`);
-      assert.equal(reply.providerHttpSuccess, true, `${label} accepted metadata must complete a real llama-server request`);
-      assert.equal(reply.desktopEvidence.answerSource, "local_ai", `${label} accepted metadata must report local_ai`);
       assert.equal(reply.isFallback, false, `${label} accepted metadata must use the local route`);
-      assert.equal(reply.provider, "local", `${label} accepted metadata must name the local provider`);
+      assert.equal(reply.publicReplyState, "answered", `${label} accepted metadata must expose an answered state`);
     } else {
-      assert.equal(reply.desktopEvidence.answerSource, "rule_fallback", `${label} rejected metadata must fall back safely`);
+      assert.equal(answerSource, "rule_fallback", `${label} rejected metadata must fall back safely`);
       assert.equal(reply.isFallback, true, `${label} rejected metadata must identify fallback`);
-      assert.equal(reply.provider, "rule", `${label} rejected metadata must use the governed rule answer`);
       assert.ok(String(reply.desktopEvidence.fallbackReason || ""), `${label} rejected metadata must expose its safe rejection reason`);
     }
   } else {
     assert.equal(intentMatch, true, `${label} deterministic fallback must preserve an expected governed intent`);
     assert.equal(slotMatch, true, `${label} deterministic fallback must preserve an expected governed slot`);
-    assert.equal(reply.classificationSource, "deterministic", `${label} must not claim local_ai while the model is disabled`);
-    assert.equal(reply.classifierStatus, "not_invoked", `${label} classifier status must be truthful`);
-    assert.equal(reply.providerConfigured, false, `${label} must not report a configured model provider`);
-    assert.equal(reply.providerHttpSuccess, false, `${label} must not report a provider HTTP call`);
     assert.equal(reply.isFallback, true, `${label} must identify the safe rule path`);
-    assert.equal(reply.provider, "rule", `${label} must use the existing Patient rule path`);
+    assert.equal(reply.publicReplyState, "governed", `${label} must expose the governed fallback state`);
     assert.equal(reply.desktopEvidence.llamaServerReady, false, `${label} must report llama unavailable`);
     assert.equal(reply.desktopEvidence.localModelReady, false, `${label} must report model unavailable`);
-    assert.equal(reply.desktopEvidence.answerSource, "rule_fallback", `${label} must report rule_fallback`);
+    assert.equal(answerSource, "rule_fallback", `${label} must report rule_fallback`);
   }
-  if (reply.generationSource === "safety_boundary") {
-    assert.ok(
-      [
-        "compound_question_preserves_all_facts",
-        "medical_bilingual_conflict_pending_review",
-        "safety_filter"
-      ].includes(String(reply.fallbackReason || "")),
-      `${label} safety_boundary must carry an approved reason`
-    );
-  }
-  const sourceKey = `${reply.generationSource}/${reply.classificationSource}/${reply.classifierStatus}`;
+  const sourceKey = `${reply.publicReplyState}/${answerSource}`;
   sourceCounts.set(sourceKey, (sourceCounts.get(sourceKey) || 0) + 1);
-  const answerSource = String(reply.desktopEvidence.answerSource || "unknown");
   answerSourceCounts.set(answerSource, (answerSourceCounts.get(answerSource) || 0) + 1);
   turnDiagnostics.push({
     label,
@@ -414,7 +383,7 @@ function recordSourceContract(reply, expectation, label, language, turnNumber) {
     language,
     turn: turnNumber,
     answerSource,
-    classifierStatus: String(reply.classifierStatus || ""),
+    publicReplyState: reply.publicReplyState,
     intent: actualIntent,
     requestedSlot: actualSlot,
     factState: String(reply.desktopEvidence.factState || ""),

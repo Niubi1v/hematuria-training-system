@@ -105,10 +105,8 @@ async function routeTrainingApis(context, observations) {
           : (isOnsetQuestion ? "最近开始的。" : "我发现小便有变化。"),
         matchedSlotIds: [isOnsetQuestion ? "hematuria_onset" : "chief_complaint"],
         matchedFacts: [],
-        provider: "rule",
-        generationSource: "rule_fallback",
         isFallback: true,
-        fallbackReason: "deterministic_test_fixture"
+        publicReplyState: "governed"
       })
     });
   });

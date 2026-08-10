@@ -54,7 +54,7 @@ import { desktopRuntimeConfig, publicApiConfig } from "@/src/lib/apiConfig";
 import { desktopRuntimeFailureMessage, desktopShellAvailable, isDesktopRuntimeFailureCode, restartDesktopRuntime } from "@/src/lib/desktopDiagnostics";
 import { ATTEMPT_SUMMARY_KEY, createAttemptSummary, isAttemptSummary, type AttemptSummary } from "@/src/lib/catalogProgress";
 import { canonicalSlotDefinitions } from "@/src/lib/canonicalSlots";
-import { isConnectionFailureFallback, isSafetyFallback, mergeRecoveredCoverage, recordConnectionTransition, validCachedSession, type AiConnectionStatus, type CachedPatientSession, type ConnectionTransition } from "@/src/lib/aiRecovery";
+import { mergeRecoveredCoverage, recordConnectionTransition, validCachedSession, type AiConnectionStatus, type CachedPatientSession, type ConnectionTransition } from "@/src/lib/aiRecovery";
 import { initializeStorageVersion, readJsonStorage, removeBrowserStorageEntries, writeJsonStorage } from "@/src/lib/safeStorage";
 import { attemptModeForTrainingMode, attemptPointerKey, attemptStorageKey, createAttempt, isAttemptCompatible, isStoredAttemptStateCompatible, legacyTrainingStateStorageKey, trainingStateStorageKey, type AttemptIdentity, type AttemptMode, type StoredAttemptState } from "@/src/lib/attemptState";
 import { projectStudentScoreText } from "@/src/lib/studentScoreProjection";
@@ -116,27 +116,11 @@ type AgentConfig = {
 };
 
 type PatientReplyApiResponse = {
-  agentId?: string;
   replyText: string;
   matchedSlotIds: string[];
-  revealedFields?: string[];
-  revealedDataKeys?: string[];
-  blockedFields?: string[];
-  blockedDataKeys?: string[];
-  safetyFlags?: string[];
-  provider: string;
-  model?: string;
-  usedModel?: string;
   isFallback: boolean;
-  generationSource?: "deepseek_live_ai" | "live_ai" | "ai_cache" | "governed_planner" | "rule_fallback" | "safety_boundary" | "mock" | "none";
-  classificationSource?: "deepseek_live_ai" | "live_ai" | "local_ai" | "deterministic" | "none";
-  classifierStatus?: "accepted" | "rejected" | "timeout" | "not_invoked";
-  factSource?: string;
-  matchedFacts?: string[];
-  answerSource?: string;
-  confidence?: number;
-  fallbackReason?: string;
-  debug?: Record<string, unknown>;
+  matchedFacts: string[];
+  publicReplyState: "answered" | "governed" | "safety" | "connection_unavailable";
 };
 
 type SessionInitResponse = CachedPatientSession & {
@@ -261,7 +245,6 @@ function orderSubmissionFailureMessage(error: unknown, language: LanguageCode) {
 type PendingFailedQuestion = {
   question: string;
   patientMessageIndex: number;
-  fallbackReason: string;
 };
 type PendingHistoryLog = {
   question: string;
@@ -1058,7 +1041,6 @@ async function requestAiPatientReply({ sessionId, caseId, question, messages, as
         stage: "history",
         mode: aiMode === "rule" ? "rule" : aiMode === "debug" ? "debug" : "training",
         language,
-        ...(desktopRuntimeConfig()?.debugRuntime ? { debug: true } : {}),
         studentInput: question,
         conversationHistory: messages.slice(-6).map((message) => ({ role: message.role, text: message.text })),
         askedSlotIds: askedSlots,
@@ -2655,15 +2637,15 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
       matchedSlots = safeAiReply ? aiResult.matchedSlotIds || [] : [];
       matchedFacts = safeAiReply ? aiResult.matchedFacts || [] : [];
       matchedKeys = unique(matchedSlots.map((slot) => canonicalToCollected[slot]).filter(Boolean)) as KeyPointId[];
-      if (safeAiReply && !aiResult.isFallback) {
+      if (safeAiReply && aiResult.publicReplyState === "answered" && !aiResult.isFallback) {
         setAiStatus("connected");
         setPendingFailedQuestion(null);
         setReconnectNotice("");
-      } else if (isConnectionFailureFallback(aiResult.fallbackReason)) {
-        pendingReason = aiResult.fallbackReason || "provider_unavailable";
+      } else if (aiResult.publicReplyState === "connection_unavailable") {
+        pendingReason = "connection_unavailable";
         setAiStatus("degraded");
         setReconnectNotice(lang === "en" ? "Interview assistance is temporarily unavailable. You can continue safely and retry later." : "问诊辅助暂时不可用，仍可安全继续并稍后重试。");
-      } else if (isSafetyFallback(aiResult.fallbackReason)) {
+      } else if (aiResult.publicReplyState === "safety" || aiResult.publicReplyState === "governed") {
         setAiStatus((current) => current === "connected" ? current : "unknown");
       } else {
         setAiStatus((current) => current === "connected" ? current : "degraded");
@@ -2684,7 +2666,7 @@ export default function ClinicalTrainingClient({ caseData: initialCaseData, mode
     const patientMessageIndex = messages.length + 1;
     const nextMessages: ChatMessage[] = [...messages, { role: "student", text }, { role: "patient", text: answerText, matchedKeys, matchedSlots, matchedFacts }];
     if (pendingReason) {
-      setPendingFailedQuestion({ question: text, patientMessageIndex, fallbackReason: pendingReason });
+      setPendingFailedQuestion({ question: text, patientMessageIndex });
     }
     setMessages(nextMessages);
     setCollected(nextCollected);

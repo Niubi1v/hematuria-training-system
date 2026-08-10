@@ -318,9 +318,8 @@ test("@ui-clinical-stage3 male case hides initial answers and restores released 
       replyText: "我发现小便颜色变红。",
       matchedSlotIds: ["chief_complaint"],
       matchedFacts: ["chief_complaint=小便颜色变红"],
-      provider: "deepseek",
-      generationSource: "live_ai",
-      isFallback: false
+      isFallback: false,
+      publicReplyState: "answered"
     })
   }));
   await page.goto("/cases/P001/");
@@ -379,9 +378,8 @@ test("@ui-clinical-stage3 female case shows only applicable examination and imag
       replyText: "我发现小便颜色发红。",
       matchedSlotIds: ["chief_complaint"],
       matchedFacts: ["chief_complaint=小便颜色发红"],
-      provider: "deepseek",
-      generationSource: "live_ai",
-      isFallback: false
+      isFallback: false,
+      publicReplyState: "answered"
     })
   }));
   await page.goto("/cases/P002/");
@@ -1281,8 +1279,8 @@ test("one fallback patient round submits through the same ready training attempt
     contentType: "application/json",
     body: JSON.stringify({
       replyText: "医生，您能问得再具体一点吗？我不太明白您的意思。",
-      matchedSlotIds: [], matchedFacts: [], provider: "rules",
-      generationSource: "fallback", isFallback: true, fallbackReason: "provider_unavailable"
+      matchedSlotIds: [], matchedFacts: [], isFallback: true,
+      publicReplyState: "connection_unavailable"
     })
   }));
   await page.goto("/cases/P001/");
@@ -1526,7 +1524,7 @@ test("stage one safely recovers when the signed browser token outlives the serve
   await page.route("**/api/agent-chat/**", (route) => route.fulfill({
     status: 200,
     contentType: "application/json",
-    body: JSON.stringify({ replyText: "我吸烟，大约每天一包。", matchedSlotIds: ["smoking"], matchedFacts: ["smoking=current"], provider: "deepseek", generationSource: "live_ai", isFallback: false })
+    body: JSON.stringify({ replyText: "我吸烟，大约每天一包。", matchedSlotIds: ["smoking"], matchedFacts: ["smoking=current"], isFallback: false, publicReplyState: "answered" })
   }));
   await page.goto("/cases/P001/");
   await expect.poll(() => observations.filter((item) => item.action === "init-attempt").length).toBe(1);
@@ -1797,9 +1795,8 @@ test("@r5-visual @ui-defect-regression P001 Chinese seven-stage contract keeps p
       replyText: "我平时吸烟，最近发现尿色发红。",
       matchedSlotIds: ["smoking", "chief_complaint"],
       matchedFacts: ["smoking=current"],
-      provider: "local-test",
-      generationSource: "test",
-      isFallback: false
+      isFallback: false,
+      publicReplyState: "answered"
     })
   }));
 
@@ -1968,9 +1965,8 @@ test("@ui-defect-regression P001 English stages 1-3 use natural evidence labels"
       replyText: "I smoke, and the change started this morning.",
       matchedSlotIds: ["smoking", "hematuria_onset"],
       matchedFacts: ["smoking=current", "onset=today"],
-      provider: "local-test",
-      generationSource: "test",
-      isFallback: false
+      isFallback: false,
+      publicReplyState: "answered"
     })
   }));
 
@@ -2147,7 +2143,7 @@ test("HEM-P1-034 language switches bind each session to its own attempt token", 
     const english = body.language === "en";
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: `e2e-session-${body.attemptId}`, caseId: "P001", language: body.language, mode: "free", patientOpeningStatement: english ? "Hello doctor. My urine has been red." : "医生您好，我发现尿液发红。", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) });
   });
-  await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "- I do not have pain or fever.", matchedSlotIds: ["pain", "fever_chills"], isFallback: false }) }));
+  await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "- I do not have pain or fever.", matchedSlotIds: ["pain", "fever_chills"], matchedFacts: [], isFallback: false, publicReplyState: "answered" }) }));
   await page.route("**/api/training-action/**", async (route) => {
     const body = route.request().postDataJSON();
     const payload = body.action === "init-attempt" ? { attemptId: body.attemptId, practiceOnly: true } : { recorded: true };
@@ -2252,14 +2248,13 @@ test("@ui-patient-reply-safety grounded compound patient reply is not replaced b
   await page.route("**/api/agent-chat/**", (route) => {
     const request = route.request().postDataJSON();
     const payload = request.probe
-      ? { replyText: "", matchedSlotIds: [], matchedFacts: [], provider: "deepseek", isFallback: false }
+      ? { replyText: "", matchedSlotIds: [], matchedFacts: [], isFallback: false, publicReplyState: "answered" }
       : {
           replyText: "有高血压。没有糖尿病。我长期服用缬沙坦、阿司匹林。",
           matchedSlotIds: ["PAST_HYPERTENSION", "MED_ALL", "PAST_DIABETES"],
           matchedFacts: ["hypertension_history", "medication_name", "diabetes_history", "medication_list"],
-          provider: "local-test",
-          generationSource: "local_ai",
-          isFallback: false
+          isFallback: false,
+          publicReplyState: "answered"
         };
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(payload) });
   });
@@ -2287,14 +2282,13 @@ test("@ui-patient-reply-safety JSON provider reply falls closed without collecti
   await page.route("**/api/agent-chat/**", (route) => {
     const request = route.request().postDataJSON();
     const payload = request.probe
-      ? { replyText: "", matchedSlotIds: [], matchedFacts: [], provider: "local-test", isFallback: false }
+      ? { replyText: "", matchedSlotIds: [], matchedFacts: [], isFallback: false, publicReplyState: "answered" }
       : {
           replyText: '{"currentAllowedAnswer":"我吸烟，每天一包。"}',
           matchedSlotIds: ["smoking"],
           matchedFacts: ["smoking_history"],
-          provider: "local-test",
-          generationSource: "local_ai",
-          isFallback: false
+          isFallback: false,
+          publicReplyState: "answered"
         };
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(payload) });
   });
@@ -2324,11 +2318,11 @@ test("@ui-patient-reply-safety recovered grounded compound patient reply uses th
   });
   await page.route("**/api/agent-chat/**", (route) => {
     const request = route.request().postDataJSON();
-    if (request.probe) return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "", matchedSlotIds: [], matchedFacts: [], provider: "deepseek", isFallback: false }) });
+    if (request.probe) return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "", matchedSlotIds: [], matchedFacts: [], isFallback: false, publicReplyState: "answered" }) });
     const recovered = request.sessionId === "compound-session-recovered";
     const payload = recovered
-      ? { replyText: "有高血压。没有糖尿病。我长期服用缬沙坦、阿司匹林。", matchedSlotIds: ["PAST_HYPERTENSION", "MED_ALL", "PAST_DIABETES"], matchedFacts: ["hypertension_history", "medication_name", "diabetes_history", "medication_list"], provider: "local-test", generationSource: "local_ai", isFallback: false }
-      : { replyText: "这次回答暂时没有生成。", matchedSlotIds: [], matchedFacts: [], provider: "rule", generationSource: "rule_fallback", isFallback: true, fallbackReason: "provider_timeout" };
+      ? { replyText: "有高血压。没有糖尿病。我长期服用缬沙坦、阿司匹林。", matchedSlotIds: ["PAST_HYPERTENSION", "MED_ALL", "PAST_DIABETES"], matchedFacts: ["hypertension_history", "medication_name", "diabetes_history", "medication_list"], isFallback: false, publicReplyState: "answered" }
+      : { replyText: "这次回答暂时没有生成。", matchedSlotIds: [], matchedFacts: [], isFallback: true, publicReplyState: "connection_unavailable" };
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(payload) });
   });
 
@@ -2350,8 +2344,8 @@ test("HEM-P1-033 unsafe patient metadata cannot collect a hidden fact", async ({
   await page.route("**/api/agent-chat/**", (route) => {
     const request = route.request().postDataJSON();
     const payload = request.probe
-      ? { replyText: "", matchedSlotIds: [], matchedFacts: [], provider: "deepseek", isFallback: false }
-      : { replyText: "未主动诉血块，需追问；以无痛全程血尿为主", matchedSlotIds: ["clots"], matchedFacts: ["clots=teacher-only"], provider: "rule", isFallback: true, fallbackReason: "unsafe_deterministic_answer" };
+      ? { replyText: "", matchedSlotIds: [], matchedFacts: [], isFallback: false, publicReplyState: "answered" }
+      : { replyText: "未主动诉血块，需追问；以无痛全程血尿为主", matchedSlotIds: ["clots"], matchedFacts: ["clots=teacher-only"], isFallback: true, publicReplyState: "safety" };
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(payload) });
   });
 
@@ -2382,11 +2376,11 @@ test("rule fallback keeps reconnection available and recovery replaces the reply
   });
   await page.route("**/api/agent-chat/**", (route) => {
     const request = route.request().postDataJSON();
-    if (request.probe) return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "", matchedSlotIds: [], matchedFacts: [], provider: "deepseek", isFallback: false }) });
+    if (request.probe) return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "", matchedSlotIds: [], matchedFacts: [], isFallback: false, publicReplyState: "answered" }) });
     const recovered = request.sessionId === "session-new";
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(recovered
-      ? { replyText: "我吸烟，大约每天一包。", matchedSlotIds: ["smoking"], matchedFacts: ["smoking=current"], provider: "deepseek", isFallback: false, fallbackReason: "" }
-      : { replyText: "我吸烟，大约每天一包。", matchedSlotIds: ["smoking"], matchedFacts: ["smoking=current"], provider: "rule", isFallback: true, fallbackReason: "provider_timeout" }) });
+      ? { replyText: "我吸烟，大约每天一包。", matchedSlotIds: ["smoking"], matchedFacts: ["smoking=current"], isFallback: false, publicReplyState: "answered" }
+      : { replyText: "我吸烟，大约每天一包。", matchedSlotIds: ["smoking"], matchedFacts: ["smoking=current"], isFallback: true, publicReplyState: "connection_unavailable" }) });
   });
   await page.route("**/api/training-action/**", async (route) => {
     const body = route.request().postDataJSON();
@@ -2456,7 +2450,7 @@ test("patient send waits for a session capability before issuing agent-chat", as
     patientCalls += 1;
     const body = route.request().postDataJSON();
     expect(body.sessionId).toBe("delayed-capability");
-    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "今天早上开始的。", matchedSlotIds: ["hematuria_onset"], matchedFacts: ["onset=today"], provider: "deepseek", generationSource: "live_ai", isFallback: false }) });
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "今天早上开始的。", matchedSlotIds: ["hematuria_onset"], matchedFacts: ["onset=today"], isFallback: false, publicReplyState: "answered" }) });
   });
 
   await page.goto("/cases/P001/");
@@ -2481,7 +2475,7 @@ test("offline transition sends no request and resumes locally after the online e
   await mockTrainingState(page);
   await page.route("**/api/health/**", (route) => { healthCalls += 1; return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" }) }); });
   await page.route("**/api/session/init/**", (route) => { sessionCalls += 1; return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: `session-${Date.now()}`, caseId: "P001", language: "zh", mode: "free", patientOpeningStatement: "医生您好。", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) }); });
-  await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "", matchedSlotIds: [], matchedFacts: [], provider: "deepseek", isFallback: false }) }));
+  await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "", matchedSlotIds: [], matchedFacts: [], isFallback: false, publicReplyState: "answered" }) }));
   await page.goto("/cases/P001/");
   await expect.poll(() => sessionCalls).toBe(1);
   await page.waitForTimeout(500);
@@ -2511,7 +2505,7 @@ test("offline transition sends no request and resumes locally after the online e
 test("AI reply renders before history log synchronization and uses one sync notice", async ({ page }) => {
   await page.route("**/api/health/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" }) }));
   await page.route("**/api/session/init/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: "sync-session", caseId: "P001", language: "en", mode: "free", patientOpeningStatement: "Hello doctor.", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) }));
-  await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "I first noticed the red urine this morning.", matchedSlotIds: ["hematuria_onset"], matchedFacts: ["onset=today"], provider: "deepseek", generationSource: "live_ai", isFallback: false }) }));
+  await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "I first noticed the red urine this morning.", matchedSlotIds: ["hematuria_onset"], matchedFacts: ["onset=today"], isFallback: false, publicReplyState: "answered" }) }));
   await page.route("**/api/training-action/**", async (route) => {
     const body = route.request().postDataJSON();
     if (body.action === "history-log") await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -2533,7 +2527,7 @@ test("history log transient failure retries one idempotent request without repla
   const historyRequestIds = [];
   await page.route("**/api/health/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" }) }));
   await page.route("**/api/session/init/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: "retry-sync-session", caseId: "P001", language: "en", mode: "free", patientOpeningStatement: "Hello doctor.", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) }));
-  await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "It started this morning.", matchedSlotIds: ["hematuria_onset"], matchedFacts: ["onset=today"], provider: "deepseek", generationSource: "live_ai", isFallback: false }) }));
+  await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "It started this morning.", matchedSlotIds: ["hematuria_onset"], matchedFacts: ["onset=today"], isFallback: false, publicReplyState: "answered" }) }));
   await page.route("**/api/training-action/**", async (route) => {
     const body = route.request().postDataJSON();
     if (body.action === "history-log") {
@@ -2562,7 +2556,7 @@ test("history log exhausted retries exposes one manual idempotent retry", async 
   const historyRequestIds = [];
   await page.route("**/api/health/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" }) }));
   await page.route("**/api/session/init/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: "manual-retry-session", caseId: "P001", language: "en", mode: "free", patientOpeningStatement: "Hello doctor.", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) }));
-  await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "It started this morning.", matchedSlotIds: ["hematuria_onset"], matchedFacts: ["onset=today"], provider: "deepseek", generationSource: "live_ai", isFallback: false }) }));
+  await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "It started this morning.", matchedSlotIds: ["hematuria_onset"], matchedFacts: ["onset=today"], isFallback: false, publicReplyState: "answered" }) }));
   await page.route("**/api/training-action/**", (route) => {
     const body = route.request().postDataJSON();
     if (body.action === "history-log") {
@@ -2603,7 +2597,7 @@ test("rapid double send creates one patient request and one conversation turn", 
   await page.route("**/api/agent-chat/**", async (route) => {
     patientCalls += 1;
     await new Promise((resolve) => setTimeout(resolve, 250));
-    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "今天早上开始的。", matchedSlotIds: ["hematuria_onset"], matchedFacts: ["onset=today"], provider: "deepseek", generationSource: "live_ai", isFallback: false }) });
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "今天早上开始的。", matchedSlotIds: ["hematuria_onset"], matchedFacts: ["onset=today"], isFallback: false, publicReplyState: "answered" }) });
   });
   await page.route("**/api/training-action/**", (route) => {
     const body = route.request().postDataJSON();
@@ -2631,7 +2625,7 @@ test("twenty interview turns do not reinitialize the active language session", a
   });
   await page.route("**/api/agent-chat/**", (route) => {
     patientCalls += 1;
-    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: `Patient answer ${patientCalls}.`, matchedSlotIds: [], matchedFacts: [], provider: "deepseek", generationSource: "live_ai", isFallback: false }) });
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: `Patient answer ${patientCalls}.`, matchedSlotIds: [], matchedFacts: [], isFallback: false, publicReplyState: "answered" }) });
   });
   await page.route("**/api/training-action/**", (route) => {
     const body = route.request().postDataJSON();
@@ -2677,7 +2671,7 @@ test("page refresh resumes the same pending history log request", async ({ page 
   const historyRequestIds = [];
   await page.route("**/api/health/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "ok", patientServiceConfigured: true, trainingStateConfigured: true, cloudTtsConfigured: false, allowedOriginConfigured: true, deploymentTier: "practice", gitSha: "e2e-sha", deploymentSha: "e2e-sha", apiVersion: "2.6.0" }) }));
   await page.route("**/api/session/init/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ sessionId: "refresh-sync-session", caseId: "P001", language: "en", mode: "free", patientOpeningStatement: "Hello doctor.", sessionCreatedAt: new Date().toISOString(), sessionExpiresAt: new Date(Date.now() + 1_800_000).toISOString(), deploymentSha: "e2e-sha", apiVersion: "2.6.0", aiStatus: "available", profileSource: "local-simulation", cacheHit: false }) }));
-  await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "It began this morning.", matchedSlotIds: ["hematuria_onset"], matchedFacts: ["onset=today"], provider: "deepseek", generationSource: "live_ai", isFallback: false }) }));
+  await page.route("**/api/agent-chat/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ replyText: "It began this morning.", matchedSlotIds: ["hematuria_onset"], matchedFacts: ["onset=today"], isFallback: false, publicReplyState: "answered" }) }));
   await page.route("**/api/training-action/**", async (route) => {
     const body = route.request().postDataJSON();
     if (body.action === "history-log") {

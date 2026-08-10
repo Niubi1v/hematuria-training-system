@@ -86,6 +86,8 @@ if (realLocalAi) {
 }
 const evidenceRoot = path.resolve(process.env.HEMATURIA_NSIS_P0_EVIDENCE_ROOT
   || "D:\\HematuriaDesktopArtifacts\\R5-Handoffs");
+const patientStudentKeys = ["isFallback", "matchedFacts", "matchedSlotIds", "publicReplyState", "replyText"];
+const publicReplyStates = new Set(["answered", "governed", "safety", "connection_unavailable"]);
 
 const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
@@ -554,7 +556,17 @@ async function verifyMentorAssistanceAvailable(page) {
   return true;
 }
 
-async function askGovernedQuestion(page, expectedReason, requireLocalClassifier = false, question = "", allowGovernedWithoutClassifier = false) {
+function assertPatientStudentReply(payload) {
+  assert.ok(payload && typeof payload === "object" && !Array.isArray(payload));
+  assert.deepEqual(Object.keys(payload).sort(), patientStudentKeys, "normal desktop Patient response must expose only the Student DTO");
+  assert.equal(typeof payload.replyText, "string");
+  assert.equal(typeof payload.isFallback, "boolean");
+  assert.ok(Array.isArray(payload.matchedSlotIds) && payload.matchedSlotIds.every((value) => typeof value === "string"));
+  assert.ok(Array.isArray(payload.matchedFacts) && payload.matchedFacts.every((value) => typeof value === "string"));
+  assert.ok(publicReplyStates.has(payload.publicReplyState));
+}
+
+async function askGovernedQuestion(page, expectedPublicState, requireLocalClassifier = false, question = "") {
   const before = (await desktopJson(page, "/api/desktop/evidence")).payload;
   const composer = page.locator('[data-testid="chat-composer"]');
   const send = composer.locator("button").last();
@@ -569,41 +581,34 @@ async function askGovernedQuestion(page, expectedReason, requireLocalClassifier 
   const response = await responsePromise;
   assert.equal(response.status(), 200);
   const payload = await response.json();
-  if (requireLocalClassifier) {
-    if (!allowGovernedWithoutClassifier) assert.equal(payload.classificationSource, "local_ai");
-    else assert.ok(["local_ai", "deterministic", "none"].includes(payload.classificationSource));
-    assert.ok((allowGovernedWithoutClassifier
-      ? ["accepted", "rejected", "timeout", "not_invoked"]
-      : ["accepted", "rejected", "timeout"]).includes(payload.classifierStatus));
-    if (payload.classificationSource === "local_ai" && payload.classifierStatus === "accepted") {
-      assert.equal(payload.isFallback, false);
-      assert.equal(payload.provider, "local");
-    } else if (payload.classificationSource === "local_ai") {
-      assert.equal(payload.isFallback, true);
-      assert.equal(payload.provider, "rule");
-      assert.ok(payload.fallbackReason);
-    }
-  } else {
-    assert.equal(payload.isFallback, true);
-    if (expectedReason) assert.equal(payload.fallbackReason, expectedReason);
-    else assert.ok(payload.fallbackReason, "packaged fallback must expose a stable reason to the renderer");
-  }
+  assertPatientStudentReply(payload);
   const after = (await desktopJson(page, "/api/desktop/evidence")).payload;
   const acceptedDelta = after.localAiAcceptedCount - before.localAiAcceptedCount;
   const fallbackDelta = after.ruleFallbackCount - before.ruleFallbackCount;
   assert.equal(acceptedDelta + fallbackDelta, 1);
   assert.equal(after.cloudRequestCount, 0);
+  assert.ok(String(after.model || ""), "desktop evidence endpoint must expose the configured model");
+  const answerSource = acceptedDelta === 1 ? "local_ai" : "rule_fallback";
+  if (answerSource === "local_ai") {
+    assert.equal(requireLocalClassifier, true);
+    assert.equal(payload.isFallback, false);
+    assert.equal(payload.publicReplyState, "answered");
+  } else {
+    assert.equal(payload.isFallback, true);
+    assert.ok(["governed", "safety", "connection_unavailable"].includes(payload.publicReplyState));
+    if (expectedPublicState) assert.equal(payload.publicReplyState, expectedPublicState);
+  }
   const conversation = page.getByRole("log", { name: "模拟问诊对话" });
   await conversation.locator(".history-message").last().waitFor({ state: "visible" });
-  assert.doesNotMatch(await conversation.innerText(), /answerSource|fallbackReason|classificationSource|classifierStatus|provider|rule_fallback|semantic_response_invalid|local_ai/i);
+  assert.doesNotMatch(await conversation.innerText(), /answerSource|fallbackReason|classificationSource|classifierStatus|publicReplyState|provider|rule_fallback|semantic_response_invalid|local_ai/i);
   return {
     acceptedDelta,
     fallbackDelta,
     localAiAcceptedCount: after.localAiAcceptedCount,
     ruleFallbackCount: after.ruleFallbackCount,
     cloudRequestCount: after.cloudRequestCount,
-    classificationSource: payload.classificationSource || null,
-    classifierStatus: payload.classifierStatus || null,
+    answerSource,
+    publicReplyState: payload.publicReplyState,
     isFallback: Boolean(payload.isFallback)
   };
 }
@@ -642,7 +647,7 @@ async function verifyPublicBoundaryAndExport(page, redactions) {
       .filter(Boolean);
     return `${document.body.innerText}\n${values.join("\n")}`;
   });
-  assert.doesNotMatch(accessible, /answerSource|fallbackReason|requestedSlot|factState|rule_fallback|local_ai|\b360\b|360分/i);
+  assert.doesNotMatch(accessible, /answerSource|fallbackReason|publicReplyState|requestedSlot|factState|rule_fallback|local_ai|connection_unavailable|\b360\b|360分/i);
   const exported = await page.evaluate(async () => {
     const bridge = globalThis.__TAURI_INTERNALS__;
     if (!bridge?.invoke) throw new Error("tauri_bridge_unavailable");
@@ -652,7 +657,7 @@ async function verifyPublicBoundaryAndExport(page, redactions) {
   const serialized = await fs.readFile(exported.path, "utf8");
   assert.equal(Buffer.byteLength(serialized), exported.size);
   assert.equal(path.dirname(exported.path), path.join(redactions[0], "exports"));
-  assert.doesNotMatch(serialized, /answerSource|fallbackReason|requestedSlot|factState|stateToken|authToken|\b360\b|360分/i);
+  assert.doesNotMatch(serialized, /answerSource|fallbackReason|publicReplyState|requestedSlot|factState|stateToken|authToken|\b360\b|360分/i);
   for (const value of redactions.filter(Boolean)) assert.equal(serialized.includes(value), false);
   return { accessibleSurfaceScanned: true, exportBytes: exported.size, exported: true, percentageScore: 75 };
 }
@@ -945,15 +950,15 @@ try {
   ] : [];
   const mentorAnswers = [];
   for (const [index, question] of mentorQuestions.entries()) {
-    mentorAnswers.push(await step(`mentor-question-${index + 1}`, askGovernedQuestion(running.page, undefined, true, question, true)));
+    mentorAnswers.push(await step(`mentor-question-${index + 1}`, askGovernedQuestion(running.page, undefined, true, question)));
   }
   const fallback = mentorHumanEntrypoint
     ? mentorAnswers[0]
-    : await askGovernedQuestion(running.page, usesFakeLocalAi ? "semantic_response_invalid" : undefined, realLocalAi);
+    : await askGovernedQuestion(running.page, usesFakeLocalAi ? "governed" : undefined, realLocalAi);
   const mentorLocalAcceptedCount = mentorAnswers.reduce((total, answer) => total + answer.acceptedDelta, 0);
   if (mentorHumanEntrypoint) {
     assert.equal(mentorAnswers.length, 10, "mentor_ten_patient_turns_required");
-    assert.ok(mentorLocalAcceptedCount > mentorAnswers.length - mentorLocalAcceptedCount, `mentor_local_ai_must_be_the_majority:${JSON.stringify(mentorAnswers.map(({ classificationSource, classifierStatus, acceptedDelta, fallbackDelta }) => ({ classificationSource, classifierStatus, acceptedDelta, fallbackDelta })))}`);
+    assert.ok(mentorLocalAcceptedCount > mentorAnswers.length - mentorLocalAcceptedCount, `mentor_local_ai_must_be_the_majority:${JSON.stringify(mentorAnswers.map(({ answerSource, publicReplyState, acceptedDelta, fallbackDelta }) => ({ answerSource, publicReplyState, acceptedDelta, fallbackDelta })))}`);
     assert.ok(mentorAnswers.every((answer) => answer.acceptedDelta + answer.fallbackDelta === 1), "mentor_each_turn_must_have_one_runtime_outcome");
     assert.ok(mentorAnswers.every((answer, index) => index === 0 || answer.localAiAcceptedCount >= mentorAnswers[index - 1].localAiAcceptedCount), "mentor_local_ai_count_regressed");
   }

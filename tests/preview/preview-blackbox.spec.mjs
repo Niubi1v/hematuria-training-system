@@ -45,10 +45,8 @@ function createSanitizedEvidence(page, scenario) {
         try {
           const payload = await response.json();
           item.error = typeof payload.error === "string" ? payload.error : undefined;
-          item.generationSource = typeof payload.generationSource === "string" ? payload.generationSource : undefined;
-          item.provider = typeof payload.provider === "string" ? payload.provider : undefined;
+          item.publicReplyState = typeof payload.publicReplyState === "string" ? payload.publicReplyState : undefined;
           item.isFallback = typeof payload.isFallback === "boolean" ? payload.isFallback : undefined;
-          item.fallbackReason = typeof payload.fallbackReason === "string" ? payload.fallbackReason : undefined;
         } catch { /* Evidence remains status-only. */ }
       }
       evidence.responses.push(item);
@@ -136,9 +134,12 @@ async function askLiveAiQuestion(page, language, question) {
   const patient = await patientResponse;
   expect(patient.status()).toBe(200);
   const patientPayload = await patient.json();
-  expect(patientPayload.generationSource).toBe("live_ai");
+  expect(Object.keys(patientPayload).sort()).toEqual(["isFallback", "matchedFacts", "matchedSlotIds", "publicReplyState", "replyText"]);
+  expect(String(patientPayload.replyText || "").trim()).not.toBe("");
+  expect(Array.isArray(patientPayload.matchedSlotIds)).toBe(true);
+  expect(Array.isArray(patientPayload.matchedFacts)).toBe(true);
+  expect(patientPayload.publicReplyState).toBe("answered");
   expect(patientPayload.isFallback).toBe(false);
-  expect(String(patientPayload.provider || "").toLowerCase()).not.toContain("rule");
 
   const history = await historyResponse;
   expect(history.status()).toBe(200);

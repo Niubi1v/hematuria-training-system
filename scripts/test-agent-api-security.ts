@@ -1,4 +1,8 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
+const { isUnsafePatientReply } = require("../src/components/ClinicalTrainingClient");
 
 process.env.AGENT_API_ALLOWED_ORIGINS = "https://allowed.example, https://second.example";
 process.env.AGENT_CHAT_RATE_LIMIT_PER_MINUTE = "2";
@@ -20,6 +24,9 @@ const legacyPatientHandler = require("../api/patient-reply.js");
 const legacyProfileHandler = require("../api/session/complete-profile.js");
 const { resetMemoryAttemptStore } = require("../server/trainingAttemptStore.js");
 const { executeIdempotentAgentRequest, resetMemoryAgentRequestStore } = require("../server/agentRequestStore.js");
+const { resetPatientIntentClassifierState } = require("../server/patientIntentClassifier.js");
+const { resetMemoryProviderCircuitStore } = require("../server/providerCircuitStore.js");
+const desktopSqliteStore = require("../server/desktopSqliteStore.js");
 
 type ApiHandler = (req: unknown, res: unknown) => unknown;
 type CallOptions = {
@@ -225,28 +232,259 @@ async function verifyPatientResponsePublicAllowlist(session: AuthorizedSession) 
       body: authorizedBody(session, { agentId: "standardized_patient", sessionMode: session.mode, studentInput: "查过尿吗？" })
     });
     assert.equal(response.statusCode, 200);
-    const payload = response.payload as Record<string, unknown>;
-    const allowed = new Set([
-      "agentId", "replyText", "usedModel", "provider", "visibleToStudent", "revealedDataKeys", "blockedDataKeys",
-      "safetyFlags", "isFallback", "generationSource", "classificationSource", "classifierStatus", "matchedSlotIds",
-      "matchedFacts", "answerSource", "factSource", "confidence", "fallbackReason", "providerConfigured",
-      "providerHttpSuccess", "thinkingExecuted", "thinkingMode"
-    ]);
-    assert.equal(typeof payload.replyText, "string");
-    assert.ok(Array.isArray(payload.matchedSlotIds), "patient response matchedSlotIds must remain an array");
-    assert.ok(Array.isArray(payload.matchedFacts), "patient response matchedFacts must remain an array");
-    assert.equal("desktopEvidence" in payload, false, "non-debug patient response must not expose desktop diagnostics");
-    assert.doesNotMatch(String(payload.replyText), /currentAllowedAnswer|allowedAnswer|```|^[\[{]/);
-    assert.deepEqual(Object.keys(payload).filter((field) => !allowed.has(field)), [], "patient response exposed an unapproved public field");
-    for (const field of [
-      "allowedAnswer", "currentAllowedAnswer", "answerPlans", "clauseOutcomes", "localMetadata",
-      "provenance", "classifier", "teacherOnly", "source", "governance"
-    ]) {
-      assert.equal(field in payload, false, `patient response leaked internal field: ${field}`);
-    }
+    assertPatientPublicResponse(response.payload, "normal governed Patient response", "connection_unavailable", true);
   } finally {
     if (previousAiPatient === undefined) delete process.env.LLM_ENABLE_AI_PATIENT;
     else process.env.LLM_ENABLE_AI_PATIENT = previousAiPatient;
+  }
+}
+
+type PatientPublicReplyState = "answered" | "governed" | "safety" | "connection_unavailable";
+
+const patientPublicResponseKeys = ["isFallback", "matchedFacts", "matchedSlotIds", "publicReplyState", "replyText"];
+const patientDesktopEvidenceKeys = [
+  "answerSource", "cloudRequestCount", "configuredMode", "effectiveMode", "effectiveModel", "factState", "fallbackReason",
+  "intent", "latency", "llamaServerReady", "localModelReady", "model", "modelProfile", "overrideSource", "productHead",
+  "requestedSlot", "responseErrors", "runtimeTarget", "sessionStartedAt", "unknown"
+].sort();
+const forbiddenPatientPublicKeys = new Set([
+  "agentId", "usedModel", "provider", "visibleToStudent", "revealedDataKeys", "blockedDataKeys", "safetyFlags",
+  "generationSource", "classificationSource", "classifierStatus", "answerSource", "factSource", "confidence",
+  "fallbackReason", "providerConfigured", "providerHttpSuccess", "thinkingExecuted", "thinkingMode", "allowedAnswer",
+  "currentAllowedAnswer", "answerPlans", "clauseOutcomes", "localMetadata", "provenance", "classifier", "teacherOnly",
+  "source", "governance", "factState", "requestedSlot", "intent"
+]);
+const forbiddenPatientPublicValue = /(?:teacher(?:OnlyData|[-_ ]only)|blockedDataKeys|revealedDataKeys|blockedFields|revealedFields|fallbackReason|generationSource|classificationSource|classifierStatus|answerSource|factSource|currentAllowedAnswer|allowedAnswer|answerPlans|clauseOutcomes|localMetadata|governanceSlotIds|collectableSlotIds|unknownReasonCodes|provenance|diagnosticEligible|scoringEligible|providerConfigured|providerHttpSuccess|thinkingExecuted|thinkingMode|governed_planner|local_ai|live_ai|ai_cache|rule_fallback|safety_boundary|diagnosis_boundary|report_boundary|ai_response_blocked|medical_history_pending_review|medical_bilingual_conflict_pending_review|compound_question_partial_medical_quarantine|pending_medical_review|provider_(?:unavailable|not_configured|timeout|rate_limit|http_error)|semantic_[a-z0-9_]+|needs_review|blocked_medical|medical_conflict)/iu;
+
+function assertNoInternalPatientData(value: unknown, label: string, path = "$response") {
+  if (typeof value === "string") {
+    assert.doesNotMatch(value, forbiddenPatientPublicValue, `${label} leaked an internal governance value at ${path}`);
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => assertNoInternalPatientData(item, label, `${path}[${index}]`));
+    return;
+  }
+  if (!value || typeof value !== "object") return;
+  for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
+    assert.equal(forbiddenPatientPublicKeys.has(key), false, `${label} leaked internal field ${path}.${key}`);
+    assertNoInternalPatientData(nested, label, `${path}.${key}`);
+  }
+}
+
+function assertPatientPublicResponse(
+  payload: unknown,
+  label: string,
+  expectedState: PatientPublicReplyState,
+  expectedFallback: boolean,
+  authorizedDesktopDebug = false
+) {
+  assert.ok(payload && typeof payload === "object" && !Array.isArray(payload), `${label} must return a JSON object`);
+  const response = payload as Record<string, unknown>;
+  assert.equal("desktopEvidence" in response, authorizedDesktopDebug, `${label} desktop diagnostics authorization`);
+  const expectedKeys = authorizedDesktopDebug ? [...patientPublicResponseKeys, "desktopEvidence"].sort() : patientPublicResponseKeys;
+  assert.deepEqual(Object.keys(response).sort(), expectedKeys, `${label} exposed fields outside the Student DTO`);
+  if (authorizedDesktopDebug) {
+    assert.ok(response.desktopEvidence && typeof response.desktopEvidence === "object" && !Array.isArray(response.desktopEvidence), `${label} desktopEvidence`);
+    assert.deepEqual(Object.keys(response.desktopEvidence as Record<string, unknown>).sort(), patientDesktopEvidenceKeys, `${label} desktopEvidence whitelist`);
+  }
+  assert.equal(response.publicReplyState, expectedState, `${label} public reply state`);
+  assert.equal(response.isFallback, expectedFallback, `${label} fallback state`);
+  assert.equal(typeof response.replyText, "string", `${label} replyText`);
+  assert.ok(Array.isArray(response.matchedSlotIds) && response.matchedSlotIds.every((item) => typeof item === "string"), `${label} matchedSlotIds`);
+  assert.ok(Array.isArray(response.matchedFacts) && response.matchedFacts.every((item) => typeof item === "string"), `${label} matchedFacts`);
+  assertNoInternalPatientData(Object.fromEntries(patientPublicResponseKeys.map((key) => [key, response[key]])), label);
+}
+
+async function verifyPatientPublicApiMinimalSurface() {
+  const originalFetch = globalThis.fetch;
+  const originalDesktopRuntimeEvidence = (globalThis as Record<string, unknown>).__hematuriaDesktopRuntimeEvidence;
+  const runtimeDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "hematuria-patient-public-api-"));
+  const environmentKeys = [
+    "LLM_ENABLE_AI_PATIENT", "LLM_PROVIDER", "LLM_API_BASE_URL", "LLM_MODEL", "LLM_STREAMING_ENABLED",
+    "HEMATURIA_RUNTIME_TARGET", "HEMATURIA_DESKTOP_DEBUG_RUNTIME", "HEMATURIA_DESKTOP_DATABASE_PATH",
+    "HEMATURIA_DESKTOP_RUNTIME_SESSION_ID"
+  ];
+  const originalEnvironment = new Map(environmentKeys.map((key) => [key, process.env[key]]));
+  process.env.LLM_PROVIDER = "local";
+  process.env.LLM_API_BASE_URL = "http://127.0.0.1:18080/v1";
+  process.env.LLM_MODEL = "Qwen3-1.7B";
+  process.env.LLM_STREAMING_ENABLED = "false";
+  process.env.HEMATURIA_DESKTOP_DATABASE_PATH = path.join(runtimeDirectory, "runtime.sqlite3");
+  process.env.HEMATURIA_DESKTOP_RUNTIME_SESSION_ID = "patient-public-api-runtime";
+  (globalThis as Record<string, unknown>).__hematuriaDesktopRuntimeEvidence = () => ({
+    sessionStartedAt: "2026-08-10T00:00:00.000Z",
+    runtimeTarget: "desktop",
+    llamaServerReady: true,
+    localModelReady: true,
+    model: "Qwen3-1.7B",
+    modelProfile: "lightweight",
+    configuredMode: "lightweight",
+    effectiveMode: "lightweight",
+    effectiveModel: "Qwen3-1.7B",
+    overrideSource: "runtime_default",
+    productHead: "a".repeat(40),
+    cloudRequestCount: 0
+  });
+  desktopSqliteStore.startDesktopRuntimeSession({
+    runtimeSessionId: process.env.HEMATURIA_DESKTOP_RUNTIME_SESSION_ID,
+    sessionStartedAt: "2026-08-10T00:00:00.000Z"
+  });
+
+  const providerResponse = (content: string) => new Response(JSON.stringify({ choices: [{ message: { content } }] }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" }
+  });
+  const installLocalProvider = (naturalizerOutputs: string[]) => {
+    const calls = { classifier: 0, naturalizer: 0 };
+    globalThis.fetch = async (_input, init) => {
+      const body = JSON.parse(String(init?.body || "{}"));
+      const providerPayload = JSON.parse(String(body.messages?.[1]?.content || "{}"));
+      if (providerPayload.classificationId) {
+        calls.classifier += 1;
+        return providerResponse(JSON.stringify({
+          intent: "prior_investigations",
+          currentTopic: "prior_investigations",
+          currentEntity: "prior_investigations",
+          requestedSlot: "PATIENT_PRIOR_INVESTIGATIONS",
+          contextReference: { inherited: false, sourceIntent: null },
+          clauses: [{ intent: "prior_investigations", requestedSlot: "PATIENT_PRIOR_INVESTIGATIONS" }],
+          naturalizationStyle: "direct"
+        }));
+      }
+      const content = naturalizerOutputs[Math.min(calls.naturalizer, naturalizerOutputs.length - 1)];
+      calls.naturalizer += 1;
+      return providerResponse(content);
+    };
+    return calls;
+  };
+  const runScenario = async ({
+    id, caseId = "P001", question, expectedState, expectedFallback, debug = false, expectDesktopEvidence = false
+  }: {
+    id: string;
+    caseId?: string;
+    question: string;
+    expectedState: PatientPublicReplyState;
+    expectedFallback: boolean;
+    debug?: boolean;
+    expectDesktopEvidence?: boolean;
+  }) => {
+    const session = await createAuthorizedSession(`patient-public-${id}`, caseId);
+    const response = await call(agentHandler, {
+      origin: "https://allowed.example",
+      ip: `patient-public-${id}`,
+      headers: { "x-idempotency-key": `patient-public-${id}` },
+      body: authorizedBody(session, {
+        agentId: "standardized_patient",
+        sessionMode: session.mode,
+        studentInput: question,
+        ...(debug ? { debug: true } : {})
+      })
+    });
+    assert.equal(response.statusCode, 200, `${id} response status`);
+    assertPatientPublicResponse(response.payload, id, expectedState, expectedFallback, expectDesktopEvidence);
+    return response.payload as Record<string, unknown>;
+  };
+
+  try {
+    process.env.LLM_ENABLE_AI_PATIENT = "true";
+    process.env.HEMATURIA_RUNTIME_TARGET = "desktop";
+    process.env.HEMATURIA_DESKTOP_DEBUG_RUNTIME = "1";
+    resetPatientIntentClassifierState();
+    resetMemoryProviderCircuitStore();
+    const normalLocalCalls = installLocalProvider(["之前没有做过检查。"]);
+    await runScenario({
+      id: "A normal local AI",
+      question: "查过尿吗？",
+      expectedState: "answered",
+      expectedFallback: false
+    });
+    assert.deepEqual(normalLocalCalls, { classifier: 1, naturalizer: 1 }, "A must exercise accepted local AI");
+
+    resetPatientIntentClassifierState();
+    const desktopDebugCalls = installLocalProvider(["之前没有做过检查。"]);
+    await runScenario({
+      id: "A authorized desktop diagnostics",
+      question: "查过尿吗？",
+      expectedState: "answered",
+      expectedFallback: false,
+      debug: true,
+      expectDesktopEvidence: true
+    });
+    assert.deepEqual(desktopDebugCalls, { classifier: 1, naturalizer: 1 }, "authorized desktop diagnostics must not change Patient routing");
+
+    delete process.env.HEMATURIA_RUNTIME_TARGET;
+    delete process.env.HEMATURIA_DESKTOP_DEBUG_RUNTIME;
+    process.env.LLM_ENABLE_AI_PATIENT = "false";
+    let disabledProviderCalls = 0;
+    globalThis.fetch = async () => {
+      disabledProviderCalls += 1;
+      throw new Error("disabled patient provider must not be called");
+    };
+    resetPatientIntentClassifierState();
+    await runScenario({ id: "B governed", question: "尿是什么颜色？", expectedState: "governed", expectedFallback: true, debug: true });
+    const pendingQuestion = "有没有高血压、糖尿病，平时吃什么药？";
+    const pending = await runScenario({
+      id: "C P002 partial medical pending",
+      caseId: "P002",
+      question: pendingQuestion,
+      expectedState: "governed",
+      expectedFallback: true
+    });
+    assert.ok((pending.matchedFacts as string[]).includes("diabetes_history"), "C must preserve the governed diabetes answer");
+    assert.ok((pending.matchedFacts as string[]).includes("medication_list"), "C must preserve the governed medication answer");
+    assert.equal((pending.matchedFacts as string[]).some((value) => /hypertension/i.test(value)), false, "C must not collect pending hypertension");
+    assert.equal((pending.matchedSlotIds as string[]).includes("PAST_HYPERTENSION"), false, "C pending hypertension must fail closed");
+    assert.doesNotMatch(String(pending.replyText), /(?:^|[。！？\n])(?:我)?(?:有|没有|没得过|患有)高血压/u, "C must not invent a hypertension polarity");
+    assert.equal(
+      isUnsafePatientReply(
+        pendingQuestion,
+        String(pending.replyText),
+        "zh",
+        pending.matchedFacts as string[],
+        pending.matchedSlotIds as string[]
+      ),
+      false,
+      "C governed diabetes and medication answer must remain visible in the Student UI"
+    );
+    assert.doesNotMatch(String(pending.replyText), /问得再具体一点/u, "C must not be replaced by a generic clarification");
+    await runScenario({ id: "D diagnosis boundary", question: "你觉得我得的是什么病？", expectedState: "safety", expectedFallback: true });
+    await runScenario({ id: "E report boundary", question: "CTU报告显示什么？", expectedState: "safety", expectedFallback: true });
+    await runScenario({ id: "F bilingual conflict", question: "最近有尿急吗？", expectedState: "safety", expectedFallback: true });
+    assert.equal(disabledProviderCalls, 0, "B-F governed and safety paths must not call a provider");
+
+    process.env.LLM_ENABLE_AI_PATIENT = "true";
+    resetPatientIntentClassifierState();
+    resetMemoryProviderCircuitStore();
+    let unavailableCalls = 0;
+    globalThis.fetch = async () => {
+      unavailableCalls += 1;
+      throw new TypeError("test-only local provider unavailable");
+    };
+    await runScenario({ id: "G provider unavailable", question: "查过尿吗？", expectedState: "connection_unavailable", expectedFallback: true });
+    assert.equal(unavailableCalls, 1, "G must exercise the unavailable provider path once");
+
+    resetPatientIntentClassifierState();
+    resetMemoryProviderCircuitStore();
+    const rejectedCorrectionCalls = installLocalProvider([
+      '{"allowedAnswer":"之前没有做过检查。"}',
+      '{"replyText":"之前没有做过检查。","currentAllowedAnswer":"..."}'
+    ]);
+    await runScenario({ id: "H protocol correction fallback", question: "查过尿吗？", expectedState: "safety", expectedFallback: true });
+    assert.deepEqual(rejectedCorrectionCalls, { classifier: 1, naturalizer: 2 }, "H must exhaust exactly one protocol correction");
+  } finally {
+    globalThis.fetch = originalFetch;
+    desktopSqliteStore.closeDesktopSqliteStore();
+    if (originalDesktopRuntimeEvidence === undefined) delete (globalThis as Record<string, unknown>).__hematuriaDesktopRuntimeEvidence;
+    else (globalThis as Record<string, unknown>).__hematuriaDesktopRuntimeEvidence = originalDesktopRuntimeEvidence;
+    fs.rmSync(runtimeDirectory, { recursive: true, force: true });
+    resetPatientIntentClassifierState();
+    resetMemoryProviderCircuitStore();
+    for (const key of environmentKeys) {
+      const value = originalEnvironment.get(key);
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
   }
 }
 
@@ -346,8 +584,7 @@ async function verifyGenerationSourceClassification(session: AuthorizedSession) 
     body: authorizedBody(session, { agentId: "standardized_patient", sessionMode: session.mode, studentInput: "有血块吗？有发热吗？" })
   });
   assert.equal(compound.statusCode, 200);
-  assert.equal((compound.payload as { fallbackReason: string }).fallbackReason, "compound_question_preserves_all_facts");
-  assert.equal((compound.payload as { generationSource: string }).generationSource, "safety_boundary", "fact-preserving compound fallback must not be reported as a provider/rule failure");
+  assertPatientPublicResponse(compound.payload, "fact-preserving compound response", "governed", true);
   assert.match(compound.headers["server-timing"], /^app;dur=\d+\.\d$/);
 }
 
@@ -802,6 +1039,11 @@ async function verifyBodyLimits() {
 async function main() {
   resetMemoryAttemptStore();
   resetMemoryAgentRequestStore();
+  if (process.argv.includes("--patient-public-api-minimal-surface")) {
+    await verifyPatientPublicApiMinimalSurface();
+    console.log("R5-PATIENT-PUBLIC-API-MINIMAL-SURFACE passed.");
+    return;
+  }
   await verifyOriginAndCors(agentHandler, "agent-chat");
   await verifyOriginAndCors(sessionHandler, "session-init");
   await verifyOptionalServerToken(sessionHandler);
@@ -812,6 +1054,7 @@ async function main() {
   await verifySessionCapabilityBoundary(session);
   await verifyGenerationSourceClassification(session);
   await verifyPatientResponsePublicAllowlist(session);
+  await verifyPatientPublicApiMinimalSurface();
   await verifyProviderTimingNonDisclosure(session);
   await verifyProviderFailureNonDisclosure(session);
   await verifyAgentIdempotency(session);

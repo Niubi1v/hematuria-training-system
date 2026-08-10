@@ -78,6 +78,8 @@ const {
   resetDesktopPatientEvidenceForTests
 } = require("../server/desktopRuntimeEvidence.js");
 const originalDesktopRuntimeEvidence = globalThis.__hematuriaDesktopRuntimeEvidence;
+const patientStudentKeys = ["isFallback", "matchedFacts", "matchedSlotIds", "publicReplyState", "replyText"];
+const patientStudentDebugKeys = [...patientStudentKeys, "desktopEvidence"].sort();
 
 function localMetadata(intent = "dysuria", overrides = {}) {
   const requestedSlot = intent === null
@@ -140,6 +142,20 @@ async function callApi(handler, { body, headers = {}, ip = "local-structured-api
   };
   await handler(req, res);
   return { statusCode, payload, headers: responseHeaders };
+}
+
+function assertPatientStudentReply(payload, label, expectedState, expectedFallback, desktopDebug = false) {
+  assert.ok(payload && typeof payload === "object" && !Array.isArray(payload), `${label} must return a JSON object`);
+  assert.deepEqual(
+    Object.keys(payload).sort(),
+    desktopDebug ? patientStudentDebugKeys : patientStudentKeys,
+    `${label} must expose only the Student DTO${desktopDebug ? " and authorized desktopEvidence" : ""}`
+  );
+  assert.equal(payload.publicReplyState, expectedState, `${label} public reply state`);
+  assert.equal(payload.isFallback, expectedFallback, `${label} fallback state`);
+  assert.equal(typeof payload.replyText, "string", `${label} replyText`);
+  assert.ok(Array.isArray(payload.matchedSlotIds) && payload.matchedSlotIds.every((value) => typeof value === "string"), `${label} matchedSlotIds`);
+  assert.ok(Array.isArray(payload.matchedFacts) && payload.matchedFacts.every((value) => typeof value === "string"), `${label} matchedFacts`);
 }
 
 async function main() {
@@ -517,12 +533,7 @@ async function main() {
     });
     assert.equal(apiLocal.statusCode, 200, JSON.stringify(apiLocal.payload));
     assert.equal(networkCalls, 1);
-    assert.equal(apiLocal.payload.generationSource, "governed_planner");
-    assert.equal(apiLocal.payload.classificationSource, "local_ai");
-    assert.equal(apiLocal.payload.classifierStatus, "accepted");
-    assert.equal(apiLocal.payload.provider, "local");
-    assert.equal(apiLocal.payload.isFallback, false);
-    assert.notEqual(apiLocal.payload.answerSource, "local");
+    assertPatientStudentReply(apiLocal.payload, "authorized desktop local reply", "answered", false, true);
     assert.deepEqual(Object.keys(apiLocal.payload.desktopEvidence).sort(), [
       "answerSource", "cloudRequestCount", "factState", "fallbackReason", "intent", "latency",
       "llamaServerReady", "localModelReady", "model", "modelProfile", "configuredMode", "effectiveMode",
@@ -530,6 +541,7 @@ async function main() {
       "responseErrors", "runtimeTarget", "sessionStartedAt", "unknown"
     ].sort());
     assert.equal(apiLocal.payload.desktopEvidence.model, DEFAULT_LOCAL_MODEL);
+    assert.equal(apiLocal.payload.desktopEvidence.answerSource, "local_ai");
     assert.equal(desktopRuntimeSummary().localAiAcceptedCount, 1);
 
     for (let index = 0; index < 4; index += 1) {
@@ -552,9 +564,7 @@ async function main() {
         }
       });
       assert.equal(releaseModeReply.statusCode, 200, JSON.stringify(releaseModeReply.payload));
-      assert.equal(releaseModeReply.payload.classificationSource, "local_ai");
-      assert.equal(releaseModeReply.payload.classifierStatus, "accepted");
-      assert.equal(Object.hasOwn(releaseModeReply.payload, "desktopEvidence"), false);
+      assertPatientStudentReply(releaseModeReply.payload, `normal local reply ${index + 1}`, "answered", false);
     }
     assert.equal(desktopRuntimeSummary().localAiAcceptedCount, 5);
 
@@ -598,8 +608,7 @@ async function main() {
         }
       });
       assert.equal(disabledReply.statusCode, 200, JSON.stringify(disabledReply.payload));
-      assert.equal(disabledReply.payload.classificationSource, "deterministic");
-      assert.equal(Object.hasOwn(disabledReply.payload, "desktopEvidence"), false);
+      assertPatientStudentReply(disabledReply.payload, `normal governed reply ${index + 1}`, "governed", true);
     }
     assert.equal(networkCalls, 0);
     assert.equal(desktopRuntimeSummary().localAiAcceptedCount, 0);
@@ -645,12 +654,8 @@ async function main() {
       }
     });
     assert.equal(apiFallback.statusCode, 200, JSON.stringify(apiFallback.payload));
-    assert.equal(apiFallback.payload.generationSource, "governed_planner");
-    assert.equal(apiFallback.payload.classificationSource, "local_ai");
-    assert.equal(apiFallback.payload.classifierStatus, "rejected");
-    assert.equal(apiFallback.payload.isFallback, true);
+    assertPatientStudentReply(apiFallback.payload, "authorized desktop fallback reply", "governed", true, true);
     assert.match(apiFallback.payload.replyText, /没有|不痛/);
-    assert.equal(apiFallback.payload.usedModel, DEFAULT_LOCAL_MODEL);
     assert.equal(apiFallback.payload.desktopEvidence.model, DEFAULT_LOCAL_MODEL);
     assert.equal(apiFallback.payload.desktopEvidence.answerSource, "rule_fallback");
     assert.equal(apiFallback.payload.desktopEvidence.fallbackReason, "semantic_response_invalid");

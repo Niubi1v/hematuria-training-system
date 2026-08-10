@@ -15,7 +15,10 @@ const firstTokenDurations = [];
 const historyDurations = [];
 const scoreDurations = [];
 const statusCounts = new Map();
-let realAiReplies = 0;
+const patientStateCounts = new Map();
+const patientReplyKeys = ["isFallback", "matchedFacts", "matchedSlotIds", "publicReplyState", "replyText"];
+const patientReplyStates = new Set(["answered", "governed", "safety", "connection_unavailable"]);
+let answeredReplies = 0;
 let fallbackReplies = 0;
 
 async function request(path, init = {}) {
@@ -77,15 +80,20 @@ for (const language of ["zh", "en"]) {
       patientDurations.push(performance.now() - startedAt);
       const timing = parseServerTiming(reply.response.headers.get("server-timing") || "");
       if (timing.app === undefined) throw new Error("missing patient application timing metadata");
+      if (JSON.stringify(Object.keys(reply.payload).sort()) !== JSON.stringify(patientReplyKeys)) throw new Error("unexpected patient reply DTO");
       if (!String(reply.payload.replyText || "").trim()) throw new Error("empty patient reply");
       if (language === "en" && /[\u3400-\u9fff]/.test(reply.payload.replyText)) throw new Error("English reply contains Chinese text");
+      if (!Array.isArray(reply.payload.matchedSlotIds) || !Array.isArray(reply.payload.matchedFacts)) throw new Error("invalid patient reply matches");
+      if (!patientReplyStates.has(reply.payload.publicReplyState)) throw new Error("invalid patient public reply state");
+      patientStateCounts.set(reply.payload.publicReplyState, (patientStateCounts.get(reply.payload.publicReplyState) || 0) + 1);
       if (reply.payload.isFallback) fallbackReplies += 1;
       else {
-        realAiReplies += 1;
-        if (reply.payload.generationSource === "live_ai" && timing.provider === undefined) throw new Error("missing live provider timing metadata");
-        if (reply.payload.generationSource === "live_ai" && timing.firsttoken === undefined) throw new Error("missing live first-token timing metadata");
-        if (timing.provider !== undefined) providerDurations.push(timing.provider);
-        if (timing.firsttoken !== undefined) firstTokenDurations.push(timing.firsttoken);
+        answeredReplies += 1;
+        if (reply.payload.publicReplyState !== "answered") throw new Error("unexpected governed patient reply");
+        if (timing.provider === undefined) throw new Error("missing provider timing metadata");
+        if (timing.firsttoken === undefined) throw new Error("missing first-token timing metadata");
+        providerDurations.push(timing.provider);
+        firstTokenDurations.push(timing.firsttoken);
       }
     });
   }
@@ -150,7 +158,7 @@ console.log(`METRIC\tpatient-provider\t${metricSummary(providerDurations)}`);
 console.log(`METRIC\tpatient-first-token\t${metricSummary(firstTokenDurations)}`);
 console.log(`METRIC\thistory-log\t${metricSummary(historyDurations)}`);
 console.log(`METRIC\tscore-submit\t${metricSummary(scoreDurations)}`);
-console.log(`METRIC\tpatient-source\treal-ai=${realAiReplies} fallback=${fallbackReplies} success-rate=${((realAiReplies + fallbackReplies) / 10 * 100).toFixed(0)}%`);
+console.log(`METRIC\tpatient-state\tanswered=${patientStateCounts.get("answered") || 0} governed=${patientStateCounts.get("governed") || 0} safety=${patientStateCounts.get("safety") || 0} connection-unavailable=${patientStateCounts.get("connection_unavailable") || 0} non-fallback=${answeredReplies} fallback=${fallbackReplies}`);
 console.log(`METRIC\tupstream-status\t429=${statusCounts.get(429) || 0} 502=${statusCounts.get(502) || 0} 503=${statusCounts.get(503) || 0} 504=${statusCounts.get(504) || 0}`);
 if (results.some((row) => row.status === "FAIL")) process.exit(1);
 console.log("Production smoke passed with real services; no mocks were used.");

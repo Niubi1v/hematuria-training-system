@@ -120,13 +120,9 @@ async function ask(page, language, question, expectedFact, options = {}) {
     expectedFact,
     status: patient.status(),
     historyStatus: history.status(),
-    answerSource: payload.generationSource,
-    provider: payload.provider,
-    providerConfigured: payload.providerConfigured,
-    providerHttpSuccess: payload.providerHttpSuccess,
-    model: payload.usedModel,
-    thinkingMode: payload.thinkingMode,
-    thinkingExecuted: payload.thinkingExecuted,
+    replyKeys: Object.keys(payload).sort(),
+    replyTextPresent: Boolean(String(payload.replyText || "").trim()),
+    publicReplyState: payload.publicReplyState,
     matchedFact: expectedFact
       ? (matchedFacts.includes(expectedFact) ? expectedFact : "")
       : (matchedFacts[0] || ""),
@@ -134,7 +130,6 @@ async function ask(page, language, question, expectedFact, options = {}) {
     unknown: options.allowUnknown ? false : unknown,
     expectedPartialUnknown: Boolean(options.allowUnknown && unknown),
     fallback: payload.isFallback,
-    fallbackReason: payload.fallbackReason || "",
     durationMs,
     providerMs: timing.provider,
     firstTokenMs: timing.firsttoken
@@ -222,8 +217,12 @@ test("@preview-history-continuity preserves governed facts across real Flash fol
     cases: cases.length,
     femaleCases: cases.filter((item) => item.sex === "female").length,
     healthCheckCases: cases.filter((item) => item.complaint === "health_check_finding").length,
-    zhLiveAi: samples.filter((sample) => sample.language === "zh" && sample.answerSource === "live_ai").length,
-    enLiveAi: samples.filter((sample) => sample.language === "en" && sample.answerSource === "live_ai").length,
+    zhProviderReplies: samples.filter((sample) => sample.language === "zh" && !sample.fallback && Number.isFinite(sample.providerMs)).length,
+    enProviderReplies: samples.filter((sample) => sample.language === "en" && !sample.fallback && Number.isFinite(sample.providerMs)).length,
+    publicReplyStates: Object.fromEntries(["answered", "governed", "safety", "connection_unavailable"].map((state) => [
+      state,
+      samples.filter((sample) => sample.publicReplyState === state).length
+    ])),
     erroneousUnknowns: samples.filter((sample) => sample.unknown).length,
     contextLosses: samples.filter((sample) =>
       !sample.matchedFact
@@ -242,12 +241,12 @@ test("@preview-history-continuity preserves governed facts across real Flash fol
   });
   console.log(`PATIENT_HISTORY_CONTINUITY_EVIDENCE ${JSON.stringify(summary)}`);
   expect(samples.every((sample) => sample.status === 200 && sample.historyStatus === 200)).toBe(true);
-  expect(samples.every((sample) => sample.providerConfigured === true)).toBe(true);
-  expect(samples.every((sample) => sample.provider === "deepseek")).toBe(true);
-  expect(samples.every((sample) => sample.model === "deepseek-v4-flash")).toBe(true);
-  expect(samples.every((sample) => sample.thinkingMode === "disabled" && sample.thinkingExecuted === false)).toBe(true);
-  expect(summary.zhLiveAi).toBeGreaterThanOrEqual(10);
-  expect(summary.enLiveAi).toBeGreaterThanOrEqual(5);
+  expect(samples.every((sample) => JSON.stringify(sample.replyKeys) === JSON.stringify(["isFallback", "matchedFacts", "matchedSlotIds", "publicReplyState", "replyText"]))).toBe(true);
+  expect(samples.every((sample) => sample.replyTextPresent)).toBe(true);
+  expect(samples.every((sample) => ["answered", "governed"].includes(sample.publicReplyState))).toBe(true);
+  expect(samples.every((sample) => Number.isFinite(sample.providerMs) && Number.isFinite(sample.firstTokenMs))).toBe(true);
+  expect(summary.zhProviderReplies).toBeGreaterThanOrEqual(10);
+  expect(summary.enProviderReplies).toBeGreaterThanOrEqual(5);
   expect(summary.erroneousUnknowns).toBe(0);
   expect(summary.contextLosses).toBe(0);
   expect(summary.fallbacks).toBe(0);

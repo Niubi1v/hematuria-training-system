@@ -1,6 +1,8 @@
 "use strict";
 
 const path = require("node:path");
+const patientReplyKeys = ["isFallback", "matchedFacts", "matchedSlotIds", "publicReplyState", "replyText"];
+const patientReplyStates = new Set(["answered", "governed", "safety", "connection_unavailable"]);
 
 function writeResult(result, exitCode) {
   process.stdout.write(JSON.stringify(result));
@@ -69,18 +71,32 @@ async function runPatientOnly() {
     };
   }
   const patientResult = await patientResponse.json();
-  const liveAi = patientResult?.isFallback === false
-    && patientResult?.provider === "deepseek"
-    && patientResult?.model === "deepseek-v4-pro";
+  const validPublicReply = patientResult
+    && JSON.stringify(Object.keys(patientResult).sort()) === JSON.stringify(patientReplyKeys)
+    && typeof patientResult.replyText === "string"
+    && Array.isArray(patientResult.matchedSlotIds)
+    && Array.isArray(patientResult.matchedFacts)
+    && typeof patientResult.isFallback === "boolean"
+    && patientReplyStates.has(patientResult.publicReplyState);
+  const liveAi = validPublicReply
+    && patientResult.replyText.trim().length > 0
+    && patientResult.isFallback === false
+    && patientResult.publicReplyState === "answered"
+    && String(process.env.LLM_PROVIDER || "").toLowerCase() === "deepseek"
+    && process.env.LLM_MODEL === "deepseek-v4-pro";
   return {
     result: {
       providerConfigured: true,
       providerHttpSuccess: liveAi,
       answerSource: liveAi ? "live_ai" : "rule_fallback",
       thinkingExecuted: false,
-      model: String(patientResult?.model || process.env.LLM_MODEL || ""),
+      model: String(process.env.LLM_MODEL || ""),
       durationMs: Date.now() - startedAt,
-      errorCode: liveAi ? "" : String(patientResult?.fallbackReason || "patient_provider_fallback")
+      errorCode: liveAi
+        ? ""
+        : !validPublicReply
+          ? "patient_reply_contract_invalid"
+          : `patient_${patientResult.publicReplyState}`
     },
     exitCode: liveAi ? 0 : 2
   };

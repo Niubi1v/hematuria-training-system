@@ -50,6 +50,7 @@ const fast = [
   command(pnpm, "run", "test:patient-knowable-allowlist"),
   command(pnpm, "run", "test:patient-adversarial-corpus"),
   command(pnpm, "run", "test:patient-visible-internal-protocol-leak"),
+  command(pnpm, "run", "test:patient-public-api-minimal-surface"),
   command(pnpm, "run", "test:ui:patient-reply-safety"),
   command(pnpm, "run", "test:desktop:install-identity"),
   command(pnpm, "run", "typecheck"),

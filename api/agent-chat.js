@@ -19,25 +19,61 @@ const MAX_HISTORY_ITEMS = 8;
 const MAX_ASKED_ITEMS = 100;
 const requestWindows = globalThis.__hematuriaAgentChatRequestWindows || new Map();
 globalThis.__hematuriaAgentChatRequestWindows = requestWindows;
-const safetyFallbackReasons = new Set([
+const publicSafetyFallbackReasons = new Set([
   "diagnosis_boundary",
   "report_boundary",
-  "compound_question_preserves_all_facts",
   "ai_response_blocked",
   "medical_bilingual_conflict_pending_review",
-  "safety_filter"
+  "safety_filter",
+  "unsafe_deterministic_answer"
 ]);
-
-function safetyBoundaryFallback(patient) {
-  const reason = String(patient.fallbackReason || "").toLowerCase();
-  return safetyFallbackReasons.has(reason)
-    || (patient.safetyFlags || []).some((flag) => flag.startsWith("blocked_") || flag === "ai_response_blocked");
-}
+const connectionFallbackReasons = new Set([
+  "llm_error",
+  "llm_unavailable_or_rule_mode",
+  "ai_unavailable_or_rule_mode",
+  "provider_not_configured",
+  "provider_rate_limit",
+  "provider_timeout",
+  "provider_unavailable"
+]);
 
 function desktopDiagnosticsRequested(body) {
   return body?.debug === true
     && process.env.HEMATURIA_RUNTIME_TARGET === "desktop"
     && process.env.HEMATURIA_DESKTOP_DEBUG_RUNTIME === "1";
+}
+
+function publicPatientReplyState(patient) {
+  const fallbackReason = String(patient.fallbackReason || "").toLowerCase();
+  const safetyFlags = Array.isArray(patient.safetyFlags) ? patient.safetyFlags.map((flag) => String(flag).toLowerCase()) : [];
+  const governedRestriction = Array.isArray(patient.clauseOutcomes)
+    && patient.clauseOutcomes.some((outcome) => outcome?.status === "blocked_medical");
+  if (!patient.isFallback) return governedRestriction ? "governed" : "answered";
+  if (
+    connectionFallbackReasons.has(fallbackReason)
+    || /^(?:(?:semantic_)?provider_(?:timeout|rate_limit|unavailable|not_configured|http_error)|llm_(?:error|unavailable))/.test(fallbackReason)
+  ) return "connection_unavailable";
+  if (
+    publicSafetyFallbackReasons.has(fallbackReason)
+    || safetyFlags.some((flag) =>
+      flag.startsWith("blocked_")
+      || flag === "ai_response_blocked"
+      || flag === "deterministic_answer_blocked"
+      || flag === "medical_bilingual_conflict_pending_review"
+      || flag === "safety_filter"
+    )
+  ) return "safety";
+  return "governed";
+}
+
+function patientPublicPayload(patient) {
+  return {
+    replyText: String(patient.replyText || ""),
+    matchedSlotIds: Array.isArray(patient.matchedSlotIds) ? patient.matchedSlotIds.filter((value) => typeof value === "string") : [],
+    matchedFacts: Array.isArray(patient.matchedFacts) ? patient.matchedFacts.filter((value) => typeof value === "string") : [],
+    isFallback: Boolean(patient.isFallback),
+    publicReplyState: publicPatientReplyState(patient)
+  };
 }
 
 function getProviderConfig() {
@@ -177,33 +213,16 @@ async function buildAgentResponse(body, agentId, caseData, startedAt) {
   if (agentId === "standardized_patient") {
     if (body.probe) {
       const probe = await probePatientProvider();
-      const probeProvider = String(probe.provider || "").toLowerCase();
-      const probeClassificationSource = probe.isFallback
-        ? "none"
-        : probeProvider === "local"
-          ? "local_ai"
-          : probeProvider === "deepseek"
-            ? "deepseek_live_ai"
-            : "live_ai";
       return {
         statusCode: 200,
         timings: { app: Date.now() - startedAt, provider: probe.providerDurationMs, firsttoken: probe.providerFirstTokenMs },
-        payload: {
-          agentId,
+        payload: patientPublicPayload({
           replyText: "",
           matchedSlotIds: [],
           matchedFacts: [],
-          safetyFlags: [],
-          answerSource: probe.isFallback ? "rule" : probe.provider,
-          generationSource: "none",
-          classificationSource: probeClassificationSource,
-          classifierStatus: probe.isFallback ? "rejected" : "accepted",
-          confidence: 1,
           isFallback: Boolean(probe.isFallback),
-          provider: probe.provider,
-          model: probe.model,
           fallbackReason: probe.fallbackReason || ""
-        }
+        })
       };
     }
     const patient = await generatePatientAnswer({
@@ -213,13 +232,6 @@ async function buildAgentResponse(body, agentId, caseData, startedAt) {
       conversationHistory: body.conversationHistory || [],
       language: body.language || "zh"
     });
-    const generationSource = safetyBoundaryFallback(patient)
-      ? "safety_boundary"
-      : String(patient.runtimeTrace?.generationSource || (
-          patient.isFallback
-            ? "rule_fallback"
-            : patient.cacheHit ? "ai_cache" : "live_ai"
-        ));
     const recordedDesktopEvidence = desktopPatientEvidence(patient, {
       latency: Date.now() - startedAt
     });
@@ -231,34 +243,12 @@ async function buildAgentResponse(body, agentId, caseData, startedAt) {
           : "agent-chat-final-provider-missing"
     );
     const desktopEvidence = desktopDiagnosticsRequested(body) ? recordedDesktopEvidence : null;
+    const payload = patientPublicPayload(patient);
+    if (desktopEvidence) payload.desktopEvidence = desktopEvidence;
     return {
       statusCode: 200,
       timings: { app: Date.now() - startedAt, provider: patient.providerDurationMs, firsttoken: patient.providerFirstTokenMs },
-      payload: {
-        agentId,
-        replyText: patient.replyText,
-        usedModel: patient.runtimeTrace?.model || patient.model,
-        provider: patient.provider,
-        visibleToStudent: true,
-        revealedDataKeys: [],
-        blockedDataKeys: blockedTeacherKeys,
-        safetyFlags: patient.safetyFlags || [],
-        isFallback: Boolean(patient.isFallback),
-        generationSource,
-        classificationSource: String(patient.runtimeTrace?.classificationSource || "none"),
-        classifierStatus: String(patient.runtimeTrace?.classifierStatus || "not_invoked"),
-        matchedSlotIds: patient.matchedSlotIds || [],
-        matchedFacts: patient.matchedFacts || [],
-        answerSource: patient.answerSource || (patient.isFallback ? "rule" : patient.provider),
-        factSource: patient.answerSource || "unknown",
-        confidence: patient.confidence ?? (patient.isFallback ? 0.85 : 0.95),
-        fallbackReason: patient.fallbackReason || (patient.isFallback ? "ai_unavailable_or_rule_mode" : ""),
-        providerConfigured: Boolean(patient.runtimeTrace?.providerConfigured),
-        providerHttpSuccess: Boolean(patient.runtimeTrace?.providerHttpSuccess),
-        thinkingExecuted: Boolean(patient.runtimeTrace?.thinkingExecuted),
-        thinkingMode: String(patient.runtimeTrace?.thinkingMode || "disabled"),
-        ...(desktopEvidence ? { desktopEvidence } : {}),
-      }
+      payload
     };
   }
 
