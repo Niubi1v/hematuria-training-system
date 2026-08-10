@@ -46,7 +46,8 @@ const REQUIRED_SLUGS = [
   "PATIENT-SEMANTIC-COVERAGE",
   "PATIENT-KNOWLEDGE-GROUNDING",
   "PATIENT-VISIBLE-INTERNAL-PROTOCOL-LEAK",
-  "PATIENT-UI-COMPOUND-FALSE-BLOCK"
+  "PATIENT-UI-COMPOUND-FALSE-BLOCK",
+  "PATIENT-PUBLIC-API-GOVERNANCE-LEAK"
 ];
 const STATUSES = new Set(["fixed", "regression_required", "open", "blocked_root_cause"]);
 const ROOT_CAUSE_STATUSES = new Set(["confirmed", "unconfirmed", "not_applicable"]);
