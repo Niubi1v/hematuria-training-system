@@ -52,6 +52,14 @@ const probes: Probe[] = [
     unsafe: false
   },
   {
+    id: "surgery-urinary-procedure-compound",
+    question: "做过手术或者导过尿吗？",
+    reply: "这点我记不太清了。\n以前没有做过导尿、膀胱镜等泌尿操作。",
+    matchedFacts: ["surgery_history", "urinary_procedure_history"],
+    matchedSlotIds: ["PAST_SURGERY", "PAST_URINARY_PROCEDURE"],
+    unsafe: false
+  },
+  {
     id: "grounded-public-fact-authorizes-compound-clause",
     question: "有高血压吗？",
     reply: "有高血压，没有糖尿病。",
@@ -79,6 +87,14 @@ const probes: Probe[] = [
     id: "urine-color-does-not-authorize-imaging",
     question: "尿什么颜色？",
     reply: "尿是鲜红色，后来还做了CT。",
+    matchedFacts: ["urine_color"],
+    matchedSlotIds: ["urine_color"],
+    unsafe: true
+  },
+  {
+    id: "urine-color-does-not-authorize-cystoscopy",
+    question: "尿什么颜色？",
+    reply: "尿是鲜红色，后来还做了膀胱镜。",
     matchedFacts: ["urine_color"],
     matchedSlotIds: ["urine_color"],
     unsafe: true

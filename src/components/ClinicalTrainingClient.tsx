@@ -320,7 +320,6 @@ const patientReplyForbiddenTerms = [
   "原始既往史",
   "CT提示",
   "CTU提示",
-  "膀胱镜",
   "病理",
   "占位",
   "癌栓",
@@ -408,7 +407,7 @@ const patientReplyTopicScopes = [
   { reply: /血块|血凝块|凝血块/g, question: /血块|血凝块|凝血块/, identifiers: /blood_clots|(?:^|\s)clots(?:=|\s|$)/i },
   { reply: /鲜红|暗红|洗肉水|茶色|酱油|红色/g, question: /颜色|鲜红|暗红|洗肉水|茶色|酱油|红色|尿色/, identifiers: /urine_color/i },
   { reply: /全程|终末|起始|最后几滴|一直红/g, question: /全程|终末|起始|最后几滴|一直红/, identifiers: /hematuria_phase/i },
-  { reply: /CT|影像/g, question: /CT|影像|片子|B超|彩超|MRI|核磁/i, identifiers: /prior_investigation|PATIENT_PRIOR_INVESTIGATIONS/i },
+  { reply: /CT|影像|膀胱镜|cystoscopy/gi, question: /CT|影像|片子|B超|彩超|MRI|核磁|膀胱镜|cystoscopy/i, identifiers: /prior_investigation|PATIENT_PRIOR_INVESTIGATIONS|urinary_procedure_history|PAST_URINARY_PROCEDURE/i },
   { reply: /诊断/g, question: /诊断|什么病|医生.*(?:说|讲)/, identifiers: /prior_diagnosis_patient_aware/i },
   { reply: /阿司匹林/g, question: /吃什么药|用什么药|服.*药|用药|药物/, identifiers: /medication|MED_/i },
   { reply: /肿瘤|膀胱癌/g, question: /肿瘤|膀胱癌|癌/, identifiers: /malignancy_history|PAST_MALIGNANCY/i },
@@ -439,6 +438,7 @@ export function isUnsafePatientReply(
   if (language === "en" && /[\u3400-\u9fff]/.test(reply)) return true;
   if (compactReply.length > 600) return true;
   const unscopedReply = removeAuthorizedPatientReplyTopics(compactQuestion, compactReply, matchedFacts, matchedSlotIds);
+  if (/膀胱镜|cystoscopy/i.test(unscopedReply)) return true;
 
   const askedSmoking = /吸烟|抽烟|烟龄|几包|包年/.test(compactQuestion);
   const askedAlcohol = /喝酒|饮酒|白酒|酒量/.test(compactQuestion);
