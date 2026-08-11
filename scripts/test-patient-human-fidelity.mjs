@@ -11,9 +11,9 @@ const { generatePatientAnswer, initSession } = require("../server/patientSession
 const { buildLifestyleAnswerPlan } = require("../src/lib/structuredHistoryAnswerPlanner.js");
 const { questionSemanticDepth } = require("../src/lib/stage1HistoryIntentRegistry.js");
 
-async function ask(caseId, question) {
-  const session = await initSession({ caseId, attemptId: `human-fidelity-${caseId}-${question}`, language: "zh" });
-  return generatePatientAnswer({ sessionId: session.sessionId, caseId, studentInput: question, conversationHistory: [], language: "zh" });
+async function ask(caseId, question, language = "zh") {
+  const session = await initSession({ caseId, attemptId: `human-fidelity-${caseId}-${question}`, language });
+  return generatePatientAnswer({ sessionId: session.sessionId, caseId, studentInput: question, conversationHistory: [], language });
 }
 
 async function main() {
@@ -95,6 +95,8 @@ async function main() {
   const occupation = await ask("HX-ADD-003", "有没有职业暴露？");
   assert.match(occupation.replyText, /工作中接触过/);
   assert.doesNotMatch(occupation.replyText, /职业暴露\s*[：:]|工作中接触过工作中接触过/);
+  const occupationEnglish = await ask("HX-ADD-001", "Were you exposed to dyes at work?", "en");
+  assert.doesNotMatch(occupationEnglish.replyText, /\.\.$/);
 
   console.log("R5 Patient Human Fidelity gate passed.");
 }

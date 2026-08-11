@@ -149,7 +149,7 @@ const sourceProjections = Object.freeze({
     })
   }),
   occupational_exposure: Object.freeze({
-    separators: /[。！？!?]+/u,
+    separators: /[。.！？!?]+/u,
     include: Object.freeze({ zh: /./u, en: /./u }),
     renderIncluded: Object.freeze({
       zh: patientizeOccupationalExposure,
