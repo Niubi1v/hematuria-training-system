@@ -51,7 +51,8 @@ const REQUIRED_SLUGS = [
   "SP-PROGRESSIVE-DISCLOSURE",
   "PATIENT-REPEATED-QUESTION-IDEMPOTENCY",
   "STAGE1-HISTORY-CONVERSATION-COVERAGE",
-  "HISTORY-COMPOSER-SUMMARY-VISUAL-ORDER"
+  "HISTORY-COMPOSER-SUMMARY-VISUAL-ORDER",
+  "PATIENT-UI-GROUNDED-PROCEDURE-FALSE-BLOCK"
 ];
 const STATUSES = new Set(["fixed", "regression_required", "open", "blocked_root_cause"]);
 const ROOT_CAUSE_STATUSES = new Set(["confirmed", "unconfirmed", "not_applicable"]);
