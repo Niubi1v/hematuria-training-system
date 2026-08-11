@@ -140,7 +140,7 @@ function unknownFactReason(slot) {
 function patientSlotIsUnknown(slot) {
   const zh = String(slot?.patientAnswerZh || "");
   const en = String(slot?.patientAnswerEn || "");
-  return /没(?:有)?(?:特别)?(?:注意|留意)|未注意|记不太清|不详|not noticed|not sure|do not know|cannot recall/i.test(`${zh} ${en}`);
+  return /没(?:有)?(?:特别)?(?:注意|留意)|未注意|记不太清|不详|not noticed|not sure|do not know|cannot recall|did not pay|have not paid/i.test(`${zh} ${en}`);
 }
 
 function naturalDysuriaAnswer(value, language) {

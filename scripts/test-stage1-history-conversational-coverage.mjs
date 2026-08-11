@@ -15,7 +15,7 @@ const { quarantineForMatchedSlots } = require("../server/bilingualConflictQuaran
 const { generatePatientAnswer, initSession, projectRoutedPatientFacts } = require("../server/patientSession.js");
 const { applyPatientProgressiveDisclosure } = require("../server/patientProgressiveDisclosure.js");
 const { FACT_STATES } = require("../src/lib/patientFactState.js");
-const { stage1HistoryIntentDefinitions } = require("../src/lib/stage1HistoryIntentRegistry.js");
+const { questionSemanticDepth, stage1HistoryIntentDefinitions } = require("../src/lib/stage1HistoryIntentRegistry.js");
 
 const knownStates = new Set([
   FACT_STATES.KNOWN_TRUE,
@@ -31,6 +31,10 @@ const governanceVoice = /(?:可靠的信息|没记录|数据库|病例字段|系
 const patientUnknown = /(?:这个|这点|这项).*(?:不清楚|记不清|没(?:有)?特别(?:注意|留意))|(?:i(?:'m| am) not sure|i (?:do not|don't) know)(?: about that)?/i;
 const malformedPunctuation = /(?:[。！？.!?][、，,；;]|\n[、，,；;])/u;
 const medicalese = /(?:镜下血尿|尿潴留|排尿踌躇|抗菌药|肾小球|glomerular|microscopic hematuria|urinary retention)/i;
+const grossVisibleReply = /(?:小便|尿).*(?:能|可以|看得|看出|看见).*(?:红|茶色|酱油色)|肉眼(?:可见|血尿)|(?:could|can) see.*(?:red|pink|tea|cola|blood).*(?:urine|pee)|visible (?:red|blood)/i;
+const detailPresupposition = /具体(?:什么时候|哪(?:里|个部位)|多(?:久|长)|多少|几次|几回)|(?:什么时候|几次|几回|多久|多长).*(?:没(?:有)?(?:特别)?(?:注意|留意)|记不清|没(?:有)?数)|exactly (?:when|where|how long|how many)|how many.*(?:did not|haven't|have not).*(?:count|notice)/i;
+const quantifiedReply = /\d+(?:\.\d+)?|[一二三四五六七八九十两]+(?:次|回|天|周|月|年|支|片)|(?:半|数)(?:天|小时|个月|年)|今天|昨天|前天|才开始|每天|每日|一晚|偶尔|经常|每周|每月|间断|反复|时有时无|持续|一直|具体(?:几次|几回|多少|多久|多长|剂量|吃法)|\b(?:once|twice|\d+ times?|every day|daily|per day|weekly|monthly|occasionally|regularly|intermittent|continuous(?:ly)?|comes? and goes?|today|yesterday|ago|some time|half an? (?:hour|day|month|year)|specific\s+dose|exactly\s+how\s+i\s+take|how many|how long)\b/i;
+const hardPatientMedicalese = /肾小球性镜下证据|职业暴露\s*[：:]|(?:intent|taxonomy|field|source|provenance|teacherOnly|diagnosticEligible|scoringEligible)\s*[：:=]/i;
 
 function deterministicIndex(seed, modulo) {
   return crypto.createHash("sha256").update(seed).digest().readUInt32BE(0) % modulo;
@@ -40,7 +44,8 @@ function expectedProjection(caseData, intent, question, language) {
   return applyPatientProgressiveDisclosure({
     caseData,
     matched: projectRoutedPatientFacts(caseData.id, caseData, [{ intent, text: question }], language),
-    language
+    language,
+    question
   });
 }
 
@@ -130,6 +135,16 @@ async function evaluateTurn(caseData, definition, question, language, turnId, se
   const crossIntentDisclosure = prematureDisclosure || childIntentSpill;
   const compositeFactOverDisclosure = Boolean(definition.sourceProjection && childIntentSpill);
   const quarantineError = medicallyQuarantined && routedOutcome?.factState !== FACT_STATES.MEDICAL_CONFLICT;
+  const requestedDepth = questionSemanticDepth(definition.intent, question, language);
+  const actualState = actual?.factState || routedOutcome?.factState || expected?.factState;
+  const unknownPresence = definition.semanticDepth === 1 && !knownStates.has(actualState);
+  const presenceAnsweredByDetail = requestedDepth === 1 && detailPresupposition.test(replyText);
+  const unknownPresupposition = unknownPresence && detailPresupposition.test(replyText);
+  const intentDepthMismatch = presenceAnsweredByDetail || (
+    requestedDepth === 3
+    && [FACT_STATES.KNOWN_TRUE, FACT_STATES.EXACT_VALUE, FACT_STATES.APPROXIMATE_VALUE, FACT_STATES.PARTIALLY_KNOWN].includes(actualState)
+    && !quantifiedReply.test(replyText)
+  );
   return {
     caseId: caseData.displayCaseId || caseData.id,
     question,
@@ -150,6 +165,9 @@ async function evaluateTurn(caseData, definition, question, language, turnId, se
       governanceVoiceLeak: governanceVoice.test(replyText), specificPlusUnknownCollision, contradictoryClause,
       malformedPunctuation: malformedPunctuationFound, templateJoinArtifact, crossIntentDisclosure,
       childIntentSpill, compositeFactOverDisclosure,
+      grossMicroscopicSemanticConflict: definition.intent === "microscopic_hematuria" && grossVisibleReply.test(replyText),
+      unknownPresupposition, intentDepthMismatch, presenceAnsweredByDetail,
+      hardPatientMedicalese: hardPatientMedicalese.test(replyText),
       medicaleseWarning: medicalese.test(replyText), overlongPatientReply: replyText.length > (language === "en" ? 180 : 90),
       genericTemplateRepetition: (replyText.match(/(?:记不(?:太)?清|没(?:有)?特别(?:注意|留意))/g) || []).length > 1
     }
@@ -189,6 +207,11 @@ async function main() {
     medicaleseWarning: 0,
     overlongPatientReply: 0,
     genericTemplateRepetition: 0,
+    grossMicroscopicSemanticConflict: 0,
+    unknownPresupposition: 0,
+    intentDepthMismatch: 0,
+    presenceAnsweredByDetail: 0,
+    hardPatientMedicalese: 0,
     unknownClasses: {}
   };
   const reviewSamples = new Map();
@@ -236,7 +259,12 @@ async function main() {
       compositeFactOverDisclosure: "compositeFactOverDisclosure",
       medicaleseWarning: "medicaleseWarning",
       overlongPatientReply: "overlongPatientReply",
-      genericTemplateRepetition: "genericTemplateRepetition"
+      genericTemplateRepetition: "genericTemplateRepetition",
+      grossMicroscopicSemanticConflict: "grossMicroscopicSemanticConflict",
+      unknownPresupposition: "unknownPresupposition",
+      intentDepthMismatch: "intentDepthMismatch",
+      presenceAnsweredByDetail: "presenceAnsweredByDetail",
+      hardPatientMedicalese: "hardPatientMedicalese"
     };
     for (const [check, metric] of Object.entries(metricByCheck)) {
       if (!turn.checks[check]) continue;
@@ -303,7 +331,9 @@ async function main() {
   fs.writeFileSync(path.join(outputDirectory, "conversation-audit.json"), `${JSON.stringify({ metrics, violations, conversations: selected }, null, 2)}\n`);
   const hardHumanFidelityMetrics = [
     "governanceVoiceLeak", "specificPlusUnknownCollision", "contradictoryClause", "malformedPunctuation",
-    "templateJoinArtifact", "crossIntentDisclosure", "childIntentSpill", "compositeFactOverDisclosure"
+    "templateJoinArtifact", "crossIntentDisclosure", "childIntentSpill", "compositeFactOverDisclosure",
+    "grossMicroscopicSemanticConflict", "unknownPresupposition", "intentDepthMismatch",
+    "presenceAnsweredByDetail", "hardPatientMedicalese"
   ];
   const warningMetrics = ["medicaleseWarning", "overlongPatientReply", "genericTemplateRepetition"];
   const humanFidelityAudit = {

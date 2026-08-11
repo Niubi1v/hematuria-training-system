@@ -1,4 +1,5 @@
 const BILINGUAL_CONFLICT_REASON = "medical_bilingual_conflict_pending_review";
+const { neutralUnknownPresenceReply } = require("../src/lib/stage1HistoryIntentRegistry.js");
 
 const conflictPairs = [
   ["P001", "pain"],
@@ -34,15 +35,12 @@ function isBilingualConflict(caseId, field) {
 
 function uncertainConflictReply(language = "zh", fields = []) {
   const field = fields[0] || "";
+  if (["pain", "dysuria", "urinary_frequency", "urinary_urgency"].includes(field)) {
+    return neutralUnknownPresenceReply(language);
+  }
   if (language === "en") {
-    if (field === "pain" || field === "dysuria") return "I did not pay close attention to exactly when it hurt.";
-    if (field === "urinary_frequency") return "I did not pay close attention to whether I was urinating more often.";
-    if (field === "urinary_urgency") return "I did not pay close attention to whether I had a sudden urge to urinate.";
     return "I cannot recall that clearly.";
   }
-  if (field === "pain" || field === "dysuria") return "具体什么时候疼，我之前没特别注意。";
-  if (field === "urinary_frequency") return "小便次数有没有增多，我之前没特别留意。";
-  if (field === "urinary_urgency") return "有没有突然憋不住尿，我之前没特别留意。";
   return "这点我记不太清了。";
 }
 

@@ -468,8 +468,8 @@ function matchesNaturalPattern(question, intentKey, language) {
   }
   if (intentKey === "urinary_frequency") {
     return language === "zh"
-      ? /(?:小便|尿|厕所).*(?:次数多|次数增多|尿得勤|老想|总想|经常|频繁)|(?:老是|总是|总|一会儿就).*(?:小便|尿|厕所)/.test(compacted)
-      : /(?:urinate|urinating|pee|passurine).*(?:moreoften|frequently|alot)|(?:frequent|often).*(?:urination|urinate|pee)/i.test(compacted);
+      ? /(?:小便|尿|厕所).*(?:次数多|次数增多|尿得勤|老想|总想|经常|频繁)|(?:老是|总是|总|一会儿就).*(?:小便|尿|厕所)|(?:一天|每日|每天|白天).*(?:小便|尿).*(?:几次|多少次|几回)/.test(compacted)
+      : /(?:urinate|urinating|pee|passurine).*(?:moreoften|frequently|alot)|(?:frequent|often).*(?:urination|urinate|pee)|(?:howmanytimes|howoften).*(?:aday|perday).*(?:urinate|pee)|(?:urinate|pee).*(?:howmanytimes|howoften).*(?:aday|perday)/i.test(compacted);
   }
   if (intentKey === "urinary_urgency") {
     return language === "zh"
@@ -518,7 +518,7 @@ function matchesNaturalPattern(question, intentKey, language) {
   }
   if (intentKey === "nocturia") {
     return language === "zh"
-      ? /(?:晚上|夜里|夜间|一晚上).*(?:起夜|起来尿|小便|尿几次|尿几回)|夜尿/.test(compacted)
+      ? /(?:晚上|夜里|夜间|一晚上).*(?:起夜|起来尿|小便|尿几次|尿几回|起几次|起几回)|夜尿/.test(compacted)
       : /(?:getup|wakeup|wake).*(?:atnight|duringthenight|overnight).*(?:urinate|pee)|(?:urinate|pee).*(?:atnight|duringthenight|overnight)|nocturia/i.test(compacted);
   }
   return false;

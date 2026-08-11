@@ -338,6 +338,12 @@ function buildLifestyleAnswerPlan(fact, intent, language = "zh") {
       factState: absent ? FACT_STATES.KNOWN_FALSE : current ? FACT_STATES.KNOWN_TRUE : FACT_STATES.MISSING
     };
   }
+  if (!absent && !current) {
+    return {
+      renderedAnswer: language === "en" ? "I am not sure whether I have had that habit." : "这个习惯有没有，我记不太清了。",
+      factState: FACT_STATES.MISSING
+    };
+  }
   if (absent) {
     return {
       renderedAnswer: language === "en" ? (smoking ? "I do not smoke." : "I do not drink alcohol.") : (smoking ? "我不抽烟。" : "我不喝酒。"),

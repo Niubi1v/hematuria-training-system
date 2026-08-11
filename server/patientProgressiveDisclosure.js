@@ -1,7 +1,11 @@
 "use strict";
 
 const { FACT_STATES, answerPlanFromRendered, renderAnswerPlan } = require("../src/lib/patientFactState.js");
-const { stage1HistoryIntent } = require("../src/lib/stage1HistoryIntentRegistry.js");
+const {
+  neutralUnknownPresenceReply,
+  questionSemanticDepth,
+  stage1HistoryIntent
+} = require("../src/lib/stage1HistoryIntentRegistry.js");
 
 const historyLabels = {
   hypertension_history: /高血压|hypertension/i,
@@ -60,27 +64,61 @@ function presentingClue(caseData, original, language) {
   return "我最近小便有点不舒服。";
 }
 
-function projectIntentAnswer(plan, language) {
+const unknownPresenceStates = new Set([
+  FACT_STATES.PATIENT_NOT_AWARE,
+  FACT_STATES.MISSING,
+  FACT_STATES.NEEDS_REVIEW,
+  FACT_STATES.MEDICAL_CONFLICT
+]);
+
+function projectIntentAnswer(plan, language, question) {
   const projection = stage1HistoryIntent(plan.intent)?.sourceProjection;
-  if (!projection) return plan;
-  const rendered = renderAnswerPlan(plan);
-  const included = rendered
-    .split(projection.separators)
-    .map((part) => part.trim())
-    .filter((part) => part && projection.include[language].test(part));
-  const projected = included.length
-    ? `${included.join(language === "en" ? ", " : "、")}。`
-    : projection.missingReply?.[language];
-  if (!projected) return plan;
-  return answerPlanFromRendered({
-    ...plan,
-    factState: included.length ? plan.factState : FACT_STATES.PATIENT_NOT_AWARE,
-    renderedAnswer: projected,
-    unknownReason: included.length ? plan.unknownReason : "patient_not_aware"
-  });
+  let projectedPlan = plan;
+  if (projection) {
+    const included = renderAnswerPlan(plan)
+      .split(projection.separators)
+      .map((part) => part.trim())
+      .filter((part) => part && projection.include[language].test(part));
+    const projected = included.length
+      ? (projection.renderIncluded?.[language]?.(included) || `${included.join(language === "en" ? ", " : "、")}。`)
+      : projection.missingReply?.[language];
+    if (projected) {
+      projectedPlan = answerPlanFromRendered({
+        ...plan,
+        factState: included.length ? plan.factState : FACT_STATES.PATIENT_NOT_AWARE,
+        renderedAnswer: projected,
+        unknownReason: included.length ? plan.unknownReason : "patient_not_aware"
+      });
+    }
+  }
+  const definition = stage1HistoryIntent(plan.intent);
+  const requestedDepth = questionSemanticDepth(plan.intent, question, language);
+  if (
+    definition?.semanticDepth === 1
+    && unknownPresenceStates.has(projectedPlan.factState)
+  ) {
+    return answerPlanFromRendered({
+      ...projectedPlan,
+      renderedAnswer: projection?.missingReply?.[language] || neutralUnknownPresenceReply(language)
+    });
+  }
+  if (
+    definition?.semanticDepth === 1
+    && requestedDepth === 3
+    && projectedPlan.factState === FACT_STATES.KNOWN_TRUE
+    && definition.quantityUnknownReply?.[language]
+  ) {
+    return answerPlanFromRendered({
+      ...projectedPlan,
+      factState: FACT_STATES.PARTIALLY_KNOWN,
+      renderedAnswer: definition.quantityUnknownReply[language],
+      unknownReason: "partial_fact"
+    });
+  }
+  return projectedPlan;
 }
 
-function applyPatientProgressiveDisclosure({ caseData, matched, language = "zh", contextResolution = null }) {
+function applyPatientProgressiveDisclosure({ caseData, matched, language = "zh", contextResolution = null, question = "" }) {
   if (!matched?.answerPlans?.length) return matched;
   const answerPlans = matched.answerPlans.map((plan) => {
     if (
@@ -95,7 +133,7 @@ function applyPatientProgressiveDisclosure({ caseData, matched, language = "zh",
         renderedAnswer
       });
     }
-    if (plan.intent !== "chief_complaint") return projectIntentAnswer(plan, language);
+    if (plan.intent !== "chief_complaint") return projectIntentAnswer(plan, language, question);
     return answerPlanFromRendered({
       ...plan,
       renderedAnswer: presentingClue(caseData, renderAnswerPlan(plan), language)

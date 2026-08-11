@@ -8,6 +8,8 @@ process.env.PATIENT_SEMANTIC_CLASSIFIER_ENABLED = "false";
 
 const require = createRequire(import.meta.url);
 const { generatePatientAnswer, initSession } = require("../server/patientSession.js");
+const { buildLifestyleAnswerPlan } = require("../src/lib/structuredHistoryAnswerPlanner.js");
+const { questionSemanticDepth } = require("../src/lib/stage1HistoryIntentRegistry.js");
 
 async function ask(caseId, question) {
   const session = await initSession({ caseId, attemptId: `human-fidelity-${caseId}-${question}`, language: "zh" });
@@ -50,6 +52,49 @@ async function main() {
   assert.deepEqual(urineColor.matchedFacts, ["urine_color"]);
   assert.match(urineColor.replyText, /茶色|淡红|红色/);
   assert.doesNotMatch(urineColor.replyText, /泡沫/);
+
+  const microscopic = await ask("HX-ADD-017", "平时镜下血尿有吗？");
+  assert.deepEqual(microscopic.matchedFacts, ["microscopic_hematuria"]);
+  assert.match(microscopic.replyText, /尿检|检查|红细胞/);
+  assert.doesNotMatch(microscopic.replyText, /小便能看出红色|肉眼/);
+
+  const gross = await ask("P011", "肉眼能看见尿里有血吗？");
+  const microscopicComposite = await ask("P011", "尿检或镜下能查到血吗？");
+  assert.deepEqual(gross.matchedFacts, ["gross_hematuria"]);
+  assert.deepEqual(microscopicComposite.matchedFacts, ["microscopic_hematuria"]);
+  assert.match(gross.replyText, /小便能看出红色/);
+  assert.doesNotMatch(gross.replyText, /镜下|红细胞|肾小球/);
+  assert.match(microscopicComposite.replyText, /尿检|检查|红细胞/);
+  assert.doesNotMatch(microscopicComposite.replyText, /小便能看出红色|肾小球性镜下证据/);
+
+  const frequencyPresenceUnknown = await ask("HX-ADD-023", "有没有尿频？");
+  assert.equal(frequencyPresenceUnknown.factStates?.urinary_frequency, "missing");
+  assert.match(frequencyPresenceUnknown.replyText, /有没有尿频|是否尿频|会不会尿频|小便次数有没有增多|没太留意/);
+  assert.doesNotMatch(frequencyPresenceUnknown.replyText, /具体.*次数|次数.*没(?:有)?数/);
+
+  const painConflict = await ask("P004", "一般疼痛有还是没有？");
+  assert.equal(painConflict.clauseOutcomes?.[0]?.status, "blocked_medical");
+  assert.doesNotMatch(painConflict.replyText, /什么时候疼/);
+  assert.match(painConflict.replyText, /有没有疼|是否疼|有无疼痛|说不准|记不清|没太留意/);
+
+  assert.equal(questionSemanticDepth("urinary_frequency", "有没有尿频？", "zh"), 1);
+  assert.equal(questionSemanticDepth("urinary_frequency", "一天小便几次？", "zh"), 3);
+  assert.equal(questionSemanticDepth("urine_color", "尿是什么颜色？", "zh"), 2);
+
+  const urinaryQuantity = await ask("P005", "一天小便几次？");
+  assert.deepEqual(urinaryQuantity.matchedFacts, ["urinary_frequency"]);
+  assert.match(urinaryQuantity.replyText, /具体.*几次.*没数/);
+  assert.doesNotMatch(urinaryQuantity.replyText, /^有，小便次数比平时多。$/);
+
+  const unknownSmokingAmount = buildLifestyleAnswerPlan({ status: "unknown" }, "smoking_amount", "zh");
+  assert.equal(unknownSmokingAmount.factState, "missing");
+  assert.doesNotMatch(unknownSmokingAmount.renderedAnswer, /每天|多少支|抽了多少年/);
+  const knownSmokingUnknownAmount = buildLifestyleAnswerPlan({ status: "current" }, "smoking_amount", "zh");
+  assert.match(knownSmokingUnknownAmount.renderedAnswer, /每天抽多少支/);
+
+  const occupation = await ask("HX-ADD-003", "有没有职业暴露？");
+  assert.match(occupation.replyText, /工作中接触过/);
+  assert.doesNotMatch(occupation.replyText, /职业暴露\s*[：:]|工作中接触过工作中接触过/);
 
   console.log("R5 Patient Human Fidelity gate passed.");
 }

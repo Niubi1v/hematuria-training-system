@@ -22,7 +22,7 @@ const UNKNOWN_REASON_CODES = Object.freeze({
 
 const approximatePattern = /(?:大约|大概|约|余|多|左右|近|数(?:天|周|月|年)|几(?:天|周|月|年)|记不清.*哪一天|about|around|approximately|roughly|over|more than|nearly|almost|a few|several)/i;
 const partialPattern = /(?:具体|细节|哪一天|几次|多少|记不全|说不清|部分|大致|具体不清|exact|detail|cannot recall all|not all|partly)/i;
-const unawarePattern = /(?:没(?:有)?(?:特别)?(?:注意|留意)|未注意|没仔细看|没有数|没有量|记不太清|不详|not noticed|not sure|do not know|cannot recall|did not (?:look|notice|measure|count)|have not (?:noticed|counted|kept))/i;
+const unawarePattern = /(?:没(?:有)?(?:特别)?(?:注意|留意)|未注意|没仔细看|没有数|没有量|记不太清|不详|not noticed|not sure|do not know|cannot recall|did not (?:look|notice|measure|count|pay)|have not (?:noticed|counted|kept|paid))/i;
 
 function reasonCodeForState(state) {
   if (state === FACT_STATES.PATIENT_NOT_AWARE) return UNKNOWN_REASON_CODES.PATIENT_NOT_AWARE;

@@ -1808,7 +1808,7 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
       contextResolution
     };
   }
-  matched = applyPatientProgressiveDisclosure({ caseData, matched, language, contextResolution });
+  matched = applyPatientProgressiveDisclosure({ caseData, matched, language, contextResolution, question: routedInput });
   const clauseOutcomes = matched?.clauseOutcomes || clauseOutcomesForMatch(matched);
   const fallback = realizeSpokenPatientAnswer(conciseDeterministicReply(matched
     ? {
