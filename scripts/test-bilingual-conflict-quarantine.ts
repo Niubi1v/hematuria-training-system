@@ -118,8 +118,8 @@ async function main() {
   assert.deepEqual(filtered.quarantinedSlotIds, ["urinary_urgency"]);
   assert.equal(filtered.reason, BILINGUAL_CONFLICT_REASON);
 
-  assert.equal(uncertainConflictReply("zh", ["urinary_urgency"]), "有没有突然憋不住尿，我之前没特别留意。");
-  assert.equal(uncertainConflictReply("en", ["urinary_frequency"]), "I did not pay close attention to whether I was urinating more often.");
+  assert.equal(uncertainConflictReply("zh", ["urinary_urgency"]), "这个我之前没太留意。");
+  assert.equal(uncertainConflictReply("en", ["urinary_frequency"]), "I have not really paid attention to that.");
   assert.doesNotMatch(uncertainConflictReply("en", ["pain"]), /[\u3400-\u9fff]/);
   console.log("Bilingual medical conflict quarantine passed: 18 facts isolated without changing medical truth or review state.");
 }
