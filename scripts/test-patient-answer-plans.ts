@@ -81,7 +81,8 @@ async function main() {
     language: "zh"
   });
   assert.equal(missingKidneyHistory.unknownReasonCodes?.previous_kidney_disease, UNKNOWN_REASON_CODES.FACT_MISSING);
-  assert.match(missingKidneyHistory.replyText, /没有可靠的信息|不能把没记录当成没有/);
+  assert.match(missingKidneyHistory.replyText, /记不(?:太)?清|不太清楚/);
+  assert.doesNotMatch(missingKidneyHistory.replyText, /可靠的信息|没记录|数据库|病例字段|source fact|needs review/i);
   assert.doesNotMatch(missingKidneyHistory.replyText, /^没有[，。]/, "missing history must not become a negative fact");
 
   console.log("Patient fact-state model and deterministic answer-plan contracts passed.");

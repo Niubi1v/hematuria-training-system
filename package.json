@@ -97,7 +97,7 @@
     "test:agent-api-security": "tsx scripts/test-agent-api-security.ts",
     "test:patient-public-api-minimal-surface": "tsx scripts/test-agent-api-security.ts --patient-public-api-minimal-surface",
     "test:patient-sp-progressive-disclosure": "node scripts/test-patient-progressive-disclosure.mjs",
-    "test:stage1-history-conversation-regressions": "node scripts/test-stage1-history-conversation-regressions.mjs",
+    "test:stage1-history-conversation-regressions": "node scripts/test-stage1-history-conversation-regressions.mjs && node scripts/test-patient-human-fidelity.mjs",
     "test:stage1-history-conversational-coverage": "node scripts/test-stage1-history-conversational-coverage.mjs",
     "test:ai-recovery": "tsx scripts/test-ai-recovery.ts",
     "test:performance-timing": "tsx scripts/test-performance-timing.ts",

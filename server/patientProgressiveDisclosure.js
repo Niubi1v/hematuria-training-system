@@ -60,6 +60,26 @@ function presentingClue(caseData, original, language) {
   return "我最近小便有点不舒服。";
 }
 
+function projectIntentAnswer(plan, language) {
+  const projection = stage1HistoryIntent(plan.intent)?.sourceProjection;
+  if (!projection) return plan;
+  const rendered = renderAnswerPlan(plan);
+  const included = rendered
+    .split(projection.separators)
+    .map((part) => part.trim())
+    .filter((part) => part && projection.include[language].test(part));
+  const projected = included.length
+    ? `${included.join(language === "en" ? ", " : "、")}。`
+    : projection.missingReply?.[language];
+  if (!projected) return plan;
+  return answerPlanFromRendered({
+    ...plan,
+    factState: included.length ? plan.factState : FACT_STATES.PATIENT_NOT_AWARE,
+    renderedAnswer: projected,
+    unknownReason: included.length ? plan.unknownReason : "patient_not_aware"
+  });
+}
+
 function applyPatientProgressiveDisclosure({ caseData, matched, language = "zh", contextResolution = null }) {
   if (!matched?.answerPlans?.length) return matched;
   const answerPlans = matched.answerPlans.map((plan) => {
@@ -75,7 +95,7 @@ function applyPatientProgressiveDisclosure({ caseData, matched, language = "zh",
         renderedAnswer
       });
     }
-    if (plan.intent !== "chief_complaint") return plan;
+    if (plan.intent !== "chief_complaint") return projectIntentAnswer(plan, language);
     return answerPlanFromRendered({
       ...plan,
       renderedAnswer: presentingClue(caseData, renderAnswerPlan(plan), language)

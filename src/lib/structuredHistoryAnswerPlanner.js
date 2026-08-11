@@ -33,6 +33,16 @@ function medicationNames(medications) {
   return [...new Set(medications.map((item) => String(item?.name || "").trim()).filter(Boolean))];
 }
 
+function missingMedicationDetail(items, detail, language) {
+  const names = medicationNames(items.map((item) => ({ name: item.medicationName })));
+  if (language === "en") {
+    if (names.length === 1) return `I cannot recall the exact ${detail} for ${names[0]}.`;
+    return `I cannot recall the exact ${detail} for these medications.`;
+  }
+  if (names.length === 1) return `${names[0]}的具体${detail === "dose" ? "剂量" : "吃法"}我记不清了。`;
+  return `这些药的具体${detail === "dose" ? "剂量" : "吃法"}我记不清了。`;
+}
+
 function medicationScopeFromQuestion(question, language = "zh") {
   const text = String(question || "");
   if (language === "en") {
@@ -141,8 +151,8 @@ function buildMedicationAnswerPlan(
       };
     }
     const renderedAnswer = medicationAnswer || (language === "en"
-      ? "I do not have a reliable medication list."
-      : "我没有可靠的用药记录。");
+      ? "I cannot remember exactly which medications I take."
+      : "具体吃什么药，我记不太清了。");
     return {
       renderedAnswer,
       factState: noLongTermMedication(renderedAnswer, language)
@@ -204,7 +214,7 @@ function buildMedicationAnswerPlan(
     if (!known.length) {
       return {
         renderedAnswer: missingRecommendations.length
-          ? naturalList(missingRecommendations.map((item) => item.runtimeAnswer), language)
+          ? missingMedicationDetail(missingRecommendations, "dose", language)
           : language === "en"
           ? `I only know that I take ${joinedNames} long term; I cannot recall the specific dose.`
           : `只知道长期服用${joinedNames}，具体剂量记不清。`,
@@ -215,7 +225,7 @@ function buildMedicationAnswerPlan(
     return {
       renderedAnswer: missing.length
         ? (missingRecommendations.length
-          ? `${naturalList(known, language)}；${naturalList(missingRecommendations.map((item) => item.runtimeAnswer), language)}`
+          ? `${naturalList(known, language)}；${missingMedicationDetail(missingRecommendations, "dose", language)}`
           : language === "en"
           ? `${naturalList(known, language)}. I cannot recall the dose of ${naturalList(medicationNames(missing), language)}.`
           : `${naturalList(known, language)}；${naturalList(medicationNames(missing), language)}的具体剂量记不清。`)
@@ -236,7 +246,7 @@ function buildMedicationAnswerPlan(
     if (!known.length) {
       return {
         renderedAnswer: missingRecommendations.length
-          ? naturalList(missingRecommendations.map((item) => item.runtimeAnswer), language)
+          ? missingMedicationDetail(missingRecommendations, "frequency", language)
           : language === "en"
           ? `I only know that I take ${joinedNames} long term; I cannot recall exactly how I take them.`
           : `只知道长期服用${joinedNames}，具体吃法记不清。`,
@@ -247,7 +257,7 @@ function buildMedicationAnswerPlan(
     return {
       renderedAnswer: missing.length
         ? (missingRecommendations.length
-          ? `${naturalList(known, language)}；${naturalList(missingRecommendations.map((item) => item.runtimeAnswer), language)}`
+          ? `${naturalList(known, language)}；${missingMedicationDetail(missingRecommendations, "frequency", language)}`
           : language === "en"
           ? `${naturalList(known, language)}. I cannot recall exactly how I take ${naturalList(medicationNames(missing), language)}.`
           : `${naturalList(known, language)}；${naturalList(medicationNames(missing), language)}的具体吃法记不清。`)

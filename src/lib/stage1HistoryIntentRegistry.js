@@ -36,6 +36,34 @@ const followUps = Object.freeze({
   prior_medication_for_current_problem: ["treatment_response"]
 });
 
+const sourceProjections = Object.freeze({
+  urine_color: Object.freeze({
+    separators: /[，,；;。！？!?]+/u,
+    include: Object.freeze({
+      zh: /颜色|尿色|红|茶色|酱油色|洗肉水/u,
+      en: /colou?r|red|tea|cola|pink/i
+    }),
+    childIntents: Object.freeze(["foamy_urine"]),
+    spillPattern: Object.freeze({ zh: /泡沫/u, en: /foam/i })
+  }),
+  hesitancy: Object.freeze({
+    separators: /[、，,；;。！？!?]+/u,
+    include: Object.freeze({
+      zh: /踌躇|起尿|开始尿|等一会/u,
+      en: /hesitan|wait.*start|difficulty starting/i
+    }),
+    childIntents: Object.freeze(["weak_stream", "urinary_frequency", "nocturia", "urinary_retention"]),
+    spillPattern: Object.freeze({
+      zh: /尿线|尿分叉|尿频|夜尿|尿潴留|尿不出来/u,
+      en: /weak stream|split stream|frequen|nocturia|retention|cannot pass urine/i
+    }),
+    missingReply: Object.freeze({
+      zh: "小便开始时要不要等一会，我之前没太留意。",
+      en: "I have not paid close attention to whether I have to wait before urination starts."
+    })
+  })
+});
+
 function sourceField(definition) {
   if (definition.domain === "structured_history") {
     return definition.historyKey
@@ -90,6 +118,7 @@ const stage1HistoryIntentDefinitions = Object.freeze(patientFactOntology
   followUpIntents: Object.freeze(followUps[definition.key] || []),
   governancePolicy: governancePolicy(definition.domain),
   compoundBehavior: "preserve_each_grounded_clause",
+  sourceProjection: sourceProjections[definition.key] || null,
   semanticIntentFallback: definition.domain !== "safe_missing",
   ontology: definition
 })));

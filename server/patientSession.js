@@ -921,6 +921,18 @@ function clarificationReply(language = "zh") {
 function mergePatientFactMatches(canonical, structured) {
   if (!canonical) return structured;
   if (!structured) return canonical;
+  const specificPriorCareIntents = new Set([
+    "prior_medical_visit", "prior_investigations", "prior_investigation_results_patient_aware",
+    "prior_diagnosis_patient_aware", "prior_treatment", "prior_medication_for_current_problem",
+    "treatment_response"
+  ]);
+  const combinedPlans = [...(canonical.answerPlans || []), ...(structured.answerPlans || [])];
+  if (combinedPlans.some((plan) => specificPriorCareIntents.has(plan.intent))) {
+    canonical = omitPatientFactIntents(canonical, new Set(["prior_care"]));
+    structured = omitPatientFactIntents(structured, new Set(["prior_care"]));
+    if (!canonical) return structured;
+    if (!structured) return canonical;
+  }
   const unique = (values) => [...new Set(values.filter(Boolean))];
   const canonicalCollectableSlots = canonical.collectableSlotIds || canonical.matchedSlotIds || [];
   const canonicalCollectableFacts = canonical.collectableFacts || canonical.matchedFacts || [];
@@ -1635,8 +1647,8 @@ async function generatePatientAnswer({ sessionId, caseId, studentInput, conversa
     : null;
   if (safeMissingMatch) {
     const replyText = language === "en"
-      ? "I do not have reliable information about that in what I can recall."
-      : "这方面我没有可靠的信息，不能把没记录当成没有。";
+      ? "I cannot remember that clearly."
+      : "这个我记不太清了。";
     const plan = answerPlanFromRendered({
       intent: safeMissingMatch.intentKey,
       sourceSlotId: null,

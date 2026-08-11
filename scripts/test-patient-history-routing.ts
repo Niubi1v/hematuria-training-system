@@ -21,6 +21,7 @@ const { generatePatientAnswer } = require("../server/patientSession.js") as {
     factStates?: Record<string, string>;
     clauseOutcomes?: Array<{ intent: string; sourceSlotId: string; status: string; factState: string }>;
     contextResolution?: { inherited?: boolean; reason?: string };
+    answerPlans?: Array<{ intent: string; sourceSlotId?: string; factState: string }>;
   }>;
 };
 type HistoryFact = {
@@ -154,6 +155,12 @@ async function main() {
     });
     assert.notEqual(result.fallbackReason, "diagnosis_boundary", `${probe.id} must remain a history question`);
     assert.notEqual(result.fallbackReason, "report_boundary", `${probe.id} must remain a history question`);
+    if (probe.id.startsWith("prior-care")) {
+      assert.ok(result.answerPlans?.some((plan) => plan.intent === "prior_medical_visit"), `${probe.id} governed visit projection`);
+      assert.ok(!result.answerPlans?.some((plan) => plan.intent === "prior_care"), `${probe.id} legacy alias must not duplicate the answer`);
+      assert.ok((result.matchedSlotIds || []).every((slotId) => result.answerPlans?.some((plan) => plan.sourceSlotId === slotId)), `${probe.id} public slot authority`);
+      continue;
+    }
     if (result.fallbackReason === "unsafe_deterministic_answer") {
       assert.deepEqual(result.matchedSlotIds || [], [], `${probe.id} unsafe source must remain uncollected`);
       assert.ok(result.safetyFlags?.includes("deterministic_answer_blocked"), `${probe.id} safety boundary`);
